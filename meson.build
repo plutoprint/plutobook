@@ -13,7 +13,7 @@ expat_dep = dependency('expat',
 icu_dep = dependency('icu-uc',
     required: true,
     version: '>=49.0',
-    fallback: ['icu', 'icu_dep']
+    fallback: ['icu', 'icuuc_dep']
 )
 
 freetype_dep = dependency('freetype2',
@@ -31,13 +31,13 @@ fontconfig_dep = dependency('fontconfig',
 harfbuzz_dep = dependency('harfbuzz',
     required: true,
     version: '>=2.0.0',
-    fallback: ['harfbuzz', 'harfbuzz_dep']
+    fallback: ['harfbuzz', 'libharfbuzz_dep']
 )
 
 cairo_dep = dependency('cairo',
     required: true,
     version: '>=1.14.0',
-    fallback: ['cairo', 'cairo_dep']
+    fallback: ['cairo', 'libcairo_dep']
 )
 
 plutobook_deps = [
@@ -61,7 +61,7 @@ endif
 
 jpeg_dep = dependency('libturbojpeg',
     required: get_option('turbojpeg'),
-    fallback: ['libjpeg-turbo', 'jpeg_dep']
+    fallback: ['libjpeg-turbo', 'turbojpeg_dep']
 )
 
 if jpeg_dep.found()
