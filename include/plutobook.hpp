@@ -30,6 +30,8 @@
 #include "plutobook.h"
 
 /*
+ * PlutoBook C++ header file
+ *
  * Report an issue: https://github.com/plutoprint/plutobook/issues
  * Buy me a coffee: https://www.paypal.me/sammycage
  */

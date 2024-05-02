@@ -23,6 +23,13 @@
 #ifndef PLUTOBOOK_H
 #define PLUTOBOOK_H
 
+/*
+ * PlutoBook C header file
+ *
+ * Report an issue: https://github.com/plutoprint/plutobook/issues
+ * Buy me a coffee: https://www.paypal.me/sammycage
+ */
+
 #ifndef __cplusplus
 extern "C" {
 #endif

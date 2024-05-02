@@ -181,7 +181,7 @@ meson.override_dependency('plutobook', plutobook_dep)
 install_headers(plutobook_public_headers, subdir: 'plutobook')
 
 if not get_option('examples').disabled()
-  subdir('examples')
+    subdir('examples')
 endif
 
 pkgmod = import('pkgconfig')
