@@ -1,0 +1,40 @@
+name: Build PlutoBook
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          libcairo2-dev \
+          libexpat1-dev \
+          libicu-dev \
+          libfreetype6-dev \
+          libfontconfig1-dev \
+          libharfbuzz-dev \
+          libcurl4-openssl-dev \
+          libturbojpeg0-dev \
+          libwebp-dev
+          
+    - name: Install Meson and Ninja
+      run: |
+        sudo apt-get install meson ninja-build
+        
+    - name: Configure and Build
+      run: |
+        meson setup build
+        ninja -C build
