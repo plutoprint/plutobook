@@ -23,12 +23,6 @@
 #ifndef PLUTOBOOK_HPP
 #define PLUTOBOOK_HPP
 
-#include <string>
-#include <memory>
-#include <vector>
-
-#include "plutobook.h"
-
 /*
  * PlutoBook C++ header file
  *
@@ -36,18 +30,30 @@
  * Buy me a coffee: https://www.paypal.me/sammycage
  */
 
+#include <string>
+#include <memory>
+#include <vector>
+
+#include "plutobook.h"
+
 namespace plutobook {
 
+/**
+ * Defines an index that is guaranteed to exceed the valid page count.
+ * It is typically utilized as a sentinel value to represent an unbounded or maximum value, indicating
+ * that there is no limit or that the maximum possible value is intended.
+ */
 constexpr uint32_t kMaxPageCount = PLUTOBOOK_MAX_PAGE_COUNT;
 
+/**
+ * @brief Represents a page size in points (1/72 inch), providing functionality to manipulate and retrieve width and height.
+ */
 class PLUTOBOOK_API PageSize {
 public:
     constexpr PageSize() = default;
     constexpr PageSize(plutobook_page_size_t size) : PageSize(size.width, size.height) {}
     constexpr explicit PageSize(float size) : PageSize(size, size) {}
-    constexpr PageSize(float width, float height)
-        : m_width(width), m_height(height)
-    {}
+    constexpr PageSize(float width, float height) : m_width(width), m_height(height) {}
 
     constexpr void setWidth(float width) { m_width = width; }
     constexpr void setHeight(float height) { m_height = height; }
@@ -60,6 +66,9 @@ public:
 
     constexpr operator plutobook_page_size_t() const { return {m_width, m_height}; }
 
+    /**
+     * @brief Predefined PageSize objects for common paper sizes.
+     */
     static const PageSize A3;
     static const PageSize A4;
     static const PageSize A5;
@@ -97,6 +106,9 @@ inline const PageSize PageSize::Letter = PLUTOBOOK_PAGE_SIZE_LETTER;
 inline const PageSize PageSize::Legal = PLUTOBOOK_PAGE_SIZE_LEGAL;
 inline const PageSize PageSize::Ledger = PLUTOBOOK_PAGE_SIZE_LEDGER;
 
+/**
+ * @brief Represents the margins of a page in points (1/72 inch), providing functionality to manipulate and retrieve top, right, bottom, and left margins.
+ */
 class PLUTOBOOK_API PageMargins {
 public:
     constexpr PageMargins() = default;
@@ -128,6 +140,9 @@ public:
 
     constexpr operator plutobook_page_margins_t() const { return {m_top, m_right, m_bottom, m_left}; }
 
+    /**
+     * @brief Predefined PageMargins objects for common margin settings.
+     */
     static const PageMargins None;
     static const PageMargins Normal;
     static const PageMargins Narrow;
@@ -145,6 +160,14 @@ inline const PageMargins PageMargins::Normal = PLUTOBOOK_PAGE_MARGINS_NORMAL;
 inline const PageMargins PageMargins::Narrow = PLUTOBOOK_PAGE_MARGINS_NARROW;
 inline const PageMargins PageMargins::Moderate = PLUTOBOOK_PAGE_MARGINS_MODERATE;
 
+/**
+ * Defines conversion factors for various units to points (pt) and vice versa.
+ * These conversion factors allow easy conversion between different units and points.
+ *
+ * Example Usage:
+ *   - To convert 12 inches to points: 12 * units::in
+ *   - To convert 12 points to inches: 12 / units::in
+ */
 namespace units {
 
 constexpr float pt = PLUTOBOOK_UNITS_PT;

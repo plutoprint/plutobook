@@ -62,11 +62,42 @@ extern "C" {
 #define PLUTOBOOK_VERSION_STRINGIZE(major, minor, micro) PLUTOBOOK_VERSION_XSTRINGIZE(major, minor, micro)
 #define PLUTOBOOK_VERSION_STRING PLUTOBOOK_VERSION_STRINGIZE(PLUTOBOOK_VERSION_MAJOR, PLUTOBOOK_VERSION_MINOR, PLUTOBOOK_VERSION_MICRO)
 
+/**
+ * @brief Returns the version of the plutobook library encoded in a single integer.
+ *
+ * This function retrieves the version of the plutobook library and encodes it into a single integer.
+ * The version number is represented in a format suitable for comparison.
+ *
+ * @return The version of the plutobook library encoded in a single integer.
+ */
 PLUTOBOOK_API int plutobook_version(void);
+
+/**
+ * @brief Returns the version of the plutobook library as a human-readable string in the format "X.Y.Z".
+ *
+ * This function retrieves the version of the plutobook library and returns it as a human-readable string
+ * in the format "X.Y.Z", where X represents the major version, Y represents the minor version, and Z represents
+ * the patch version.
+ *
+ * @return A pointer to a string containing the version of the plutobook library in the format "X.Y.Z".
+ */
 PLUTOBOOK_API const char* plutobook_version_string(void);
 
+/**
+ * This macro defines an index that is guaranteed to exceed the valid page count.
+ * It is typically utilized as a sentinel value to represent an unbounded or maximum value, indicating
+ * that there is no limit or that the maximum possible value is intended.
+ */
 #define PLUTOBOOK_MAX_PAGE_COUNT 0xFFFFFFFFU
 
+/**
+ * Defines conversion factors for various units to points (pt) and vice versa.
+ * These conversion factors allow easy conversion between different units and points.
+ *
+ * Example Usage:
+ *   - To convert 12 inches to points: 12 * PLUTOBOOK_UNITS_IN
+ *   - To convert 12 points to inches: 12 / PLUTOBOOK_UNITS_IN
+ */
 #define PLUTOBOOK_UNITS_PT 1.f
 #define PLUTOBOOK_UNITS_PC 12.f
 #define PLUTOBOOK_UNITS_IN 72.f
@@ -74,11 +105,17 @@ PLUTOBOOK_API const char* plutobook_version_string(void);
 #define PLUTOBOOK_UNITS_MM (72.f / 25.4f)
 #define PLUTOBOOK_UNITS_PX (72.f / 96.0f)
 
+/**
+ * @brief Represents the size of a page in points (1/72 inch).
+ */
 typedef struct _plutobook_page_size {
     float width;
     float height;
 } plutobook_page_size_t;
 
+/**
+ * @brief Predefined plutobook_page_size_t objects for common paper sizes.
+ */
 #define PLUTOBOOK_PAGE_SIZE_NAMED(name) ((plutobook_page_size_t){PLUTOBOOK_PAGE_WIDTH_##name, PLUTOBOOK_PAGE_HEIGHT_##name})
 
 #define PLUTOBOOK_PAGE_WIDTH_NONE 0.f
@@ -117,6 +154,9 @@ typedef struct _plutobook_page_size {
 #define PLUTOBOOK_PAGE_HEIGHT_LEDGER (17 * PLUTOBOOK_UNITS_IN)
 #define PLUTOBOOK_PAGE_SIZE_LEDGER PLUTOBOOK_PAGE_SIZE_NAMED(LEDGER)
 
+/**
+ * @brief Represents the margins of a page in points (1/72 inch).
+ */
 typedef struct _plutobook_page_margins {
     float top;
     float right;
@@ -124,6 +164,9 @@ typedef struct _plutobook_page_margins {
     float left;
 } plutobook_page_margins_t;
 
+/**
+ * @brief Predefined plutobook_page_margins_t objects for common margin settings.
+ */
 #define PLUTOBOOK_PAGE_MARGINS_NONE ((plutobook_page_margins_t){0, 0, 0, 0})
 #define PLUTOBOOK_PAGE_MARGINS_NORMAL ((plutobook_page_margins_t){72, 72, 72, 72})
 #define PLUTOBOOK_PAGE_MARGINS_NARROW ((plutobook_page_margins_t){36, 54, 36, 54})
