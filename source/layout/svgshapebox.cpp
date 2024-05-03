@@ -1,6 +1,8 @@
 #include "svgshapebox.h"
 #include "svgresourcebox.h"
 
+#include <numbers>
+
 namespace plutobook {
 
 Rect SVGMarkerPosition::markerBoundingBox(float strokeWidth) const

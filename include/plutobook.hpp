@@ -30,6 +30,8 @@
  * Buy me a coffee: https://www.paypal.me/sammycage
  */
 
+#include <cstdint>
+#include <cstddef>
 #include <string>
 #include <memory>
 #include <vector>
@@ -48,7 +50,7 @@ constexpr uint32_t kMaxPageCount = PLUTOBOOK_MAX_PAGE_COUNT;
 /**
  * @brief Represents a page size in points (1/72 inch), providing functionality to manipulate and retrieve width and height.
  */
-class PLUTOBOOK_API PageSize {
+class PageSize {
 public:
     constexpr PageSize() = default;
     constexpr PageSize(plutobook_page_size_t size) : PageSize(size.width, size.height) {}
@@ -109,7 +111,7 @@ inline const PageSize PageSize::Ledger = PLUTOBOOK_PAGE_SIZE_LEDGER;
 /**
  * @brief Represents the margins of a page in points (1/72 inch), providing functionality to manipulate and retrieve top, right, bottom, and left margins.
  */
-class PLUTOBOOK_API PageMargins {
+class PageMargins {
 public:
     constexpr PageMargins() = default;
     constexpr PageMargins(plutobook_page_margins_t margins)

@@ -6,6 +6,7 @@
 #include "imageresource.h"
 
 #include <set>
+#include <numbers>
 #include <cmath>
 
 namespace plutobook {

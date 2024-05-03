@@ -9,6 +9,7 @@
 #include <map>
 #include <forward_list>
 #include <memory>
+#include <numbers>
 
 namespace plutobook {
 

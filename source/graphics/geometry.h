@@ -1,9 +1,11 @@
 #ifndef PLUTOBOOK_GEOMETRY_H
 #define PLUTOBOOK_GEOMETRY_H
 
+#include <array>
 #include <tuple>
 #include <algorithm>
 #include <vector>
+#include <cstdint>
 
 namespace plutobook {
 

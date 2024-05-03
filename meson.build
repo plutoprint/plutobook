@@ -31,12 +31,21 @@ fontconfig_dep = dependency('fontconfig',
 harfbuzz_dep = dependency('harfbuzz',
     required: true,
     version: '>=2.0.0',
-    fallback: ['harfbuzz', 'libharfbuzz_dep']
+    fallback: ['harfbuzz', 'libharfbuzz_dep'],
+    default_options: ['icu=enabled']
 )
+
+cairo_required_version = '>=1.14.0'
+cairo_default_options = [
+    'freetype=enabled',
+    'fontconfig=enabled',
+    'glib=disabled'
+]
 
 cairo_dep = dependency('cairo',
     required: true,
-    version: '>=1.14.0',
+    version: cairo_required_version,
+    default_options: cairo_default_options,
     fallback: ['cairo', 'libcairo_dep']
 )
 
@@ -48,6 +57,19 @@ plutobook_deps = [
     harfbuzz_dep,
     cairo_dep
 ]
+
+cairo_required_features = [
+    'cairo-pdf',
+    'cairo-ft',
+    'cairo-fc'
+]
+
+foreach feature: cairo_required_features
+    plutobook_deps += dependency(feature,
+        required: true,
+        version: cairo_required_version
+    )
+endforeach
 
 curl_dep = dependency('libcurl',
     required: get_option('curl'),

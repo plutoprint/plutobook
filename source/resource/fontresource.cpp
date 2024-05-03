@@ -8,6 +8,7 @@
 #include <fontconfig/fcfreetype.h>
 #include <cairo-ft.h>
 
+#include <numbers>
 #include <cmath>
 
 namespace plutobook {

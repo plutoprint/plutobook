@@ -3,6 +3,7 @@
 
 #include <cairo.h>
 #include <cmath>
+#include <numbers>
 
 namespace plutobook {
 

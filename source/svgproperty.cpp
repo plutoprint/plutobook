@@ -2,6 +2,7 @@
 #include "svgdocument.h"
 #include "boxstyle.h"
 
+#include <numbers>
 #include <cmath>
 
 namespace plutobook {
