@@ -48,7 +48,8 @@ namespace plutobook {
 constexpr uint32_t kMaxPageCount = PLUTOBOOK_MAX_PAGE_COUNT;
 
 /**
- * @brief Represents a page size in points (1/72 inch), providing functionality to manipulate and retrieve width and height.
+ * @brief The PageSize class represents a page size in points (1/72 inch), providing functionality
+ * to manipulate and retrieve width and height.
  */
 class PageSize {
 public:
@@ -109,7 +110,8 @@ inline const PageSize PageSize::Legal = PLUTOBOOK_PAGE_SIZE_LEGAL;
 inline const PageSize PageSize::Ledger = PLUTOBOOK_PAGE_SIZE_LEDGER;
 
 /**
- * @brief Represents the margins of a page in points (1/72 inch), providing functionality to manipulate and retrieve top, right, bottom, and left margins.
+ * @brief The PageMargins class represents the margins of a page in points (1/72 inch), providing functionality
+ * to manipulate and retrieve top, right, bottom, and left margins.
  */
 class PageMargins {
 public:
@@ -181,121 +183,136 @@ constexpr float px = PLUTOBOOK_UNITS_PX;
 
 } // units
 
+/**
+ * @brief The ResourceFetcher class is an abstract base class for fetching resources from a URL.
+ */
 class PLUTOBOOK_API ResourceFetcher {
 public:
     /**
-     * @brief ~ResourceFetcher
+     * @brief Virtual destructor
      */
     virtual ~ResourceFetcher() = default;
 
     /**
-     * @brief loadUrl
-     * @param url
-     * @param mimeType
-     * @param textEncoding
-     * @param content
-     * @return
+     * @brief Fetches the content of a resource from the specified URL.
+     * @param url The URL of the resource to fetch.
+     * @param mimeType A reference to a string where the MIME type of the fetched content will be stored.
+     * @param textEncoding A reference to a string where the text encoding of the fetched content will be stored.
+     * @param content A reference to a vector where the fetched content will be stored as a sequence of characters.
+     * @return true if the resource was fetched successfully, false otherwise.
      */
     virtual bool loadUrl(const std::string& url, std::string& mimeType, std::string& textEncoding, std::vector<char>& content) = 0;
 };
 
+/**
+ * @brief The OutputStream is an abstract base class for writing data to an output stream.
+ */
 class PLUTOBOOK_API OutputStream {
 public:
     /**
-     * @brief ~OutputStream
+     * @brief Virtual destructor
      */
     virtual ~OutputStream() = default;
 
     /**
-     * @brief write
-     * @param data
-     * @param length
-     * @return
+     * @brief Writes data to the output stream.
+     * @param data A pointer to the buffer containing the data to be written.
+     * @param length The length of the data to be written, in bytes.
+     * @return true if the data was written successfully, false otherwise.
      */
     virtual bool write(const char* data, size_t length) = 0;
 };
 
+/**
+ * @brief The Canvas class provides a basic interface for manipulating a 2D drawing surface.
+ */
 class PLUTOBOOK_API Canvas {
 public:
     /**
-     * @brief ~Canvas
+     * @brief Virtual destructor
      */
     virtual ~Canvas();
 
     /**
-     * @brief translate
-     * @param tx
-     * @param ty
+     * @brief Translates the origin of the coordinate system.
+     * @param tx The horizontal translation distance.
+     * @param ty The vertical translation distance.
      */
     void translate(float tx, float ty);
 
     /**
-     * @brief scale
-     * @param sx
-     * @param sy
+     * @brief Scales the coordinate system.
+     * @param sx The horizontal scaling factor.
+     * @param sy The vertical scaling factor.
      */
     void scale(float sx, float sy);
 
     /**
-     * @brief rotate
-     * @param angle
+     * @brief Rotates the coordinate system.
+     * @param angle The rotation angle in radians.
      */
     void rotate(float angle);
 
     /**
-     * @brief transform
-     * @param a
-     * @param b
-     * @param c
-     * @param d
-     * @param e
-     * @param f
+     * @brief Concatenates a custom transformation matrix to the current matrix.
+     * @param a The element at position (1, 1) of the transformation matrix.
+     * @param b The element at position (1, 2) of the transformation matrix.
+     * @param c The element at position (2, 1) of the transformation matrix.
+     * @param d The element at position (2, 2) of the transformation matrix.
+     * @param e The element at position (3, 1) of the transformation matrix.
+     * @param f The element at position (3, 2) of the transformation matrix.
      */
     void transform(float a, float b, float c, float d, float e, float f);
 
     /**
-     * @brief setMatrix
-     * @param a
-     * @param b
-     * @param c
-     * @param d
-     * @param e
-     * @param f
+     * @brief Sets the transformation matrix directly.
+     * @param a The element at position (1, 1) of the transformation matrix.
+     * @param b The element at position (1, 2) of the transformation matrix.
+     * @param c The element at position (2, 1) of the transformation matrix.
+     * @param d The element at position (2, 2) of the transformation matrix.
+     * @param e The element at position (3, 1) of the transformation matrix.
+     * @param f The element at position (3, 2) of the transformation matrix.
      */
     void setMatrix(float a, float b, float c, float d, float e, float f);
 
     /**
-     * @brief resetMatrix
+     * @brief Resets the transformation matrix to the identity matrix.
      */
     void resetMatrix();
 
     /**
-     * @brief clipRect
-     * @param x
-     * @param y
-     * @param width
-     * @param height
+     * @brief Clips drawing to a rectangular region.
+     * @param x The x-coordinate of the top-left corner of the rectangle.
+     * @param y The y-coordinate of the top-left corner of the rectangle.
+     * @param width width The width of the rectangle.
+     * @param height height The height of the rectangle.
      */
     void clipRect(float x, float y, float width, float height);
 
     /**
-     * @brief clearSurface
-     * @param red
-     * @param green
-     * @param blue
-     * @param alpha
+     * @brief Clears the entire surface with the specified color.
+     * @param red The red component of the color.
+     * @param green The green component of the color.
+     * @param blue The blue component of the color.
+     * @param alpha The alpha component of the color.
      */
     void clearSurface(float red, float green, float blue, float alpha);
 
     /**
-     * @brief saveState
+     * @brief Saves the current drawing state.
      */
     void saveState();
 
     /**
-     * @brief restoreState
+     * @brief Restores the most recently saved drawing state.
      */
     void restoreState();
+
+    /**
+     * @brief Checks if the canvas is null.
+     * return true if the canvas is null (i.e., invalid), false otherwise.
+     */
+    bool isNull() const { return !m_canvas; }
 
     /**
      * @brief surface
@@ -308,12 +325,6 @@ public:
      * @return
      */
     cairo_t* context() const;
-
-    /**
-     * @brief isNull
-     * return
-     */
-    bool isNull() const { return !m_canvas; }
 
     /**
      * @brief canvas
@@ -339,156 +350,159 @@ enum class ImageFormat {
 class PLUTOBOOK_API ImageCanvas final : public Canvas {
 public:
     /**
-     * @brief ImageCanvas
-     * @param width
-     * @param height
-     * @param format
+     * @brief Constructs an ImageCanvas with the specified width, height, and optional image format.
+     * @param width The width of the canvas.
+     * @param height The height of the canvas.
+     * @param format The format of the image
      */
     ImageCanvas(int width, int height, ImageFormat format = ImageFormat::ARGB32);
 
     /**
-     * @brief ImageCanvas
-     * @param data
-     * @param width
-     * @param height
-     * @param stride
-     * @param format
+     * @brief Constructs an ImageCanvas with the provided image data, width, height, stride, and optional image format.
+     * @param data A pointer to the image data.
+     * @param width The width of the image data.
+     * @param height The height of the image data.
+     * @param stride The stride of the image data.
+     * @param format The format of the image data
      */
     ImageCanvas(uint8_t* data, int width, int height, int stride, ImageFormat format = ImageFormat::ARGB32);
 
     /**
-     * @brief data
-     * @return
+     * @brief Retrieves a pointer to the image data.
+     * @return A pointer to the image data.
      */
     uint8_t* data() const;
 
     /**
-     * @brief width
-     * @return
+     * @brief Retrieves the width of the canvas.
+     * @return The width of the canvas.
      */
     int width() const;
 
     /**
-     * @brief height
-     * @return
+     * @brief Retrieves the height of the canvas.
+     * @return The height of the canvas.
      */
     int height() const;
 
     /**
-     * @brief stride
-     * @return
+     * @brief Retrieves the stride of the image data.
+     * @return The stride of the image data.
      */
     int stride() const;
 
     /**
-     * @brief format
-     * @return
+     * @brief Retrieves the format of the image data.
+     * @return The format of the image data.
      */
     ImageFormat format() const;
 
     /**
-     * @brief writeToPng
-     * @param filename
-     * @return
+     * @brief Writes the image data to a PNG file.
+     * @param filename The name of the PNG file to write to.
+     * @return true if the image was successfully written to the file, false otherwise.
      */
     bool writeToPng(const std::string& filename) const;
 
     /**
-     * @brief writeToPng
-     * @param output
-     * @return
+     * @brief Writes the image data to an output stream in PNG format.
+     * @param output The output stream to write to.
+     * @return true if the image was successfully written to the output stream, false otherwise.
      */
     bool writeToPng(OutputStream& output) const;
 
     /**
-     * @brief writeToPng
-     * @param callback
-     * @param closure
-     * @return
+     * @brief Writes the image data to a PNG file using a custom write callback.
+     * @param callback The callback function for writing data
+     * @param closure A pointer to user-defined data to be passed to the callback.
+     * @return true if the image was successfully written using the callback, false otherwise.
      */
     bool writeToPng(plutobook_stream_write_callback_t callback, void* closure) const;
 };
 
+/**
+ * @brief The PdfCanvas class represents a canvas for creating PDF documents.
+ */
 class PLUTOBOOK_API PdfCanvas final : public Canvas {
 public:
     /**
-     * @brief PdfCanvas
-     * @param filename
-     * @param pageSize
+     * @brief Constructs a PdfCanvas that writes to a PDF file with the specified filename and page size.
+     * @param filename The name of the PDF file to create.
+     * @param pageSize The size of the pages in the PDF.
      */
     PdfCanvas(const std::string& filename, const PageSize& pageSize);
 
     /**
-     * @brief PdfCanvas
-     * @param output
-     * @param pageSize
+     * @brief Constructs a PdfCanvas that writes to an output stream with the specified page size.
+     * @param output The output stream to write the PDF to.
+     * @param pageSize The size of the pages in the PDF.
      */
     PdfCanvas(OutputStream& output, const PageSize& pageSize);
 
     /**
-     * @brief PdfCanvas
-     * @param callback
-     * @param closure
-     * @param pageSize
+     * @brief Constructs a PdfCanvas that uses a custom write callback and closure with the specified page size.
+     * @param callback The callback function for writing PDF data.
+     * @param closure A pointer to user-defined data to be passed to the callback.
+     * @param pageSize The size of the pages in the PDF.
      */
     PdfCanvas(plutobook_stream_write_callback_t callback, void* closure, const PageSize& pageSize);
 
     /**
-     * @brief setTitle
-     * @param title
+     * @brief Sets the title of the PDF document.
+     * @param title The title of the PDF document.
      */
     void setTitle(const std::string& title);
 
     /**
-     * @brief setAuthor
-     * @param author
+     * @brief Sets the author of the PDF document.
+     * @param author The author of the PDF document.
      */
     void setAuthor(const std::string& author);
 
     /**
-     * @brief setSubject
-     * @param subject
+     * @brief Sets the subject of the PDF document.
+     * @param subject The subject of the PDF document.
      */
     void setSubject(const std::string& subject);
 
     /**
-     * @brief setKeywords
-     * @param keywords
+     * @brief Sets the keywords associated with the PDF document.
+     * @param keywords The keywords associated with the PDF document.
      */
     void setKeywords(const std::string& keywords);
 
     /**
-     * @brief setCreator
-     * @param creator
+     * @brief Sets the creator of the PDF document.
+     * @param creator The creator of the PDF document.
      */
     void setCreator(const std::string& creator);
 
     /**
-     * @brief setCreationDate
-     * @param creationDate
+     * @brief Sets the creation date of the PDF document.
+     * @param creationDate The creation date of the PDF document.
      */
     void setCreationDate(const std::string& creationDate);
 
     /**
-     * @brief setModificationDate
-     * @param modificationDate
+     * @brief Sets the modification date of the PDF document.
+     * @param modificationDate The modification date of the PDF document.
      */
     void setModificationDate(const std::string& modificationDate);
 
     /**
-     * @brief setPageSize
-     * @param pageSize
+     * @brief Sets the page size of the PDF document.
+     * @param pageSize The page size of the PDF document.
      */
     void setPageSize(const PageSize& pageSize);
 
     /**
-     * @brief showPage
+     * @brief Signals the end of a page and starts a new page.
      */
     void showPage();
 
     /**
-     * @brief pageSize
-     * @return
+     * @brief Retrieves the page size of the PDF document.
+     * @return The page size of the PDF document.
      */
     const PageSize& pageSize() const { return m_pageSize; }
 
