@@ -337,7 +337,6 @@ bool Book::loadHtml(const std::string_view& content, const std::string_view& use
     m_document->addUserStyleSheet(userStyle);
     m_document->addUserJavaScript(userScript);
     m_document->load(content);
-    m_document->build();
     return true;
 }
 
