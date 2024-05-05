@@ -297,7 +297,7 @@ PLUTOBOOK_API plutobook_status_t plutobook_write_to_pdf_stream_range(const pluto
 PLUTOBOOK_API plutobook_status_t plutobook_write_to_png(const plutobook_t* book, const char* filename, plutobook_image_format_t format);
 PLUTOBOOK_API plutobook_status_t plutobook_write_to_png_stream(const plutobook_t* book, plutobook_stream_write_callback_t callback, void* closure, plutobook_image_format_t format);
 
-#ifndef __cplusplus
+#ifdef __cplusplus
 }
 #endif
 
