@@ -30,7 +30,7 @@
  * Buy me a coffee: https://www.paypal.me/sammycage
  */
 
-#ifndef __cplusplus
+#ifdef __cplusplus
 extern "C" {
 #endif
 
