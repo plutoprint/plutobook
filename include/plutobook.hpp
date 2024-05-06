@@ -117,7 +117,7 @@ class PageMargins {
 public:
     constexpr PageMargins() = default;
     constexpr PageMargins(plutobook_page_margins_t margins)
-        : PageMargins(margins.top, margins.right, margins.bottom, margins.right)
+        : PageMargins(margins.top, margins.right, margins.bottom, margins.left)
     {}
 
     constexpr explicit PageMargins(float margin)
@@ -126,6 +126,10 @@ public:
 
     constexpr PageMargins(float vertical, float horizontal)
         : PageMargins(vertical, horizontal, horizontal, vertical)
+    {}
+
+    constexpr PageMargins(float top, float rightAndLeft, float bottom)
+        : PageMargins(top, rightAndLeft, bottom, rightAndLeft)
     {}
 
     constexpr PageMargins(float top, float right, float bottom, float left)
