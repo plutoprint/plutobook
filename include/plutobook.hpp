@@ -46,6 +46,7 @@ namespace plutobook {
  * that there is no limit or that the maximum possible value is intended.
  */
 constexpr uint32_t kMaxPageCount = PLUTOBOOK_MAX_PAGE_COUNT;
+constexpr uint32_t kMinPageCount = PLUTOBOOK_MIN_PAGE_COUNT;
 
 /**
  * @brief The PageSize class represents a page size in points (1/72 inch), providing functionality
@@ -815,7 +816,7 @@ public:
      * @param pageStep
      * @return
      */
-    bool writeToPdf(const std::string& filename, uint32_t fromPage = 1, uint32_t toPage = kMaxPageCount, int pageStep = 1) const;
+    bool writeToPdf(const std::string& filename, uint32_t fromPage = kMinPageCount, uint32_t toPage = kMaxPageCount, int pageStep = 1) const;
 
     /**
      * @brief writeToPdf
@@ -825,7 +826,7 @@ public:
      * @param pageStep
      * @return
      */
-    bool writeToPdf(OutputStream& output, uint32_t fromPage = 1, uint32_t toPage = kMaxPageCount, int pageStep = 1) const;
+    bool writeToPdf(OutputStream& output, uint32_t fromPage = kMinPageCount, uint32_t toPage = kMaxPageCount, int pageStep = 1) const;
 
     /**
      * @brief writeToPdf
@@ -836,7 +837,7 @@ public:
      * @param pageStep
      * @return
      */
-    bool writeToPdf(plutobook_stream_write_callback_t callback, void* closure, uint32_t fromPage = 1, uint32_t toPage = kMaxPageCount, int pageStep = 1) const;
+    bool writeToPdf(plutobook_stream_write_callback_t callback, void* closure, uint32_t fromPage = kMinPageCount, uint32_t toPage = kMaxPageCount, int pageStep = 1) const;
 
     /**
      * @brief writeToPng

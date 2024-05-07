@@ -89,6 +89,7 @@ PLUTOBOOK_API const char* plutobook_version_string(void);
  * that there is no limit or that the maximum possible value is intended.
  */
 #define PLUTOBOOK_MAX_PAGE_COUNT 0xFFFFFFFFU
+#define PLUTOBOOK_MIN_PAGE_COUNT 0x00000000U
 
 /**
  * Defines conversion factors for various units to points (pt) and vice versa.
@@ -272,9 +273,9 @@ PLUTOBOOK_API float plutobook_get_document_height(const plutobook_t* book);
 
 PLUTOBOOK_API plutobook_page_size_t plutobook_get_page_size(const plutobook_t* book);
 PLUTOBOOK_API plutobook_page_margins_t plutobook_get_page_margins(const plutobook_t* book);
-PLUTOBOOK_API unsigned int plutobook_get_page_count(const plutobook_t* book);
 PLUTOBOOK_API plutobook_page_size_t plutobook_get_page_size_at(const plutobook_t* book, unsigned int index);
 PLUTOBOOK_API plutobook_media_type_t plutobook_get_media_type(const plutobook_t* book);
+PLUTOBOOK_API unsigned int plutobook_get_page_count(const plutobook_t* book);
 
 PLUTOBOOK_API plutobook_status_t plutobook_load_url(plutobook_t* book, const char* url, const char* user_style, const char* user_script);
 PLUTOBOOK_API plutobook_status_t plutobook_load_data(plutobook_t* book, const char* data, unsigned int size, const char* mime_type, const char* text_encoding, const char* user_style, const char* user_script, const char* base_url);
