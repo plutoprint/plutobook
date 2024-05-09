@@ -236,14 +236,14 @@ PLUTOBOOK_API void plutobook_pdf_canvas_show_page(plutobook_canvas_t* canvas);
 
 typedef struct _plutobook_resource_data plutobook_resource_data_t;
 
-PLUTOBOOK_API plutobook_resource_data_t* plutobook_resource_data_create(const char* mime_type, const char* text_encoding, const char* content, unsigned int content_length);
+PLUTOBOOK_API plutobook_resource_data_t* plutobook_resource_data_create(const char* content, unsigned int content_length, const char* mime_type, const char* text_encoding);
 PLUTOBOOK_API plutobook_resource_data_t* plutobook_resource_data_reference(plutobook_resource_data_t* resource);
 PLUTOBOOK_API void plutobook_resource_data_destroy(plutobook_resource_data_t* resource);
 PLUTOBOOK_API unsigned int plutobook_resource_data_get_reference_count(const plutobook_resource_data_t* resource);
-PLUTOBOOK_API const char* plutobook_resource_data_get_mime_type(const plutobook_resource_data_t* resource);
-PLUTOBOOK_API const char* plutobook_resource_data_get_text_encoding(const plutobook_resource_data_t* resource);
 PLUTOBOOK_API const char* plutobook_resource_data_get_content(const plutobook_resource_data_t* resource);
 PLUTOBOOK_API unsigned int plutobook_resource_data_get_content_length(const plutobook_resource_data_t* resource);
+PLUTOBOOK_API const char* plutobook_resource_data_get_mime_type(const plutobook_resource_data_t* resource);
+PLUTOBOOK_API const char* plutobook_resource_data_get_text_encoding(const plutobook_resource_data_t* resource);
 
 typedef plutobook_resource_data_t* (*plutobook_resource_load_callback_t)(void* closure, const char* url);
 
@@ -278,8 +278,8 @@ PLUTOBOOK_API plutobook_media_type_t plutobook_get_media_type(const plutobook_t*
 PLUTOBOOK_API unsigned int plutobook_get_page_count(const plutobook_t* book);
 
 PLUTOBOOK_API plutobook_status_t plutobook_load_url(plutobook_t* book, const char* url, const char* user_style, const char* user_script);
-PLUTOBOOK_API plutobook_status_t plutobook_load_data(plutobook_t* book, const char* data, unsigned int size, const char* mime_type, const char* text_encoding, const char* user_style, const char* user_script, const char* base_url);
-PLUTOBOOK_API plutobook_status_t plutobook_load_image(plutobook_t* book, const char* data, unsigned int size, const char* mime_type, const char* text_encoding, const char* user_style, const char* user_script, const char* base_url);
+PLUTOBOOK_API plutobook_status_t plutobook_load_data(plutobook_t* book, const char* data, unsigned int length, const char* mime_type, const char* text_encoding, const char* user_style, const char* user_script, const char* base_url);
+PLUTOBOOK_API plutobook_status_t plutobook_load_image(plutobook_t* book, const char* data, unsigned int length, const char* mime_type, const char* text_encoding, const char* user_style, const char* user_script, const char* base_url);
 PLUTOBOOK_API plutobook_status_t plutobook_load_xml(plutobook_t* book, const char* data, int length, const char* user_style, const char* user_script, const char* base_url);
 PLUTOBOOK_API plutobook_status_t plutobook_load_html(plutobook_t* book, const char* data, int length, const char* user_style, const char* user_script, const char* base_url);
 

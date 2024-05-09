@@ -237,7 +237,7 @@ struct _plutobook_resource_data {
     char* content;
 };
 
-plutobook_resource_data_t* plutobook_resource_data_create(const char* mime_type, const char* text_encoding, const char* content, unsigned int content_length)
+plutobook_resource_data_t* plutobook_resource_data_create(const char* content, unsigned int content_length, const char* mime_type, const char* text_encoding)
 {
     auto mime_type_length = std::strlen(mime_type) + 1ul;
     auto text_encoding_length = std::strlen(text_encoding) + 1ul;
@@ -279,20 +279,6 @@ unsigned int plutobook_resource_data_get_reference_count(const plutobook_resourc
     return resource->ref_count;
 }
 
-const char* plutobook_resource_data_get_mime_type(const plutobook_resource_data_t* resource)
-{
-    if(resource == nullptr)
-        return nullptr;
-    return resource->mime_type;
-}
-
-const char* plutobook_resource_data_get_text_encoding(const plutobook_resource_data_t* resource)
-{
-    if(resource == nullptr)
-        return nullptr;
-    return resource->text_encoding;
-}
-
 const char* plutobook_resource_data_get_content(const plutobook_resource_data_t* resource)
 {
     if(resource == nullptr)
@@ -307,6 +293,20 @@ unsigned int plutobook_resource_data_get_content_length(const plutobook_resource
     return resource->content_length;
 }
 
+const char* plutobook_resource_data_get_mime_type(const plutobook_resource_data_t* resource)
+{
+    if(resource == nullptr)
+        return nullptr;
+    return resource->mime_type;
+}
+
+const char* plutobook_resource_data_get_text_encoding(const plutobook_resource_data_t* resource)
+{
+    if(resource == nullptr)
+        return nullptr;
+    return resource->text_encoding;
+}
+
 plutobook_resource_data_t* plutobook_default_resource_fetcher_load_url(const char* url)
 {
     std::string mimeType;
@@ -314,7 +314,7 @@ plutobook_resource_data_t* plutobook_default_resource_fetcher_load_url(const cha
     std::vector<char> content;
     if(!plutobook::Book::defaultResourceFetcher()->loadUrl(url, mimeType, textEncoding, content))
         return nullptr;
-    return plutobook_resource_data_create(mimeType.data(), textEncoding.data(), content.data(), content.size());
+    return plutobook_resource_data_create(content.data(), content.size(), mimeType.data(), textEncoding.data());
 }
 
 namespace {
