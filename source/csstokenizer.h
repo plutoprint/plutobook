@@ -5,6 +5,7 @@
 #include <list>
 #include <string>
 #include <cassert>
+#include <cstdint>
 
 namespace plutobook {
 
