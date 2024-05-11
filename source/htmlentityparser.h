@@ -2,6 +2,7 @@
 #define PLUTOBOOK_HTMLENTITYPARSER_H
 
 #include <string>
+#include <cstdint>
 
 namespace plutobook {
 
