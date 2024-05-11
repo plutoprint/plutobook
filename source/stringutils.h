@@ -2,6 +2,7 @@
 #define PLUTOBOOK_STRINGUTILS_H
 
 #include <string>
+#include <cstdint>
 
 namespace plutobook {
 
