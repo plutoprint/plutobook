@@ -12,57 +12,63 @@ jobs:
   linux:
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-    - name: Setup Ccache
-      uses: hendrikmuhs/ccache-action@v1.2
-      with:
-        key: ${{ github.job }}
-    - name: Install dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y \
-          libcairo2-dev \
-          libexpat1-dev \
-          libicu-dev \
-          libfreetype6-dev \
-          libfontconfig1-dev \
-          libharfbuzz-dev \
-          libcurl4-openssl-dev \
-          libturbojpeg0-dev \
-          libwebp-dev
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Ccache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: ${{ github.job }}
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libcairo2-dev \
+            libexpat1-dev \
+            libicu-dev \
+            libfreetype6-dev \
+            libfontconfig1-dev \
+            libharfbuzz-dev \
+            libcurl4-openssl-dev \
+            libturbojpeg0-dev \
+            libwebp-dev \
+            ninja-build \
+            meson
+            
+      - name: Setup and Build
+        run: |
+          meson setup build --wrap-mode=nodownload
+          meson compile -C build
           
-    - name: Install Meson and Ninja
-      run: |
-        sudo apt-get install meson ninja-build
-        
-    - name: Setup and Build
-      run: |
-        meson setup build --wrap-mode=nodownload
-        meson compile -C build
-
   windows:
     runs-on: windows-latest
+    defaults:
+      run:
+        shell: msys2 {0}
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-    - name: Setup Ccache
-      uses: hendrikmuhs/ccache-action@v1.2
-      with:
-        variant: sccache
-        key: ${{ github.job }}
-        
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.10'
-        
-    - name: Install Meson and Ninja
-      run: |
-        pip3 install meson
-        pip3 install ninja
-        
-    - name: Setup and Build
-      run: |
-        meson setup build
-        meson compile -C build
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup MSYS2
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: >-
+            mingw-w64-x86_64-cairo
+            mingw-w64-x86_64-expat
+            mingw-w64-x86_64-icu
+            mingw-w64-x86_64-freetype
+            mingw-w64-x86_64-fontconfig
+            mingw-w64-x86_64-harfbuzz
+            mingw-w64-x86_64-curl
+            mingw-w64-x86_64-libjpeg-turbo
+            mingw-w64-x86_64-libwebp
+            mingw-w64-x86_64-ninja
+            mingw-w64-x86_64-meson
+            mingw-w64-x86_64-pkgconf
+            mingw-w64-x86_64-gcc
+            
+      - name: Setup and Build
+        run: |
+          meson setup build --wrap-mode=nodownload
+          meson compile -C build
+          
