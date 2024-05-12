@@ -277,12 +277,12 @@ bool ResourceLoader::loadUrl(const Url& url, std::string& mimeType, std::string&
 Url ResourceLoader::baseUrl()
 {
     std::string path("file://");
-    for(auto& component : std::filesystem::current_path()) {
-        if(component.empty())
-            continue;
-        path += component.string();
-        path += '/';
-    }
+    // for(auto& component : std::filesystem::current_path()) {
+    //     if(component.empty())
+    //         continue;
+    //     path += component.string();
+    //     path += '/';
+    // }
 
     return Url(path);
 }
