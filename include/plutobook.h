@@ -34,7 +34,7 @@
 extern "C" {
 #endif
 
-#if defined(PLUTOBOOK_BUILD_SHARED) && (defined(_WIN32) || defined(__CYGWIN__))
+#if !defined(PLUTOBOOK_BUILD_STATIC) && (defined(_WIN32) || defined(__CYGWIN__))
 #define PLUTOBOOK_EXPORT __declspec(dllexport)
 #define PLUTOBOOK_IMPORT __declspec(dllimport)
 #elif defined(__GNUC__) && (__GNUC__ >= 4)

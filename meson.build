@@ -60,6 +60,7 @@ plutobook_deps = [
 
 cairo_required_features = [
     'cairo-pdf',
+    'cairo-png',
     'cairo-ft',
     'cairo-fc'
 ]
@@ -73,6 +74,7 @@ endforeach
 
 curl_dep = dependency('libcurl',
     required: get_option('curl'),
+    version: '>=7.71.0',
     fallback: ['curl', 'curl_dep']
 )
 
@@ -179,9 +181,9 @@ plutobook_cpp_args += cpp.get_supported_arguments(
 )
 
 plutobook_compile_args = []
-if get_option('default_library') == 'shared'
-    plutobook_compile_args += ['-DPLUTOBOOK_BUILD_SHARED']
-    add_project_arguments('-DPLUTOBOOK_BUILD_SHARED', language: 'cpp')
+if get_option('default_library') == 'static'
+    plutobook_compile_args += ['-DPLUTOBOOK_BUILD_STATIC']
+    add_project_arguments('-DPLUTOBOOK_BUILD_STATIC', language: 'cpp')
 endif
 
 plutobook_lib = library('plutobook', plutobook_sources,

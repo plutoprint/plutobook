@@ -52,6 +52,7 @@ bool DefaultResourceFetcher::loadUrl(const std::string& url, std::string& mimeTy
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &content);
     curl_easy_setopt(curl, CURLOPT_USERAGENT, "PlutoBook/" PLUTOBOOK_VERSION_STRING);
     curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+    curl_easy_setopt(curl, CURLOPT_SSL_OPTIONS, CURLSSLOPT_NATIVE_CA);
     auto response = curl_easy_perform(curl);
     if(response == CURLE_OK) {
         const char* contentType = nullptr;
