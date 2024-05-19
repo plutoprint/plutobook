@@ -14,6 +14,11 @@ const char* plutobook_version_string()
     return PLUTOBOOK_VERSION_STRING;
 }
 
+const char* plutobook_about()
+{
+    return "PlutoBook " PLUTOBOOK_VERSION_STRING " (https://github.com/plutoprint)";
+}
+
 struct _plutobook_canvas {
     cairo_surface_t* surface;
     cairo_t* context;

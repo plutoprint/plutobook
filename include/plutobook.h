@@ -23,13 +23,6 @@
 #ifndef PLUTOBOOK_H
 #define PLUTOBOOK_H
 
-/*
- * PlutoBook C header file
- *
- * Report an issue: https://github.com/plutoprint/plutobook/issues
- * Buy me a coffee: https://www.paypal.me/sammycage
- */
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -82,6 +75,12 @@ PLUTOBOOK_API int plutobook_version(void);
  * @return A pointer to a string containing the version of the plutobook library in the format "X.Y.Z".
  */
 PLUTOBOOK_API const char* plutobook_version_string(void);
+
+/**
+ * @brief plutobook_about
+ * @return
+ */
+PLUTOBOOK_API const char* plutobook_about(void);
 
 /**
  * This macro defines an index that is guaranteed to exceed the valid page count.

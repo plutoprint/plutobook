@@ -23,13 +23,6 @@
 #ifndef PLUTOBOOK_HPP
 #define PLUTOBOOK_HPP
 
-/*
- * PlutoBook C++ header file
- *
- * Report an issue: https://github.com/plutoprint/plutobook/issues
- * Buy me a coffee: https://www.paypal.me/sammycage
- */
-
 #include <cstdint>
 #include <cstddef>
 #include <string>
@@ -426,31 +419,31 @@ public:
 };
 
 /**
- * @brief The PdfCanvas class represents a canvas for creating PDF documents.
+ * @brief The PDFCanvas class represents a canvas for creating PDF documents.
  */
-class PLUTOBOOK_API PdfCanvas final : public Canvas {
+class PLUTOBOOK_API PDFCanvas final : public Canvas {
 public:
     /**
-     * @brief Constructs a PdfCanvas that writes to a PDF file with the specified filename and page size.
+     * @brief Constructs a PDFCanvas that writes to a PDF file with the specified filename and page size.
      * @param filename The name of the PDF file to create.
      * @param pageSize The size of the pages in the PDF.
      */
-    PdfCanvas(const std::string& filename, const PageSize& pageSize);
+    PDFCanvas(const std::string& filename, const PageSize& pageSize);
 
     /**
-     * @brief Constructs a PdfCanvas that writes to an output stream with the specified page size.
+     * @brief Constructs a PDFCanvas that writes to an output stream with the specified page size.
      * @param output The output stream to write the PDF to.
      * @param pageSize The size of the pages in the PDF.
      */
-    PdfCanvas(OutputStream& output, const PageSize& pageSize);
+    PDFCanvas(OutputStream& output, const PageSize& pageSize);
 
     /**
-     * @brief Constructs a PdfCanvas that uses a custom write callback and closure with the specified page size.
+     * @brief Constructs a PDFCanvas that uses a custom write callback and closure with the specified page size.
      * @param callback The callback function for writing PDF data.
      * @param closure A pointer to user-defined data to be passed to the callback.
      * @param pageSize The size of the pages in the PDF.
      */
-    PdfCanvas(plutobook_stream_write_callback_t callback, void* closure, const PageSize& pageSize);
+    PDFCanvas(plutobook_stream_write_callback_t callback, void* closure, const PageSize& pageSize);
 
     /**
      * @brief Sets the title of the PDF document.
@@ -504,15 +497,6 @@ public:
      * @brief Signals the end of a page and starts a new page.
      */
     void showPage();
-
-    /**
-     * @brief Retrieves the page size of the PDF document.
-     * @return The page size of the PDF document.
-     */
-    const PageSize& pageSize() const { return m_pageSize; }
-
-private:
-    PageSize m_pageSize;
 };
 
 class Heap;
