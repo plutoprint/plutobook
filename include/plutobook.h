@@ -176,7 +176,8 @@ typedef enum _plutobook_status {
     PLUTOBOOK_STATUS_SUCCESS = 0,
     PLUTOBOOK_STATUS_MEMORY_ERROR = 1,
     PLUTOBOOK_STATUS_LOAD_ERROR = 10,
-    PLUTOBOOK_STATUS_WRITE_ERROR = 11
+    PLUTOBOOK_STATUS_WRITE_ERROR = 11,
+    PLUTOBOOK_STATUS_CANVAS_ERROR = 12
 } plutobook_status_t;
 
 typedef plutobook_status_t (*plutobook_stream_write_callback_t)(void* closure, const char* data, unsigned int length);
@@ -198,6 +199,7 @@ PLUTOBOOK_API void plutobook_canvas_save_state(plutobook_canvas_t* canvas);
 PLUTOBOOK_API void plutobook_canvas_restore_state(plutobook_canvas_t* canvas);
 PLUTOBOOK_API cairo_surface_t* plutobook_canvas_get_surface(const plutobook_canvas_t* canvas);
 PLUTOBOOK_API cairo_t* plutobook_canvas_get_context(const plutobook_canvas_t* canvas);
+PLUTOBOOK_API plutobook_status_t plutobook_canvas_get_status(const plutobook_canvas_t* canvas);
 
 typedef enum _plutobook_image_format {
     PLUTOBOOK_IMAGE_FORMAT_INVALID = -1,

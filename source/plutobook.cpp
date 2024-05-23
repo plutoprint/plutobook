@@ -104,6 +104,11 @@ cairo_t* Canvas::context() const
     return plutobook_canvas_get_context(m_canvas);
 }
 
+bool Canvas::isGood() const
+{
+    return plutobook_canvas_get_status(m_canvas) == PLUTOBOOK_STATUS_SUCCESS;
+}
+
 ImageCanvas::ImageCanvas(int width, int height, ImageFormat format)
     : Canvas(plutobook_image_canvas_create(width, height, (plutobook_image_format_t)(format)))
 {
@@ -440,13 +445,15 @@ bool Book::writeToPdf(plutobook_stream_write_callback_t callback, void* closure,
     canvas.setKeywords(m_keywords);
     canvas.setCreationDate(m_creationDate);
     canvas.setModificationDate(m_modificationDate);
-    for(auto pageIndex = fromPage - 1; pageStep > 0 ? pageIndex < toPage : pageIndex > toPage; pageIndex += pageStep) {
-        canvas.setPageSize(pageSizeAt(pageIndex));
-        renderPage(canvas, pageIndex);
+    for(auto pageIndex = fromPage; pageStep > 0 ? pageIndex <= toPage : pageIndex >= toPage; pageIndex += pageStep) {
+        if(!canvas.isGood())
+            break;
+        canvas.setPageSize(pageSizeAt(pageIndex - 1));
+        renderPage(canvas, pageIndex - 1);
         canvas.showPage();
     }
 
-    return true;
+    return canvas.isGood();
 }
 
 bool Book::writeToPng(const std::string& filename, ImageFormat format) const

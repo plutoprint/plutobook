@@ -140,6 +140,13 @@ cairo_t* plutobook_canvas_get_context(const plutobook_canvas_t* canvas)
     return canvas->context;
 }
 
+plutobook_status_t plutobook_canvas_get_status(const plutobook_canvas_t* canvas)
+{
+    if(canvas == nullptr || cairo_status(canvas->context) || cairo_surface_status(canvas->surface))
+        return PLUTOBOOK_STATUS_CANVAS_ERROR;
+    return PLUTOBOOK_STATUS_SUCCESS;
+}
+
 plutobook_canvas_t* plutobook_image_canvas_create(int width, int height, plutobook_image_format_t format)
 {
     return plutobook_canvas_create(cairo_image_surface_create((cairo_format_t)(format), width, height));
@@ -188,7 +195,7 @@ int plutobook_image_canvas_get_stride(const plutobook_canvas_t* canvas)
 plutobook_status_t plutobook_image_canvas_write_to_png(const plutobook_canvas_t* canvas, const char* filename)
 {
     if(canvas == nullptr)
-        return PLUTOBOOK_STATUS_MEMORY_ERROR;
+        return PLUTOBOOK_STATUS_WRITE_ERROR;
     if(cairo_surface_write_to_png(canvas->surface, filename))
         return PLUTOBOOK_STATUS_WRITE_ERROR;
     return PLUTOBOOK_STATUS_SUCCESS;
@@ -197,7 +204,7 @@ plutobook_status_t plutobook_image_canvas_write_to_png(const plutobook_canvas_t*
 plutobook_status_t plutobook_image_canvas_write_to_png_stream(const plutobook_canvas_t* canvas, plutobook_stream_write_callback_t callback, void* closure)
 {
     if(canvas == nullptr)
-        return PLUTOBOOK_STATUS_MEMORY_ERROR;
+        return PLUTOBOOK_STATUS_WRITE_ERROR;
     if(cairo_surface_write_to_png_stream(canvas->surface, (cairo_write_func_t)(callback), closure))
         return PLUTOBOOK_STATUS_WRITE_ERROR;
     return PLUTOBOOK_STATUS_SUCCESS;

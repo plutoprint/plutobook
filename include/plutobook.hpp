@@ -307,12 +307,6 @@ public:
     void restoreState();
 
     /**
-     * @brief Checks if the canvas is null.
-     * return true if the canvas is null (i.e., invalid), false otherwise.
-     */
-    bool isNull() const { return !m_canvas; }
-
-    /**
      * @brief surface
      * @return
      */
@@ -329,6 +323,18 @@ public:
      * @return
      */
     plutobook_canvas_t* canvas() const { return m_canvas; }
+
+    /**
+     * @brief isNull
+     * @return
+     */
+    bool isNull() const { return !m_canvas; }
+
+    /**
+     * @brief isGood
+     * @return
+     */
+    bool isGood() const;
 
 protected:
     Canvas(const Canvas&) = delete;
