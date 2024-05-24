@@ -44,6 +44,16 @@ Canvas::~Canvas()
     plutobook_canvas_destroy(m_canvas);
 }
 
+void Canvas::flush()
+{
+    plutobook_canvas_flush(m_canvas);
+}
+
+void Canvas::finish()
+{
+    plutobook_canvas_finish(m_canvas);
+}
+
 void Canvas::translate(float tx, float ty)
 {
     plutobook_canvas_translate(m_canvas, tx, ty);

@@ -49,6 +49,20 @@ void plutobook_canvas_destroy(plutobook_canvas_t* canvas)
     std::free(canvas);
 }
 
+void plutobook_canvas_flush(plutobook_canvas_t* canvas)
+{
+    if(canvas == NULL)
+        return;
+    cairo_surface_flush(canvas->surface);
+}
+
+void plutobook_canvas_finish(plutobook_canvas_t* canvas)
+{
+    if(canvas == NULL)
+        return;
+    cairo_surface_finish(canvas->surface);
+}
+
 void plutobook_canvas_translate(plutobook_canvas_t* canvas, float tx, float ty)
 {
     if(canvas == nullptr)

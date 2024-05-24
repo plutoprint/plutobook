@@ -232,6 +232,16 @@ public:
     virtual ~Canvas();
 
     /**
+     * @brief flush
+     */
+    void flush();
+
+    /**
+     * @brief finish
+     */
+    void finish();
+
+    /**
      * @brief Translates the origin of the coordinate system.
      * @param tx The horizontal translation distance.
      * @param ty The vertical translation distance.

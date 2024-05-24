@@ -187,6 +187,8 @@ typedef struct _cairo_surface cairo_surface_t;
 typedef struct _cairo cairo_t;
 
 PLUTOBOOK_API void plutobook_canvas_destroy(plutobook_canvas_t* canvas);
+PLUTOBOOK_API void plutobook_canvas_flush(plutobook_canvas_t* canvas);
+PLUTOBOOK_API void plutobook_canvas_finish(plutobook_canvas_t* canvas);
 PLUTOBOOK_API void plutobook_canvas_translate(plutobook_canvas_t* canvas, float tx, float ty);
 PLUTOBOOK_API void plutobook_canvas_scale(plutobook_canvas_t* canvas, float sx, float sy);
 PLUTOBOOK_API void plutobook_canvas_rotate(plutobook_canvas_t* canvas, float angle);
