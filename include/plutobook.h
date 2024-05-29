@@ -169,8 +169,9 @@ typedef struct _plutobook_page_margins {
  */
 #define PLUTOBOOK_PAGE_MARGINS_NONE ((plutobook_page_margins_t){0, 0, 0, 0})
 #define PLUTOBOOK_PAGE_MARGINS_NORMAL ((plutobook_page_margins_t){72, 72, 72, 72})
-#define PLUTOBOOK_PAGE_MARGINS_NARROW ((plutobook_page_margins_t){36, 54, 36, 54})
-#define PLUTOBOOK_PAGE_MARGINS_MODERATE ((plutobook_page_margins_t){90, 72, 90, 72})
+#define PLUTOBOOK_PAGE_MARGINS_NARROW ((plutobook_page_margins_t){36, 36, 36, 36})
+#define PLUTOBOOK_PAGE_MARGINS_MODERATE ((plutobook_page_margins_t){72, 54, 72, 54})
+#define PLUTOBOOK_PAGE_MARGINS_WIDE ((plutobook_page_margins_t){72, 144, 72, 144})
 
 typedef enum _plutobook_status {
     PLUTOBOOK_STATUS_SUCCESS = 0,
