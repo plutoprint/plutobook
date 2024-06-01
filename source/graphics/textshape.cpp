@@ -224,37 +224,36 @@ RefPtr<TextShape> TextShape::createForText(const UString& text, Direction direct
 RefPtr<TextShape> TextShape::createForTabs(const UString& text, Direction direction, const BoxStyle* style)
 {
     auto& font = style->font();
-    auto fontData = font->getFontData(kSpaceCharacter);
-    if(fontData == nullptr)
-        return nullptr;
-    auto tabSize = style->tabSize();
-    auto tabWidth = fontData->tabWidth(tabSize);
-    auto spaceGlyph = fontData->spaceGlyph();
-    auto heap = font->heap();
+    auto heap = style->heap();
 
     float totalWidth = 0.f;
     int startIndex = 0;
     int totalLength = text.length();
 
     TextShapeRunList runs(heap);
-    while(totalLength > 0) {
-        auto numGlyphs = std::min(totalLength, kMaxGlyphs);
-        TextShapeRunGlyphDataList glyphs(heap, numGlyphs);
-        for(int index = 0; index < numGlyphs; ++index) {
-            assert(text[index + startIndex] == kTabulationCharacter);
-            auto& glyphData = glyphs[index];
-            glyphData.glyphIndex = spaceGlyph;
-            glyphData.characterIndex = direction == Direction::Ltr ? index : numGlyphs - index - 1;
-            glyphData.xOffset = 0.f;
-            glyphData.yOffset = 0.f;
-            glyphData.advance = tabWidth;
-        }
+    if(auto fontData = font->getFontData(kSpaceCharacter)) {
+        auto tabSize = style->tabSize();
+        auto tabWidth = fontData->tabWidth(tabSize);
+        auto spaceGlyph = fontData->spaceGlyph();
+        while(totalLength > 0) {
+            auto numGlyphs = std::min(totalLength, kMaxGlyphs);
+            TextShapeRunGlyphDataList glyphs(heap, numGlyphs);
+            for(int index = 0; index < numGlyphs; ++index) {
+                assert(text[index + startIndex] == kTabulationCharacter);
+                auto& glyphData = glyphs[index];
+                glyphData.glyphIndex = spaceGlyph;
+                glyphData.characterIndex = direction == Direction::Ltr ? index : numGlyphs - index - 1;
+                glyphData.xOffset = 0.f;
+                glyphData.yOffset = 0.f;
+                glyphData.advance = tabWidth;
+            }
 
-        auto run = TextShapeRun::create(heap, fontData, startIndex, numGlyphs, numGlyphs * tabWidth, std::move(glyphs));
-        totalWidth += run->width();
-        startIndex += numGlyphs;
-        totalLength -= numGlyphs;
-        runs.push_back(std::move(run));
+            auto run = TextShapeRun::create(heap, fontData, startIndex, numGlyphs, numGlyphs * tabWidth, std::move(glyphs));
+            totalWidth += run->width();
+            startIndex += numGlyphs;
+            totalLength -= numGlyphs;
+            runs.push_back(std::move(run));
+        }
     }
 
     return adoptPtr(new (heap) TextShape(text, direction, totalWidth, std::move(runs)));
