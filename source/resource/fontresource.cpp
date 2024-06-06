@@ -611,7 +611,8 @@ RefPtr<SimpleFontData> FontDataCache::getFontData(const GlobalString& family, co
     FcPatternDestroy(pattern);
     if(matchResult == FcResultMatch)
         return (fontData = createFontDataFromPattern(matchPattern, description));
-    spdlog::warn("unable to load font: family={} size={} weight={} slope={}", family, description.size, description.request.weight, description.request.width, description.request.slope);
+    spdlog::warn("unable to load font: family={} size={} weight={} width={} slope={}", family, description.size,
+        description.request.weight, description.request.width, description.request.slope);
     return nullptr;
 }
 
@@ -651,7 +652,8 @@ RefPtr<SimpleFontData> FontDataCache::getFontData(uint32_t codepoint, const Font
     if(matchResult == FcResultMatch)
         return createFontDataFromPattern(matchPattern, description);
     FcPatternDestroy(matchPattern);
-    spdlog::warn("unable to load font: codepoint={} size={} weight={} slope={}", codepoint, description.size, description.request.weight, description.request.width, description.request.slope);
+    spdlog::warn("unable to load font: codepoint={} size={} weight={} width={} slope={}", codepoint, description.size,
+        description.request.weight, description.request.width, description.request.slope);
     return nullptr;
 }
 
