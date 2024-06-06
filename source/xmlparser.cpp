@@ -1,6 +1,7 @@
 #include "xmlparser.h"
 #include "xmldocument.h"
 
+#include <spdlog/spdlog.h>
 #include <expat.h>
 
 namespace plutobook {
@@ -40,12 +41,16 @@ bool XMLParser::parse(const std::string_view& content)
     XML_SetElementHandler(parser, startElementCallback, endElementCallback);
     XML_SetCharacterDataHandler(parser, characterDataCallback);
     auto status = XML_Parse(parser, content.data(), content.length(), XML_TRUE);
-    XML_ParserFree(parser);
-    if(status == XML_STATUS_OK)
+    auto error = XML_GetErrorCode(parser);
+    if(status == XML_STATUS_OK && error == XML_ERROR_NONE) {
         m_document->finishParsingDocument();
-    if(status == XML_STATUS_OK && m_document->isSVGImageDocument())
-        return m_document->rootElement()->isOfType(svgNs, svgTag);
-    return status == XML_STATUS_OK;
+        XML_ParserFree(parser);
+        return true;
+    }
+
+    spdlog::error("expat error: {} on line {}, column {}", XML_ErrorString(error), XML_GetCurrentLineNumber(parser ), XML_GetCurrentColumnNumber(parser));
+    XML_ParserFree(parser);
+    return false;
 }
 
 class QualifiedName {

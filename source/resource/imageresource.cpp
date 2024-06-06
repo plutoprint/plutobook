@@ -5,6 +5,7 @@
 #include "graphicscontext.h"
 #include "geometry.h"
 
+#include <spdlog/spdlog.h>
 #include <cairo.h>
 #include <cstring>
 #include <cmath>
@@ -31,8 +32,11 @@ namespace plutobook {
 RefPtr<ImageResource> ImageResource::create(const Url& url, const std::string& mimeType, const std::string& textEncoding, std::vector<char> content)
 {
     auto image = decode(content.data(), content.size(), mimeType, textEncoding, url.base());
-    if(image == nullptr)
+    if(image == nullptr) {
+        spdlog::error("unable to decode image: {}", url.value());
         return nullptr;
+    }
+
     return adoptPtr(new ImageResource(std::move(image)));
 }
 
@@ -137,8 +141,14 @@ Image::Image(cairo_surface_t* surface, float width, float height)
 RefPtr<BitmapImage> BitmapImage::create(const char* data, size_t size)
 {
     auto surface = decode(data, size);
-    if(surface == nullptr || cairo_surface_status(surface))
+    if(surface == nullptr)
         return nullptr;
+    if(auto status = cairo_surface_status(surface)) {
+        spdlog::error("cairo error: {}", cairo_status_to_string(status));
+        cairo_surface_destroy(surface);
+        return nullptr;
+    }
+
     return adoptPtr(new BitmapImage(surface, cairo_image_surface_get_width(surface), cairo_image_surface_get_height(surface)));
 }
 
@@ -179,7 +189,8 @@ cairo_surface_t* BitmapImage::decode(const char* data, size_t size)
     if(size > 3 && std::memcmp(data, "\xFF\xD8\xFF", 3) == 0) {
         int width, height;
         auto tj = tjInitDecompress();
-        if(tjDecompressHeader(tj, (uint8_t*)(data), size, &width, &height) == -1) {
+        if(!tj || tjDecompressHeader(tj, (uint8_t*)(data), size, &width, &height) == -1) {
+            spdlog::error("turbojpeg error: {}", tjGetErrorStr());
             tjDestroy(tj);
             return nullptr;
         }
@@ -198,7 +209,13 @@ cairo_surface_t* BitmapImage::decode(const char* data, size_t size)
 #ifdef PLUTOBOOK_HAS_WEBP
     if(size > 14 && std::memcmp(data, "RIFF", 4) == 0 && std::memcmp(data + 8, "WEBPVP", 6) == 0) {
         WebPDecoderConfig config;
-        if(!WebPInitDecoderConfig(&config) || WebPGetFeatures((const uint8_t*)(data), size, &config.input) != VP8_STATUS_OK) {
+        if(!WebPInitDecoderConfig(&config)) {
+            spdlog::error("webp error: WebPInitDecoderConfig failed");
+            return nullptr;
+        }
+
+        if(WebPGetFeatures((const uint8_t*)(data), size, &config.input) != VP8_STATUS_OK) {
+            spdlog::error("webp error: WebPGetFeatures failed");
             return nullptr;
         }
 
@@ -215,7 +232,11 @@ cairo_surface_t* BitmapImage::decode(const char* data, size_t size)
         config.output.width = surfaceWidth;
         config.output.height = surfaceHeight;
         config.output.is_external_memory = 1;
-        WebPDecode((const uint8_t*)(data), size, &config);
+        if(WebPDecode((const uint8_t*)(data), size, &config) != VP8_STATUS_OK) {
+            spdlog::error("webp error: WebPDecode failed");
+            return nullptr;
+        }
+
         cairo_surface_mark_dirty(surface);
         return surface;
     }
@@ -223,8 +244,11 @@ cairo_surface_t* BitmapImage::decode(const char* data, size_t size)
 
     int width, height, channels;
     auto imageData = stbi_load_from_memory((const stbi_uc*)(data), size, &width, &height, &channels, STBI_rgb_alpha);
-    if(imageData == nullptr)
+    if(imageData == nullptr) {
+        spdlog::error("stbi error: {}", stbi_failure_reason());
         return nullptr;
+    }
+
     auto surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, width, height);
     auto surfaceData = cairo_image_surface_get_data(surface);
     auto surfaceWidth = cairo_image_surface_get_width(surface);
@@ -262,6 +286,11 @@ RefPtr<SVGImage> SVGImage::create(const std::string_view& content, Url baseUrl)
     auto document = SVGDocument::create(nullptr, heap.get(), std::move(baseUrl));
     if(!document->load(content))
         return nullptr;
+    if(!document->rootElement()->isOfType(svgNs, svgTag)) {
+        spdlog::error("invalid svg root element");
+        return nullptr;
+    }
+
     document->build();
     document->layout();
 

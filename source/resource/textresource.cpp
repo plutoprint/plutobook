@@ -1,13 +1,19 @@
 #include "textresource.h"
 #include "stringutils.h"
+#include "url.h"
+
+#include <spdlog/spdlog.h>
 
 namespace plutobook {
 
 RefPtr<TextResource> TextResource::create(const Url& url, const std::string& mimeType, const std::string& textEncoding, std::vector<char> content)
 {
     auto text = decode(content.data(), content.size(), mimeType, textEncoding);
-    if(text.empty())
+    if(text.empty()) {
+        spdlog::error("unable to decode text: {}", url.value());
         return nullptr;
+    }
+
     return adoptPtr(new TextResource(std::move(text)));
 }
 

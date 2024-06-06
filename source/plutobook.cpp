@@ -7,6 +7,7 @@
 #include "replacedbox.h"
 #include "graphicscontext.h"
 
+#include <spdlog/spdlog.h>
 #include <fstream>
 #include <cmath>
 
@@ -14,9 +15,7 @@ namespace plutobook {
 
 class FileOutputStream final : public OutputStream {
 public:
-    explicit FileOutputStream(const std::string& filename)
-        : m_stream(filename, std::ios::binary)
-    {}
+    explicit FileOutputStream(const std::string& filename);
 
     bool isOpen() const { return m_stream.is_open(); }
     bool write(const char* data, size_t length) final;
@@ -24,6 +23,14 @@ public:
 private:
     std::ofstream m_stream;
 };
+
+FileOutputStream::FileOutputStream(const std::string& filename)
+    : m_stream(filename, std::ios::binary)
+{
+    if(!m_stream.is_open()) {
+        spdlog::error("unable to open file: {}", filename);
+    }
+}
 
 bool FileOutputStream::write(const char* data, size_t length)
 {
@@ -283,8 +290,6 @@ PageSize Book::pageSizeAt(uint32_t pageIndex) const
 bool Book::loadUrl(const std::string_view& url, const std::string_view& userStyle, const std::string_view& userScript)
 {
     auto completeUrl = ResourceLoader::completeUrl(url);
-    if(completeUrl.isEmpty())
-        return false;
     std::string mimeType;
     std::string textEncoding;
     std::vector<char> content;
@@ -306,6 +311,7 @@ bool Book::loadImage(const char* data, size_t length, const std::string_view& mi
 {
     auto image = ImageResource::decode(data, length, mimeType, textEncoding, baseUrl);
     if(image == nullptr) {
+        spdlog::error("unable to decode image data");
         return false;
     }
 
@@ -323,8 +329,11 @@ bool Book::loadImage(const char* data, size_t length, const std::string_view& mi
     assert(imageElement && imageElement->tagName() == imgTag);
 
     auto box = imageElement->box();
-    if(box == nullptr)
+    if(box == nullptr) {
+        spdlog::error("invalid img element");
         return false;
+    }
+
     auto& imageBox = to<ImageBox>(*box);
     imageBox.setImage(std::move(image));
     return true;
@@ -444,8 +453,11 @@ bool Book::writeToPdf(plutobook_stream_write_callback_t callback, void* closure,
 {
     fromPage = std::max(1u, std::min(fromPage, pageCount()));
     toPage = std::max(1u, std::min(toPage, pageCount()));
-    if(pageStep == 0 || (pageStep > 0 && fromPage > toPage) || (pageStep < 0 && fromPage < toPage))
+    if(pageStep == 0 || (pageStep > 0 && fromPage > toPage) || (pageStep < 0 && fromPage < toPage)) {
+        spdlog::error("invalid page rage: from={} to={} step={}", fromPage, toPage, pageStep);
         return false;
+    }
+
     PDFCanvas canvas(callback, closure, pageSizeAt(fromPage - 1));
     canvas.scale(PLUTOBOOK_UNITS_PX, PLUTOBOOK_UNITS_PX);
     canvas.setTitle(m_title);
@@ -455,9 +467,7 @@ bool Book::writeToPdf(plutobook_stream_write_callback_t callback, void* closure,
     canvas.setKeywords(m_keywords);
     canvas.setCreationDate(m_creationDate);
     canvas.setModificationDate(m_modificationDate);
-    for(auto pageIndex = fromPage; pageStep > 0 ? pageIndex <= toPage : pageIndex >= toPage; pageIndex += pageStep) {
-        if(!canvas.isGood())
-            break;
+    for(auto pageIndex = fromPage; canvas.isGood() && (pageStep > 0 ? pageIndex <= toPage : pageIndex >= toPage); pageIndex += pageStep) {
         canvas.setPageSize(pageSizeAt(pageIndex - 1));
         renderPage(canvas, pageIndex - 1);
         canvas.showPage();
@@ -483,8 +493,11 @@ bool Book::writeToPng(plutobook_stream_write_callback_t callback, void* closure,
 {
     int width = std::ceil(documentWidth());
     int height = std::ceil(documentHeight());
-    if(width <= 0 || height <= 0)
+    if(width <= 0 || height <= 0) {
+        spdlog::error("invalid document size");
         return false;
+    }
+
     ImageCanvas canvas(width, height, format);
     renderDocument(canvas, 0, 0, width, height);
     return canvas.writeToPng(callback, closure);

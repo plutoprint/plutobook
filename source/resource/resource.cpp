@@ -3,6 +3,7 @@
 #include "plutobook.hpp"
 #include "url.h"
 
+#include <spdlog/spdlog.h>
 #include <filesystem>
 #include <cstring>
 #include <map>
@@ -63,7 +64,10 @@ bool DefaultResourceFetcher::loadUrl(const std::string& url, std::string& mimeTy
     }
 
     curl_easy_cleanup(curl);
-    return response == CURLE_OK;
+    if(response == CURLE_OK)
+        return true;
+    spdlog::error("curl error: {}", curl_easy_strerror(response));
+    return false;
 }
 
 #else
@@ -81,8 +85,11 @@ bool DefaultResourceFetcher::loadUrl(const std::string& url, std::string& mimeTy
     input.remove_prefix(7);
     auto filename = percentDecode(input.substr(0, input.rfind('?')));
     std::ifstream in(filename, std::ios::binary);
-    if(!in.is_open() || !in.good())
+    if(!in.is_open() || !in.good()) {
+        spdlog::error("unable to open file: {}", filename);
         return false;
+    }
+
     content.assign(std::istreambuf_iterator<char>(in), std::istreambuf_iterator<char>());
     return true;
 }
@@ -268,8 +275,11 @@ bool ResourceLoader::loadUrl(const Url& url, std::string& mimeType, std::string&
     auto fetcher = m_customFetcher;
     if(fetcher == nullptr)
         fetcher = m_defaultFetcher.get();
-    if(!fetcher || !fetcher->loadUrl(url.value(), mimeType, textEncoding, content))
+    if(!fetcher || !fetcher->loadUrl(url.value(), mimeType, textEncoding, content)) {
+        spdlog::error("unable to load url: {}", url.value());
         return false;
+    }
+
     if(mimeType.empty() && textEncoding.empty())
         mimeTypeFromPath(mimeType, percentDecode(url.path()));
     return true;
