@@ -473,6 +473,8 @@ bool Book::writeToPdf(plutobook_stream_write_callback_t callback, void* closure,
         canvas.showPage();
     }
 
+    if(canvas.isGood())
+        canvas.finish();
     return canvas.isGood();
 }
 
