@@ -1,4 +1,5 @@
 #include "blockbox.h"
+#include "multicolumnbox.h"
 #include "linebox.h"
 #include "linelayout.h"
 #include "boxlayer.h"
@@ -1432,6 +1433,17 @@ void BlockFlowBox::build()
         child = child->nextSibling();
     if(child == nullptr)
         setChildrenInline(false);
+    if(child == nullptr)
+        setChildrenInline(false);
+    if(child && style()->hasColumns()) {
+        auto columnFlowBox = MultiColumnFlowBox::create(style());
+        moveChildrenTo(columnFlowBox);
+        appendChild(columnFlowBox);
+        columnFlowBox->setChildrenInline(isChildrenInline());
+        setChildrenInline(false);
+        m_columnFlowBox = columnFlowBox;
+    }
+
     if(isChildrenInline()) {
         m_lineLayout = LineLayout::create(this);
         m_lineLayout->build();

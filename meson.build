@@ -126,6 +126,7 @@ plutobook_sources = [
     'source/layout/linebox.cpp',
     'source/layout/linelayout.cpp',
     'source/layout/listitembox.cpp',
+    'source/layout/multicolumnbox.cpp',
     'source/layout/pagebox.cpp',
     'source/layout/pagebuilder.cpp',
     'source/layout/replacedbox.cpp',

@@ -889,6 +889,7 @@ public:
     bool hasLineHeight() const;
     bool hasStroke() const;
     bool hasBackground() const;
+    bool hasColumns() const;
 
     bool hasOpacity() const { return opacity() < 1.0f; }
     bool hasBlendMode() const { return m_blendMode > BlendMode::Normal; }

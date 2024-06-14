@@ -122,6 +122,7 @@ using FloatingBoxList = std::pmr::vector<FloatingBox>;
 
 class MarginInfo;
 class LineLayout;
+class MultiColumnFlowBox;
 
 class BlockFlowBox : public BlockBox {
 public:
@@ -134,6 +135,9 @@ public:
 
     void updateOverflowRect() override;
     void computePreferredWidths(float& minWidth, float& maxWidth) const override;
+
+    MultiColumnFlowBox* columnFlowBox() const { return m_columnFlowBox; }
+    LineLayout* lineLayout() const { return m_lineLayout.get(); }
 
     std::optional<float> firstLineBaseline() const override;
     std::optional<float> lastLineBaseline() const override;
@@ -201,6 +205,7 @@ public:
     const char* name() const override { return "BlockFlowBox"; }
 
 private:
+    MultiColumnFlowBox* m_columnFlowBox{nullptr};
     std::unique_ptr<LineLayout> m_lineLayout;
     std::unique_ptr<FloatingBoxList> m_floatingBoxes;
 

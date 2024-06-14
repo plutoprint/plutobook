@@ -1600,6 +1600,11 @@ bool BoxStyle::hasBackground() const
     return backgroundColor().isVisible() || backgroundImage();
 }
 
+bool BoxStyle::hasColumns() const
+{
+    return columnCount() || columnWidth();
+}
+
 const HeapString& BoxStyle::getQuote(bool open, size_t depth) const
 {
     static const GlobalString defaultQuote("\"");

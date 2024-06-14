@@ -3,6 +3,7 @@
 #include "flexiblebox.h"
 #include "listitembox.h"
 #include "tablebox.h"
+#include "multicolumnbox.h"
 #include "linebox.h"
 #include "borderpainter.h"
 #include "graphicscontext.h"
@@ -190,6 +191,8 @@ BlockFlowBox* Box::createAnonymousBlock(const BoxStyle* parentStyle)
 
 BlockBox* Box::containingBlock() const
 {
+    if(hasColumnSpanBox())
+        return columnSpanBox()->containingBlock();
     auto parent = parentBox();
     if(position() == Position::Static || position() == Position::Relative || isTextBox()) {
         while(parent && !parent->isBlockBox())
@@ -218,6 +221,8 @@ BlockBox* Box::containingBlock() const
 
 BoxModel* Box::containingBox() const
 {
+    if(hasColumnSpanBox())
+        return columnSpanBox()->containingBox();
     auto parent = parentBox();
     if(!isTextBox()) {
         if(position() == Position::Fixed) {
@@ -248,6 +253,18 @@ BoxLayer* Box::enclosingLayer() const
     }
 
     return nullptr;
+}
+
+MultiColumnSpanBox* Box::columnSpanBox() const
+{
+    if(auto box = to<BoxFrame>(this))
+        return box->columnSpanBox();
+    return nullptr;
+}
+
+BoxView* Box::view() const
+{
+    return document()->box();
 }
 
 bool Box::isBodyBox() const
