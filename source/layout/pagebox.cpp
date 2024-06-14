@@ -8,6 +8,11 @@ std::unique_ptr<PageBox> PageBox::create(const RefPtr<BoxStyle>& style, const Gl
     return std::unique_ptr<PageBox>(new (style->heap()) PageBox(style, pageName, pageIndex));
 }
 
+const PageSize& PageBox::pageSize() const
+{
+    return document()->book()->pageSize();
+}
+
 void PageBox::updateOverflowRect()
 {
     BlockBox::updateOverflowRect();
@@ -23,24 +28,18 @@ void PageBox::computePreferredWidths(float& minWidth, float& maxWidth) const
 
 void PageBox::computeWidth(float& x, float& width, float& marginLeft, float& marginRight) const
 {
-    auto marginLeftLength = style()->marginLeft();
-    auto marginRightLength = style()->marginRight();
-
-    const auto& deviceMargins = document()->book()->pageMargins();
-    marginLeft = marginLeftLength.isAuto() ? deviceMargins.left() / units::px : marginLeftLength.calcMin(m_pageSize.width() / units::px);
-    marginRight = marginRightLength.isAuto() ? deviceMargins.right() / units::px : marginRightLength.calcMin(m_pageSize.width() / units::px);
-    width = m_pageSize.width() / units::px;
+    auto book = document()->book();
+    width = book->pageSize().height() / units::px;
+    marginLeft = book->pageMargins().left() / units::px;
+    marginRight = book->pageMargins().right() / units::px;
 }
 
 void PageBox::computeHeight(float& y, float& height, float& marginTop, float& marginBottom) const
 {
-    auto marginTopLength = style()->marginTop();
-    auto marginBottomLength = style()->marginBottom();
-
-    const auto& deviceMargins = document()->book()->pageMargins();
-    marginTop = marginTopLength.isAuto() ? deviceMargins.top() / units::px : marginTopLength.calcMin(m_pageSize.height() / units::px);
-    marginBottom = marginBottomLength.isAuto() ? deviceMargins.bottom() / units::px : marginBottomLength.calcMin(m_pageSize.height() / units::px);
-    height = m_pageSize.height() / units::px;
+    auto book = document()->book();
+    height = book->pageSize().height() / units::px;
+    marginTop = book->pageMargins().top() / units::px;
+    marginBottom = book->pageMargins().bottom() / units::px;
 }
 
 void PageBox::layout()
@@ -51,10 +50,6 @@ void PageBox::layout()
 
 void PageBox::build()
 {
-    const auto& deviceSize = document()->book()->pageSize();
-    auto pageSize = style()->getPageSize(deviceSize);
-    m_pageSize.setWidth(std::max(1.f, pageSize.width()));
-    m_pageSize.setHeight(std::max(1.f, pageSize.height()));
     BlockBox::build();
 }
 

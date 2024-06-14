@@ -1482,7 +1482,8 @@ void BlockFlowBox::paginate(PageBuilder& builder, float top) const
     } else {
         auto child = firstBoxFrame();
         while(child) {
-            child->paginate(builder, adjustedTop);
+            if(!child->isFloatingOrPositioned())
+                child->paginate(builder, adjustedTop);
             child = child->nextBoxFrame();
         }
     }

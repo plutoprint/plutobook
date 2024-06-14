@@ -457,9 +457,9 @@ inline const plutobook::Book* toBook(const plutobook_t* book)
     return (const plutobook::Book*)(book);
 }
 
-plutobook_t* plutobook_create(plutobook_page_size_t size, plutobook_page_margins_t margins, plutobook_media_type_t media)
+plutobook_t* plutobook_create(plutobook_page_size_t size, plutobook_page_margins_t margins, plutobook_media_type_t media, float scale)
 {
-    return (plutobook_t*)(new plutobook::Book(size, margins, (plutobook::MediaType)(media)));
+    return (plutobook_t*)(new plutobook::Book(size, margins, (plutobook::MediaType)(media), scale));
 }
 
 void plutobook_destroy(plutobook_t* book)
@@ -549,6 +549,11 @@ plutobook_page_size_t plutobook_get_page_size(const plutobook_t* book)
 plutobook_page_margins_t plutobook_get_page_margins(const plutobook_t* book)
 {
     return toBook(book)->pageMargins();
+}
+
+float plutobook_get_page_scale(const plutobook_t* book)
+{
+    return toBook(book)->pageScale();
 }
 
 unsigned int plutobook_get_page_count(const plutobook_t* book)

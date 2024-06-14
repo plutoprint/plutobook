@@ -530,8 +530,9 @@ public:
      * @param size
      * @param margins
      * @param media
+     * @param scale
      */
-    Book(const PageSize& size, const PageMargins& margins = PageMargins::Normal, MediaType media = MediaType::Print);
+    Book(const PageSize& size, const PageMargins& margins = PageMargins::Normal, MediaType media = MediaType::Print, float scale = 0);
 
     /**
      * @brief ~Book
@@ -663,6 +664,12 @@ public:
      * @return
      */
     MediaType mediaType() const { return m_mediaType; }
+
+    /**
+     * @brief pageCount
+     * @return
+     */
+    uint32_t pageScale() const { return m_pageScale; }
 
     /**
      * @brief pageCount
@@ -902,6 +909,7 @@ private:
     PageSize m_pageSize;
     PageMargins m_pageMargins;
     MediaType m_mediaType;
+    float m_pageScale{0};
 
     mutable bool m_needsBuild{true};
     mutable bool m_needsLayout{true};

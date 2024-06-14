@@ -66,7 +66,7 @@ void PageBuilder::addPageUntil(const BoxFrame* box, float top)
 void PageBuilder::setPageBreakAt(float top)
 {
     if(m_currentPage && top > m_currentPage->pageTop()) {
-        m_currentPage->setPageBottom(std::floor(top));
+        m_currentPage->setPageBottom(top);
     }
 }
 
@@ -82,16 +82,8 @@ void PageBuilder::newPage(const BoxFrame* box, float top)
     pageBox->build();
     pageBox->layout();
 
-    auto pageWidth = std::max(1.f, pageBox->width() - pageBox->marginWidth());
-    auto pageHeight = std::max(1.f, pageBox->height() - pageBox->marginHeight());
-    if(auto pageScale = pageStyle->pageScale()) {
-        pageBox->setPageScale(pageScale.value());
-    } else {
-        pageBox->setPageScale(pageWidth / m_document->width());
-    }
-
-    pageBox->setPageTop(std::ceil(top));
-    pageBox->setPageBottom(std::ceil(top + (pageHeight / pageBox->pageScale())));
+    pageBox->setPageTop(top);
+    pageBox->setPageBottom(top + m_document->box()->pageHeight());
     m_currentPage = pageBox.get();
     m_pages.push_back(std::move(pageBox));
 }

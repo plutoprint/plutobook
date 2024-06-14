@@ -1687,12 +1687,15 @@ void LineLayout::paint(const PaintInfo& info, const Point& offset, PaintPhase ph
 
 void LineLayout::paginate(PageBuilder& builder, float top) const
 {
+    float prevLineBottom = 0.f;
     for(auto& line : m_lines) {
         auto adjustedTop = top + line->lineTop();
         builder.addPageUntil(m_block, adjustedTop);
         if(!builder.canFitOnPage(top + line->lineBottom())) {
-            builder.setPageBreakAt(adjustedTop);
+            builder.setPageBreakAt(top + prevLineBottom);
         }
+
+        prevLineBottom = line->lineBottom();
     }
 }
 

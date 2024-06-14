@@ -239,10 +239,11 @@ void PDFCanvas::showPage()
     plutobook_pdf_canvas_show_page(m_canvas);
 }
 
-Book::Book(const PageSize& size, const PageMargins& margins, MediaType media)
+Book::Book(const PageSize& size, const PageMargins& margins, MediaType media, float scale)
     : m_pageSize(size)
     , m_pageMargins(margins)
     , m_mediaType(media)
+    , m_pageScale(scale)
     , m_heap(new Heap(1024 * 32))
 {
 }
