@@ -5,6 +5,23 @@
 
 namespace plutobook {
 
+class MultiColumnRow {
+public:
+    explicit MultiColumnRow(BoxFrame* box)
+        : m_box(box)
+    {}
+
+    bool hasColumnSpan() const { return m_box && m_box->hasColumnSpan(); }
+    BoxFrame* box() const { return m_box; }
+    float y() const { return m_y; }
+
+private:
+    BoxFrame* m_box;
+    float m_y;
+};
+
+using MultiColumnRowList = std::pmr::vector<MultiColumnRow>;
+
 class MultiColumnFlowBox final : public BlockFlowBox {
 public:
     static MultiColumnFlowBox* create(const BoxStyle* parentStyle);
@@ -12,16 +29,19 @@ public:
     bool isMultiColumnFlowBox() const final { return true; }
     BlockFlowBox* columnBlockFlowBox() const;
     uint32_t columnCount() const { return m_columnCount; }
+    const MultiColumnRowList& rows() const { return m_rows; }
 
     void updatePreferredWidths() const final;
     void computeWidth(float& x, float& width, float& marginLeft, float& marginRight) const final;
     void build() final;
+    void layout() final;
 
     const char* name() const final { return "MultiColumnFlowBox"; }
 
 private:
     MultiColumnFlowBox(const RefPtr<BoxStyle>& style);
     mutable uint32_t m_columnCount{0};
+    MultiColumnRowList m_rows;
 };
 
 inline BlockFlowBox* MultiColumnFlowBox::columnBlockFlowBox() const
@@ -29,51 +49,10 @@ inline BlockFlowBox* MultiColumnFlowBox::columnBlockFlowBox() const
     return static_cast<BlockFlowBox*>(parentBox());
 }
 
-class MultiColumnSetBox final : public BlockBox {
-public:
-    static MultiColumnSetBox* create(const BoxStyle* parentStyle);
-
-    bool isMultiColumnSetBox() const final { return true; }
-    MultiColumnFlowBox* columnFlowBox() const;
-
-    void computePreferredWidths(float& minWidth, float& maxWidth) const final;
-    void paginate(PageBuilder& builder, float top) const final;
-    void layout() final;
-
-    const char* name() const final { return "MultiColumnSetBox"; }
-
-private:
-    MultiColumnSetBox(const RefPtr<BoxStyle>& style);
+template<>
+struct is_a<MultiColumnFlowBox> {
+    static bool check(const Box& box) { return box.isMultiColumnFlowBox(); }
 };
-
-inline MultiColumnFlowBox* MultiColumnSetBox::columnFlowBox() const
-{
-    return static_cast<BlockFlowBox*>(parentBox())->columnFlowBox();
-}
-
-class MultiColumnSpanBox final : public BlockBox {
-public:
-    static MultiColumnSpanBox* create(BoxFrame* box, const BoxStyle* parentStyle);
-
-    bool isMultiColumnSpanBox() const final { return true; }
-    MultiColumnFlowBox* columnFlowBox() const;
-    BoxFrame* box() const { return m_box; }
-
-    void computePreferredWidths(float& minWidth, float& maxWidth) const final;
-    void paginate(PageBuilder& builder, float top) const final;
-    void layout() final;
-
-    const char* name() const final { return "MultiColumnSpanBox"; }
-
-private:
-    MultiColumnSpanBox(BoxFrame* box, const RefPtr<BoxStyle>& style);
-    BoxFrame* m_box;
-};
-
-inline MultiColumnFlowBox* MultiColumnSpanBox::columnFlowBox() const
-{
-    return static_cast<BlockFlowBox*>(parentBox())->columnFlowBox();
-}
 
 } // namespace plutobook
 

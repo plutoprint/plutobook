@@ -40,7 +40,7 @@ class BoxView;
 class BoxModel;
 class BlockBox;
 class BlockFlowBox;
-class MultiColumnSpanBox;
+class MultiColumnFlowBox;
 
 class Box : public HeapMember {
 public:
@@ -76,8 +76,8 @@ public:
 
     BlockBox* containingBlock() const;
     BoxModel* containingBox() const;
+    MultiColumnFlowBox* containingColumn() const;
     BoxLayer* enclosingLayer() const;
-    MultiColumnSpanBox* columnSpanBox() const;
     BoxView* view() const;
 
     bool isBodyBox() const;
@@ -102,8 +102,6 @@ public:
     virtual bool isInsideListMarkerBox() const { return false; }
     virtual bool isOutsideListMarkerBox() const { return false; }
     virtual bool isMultiColumnFlowBox() const { return false; }
-    virtual bool isMultiColumnSetBox() const { return false; }
-    virtual bool isMultiColumnSpanBox() const { return false; }
     virtual bool isPageBox() const { return false; }
     virtual bool isPageMarginBox() const { return false; }
     virtual bool isTableBox() const { return false; }
@@ -146,7 +144,7 @@ public:
     bool isOverflowHidden() const { return m_overflowHidden; }
     bool hasTransform() const { return m_hasTransform; }
     bool hasLayer() const { return m_hasLayer; }
-    bool hasColumnSpanBox() const { return m_hasColumnSpanBox; }
+    bool hasColumnSpan() const { return m_hasColumnSpan; }
 
     void setAnonymous(bool value) { m_anonymous = value; }
     void setChildrenInline(bool value) { m_childrenInline = value; }
@@ -157,7 +155,7 @@ public:
     void setOverflowHidden(bool value) { m_overflowHidden = value; }
     void setHasTransform(bool value) { m_hasTransform = value; }
     void setHasLayer(bool value) { m_hasLayer = value; }
-    void setHasColumnSpanBox(bool value) { m_hasColumnSpanBox = value; }
+    void setHasColumnSpan(bool value) { m_hasColumnSpan = value; }
 
     Heap* heap() const { return m_style->heap(); }
     Document* document() const { return m_style->document(); }
@@ -193,7 +191,7 @@ private:
     bool m_overflowHidden : 1 {false};
     bool m_hasTransform : 1 {false};
     bool m_hasLayer : 1 {false};
-    bool m_hasColumnSpanBox : 1 {false};
+    bool m_hasColumnSpan : 1 {false};
 };
 
 class BoxModel : public Box {
@@ -327,9 +325,6 @@ public:
     BoxFrame* firstBoxFrame() const;
     BoxFrame* lastBoxFrame() const;
 
-    MultiColumnSpanBox* columnSpanBox() const { return m_columnSpanBox; }
-    void setColumnSpanBox(MultiColumnSpanBox* columnSpanBox) { m_columnSpanBox = columnSpanBox; }
-
     ReplacedLineBox* line() const { return m_line.get(); }
     void setLine(std::unique_ptr<ReplacedLineBox> line);
 
@@ -435,7 +430,6 @@ public:
     const char* name() const override { return "BoxFrame"; }
 
 private:
-    MultiColumnSpanBox* m_columnSpanBox{nullptr};
     std::unique_ptr<ReplacedLineBox> m_line;
 
     float m_x{0};

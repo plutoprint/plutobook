@@ -191,8 +191,8 @@ BlockFlowBox* Box::createAnonymousBlock(const BoxStyle* parentStyle)
 
 BlockBox* Box::containingBlock() const
 {
-    if(hasColumnSpanBox())
-        return columnSpanBox()->containingBlock();
+    if(hasColumnSpan())
+        return containingColumn()->containingBlock();
     auto parent = parentBox();
     if(position() == Position::Static || position() == Position::Relative || isTextBox()) {
         while(parent && !parent->isBlockBox())
@@ -221,8 +221,8 @@ BlockBox* Box::containingBlock() const
 
 BoxModel* Box::containingBox() const
 {
-    if(hasColumnSpanBox())
-        return columnSpanBox()->containingBox();
+    if(hasColumnSpan())
+        return containingColumn()->containingBox();
     auto parent = parentBox();
     if(!isTextBox()) {
         if(position() == Position::Fixed) {
@@ -243,6 +243,18 @@ BoxModel* Box::containingBox() const
     return to<BoxModel>(parent);
 }
 
+MultiColumnFlowBox* Box::containingColumn() const
+{
+    auto parent = parentBox();
+    while(parent) {
+        if(parent->isMultiColumnFlowBox())
+            return to<MultiColumnFlowBox>(parent);
+        parent = parent->parentBox();
+    }
+
+    return nullptr;
+}
+
 BoxLayer* Box::enclosingLayer() const
 {
     for(auto current = this; current; current = current->parentBox()) {
@@ -252,13 +264,6 @@ BoxLayer* Box::enclosingLayer() const
         }
     }
 
-    return nullptr;
-}
-
-MultiColumnSpanBox* Box::columnSpanBox() const
-{
-    if(auto box = to<BoxFrame>(this))
-        return box->columnSpanBox();
     return nullptr;
 }
 

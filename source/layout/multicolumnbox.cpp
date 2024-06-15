@@ -58,18 +58,15 @@ static bool isValidColumnSpanBox(BoxFrame* box)
 
 void MultiColumnFlowBox::build()
 {
-    MultiColumnSetBox* lastColumnSet = nullptr;
     auto child = firstChild();
     while(child) {
-        if(auto box = to<BoxFrame>(child); box && isValidColumnSpanBox(box)) {
-            auto columnSpanBox = MultiColumnSpanBox::create(box, columnBlockFlowBox()->style());
-            columnBlockFlowBox()->addChild(columnSpanBox);
-            lastColumnSet = nullptr;
-        } else if(!child->isPositioned()) {
-            if(lastColumnSet == nullptr) {
-                auto columnSetBox = MultiColumnSetBox::create(columnBlockFlowBox()->style());
-                columnBlockFlowBox()->addChild(columnSetBox);
-                lastColumnSet = columnSetBox;
+        auto box = to<BoxFrame>(child);
+        if(box && isValidColumnSpanBox(box)) {
+            box->setHasColumnSpan(true);
+            m_rows.emplace_back(box);
+        } else if(!child->isFloatingOrPositioned()) {
+            if(m_rows.empty() || m_rows.back().hasColumnSpan()) {
+                m_rows.emplace_back(nullptr);
             }
 
             if(child->firstChild()) {
@@ -95,69 +92,15 @@ void MultiColumnFlowBox::build()
     BlockFlowBox::build();
 }
 
+void MultiColumnFlowBox::layout()
+{
+    BlockFlowBox::layout();
+}
+
 MultiColumnFlowBox::MultiColumnFlowBox(const RefPtr<BoxStyle>& style)
     : BlockFlowBox(nullptr, style)
+    , m_rows(style->heap())
 {
-}
-
-MultiColumnSetBox* MultiColumnSetBox::create(const BoxStyle* parentStyle)
-{
-    auto newStyle = BoxStyle::create(*parentStyle, Display::Block);
-    auto newColumn = new (newStyle->heap()) MultiColumnSetBox(newStyle);
-    newColumn->setAnonymous(true);
-    return newColumn;
-}
-
-void MultiColumnSetBox::computePreferredWidths(float& minWidth, float& maxWidth) const
-{
-    minWidth = columnFlowBox()->minPreferredWidth();
-    maxWidth = columnFlowBox()->maxPreferredWidth();
-}
-
-void MultiColumnSetBox::paginate(PageBuilder& builder, float top) const
-{
-}
-
-void MultiColumnSetBox::layout()
-{
-    updateWidth();
-    updateHeight();
-}
-
-MultiColumnSetBox::MultiColumnSetBox(const RefPtr<BoxStyle>& style)
-    : BlockBox(nullptr, style)
-{
-}
-
-MultiColumnSpanBox* MultiColumnSpanBox::create(BoxFrame* box, const BoxStyle* parentStyle)
-{
-    auto newStyle = BoxStyle::create(*parentStyle, Display::Block);
-    auto newColumn = new (newStyle->heap()) MultiColumnSpanBox(box, newStyle);
-    newColumn->setAnonymous(true);
-    return newColumn;
-}
-
-void MultiColumnSpanBox::computePreferredWidths(float& minWidth, float& maxWidth) const
-{
-    minWidth = m_box->minPreferredWidth();
-    maxWidth = m_box->maxPreferredWidth();
-}
-
-void MultiColumnSpanBox::paginate(PageBuilder& builder, float top) const
-{
-}
-
-void MultiColumnSpanBox::layout()
-{
-    updateWidth();
-    updateHeight();
-}
-
-MultiColumnSpanBox::MultiColumnSpanBox(BoxFrame* box, const RefPtr<BoxStyle>& style)
-    : BlockBox(nullptr, style)
-{
-    box->setColumnSpanBox(this);
-    box->setHasColumnSpanBox(true);
 }
 
 } // namespace plutobook
