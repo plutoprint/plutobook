@@ -3,21 +3,50 @@
 
 #include "blockbox.h"
 
+#include <list>
+
 namespace plutobook {
+
+class MultiColumnItem {
+public:
+    MultiColumnItem() = default;
+
+    float x() const { return m_x; }
+    float height() const { return m_height; }
+
+    void setX(float x) { m_x = x; }
+    void setHeight(float height) { m_height = height; }
+
+private:
+    float m_x{0};
+    float m_height{0};
+};
+
+using MultiColumnItemList = std::pmr::list<MultiColumnItem>;
 
 class MultiColumnRow {
 public:
     explicit MultiColumnRow(BoxFrame* box)
-        : m_box(box)
+        : m_items(box->heap())
+        , m_box(box)
     {}
 
-    bool hasColumnSpan() const { return m_box && m_box->hasColumnSpan(); }
+    const MultiColumnItemList& items() const { return m_items; }
+    MultiColumnItemList& items() { return m_items; }
+
+    bool hasColumnSpan() const { return m_box->hasColumnSpan(); }
     BoxFrame* box() const { return m_box; }
     float y() const { return m_y; }
+    float width() const { return m_width; }
+
+    void setY(float y) { m_y = y; }
+    void setWidth(float width) { m_width = width; }
 
 private:
+    MultiColumnItemList m_items;
     BoxFrame* m_box;
-    float m_y;
+    float m_y{0};
+    float m_width{0};
 };
 
 using MultiColumnRowList = std::pmr::vector<MultiColumnRow>;

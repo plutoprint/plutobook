@@ -1,4 +1,6 @@
 #include "multicolumnbox.h"
+#include "columnbuilder.h"
+#include "linelayout.h"
 
 #include <cmath>
 
@@ -66,7 +68,7 @@ void MultiColumnFlowBox::build()
             m_rows.emplace_back(box);
         } else if(!child->isFloatingOrPositioned()) {
             if(m_rows.empty() || m_rows.back().hasColumnSpan()) {
-                m_rows.emplace_back(nullptr);
+                m_rows.emplace_back(this);
             }
 
             if(child->firstChild()) {

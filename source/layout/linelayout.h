@@ -315,6 +315,7 @@ private:
     uint32_t m_lineIndex{0};
 };
 
+class ColumnBuilder;
 class PageBuilder;
 class PaintInfo;
 class Point;
@@ -338,6 +339,7 @@ public:
     void layout();
 
     void paint(const PaintInfo& info, const Point& offset, PaintPhase phase);
+    void columnize(ColumnBuilder& builder, float top) const;
     void paginate(PageBuilder& builder, float top) const;
 
 private:

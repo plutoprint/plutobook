@@ -1685,6 +1685,11 @@ void LineLayout::paint(const PaintInfo& info, const Point& offset, PaintPhase ph
     }
 }
 
+void LineLayout::columnize(ColumnBuilder& builder, float top) const
+{
+    assert(false);
+}
+
 void LineLayout::paginate(PageBuilder& builder, float top) const
 {
     float prevLineBottom = 0.f;
