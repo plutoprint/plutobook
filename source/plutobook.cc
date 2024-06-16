@@ -609,7 +609,7 @@ void plutobook_render_document_rect_cairo(const plutobook_t* book, cairo_t* cont
 
 plutobook_status_t plutobook_write_to_pdf(const plutobook_t* book, const char* filename)
 {
-    return plutobook_write_to_pdf_range(book, filename, 1, PLUTOBOOK_MAX_PAGE_COUNT, 1);
+    return plutobook_write_to_pdf_range(book, filename, PLUTOBOOK_MIN_PAGE_COUNT, PLUTOBOOK_MAX_PAGE_COUNT, 1);
 }
 
 plutobook_status_t plutobook_write_to_pdf_range(const plutobook_t* book, const char* filename, unsigned int from_page, unsigned int to_page, int page_step)
@@ -621,7 +621,7 @@ plutobook_status_t plutobook_write_to_pdf_range(const plutobook_t* book, const c
 
 plutobook_status_t plutobook_write_to_pdf_stream(const plutobook_t* book, plutobook_stream_write_callback_t callback, void* closure)
 {
-    return plutobook_write_to_pdf_stream_range(book, callback, closure, 1, PLUTOBOOK_MAX_PAGE_COUNT, 1);
+    return plutobook_write_to_pdf_stream_range(book, callback, closure, PLUTOBOOK_MIN_PAGE_COUNT, PLUTOBOOK_MAX_PAGE_COUNT, 1);
 }
 
 plutobook_status_t plutobook_write_to_pdf_stream_range(const plutobook_t* book, plutobook_stream_write_callback_t callback, void* closure, unsigned int from_page, unsigned int to_page, int page_step)
