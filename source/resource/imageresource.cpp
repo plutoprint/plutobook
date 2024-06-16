@@ -29,9 +29,14 @@
 
 namespace plutobook {
 
-RefPtr<ImageResource> ImageResource::create(const Url& url, const std::string& mimeType, const std::string& textEncoding, std::vector<char> content)
+RefPtr<ImageResource> ImageResource::create(ResourceFetcher* fetcher, const Url& url)
 {
-    auto image = decode(content.data(), content.size(), mimeType, textEncoding, url.base());
+    std::string mimeType;
+    std::string textEncoding;
+    std::vector<char> content;
+    if(!ResourceLoader::loadUrl(url, mimeType, textEncoding, content, fetcher))
+        return nullptr;
+    auto image = decode(content.data(), content.size(), mimeType, textEncoding, fetcher, url.base());
     if(image == nullptr) {
         spdlog::error("unable to decode image: {}", url.value());
         return nullptr;
@@ -40,10 +45,10 @@ RefPtr<ImageResource> ImageResource::create(const Url& url, const std::string& m
     return adoptPtr(new ImageResource(std::move(image)));
 }
 
-RefPtr<Image> ImageResource::decode(const char* data, size_t size, const std::string_view& mimeType, const std::string_view& textEncoding, const std::string_view& baseUrl)
+RefPtr<Image> ImageResource::decode(const char* data, size_t size, const std::string_view& mimeType, const std::string_view& textEncoding, ResourceFetcher* fetcher, const std::string_view& baseUrl)
 {
     if(equals(mimeType, "image/svg+xml", false))
-        return SVGImage::create(TextResource::decode(data, size, mimeType, textEncoding), ResourceLoader::completeUrl(baseUrl));
+        return SVGImage::create(TextResource::decode(data, size, mimeType, textEncoding), fetcher, ResourceLoader::completeUrl(baseUrl));
     return BitmapImage::create(data, size);
 }
 
@@ -280,10 +285,10 @@ BitmapImage::BitmapImage(cairo_surface_t* surface, float width, float height)
 {
 }
 
-RefPtr<SVGImage> SVGImage::create(const std::string_view& content, Url baseUrl)
+RefPtr<SVGImage> SVGImage::create(const std::string_view& content, ResourceFetcher* fetcher, Url baseUrl)
 {
     std::unique_ptr<Heap> heap(new Heap(1024 * 24));
-    auto document = SVGDocument::create(nullptr, heap.get(), std::move(baseUrl));
+    auto document = SVGDocument::create(nullptr, heap.get(), fetcher, std::move(baseUrl));
     if(!document->load(content))
         return nullptr;
     if(!document->rootElement()->isOfType(svgNs, svgTag)) {

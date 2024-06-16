@@ -203,6 +203,12 @@ public:
 };
 
 /**
+ * @brief defaultResourceFetcher
+ * @return
+ */
+ResourceFetcher* defaultResourceFetcher();
+
+/**
  * @brief The OutputStream is an abstract base class for writing data to an output stream.
  */
 class PLUTOBOOK_API OutputStream {
@@ -530,9 +536,8 @@ public:
      * @param size
      * @param margins
      * @param media
-     * @param scale
      */
-    Book(const PageSize& size, const PageMargins& margins = PageMargins::Normal, MediaType media = MediaType::Print, float scale = 0);
+    Book(const PageSize& size, const PageMargins& margins = PageMargins::Normal, MediaType media = MediaType::Print);
 
     /**
      * @brief ~Book
@@ -666,10 +671,16 @@ public:
     MediaType mediaType() const { return m_mediaType; }
 
     /**
-     * @brief pageCount
+     * @brief pageScale
      * @return
      */
-    uint32_t pageScale() const { return m_pageScale; }
+    float pageScale() const { return m_pageScale; }
+
+    /**
+     * @brief setPageScale
+     * @param scale
+     */
+    void setPageScale(float scale) { m_pageScale = scale; }
 
     /**
      * @brief pageCount
@@ -875,19 +886,13 @@ public:
      * @brief setCustomResourceFetcher
      * @param fetcher
      */
-    static void setCustomResourceFetcher(ResourceFetcher* fetcher);
+    void setCustomResourceFetcher(ResourceFetcher* fetcher) { m_customResourceFetcher = fetcher; }
 
     /**
      * @brief customResourceFetcher
      * @return
      */
-    static ResourceFetcher* customResourceFetcher();
-
-    /**
-     * @brief defaultResourceFetcher
-     * @return
-     */
-    static ResourceFetcher* defaultResourceFetcher();
+    ResourceFetcher* customResourceFetcher() const { return m_customResourceFetcher; }
 
     /**
      * @brief heap
@@ -923,6 +928,7 @@ private:
     std::string m_creationDate;
     std::string m_modificationDate;
 
+    ResourceFetcher* m_customResourceFetcher{nullptr};
     std::unique_ptr<Heap> m_heap;
     std::unique_ptr<Document> m_document;
 };

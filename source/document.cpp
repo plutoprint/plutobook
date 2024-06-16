@@ -463,10 +463,11 @@ void Element::serialize(std::ostream& o) const
     }
 }
 
-Document::Document(Book* book, Heap* heap, Url url)
+Document::Document(Book* book, Heap* heap, ResourceFetcher* fetcher, Url url)
     : ContainerNode(this)
     , m_book(book)
     , m_heap(heap)
+    , m_customResourceFetcher(fetcher)
     , m_baseUrl(std::move(url))
     , m_pages(heap)
     , m_idCache(heap)
@@ -862,12 +863,7 @@ RefPtr<ResourceType> Document::fetchResource(const Url& url)
     auto it = m_resourceCache.find(url);
     if(it != m_resourceCache.end())
         return to<ResourceType>(it->second);
-    std::string mimeType;
-    std::string textEncoding;
-    std::vector<char> content;
-    if(!resourceLoader()->loadUrl(url, mimeType, textEncoding, content))
-        return nullptr;
-    auto resource = ResourceType::create(url, mimeType, textEncoding, std::move(content));
+    auto resource = ResourceType::create(m_customResourceFetcher, url);
     if(!url.protocolIs("data"))
         m_resourceCache.emplace(url, resource);
     return resource;

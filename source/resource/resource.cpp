@@ -268,14 +268,12 @@ static bool mimeTypeFromPath(std::string& mimeType, const std::string_view& path
     return true;
 }
 
-bool ResourceLoader::loadUrl(const Url& url, std::string& mimeType, std::string& textEncoding, std::vector<char>& content) const
+bool ResourceLoader::loadUrl(const Url& url, std::string& mimeType, std::string& textEncoding, std::vector<char>& content, ResourceFetcher* customFetcher)
 {
     if(url.protocolIs("data"))
         return loadDataUrl(mimeType, textEncoding, content, percentDecode(url.value()));
-    auto fetcher = m_customFetcher;
-    if(fetcher == nullptr)
-        fetcher = m_defaultFetcher.get();
-    if(!fetcher || !fetcher->loadUrl(url.value(), mimeType, textEncoding, content)) {
+    auto fetcher = customFetcher ? customFetcher : defaultResourceFetcher();
+    if(!fetcher->loadUrl(url.value(), mimeType, textEncoding, content)) {
         spdlog::error("unable to load url: {}", url.value());
         return false;
     }
@@ -303,15 +301,10 @@ Url ResourceLoader::completeUrl(const std::string_view& value)
     return baseUrl().complete(value);
 }
 
-ResourceLoader::ResourceLoader()
-    : m_defaultFetcher(new DefaultResourceFetcher)
+ResourceFetcher* defaultResourceFetcher()
 {
-}
-
-ResourceLoader* resourceLoader()
-{
-    static ResourceLoader loader;
-    return &loader;
+    static DefaultResourceFetcher defaultFetcher;
+    return &defaultFetcher;
 }
 
 } // namespace plutobook

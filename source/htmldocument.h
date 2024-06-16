@@ -155,13 +155,13 @@ public:
 
 class HTMLDocument final : public Document {
 public:
-    static std::unique_ptr<HTMLDocument> create(Book* book, Heap* heap, Url url);
+    static std::unique_ptr<HTMLDocument> create(Book* book, Heap* heap, ResourceFetcher* fetcher, Url url);
 
     bool isHTMLDocument() const final { return true; }
     bool load(const std::string_view& content) final;
 
 private:
-    HTMLDocument(Book* book, Heap* heap, Url url);
+    HTMLDocument(Book* book, Heap* heap, ResourceFetcher* fetcher, Url url);
 };
 
 template<>

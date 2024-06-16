@@ -6,8 +6,13 @@
 
 namespace plutobook {
 
-RefPtr<TextResource> TextResource::create(const Url& url, const std::string& mimeType, const std::string& textEncoding, std::vector<char> content)
+RefPtr<TextResource> TextResource::create(ResourceFetcher* fetcher, const Url& url)
 {
+    std::string mimeType;
+    std::string textEncoding;
+    std::vector<char> content;
+    if(!ResourceLoader::loadUrl(url, mimeType, textEncoding, content, fetcher))
+        return nullptr;
     auto text = decode(content.data(), content.size(), mimeType, textEncoding);
     if(text.empty()) {
         spdlog::error("unable to decode text: {}", url.value());

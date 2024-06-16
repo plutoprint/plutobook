@@ -11,8 +11,8 @@ class Image;
 
 class ImageResource final : public Resource {
 public:
-    static RefPtr<ImageResource> create(const Url& url, const std::string& mimeType, const std::string& textEncoding, std::vector<char> content);
-    static RefPtr<Image> decode(const char* data, size_t size, const std::string_view& mimeType, const std::string_view& textEncoding, const std::string_view& baseUrl);
+    static RefPtr<ImageResource> create(ResourceFetcher* fetcher, const Url& url);
+    static RefPtr<Image> decode(const char* data, size_t size, const std::string_view& mimeType, const std::string_view& textEncoding, ResourceFetcher* fetcher, const std::string_view& baseUrl);
     static bool supportsMimeType(const std::string_view& mimeType);
     const RefPtr<Image>& image() const { return m_image; }
     Type type() const final { return Type::Image; }
@@ -67,7 +67,7 @@ struct is_a<BitmapImage> {
 
 class SVGImage final : public Image {
 public:
-    static RefPtr<SVGImage> create(const std::string_view& content, Url baseUrl);
+    static RefPtr<SVGImage> create(const std::string_view& content, ResourceFetcher* fetcher, Url baseUrl);
 
     bool isSVGImage() const final { return true; }
 

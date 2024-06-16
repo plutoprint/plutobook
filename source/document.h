@@ -248,6 +248,7 @@ class Resource;
 class TextResource;
 class ImageResource;
 class FontResource;
+class ResourceFetcher;
 class Font;
 
 struct FontDescription;
@@ -270,7 +271,7 @@ using PageBoxList = std::pmr::vector<std::unique_ptr<PageBox>>;
 
 class Document : public ContainerNode {
 public:
-    Document(Book* book, Heap* heap, Url url);
+    Document(Book* book, Heap* heap, ResourceFetcher* fetcher, Url url);
     ~Document() override;
 
     bool isDocumentNode() const final { return true; }
@@ -293,6 +294,7 @@ public:
     TextNode* createTextNode(const std::string_view& value);
     Element* createElement(const GlobalString& namespaceURI, const GlobalString& tagName);
     Element* rootElement() const { return m_rootElement; }
+    ResourceFetcher* customResourceFetcher() const { return m_customResourceFetcher; }
     Element* bodyElement() const;
     BoxStyle* backgroundStyle() const;
     BoxStyle* rootStyle() const;
@@ -353,6 +355,7 @@ private:
     Element* m_rootElement{nullptr};
     Book* m_book;
     Heap* m_heap;
+    ResourceFetcher* m_customResourceFetcher;
     Url m_baseUrl;
     PageBoxList m_pages;
     DocumentElementMap m_idCache;

@@ -50,8 +50,13 @@ static void FTFontDataDestroy(void* data)
     delete (FTFontData*)(data);
 }
 
-RefPtr<FontResource> FontResource::create(const Url& url, const std::string& mimeType, const std::string& textEncoding, std::vector<char> content)
+RefPtr<FontResource> FontResource::create(ResourceFetcher* fetcher, const Url& url)
 {
+    std::string mimeType;
+    std::string textEncoding;
+    std::vector<char> content;
+    if(!ResourceLoader::loadUrl(url, mimeType, textEncoding, content, fetcher))
+        return nullptr;
     auto fontData = FTFontData::create(std::move(content));
     if(fontData == nullptr) {
         spdlog::error("unable to decode font: {}", url.value());

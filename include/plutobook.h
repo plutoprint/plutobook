@@ -265,9 +265,6 @@ PLUTOBOOK_API const char* plutobook_resource_data_get_text_encoding(const plutob
 typedef plutobook_resource_data_t* (*plutobook_resource_load_callback_t)(void* closure, const char* url);
 
 PLUTOBOOK_API plutobook_resource_data_t* plutobook_default_resource_fetcher_load_url(const char* url);
-PLUTOBOOK_API void plutobook_set_custom_resource_fetcher(plutobook_resource_load_callback_t callback, void* closure);
-PLUTOBOOK_API plutobook_resource_load_callback_t plutobook_get_custom_resource_fetcher_callback(void);
-PLUTOBOOK_API void* plutobook_get_custom_resource_fetcher_closure(void);
 
 typedef enum _plutobook_media_type {
     PLUTOBOOK_MEDIA_TYPE_PRINT,
@@ -276,7 +273,7 @@ typedef enum _plutobook_media_type {
 
 typedef struct _plutobook plutobook_t;
 
-PLUTOBOOK_API plutobook_t* plutobook_create(plutobook_page_size_t size, plutobook_page_margins_t margins, plutobook_media_type_t media, float scale);
+PLUTOBOOK_API plutobook_t* plutobook_create(plutobook_page_size_t size, plutobook_page_margins_t margins, plutobook_media_type_t media);
 PLUTOBOOK_API void plutobook_destroy(plutobook_t* book);
 PLUTOBOOK_API void plutobook_clear_content(plutobook_t* book);
 
@@ -315,6 +312,10 @@ PLUTOBOOK_API plutobook_status_t plutobook_write_to_pdf_stream_range(const pluto
 
 PLUTOBOOK_API plutobook_status_t plutobook_write_to_png(const plutobook_t* book, const char* filename, plutobook_image_format_t format);
 PLUTOBOOK_API plutobook_status_t plutobook_write_to_png_stream(const plutobook_t* book, plutobook_stream_write_callback_t callback, void* closure, plutobook_image_format_t format);
+
+PLUTOBOOK_API void plutobook_set_custom_resource_fetcher(plutobook_t* book, plutobook_resource_load_callback_t callback, void* closure);
+PLUTOBOOK_API plutobook_resource_load_callback_t plutobook_get_custom_resource_fetcher_callback(const plutobook_t* book);
+PLUTOBOOK_API void* plutobook_get_custom_resource_fetcher_closure(const plutobook_t* book);
 
 #ifdef __cplusplus
 }

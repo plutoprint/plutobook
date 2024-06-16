@@ -19,7 +19,7 @@ namespace plutobook {
 
 class FontResource final : public Resource {
 public:
-    static RefPtr<FontResource> create(const Url& url, const std::string& mimeType, const std::string& textEncoding, std::vector<char> content);
+    static RefPtr<FontResource> create(ResourceFetcher* fetcher, const Url& url);
     static bool supportsFormat(const std::string_view& format);
     cairo_font_face_t* face() const { return m_face; }
     Type type() const final { return Type::Font; }

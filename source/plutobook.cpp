@@ -239,11 +239,10 @@ void PDFCanvas::showPage()
     plutobook_pdf_canvas_show_page(m_canvas);
 }
 
-Book::Book(const PageSize& size, const PageMargins& margins, MediaType media, float scale)
+Book::Book(const PageSize& size, const PageMargins& margins, MediaType media)
     : m_pageSize(size)
     , m_pageMargins(margins)
     , m_mediaType(media)
-    , m_pageScale(scale)
     , m_heap(new Heap(1024 * 32))
 {
 }
@@ -294,7 +293,7 @@ bool Book::loadUrl(const std::string_view& url, const std::string_view& userStyl
     std::string mimeType;
     std::string textEncoding;
     std::vector<char> content;
-    if(!resourceLoader()->loadUrl(completeUrl, mimeType, textEncoding, content))
+    if(!ResourceLoader::loadUrl(completeUrl, mimeType, textEncoding, content, m_customResourceFetcher))
         return false;
     return loadData(content.data(), content.size(), mimeType, textEncoding, userStyle, userScript, completeUrl.base());
 }
@@ -310,7 +309,7 @@ bool Book::loadData(const char* data, size_t length, const std::string_view& mim
 
 bool Book::loadImage(const char* data, size_t length, const std::string_view& mimeType, const std::string_view& textEncoding, const std::string_view& userStyle, const std::string_view& userScript, const std::string_view& baseUrl)
 {
-    auto image = ImageResource::decode(data, length, mimeType, textEncoding, baseUrl);
+    auto image = ImageResource::decode(data, length, mimeType, textEncoding, m_customResourceFetcher, baseUrl);
     if(image == nullptr) {
         spdlog::error("unable to decode image data");
         return false;
@@ -343,7 +342,7 @@ bool Book::loadImage(const char* data, size_t length, const std::string_view& mi
 bool Book::loadXml(const std::string_view& content, const std::string_view& userStyle, const std::string_view& userScript, const std::string_view& baseUrl)
 {
     clearContent();
-    m_document = XMLDocument::create(this, m_heap.get(), ResourceLoader::completeUrl(baseUrl));
+    m_document = XMLDocument::create(this, heap(), m_customResourceFetcher, ResourceLoader::completeUrl(baseUrl));
     m_document->addUserStyleSheet(userStyle);
     m_document->addUserJavaScript(userScript);
     if(m_document->load(content))
@@ -355,7 +354,7 @@ bool Book::loadXml(const std::string_view& content, const std::string_view& user
 bool Book::loadHtml(const std::string_view& content, const std::string_view& userStyle, const std::string_view& userScript, const std::string_view& baseUrl)
 {
     clearContent();
-    m_document = HTMLDocument::create(this, m_heap.get(), ResourceLoader::completeUrl(baseUrl));
+    m_document = HTMLDocument::create(this, heap(), m_customResourceFetcher, ResourceLoader::completeUrl(baseUrl));
     m_document->addUserStyleSheet(userStyle);
     m_document->addUserJavaScript(userScript);
     m_document->load(content);
@@ -504,21 +503,6 @@ bool Book::writeToPng(plutobook_stream_write_callback_t callback, void* closure,
     ImageCanvas canvas(width, height, format);
     renderDocument(canvas, 0, 0, width, height);
     return canvas.writeToPng(callback, closure);
-}
-
-void Book::setCustomResourceFetcher(ResourceFetcher* fetcher)
-{
-    resourceLoader()->setCustomFetcher(fetcher);
-}
-
-ResourceFetcher* Book::customResourceFetcher()
-{
-    return resourceLoader()->customFetcher();
-}
-
-ResourceFetcher* Book::defaultResourceFetcher()
-{
-    return resourceLoader()->defaultFetcher();
 }
 
 Document* Book::buildIfNeeded() const
