@@ -181,6 +181,47 @@ constexpr float px = PLUTOBOOK_UNITS_PX;
 
 } // units
 
+class PLUTOBOOK_API ResourceData {
+public:
+    static ResourceData createWithCopy(const char* content, size_t contentLength, const std::string& mimeType, const std::string& textEncoding);
+    static ResourceData createWithoutCopy(const char* content, size_t contentLength, const std::string& mimeType, const std::string& textEncoding, plutobook_resource_destroy_func_t destroyFunc, void* closure);
+
+    ResourceData() : m_data(nullptr) {}
+    ResourceData(std::nullptr_t) : m_data(nullptr) {}
+    explicit ResourceData(plutobook_resource_data_t* data) : m_data(data) {}
+    ResourceData(ResourceData&& resource) : m_data(resource.release()) {}
+    ResourceData(const ResourceData& resource);
+    ~ResourceData();
+
+    /**
+     * @brief get
+     * @return
+     */
+    plutobook_resource_data_t* get() const { return m_data; }
+
+    /**
+     * @brief release
+     * @return
+     */
+    plutobook_resource_data_t* release();
+
+    ResourceData& operator=(std::nullptr_t);
+    ResourceData& operator=(const ResourceData& resource);
+    ResourceData& operator=(ResourceData&& resource);
+
+    void swap(ResourceData& resource);
+
+    const char* content() const;
+    size_t contentLength() const;
+    std::string_view mimeType() const;
+    std::string_view textEncoding() const;
+
+    bool isNull() const { return m_data == nullptr; }
+
+private:
+    plutobook_resource_data_t* m_data;
+};
+
 /**
  * @brief The ResourceFetcher class is an abstract base class for fetching resources from a URL.
  */
@@ -192,14 +233,11 @@ public:
     virtual ~ResourceFetcher() = default;
 
     /**
-     * @brief Fetches the content of a resource from the specified URL.
-     * @param url The URL of the resource to fetch.
-     * @param mimeType A reference to a string where the MIME type of the fetched content will be stored.
-     * @param textEncoding A reference to a string where the text encoding of the fetched content will be stored.
-     * @param content A reference to a vector where the fetched content will be stored as a sequence of characters.
-     * @return true if the resource was fetched successfully, false otherwise.
+     * @brief loadUrl
+     * @param url
+     * @return
      */
-    virtual bool loadUrl(const std::string& url, std::string& mimeType, std::string& textEncoding, std::vector<char>& content) = 0;
+    virtual ResourceData loadUrl(const std::string& url) = 0;
 };
 
 /**

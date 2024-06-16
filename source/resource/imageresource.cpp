@@ -1,5 +1,6 @@
 #include "imageresource.h"
 #include "textresource.h"
+#include "plutobook.hpp"
 #include "svgdocument.h"
 #include "stringutils.h"
 #include "graphicscontext.h"
@@ -31,12 +32,10 @@ namespace plutobook {
 
 RefPtr<ImageResource> ImageResource::create(ResourceFetcher* fetcher, const Url& url)
 {
-    std::string mimeType;
-    std::string textEncoding;
-    std::vector<char> content;
-    if(!ResourceLoader::loadUrl(url, mimeType, textEncoding, content, fetcher))
+    auto resource = ResourceLoader::loadUrl(url, fetcher);
+    if(resource.isNull())
         return nullptr;
-    auto image = decode(content.data(), content.size(), mimeType, textEncoding, fetcher, url.base());
+    auto image = decode(resource.content(), resource.contentLength(), resource.mimeType(), resource.textEncoding(), fetcher, url.base());
     if(image == nullptr) {
         spdlog::error("unable to decode image: {}", url.value());
         return nullptr;

@@ -239,6 +239,76 @@ void PDFCanvas::showPage()
     plutobook_pdf_canvas_show_page(m_canvas);
 }
 
+ResourceData ResourceData::createWithCopy(const char* content, size_t contentLength, const std::string& mimeType, const std::string& textEncoding)
+{
+    return ResourceData(plutobook_resource_data_create_with_copy(content, contentLength, mimeType.data(), textEncoding.data()));
+}
+
+ResourceData ResourceData::createWithoutCopy(const char* content, size_t contentLength, const std::string& mimeType, const std::string& textEncoding, plutobook_resource_destroy_func_t destroyFunc, void* closure)
+{
+    return ResourceData(plutobook_resource_data_create_without_copy(content, contentLength, mimeType.data(), textEncoding.data(), destroyFunc, closure));
+}
+
+ResourceData::ResourceData(const ResourceData& resource)
+    : m_data(plutobook_resource_data_reference(resource.get()))
+{
+}
+
+ResourceData::~ResourceData()
+{
+    plutobook_resource_data_destroy(m_data);
+}
+
+plutobook_resource_data_t* ResourceData::release()
+{
+    auto data = m_data;
+    m_data = nullptr;
+    return data;
+}
+
+ResourceData& ResourceData::operator=(std::nullptr_t)
+{
+    ResourceData(nullptr).swap(*this);
+    return *this;
+}
+
+ResourceData& ResourceData::operator=(const ResourceData& resource)
+{
+    ResourceData(resource).swap(*this);
+    return *this;
+}
+
+ResourceData& ResourceData::operator=(ResourceData&& resource)
+{
+    ResourceData(std::move(resource)).swap(*this);
+    return *this;
+}
+
+void ResourceData::swap(ResourceData& resource)
+{
+    std::swap(m_data, resource.m_data);
+}
+
+const char* ResourceData::content() const
+{
+    return plutobook_resource_data_get_content(m_data);
+}
+
+size_t ResourceData::contentLength() const
+{
+    return plutobook_resource_data_get_content_length(m_data);
+}
+
+std::string_view ResourceData::mimeType() const
+{
+    return plutobook_resource_data_get_mime_type(m_data);
+}
+
+std::string_view ResourceData::textEncoding() const
+{
+    return plutobook_resource_data_get_text_encoding(m_data);
+}
+
 Book::Book(const PageSize& size, const PageMargins& margins, MediaType media)
     : m_pageSize(size)
     , m_pageMargins(margins)
@@ -290,12 +360,10 @@ PageSize Book::pageSizeAt(uint32_t pageIndex) const
 bool Book::loadUrl(const std::string_view& url, const std::string_view& userStyle, const std::string_view& userScript)
 {
     auto completeUrl = ResourceLoader::completeUrl(url);
-    std::string mimeType;
-    std::string textEncoding;
-    std::vector<char> content;
-    if(!ResourceLoader::loadUrl(completeUrl, mimeType, textEncoding, content, m_customResourceFetcher))
+    auto resource = ResourceLoader::loadUrl(completeUrl, m_customResourceFetcher);
+    if(resource.isNull())
         return false;
-    return loadData(content.data(), content.size(), mimeType, textEncoding, userStyle, userScript, completeUrl.base());
+    return loadData(resource.content(), resource.contentLength(), resource.mimeType(), resource.textEncoding(), userStyle, userScript, completeUrl.base());
 }
 
 bool Book::loadData(const char* data, size_t length, const std::string_view& mimeType, const std::string_view& textEncoding, const std::string_view& userStyle, const std::string_view& userScript, const std::string_view& baseUrl)

@@ -16,85 +16,12 @@
 
 namespace plutobook {
 
-class DefaultResourceFetcher final : public ResourceFetcher {
-public:
-    DefaultResourceFetcher();
-    ~DefaultResourceFetcher() final;
+using ByteArray = std::vector<char>;
 
-    bool loadUrl(const std::string& url, std::string& mimeType, std::string& textEncoding, std::vector<char>& content) final;
-};
-
-#ifdef PLUTOBOOK_HAS_CURL
-
-DefaultResourceFetcher::DefaultResourceFetcher()
+static void ByteArrayDestroy(void* data)
 {
-    curl_global_init(CURL_GLOBAL_ALL);
+    delete (ByteArray*)(data);
 }
-
-DefaultResourceFetcher::~DefaultResourceFetcher()
-{
-    curl_global_cleanup();
-}
-
-static size_t writeCallback(char* contents, size_t blockSize, size_t numberOfBlocks, std::vector<char>* response)
-{
-    size_t totalSize = blockSize * numberOfBlocks;
-    response->insert(response->end(), contents, contents + totalSize);
-    return totalSize;
-}
-
-static void parseContentType(std::string_view input, std::string& mimeType, std::string& textEncoding);
-
-bool DefaultResourceFetcher::loadUrl(const std::string& url, std::string& mimeType, std::string& textEncoding, std::vector<char>& content)
-{
-    auto curl = curl_easy_init();
-    curl_easy_setopt(curl, CURLOPT_URL, url.data());
-    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, writeCallback);
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &content);
-    curl_easy_setopt(curl, CURLOPT_USERAGENT, "PlutoBook/" PLUTOBOOK_VERSION_STRING);
-    curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
-    curl_easy_setopt(curl, CURLOPT_SSL_OPTIONS, CURLSSLOPT_NATIVE_CA);
-    auto response = curl_easy_perform(curl);
-    if(response == CURLE_OK) {
-        const char* contentType = nullptr;
-        auto response = curl_easy_getinfo(curl, CURLINFO_CONTENT_TYPE, &contentType);
-        if(response == CURLE_OK && contentType) {
-            parseContentType(contentType, mimeType, textEncoding);
-        }
-    }
-
-    curl_easy_cleanup(curl);
-    if(response == CURLE_OK)
-        return true;
-    spdlog::error("curl error: {}", curl_easy_strerror(response));
-    return false;
-}
-
-#else
-
-DefaultResourceFetcher::DefaultResourceFetcher() = default;
-DefaultResourceFetcher::~DefaultResourceFetcher() = default;
-
-static std::string percentDecode(std::string_view input);
-
-bool DefaultResourceFetcher::loadUrl(const std::string& url, std::string& mimeType, std::string& textEncoding, std::vector<char>& content)
-{
-    std::string_view input(url);
-    if(!startswith(input, "file://", false))
-        return false;
-    input.remove_prefix(7);
-    auto filename = percentDecode(input.substr(0, input.rfind('?')));
-    std::ifstream in(filename, std::ios::binary);
-    if(!in.is_open() || !in.good()) {
-        spdlog::error("unable to open file: {}", filename);
-        return false;
-    }
-
-    content.assign(std::istreambuf_iterator<char>(in), std::istreambuf_iterator<char>());
-    return true;
-}
-
-#endif // PLUTOBOOK_HAS_CURL
 
 static void parseContentType(std::string_view input, std::string& mimeType, std::string& textEncoding)
 {
@@ -143,7 +70,7 @@ static const char base64DecMap[128] = {
     0x31, 0x32, 0x33, 0x00, 0x00, 0x00, 0x00, 0x00
 };
 
-static bool base64Decode(const std::string_view& input, std::vector<char>& output)
+static bool base64Decode(const std::string_view& input, ByteArray& output)
 {
     output.resize(input.length());
     size_t equalsSignCount = 0;
@@ -208,17 +135,23 @@ static std::string percentDecode(std::string_view input)
     return output;
 }
 
-static bool loadDataUrl(std::string& mimeType, std::string& textEncoding, std::vector<char>& output, std::string_view input)
+static ResourceData loadDataUrl(std::string_view input)
 {
     assert(startswith(input, "data:", false));
     input.remove_prefix(5);
     auto headerEnd = input.find(',');
     if(headerEnd == std::string_view::npos)
-        return false;
+        return nullptr;
+
     auto header = input.substr(0, headerEnd);
     auto mediaTypeEnd = header.rfind(';');
-    if(mediaTypeEnd == std::string_view::npos)
+    if(mediaTypeEnd == std::string_view::npos) {
         mediaTypeEnd = header.length();
+    }
+
+    std::string mimeType;
+    std::string textEncoding;
+    ByteArray* content = new ByteArray;
     auto mediaType = header.substr(0, mediaTypeEnd);
     parseContentType(mediaType, mimeType, textEncoding);
     if(mimeType.empty() && textEncoding.empty()) {
@@ -226,18 +159,24 @@ static bool loadDataUrl(std::string& mimeType, std::string& textEncoding, std::v
         textEncoding.assign("US-ASCII");
     }
 
+    std::string_view formatType;
     input.remove_prefix(headerEnd + 1);
     if(mediaTypeEnd < header.length()) {
-        auto formatType = header.substr(mediaTypeEnd + 1);
+        formatType = header.substr(mediaTypeEnd + 1);
         stripLeadingAndTrailingSpaces(formatType);
-        if(equals(formatType, "base64", false)) {
-            return base64Decode(input, output);
-        }
     }
 
-    output.reserve(input.length());
-    output.assign(input.begin(), input.end());
-    return true;
+    if(equals(formatType, "base64", false)) {
+        if(!base64Decode(input, *content)) {
+            ByteArrayDestroy(content);
+            return nullptr;
+        }
+    } else {
+        content->reserve(input.length());
+        content->assign(input.begin(), input.end());
+    }
+
+    return ResourceData::createWithoutCopy(content->data(), content->size(), mimeType, textEncoding, ByteArrayDestroy, content);
 }
 
 static bool mimeTypeFromPath(std::string& mimeType, const std::string_view& path)
@@ -268,19 +207,120 @@ static bool mimeTypeFromPath(std::string& mimeType, const std::string_view& path
     return true;
 }
 
-bool ResourceLoader::loadUrl(const Url& url, std::string& mimeType, std::string& textEncoding, std::vector<char>& content, ResourceFetcher* customFetcher)
+class DefaultResourceFetcher final : public ResourceFetcher {
+public:
+    DefaultResourceFetcher();
+    ~DefaultResourceFetcher() final;
+
+    ResourceData loadUrl(const std::string& url) final;
+};
+
+#ifdef PLUTOBOOK_HAS_CURL
+
+DefaultResourceFetcher::DefaultResourceFetcher()
 {
-    if(url.protocolIs("data"))
-        return loadDataUrl(mimeType, textEncoding, content, percentDecode(url.value()));
-    auto fetcher = customFetcher ? customFetcher : defaultResourceFetcher();
-    if(!fetcher->loadUrl(url.value(), mimeType, textEncoding, content)) {
-        spdlog::error("unable to load url: {}", url.value());
-        return false;
+    curl_global_init(CURL_GLOBAL_ALL);
+}
+
+DefaultResourceFetcher::~DefaultResourceFetcher()
+{
+    curl_global_cleanup();
+}
+
+static size_t writeCallback(char* contents, size_t blockSize, size_t numberOfBlocks, ByteArray* response)
+{
+    size_t totalSize = blockSize * numberOfBlocks;
+    response->insert(response->end(), contents, contents + totalSize);
+    return totalSize;
+}
+
+ResourceData DefaultResourceFetcher::loadUrl(const std::string& url)
+{
+    if(startswith(url, "data:", false))
+        return loadDataUrl(percentDecode(url));
+    std::string mimeType;
+    std::string textEncoding;
+    ByteArray* content = new ByteArray;
+
+    auto curl = curl_easy_init();
+    curl_easy_setopt(curl, CURLOPT_URL, url.data());
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, writeCallback);
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, content);
+    curl_easy_setopt(curl, CURLOPT_USERAGENT, "PlutoBook/" PLUTOBOOK_VERSION_STRING);
+    curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+    curl_easy_setopt(curl, CURLOPT_SSL_OPTIONS, CURLSSLOPT_NATIVE_CA);
+    auto response = curl_easy_perform(curl);
+    if(response == CURLE_OK) {
+        const char* contentType = nullptr;
+        auto response = curl_easy_getinfo(curl, CURLINFO_CONTENT_TYPE, &contentType);
+        if(response == CURLE_OK && contentType) {
+            parseContentType(contentType, mimeType, textEncoding);
+        }
+
+        if(mimeType.empty()) {
+            mimeTypeFromPath(mimeType, percentDecode(url.substr(0, url.rfind('?'))));
+        }
     }
 
-    if(mimeType.empty() && textEncoding.empty())
-        mimeTypeFromPath(mimeType, percentDecode(url.path()));
-    return true;
+    curl_easy_cleanup(curl);
+    if(response == CURLE_OK)
+        return ResourceData::createWithoutCopy(content->data(), content->size(), mimeType, textEncoding, ByteArrayDestroy, content);
+    delete content;
+    spdlog::error("curl error: {}", curl_easy_strerror(response));
+    return nullptr;
+}
+
+#else
+
+DefaultResourceFetcher::DefaultResourceFetcher() = default;
+DefaultResourceFetcher::~DefaultResourceFetcher() = default;
+
+ResourceData DefaultResourceFetcher::loadUrl(const std::string& url)
+{
+    if(startswith(url, "data:", false))
+        return loadDataUrl(percentDecode(url));
+    std::string_view input(url);
+    if(!startswith(input, "file://", false))
+        return nullptr;
+    input.remove_prefix(7);
+    auto filename = percentDecode(input.substr(0, input.rfind('?')));
+    std::ifstream in(filename, std::ios::binary);
+    if(!in.is_open() || !in.good()) {
+        spdlog::error("unable to open file: {}", filename);
+        return nullptr;
+    }
+
+    std::string mimeType;
+    std::string textEncoding;
+    mimeTypeFromPath(mimeType, filename);
+
+    in.seekg(0, std::ios::end);
+    std::streamsize length = in.tellg();
+    in.seekg(0, std::ios::beg);
+
+    auto content = (char*)(std::malloc(length));
+    if(!in.read(content, length)) {
+        spdlog::error("unable to read file: {}", filename);
+        std::free(content);
+        return nullptr;
+    }
+
+    return ResourceData::createWithoutCopy(content, length, mimeType, textEncoding, std::free, content);
+}
+
+#endif // PLUTOBOOK_HAS_CURL
+
+ResourceData ResourceLoader::loadUrl(const Url& url, ResourceFetcher* customFetcher)
+{
+    if(url.protocolIs("data"))
+        return loadDataUrl(percentDecode(url.value()));
+    auto fetcher = customFetcher ? customFetcher : defaultResourceFetcher();
+    auto resource = fetcher->loadUrl(url.value());
+    if(resource.isNull()) {
+        spdlog::error("unable to load url: {}", url.value());
+    }
+
+    return resource;
 }
 
 Url ResourceLoader::baseUrl()

@@ -3,8 +3,7 @@
 
 #include "pointer.h"
 
-#include <string>
-#include <vector>
+#include <string_view>
 
 namespace plutobook {
 
@@ -26,10 +25,11 @@ protected:
 };
 
 class ResourceFetcher;
+class ResourceData;
 
 class ResourceLoader {
 public:
-    static bool loadUrl(const Url& url, std::string& mimeType, std::string& textEncoding, std::vector<char>& content, ResourceFetcher* customFetcher = nullptr);
+    static ResourceData loadUrl(const Url& url, ResourceFetcher* customFetcher = nullptr);
     static Url completeUrl(const std::string_view& value);
     static Url baseUrl();
 };

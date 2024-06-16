@@ -1,4 +1,5 @@
 #include "textresource.h"
+#include "plutobook.hpp"
 #include "stringutils.h"
 #include "url.h"
 
@@ -8,12 +9,10 @@ namespace plutobook {
 
 RefPtr<TextResource> TextResource::create(ResourceFetcher* fetcher, const Url& url)
 {
-    std::string mimeType;
-    std::string textEncoding;
-    std::vector<char> content;
-    if(!ResourceLoader::loadUrl(url, mimeType, textEncoding, content, fetcher))
+    auto resource = ResourceLoader::loadUrl(url, fetcher);
+    if(resource.isNull())
         return nullptr;
-    auto text = decode(content.data(), content.size(), mimeType, textEncoding);
+    auto text = decode(resource.content(), resource.contentLength(), resource.mimeType(), resource.textEncoding());
     if(text.empty()) {
         spdlog::error("unable to decode text: {}", url.value());
         return nullptr;

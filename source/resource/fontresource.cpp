@@ -1,4 +1,5 @@
 #include "fontresource.h"
+#include "plutobook.hpp"
 #include "document.h"
 #include "stringutils.h"
 #include "boxstyle.h"
@@ -17,17 +18,17 @@ namespace plutobook {
 
 class FTFontData {
 public:
-    static FTFontData* create(std::vector<char> data);
+    static FTFontData* create(ResourceData resource);
     FT_Face face() const { return m_face; }
     ~FTFontData() { FT_Done_Face(m_face); }
 
 private:
-    FTFontData(FT_Face face, std::vector<char> data) : m_face(face), m_data(std::move(data)) {}
+    FTFontData(FT_Face face, ResourceData resource) : m_face(face), m_resource(std::move(resource)) {}
     FT_Face m_face;
-    std::vector<char> m_data;
+    ResourceData m_resource;
 };
 
-FTFontData* FTFontData::create(std::vector<char> data)
+FTFontData* FTFontData::create(ResourceData resource)
 {
     static FT_Library ftLibrary;
     if(ftLibrary == nullptr) {
@@ -37,12 +38,12 @@ FTFontData* FTFontData::create(std::vector<char> data)
     }
 
     FT_Face ftFace = nullptr;
-    if(auto error = FT_New_Memory_Face(ftLibrary, (FT_Byte*)(data.data()), data.size(), 0, &ftFace)) {
+    if(auto error = FT_New_Memory_Face(ftLibrary, (FT_Byte*)(resource.content()), resource.contentLength(), 0, &ftFace)) {
         spdlog::error("freetype error: {}", FT_Error_String(error));
         return nullptr;
     }
 
-    return new FTFontData(ftFace, std::move(data));
+    return new FTFontData(ftFace, std::move(resource));
 }
 
 static void FTFontDataDestroy(void* data)
@@ -52,12 +53,10 @@ static void FTFontDataDestroy(void* data)
 
 RefPtr<FontResource> FontResource::create(ResourceFetcher* fetcher, const Url& url)
 {
-    std::string mimeType;
-    std::string textEncoding;
-    std::vector<char> content;
-    if(!ResourceLoader::loadUrl(url, mimeType, textEncoding, content, fetcher))
+    auto resource = ResourceLoader::loadUrl(url, fetcher);
+    if(resource.isNull())
         return nullptr;
-    auto fontData = FTFontData::create(std::move(content));
+    auto fontData = FTFontData::create(std::move(resource));
     if(fontData == nullptr) {
         spdlog::error("unable to decode font: {}", url.value());
         return nullptr;

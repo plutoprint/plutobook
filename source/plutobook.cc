@@ -307,13 +307,15 @@ struct _plutobook_resource_data {
     char* mime_type;
     char* text_encoding;
     char* content;
+    plutobook_resource_destroy_func_t destroy_func;
+    void* closure;
 };
 
-plutobook_resource_data_t* plutobook_resource_data_create(const char* content, unsigned int content_length, const char* mime_type, const char* text_encoding)
+plutobook_resource_data_t* plutobook_resource_data_create_with_copy(const char* content, unsigned int content_length, const char* mime_type, const char* text_encoding)
 {
     auto mime_type_length = std::strlen(mime_type) + 1ul;
     auto text_encoding_length = std::strlen(text_encoding) + 1ul;
-    auto resource = (plutobook_resource_data_t*)(std::malloc(mime_type_length + text_encoding_length + content_length + sizeof(plutobook_resource_data_t)));
+    auto resource = (plutobook_resource_data_t*)(std::malloc(mime_type_length + text_encoding_length + sizeof(plutobook_resource_data_t)));
     if(resource == nullptr)
         return nullptr;
     resource->ref_count = 1u;
@@ -321,9 +323,30 @@ plutobook_resource_data_t* plutobook_resource_data_create(const char* content, u
     resource->mime_type = (char*)(resource + 1);
     resource->text_encoding = resource->mime_type + mime_type_length;
     resource->content = resource->text_encoding + text_encoding_length;
+    resource->destroy_func = nullptr;
+    resource->closure = nullptr;
     std::memcpy(resource->mime_type, mime_type, mime_type_length);
     std::memcpy(resource->text_encoding, text_encoding, text_encoding_length);
     std::memcpy(resource->content, content, content_length);
+    return resource;
+}
+
+plutobook_resource_data_t* plutobook_resource_data_create_without_copy(const char* content, unsigned int content_length, const char* mime_type, const char* text_encoding, plutobook_resource_destroy_func_t destroy_func, void* closure)
+{
+    auto mime_type_length = std::strlen(mime_type) + 1ul;
+    auto text_encoding_length = std::strlen(text_encoding) + 1ul;
+    auto resource = (plutobook_resource_data_t*)(std::malloc(mime_type_length + text_encoding_length + sizeof(plutobook_resource_data_t)));
+    if(resource == nullptr)
+        return nullptr;
+    resource->ref_count = 1u;
+    resource->content_length = content_length;
+    resource->mime_type = (char*)(resource + 1);
+    resource->text_encoding = resource->mime_type + mime_type_length;
+    resource->content = (char*)(content);
+    resource->destroy_func = destroy_func;
+    resource->closure = closure;
+    std::memcpy(resource->mime_type, mime_type, mime_type_length);
+    std::memcpy(resource->text_encoding, text_encoding, text_encoding_length);
     return resource;
 }
 
@@ -340,6 +363,8 @@ void plutobook_resource_data_destroy(plutobook_resource_data_t* resource)
     if(resource == nullptr)
         return;
     if(--resource->ref_count == 0) {
+        if(resource->destroy_func)
+            resource->destroy_func(resource->closure);
         std::free(resource);
     }
 }
@@ -381,17 +406,12 @@ const char* plutobook_resource_data_get_text_encoding(const plutobook_resource_d
 
 plutobook_resource_data_t* plutobook_default_resource_fetcher_load_url(const char* url)
 {
-    std::string mimeType;
-    std::string textEncoding;
-    std::vector<char> content;
-    if(!plutobook::defaultResourceFetcher()->loadUrl(url, mimeType, textEncoding, content))
-        return nullptr;
-    return plutobook_resource_data_create(content.data(), content.size(), mimeType.data(), textEncoding.data());
+    return plutobook::defaultResourceFetcher()->loadUrl(url).release();
 }
 
 struct _plutobook final : public plutobook::ResourceFetcher {
     _plutobook(plutobook_page_size_t size, plutobook_page_margins_t margins, plutobook_media_type_t media);
-    bool loadUrl(const std::string& url, std::string& mimeType, std::string& textEncoding, std::vector<char>& content) final;
+    plutobook::ResourceData loadUrl(const std::string& url) final;
     plutobook::Book book;
     plutobook_resource_load_callback_t custom_resource_fetcher_callback{nullptr};
     void* custom_resource_fetcher_closure{nullptr};
@@ -402,23 +422,16 @@ _plutobook::_plutobook(plutobook_page_size_t size, plutobook_page_margins_t marg
 {
 }
 
-bool _plutobook::loadUrl(const std::string& url, std::string& mimeType, std::string& textEncoding, std::vector<char>& content)
+plutobook::ResourceData _plutobook::loadUrl(const std::string& url)
 {
     if(custom_resource_fetcher_callback == nullptr)
-        return plutobook::defaultResourceFetcher()->loadUrl(url, mimeType, textEncoding, content);
-    auto resource = custom_resource_fetcher_callback(custom_resource_fetcher_closure, url.data());
-    if(resource == nullptr)
-        return false;
-    mimeType.assign(resource->mime_type);
-    textEncoding.assign(resource->text_encoding);
-    content.assign(resource->content, resource->content + resource->content_length);
-    plutobook_resource_data_destroy(resource);
-    return true;
+        return plutobook::defaultResourceFetcher()->loadUrl(url);
+    return plutobook::ResourceData(custom_resource_fetcher_callback(custom_resource_fetcher_closure, url.data()));
 }
 
 plutobook_t* plutobook_create(plutobook_page_size_t size, plutobook_page_margins_t margins, plutobook_media_type_t media)
 {
-    return new plutobook_t(size, margins, media);
+    return new _plutobook(size, margins, media);
 }
 
 void plutobook_destroy(plutobook_t* book)
