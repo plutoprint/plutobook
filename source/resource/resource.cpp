@@ -18,6 +18,11 @@ namespace plutobook {
 
 using ByteArray = std::vector<char>;
 
+static ByteArray* ByteArrayCreate(size_t size = 0)
+{
+    return new ByteArray(size);
+}
+
 static void ByteArrayDestroy(void* data)
 {
     delete (ByteArray*)(data);
@@ -150,7 +155,6 @@ static ResourceData loadDataUrl(std::string_view input)
 
     std::string mimeType;
     std::string textEncoding;
-    ByteArray* content = new ByteArray;
     auto mediaType = header.substr(0, mediaTypeEnd);
     parseContentType(mediaType, mimeType, textEncoding);
     if(mimeType.empty() && textEncoding.empty()) {
@@ -165,6 +169,7 @@ static ResourceData loadDataUrl(std::string_view input)
         stripLeadingAndTrailingSpaces(formatType);
     }
 
+    auto content = ByteArrayCreate();
     if(!equals(formatType, "base64", false)) {
         content->reserve(input.length());
         content->assign(input.begin(), input.end());
@@ -239,7 +244,7 @@ ResourceData DefaultResourceFetcher::loadUrl(const std::string& url)
         return loadDataUrl(percentDecode(url));
     std::string mimeType;
     std::string textEncoding;
-    ByteArray* content = new ByteArray;
+    auto content = ByteArrayCreate();
 
     auto curl = curl_easy_init();
     curl_easy_setopt(curl, CURLOPT_URL, url.data());
@@ -264,7 +269,7 @@ ResourceData DefaultResourceFetcher::loadUrl(const std::string& url)
     curl_easy_cleanup(curl);
     if(response == CURLE_OK)
         return ResourceData::createWithoutCopy(content->data(), content->size(), mimeType, textEncoding, ByteArrayDestroy, content);
-    delete content;
+    ByteArrayDestroy(content);
     spdlog::error("curl error: {}", curl_easy_strerror(response));
     return ResourceData();
 }
@@ -280,31 +285,25 @@ ResourceData DefaultResourceFetcher::loadUrl(const std::string& url)
         return loadDataUrl(percentDecode(url));
     std::string_view input(url);
     if(!startswith(input, "file://", false))
-        return nullptr;
+        return ResourceData();
     input.remove_prefix(7);
     auto filename = percentDecode(input.substr(0, input.rfind('?')));
-    std::ifstream in(filename, std::ios::binary);
+    std::ifstream in(filename, std::ios::ate | std::ios::binary);
     if(!in.is_open() || !in.good()) {
         spdlog::error("unable to open file: {}", filename);
-        return nullptr;
+        return ResourceData();
     }
 
     std::string mimeType;
     std::string textEncoding;
     mimeTypeFromPath(mimeType, filename);
 
-    in.seekg(0, std::ios::end);
-    std::streamsize length = in.tellg();
+    auto content = ByteArrayCreate(in.tellg());
     in.seekg(0, std::ios::beg);
+    in.read(content->data(), content->size());
+    in.close();
 
-    auto content = (char*)(std::malloc(length));
-    if(!in.read(content, length)) {
-        spdlog::error("unable to read file: {}", filename);
-        std::free(content);
-        return nullptr;
-    }
-
-    return ResourceData::createWithoutCopy(content, length, mimeType, textEncoding, std::free, content);
+    return ResourceData::createWithoutCopy(content->data(), content->size(), mimeType, textEncoding, ByteArrayDestroy, content);
 }
 
 #endif // PLUTOBOOK_HAS_CURL
