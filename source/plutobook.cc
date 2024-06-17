@@ -307,7 +307,7 @@ struct _plutobook_resource_data {
     char* mime_type;
     char* text_encoding;
     char* content;
-    plutobook_resource_destroy_func_t destroy_func;
+    plutobook_resource_destroy_callback_t destroy_callback;
     void* closure;
 };
 
@@ -323,7 +323,7 @@ static plutobook_resource_data_t* plutobook_resource_data_create(unsigned int co
     resource->mime_type = (char*)(resource + 1);
     resource->text_encoding = resource->mime_type + mime_type_length;
     resource->content = resource->text_encoding + text_encoding_length;
-    resource->destroy_func = nullptr;
+    resource->destroy_callback = nullptr;
     resource->closure = nullptr;
     std::memcpy(resource->mime_type, mime_type, mime_type_length);
     std::memcpy(resource->text_encoding, text_encoding, text_encoding_length);
@@ -339,14 +339,14 @@ plutobook_resource_data_t* plutobook_resource_data_create_with_copy(const char* 
     return resource;
 }
 
-plutobook_resource_data_t* plutobook_resource_data_create_without_copy(const char* content, unsigned int content_length, const char* mime_type, const char* text_encoding, plutobook_resource_destroy_func_t destroy_func, void* closure)
+plutobook_resource_data_t* plutobook_resource_data_create_without_copy(const char* content, unsigned int content_length, const char* mime_type, const char* text_encoding, plutobook_resource_destroy_callback_t destroy_callback, void* closure)
 {
     auto resource = plutobook_resource_data_create(0, mime_type, text_encoding);
     if(resource == nullptr)
         return nullptr;
     resource->content_length = content_length;
     resource->content = (char*)(content);
-    resource->destroy_func = destroy_func;
+    resource->destroy_callback = destroy_callback;
     resource->closure = closure;
     return resource;
 }
@@ -364,8 +364,8 @@ void plutobook_resource_data_destroy(plutobook_resource_data_t* resource)
     if(resource == nullptr)
         return;
     if(--resource->ref_count == 0) {
-        if(resource->destroy_func)
-            resource->destroy_func(resource->closure);
+        if(resource->destroy_callback)
+            resource->destroy_callback(resource->closure);
         std::free(resource);
     }
 }

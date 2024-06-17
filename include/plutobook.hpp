@@ -184,7 +184,7 @@ constexpr float px = PLUTOBOOK_UNITS_PX;
 class PLUTOBOOK_API ResourceData {
 public:
     static ResourceData createWithCopy(const char* content, size_t contentLength, const std::string& mimeType, const std::string& textEncoding);
-    static ResourceData createWithoutCopy(const char* content, size_t contentLength, const std::string& mimeType, const std::string& textEncoding, plutobook_resource_destroy_func_t destroyFunc, void* closure);
+    static ResourceData createWithoutCopy(const char* content, size_t contentLength, const std::string& mimeType, const std::string& textEncoding, plutobook_resource_destroy_callback_t destroyCallback, void* closure);
 
     ResourceData() : m_data(nullptr) {}
     ResourceData(std::nullptr_t) : m_data(nullptr) {}

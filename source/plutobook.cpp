@@ -244,9 +244,9 @@ ResourceData ResourceData::createWithCopy(const char* content, size_t contentLen
     return ResourceData(plutobook_resource_data_create_with_copy(content, contentLength, mimeType.data(), textEncoding.data()));
 }
 
-ResourceData ResourceData::createWithoutCopy(const char* content, size_t contentLength, const std::string& mimeType, const std::string& textEncoding, plutobook_resource_destroy_func_t destroyFunc, void* closure)
+ResourceData ResourceData::createWithoutCopy(const char* content, size_t contentLength, const std::string& mimeType, const std::string& textEncoding, plutobook_resource_destroy_callback_t destroyCallback, void* closure)
 {
-    return ResourceData(plutobook_resource_data_create_without_copy(content, contentLength, mimeType.data(), textEncoding.data(), destroyFunc, closure));
+    return ResourceData(plutobook_resource_data_create_without_copy(content, contentLength, mimeType.data(), textEncoding.data(), destroyCallback, closure));
 }
 
 ResourceData::ResourceData(const ResourceData& resource)
