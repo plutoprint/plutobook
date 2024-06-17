@@ -183,21 +183,99 @@ constexpr float px = PLUTOBOOK_UNITS_PX;
 
 class PLUTOBOOK_API ResourceData {
 public:
+    /**
+     * @brief createWithCopy
+     * @param content
+     * @param contentLength
+     * @param mimeType
+     * @param textEncoding
+     * @return
+     */
     static ResourceData createWithCopy(const char* content, size_t contentLength, const std::string& mimeType, const std::string& textEncoding);
+
+    /**
+     * @brief createWithoutCopy
+     * @param content
+     * @param contentLength
+     * @param mimeType
+     * @param textEncoding
+     * @param destroyCallback
+     * @param closure
+     * @return
+     */
     static ResourceData createWithoutCopy(const char* content, size_t contentLength, const std::string& mimeType, const std::string& textEncoding, plutobook_resource_destroy_callback_t destroyCallback, void* closure);
 
-    ResourceData() : m_data(nullptr) {}
-    ResourceData(std::nullptr_t) : m_data(nullptr) {}
+    /**
+     * @brief ResourceData
+     */
+    ResourceData() = default;
+
+    /**
+     * @brief ResourceData
+     * @param data
+     */
     explicit ResourceData(plutobook_resource_data_t* data) : m_data(data) {}
+
+    /**
+     * @brief ResourceData
+     * @param resource
+     */
     ResourceData(ResourceData&& resource) : m_data(resource.release()) {}
+
+    /**
+     * @brief ResourceData
+     * @param resource
+     */
     ResourceData(const ResourceData& resource);
+
+    /**
+     * @brief ~ResourceData
+     */
     ~ResourceData();
 
     /**
-     * @brief get
+     * @brief Copy assignment operator
+     * @param resource
      * @return
      */
-    plutobook_resource_data_t* get() const { return m_data; }
+    ResourceData& operator=(const ResourceData& resource);
+
+    /**
+     * @brief Move assignment operator
+     * @param resource
+     * @return
+     */
+    ResourceData& operator=(ResourceData&& resource);
+
+    /**
+     * @brief swap
+     * @param resource
+     */
+    void swap(ResourceData& resource);
+
+    /**
+     * @brief content
+     * @return
+     */
+    const char* content() const;
+
+    /**
+     * @brief contentLength
+     * @return
+     */
+    size_t contentLength() const;
+
+    /**
+     * @brief mimeType
+     * @return
+     */
+    std::string_view mimeType() const;
+
+    /**
+     * @brief textEncoding
+     * @return
+     */
+    std::string_view textEncoding() const;
 
     /**
      * @brief release
@@ -205,21 +283,20 @@ public:
      */
     plutobook_resource_data_t* release();
 
-    ResourceData& operator=(std::nullptr_t);
-    ResourceData& operator=(const ResourceData& resource);
-    ResourceData& operator=(ResourceData&& resource);
+    /**
+     * @brief data
+     * @return
+     */
+    plutobook_resource_data_t* data() const { return m_data; }
 
-    void swap(ResourceData& resource);
-
-    const char* content() const;
-    size_t contentLength() const;
-    std::string_view mimeType() const;
-    std::string_view textEncoding() const;
-
+    /**
+     * @brief isNull
+     * @return
+     */
     bool isNull() const { return m_data == nullptr; }
 
 private:
-    plutobook_resource_data_t* m_data;
+    plutobook_resource_data_t* m_data{nullptr};
 };
 
 /**

@@ -250,26 +250,13 @@ ResourceData ResourceData::createWithoutCopy(const char* content, size_t content
 }
 
 ResourceData::ResourceData(const ResourceData& resource)
-    : m_data(plutobook_resource_data_reference(resource.get()))
+    : m_data(plutobook_resource_data_reference(resource.data()))
 {
 }
 
 ResourceData::~ResourceData()
 {
     plutobook_resource_data_destroy(m_data);
-}
-
-plutobook_resource_data_t* ResourceData::release()
-{
-    auto data = m_data;
-    m_data = nullptr;
-    return data;
-}
-
-ResourceData& ResourceData::operator=(std::nullptr_t)
-{
-    ResourceData(nullptr).swap(*this);
-    return *this;
 }
 
 ResourceData& ResourceData::operator=(const ResourceData& resource)
@@ -307,6 +294,13 @@ std::string_view ResourceData::mimeType() const
 std::string_view ResourceData::textEncoding() const
 {
     return plutobook_resource_data_get_text_encoding(m_data);
+}
+
+plutobook_resource_data_t* ResourceData::release()
+{
+    auto data = m_data;
+    m_data = nullptr;
+    return data;
 }
 
 Book::Book(const PageSize& size, const PageMargins& margins, MediaType media)

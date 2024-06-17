@@ -141,8 +141,7 @@ static ResourceData loadDataUrl(std::string_view input)
     input.remove_prefix(5);
     auto headerEnd = input.find(',');
     if(headerEnd == std::string_view::npos)
-        return nullptr;
-
+        return ResourceData();
     auto header = input.substr(0, headerEnd);
     auto mediaTypeEnd = header.rfind(';');
     if(mediaTypeEnd == std::string_view::npos) {
@@ -166,14 +165,14 @@ static ResourceData loadDataUrl(std::string_view input)
         stripLeadingAndTrailingSpaces(formatType);
     }
 
-    if(equals(formatType, "base64", false)) {
-        if(!base64Decode(input, *content)) {
-            ByteArrayDestroy(content);
-            return nullptr;
-        }
-    } else {
+    if(!equals(formatType, "base64", false)) {
         content->reserve(input.length());
         content->assign(input.begin(), input.end());
+    } else {
+        if(!base64Decode(input, *content)) {
+            ByteArrayDestroy(content);
+            return ResourceData();
+        }
     }
 
     return ResourceData::createWithoutCopy(content->data(), content->size(), mimeType, textEncoding, ByteArrayDestroy, content);
@@ -267,7 +266,7 @@ ResourceData DefaultResourceFetcher::loadUrl(const std::string& url)
         return ResourceData::createWithoutCopy(content->data(), content->size(), mimeType, textEncoding, ByteArrayDestroy, content);
     delete content;
     spdlog::error("curl error: {}", curl_easy_strerror(response));
-    return nullptr;
+    return ResourceData();
 }
 
 #else
