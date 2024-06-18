@@ -163,13 +163,13 @@ static ResourceData loadDataUrl(std::string_view input)
     }
 
     std::string_view formatType;
-    input.remove_prefix(headerEnd + 1);
     if(mediaTypeEnd < header.length()) {
         formatType = header.substr(mediaTypeEnd + 1);
         stripLeadingAndTrailingSpaces(formatType);
     }
 
     auto content = ByteArrayCreate();
+    input.remove_prefix(headerEnd + 1);
     if(!equals(formatType, "base64", false)) {
         content->reserve(input.length());
         content->assign(input.begin(), input.end());

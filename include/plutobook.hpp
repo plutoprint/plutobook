@@ -203,7 +203,8 @@ public:
      * @param closure
      * @return
      */
-    static ResourceData createWithoutCopy(const char* content, size_t contentLength, const std::string& mimeType, const std::string& textEncoding, plutobook_resource_destroy_callback_t destroyCallback, void* closure);
+    static ResourceData createWithoutCopy(const char* content, size_t contentLength, const std::string& mimeType, const std::string& textEncoding,
+        plutobook_resource_destroy_callback_t destroyCallback, void* closure);
 
     /**
      * @brief ResourceData
