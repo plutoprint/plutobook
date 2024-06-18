@@ -6,10 +6,10 @@
 #include "graphicscontext.h"
 #include "geometry.h"
 
-#include <spdlog/spdlog.h>
 #include <cairo.h>
 #include <cstring>
 #include <cmath>
+#include <iostream>
 
 #ifdef PLUTOBOOK_HAS_WEBP
 #include <webp/decode.h>
@@ -37,7 +37,7 @@ RefPtr<ImageResource> ImageResource::create(ResourceFetcher* fetcher, const Url&
         return nullptr;
     auto image = decode(resource.content(), resource.contentLength(), resource.mimeType(), resource.textEncoding(), fetcher, url.base());
     if(image == nullptr) {
-        spdlog::error("unable to decode image: {}", url.value());
+        std::cerr << "unable to decode image: " << url << std::endl;
         return nullptr;
     }
 
@@ -148,7 +148,7 @@ RefPtr<BitmapImage> BitmapImage::create(const char* data, size_t size)
     if(surface == nullptr)
         return nullptr;
     if(auto status = cairo_surface_status(surface)) {
-        spdlog::error("cairo error: {}", cairo_status_to_string(status));
+        std::cerr << "cairo error: " << cairo_status_to_string(status) << std::endl;
         cairo_surface_destroy(surface);
         return nullptr;
     }
@@ -194,7 +194,7 @@ cairo_surface_t* BitmapImage::decode(const char* data, size_t size)
         int width, height;
         auto tj = tjInitDecompress();
         if(!tj || tjDecompressHeader(tj, (uint8_t*)(data), size, &width, &height) == -1) {
-            spdlog::error("turbojpeg error: {}", tjGetErrorStr());
+            std::cerr << "turbojpeg error: " << tjGetErrorStr2(tj) << std::endl;
             tjDestroy(tj);
             return nullptr;
         }
@@ -214,12 +214,12 @@ cairo_surface_t* BitmapImage::decode(const char* data, size_t size)
     if(size > 14 && std::memcmp(data, "RIFF", 4) == 0 && std::memcmp(data + 8, "WEBPVP", 6) == 0) {
         WebPDecoderConfig config;
         if(!WebPInitDecoderConfig(&config)) {
-            spdlog::error("webp error: WebPInitDecoderConfig failed");
+            std::cerr << "webp error: WebPInitDecoderConfig failed" << std::endl;
             return nullptr;
         }
 
         if(WebPGetFeatures((const uint8_t*)(data), size, &config.input) != VP8_STATUS_OK) {
-            spdlog::error("webp error: WebPGetFeatures failed");
+            std::cerr << "webp error: WebPGetFeatures failed" << std::endl;
             return nullptr;
         }
 
@@ -237,7 +237,7 @@ cairo_surface_t* BitmapImage::decode(const char* data, size_t size)
         config.output.height = surfaceHeight;
         config.output.is_external_memory = 1;
         if(WebPDecode((const uint8_t*)(data), size, &config) != VP8_STATUS_OK) {
-            spdlog::error("webp error: WebPDecode failed");
+            std::cerr << "webp error: WebPDecode failed" << std::endl;
             return nullptr;
         }
 
@@ -249,7 +249,7 @@ cairo_surface_t* BitmapImage::decode(const char* data, size_t size)
     int width, height, channels;
     auto imageData = stbi_load_from_memory((const stbi_uc*)(data), size, &width, &height, &channels, STBI_rgb_alpha);
     if(imageData == nullptr) {
-        spdlog::error("stbi error: {}", stbi_failure_reason());
+        std::cerr << "stbi error: " << stbi_failure_reason() << std::endl;
         return nullptr;
     }
 
@@ -291,7 +291,7 @@ RefPtr<SVGImage> SVGImage::create(const std::string_view& content, ResourceFetch
     if(!document->load(content))
         return nullptr;
     if(!document->rootElement()->isOfType(svgNs, svgTag)) {
-        spdlog::error("invalid svg root element");
+        std::cerr << "invalid svg root element" << std::endl;
         return nullptr;
     }
 

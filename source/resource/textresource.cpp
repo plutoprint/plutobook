@@ -3,7 +3,7 @@
 #include "stringutils.h"
 #include "url.h"
 
-#include <spdlog/spdlog.h>
+#include <iostream>
 
 namespace plutobook {
 
@@ -14,7 +14,7 @@ RefPtr<TextResource> TextResource::create(ResourceFetcher* fetcher, const Url& u
         return nullptr;
     auto text = decode(resource.content(), resource.contentLength(), resource.mimeType(), resource.textEncoding());
     if(text.empty()) {
-        spdlog::error("unable to decode text: {}", url.value());
+        std::cerr << "unable to decode text: " << url << std::endl;
         return nullptr;
     }
 

@@ -6,11 +6,11 @@
 
 #include <fontconfig/fontconfig.h>
 #include <fontconfig/fcfreetype.h>
-#include <spdlog/spdlog.h>
 
 #include <cairo-ft.h>
 #include <hb-ft.h>
 
+#include <iostream>
 #include <numbers>
 #include <cmath>
 
@@ -33,13 +33,13 @@ FTFontData* FTFontData::create(ResourceData resource)
     static FT_Library ftLibrary;
     if(ftLibrary == nullptr) {
         if(auto error = FT_Init_FreeType(&ftLibrary)) {
-            spdlog::error("freetype error: {}", FT_Error_String(error));
+            std::cerr << "freetype error: " << FT_Error_String(error) << std::endl;
         }
     }
 
     FT_Face ftFace = nullptr;
     if(auto error = FT_New_Memory_Face(ftLibrary, (FT_Byte*)(resource.content()), resource.contentLength(), 0, &ftFace)) {
-        spdlog::error("freetype error: {}", FT_Error_String(error));
+        std::cerr << "freetype error: " << FT_Error_String(error) << std::endl;
         return nullptr;
     }
 
@@ -58,7 +58,7 @@ RefPtr<FontResource> FontResource::create(ResourceFetcher* fetcher, const Url& u
         return nullptr;
     auto fontData = FTFontData::create(std::move(resource));
     if(fontData == nullptr) {
-        spdlog::error("unable to decode font: {}", url.value());
+        std::cerr << "unable to decode font: " << url << std::endl;
         return nullptr;
     }
 
@@ -66,7 +66,7 @@ RefPtr<FontResource> FontResource::create(ResourceFetcher* fetcher, const Url& u
     auto face = cairo_ft_font_face_create_for_ft_face(fontData->face(), FT_LOAD_DEFAULT);
     cairo_font_face_set_user_data(face, &key, fontData, FTFontDataDestroy);
     if(auto status = cairo_font_face_status(face)) {
-        spdlog::error("cairo error: {}", cairo_status_to_string(status));
+        std::cerr << "cairo error: " << cairo_status_to_string(status) << std::endl;
         FTFontDataDestroy(fontData);
         return nullptr;
     }
@@ -294,7 +294,7 @@ RefPtr<SimpleFontData> SimpleFontData::create(cairo_scaled_font_t* font, FontFea
     auto face = cairo_ft_scaled_font_lock_face(font);
     if(face == nullptr) {
         auto status = cairo_scaled_font_status(font);
-        spdlog::error("cairo error: {}", cairo_status_to_string(status));
+        std::cerr << "cairo error: " << cairo_status_to_string(status) << std::endl;
         cairo_scaled_font_destroy(font);
         return nullptr;
     }
@@ -615,8 +615,8 @@ RefPtr<SimpleFontData> FontDataCache::getFontData(const GlobalString& family, co
     FcPatternDestroy(pattern);
     if(matchResult == FcResultMatch)
         return (fontData = createFontDataFromPattern(matchPattern, description));
-    spdlog::warn("unable to load font: family={} size={} weight={} width={} slope={}", familyName, description.size,
-        description.request.weight, description.request.width, description.request.slope);
+    std::cerr << "unable to load font: family=" << family << " size=" << description.size
+        << " weight=" << description.request.weight << " width=" << description.request.width << " slope=" << description.request.slope << std::endl;
     return nullptr;
 }
 
@@ -656,8 +656,8 @@ RefPtr<SimpleFontData> FontDataCache::getFontData(uint32_t codepoint, const Font
     if(matchResult == FcResultMatch)
         return createFontDataFromPattern(matchPattern, description);
     FcPatternDestroy(matchPattern);
-    spdlog::warn("unable to load font: codepoint={} size={} weight={} width={} slope={}", codepoint, description.size,
-        description.request.weight, description.request.width, description.request.slope);
+    std::cerr << "unable to load font: codepoint=" << codepoint << " size=" << description.size
+        << " weight=" << description.request.weight << " width=" << description.request.width << " slope=" << description.request.slope << std::endl;
     return nullptr;
 }
 

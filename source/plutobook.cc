@@ -1,10 +1,10 @@
 #include "plutobook.hpp"
 
-#include <spdlog/spdlog.h>
 #include <cairo-pdf.h>
 
 #include <cstring>
 #include <cstdlib>
+#include <iostream>
 
 int plutobook_version()
 {
@@ -21,16 +21,6 @@ const char* plutobook_about()
     return "PlutoBook " PLUTOBOOK_VERSION_STRING " (https://github.com/plutoprint)";
 }
 
-plutobook_log_level_t plutobook_get_log_level(void)
-{
-    return static_cast<plutobook_log_level_t>(spdlog::get_level());
-}
-
-void plutobook_set_log_level(plutobook_log_level_t level)
-{
-    spdlog::set_level(static_cast<spdlog::level::level_enum>(level));
-}
-
 struct _plutobook_canvas {
     cairo_surface_t* surface;
     cairo_t* context;
@@ -40,7 +30,7 @@ static plutobook_canvas_t* plutobook_canvas_create(cairo_surface_t* surface)
 {
     auto context = cairo_create(surface);
     if(auto status = cairo_status(context)) {
-        spdlog::error("cairo error: {}", cairo_status_to_string(status));
+        std::cerr << "cairo error: " << cairo_status_to_string(status) << std::endl;
         cairo_surface_destroy(surface);
         return nullptr;
     }
@@ -64,13 +54,13 @@ void plutobook_canvas_destroy(plutobook_canvas_t* canvas)
 
 #define CHECK_CANVAS_SURFACE_ERROR(canvas) do { \
   if(auto status = cairo_surface_status(canvas->surface)) { \
-    spdlog::error("cairo error: {}", cairo_status_to_string(status)); \
+    std::cerr << "cairo error: " << cairo_status_to_string(status) << std::endl; \
   } \
   } while(0)
 
 #define CHECK_CANVAS_CONTEXT_ERROR(canvas) do { \
   if(auto status = cairo_status(canvas->context)) { \
-    spdlog::error("cairo error: {}", cairo_status_to_string(status)); \
+    std::cerr << "cairo error: " << cairo_status_to_string(status) << std::endl; \
   } \
   } while(0)
 

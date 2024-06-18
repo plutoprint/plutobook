@@ -3,8 +3,8 @@
 #include "plutobook.hpp"
 #include "url.h"
 
-#include <spdlog/spdlog.h>
 #include <filesystem>
+#include <iostream>
 #include <cstring>
 #include <map>
 
@@ -270,7 +270,7 @@ ResourceData DefaultResourceFetcher::loadUrl(const std::string& url)
     if(response == CURLE_OK)
         return ResourceData::createWithoutCopy(content->data(), content->size(), mimeType, textEncoding, ByteArrayDestroy, content);
     ByteArrayDestroy(content);
-    spdlog::error("curl error: {}", curl_easy_strerror(response));
+    std::cerr << "curl error: " << curl_easy_strerror(response) << std::endl;
     return ResourceData();
 }
 
@@ -290,7 +290,7 @@ ResourceData DefaultResourceFetcher::loadUrl(const std::string& url)
     auto filename = percentDecode(input.substr(0, input.rfind('?')));
     std::ifstream in(filename, std::ios::ate | std::ios::binary);
     if(!in.is_open() || !in.good()) {
-        spdlog::error("unable to open file: {}", filename);
+        std::cerr << "unable to open file: " << filename << std::endl;
         return ResourceData();
     }
 
@@ -315,7 +315,7 @@ ResourceData ResourceLoader::loadUrl(const Url& url, ResourceFetcher* customFetc
     auto fetcher = customFetcher ? customFetcher : defaultResourceFetcher();
     auto resource = fetcher->loadUrl(url.value());
     if(resource.isNull()) {
-        spdlog::error("unable to load url: {}", url.value());
+        std::cerr << "unable to load url: " << url << std::endl;
     }
 
     return resource;

@@ -7,7 +7,7 @@
 #include "replacedbox.h"
 #include "graphicscontext.h"
 
-#include <spdlog/spdlog.h>
+#include <iostream>
 #include <fstream>
 #include <cmath>
 
@@ -28,7 +28,7 @@ FileOutputStream::FileOutputStream(const std::string& filename)
     : m_stream(filename, std::ios::binary)
 {
     if(!m_stream.is_open()) {
-        spdlog::error("unable to open file: {}", filename);
+        std::cerr << "unable to open file: " << filename << std::endl;
     }
 }
 
@@ -373,7 +373,7 @@ bool Book::loadImage(const char* data, size_t length, const std::string_view& mi
 {
     auto image = ImageResource::decode(data, length, mimeType, textEncoding, m_customResourceFetcher, baseUrl);
     if(image == nullptr) {
-        spdlog::error("unable to decode image data");
+        std::cerr << "unable to decode image data" << std::endl;
         return false;
     }
 
@@ -392,7 +392,7 @@ bool Book::loadImage(const char* data, size_t length, const std::string_view& mi
 
     auto box = imageElement->box();
     if(box == nullptr) {
-        spdlog::error("invalid img element");
+        std::cerr << "invalid img element" << std::endl;
         return false;
     }
 
@@ -516,7 +516,7 @@ bool Book::writeToPdf(plutobook_stream_write_callback_t callback, void* closure,
     fromPage = std::max(1u, std::min(fromPage, pageCount()));
     toPage = std::max(1u, std::min(toPage, pageCount()));
     if(pageStep == 0 || (pageStep > 0 && fromPage > toPage) || (pageStep < 0 && fromPage < toPage)) {
-        spdlog::error("invalid page rage: from={} to={} step={}", fromPage, toPage, pageStep);
+        std::cerr << "invalid page rage: from=" << fromPage << " to=" << toPage << " step=" << pageStep << std::endl;
         return false;
     }
 
@@ -558,7 +558,7 @@ bool Book::writeToPng(plutobook_stream_write_callback_t callback, void* closure,
     int width = std::ceil(documentWidth());
     int height = std::ceil(documentHeight());
     if(width <= 0 || height <= 0) {
-        spdlog::error("invalid document size");
+        std::cerr << "invalid document size" << std::endl;
         return false;
     }
 

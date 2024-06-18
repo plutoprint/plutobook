@@ -5,11 +5,6 @@ project('plutobook', 'cpp',
     default_options: ['cpp_std=c++20']
 )
 
-spdlog_dep = dependency('spdlog',
-    required: true,
-    fallback: ['spdlog', 'spdlog_dep']
-)
-
 expat_dep = dependency('expat',
     required: true,
     fallback: ['expat', 'expat_dep']
@@ -55,7 +50,6 @@ cairo_dep = dependency('cairo',
 )
 
 plutobook_deps = [
-    spdlog_dep,
     expat_dep,
     icu_dep,
     freetype_dep,

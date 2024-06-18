@@ -1,8 +1,8 @@
 #include "xmlparser.h"
 #include "xmldocument.h"
 
-#include <spdlog/spdlog.h>
 #include <expat.h>
+#include <iostream>
 
 namespace plutobook {
 
@@ -48,7 +48,8 @@ bool XMLParser::parse(const std::string_view& content)
         return true;
     }
 
-    spdlog::error("expat error: {} on line {}, column {}", XML_ErrorString(error), XML_GetCurrentLineNumber(parser ), XML_GetCurrentColumnNumber(parser));
+    std::cerr << "expat error: " << XML_ErrorString(error) << "on line "
+        << XML_GetCurrentLineNumber(parser) << " column " << XML_GetCurrentColumnNumber(parser) << std::endl;
     XML_ParserFree(parser);
     return false;
 }

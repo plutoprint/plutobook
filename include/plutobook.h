@@ -173,19 +173,6 @@ typedef struct _plutobook_page_margins {
 #define PLUTOBOOK_PAGE_MARGINS_MODERATE ((plutobook_page_margins_t){72, 54, 72, 54})
 #define PLUTOBOOK_PAGE_MARGINS_WIDE ((plutobook_page_margins_t){72, 144, 72, 144})
 
-typedef enum _plutobook_log_level {
-    PLUTOBOOK_LOG_LEVEL_TRACE = 0,
-    PLUTOBOOK_LOG_LEVEL_DEBUG = 1,
-    PLUTOBOOK_LOG_LEVEL_INFO = 2,
-    PLUTOBOOK_LOG_LEVEL_WARN = 3,
-    PLUTOBOOK_LOG_LEVEL_ERROR = 4,
-    PLUTOBOOK_LOG_LEVEL_CRITICAL = 5,
-    PLUTOBOOK_LOG_LEVEL_OFF = 6
-} plutobook_log_level_t;
-
-PLUTOBOOK_API plutobook_log_level_t plutobook_get_log_level(void);
-PLUTOBOOK_API void plutobook_set_log_level(plutobook_log_level_t level);
-
 typedef enum _plutobook_status {
     PLUTOBOOK_STATUS_SUCCESS = 0,
     PLUTOBOOK_STATUS_MEMORY_ERROR = 1,
