@@ -279,7 +279,6 @@ PLUTOBOOK_API plutobook_page_size_t plutobook_get_page_size(const plutobook_t* b
 PLUTOBOOK_API plutobook_page_margins_t plutobook_get_page_margins(const plutobook_t* book);
 PLUTOBOOK_API plutobook_page_size_t plutobook_get_page_size_at(const plutobook_t* book, unsigned int index);
 PLUTOBOOK_API plutobook_media_type_t plutobook_get_media_type(const plutobook_t* book);
-PLUTOBOOK_API float plutobook_get_page_scale(const plutobook_t* book);
 PLUTOBOOK_API unsigned int plutobook_get_page_count(const plutobook_t* book);
 
 PLUTOBOOK_API plutobook_status_t plutobook_load_url(plutobook_t* book, const char* url, const char* user_style, const char* user_script);

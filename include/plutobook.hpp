@@ -787,18 +787,6 @@ public:
     MediaType mediaType() const { return m_mediaType; }
 
     /**
-     * @brief pageScale
-     * @return
-     */
-    float pageScale() const { return m_pageScale; }
-
-    /**
-     * @brief setPageScale
-     * @param scale
-     */
-    void setPageScale(float scale) { m_pageScale = scale; }
-
-    /**
      * @brief pageCount
      * @return
      */
@@ -1030,7 +1018,6 @@ private:
     PageSize m_pageSize;
     PageMargins m_pageMargins;
     MediaType m_mediaType;
-    float m_pageScale{0};
 
     mutable bool m_needsBuild{true};
     mutable bool m_needsLayout{true};

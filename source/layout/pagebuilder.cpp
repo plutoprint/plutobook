@@ -82,8 +82,19 @@ void PageBuilder::newPage(const BoxFrame* box, float top)
     pageBox->build();
     pageBox->layout();
 
+    auto pageWidth = std::max(1.f, pageBox->width() - pageBox->marginWidth());
+    auto pageHeight = std::max(1.f, pageBox->height() - pageBox->marginHeight());
+    if(auto pageScale = pageStyle->pageScale()) {
+        pageBox->setPageScale(pageScale.value());
+    } else if(pageWidth < m_document->width()) {
+        pageBox->setPageScale(pageWidth / m_document->width());
+    } else {
+        pageBox->setPageScale(1.f);
+    }
+
     pageBox->setPageTop(top);
-    pageBox->setPageBottom(top + m_document->box()->pageHeight());
+    pageBox->setPageBottom(top + (pageHeight / pageBox->pageScale()));
+
     m_currentPage = pageBox.get();
     m_pages.push_back(std::move(pageBox));
 }

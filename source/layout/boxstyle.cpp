@@ -48,6 +48,11 @@ Heap* BoxStyle::heap() const
     return m_node->heap();
 }
 
+Book* BoxStyle::book() const
+{
+    return document()->book();
+}
+
 void BoxStyle::setFont(RefPtr<Font> font)
 {
     m_font = std::move(font);

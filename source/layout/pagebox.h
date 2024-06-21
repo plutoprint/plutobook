@@ -13,15 +13,17 @@ public:
 
     bool isPageBox() const final { return true; }
     bool requiresLayer() const final { return false; }
+    const PageSize& pageSize() const { return m_pageSize; }
     const GlobalString& pageName() const { return m_pageName; }
     uint32_t pageIndex() const { return m_pageIndex; }
-    const PageSize& pageSize() const;
 
     float pageTop() const { return m_pageTop; }
     float pageBottom() const { return m_pageBottom; }
+    float pageScale() const { return m_pageScale; }
 
     void setPageTop(float pageTop) { m_pageTop = pageTop; }
     void setPageBottom(float pageBottom) { m_pageBottom = pageBottom; }
+    void setPageScale(float pageScale) { m_pageScale = pageScale; }
 
     void updateOverflowRect() final;
     void computePreferredWidths(float& minWidth, float& maxWidth) const final;
@@ -34,10 +36,12 @@ public:
 
 private:
     PageBox(const RefPtr<BoxStyle>& style, const GlobalString& pageName, uint32_t pageIndex);
+    PageSize m_pageSize;
     GlobalString m_pageName;
     uint32_t m_pageIndex;
     float m_pageTop{0};
     float m_pageBottom{0};
+    float m_pageScale{1};
 };
 
 template<>

@@ -616,6 +616,7 @@ class Font;
 class Image;
 class Node;
 class Document;
+class Book;
 class CSSValue;
 
 enum class CSSValueID : uint16_t;
@@ -653,6 +654,7 @@ public:
 
     Document* document() const;
     Heap* heap() const;
+    Book* book() const;
 
     Node* node() const { return m_node; }
     PseudoType pseudoType() const { return m_pseudoType; }

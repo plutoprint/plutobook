@@ -524,11 +524,6 @@ plutobook_page_margins_t plutobook_get_page_margins(const plutobook_t* book)
     return getBook(book).pageMargins();
 }
 
-float plutobook_get_page_scale(const plutobook_t* book)
-{
-    return getBook(book).pageScale();
-}
-
 unsigned int plutobook_get_page_count(const plutobook_t* book)
 {
     return getBook(book).pageCount();
