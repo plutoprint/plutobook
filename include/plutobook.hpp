@@ -349,17 +349,17 @@ public:
 class PLUTOBOOK_API Canvas {
 public:
     /**
-     * @brief Virtual destructor
+     * @brief Destructor
      */
     virtual ~Canvas();
 
     /**
-     * @brief flush
+     * @brief Flushes any pending drawing operations.
      */
     void flush();
 
     /**
-     * @brief finish
+     * @brief Finishes all drawing operations and cleans up the canvas.
      */
     void finish();
 
@@ -384,24 +384,24 @@ public:
     void rotate(float angle);
 
     /**
-     * @brief Concatenates a custom transformation matrix to the current matrix.
-     * @param a The element at position (1, 1) of the transformation matrix.
-     * @param b The element at position (1, 2) of the transformation matrix.
-     * @param c The element at position (2, 1) of the transformation matrix.
-     * @param d The element at position (2, 2) of the transformation matrix.
-     * @param e The element at position (3, 1) of the transformation matrix.
-     * @param f The element at position (3, 2) of the transformation matrix.
+     * @brief Multiplies the current transformation matrix with the specified matrix.
+     * @param a The horizontal scaling factor.
+     * @param b The horizontal skewing factor.
+     * @param c The vertical skewing factor.
+     * @param d The vertical scaling factor.
+     * @param e The horizontal translation distance.
+     * @param f The vertical translation distance.
      */
     void transform(float a, float b, float c, float d, float e, float f);
 
     /**
-     * @brief Sets the transformation matrix directly.
-     * @param a The element at position (1, 1) of the transformation matrix.
-     * @param b The element at position (1, 2) of the transformation matrix.
-     * @param c The element at position (2, 1) of the transformation matrix.
-     * @param d The element at position (2, 2) of the transformation matrix.
-     * @param e The element at position (3, 1) of the transformation matrix.
-     * @param f The element at position (3, 2) of the transformation matrix.
+     * @brief Resets the current transformation to the identity matrix.
+     * @param a The horizontal scaling factor.
+     * @param b The horizontal skewing factor.
+     * @param c The vertical skewing factor.
+     * @param d The vertical scaling factor.
+     * @param e The horizontal translation distance.
+     * @param f The vertical translation distance.
      */
     void setMatrix(float a, float b, float c, float d, float e, float f);
 
@@ -411,7 +411,7 @@ public:
     void resetMatrix();
 
     /**
-     * @brief Clips drawing to a rectangular region.
+     * @brief Intersects the current clip with the specified rectangle.
      * @param x The x-coordinate of the top-left corner of the rectangle.
      * @param y The y-coordinate of the top-left corner of the rectangle.
      * @param width width The width of the rectangle.
@@ -420,7 +420,7 @@ public:
     void clipRect(float x, float y, float width, float height);
 
     /**
-     * @brief Clears the entire surface with the specified color.
+     * @brief Clears the canvas surface with the specified color.
      * @param red The red component of the color.
      * @param green The green component of the color.
      * @param blue The blue component of the color.
