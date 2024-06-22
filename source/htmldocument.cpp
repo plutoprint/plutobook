@@ -6,6 +6,7 @@
 #include "textbox.h"
 #include "replacedbox.h"
 #include "tablebox.h"
+#include "formcontrolbox.h"
 #include "textresource.h"
 #include "imageresource.h"
 #include "stringutils.h"
@@ -685,6 +686,24 @@ Box* HTMLTableCellElement::createBox(const RefPtr<BoxStyle>& style)
     }
 
     return box;
+}
+
+HTMLSelectElement::HTMLSelectElement(Document* document)
+    : HTMLElement(document, selectTag)
+{
+}
+
+unsigned HTMLSelectElement::size() const
+{
+    unsigned value = 1;
+    if(!parseHTMLInteger(value, getAttribute(sizeAttr)))
+        return hasAttribute(multipleAttr) ? 4 : 1;
+    return std::max(1u, value);
+}
+
+Box* HTMLSelectElement::createBox(const RefPtr<BoxStyle>& style)
+{
+    return new (heap()) SelectBox(this, style);
 }
 
 HTMLStyleElement::HTMLStyleElement(Document* document)

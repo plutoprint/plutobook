@@ -540,6 +540,8 @@ Element* Document::createElement(const GlobalString& namespaceURI, const GlobalS
             return new (m_heap) HTMLTableColElement(this, tagName);
         if(tagName == tdTag || tagName == thTag)
             return new (m_heap) HTMLTableCellElement(this, tagName);
+        if(tagName == selectTag)
+            return new (m_heap) HTMLSelectElement(this);
         if(tagName == styleTag)
             return new (m_heap) HTMLStyleElement(this);
         if(tagName == linkTag)

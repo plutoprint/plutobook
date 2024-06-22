@@ -461,8 +461,32 @@ center, th, caption {
     text-align: center;
 }
 
+optgroup {
+    display: block;
+    font-weight: bolder;
+}
+
 option {
-    display: none;
+    display: block;
+    font-weight: normal;
+    padding: 0 2px 1px 2px;
+    white-space: pre;
+    min-height: 1.2em;
+}
+
+optgroup::before {
+    display: block;
+    content: "\200b" attr(label);
+}
+
+optgroup > option::before {
+    content: "\00a0\00a0\00a0\00a0";
+}
+
+select {
+    box-sizing: border-box;
+    border: 1px solid black;
+    background-color: white;
 }
 
 input, select, option, optgroup, button, textarea, keygen {
