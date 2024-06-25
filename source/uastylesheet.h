@@ -505,22 +505,15 @@ textarea {
     font-family: monospace;
 }
 
-input[type=text i], textarea {
-    overflow: hidden;
-}
-
 input[type=button i], input[type=reset i], input[type=submit i], button {
     text-align: center;
     background-color: lightgray;
     border-radius: 2px;
 }
 
-input[type=button i], input[type=reset i], input[type=submit i] {
-    white-space: pre;
-}
-
 input::before {
     content: "\200b" attr(value);
+    white-space: pre;
 }
 
 input[type=submit i]:not([value])::before {
