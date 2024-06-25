@@ -1,9 +1,37 @@
 #include "formcontrolbox.h"
-#include "boxlayer.h"
 #include "htmldocument.h"
 #include "pagebuilder.h"
+#include "boxlayer.h"
 
 namespace plutobook {
+
+TextInputBox::TextInputBox(HTMLElement* element, const RefPtr<BoxStyle>& style)
+    : BlockFlowBox(element, style)
+{
+}
+
+HTMLElement* TextInputBox::element() const
+{
+    return static_cast<HTMLElement*>(node());
+}
+
+std::optional<float> TextInputBox::inlineBlockBaseline() const
+{
+    if(m_rows == 1)
+        return firstLineBaseline();
+    return std::nullopt;
+}
+
+void TextInputBox::computePreferredWidths(float& minWidth, float& maxWidth) const
+{
+    minWidth = maxWidth = m_cols * style()->chFontSize();
+}
+
+void TextInputBox::computeHeight(float& y, float& height, float& marginTop, float& marginBottom) const
+{
+    height = m_rows * style()->lineHeight() + borderAndPaddingHeight();
+    BlockFlowBox::computeHeight(y, height, marginTop, marginBottom);
+}
 
 SelectBox::SelectBox(HTMLSelectElement* element, const RefPtr<BoxStyle>& style)
     : BlockBox(element, style)
@@ -18,6 +46,8 @@ HTMLSelectElement* SelectBox::element() const
 
 std::optional<float> SelectBox::inlineBlockBaseline() const
 {
+    if(m_size == 1)
+        return firstLineBaseline();
     return std::nullopt;
 }
 
@@ -81,13 +111,13 @@ void SelectBox::computePreferredWidths(float& minWidth, float& maxWidth) const
 
 void SelectBox::computeHeight(float& y, float& height, float& marginTop, float& marginBottom) const
 {
-    height = borderAndPaddingHeight();
     unsigned itemIndex = 0;
+    height = borderAndPaddingHeight();
     for(auto child = firstBoxFrame(); child && itemIndex < m_size; child = child->nextBoxFrame()) {
-        if(child->isPositioned())
-            continue;
-        height += child->height();
-        ++itemIndex;
+        if(!child->isPositioned()) {
+            height += child->height();
+            ++itemIndex;
+        }
     }
 
     BlockBox::computeHeight(y, height, marginTop, marginBottom);

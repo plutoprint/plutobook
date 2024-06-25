@@ -475,8 +475,8 @@ option {
 }
 
 optgroup::before {
-    display: block;
     content: "\200b" attr(label);
+    display: block;
 }
 
 optgroup > option::before {
@@ -484,24 +484,75 @@ optgroup > option::before {
 }
 
 select {
-    box-sizing: border-box;
-    border: 1px solid black;
-    background-color: white;
+    background-color: lightgray;
 }
 
-input, select, option, optgroup, button, textarea, keygen {
+input, select, button, textarea {
+    letter-spacing: initial;
+    word-spacing: initial;
+    line-height: initial;
+    text-transform: initial;
     text-indent: initial;
-}
-
-textarea { white-space: pre-wrap; }
-
-input[type="radio"], input[type="checkbox"], input[type="reset"], input[type="button"],
-input[type="submit"], select, button {
-    box-sizing: border-box;
-}
-
-input, textarea, select, button, keygen {
     display: inline-block;
+    border: 1px solid black;
+    padding: 2px;
+}
+
+textarea {
+    background-color: white;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    font-family: monospace;
+}
+
+input[type=text i], textarea {
+    overflow: hidden;
+}
+
+input[type=button i], input[type=reset i], input[type=submit i], button {
+    text-align: center;
+    background-color: lightgray;
+    border-radius: 2px;
+}
+
+input[type=button i], input[type=reset i], input[type=submit i] {
+    white-space: pre;
+}
+
+input::before {
+    content: "\200b" attr(value);
+}
+
+input[type=submit i]:not([value])::before {
+    content: "Submit";
+}
+
+input[type=reset i]:not([value])::before {
+    content: "Reset";
+}
+
+input[type=checkbox i]::before, input[type=radio i]::before {
+    content: "\200b";
+}
+
+input[type=checkbox i], input[type=radio i] {
+    margin: 3px 3px 0 5px;
+    height: 16px;
+    width: 16px;
+}
+
+input[type=checkbox i][checked]::before, input[type=radio i][checked]::before {
+    display: block;
+    background: black;
+    height: 100%;
+}
+
+input[type=radio i][checked]::before {
+    border-radius: 50%;
+}
+
+input[type=radio i] {
+    border-radius: 50%;
 }
 
 hr {

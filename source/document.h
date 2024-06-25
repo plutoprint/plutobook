@@ -49,6 +49,9 @@ public:
     void setNextSibling(Node* nextSibling) { m_nextSibling = nextSibling; }
     void setPreviousSibling(Node* previousSibling) { m_previousSibling = previousSibling; }
 
+    Box* nextSiblingBox() const;
+    Box* previousSiblingBox() const;
+
     Node* firstChild() const;
     Node* lastChild() const;
 

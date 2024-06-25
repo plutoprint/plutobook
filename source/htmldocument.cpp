@@ -554,7 +554,7 @@ HTMLLIElement::HTMLLIElement(Document* document)
 
 std::optional<int> HTMLLIElement::value() const
 {
-    int value = 0;
+    int value;
     if(!parseHTMLInteger(value, getAttribute(valueAttr)))
         return std::nullopt;
     return value;
@@ -567,7 +567,7 @@ HTMLOLElement::HTMLOLElement(Document* document)
 
 int HTMLOLElement::start() const
 {
-    int value = 1;
+    int value;
     if(!parseHTMLInteger(value, getAttribute(startAttr)))
         return 1;
     return value;
@@ -642,7 +642,7 @@ HTMLTableColElement::HTMLTableColElement(Document* document, const GlobalString&
 
 unsigned HTMLTableColElement::span() const
 {
-    unsigned value = 1;
+    unsigned value;
     if(!parseHTMLInteger(value, getAttribute(spanAttr)))
         return 1;
     return std::max(1u, value);
@@ -663,7 +663,7 @@ HTMLTableCellElement::HTMLTableCellElement(Document* document, const GlobalStrin
 
 unsigned HTMLTableCellElement::colSpan() const
 {
-    unsigned value = 1;
+    unsigned value;
     if(!parseHTMLInteger(value, getAttribute(colspanAttr)))
         return 1;
     return std::max(1u, value);
@@ -671,8 +671,8 @@ unsigned HTMLTableCellElement::colSpan() const
 
 unsigned HTMLTableCellElement::rowSpan() const
 {
-    unsigned value = 1;
-    if(!parseHTMLInteger(value, getAttribute(rowSpanAttr)))
+    unsigned value;
+    if(!parseHTMLInteger(value, getAttribute(rowspanAttr)))
         return 1;
     return value;
 }
@@ -688,6 +688,65 @@ Box* HTMLTableCellElement::createBox(const RefPtr<BoxStyle>& style)
     return box;
 }
 
+HTMLInputElement::HTMLInputElement(Document* document)
+    : HTMLElement(document, inputTag)
+{
+}
+
+unsigned HTMLInputElement::size() const
+{
+    unsigned value;
+    if(!parseHTMLInteger(value, getAttribute(sizeAttr)))
+        return 20;
+    return std::max(1u, value);
+}
+
+Box* HTMLInputElement::createBox(const RefPtr<BoxStyle>& style)
+{
+    const auto& type = getAttribute(typeAttr);
+    if(!equals(type, "text", false)
+        && !equals(type, "search", false)
+        && !equals(type, "url", false)
+        && !equals(type, "tel", false)
+        && !equals(type, "email", false)
+        && !equals(type, "password", false)) {
+        return HTMLElement::createBox(style);
+    }
+
+    auto box = new (heap()) TextInputBox(this, style);
+    box->setCols(size());
+    return box;
+}
+
+HTMLTextAreaElement::HTMLTextAreaElement(Document* document)
+    : HTMLElement(document, textareaTag)
+{
+}
+
+unsigned HTMLTextAreaElement::rows() const
+{
+    unsigned value;
+    if(!parseHTMLInteger(value, getAttribute(rowsAttr)))
+        return 2;
+    return std::max(1u, value);
+}
+
+unsigned HTMLTextAreaElement::cols() const
+{
+    unsigned value;
+    if(!parseHTMLInteger(value, getAttribute(colsAttr)))
+        return 20;
+    return std::max(1u, value);
+}
+
+Box* HTMLTextAreaElement::createBox(const RefPtr<BoxStyle>& style)
+{
+    auto box = new (heap()) TextInputBox(this, style);
+    box->setRows(rows());
+    box->setCols(cols());
+    return box;
+}
+
 HTMLSelectElement::HTMLSelectElement(Document* document)
     : HTMLElement(document, selectTag)
 {
@@ -695,7 +754,7 @@ HTMLSelectElement::HTMLSelectElement(Document* document)
 
 unsigned HTMLSelectElement::size() const
 {
-    unsigned value = 1;
+    unsigned value;
     if(!parseHTMLInteger(value, getAttribute(sizeAttr)))
         return hasAttribute(multipleAttr) ? 4 : 1;
     return std::max(1u, value);

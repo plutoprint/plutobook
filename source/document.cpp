@@ -43,6 +43,30 @@ void Node::remove()
     }
 }
 
+Box* Node::nextSiblingBox() const
+{
+    auto node = nextSibling();
+    while(node) {
+        if(auto box = node->box())
+            return box;
+        node = node->nextSibling();
+    }
+
+    return nullptr;
+}
+
+Box* Node::previousSiblingBox() const
+{
+    auto node = previousSibling();
+    while(node) {
+        if(auto box = node->box())
+            return box;
+        node = node->previousSibling();
+    }
+
+    return nullptr;
+}
+
 BoxStyle* Node::style() const
 {
     if(m_box)
@@ -79,8 +103,8 @@ bool TextNode::isHidden(const Box* parent) const
 
     if(parent->style()->preserveNewline())
         return false;
-    if(auto prevBox = parent->lastChild())
-        return !prevBox->isInline() || prevBox->isLineBreakBox();
+    if(auto prevBox = previousSiblingBox())
+        return !prevBox->isInline() || prevBox->isLineBreakBox();;
     return !parent->isInlineBox();
 }
 
@@ -540,6 +564,10 @@ Element* Document::createElement(const GlobalString& namespaceURI, const GlobalS
             return new (m_heap) HTMLTableColElement(this, tagName);
         if(tagName == tdTag || tagName == thTag)
             return new (m_heap) HTMLTableCellElement(this, tagName);
+        if(tagName == inputTag)
+            return new (m_heap) HTMLInputElement(this);
+        if(tagName == textareaTag)
+            return new (m_heap) HTMLTextAreaElement(this);
         if(tagName == selectTag)
             return new (m_heap) HTMLSelectElement(this);
         if(tagName == styleTag)

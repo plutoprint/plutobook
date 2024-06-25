@@ -319,7 +319,7 @@ RefPtr<SimpleFontData> SimpleFontData::create(cairo_scaled_font_t* font, FontFea
     info.lineGap = font_extents.height - font_extents.ascent - font_extents.descent;
     info.xHeight = glyph_extents(xGlyph).height;
     info.spaceWidth = glyph_extents(spaceGlyph).x_advance;
-    info.zeroWidth = glyph_extents(zeroGlyph).width;
+    info.zeroWidth = glyph_extents(zeroGlyph).x_advance;
     info.zeroGlyph = zeroGlyph;
     info.spaceGlyph = spaceGlyph;
     cairo_ft_scaled_font_unlock_face(font);

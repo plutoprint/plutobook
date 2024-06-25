@@ -110,6 +110,8 @@ public:
     virtual bool isTableRowBox() const { return false; }
     virtual bool isTableCaptionBox() const { return false; }
     virtual bool isTableSectionBox() const { return false; }
+    virtual bool isTextInputBox() const { return false; }
+    virtual bool isSelectBox() const { return false; }
     virtual bool isSVGInlineTextBox() const { return false; }
     virtual bool isSVGTSpanBox() const { return false; }
     virtual bool isSVGTextBox() const { return false; }

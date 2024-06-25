@@ -124,6 +124,25 @@ public:
     Box* createBox(const RefPtr<BoxStyle>& style) final;
 };
 
+class HTMLInputElement final : public HTMLElement {
+public:
+    HTMLInputElement(Document* document);
+
+    unsigned size() const;
+
+    Box* createBox(const RefPtr<BoxStyle>& style) final;
+};
+
+class HTMLTextAreaElement final : public HTMLElement {
+public:
+    HTMLTextAreaElement(Document* document);
+
+    unsigned rows() const;
+    unsigned cols() const;
+
+    Box* createBox(const RefPtr<BoxStyle>& style) final;
+};
+
 class HTMLSelectElement final : public HTMLElement {
 public:
     HTMLSelectElement(Document* document);

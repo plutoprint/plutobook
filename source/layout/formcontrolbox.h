@@ -5,11 +5,44 @@
 
 namespace plutobook {
 
+class HTMLElement;
+
+class TextInputBox final : public BlockFlowBox {
+public:
+    TextInputBox(HTMLElement* element, const RefPtr<BoxStyle>& style);
+
+    bool isTextInputBox() const final { return true; }
+
+    HTMLElement* element() const;
+    std::optional<float> inlineBlockBaseline() const final;
+    uint32_t rows() const { return m_rows; }
+    uint32_t cols() const { return m_cols; }
+
+    void setRows(uint32_t rows) { m_rows = rows; }
+    void setCols(uint32_t cols) { m_cols = cols; }
+
+    void computePreferredWidths(float& minWidth, float& maxWidth) const final;
+    void computeHeight(float& y, float& height, float& marginTop, float& marginBottom) const final;
+
+    const char* name() const final { return "TextInputBox"; }
+
+private:
+    uint32_t m_rows{1};
+    uint32_t m_cols{1};
+};
+
+template<>
+struct is_a<TextInputBox> {
+    static bool check(const Box& box) { return box.isTextInputBox(); }
+};
+
 class HTMLSelectElement;
 
-class SelectBox : public BlockBox {
+class SelectBox final : public BlockBox {
 public:
     SelectBox(HTMLSelectElement* element, const RefPtr<BoxStyle>& style);
+
+    bool isSelectBox() const final { return true; }
 
     HTMLSelectElement* element() const;
     std::optional<float> inlineBlockBaseline() const final;
@@ -18,14 +51,20 @@ public:
     void addChild(Box* newChild) final;
     void updateOverflowRect() final;
     void computePreferredWidths(float& minWidth, float& maxWidth) const final;
-
     void computeHeight(float& y, float& height, float& marginTop, float& marginBottom) const final;
     void paintContents(const PaintInfo& info, const Point& offset, PaintPhase phase) final;
     void paginate(PageBuilder& builder, float top) const final;
     void layout() final;
 
+    const char* name() const final { return "SelectBox"; }
+
 private:
-    uint32_t m_size;
+    const uint32_t m_size;
+};
+
+template<>
+struct is_a<SelectBox> {
+    static bool check(const Box& box) { return box.isSelectBox(); }
 };
 
 } // namespace plutobook
