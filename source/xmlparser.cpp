@@ -2,7 +2,6 @@
 #include "xmldocument.h"
 
 #include <expat.h>
-#include <iostream>
 
 namespace plutobook {
 
@@ -41,17 +40,10 @@ bool XMLParser::parse(const std::string_view& content)
     XML_SetElementHandler(parser, startElementCallback, endElementCallback);
     XML_SetCharacterDataHandler(parser, characterDataCallback);
     auto status = XML_Parse(parser, content.data(), content.length(), XML_TRUE);
-    auto error = XML_GetErrorCode(parser);
-    if(status == XML_STATUS_OK && error == XML_ERROR_NONE) {
+    if(status == XML_STATUS_OK)
         m_document->finishParsingDocument();
-        XML_ParserFree(parser);
-        return true;
-    }
-
-    std::cerr << "expat error: " << XML_ErrorString(error) << "on line "
-        << XML_GetCurrentLineNumber(parser) << " column " << XML_GetCurrentColumnNumber(parser) << std::endl;
     XML_ParserFree(parser);
-    return false;
+    return status == XML_STATUS_OK;
 }
 
 class QualifiedName {

@@ -4,7 +4,6 @@
 #include "url.h"
 
 #include <filesystem>
-#include <iostream>
 #include <cstring>
 #include <map>
 
@@ -270,7 +269,6 @@ ResourceData DefaultResourceFetcher::loadUrl(const std::string& url)
     if(response == CURLE_OK)
         return ResourceData::createWithoutCopy(content->data(), content->size(), mimeType, textEncoding, ByteArrayDestroy, content);
     ByteArrayDestroy(content);
-    std::cerr << "curl error: " << curl_easy_strerror(response) << std::endl;
     return ResourceData();
 }
 
@@ -290,7 +288,6 @@ ResourceData DefaultResourceFetcher::loadUrl(const std::string& url)
     auto filename = percentDecode(input.substr(0, input.rfind('?')));
     std::ifstream in(filename, std::ios::ate | std::ios::binary);
     if(!in.is_open() || !in.good()) {
-        std::cerr << "unable to open file: " << filename << std::endl;
         return ResourceData();
     }
 
@@ -302,7 +299,6 @@ ResourceData DefaultResourceFetcher::loadUrl(const std::string& url)
     in.seekg(0, std::ios::beg);
     in.read(content->data(), content->size());
     in.close();
-
     return ResourceData::createWithoutCopy(content->data(), content->size(), mimeType, textEncoding, ByteArrayDestroy, content);
 }
 
@@ -312,13 +308,9 @@ ResourceData ResourceLoader::loadUrl(const Url& url, ResourceFetcher* customFetc
 {
     if(url.protocolIs("data"))
         return loadDataUrl(percentDecode(url.value()));
-    auto fetcher = customFetcher ? customFetcher : defaultResourceFetcher();
-    auto resource = fetcher->loadUrl(url.value());
-    if(resource.isNull()) {
-        std::cerr << "unable to load url: " << url << std::endl;
-    }
-
-    return resource;
+    if(customFetcher == nullptr)
+        customFetcher = defaultResourceFetcher();
+    return customFetcher->loadUrl(url.value());
 }
 
 Url ResourceLoader::baseUrl()

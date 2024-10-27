@@ -3,8 +3,6 @@
 #include "stringutils.h"
 #include "url.h"
 
-#include <iostream>
-
 namespace plutobook {
 
 RefPtr<TextResource> TextResource::create(ResourceFetcher* fetcher, const Url& url)
@@ -13,11 +11,8 @@ RefPtr<TextResource> TextResource::create(ResourceFetcher* fetcher, const Url& u
     if(resource.isNull())
         return nullptr;
     auto text = decode(resource.content(), resource.contentLength(), resource.mimeType(), resource.textEncoding());
-    if(text.empty()) {
-        std::cerr << "unable to decode text: " << url << std::endl;
+    if(text.empty())
         return nullptr;
-    }
-
     return adoptPtr(new TextResource(std::move(text)));
 }
 

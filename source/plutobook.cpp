@@ -7,7 +7,6 @@
 #include "replacedbox.h"
 #include "graphicscontext.h"
 
-#include <iostream>
 #include <fstream>
 #include <cmath>
 
@@ -27,9 +26,6 @@ private:
 FileOutputStream::FileOutputStream(const std::string& filename)
     : m_stream(filename, std::ios::binary)
 {
-    if(!m_stream.is_open()) {
-        std::cerr << "unable to open file: " << filename << std::endl;
-    }
 }
 
 bool FileOutputStream::write(const char* data, size_t length)
@@ -373,7 +369,6 @@ bool Book::loadImage(const char* data, size_t length, const std::string_view& mi
 {
     auto image = ImageResource::decode(data, length, mimeType, textEncoding, m_customResourceFetcher, baseUrl);
     if(image == nullptr) {
-        std::cerr << "unable to decode image data" << std::endl;
         return false;
     }
 
@@ -391,11 +386,8 @@ bool Book::loadImage(const char* data, size_t length, const std::string_view& mi
     assert(imageElement && imageElement->tagName() == imgTag);
 
     auto box = imageElement->box();
-    if(box == nullptr) {
-        std::cerr << "invalid img element" << std::endl;
+    if(box == nullptr)
         return false;
-    }
-
     auto& imageBox = to<ImageBox>(*box);
     imageBox.setImage(std::move(image));
     return true;
@@ -516,7 +508,6 @@ bool Book::writeToPdf(plutobook_stream_write_callback_t callback, void* closure,
     fromPage = std::max(1u, std::min(fromPage, pageCount()));
     toPage = std::max(1u, std::min(toPage, pageCount()));
     if(pageStep == 0 || (pageStep > 0 && fromPage > toPage) || (pageStep < 0 && fromPage < toPage)) {
-        std::cerr << "invalid page rage: from=" << fromPage << " to=" << toPage << " step=" << pageStep << std::endl;
         return false;
     }
 
@@ -557,11 +548,8 @@ bool Book::writeToPng(plutobook_stream_write_callback_t callback, void* closure,
 {
     int width = std::ceil(documentWidth());
     int height = std::ceil(documentHeight());
-    if(width <= 0 || height <= 0) {
-        std::cerr << "invalid document size" << std::endl;
+    if(width <= 0 || height <= 0)
         return false;
-    }
-
     ImageCanvas canvas(width, height, format);
     renderDocument(canvas, 0, 0, width, height);
     return canvas.writeToPng(callback, closure);

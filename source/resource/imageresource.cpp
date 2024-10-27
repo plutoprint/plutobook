@@ -9,7 +9,6 @@
 #include <cairo.h>
 #include <cstring>
 #include <cmath>
-#include <iostream>
 
 #ifdef PLUTOBOOK_HAS_WEBP
 #include <webp/decode.h>
@@ -36,11 +35,8 @@ RefPtr<ImageResource> ImageResource::create(ResourceFetcher* fetcher, const Url&
     if(resource.isNull())
         return nullptr;
     auto image = decode(resource.content(), resource.contentLength(), resource.mimeType(), resource.textEncoding(), fetcher, url.base());
-    if(image == nullptr) {
-        std::cerr << "unable to decode image: " << url << std::endl;
+    if(image == nullptr)
         return nullptr;
-    }
-
     return adoptPtr(new ImageResource(std::move(image)));
 }
 
@@ -147,8 +143,7 @@ RefPtr<BitmapImage> BitmapImage::create(const char* data, size_t size)
     auto surface = decode(data, size);
     if(surface == nullptr)
         return nullptr;
-    if(auto status = cairo_surface_status(surface)) {
-        std::cerr << "cairo error: " << cairo_status_to_string(status) << std::endl;
+    if(cairo_surface_status(surface)) {
         cairo_surface_destroy(surface);
         return nullptr;
     }
@@ -194,7 +189,6 @@ cairo_surface_t* BitmapImage::decode(const char* data, size_t size)
         int width, height;
         auto tj = tjInitDecompress();
         if(!tj || tjDecompressHeader(tj, (uint8_t*)(data), size, &width, &height) == -1) {
-            std::cerr << "turbojpeg error: " << tjGetErrorStr2(tj) << std::endl;
             tjDestroy(tj);
             return nullptr;
         }
@@ -214,15 +208,11 @@ cairo_surface_t* BitmapImage::decode(const char* data, size_t size)
     if(size > 14 && std::memcmp(data, "RIFF", 4) == 0 && std::memcmp(data + 8, "WEBPVP", 6) == 0) {
         WebPDecoderConfig config;
         if(!WebPInitDecoderConfig(&config)) {
-            std::cerr << "webp error: WebPInitDecoderConfig failed" << std::endl;
             return nullptr;
         }
 
-        if(WebPGetFeatures((const uint8_t*)(data), size, &config.input) != VP8_STATUS_OK) {
-            std::cerr << "webp error: WebPGetFeatures failed" << std::endl;
+        if(WebPGetFeatures((const uint8_t*)(data), size, &config.input) != VP8_STATUS_OK)
             return nullptr;
-        }
-
         auto surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, config.input.width, config.input.height);
         auto surfaceData = cairo_image_surface_get_data(surface);
         auto surfaceWidth = cairo_image_surface_get_width(surface);
@@ -237,7 +227,6 @@ cairo_surface_t* BitmapImage::decode(const char* data, size_t size)
         config.output.height = surfaceHeight;
         config.output.is_external_memory = 1;
         if(WebPDecode((const uint8_t*)(data), size, &config) != VP8_STATUS_OK) {
-            std::cerr << "webp error: WebPDecode failed" << std::endl;
             return nullptr;
         }
 
@@ -248,11 +237,8 @@ cairo_surface_t* BitmapImage::decode(const char* data, size_t size)
 
     int width, height, channels;
     auto imageData = stbi_load_from_memory((const stbi_uc*)(data), size, &width, &height, &channels, STBI_rgb_alpha);
-    if(imageData == nullptr) {
-        std::cerr << "stbi error: " << stbi_failure_reason() << std::endl;
+    if(imageData == nullptr)
         return nullptr;
-    }
-
     auto surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, width, height);
     auto surfaceData = cairo_image_surface_get_data(surface);
     auto surfaceWidth = cairo_image_surface_get_width(surface);
@@ -286,12 +272,9 @@ BitmapImage::BitmapImage(cairo_surface_t* surface, float width, float height)
 
 RefPtr<SVGImage> SVGImage::create(const std::string_view& content, ResourceFetcher* fetcher, Url baseUrl)
 {
-    std::unique_ptr<Heap> heap(new Heap(1024 * 24));
-    auto document = SVGDocument::create(nullptr, heap.get(), fetcher, std::move(baseUrl));
-    if(!document->load(content))
-        return nullptr;
-    if(!document->rootElement()->isOfType(svgNs, svgTag)) {
-        std::cerr << "invalid svg root element" << std::endl;
+    Heap heap(1024 * 24);
+    auto document = SVGDocument::create(nullptr, &heap, fetcher, std::move(baseUrl));
+    if(!document->load(content) || !document->rootElement()->isOfType(svgNs, svgTag)) {
         return nullptr;
     }
 

@@ -4,7 +4,6 @@
 
 #include <cstring>
 #include <cstdlib>
-#include <iostream>
 
 int plutobook_version()
 {
@@ -29,9 +28,7 @@ struct _plutobook_canvas {
 static plutobook_canvas_t* plutobook_canvas_create(cairo_surface_t* surface)
 {
     auto context = cairo_create(surface);
-    if(auto status = cairo_status(context)) {
-        std::cerr << "cairo error: " << cairo_status_to_string(status) << std::endl;
-        cairo_surface_destroy(surface);
+    if(cairo_status(context)) {
         return nullptr;
     }
 
@@ -52,24 +49,11 @@ void plutobook_canvas_destroy(plutobook_canvas_t* canvas)
     std::free(canvas);
 }
 
-#define CHECK_CANVAS_SURFACE_ERROR(canvas) do { \
-  if(auto status = cairo_surface_status(canvas->surface)) { \
-    std::cerr << "cairo error: " << cairo_status_to_string(status) << std::endl; \
-  } \
-  } while(0)
-
-#define CHECK_CANVAS_CONTEXT_ERROR(canvas) do { \
-  if(auto status = cairo_status(canvas->context)) { \
-    std::cerr << "cairo error: " << cairo_status_to_string(status) << std::endl; \
-  } \
-  } while(0)
-
 void plutobook_canvas_flush(plutobook_canvas_t* canvas)
 {
     if(canvas == NULL)
         return;
     cairo_surface_flush(canvas->surface);
-    CHECK_CANVAS_SURFACE_ERROR(canvas);
 }
 
 void plutobook_canvas_finish(plutobook_canvas_t* canvas)
@@ -77,7 +61,6 @@ void plutobook_canvas_finish(plutobook_canvas_t* canvas)
     if(canvas == NULL)
         return;
     cairo_surface_finish(canvas->surface);
-    CHECK_CANVAS_SURFACE_ERROR(canvas);
 }
 
 void plutobook_canvas_translate(plutobook_canvas_t* canvas, float tx, float ty)
@@ -85,7 +68,6 @@ void plutobook_canvas_translate(plutobook_canvas_t* canvas, float tx, float ty)
     if(canvas == nullptr)
         return;
     cairo_translate(canvas->context, tx, ty);
-    CHECK_CANVAS_CONTEXT_ERROR(canvas);
 }
 
 void plutobook_canvas_scale(plutobook_canvas_t* canvas, float sx, float sy)
@@ -93,7 +75,6 @@ void plutobook_canvas_scale(plutobook_canvas_t* canvas, float sx, float sy)
     if(canvas == nullptr)
         return;
     cairo_scale(canvas->context, sx, sy);
-    CHECK_CANVAS_CONTEXT_ERROR(canvas);
 }
 
 void plutobook_canvas_rotate(plutobook_canvas_t* canvas, float angle)
@@ -101,7 +82,6 @@ void plutobook_canvas_rotate(plutobook_canvas_t* canvas, float angle)
     if(canvas == nullptr)
         return;
     cairo_rotate(canvas->context, angle);
-    CHECK_CANVAS_CONTEXT_ERROR(canvas);
 }
 
 void plutobook_canvas_transform(plutobook_canvas_t* canvas, float a, float b, float c, float d, float e, float f)
@@ -110,7 +90,6 @@ void plutobook_canvas_transform(plutobook_canvas_t* canvas, float a, float b, fl
         return;
     cairo_matrix_t matrix = {a, b, c, d, e, f};
     cairo_transform(canvas->context, &matrix);
-    CHECK_CANVAS_CONTEXT_ERROR(canvas);
 }
 
 void plutobook_canvas_set_matrix(plutobook_canvas_t* canvas, float a, float b, float c, float d, float e, float f)
@@ -119,7 +98,6 @@ void plutobook_canvas_set_matrix(plutobook_canvas_t* canvas, float a, float b, f
         return;
     cairo_matrix_t matrix = {a, b, c, d, e, f};
     cairo_set_matrix(canvas->context, &matrix);
-    CHECK_CANVAS_CONTEXT_ERROR(canvas);
 }
 
 void plutobook_canvas_reset_matrix(plutobook_canvas_t* canvas)
@@ -127,7 +105,6 @@ void plutobook_canvas_reset_matrix(plutobook_canvas_t* canvas)
     if(canvas == nullptr)
         return;
     cairo_identity_matrix(canvas->context);
-    CHECK_CANVAS_CONTEXT_ERROR(canvas);
 }
 
 void plutobook_canvas_clip_rect(plutobook_canvas_t* canvas, float x, float y, float width, float height)
@@ -136,7 +113,6 @@ void plutobook_canvas_clip_rect(plutobook_canvas_t* canvas, float x, float y, fl
         return;
     cairo_rectangle(canvas->context, x, y, width, height);
     cairo_clip(canvas->context);
-    CHECK_CANVAS_CONTEXT_ERROR(canvas);
 }
 
 void plutobook_canvas_clear_surface(plutobook_canvas_t* canvas, float red, float green, float blue, float alpha)
@@ -148,7 +124,6 @@ void plutobook_canvas_clear_surface(plutobook_canvas_t* canvas, float red, float
     cairo_set_operator(canvas->context, CAIRO_OPERATOR_SOURCE);
     cairo_paint(canvas->context);
     cairo_restore(canvas->context);
-    CHECK_CANVAS_CONTEXT_ERROR(canvas);
 }
 
 void plutobook_canvas_save_state(plutobook_canvas_t* canvas)
@@ -156,7 +131,6 @@ void plutobook_canvas_save_state(plutobook_canvas_t* canvas)
     if(canvas == nullptr)
         return;
     cairo_save(canvas->context);
-    CHECK_CANVAS_CONTEXT_ERROR(canvas);
 }
 
 void plutobook_canvas_restore_state(plutobook_canvas_t* canvas)
@@ -164,7 +138,6 @@ void plutobook_canvas_restore_state(plutobook_canvas_t* canvas)
     if(canvas == nullptr)
         return;
     cairo_restore(canvas->context);
-    CHECK_CANVAS_CONTEXT_ERROR(canvas);
 }
 
 cairo_surface_t* plutobook_canvas_get_surface(const plutobook_canvas_t* canvas)
@@ -237,11 +210,8 @@ plutobook_status_t plutobook_image_canvas_write_to_png(const plutobook_canvas_t*
 {
     if(canvas == nullptr)
         return PLUTOBOOK_STATUS_WRITE_ERROR;
-    if(cairo_surface_write_to_png(canvas->surface, filename)) {
-        CHECK_CANVAS_SURFACE_ERROR(canvas);
+    if(cairo_surface_write_to_png(canvas->surface, filename))
         return PLUTOBOOK_STATUS_WRITE_ERROR;
-    }
-
     return PLUTOBOOK_STATUS_SUCCESS;
 }
 
@@ -249,11 +219,8 @@ plutobook_status_t plutobook_image_canvas_write_to_png_stream(const plutobook_ca
 {
     if(canvas == nullptr)
         return PLUTOBOOK_STATUS_WRITE_ERROR;
-    if(cairo_surface_write_to_png_stream(canvas->surface, (cairo_write_func_t)(callback), closure)) {
-        CHECK_CANVAS_SURFACE_ERROR(canvas);
+    if(cairo_surface_write_to_png_stream(canvas->surface, (cairo_write_func_t)(callback), closure))
         return PLUTOBOOK_STATUS_WRITE_ERROR;
-    }
-
     return PLUTOBOOK_STATUS_SUCCESS;
 }
 
@@ -272,7 +239,6 @@ void plutobook_pdf_canvas_set_metadata(plutobook_canvas_t* canvas, plutobook_pdf
     if(canvas == nullptr)
         return;
     cairo_pdf_surface_set_metadata(canvas->surface, (cairo_pdf_metadata_t)(name), value);
-    CHECK_CANVAS_SURFACE_ERROR(canvas);
 }
 
 void plutobook_pdf_canvas_set_size(plutobook_canvas_t* canvas, plutobook_page_size_t size)
@@ -280,7 +246,6 @@ void plutobook_pdf_canvas_set_size(plutobook_canvas_t* canvas, plutobook_page_si
     if(canvas == nullptr)
         return;
     cairo_pdf_surface_set_size(canvas->surface, size.width, size.height);
-    CHECK_CANVAS_SURFACE_ERROR(canvas);
 }
 
 void plutobook_pdf_canvas_show_page(plutobook_canvas_t* canvas)
@@ -288,7 +253,6 @@ void plutobook_pdf_canvas_show_page(plutobook_canvas_t* canvas)
     if(canvas == nullptr)
         return;
     cairo_show_page(canvas->context);
-    CHECK_CANVAS_CONTEXT_ERROR(canvas);
 }
 
 struct _plutobook_resource_data {
@@ -303,8 +267,8 @@ struct _plutobook_resource_data {
 
 static plutobook_resource_data_t* plutobook_resource_data_create(unsigned int content_length, const char* mime_type, const char* text_encoding)
 {
-    auto mime_type_length = 1ul + std::strlen(mime_type);
-    auto text_encoding_length = 1ul + std::strlen(text_encoding);
+    auto mime_type_length = std::strlen(mime_type) + 1ul;
+    auto text_encoding_length = std::strlen(text_encoding) + 1ul;
     auto resource = (plutobook_resource_data_t*)(std::malloc(mime_type_length + text_encoding_length + content_length + sizeof(plutobook_resource_data_t)));
     if(resource == nullptr)
         return nullptr;
