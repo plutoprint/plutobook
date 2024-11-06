@@ -526,7 +526,9 @@ plutobook_status_t plutobook_load_image(plutobook_t* book, const char* data, uns
 
 plutobook_status_t plutobook_load_xml(plutobook_t* book, const char* data, int length, const char* user_style, const char* user_script, const char* base_url)
 {
-    std::string_view content(data, length >= 0 ? length : std::strlen(data));
+    if(length == -1)
+        length = std::strlen(data);
+    std::string_view content(data, length);
     if(getBook(book).loadXml(content, user_style, user_script, base_url))
         return PLUTOBOOK_STATUS_SUCCESS;
     return PLUTOBOOK_STATUS_LOAD_ERROR;
@@ -534,7 +536,9 @@ plutobook_status_t plutobook_load_xml(plutobook_t* book, const char* data, int l
 
 plutobook_status_t plutobook_load_html(plutobook_t* book, const char* data, int length, const char* user_style, const char* user_script, const char* base_url)
 {
-    std::string_view content(data, length >= 0 ? length : std::strlen(data));
+    if(length == -1)
+        length = std::strlen(data);
+    std::string_view content(data, length);
     if(getBook(book).loadHtml(content, user_style, user_script, base_url))
         return PLUTOBOOK_STATUS_SUCCESS;
     return PLUTOBOOK_STATUS_LOAD_ERROR;
