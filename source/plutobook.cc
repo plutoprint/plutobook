@@ -505,7 +505,7 @@ plutobook_media_type_t plutobook_get_media_type(const plutobook_t* book)
 
 plutobook_status_t plutobook_load_url(plutobook_t* book, const char* url, const char* user_style, const char* user_script)
 {
-    if(getBook(book).Book::loadUrl(url, user_style, user_script))
+    if(getBook(book).loadUrl(url, user_style, user_script))
         return PLUTOBOOK_STATUS_SUCCESS;
     return PLUTOBOOK_STATUS_LOAD_ERROR;
 }
