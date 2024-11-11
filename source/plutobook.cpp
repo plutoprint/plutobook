@@ -398,10 +398,12 @@ bool Book::loadXml(const std::string_view& content, const std::string_view& user
     m_document = XMLDocument::create(this, heap(), m_customResourceFetcher, ResourceLoader::completeUrl(baseUrl));
     m_document->addUserStyleSheet(userStyle);
     m_document->addUserJavaScript(userScript);
-    if(m_document->load(content))
-        return true;
-    clearContent();
-    return false;
+    if(!m_document->load(content)) {
+        clearContent();
+        return false;
+    }
+
+    return true;
 }
 
 bool Book::loadHtml(const std::string_view& content, const std::string_view& userStyle, const std::string_view& userScript, const std::string_view& baseUrl)

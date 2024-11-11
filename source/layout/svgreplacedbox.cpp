@@ -92,21 +92,30 @@ void SVGRootBox::paintReplaced(const PaintInfo& info, const Point& offset)
     auto leftWidth = borderLeft() + paddingLeft();
     auto rightWidth = borderRight() + paddingRight();
 
-    SVGBlendInfo blendInfo(m_clipper, m_masker, style());
-    SVGRenderState newState(blendInfo, this, nullptr, SVGRenderMode::Painting, *info, info->getTransform());
     if(isOverflowHidden()) {
         auto clipRect = style()->getBorderRoundedRect(borderRect, true, true);
         clipRect.shrink(topWidth, bottomWidth, leftWidth, rightWidth);
-        newState->clipRoundedRect(clipRect);
+        info->save();
+        info->clipRoundedRect(clipRect);
     }
 
     borderRect.shrink(topWidth, bottomWidth, leftWidth, rightWidth);
-    newState->translate(borderRect.x, borderRect.y);
-    newState->addTransform(element()->viewBoxToViewTransform(borderRect.size()));
-    for(auto child = firstChild(); child; child = child->nextSibling()) {
-        if(auto box = to<SVGBoxModel>(child)) {
-            box->render(newState);
+    auto currentTransform = info->getTransform();
+    currentTransform.translate(borderRect.x, borderRect.y);
+    currentTransform.multiply(element()->viewBoxToViewTransform(borderRect.size()));
+
+    {
+        SVGBlendInfo blendInfo(m_clipper, m_masker, style());
+        SVGRenderState newState(blendInfo, this, nullptr, SVGRenderMode::Painting, *info, currentTransform);
+        for(auto child = firstChild(); child; child = child->nextSibling()) {
+            if(auto box = to<SVGBoxModel>(child)) {
+                box->render(newState);
+            }
         }
+    }
+
+    if(isOverflowHidden()) {
+        info->restore();
     }
 }
 
