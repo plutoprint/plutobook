@@ -154,6 +154,11 @@ cairo_t* plutobook_canvas_get_context(const plutobook_canvas_t* canvas)
     return canvas->context;
 }
 
+static_assert(CAIRO_STATUS_SUCCESS == static_cast<cairo_status_t>(PLUTOBOOK_STATUS_SUCCESS), "Status codes must align");
+static_assert(CAIRO_STATUS_NO_MEMORY == static_cast<cairo_status_t>(PLUTOBOOK_STATUS_MEMORY_ERROR), "Status codes must align");
+static_assert(CAIRO_STATUS_READ_ERROR == static_cast<cairo_status_t>(PLUTOBOOK_STATUS_LOAD_ERROR), "Status codes must align");
+static_assert(CAIRO_STATUS_WRITE_ERROR == static_cast<cairo_status_t>(PLUTOBOOK_STATUS_WRITE_ERROR), "Status codes must align");
+
 plutobook_status_t plutobook_canvas_get_status(const plutobook_canvas_t* canvas)
 {
     if(canvas == nullptr || cairo_status(canvas->context) || cairo_surface_status(canvas->surface))
