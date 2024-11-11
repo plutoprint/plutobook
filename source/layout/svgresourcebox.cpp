@@ -36,13 +36,11 @@ void SVGResourceMarkerBox::renderMarker(const SVGRenderState& state, const Point
 {
     if(m_clipRect.isEmpty() || state.hasCycleReference(this))
         return;
-    SVGRenderState newState(this, state, markerTransform(origin, angle, strokeWidth));
-    SVGBlendInfo blendInfo(newState, m_clipper, m_masker, style());
-    blendInfo.beginGroup();
+    SVGBlendInfo blendInfo(m_clipper, m_masker, style());
+    SVGRenderState newState(blendInfo, this, state, markerTransform(origin, angle, strokeWidth));
     if(isOverflowHidden())
         newState->clipRect(m_clipRect);
     renderChildren(newState);
-    blendInfo.endGroup();
 }
 
 void SVGResourceMarkerBox::build()
@@ -151,7 +149,7 @@ void SVGResourceClipperBox::applyClipMask(const SVGRenderState& state) const
 {
     if(state.hasCycleReference(this))
         return;
-    auto maskImage = ImageBuffer::create(state.mapRect(state.paintBoundingBox()));
+    auto maskImage = ImageBuffer::create(state.currentTransform().mapRect(state.paintBoundingBox()));
     GraphicsContext context(maskImage->canvas());
     context.addTransform(state.currentTransform());
     context.addTransform(element()->transform());
@@ -160,11 +158,10 @@ void SVGResourceClipperBox::applyClipMask(const SVGRenderState& state) const
         context.translate(bbox.x, bbox.y);
         context.scale(bbox.w, bbox.h);
     }
-
-    SVGRenderState newState(this, state, context, SVGRenderMode::Clipping);
-    renderChildren(newState);
-    if(m_clipper) {
-        m_clipper->applyClipMask(newState);
+    {
+        SVGBlendInfo blendInfo(m_clipper, nullptr, 1.f, BlendMode::Normal);
+        SVGRenderState newState(blendInfo, this, &state, SVGRenderMode::Clipping, context, context.getTransform());
+        renderChildren(newState);
     }
 
     state->applyMask(*maskImage);
@@ -211,7 +208,7 @@ void SVGResourceMaskerBox::applyMask(const SVGRenderState& state) const
         maskRect.h = maskRect.h * bbox.h;
     }
 
-    auto maskImage = ImageBuffer::create(state.mapRect(state.paintBoundingBox()));
+    auto maskImage = ImageBuffer::create(state.currentTransform().mapRect(state.paintBoundingBox()));
     GraphicsContext context(maskImage->canvas());
     context.addTransform(state.currentTransform());
     context.clipRect(maskRect);
@@ -220,13 +217,10 @@ void SVGResourceMaskerBox::applyMask(const SVGRenderState& state) const
         context.translate(bbox.x, bbox.y);
         context.scale(bbox.w, bbox.h);
     }
-
-    SVGRenderState newState(this, state, context, state.mode());
-    renderChildren(newState);
-    if(m_clipper)
-        m_clipper->applyClipMask(newState);
-    if(m_masker) {
-        m_masker->applyMask(newState);
+    {
+        SVGBlendInfo blendInfo(m_clipper, m_masker, 1.f, BlendMode::Normal);
+        SVGRenderState newState(blendInfo, this, &state, state.mode(), context, context.getTransform());
+        renderChildren(newState);
     }
 
     if(style()->maskType() == MaskType::Luminance)
@@ -303,19 +297,17 @@ void SVGResourcePatternBox::applyPaint(const SVGRenderState& state, float opacit
         auto& bbox = state.fillBoundingBox();
         context.scale(bbox.w, bbox.h);
     }
-
-    if(opacity < 1.f)
-        context.pushGroup();
-    SVGRenderState newState(this, state, context, SVGRenderMode::Display);
-    m_patternContentBox->renderChildren(newState);
-    if(opacity < 1.f) {
-        context.popGroup(opacity);
+    {
+        SVGBlendInfo blendInfo(m_clipper, m_masker, opacity, BlendMode::Normal);
+        SVGRenderState newState(blendInfo, this, &state, SVGRenderMode::Painting, context, context.getTransform());
+        m_patternContentBox->renderChildren(newState);
     }
 
     Transform patternTransform(m_patternTransform);
     patternTransform.translate(patternRect.x, patternRect.y);
     patternTransform.scale(1.0 / xScale, 1.0 / yScale);
     state->setPattern(surface, patternTransform);
+
     cairo_destroy(canvas);
     cairo_surface_destroy(surface);
 }

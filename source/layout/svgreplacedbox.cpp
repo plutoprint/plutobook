@@ -92,9 +92,8 @@ void SVGRootBox::paintReplaced(const PaintInfo& info, const Point& offset)
     auto leftWidth = borderLeft() + paddingLeft();
     auto rightWidth = borderRight() + paddingRight();
 
-    SVGRenderState newState(this, info.context());
-    SVGBlendInfo blendInfo(newState, m_clipper, m_masker, style());
-    blendInfo.beginGroup();
+    SVGBlendInfo blendInfo(m_clipper, m_masker, style());
+    SVGRenderState newState(blendInfo, this, nullptr, SVGRenderMode::Painting, *info, info->getTransform());
     if(isOverflowHidden()) {
         auto clipRect = style()->getBorderRoundedRect(borderRect, true, true);
         clipRect.shrink(topWidth, bottomWidth, leftWidth, rightWidth);
@@ -109,8 +108,6 @@ void SVGRootBox::paintReplaced(const PaintInfo& info, const Point& offset)
             box->render(newState);
         }
     }
-
-    blendInfo.endGroup();
 }
 
 SVGImageBox::SVGImageBox(SVGImageElement* element, const RefPtr<BoxStyle>& style)
@@ -121,18 +118,16 @@ SVGImageBox::SVGImageBox(SVGImageElement* element, const RefPtr<BoxStyle>& style
 
 void SVGImageBox::render(const SVGRenderState& state) const
 {
-    if(m_image == nullptr || state.mode() != SVGRenderMode::Display || style()->visibility() != Visibility::Visible)
+    if(m_image == nullptr || state.mode() != SVGRenderMode::Painting || style()->visibility() != Visibility::Visible)
         return;
     auto& preserveAspectRatio = element()->preserveAspectRatio();
     Rect dstRect(m_viewportRect);
     Rect srcRect(0, 0, m_image->width(), m_image->height());
     preserveAspectRatio.transformRect(dstRect, srcRect);
 
-    SVGRenderState newState(this, state, element()->transform());
-    SVGBlendInfo blendInfo(newState, m_clipper, m_masker, style());
-    blendInfo.beginGroup();
+    SVGBlendInfo blendInfo(m_clipper, m_masker, style());
+    SVGRenderState newState(blendInfo, this, state, element()->transform());
     m_image->draw(*newState, dstRect, srcRect);
-    blendInfo.endGroup();
 }
 
 void SVGImageBox::build()

@@ -8,70 +8,60 @@
 namespace plutobook {
 
 enum class SVGRenderMode {
-    Display,
+    Painting,
     Clipping
+};
+
+class SVGBlendInfo {
+public:
+    SVGBlendInfo(const SVGResourceClipperBox* clipper, const SVGResourceMaskerBox* masker, const BoxStyle* style)
+        : SVGBlendInfo(clipper, masker, style->opacity(), style->blendMode())
+    {}
+
+    SVGBlendInfo(const SVGResourceClipperBox* clipper, const SVGResourceMaskerBox* masker, float opacity, BlendMode blendMode)
+        : m_clipper(clipper), m_masker(masker), m_opacity(opacity), m_blendMode(blendMode)
+    {}
+
+    bool requiresCompositing(SVGRenderMode mode) const;
+    const SVGResourceClipperBox* clipper() const { return m_clipper; }
+    const SVGResourceMaskerBox* masker() const { return m_masker; }
+    const float opacity() const { return m_opacity; }
+    const BlendMode blendMode() const { return m_blendMode; }
+
+private:
+    const SVGResourceClipperBox* m_clipper;
+    const SVGResourceMaskerBox* m_masker;
+    const float m_opacity;
+    const BlendMode m_blendMode;
 };
 
 class SVGRenderState {
 public:
-    SVGRenderState(const Box* box, const SVGRenderState& parent, const Transform& transform)
-        : m_box(box), m_parent(&parent), m_context(parent.context())
-        , m_mode(parent.mode()), m_currentTransform(m_context.getTransform() * transform)
-    {}
-
-    SVGRenderState(const Box* box, const SVGRenderState& parent, GraphicsContext& context, SVGRenderMode mode)
-        : m_box(box), m_parent(&parent), m_context(context)
-        , m_mode(mode), m_currentTransform(context.getTransform())
-    {}
-
-    SVGRenderState(const Box* box, GraphicsContext& context)
-        : m_box(box), m_parent(nullptr), m_context(context)
-        , m_mode(SVGRenderMode::Display), m_currentTransform(context.getTransform())
-    {}
+    SVGRenderState(const SVGBlendInfo& info, const Box* box, const SVGRenderState& parent, const Transform& localTransform);
+    SVGRenderState(const SVGBlendInfo& info, const Box* box, const SVGRenderState* parent, SVGRenderMode mode, GraphicsContext& context, const Transform& currentTransform);
+    ~SVGRenderState();
 
     GraphicsContext& operator*() const { return m_context; }
     GraphicsContext* operator->() const { return &m_context; }
 
     const Box* box() const { return m_box; }
     const SVGRenderState* parent() const { return m_parent; }
+    const SVGBlendInfo& info() const { return m_info; }
     GraphicsContext& context() const { return m_context; }
-    SVGRenderMode mode() const { return m_mode; }
+    const Transform& currentTransform() const { return m_currentTransform; }
+    const SVGRenderMode mode() const { return m_mode; }
     const Rect& fillBoundingBox() const { return m_box->fillBoundingBox(); }
     const Rect& paintBoundingBox() const { return m_box->paintBoundingBox(); }
-    const Transform& currentTransform() const { return m_currentTransform; }
-    Rect mapRect(const Rect& rect) const { return m_currentTransform.mapRect(rect); }
 
     bool hasCycleReference(const Box* box) const;
 
 private:
     const Box* m_box;
     const SVGRenderState* m_parent;
+    const SVGBlendInfo& m_info;
     GraphicsContext& m_context;
-    SVGRenderMode m_mode;
-    Transform m_currentTransform;
-};
-
-class SVGBlendInfo {
-public:
-    SVGBlendInfo(const SVGRenderState& state, const SVGResourceClipperBox* clipper, const SVGResourceMaskerBox* masker, const BoxStyle* style)
-        : SVGBlendInfo(state, clipper, masker, style->opacity(), style->blendMode())
-    {}
-
-    SVGBlendInfo(const SVGRenderState& state, const SVGResourceClipperBox* clipper, const SVGResourceMaskerBox* masker, float opacity, BlendMode blendMode)
-        : m_state(state), m_clipper(clipper), m_masker(masker), m_opacity(opacity)
-        , m_blendMode(blendMode), m_requiresCompositing(requiresCompositing(state.mode()))
-    {}
-
-    void beginGroup() const;
-    void endGroup() const;
-
-private:
-    bool requiresCompositing(SVGRenderMode mode) const;
-    const SVGRenderState& m_state;
-    const SVGResourceClipperBox* m_clipper;
-    const SVGResourceMaskerBox* m_masker;
-    const float m_opacity;
-    const BlendMode m_blendMode;
+    const Transform m_currentTransform;
+    const SVGRenderMode m_mode;
     const bool m_requiresCompositing;
 };
 

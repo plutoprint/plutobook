@@ -84,11 +84,9 @@ void SVGTransformableContainerBox::build()
 
 void SVGTransformableContainerBox::render(const SVGRenderState& state) const
 {
-    SVGRenderState newState(this, state, m_localTransform);
-    SVGBlendInfo blendInfo(newState, m_clipper, m_masker, style());
-    blendInfo.beginGroup();
+    SVGBlendInfo blendInfo(m_clipper, m_masker, style());
+    SVGRenderState newState(blendInfo, this, state, m_localTransform);
     renderChildren(newState);
-    blendInfo.endGroup();
 }
 
 SVGViewportContainerBox::SVGViewportContainerBox(SVGSVGElement* element, const RefPtr<BoxStyle>& style)
@@ -101,13 +99,11 @@ void SVGViewportContainerBox::render(const SVGRenderState& state) const
 {
     if(m_clipRect.isEmpty())
         return;
-    SVGRenderState newState(this, state, m_localTransform);
-    SVGBlendInfo blendInfo(newState, m_clipper, m_masker, style());
-    blendInfo.beginGroup();
+    SVGBlendInfo blendInfo(m_clipper, m_masker, style());
+    SVGRenderState newState(blendInfo, this, state, m_localTransform);
     if(isOverflowHidden())
         newState->clipRect(m_clipRect);
     renderChildren(newState);
-    blendInfo.endGroup();
 }
 
 void SVGViewportContainerBox::build()

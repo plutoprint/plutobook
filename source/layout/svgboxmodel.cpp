@@ -3,6 +3,49 @@
 
 namespace plutobook {
 
+bool SVGBlendInfo::requiresCompositing(SVGRenderMode mode) const
+{
+    return (m_clipper && m_clipper->requiresMasking()) || (mode == SVGRenderMode::Painting && (m_masker || m_opacity < 1.f || m_blendMode > BlendMode::Normal));
+}
+
+SVGRenderState::SVGRenderState(const SVGBlendInfo& info, const Box* box, const SVGRenderState& parent, const Transform& localTransform)
+    : SVGRenderState(info, box, &parent, parent.mode(), parent.context(), parent.currentTransform() * localTransform)
+{
+}
+
+SVGRenderState::SVGRenderState(const SVGBlendInfo& info, const Box* box, const SVGRenderState* parent, SVGRenderMode mode, GraphicsContext& context, const Transform& currentTransform)
+    : m_box(box), m_parent(parent), m_info(info), m_context(context), m_currentTransform(currentTransform)
+    , m_mode(mode), m_requiresCompositing(info.requiresCompositing(mode))
+{
+    if(m_requiresCompositing) {
+        m_context.pushGroup();
+    } else {
+        m_context.save();
+    }
+
+    m_context.setTransform(m_currentTransform);
+    if(m_info.clipper() && !m_requiresCompositing) {
+        m_info.clipper()->applyClipPath(*this);
+    }
+}
+
+SVGRenderState::~SVGRenderState()
+{
+    if(m_requiresCompositing) {
+        if(m_info.clipper())
+            m_info.clipper()->applyClipMask(*this);
+        if(m_mode == SVGRenderMode::Painting) {
+            if(m_info.masker())
+                m_info.masker()->applyMask(*this);
+            m_context.popGroup(m_info.opacity(), m_info.blendMode());
+        } else {
+            m_context.popGroup(1.0);
+        }
+    } else {
+        m_context.restore();
+    }
+}
+
 bool SVGRenderState::hasCycleReference(const Box* box) const
 {
     auto current = this;
@@ -12,42 +55,6 @@ bool SVGRenderState::hasCycleReference(const Box* box) const
         current = current->parent();
     } while(current);
     return false;
-}
-
-void SVGBlendInfo::beginGroup() const
-{
-    if(m_requiresCompositing) {
-        m_state->pushGroup();
-    } else {
-        m_state->save();
-    }
-
-    m_state->setTransform(m_state.currentTransform());
-    if(m_clipper && !m_requiresCompositing) {
-        m_clipper->applyClipPath(m_state);
-    }
-}
-
-void SVGBlendInfo::endGroup() const
-{
-    if(m_requiresCompositing) {
-        if(m_clipper)
-            m_clipper->applyClipMask(m_state);
-        if(m_state.mode() == SVGRenderMode::Display) {
-            if(m_masker)
-                m_masker->applyMask(m_state);
-            m_state->popGroup(m_opacity, m_blendMode);
-        } else {
-            m_state->popGroup(1.0);
-        }
-    } else {
-        m_state->restore();
-    }
-}
-
-bool SVGBlendInfo::requiresCompositing(SVGRenderMode mode) const
-{
-    return (m_clipper && m_clipper->requiresMasking()) || (mode == SVGRenderMode::Display && (m_masker || m_opacity < 1.f || m_blendMode > BlendMode::Normal));
 }
 
 void SVGPaintServer::applyPaint(const SVGRenderState& state) const

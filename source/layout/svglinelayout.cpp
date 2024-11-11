@@ -435,9 +435,8 @@ void SVGLineLayout::render(const SVGRenderState& state) const
         state->translate(-origin.x, -origin.y);
 
         auto parent = fragment.item.box()->parentBox();
-        if(state.mode() == SVGRenderMode::Display && parent->isSVGTSpanBox()) {
-            auto& fill = to<SVGTSpanBox>(*parent).fill();
-            fill.applyPaint(state);
+        if(state.mode() == SVGRenderMode::Painting && parent->isSVGTSpanBox()) {
+            to<SVGTSpanBox>(*parent).fill().applyPaint(state);
         }
 
         fragment.shape.draw(*state, origin, 0.f);

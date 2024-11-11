@@ -5,25 +5,6 @@
 #include <cstring>
 #include <cstdlib>
 
-static_assert(PLUTOBOOK_STATUS_SUCCESS  == static_cast<plutobook_status_t>(CAIRO_STATUS_SUCCESS), "unexpected plutobook_status_t value");
-static_assert(PLUTOBOOK_STATUS_MEMORY_ERROR == static_cast<plutobook_status_t>(CAIRO_STATUS_NO_MEMORY), "unexpected plutobook_status_t value");
-static_assert(PLUTOBOOK_STATUS_LOAD_ERROR == static_cast<plutobook_status_t>(CAIRO_STATUS_READ_ERROR), "unexpected plutobook_status_t value");
-static_assert(PLUTOBOOK_STATUS_WRITE_ERROR == static_cast<plutobook_status_t>(CAIRO_STATUS_WRITE_ERROR), "unexpected plutobook_status_t value");
-
-static_assert(PLUTOBOOK_IMAGE_FORMAT_INVALID == static_cast<plutobook_image_format_t>(CAIRO_FORMAT_INVALID), "unexpected plutobook_image_format_t value");
-static_assert(PLUTOBOOK_IMAGE_FORMAT_ARGB32 == static_cast<plutobook_image_format_t>(CAIRO_FORMAT_ARGB32), "unexpected plutobook_image_format_t value");
-static_assert(PLUTOBOOK_IMAGE_FORMAT_RGB24 == static_cast<plutobook_image_format_t>(CAIRO_FORMAT_RGB24), "unexpected plutobook_image_format_t value");
-static_assert(PLUTOBOOK_IMAGE_FORMAT_A8 == static_cast<plutobook_image_format_t>(CAIRO_FORMAT_A8), "unexpected plutobook_image_format_t value");
-static_assert(PLUTOBOOK_IMAGE_FORMAT_A1 == static_cast<plutobook_image_format_t>(CAIRO_FORMAT_A1), "unexpected plutobook_image_format_t value");
-
-static_assert(PLUTOBOOK_PDF_METADATA_TITLE == static_cast<plutobook_pdf_metadata_t>(CAIRO_PDF_METADATA_TITLE), "unexpected plutobook_pdf_metadata_t value");
-static_assert(PLUTOBOOK_PDF_METADATA_AUTHOR == static_cast<plutobook_pdf_metadata_t>(CAIRO_PDF_METADATA_AUTHOR), "unexpected plutobook_pdf_metadata_t value");
-static_assert(PLUTOBOOK_PDF_METADATA_SUBJECT == static_cast<plutobook_pdf_metadata_t>(CAIRO_PDF_METADATA_SUBJECT), "unexpected plutobook_pdf_metadata_t value");
-static_assert(PLUTOBOOK_PDF_METADATA_KEYWORDS == static_cast<plutobook_pdf_metadata_t>(CAIRO_PDF_METADATA_KEYWORDS), "unexpected plutobook_pdf_metadata_t value");
-static_assert(PLUTOBOOK_PDF_METADATA_CREATOR == static_cast<plutobook_pdf_metadata_t>(CAIRO_PDF_METADATA_CREATOR), "unexpected plutobook_pdf_metadata_t value");
-static_assert(PLUTOBOOK_PDF_METADATA_CREATION_DATE == static_cast<plutobook_pdf_metadata_t>(CAIRO_PDF_METADATA_CREATE_DATE), "unexpected plutobook_pdf_metadata_t value");
-static_assert(PLUTOBOOK_PDF_METADATA_MODIFICATION_DATE == static_cast<plutobook_pdf_metadata_t>(CAIRO_PDF_METADATA_MOD_DATE), "unexpected plutobook_pdf_metadata_t value");
-
 int plutobook_version()
 {
     return PLUTOBOOK_VERSION;
@@ -173,12 +154,23 @@ cairo_t* plutobook_canvas_get_context(const plutobook_canvas_t* canvas)
     return canvas->context;
 }
 
+static_assert(PLUTOBOOK_STATUS_SUCCESS  == static_cast<plutobook_status_t>(CAIRO_STATUS_SUCCESS), "unexpected plutobook_status_t value");
+static_assert(PLUTOBOOK_STATUS_MEMORY_ERROR == static_cast<plutobook_status_t>(CAIRO_STATUS_NO_MEMORY), "unexpected plutobook_status_t value");
+static_assert(PLUTOBOOK_STATUS_LOAD_ERROR == static_cast<plutobook_status_t>(CAIRO_STATUS_READ_ERROR), "unexpected plutobook_status_t value");
+static_assert(PLUTOBOOK_STATUS_WRITE_ERROR == static_cast<plutobook_status_t>(CAIRO_STATUS_WRITE_ERROR), "unexpected plutobook_status_t value");
+
 plutobook_status_t plutobook_canvas_get_status(const plutobook_canvas_t* canvas)
 {
     if(canvas == nullptr || cairo_status(canvas->context) || cairo_surface_status(canvas->surface))
         return PLUTOBOOK_STATUS_CANVAS_ERROR;
     return PLUTOBOOK_STATUS_SUCCESS;
 }
+
+static_assert(PLUTOBOOK_IMAGE_FORMAT_INVALID == static_cast<plutobook_image_format_t>(CAIRO_FORMAT_INVALID), "unexpected plutobook_image_format_t value");
+static_assert(PLUTOBOOK_IMAGE_FORMAT_ARGB32 == static_cast<plutobook_image_format_t>(CAIRO_FORMAT_ARGB32), "unexpected plutobook_image_format_t value");
+static_assert(PLUTOBOOK_IMAGE_FORMAT_RGB24 == static_cast<plutobook_image_format_t>(CAIRO_FORMAT_RGB24), "unexpected plutobook_image_format_t value");
+static_assert(PLUTOBOOK_IMAGE_FORMAT_A8 == static_cast<plutobook_image_format_t>(CAIRO_FORMAT_A8), "unexpected plutobook_image_format_t value");
+static_assert(PLUTOBOOK_IMAGE_FORMAT_A1 == static_cast<plutobook_image_format_t>(CAIRO_FORMAT_A1), "unexpected plutobook_image_format_t value");
 
 plutobook_canvas_t* plutobook_image_canvas_create(int width, int height, plutobook_image_format_t format)
 {
@@ -252,6 +244,14 @@ plutobook_canvas_t* plutobook_pdf_canvas_create_for_stream(plutobook_stream_writ
 {
     return plutobook_canvas_create(cairo_pdf_surface_create_for_stream((cairo_write_func_t)(callback), closure, size.width, size.height));
 }
+
+static_assert(PLUTOBOOK_PDF_METADATA_TITLE == static_cast<plutobook_pdf_metadata_t>(CAIRO_PDF_METADATA_TITLE), "unexpected plutobook_pdf_metadata_t value");
+static_assert(PLUTOBOOK_PDF_METADATA_AUTHOR == static_cast<plutobook_pdf_metadata_t>(CAIRO_PDF_METADATA_AUTHOR), "unexpected plutobook_pdf_metadata_t value");
+static_assert(PLUTOBOOK_PDF_METADATA_SUBJECT == static_cast<plutobook_pdf_metadata_t>(CAIRO_PDF_METADATA_SUBJECT), "unexpected plutobook_pdf_metadata_t value");
+static_assert(PLUTOBOOK_PDF_METADATA_KEYWORDS == static_cast<plutobook_pdf_metadata_t>(CAIRO_PDF_METADATA_KEYWORDS), "unexpected plutobook_pdf_metadata_t value");
+static_assert(PLUTOBOOK_PDF_METADATA_CREATOR == static_cast<plutobook_pdf_metadata_t>(CAIRO_PDF_METADATA_CREATOR), "unexpected plutobook_pdf_metadata_t value");
+static_assert(PLUTOBOOK_PDF_METADATA_CREATION_DATE == static_cast<plutobook_pdf_metadata_t>(CAIRO_PDF_METADATA_CREATE_DATE), "unexpected plutobook_pdf_metadata_t value");
+static_assert(PLUTOBOOK_PDF_METADATA_MODIFICATION_DATE == static_cast<plutobook_pdf_metadata_t>(CAIRO_PDF_METADATA_MOD_DATE), "unexpected plutobook_pdf_metadata_t value");
 
 void plutobook_pdf_canvas_set_metadata(plutobook_canvas_t* canvas, plutobook_pdf_metadata_t name, const char* value)
 {

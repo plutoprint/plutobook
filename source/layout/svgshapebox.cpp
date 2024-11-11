@@ -53,10 +53,9 @@ void SVGShapeBox::render(const SVGRenderState& state) const
 {
     if(style()->visibility() != Visibility::Visible)
         return;
-    SVGRenderState newState(this, state, element()->transform());
-    SVGBlendInfo blendInfo(newState, m_clipper, m_masker, style());
-    blendInfo.beginGroup();
-    if(state.mode() == SVGRenderMode::Clipping) {
+    SVGBlendInfo blendInfo(m_clipper, m_masker, style());
+    SVGRenderState newState(blendInfo, this, state, element()->transform());
+    if(newState.mode() == SVGRenderMode::Clipping) {
         newState->setColor(Color::White);
         newState->fillPath(m_path, style()->clipRule());
     } else {
@@ -74,8 +73,6 @@ void SVGShapeBox::render(const SVGRenderState& state) const
             markerPosition.renderMarker(newState, m_markerData.strokeWidth());
         }
     }
-
-    blendInfo.endGroup();
 }
 
 void SVGShapeBox::build()

@@ -37,17 +37,15 @@ void SVGTextBox::render(const SVGRenderState& state) const
 {
     if(style()->visibility() != Visibility::Visible)
         return;
-    SVGRenderState newState(this, state, element()->transform());
-    SVGBlendInfo blendInfo(newState, m_clipper, m_masker, style());
-    blendInfo.beginGroup();
-    if(state.mode() == SVGRenderMode::Display) {
-        m_fill.applyPaint(newState);
-    } else {
+    SVGBlendInfo blendInfo(m_clipper, m_masker, style());
+    SVGRenderState newState(blendInfo, this, state, element()->transform());
+    if(newState.mode() == SVGRenderMode::Clipping) {
         newState->setColor(Color::White);
+    } else {
+        m_fill.applyPaint(newState);
     }
 
     m_lineLayout.render(newState);
-    blendInfo.endGroup();
 }
 
 void SVGTextBox::build()

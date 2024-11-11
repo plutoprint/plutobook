@@ -294,9 +294,7 @@ std::string_view ResourceData::textEncoding() const
 
 plutobook_resource_data_t* ResourceData::release()
 {
-    auto data = m_data;
-    m_data = nullptr;
-    return data;
+    return std::exchange(m_data, nullptr);
 }
 
 Book::Book(const PageSize& size, const PageMargins& margins, MediaType media)
