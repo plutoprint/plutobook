@@ -7,8 +7,6 @@
 
 namespace plutobook {
 
-class Url;
-
 class Resource : public RefCounted<Resource> {
 public:
     enum class Type {
@@ -24,8 +22,9 @@ protected:
     Resource() = default;
 };
 
-class ResourceFetcher;
+class Url;
 class ResourceData;
+class ResourceFetcher;
 
 class ResourceLoader {
 public:

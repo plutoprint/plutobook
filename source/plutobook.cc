@@ -5,6 +5,25 @@
 #include <cstring>
 #include <cstdlib>
 
+static_assert(PLUTOBOOK_STATUS_SUCCESS  == static_cast<plutobook_status_t>(CAIRO_STATUS_SUCCESS), "unexpected plutobook_status_t value");
+static_assert(PLUTOBOOK_STATUS_MEMORY_ERROR == static_cast<plutobook_status_t>(CAIRO_STATUS_NO_MEMORY), "unexpected plutobook_status_t value");
+static_assert(PLUTOBOOK_STATUS_LOAD_ERROR == static_cast<plutobook_status_t>(CAIRO_STATUS_READ_ERROR), "unexpected plutobook_status_t value");
+static_assert(PLUTOBOOK_STATUS_WRITE_ERROR == static_cast<plutobook_status_t>(CAIRO_STATUS_WRITE_ERROR), "unexpected plutobook_status_t value");
+
+static_assert(PLUTOBOOK_IMAGE_FORMAT_INVALID == static_cast<plutobook_image_format_t>(CAIRO_FORMAT_INVALID), "unexpected plutobook_image_format_t value");
+static_assert(PLUTOBOOK_IMAGE_FORMAT_ARGB32 == static_cast<plutobook_image_format_t>(CAIRO_FORMAT_ARGB32), "unexpected plutobook_image_format_t value");
+static_assert(PLUTOBOOK_IMAGE_FORMAT_RGB24 == static_cast<plutobook_image_format_t>(CAIRO_FORMAT_RGB24), "unexpected plutobook_image_format_t value");
+static_assert(PLUTOBOOK_IMAGE_FORMAT_A8 == static_cast<plutobook_image_format_t>(CAIRO_FORMAT_A8), "unexpected plutobook_image_format_t value");
+static_assert(PLUTOBOOK_IMAGE_FORMAT_A1 == static_cast<plutobook_image_format_t>(CAIRO_FORMAT_A1), "unexpected plutobook_image_format_t value");
+
+static_assert(PLUTOBOOK_PDF_METADATA_TITLE == static_cast<plutobook_pdf_metadata_t>(CAIRO_PDF_METADATA_TITLE), "unexpected plutobook_pdf_metadata_t value");
+static_assert(PLUTOBOOK_PDF_METADATA_AUTHOR == static_cast<plutobook_pdf_metadata_t>(CAIRO_PDF_METADATA_AUTHOR), "unexpected plutobook_pdf_metadata_t value");
+static_assert(PLUTOBOOK_PDF_METADATA_SUBJECT == static_cast<plutobook_pdf_metadata_t>(CAIRO_PDF_METADATA_SUBJECT), "unexpected plutobook_pdf_metadata_t value");
+static_assert(PLUTOBOOK_PDF_METADATA_KEYWORDS == static_cast<plutobook_pdf_metadata_t>(CAIRO_PDF_METADATA_KEYWORDS), "unexpected plutobook_pdf_metadata_t value");
+static_assert(PLUTOBOOK_PDF_METADATA_CREATOR == static_cast<plutobook_pdf_metadata_t>(CAIRO_PDF_METADATA_CREATOR), "unexpected plutobook_pdf_metadata_t value");
+static_assert(PLUTOBOOK_PDF_METADATA_CREATION_DATE == static_cast<plutobook_pdf_metadata_t>(CAIRO_PDF_METADATA_CREATE_DATE), "unexpected plutobook_pdf_metadata_t value");
+static_assert(PLUTOBOOK_PDF_METADATA_MODIFICATION_DATE == static_cast<plutobook_pdf_metadata_t>(CAIRO_PDF_METADATA_MOD_DATE), "unexpected plutobook_pdf_metadata_t value");
+
 int plutobook_version()
 {
     return PLUTOBOOK_VERSION;
@@ -153,11 +172,6 @@ cairo_t* plutobook_canvas_get_context(const plutobook_canvas_t* canvas)
         return nullptr;
     return canvas->context;
 }
-
-static_assert(CAIRO_STATUS_SUCCESS == static_cast<cairo_status_t>(PLUTOBOOK_STATUS_SUCCESS), "Status codes must align");
-static_assert(CAIRO_STATUS_NO_MEMORY == static_cast<cairo_status_t>(PLUTOBOOK_STATUS_MEMORY_ERROR), "Status codes must align");
-static_assert(CAIRO_STATUS_READ_ERROR == static_cast<cairo_status_t>(PLUTOBOOK_STATUS_LOAD_ERROR), "Status codes must align");
-static_assert(CAIRO_STATUS_WRITE_ERROR == static_cast<cairo_status_t>(PLUTOBOOK_STATUS_WRITE_ERROR), "Status codes must align");
 
 plutobook_status_t plutobook_canvas_get_status(const plutobook_canvas_t* canvas)
 {
