@@ -317,7 +317,6 @@ RefPtr<SimpleFontData> SimpleFontData::create(cairo_scaled_font_t* font, FontFea
 }
 
 #define FLT_TO_HB(v) static_cast<hb_position_t>(v * (1 << 16))
-
 hb_font_t* SimpleFontData::hbFont() const
 {
     if(m_hbFont != nullptr)
@@ -332,14 +331,19 @@ hb_font_t* SimpleFontData::hbFont() const
 
     cairo_font_options_t* font_options = cairo_font_options_create();
     cairo_scaled_font_get_font_options(m_font, font_options);
-    std::string_view variations(cairo_font_options_get_variations(font_options));
+
     std::vector<hb_variation_t> settings;
+    std::string_view variations(cairo_font_options_get_variations(font_options));
     while(!variations.empty()) {
         hb_variation_t setting;
         auto variation = variations.substr(0, variations.find(','));
         if(hb_variation_from_string(variation.data(), variation.size(), &setting))
             settings.push_back(setting);
-        variations.remove_prefix(std::min(variations.size(), variation.size() + 1));
+        variations.remove_prefix(variation.size());
+        if(!variations.empty()) {
+            assert(variations.front() == ',');
+            variations.remove_prefix(1);
+        }
     }
 
     hb_font_set_variations(hbFont, settings.data(), settings.size());
