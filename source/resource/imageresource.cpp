@@ -14,8 +14,6 @@
 #include <webp/decode.h>
 #endif
 
-#define STB_IMAGE_IMPLEMENTATION
-
 #ifdef PLUTOBOOK_HAS_TURBOJPEG
 #define STBI_NO_JPEG
 #include <turbojpeg.h>
@@ -25,6 +23,7 @@
 #define STBI_NO_PNG
 #endif
 
+#define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
 namespace plutobook {
