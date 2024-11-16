@@ -1066,7 +1066,7 @@ ColumnFill BoxStyle::columnFill() const
 {
     auto value = get(CSSPropertyID::ColumnFill);
     if(value == nullptr)
-        return ColumnFill::Auto;
+        return ColumnFill::Balance;
     auto& ident = to<CSSIdentValue>(*value);
     switch(ident.value()) {
     case CSSValueID::Auto:
@@ -1077,7 +1077,7 @@ ColumnFill BoxStyle::columnFill() const
         assert(false);
     }
 
-    return ColumnFill::Auto;
+    return ColumnFill::Balance;
 }
 
 std::optional<float> BoxStyle::columnWidth() const

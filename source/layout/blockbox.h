@@ -136,14 +136,14 @@ public:
     void updateOverflowRect() override;
     void computePreferredWidths(float& minWidth, float& maxWidth) const override;
 
-    MultiColumnFlowBox* columnFlowBox() const { return m_columnFlowBox; }
     LineLayout* lineLayout() const { return m_lineLayout.get(); }
+    const FloatingBoxList* floatingBoxes() const { return m_floatingBoxes.get(); }
+    MultiColumnFlowBox* columnFlowBox() const { return m_columnFlowBox; }
 
     std::optional<float> firstLineBaseline() const override;
     std::optional<float> lastLineBaseline() const override;
     std::optional<float> inlineBlockBaseline() const override;
 
-    const FloatingBoxList* floatingBoxes() const { return m_floatingBoxes.get(); }
     void insertFloatingBox(BoxFrame* box);
     void removeFloatingBox(BoxFrame* box);
 
@@ -200,14 +200,16 @@ public:
 
     void paintFloats(const PaintInfo& info, const Point& offset);
     void paintContents(const PaintInfo& info, const Point& offset, PaintPhase phase) override;
+
+    void columnize(ColumnBuilder& builder, float top) const override;
     void paginate(PageBuilder& builder, float top) const override;
 
     const char* name() const override { return "BlockFlowBox"; }
 
 private:
-    MultiColumnFlowBox* m_columnFlowBox{nullptr};
     std::unique_ptr<LineLayout> m_lineLayout;
     std::unique_ptr<FloatingBoxList> m_floatingBoxes;
+    MultiColumnFlowBox* m_columnFlowBox{nullptr};
 
     float m_maxPositiveMarginTop{0};
     float m_maxNegativeMarginTop{0};

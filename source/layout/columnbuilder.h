@@ -12,30 +12,15 @@ class BoxFrame;
 
 class ColumnBuilder {
 public:
-    ColumnBuilder(ColumnBuilder* parent, MultiColumnFlowBox* column);
+    explicit ColumnBuilder(MultiColumnFlowBox* column);
 
-    void enterBox(BoxFrame* box, float y) { m_top += y; }
-    void exitBox(BoxFrame* box, float y) { m_top -= y; }
-    void advance(float y) { m_uncommittedTop = m_top + y; }
-    void commit();
-
-    void columnize();
-
-    void closeColumn();
-    void closeRow();
-
-    MultiColumnRow* currentRow() const;
-    MultiColumnItem* currentColumn() const;
+    void enterBox(const BoxFrame* box, float y) { m_top += y; }
+    void exitBox(const BoxFrame* box, float y) { m_top -= y; }
 
 private:
-    ColumnBuilder* m_parent;
     MultiColumnFlowBox* m_column;
     uint32_t m_currentRowIndex{0};
     float m_top{0};
-    float m_uncommittedTop{0};
-    float m_committedTop{0};
-    bool m_isColumnOpen{false};
-    bool m_isRowOpen{false};
 };
 
 } // namespace plutobook

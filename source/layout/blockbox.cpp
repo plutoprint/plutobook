@@ -3,6 +3,7 @@
 #include "linebox.h"
 #include "linelayout.h"
 #include "boxlayer.h"
+#include "columnbuilder.h"
 #include "pagebuilder.h"
 
 namespace plutobook {
@@ -1402,9 +1403,9 @@ void BlockFlowBox::layoutBlockChildren()
 
 void BlockFlowBox::layout()
 {
-    if(isChildrenInline())
+    if(isChildrenInline()) {
         m_lineLayout->updateWidth();
-    else {
+    } else {
         updateWidth();
     }
 
@@ -1412,9 +1413,9 @@ void BlockFlowBox::layout()
     updateMaxMargins();
 
     setHeight(borderAndPaddingTop());
-    if(isChildrenInline())
+    if(isChildrenInline()) {
         m_lineLayout->layout();
-    else {
+    } else {
         layoutBlockChildren();
     }
 
@@ -1481,6 +1482,26 @@ void BlockFlowBox::paintContents(const PaintInfo& info, const Point& offset, Pai
     if(phase == PaintPhase::Floats) {
         paintFloats(info, offset);
     }
+}
+
+void BlockFlowBox::columnize(ColumnBuilder& builder, float top) const
+{
+    if(isFloatingOrPositioned())
+        return;
+    auto adjustedTop = top + y();
+    builder.enterBox(this, adjustedTop);
+    if(isChildrenInline()) {
+        m_lineLayout->columnize(builder, adjustedTop);
+    } else {
+        auto child = firstBoxFrame();
+        while(child) {
+            if(!child->isFloatingOrPositioned())
+                child->columnize(builder, adjustedTop);
+            child = child->nextBoxFrame();
+        }
+    }
+
+    builder.exitBox(this, adjustedTop);
 }
 
 void BlockFlowBox::paginate(PageBuilder& builder, float top) const

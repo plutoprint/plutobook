@@ -21,7 +21,9 @@ void MultiColumnFlowBox::updatePreferredWidths() const
     auto columnBlock = columnBlockFlowBox();
     auto columnStyle = columnBlock->style();
     auto columnCount = columnStyle->columnCount().value_or(1);
-    auto totalColumnGap = (columnCount - 1) * columnStyle->columnGap().value_or(columnStyle->fontSize());
+    auto columnGap = columnStyle->columnGap().value_or(columnStyle->fontSize());
+
+    auto totalColumnGap = (columnCount - 1) * columnGap;
     if(auto columnWidth = columnStyle->columnWidth()) {
         m_minPreferredWidth = std::min(m_minPreferredWidth, columnWidth.value());
         m_maxPreferredWidth = std::max(m_maxPreferredWidth, columnWidth.value());
@@ -39,6 +41,7 @@ void MultiColumnFlowBox::computeWidth(float& x, float& width, float& marginLeft,
     auto columnCount = columnStyle->columnCount();
     auto columnWidth = columnStyle->columnWidth();
     auto columnGap = columnStyle->columnGap().value_or(columnStyle->fontSize());
+
     auto availableWidth = columnBlock->contentBoxWidth();
     if(!columnWidth.has_value() && columnCount.has_value()) {
         m_columnCount = columnCount.value();
@@ -55,7 +58,7 @@ void MultiColumnFlowBox::computeWidth(float& x, float& width, float& marginLeft,
 
 static bool isValidColumnSpanBox(BoxFrame* box)
 {
-    return box->style()->columnSpan() == ColumnSpan::All && !box->isInline() && !box->isFloatingOrPositioned();
+    return box && box->style()->columnSpan() == ColumnSpan::All && !box->isInline() && !box->isFloatingOrPositioned();
 }
 
 void MultiColumnFlowBox::build()
@@ -63,14 +66,12 @@ void MultiColumnFlowBox::build()
     auto child = firstChild();
     while(child) {
         auto box = to<BoxFrame>(child);
-        if(box && isValidColumnSpanBox(box)) {
+        if(isValidColumnSpanBox(box)) {
             box->setHasColumnSpan(true);
             m_rows.emplace_back(box);
         } else if(!child->isFloatingOrPositioned()) {
-            if(m_rows.empty() || m_rows.back().hasColumnSpan()) {
+            if(m_rows.empty() || m_rows.back().hasColumnSpan())
                 m_rows.emplace_back(this);
-            }
-
             if(child->firstChild()) {
                 child = child->firstChild();
                 continue;

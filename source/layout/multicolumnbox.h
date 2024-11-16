@@ -27,14 +27,15 @@ using MultiColumnItemList = std::pmr::list<MultiColumnItem>;
 class MultiColumnRow {
 public:
     explicit MultiColumnRow(BoxFrame* box)
-        : m_items(box->heap())
-        , m_box(box)
+        : m_box(box)
+        , m_items(box->heap())
     {}
 
     const MultiColumnItemList& items() const { return m_items; }
     MultiColumnItemList& items() { return m_items; }
 
     bool hasColumnSpan() const { return m_box->hasColumnSpan(); }
+
     BoxFrame* box() const { return m_box; }
     float y() const { return m_y; }
     float width() const { return m_width; }
@@ -43,8 +44,8 @@ public:
     void setWidth(float width) { m_width = width; }
 
 private:
-    MultiColumnItemList m_items;
     BoxFrame* m_box;
+    MultiColumnItemList m_items;
     float m_y{0};
     float m_width{0};
 };
@@ -56,9 +57,10 @@ public:
     static MultiColumnFlowBox* create(const BoxStyle* parentStyle);
 
     bool isMultiColumnFlowBox() const final { return true; }
+
     BlockFlowBox* columnBlockFlowBox() const;
-    uint32_t columnCount() const { return m_columnCount; }
     const MultiColumnRowList& rows() const { return m_rows; }
+    uint32_t columnCount() const { return m_columnCount; }
 
     void updatePreferredWidths() const final;
     void computeWidth(float& x, float& width, float& marginLeft, float& marginRight) const final;
@@ -69,8 +71,8 @@ public:
 
 private:
     MultiColumnFlowBox(const RefPtr<BoxStyle>& style);
-    mutable uint32_t m_columnCount{0};
     MultiColumnRowList m_rows;
+    mutable uint32_t m_columnCount{0};
 };
 
 inline BlockFlowBox* MultiColumnFlowBox::columnBlockFlowBox() const
