@@ -3,15 +3,15 @@
 #include "plutobook.hpp"
 #include "url.h"
 
-#include <filesystem>
-#include <cstring>
-#include <map>
-
 #ifdef PLUTOBOOK_HAS_CURL
 #include <curl/curl.h>
 #else
 #include <fstream>
 #endif
+
+#include <filesystem>
+#include <cstring>
+#include <map>
 
 namespace plutobook {
 

@@ -7,6 +7,7 @@
 #include "stringutils.h"
 
 #include <unicode/uiter.h>
+
 #include <set>
 
 namespace plutobook {

@@ -7,9 +7,6 @@
 #include "geometry.h"
 
 #include <cairo.h>
-#include <cstring>
-#include <cmath>
-
 #ifdef PLUTOBOOK_HAS_WEBP
 #include <webp/decode.h>
 #endif
@@ -25,6 +22,9 @@
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
+
+#include <cstring>
+#include <cmath>
 
 namespace plutobook {
 

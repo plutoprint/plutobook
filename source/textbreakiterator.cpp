@@ -35,9 +35,7 @@ bool CharacterBreakIterator::isBoundary(int offset) const
 icu::BreakIterator* CharacterBreakIterator::getIterator()
 {
     UErrorCode status = U_ZERO_ERROR;
-    thread_local std::unique_ptr<icu::BreakIterator> iterator;
-    if(iterator == nullptr)
-        iterator.reset(icu::BreakIterator::createCharacterInstance({}, status));
+    thread_local std::unique_ptr<icu::BreakIterator> iterator(icu::BreakIterator::createCharacterInstance({}, status));
     assert(iterator && U_SUCCESS(status));
     return iterator.get();
 }
@@ -183,9 +181,7 @@ bool LineBreakIterator::isBreakable(uint32_t pos) const
 icu::BreakIterator* LineBreakIterator::getIterator()
 {
     UErrorCode status = U_ZERO_ERROR;
-    thread_local std::unique_ptr<icu::BreakIterator> iterator;
-    if(iterator == nullptr)
-        iterator.reset(icu::BreakIterator::createLineInstance({}, status));
+    thread_local std::unique_ptr<icu::BreakIterator> iterator(icu::BreakIterator::createLineInstance({}, status));
     assert(iterator && U_SUCCESS(status));
     return iterator.get();
 }

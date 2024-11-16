@@ -4,6 +4,7 @@
 #include "ustring.h"
 
 #include <unicode/brkiter.h>
+
 #include <optional>
 
 namespace plutobook {

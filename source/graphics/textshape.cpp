@@ -4,10 +4,11 @@
 #include "geometry.h"
 #include "textbreakiterator.h"
 
+#include <algorithm>
+
 #include <unicode/uscript.h>
 #include <cairo-ft.h>
 #include <hb-ft.h>
-#include <algorithm>
 
 namespace plutobook {
 
@@ -131,13 +132,13 @@ RefPtr<TextShape> TextShape::createForText(const UString& text, Direction direct
     float totalWidth = 0.f;
     int startIndex = 0;
     int totalLength = text.length();
-
     TextShapeRunList textRuns(heap);
+
     CharacterBreakIterator iterator(text);
     while(totalLength > 0) {
+        auto errorCode = U_ZERO_ERROR;
         auto character = text.char32At(startIndex);
         auto fontData = font->getFontData(character);
-        auto errorCode = U_ZERO_ERROR;
         auto scriptCode = uscript_getScript(character, &errorCode);
         if(!fontData || U_FAILURE(errorCode))
             break;
@@ -163,6 +164,7 @@ RefPtr<TextShape> TextShape::createForText(const UString& text, Direction direct
         auto numCharacters = nextIndex - startIndex;
         auto scriptName = uscript_getShortName(scriptCode);
         auto hbScript = hb_script_from_string(scriptName, -1);
+
         std::vector<hb_feature_t> hbFeatures;
         for(auto& features : {fontFeatures, fontData->features()}) {
             for(auto& feature : features) {
