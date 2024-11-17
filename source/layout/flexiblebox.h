@@ -155,7 +155,7 @@ public:
     void layout() final;
 
     void paintContents(const PaintInfo& info, const Point& offset, PaintPhase phase) final;
-    void paginate(PageBuilder& builder, float top) const final;
+    void fragmentize(FragmentBuilder& builder, float top) const final;
 
     const char* name() const final { return "FlexibleBox"; }
 

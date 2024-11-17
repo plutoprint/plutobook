@@ -3,8 +3,7 @@
 #include "linebox.h"
 #include "linelayout.h"
 #include "boxlayer.h"
-#include "columnbuilder.h"
-#include "pagebuilder.h"
+#include "fragmentbuilder.h"
 
 namespace plutobook {
 
@@ -1484,40 +1483,17 @@ void BlockFlowBox::paintContents(const PaintInfo& info, const Point& offset, Pai
     }
 }
 
-void BlockFlowBox::columnize(ColumnBuilder& builder, float top) const
+void BlockFlowBox::fragmentize(FragmentBuilder& builder, float top) const
 {
-    if(isFloatingOrPositioned())
-        return;
     auto adjustedTop = top + y();
     builder.enterBox(this, adjustedTop);
     if(isChildrenInline()) {
-        m_lineLayout->columnize(builder, adjustedTop);
+        m_lineLayout->fragmentize(builder, adjustedTop);
     } else {
-        auto child = firstBoxFrame();
-        while(child) {
-            if(!child->isFloatingOrPositioned())
-                child->columnize(builder, adjustedTop);
-            child = child->nextBoxFrame();
-        }
-    }
-
-    builder.exitBox(this, adjustedTop);
-}
-
-void BlockFlowBox::paginate(PageBuilder& builder, float top) const
-{
-    if(isFloatingOrPositioned())
-        return;
-    auto adjustedTop = top + y();
-    builder.enterBox(this, adjustedTop);
-    if(isChildrenInline()) {
-        m_lineLayout->paginate(builder, adjustedTop);
-    } else {
-        auto child = firstBoxFrame();
-        while(child) {
-            if(!child->isFloatingOrPositioned())
-                child->paginate(builder, adjustedTop);
-            child = child->nextBoxFrame();
+        for(auto child = firstBoxFrame(); child; child = child->nextBoxFrame()) {
+            if(!child->isFloatingOrPositioned()) {
+                child->fragmentize(builder, adjustedTop);
+            }
         }
     }
 

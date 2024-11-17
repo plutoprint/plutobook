@@ -200,9 +200,7 @@ public:
 
     void paintFloats(const PaintInfo& info, const Point& offset);
     void paintContents(const PaintInfo& info, const Point& offset, PaintPhase phase) override;
-
-    void columnize(ColumnBuilder& builder, float top) const override;
-    void paginate(PageBuilder& builder, float top) const override;
+    void fragmentize(FragmentBuilder& builder, float top) const override;
 
     const char* name() const override { return "BlockFlowBox"; }
 

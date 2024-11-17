@@ -4,7 +4,7 @@
 #include "blockbox.h"
 #include "linebox.h"
 #include "document.h"
-#include "pagebuilder.h"
+#include "fragmentbuilder.h"
 
 #include <ranges>
 
@@ -1685,19 +1685,14 @@ void LineLayout::paint(const PaintInfo& info, const Point& offset, PaintPhase ph
     }
 }
 
-void LineLayout::columnize(ColumnBuilder& builder, float top) const
-{
-    assert(false);
-}
-
-void LineLayout::paginate(PageBuilder& builder, float top) const
+void LineLayout::fragmentize(FragmentBuilder& builder, float top) const
 {
     float prevLineBottom = 0.f;
     for(auto& line : m_lines) {
         auto adjustedTop = top + line->lineTop();
-        builder.addPageUntil(m_block, adjustedTop);
-        if(!builder.canFitOnPage(top + line->lineBottom())) {
-            builder.setPageBreakAt(top + prevLineBottom);
+        builder.addFragmentUntil(m_block, adjustedTop);
+        if(!builder.canFitOnFragment(top + line->lineBottom())) {
+            builder.setFragmentBreakAt(top + prevLineBottom);
         }
 
         prevLineBottom = line->lineBottom();

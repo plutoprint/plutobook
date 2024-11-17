@@ -63,7 +63,7 @@ public:
 
     void paintDecorations(const PaintInfo& info, const Point& offset) final;
     void paintContents(const PaintInfo& info, const Point& offset, PaintPhase phase) final;
-    void paginate(PageBuilder& builder, float top) const final;
+    void fragmentize(FragmentBuilder& builder, float top) const final;
 
     const char* name() const final { return "TableBox"; }
 
@@ -165,7 +165,7 @@ public:
     void layoutRows();
 
     void paint(const PaintInfo& info, const Point& offset, PaintPhase phase) final;
-    void paginate(PageBuilder& builder, float top) const final;
+    void fragmentize(FragmentBuilder& builder, float top) const final;
 
     const char* name() const final { return "TableSectionBox"; }
 
@@ -239,7 +239,7 @@ public:
     void setMaxPercentHeight(float height) { m_maxPercentHeight = height; }
 
     void paint(const PaintInfo& info, const Point& offset, PaintPhase phase) final;
-    void paginate(PageBuilder& builder, float top) const final;
+    void fragmentize(FragmentBuilder& builder, float top) const final;
 
     const char* name() const final { return "TableRowBox"; }
 
@@ -434,7 +434,7 @@ public:
     void paintBackgroundBehindCell(const PaintInfo& info, const Point& offset, const BoxStyle& backgroundStyle) const;
     void paintCollapsedBorders(const PaintInfo& info, const Point& offset, const TableCollapsedBorderEdge& currentEdge) const;
     void paintDecorations(const PaintInfo& info, const Point& offset) final;
-    void paginate(PageBuilder& builder, float top) const final;
+    void fragmentize(FragmentBuilder& builder, float top) const final;
 
     const char* name() const final { return "TableCellBox"; }
 
@@ -487,7 +487,7 @@ public:
     bool isTableCaptionBox() const final { return true; }
     bool avoidsFloats() const final { return true; }
     CaptionSide captionSide() const { return style()->captionSide(); }
-    void paginate(PageBuilder& builder, float top) const final;
+    void fragmentize(FragmentBuilder& builder, float top) const final;
 
     const char* name() const final { return "TableCaptionBox"; }
 };

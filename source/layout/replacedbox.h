@@ -39,7 +39,7 @@ public:
 
     virtual void paintReplaced(const PaintInfo& info, const Point& offset) = 0;
     void paint(const PaintInfo& info, const Point& offset, PaintPhase phase) override;
-    void paginate(PageBuilder& builder, float top) const override;
+    void fragmentize(FragmentBuilder& builder, float top) const override;
 
     const char* name() const override { return "ReplacedBox"; }
 };

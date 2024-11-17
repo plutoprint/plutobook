@@ -1,6 +1,6 @@
 #include "formcontrolbox.h"
 #include "htmldocument.h"
-#include "pagebuilder.h"
+#include "fragmentbuilder.h"
 #include "boxlayer.h"
 
 namespace plutobook {
@@ -135,7 +135,7 @@ void SelectBox::paintContents(const PaintInfo& info, const Point& offset, PaintP
     }
 }
 
-void SelectBox::paginate(PageBuilder& builder, float top) const
+void SelectBox::fragmentize(FragmentBuilder& builder, float top) const
 {
     builder.enterBox(this, top + y());
     builder.exitBox(this, top + y());

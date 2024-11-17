@@ -53,7 +53,7 @@ public:
     void computePreferredWidths(float& minWidth, float& maxWidth) const final;
     void computeHeight(float& y, float& height, float& marginTop, float& marginBottom) const final;
     void paintContents(const PaintInfo& info, const Point& offset, PaintPhase phase) final;
-    void paginate(PageBuilder& builder, float top) const final;
+    void fragmentize(FragmentBuilder& builder, float top) const final;
     void layout() final;
 
     const char* name() const final { return "SelectBox"; }

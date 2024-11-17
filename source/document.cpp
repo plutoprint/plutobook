@@ -13,7 +13,7 @@
 #include "fontresource.h"
 #include "stringutils.h"
 #include "plutobook.hpp"
-#include "pagebuilder.h"
+#include "fragmentbuilder.h"
 
 namespace plutobook {
 

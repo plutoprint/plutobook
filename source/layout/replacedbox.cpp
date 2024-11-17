@@ -2,7 +2,7 @@
 #include "blockbox.h"
 #include "imageresource.h"
 #include "graphicscontext.h"
-#include "pagebuilder.h"
+#include "fragmentbuilder.h"
 #include "document.h"
 
 namespace plutobook {
@@ -420,7 +420,7 @@ void ReplacedBox::paint(const PaintInfo& info, const Point& offset, PaintPhase p
     }
 }
 
-void ReplacedBox::paginate(PageBuilder& builder, float top) const
+void ReplacedBox::fragmentize(FragmentBuilder& builder, float top) const
 {
     builder.enterBox(this, top + y());
     builder.exitBox(this, top + y());

@@ -932,12 +932,7 @@ void BoxFrame::paintDecorations(const PaintInfo& info, const Point& offset)
     paintBorder(info, borderRect);
 }
 
-void BoxFrame::columnize(ColumnBuilder& builder, float top) const
-{
-    assert(false);
-}
-
-void BoxFrame::paginate(PageBuilder& builder, float top) const
+void BoxFrame::fragmentize(FragmentBuilder& builder, float top) const
 {
     assert(false);
 }

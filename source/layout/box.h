@@ -311,8 +311,7 @@ struct is_a<BoxModel> {
 };
 
 class ReplacedLineBox;
-class ColumnBuilder;
-class PageBuilder;
+class FragmentBuilder;
 
 class BoxFrame : public BoxModel {
 public:
@@ -428,9 +427,7 @@ public:
 
     virtual void paintOutlines(const PaintInfo& info, const Point& offset);
     virtual void paintDecorations(const PaintInfo& info, const Point& offset);
-
-    virtual void columnize(ColumnBuilder& builder, float top) const;
-    virtual void paginate(PageBuilder& builder, float top) const;
+    virtual void fragmentize(FragmentBuilder& builder, float top) const;
 
     const char* name() const override { return "BoxFrame"; }
 

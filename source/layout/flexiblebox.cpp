@@ -1,6 +1,6 @@
 #include "flexiblebox.h"
 #include "boxlayer.h"
-#include "pagebuilder.h"
+#include "fragmentbuilder.h"
 
 #include <ranges>
 #include <list>
@@ -872,7 +872,7 @@ void FlexibleBox::paintContents(const PaintInfo& info, const Point& offset, Pain
     }
 }
 
-void FlexibleBox::paginate(PageBuilder& builder, float top) const
+void FlexibleBox::fragmentize(FragmentBuilder& builder, float top) const
 {
     builder.enterBox(this, top + y());
     builder.exitBox(this, top + y());

@@ -315,8 +315,7 @@ private:
     uint32_t m_lineIndex{0};
 };
 
-class ColumnBuilder;
-class PageBuilder;
+class FragmentBuilder;
 class PaintInfo;
 class Point;
 class Rect;
@@ -339,8 +338,7 @@ public:
     void layout();
 
     void paint(const PaintInfo& info, const Point& offset, PaintPhase phase);
-    void columnize(ColumnBuilder& builder, float top) const;
-    void paginate(PageBuilder& builder, float top) const;
+    void fragmentize(FragmentBuilder& builder, float top) const;
 
 private:
     LineLayout(BlockFlowBox* block);

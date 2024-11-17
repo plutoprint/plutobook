@@ -1,6 +1,6 @@
 #include "tablebox.h"
 #include "borderpainter.h"
-#include "pagebuilder.h"
+#include "fragmentbuilder.h"
 
 #include <span>
 #include <ranges>
@@ -485,23 +485,23 @@ void TableBox::paintContents(const PaintInfo& info, const Point& offset, PaintPh
     }
 }
 
-void TableBox::paginate(PageBuilder& builder, float top) const
+void TableBox::fragmentize(FragmentBuilder& builder, float top) const
 {
     auto adjustedTop = top + y();
     builder.enterBox(this, adjustedTop);
     for(auto caption : m_captions) {
         if(caption->captionSide() == CaptionSide::Top) {
-            caption->paginate(builder, adjustedTop);
+            caption->fragmentize(builder, adjustedTop);
         }
     }
 
     for(auto section : m_sections) {
-        section->paginate(builder, adjustedTop);
+        section->fragmentize(builder, adjustedTop);
     }
 
     for(auto caption : m_captions) {
         if(caption->captionSide() == CaptionSide::Bottom) {
-            caption->paginate(builder, adjustedTop);
+            caption->fragmentize(builder, adjustedTop);
         }
     }
 
@@ -1302,12 +1302,12 @@ void TableSectionBox::paint(const PaintInfo& info, const Point& offset, PaintPha
     }
 }
 
-void TableSectionBox::paginate(PageBuilder& builder, float top) const
+void TableSectionBox::fragmentize(FragmentBuilder& builder, float top) const
 {
     auto adjustedTop = top + y();
     builder.enterBox(this, adjustedTop);
     for(auto rowBox : m_rows) {
-        rowBox->paginate(builder, adjustedTop);
+        rowBox->fragmentize(builder, adjustedTop);
     }
 
     builder.exitBox(this, adjustedTop);
@@ -1359,13 +1359,13 @@ void TableRowBox::paint(const PaintInfo& info, const Point& offset, PaintPhase p
     }
 }
 
-void TableRowBox::paginate(PageBuilder& builder, float top) const
+void TableRowBox::fragmentize(FragmentBuilder& builder, float top) const
 {
     auto adjustedTop = top + y();
     builder.enterBox(this, adjustedTop);
-    builder.addPageUntil(this, adjustedTop);
-    if(!builder.canFitOnPage(adjustedTop + height())) {
-        builder.setPageBreakAt(adjustedTop);
+    builder.addFragmentUntil(this, adjustedTop);
+    if(!builder.canFitOnFragment(adjustedTop + height())) {
+        builder.setFragmentBreakAt(adjustedTop);
     }
 
     builder.exitBox(this, adjustedTop);
@@ -1844,7 +1844,7 @@ void TableCellBox::paintDecorations(const PaintInfo& info, const Point& offset)
     }
 }
 
-void TableCellBox::paginate(PageBuilder& builder, float top) const
+void TableCellBox::fragmentize(FragmentBuilder& builder, float top) const
 {
     assert(false);
 }
@@ -1854,7 +1854,7 @@ TableCaptionBox::TableCaptionBox(Node* node, const RefPtr<BoxStyle>& style)
 {
 }
 
-void TableCaptionBox::paginate(PageBuilder& builder, float top) const
+void TableCaptionBox::fragmentize(FragmentBuilder& builder, float top) const
 {
     builder.enterBox(this, top + y());
     builder.exitBox(this, top + y());
