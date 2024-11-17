@@ -817,7 +817,7 @@ void BlockFlowBox::buildOverhangingFloats()
 
 void BlockFlowBox::addIntrudingFloats(BlockFlowBox* prevBlock, float offsetX, float offsetY)
 {
-    if(!prevBlock->containsFloats() || prevBlock->avoidsFloats())
+    if(!prevBlock->containsFloats())
         return;
     for(auto& item : *prevBlock->floatingBoxes()) {
         if(item.bottom() > offsetY && !containsFloat(item.box())) {
