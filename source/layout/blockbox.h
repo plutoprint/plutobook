@@ -147,8 +147,8 @@ public:
     void insertFloatingBox(BoxFrame* box);
     void removeFloatingBox(BoxFrame* box);
 
-    void buildIntrudingFloats();
-    void buildOverhangingFloats();
+    void collectIntrudingFloats();
+    void collectOverhangingFloats();
     void addIntrudingFloats(BlockFlowBox* prevBlock, float offsetX, float offsetY);
     void addOverhangingFloats(BlockFlowBox* childBlock);
     void positionNewFloats();

@@ -763,7 +763,7 @@ void BlockFlowBox::removeFloatingBox(BoxFrame* box)
     }
 }
 
-void BlockFlowBox::buildIntrudingFloats()
+void BlockFlowBox::collectIntrudingFloats()
 {
     if(m_floatingBoxes)
         m_floatingBoxes->clear();
@@ -799,7 +799,7 @@ void BlockFlowBox::buildIntrudingFloats()
     }
 }
 
-void BlockFlowBox::buildOverhangingFloats()
+void BlockFlowBox::collectOverhangingFloats()
 {
     if(isChildrenInline())
         return;
@@ -1408,7 +1408,7 @@ void BlockFlowBox::layout()
         updateWidth();
     }
 
-    buildIntrudingFloats();
+    collectIntrudingFloats();
     updateMaxMargins();
 
     setHeight(borderAndPaddingTop());
@@ -1421,7 +1421,7 @@ void BlockFlowBox::layout()
     if(avoidsFloats() && floatBottom() > (height() - borderAndPaddingBottom()))
         setHeight(floatBottom() + borderAndPaddingBottom());
     updateHeight();
-    buildOverhangingFloats();
+    collectOverhangingFloats();
     layoutPositionedBoxes();
     updateOverflowRect();
 }
