@@ -1687,15 +1687,8 @@ void LineLayout::paint(const PaintInfo& info, const Point& offset, PaintPhase ph
 
 void LineLayout::fragmentize(FragmentBuilder& builder, float top) const
 {
-    float prevLineBottom = 0.f;
     for(auto& line : m_lines) {
-        auto adjustedTop = top + line->lineTop();
-        builder.addFragmentUntil(m_block, adjustedTop);
-        if(!builder.canFitOnFragment(top + line->lineBottom())) {
-            builder.setFragmentBreakAt(top + prevLineBottom);
-        }
-
-        prevLineBottom = line->lineBottom();
+        builder.handleLineBox(*line, top);
     }
 }
 

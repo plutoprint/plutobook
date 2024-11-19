@@ -422,8 +422,7 @@ void ReplacedBox::paint(const PaintInfo& info, const Point& offset, PaintPhase p
 
 void ReplacedBox::fragmentize(FragmentBuilder& builder, float top) const
 {
-    builder.enterBox(this, top + y());
-    builder.exitBox(this, top + y());
+    builder.handleReplacedBox(this, top);
 }
 
 ImageBox::ImageBox(Node* node, const RefPtr<BoxStyle>& style)

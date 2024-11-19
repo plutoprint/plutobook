@@ -137,8 +137,7 @@ void SelectBox::paintContents(const PaintInfo& info, const Point& offset, PaintP
 
 void SelectBox::fragmentize(FragmentBuilder& builder, float top) const
 {
-    builder.enterBox(this, top + y());
-    builder.exitBox(this, top + y());
+    builder.handleReplacedBox(this, top);
 }
 
 void SelectBox::layout()

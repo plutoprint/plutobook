@@ -874,8 +874,7 @@ void FlexibleBox::paintContents(const PaintInfo& info, const Point& offset, Pain
 
 void FlexibleBox::fragmentize(FragmentBuilder& builder, float top) const
 {
-    builder.enterBox(this, top + y());
-    builder.exitBox(this, top + y());
+    builder.handleReplacedBox(this, top);
 }
 
 } // namespace plutobook

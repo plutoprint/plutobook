@@ -487,25 +487,24 @@ void TableBox::paintContents(const PaintInfo& info, const Point& offset, PaintPh
 
 void TableBox::fragmentize(FragmentBuilder& builder, float top) const
 {
-    auto adjustedTop = top + y();
-    builder.enterBox(this, adjustedTop);
+    builder.enterBox(this, top);
     for(auto caption : m_captions) {
         if(caption->captionSide() == CaptionSide::Top) {
-            caption->fragmentize(builder, adjustedTop);
+            caption->fragmentize(builder, top + y());
         }
     }
 
     for(auto section : m_sections) {
-        section->fragmentize(builder, adjustedTop);
+        section->fragmentize(builder, top + y());
     }
 
     for(auto caption : m_captions) {
         if(caption->captionSide() == CaptionSide::Bottom) {
-            caption->fragmentize(builder, adjustedTop);
+            caption->fragmentize(builder, top + y());
         }
     }
 
-    builder.exitBox(this, adjustedTop);
+    builder.exitBox(this, top);
 }
 
 std::unique_ptr<TableLayoutAlgorithm> TableLayoutAlgorithm::create(TableBox* table)
@@ -1304,13 +1303,12 @@ void TableSectionBox::paint(const PaintInfo& info, const Point& offset, PaintPha
 
 void TableSectionBox::fragmentize(FragmentBuilder& builder, float top) const
 {
-    auto adjustedTop = top + y();
-    builder.enterBox(this, adjustedTop);
+    builder.enterBox(this, top);
     for(auto rowBox : m_rows) {
-        rowBox->fragmentize(builder, adjustedTop);
+        rowBox->fragmentize(builder, top + y());
     }
 
-    builder.exitBox(this, adjustedTop);
+    builder.exitBox(this, top);
 }
 
 TableRowBox::TableRowBox(Node* node, const RefPtr<BoxStyle>& style)
@@ -1361,14 +1359,7 @@ void TableRowBox::paint(const PaintInfo& info, const Point& offset, PaintPhase p
 
 void TableRowBox::fragmentize(FragmentBuilder& builder, float top) const
 {
-    auto adjustedTop = top + y();
-    builder.enterBox(this, adjustedTop);
-    builder.addFragmentUntil(this, adjustedTop);
-    if(!builder.canFitOnFragment(adjustedTop + height())) {
-        builder.setFragmentBreakAt(adjustedTop);
-    }
-
-    builder.exitBox(this, adjustedTop);
+    builder.handleReplacedBox(this, top);
 }
 
 TableColumnBox::TableColumnBox(Node* node, const RefPtr<BoxStyle>& style)
@@ -1856,8 +1847,7 @@ TableCaptionBox::TableCaptionBox(Node* node, const RefPtr<BoxStyle>& style)
 
 void TableCaptionBox::fragmentize(FragmentBuilder& builder, float top) const
 {
-    builder.enterBox(this, top + y());
-    builder.exitBox(this, top + y());
+    builder.handleReplacedBox(this, top);
 }
 
 } // namespace plutobook

@@ -1485,19 +1485,18 @@ void BlockFlowBox::paintContents(const PaintInfo& info, const Point& offset, Pai
 
 void BlockFlowBox::fragmentize(FragmentBuilder& builder, float top) const
 {
-    auto adjustedTop = top + y();
-    builder.enterBox(this, adjustedTop);
+    builder.enterBox(this, top);
     if(isChildrenInline()) {
-        m_lineLayout->fragmentize(builder, adjustedTop);
+        m_lineLayout->fragmentize(builder, top + y());
     } else {
         for(auto child = firstBoxFrame(); child; child = child->nextBoxFrame()) {
             if(!child->isFloatingOrPositioned()) {
-                child->fragmentize(builder, adjustedTop);
+                child->fragmentize(builder, top + y());
             }
         }
     }
 
-    builder.exitBox(this, adjustedTop);
+    builder.exitBox(this, top);
 }
 
 } // namespace plutobook
