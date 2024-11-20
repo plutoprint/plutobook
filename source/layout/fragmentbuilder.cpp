@@ -24,6 +24,7 @@ void FragmentBuilder::handleReplacedBox(const BoxFrame* box, float top)
     applyBreakInside(fragment, box->style());
     handleBreakBefore(box, top);
     m_fragments.push_back(fragment);
+    handleBreakAfter(box, top);
 }
 
 void FragmentBuilder::enterBox(const BoxFrame* box, float top)
@@ -58,7 +59,7 @@ void FragmentBuilder::handleBreakBefore(const BoxFrame* box, float top)
 void FragmentBuilder::handleBreakAfter(const BoxFrame* box, float top)
 {
     if(box->style()->pageBreakAfter() == BreakBetween::Always) {
-        m_fragments.emplace_back(box, Fragment::Type::ForceBreak, top + box->y(), top + box->y());
+        m_fragments.emplace_back(box, Fragment::Type::ForceBreak, top + box->y() + box->height(), top + box->y() + box->height());
     }
 }
 
@@ -112,6 +113,8 @@ std::unique_ptr<PageBox> PageBreaker::nextPage()
                 break;
             }
 
+            if(pageBottom < fragment.bottom())
+                pageBottom = fragment.bottom();
             ++m_fragmentIndex;
             continue;
         }
@@ -119,8 +122,6 @@ std::unique_ptr<PageBox> PageBreaker::nextPage()
         if(fragment.top() > pageBox->pageBottom())
             break;
         if(fragment.type() == Fragment::Type::BoxStart) {
-            if(fragment.bottom() < pageBox->pageBottom())
-                pageBottom = fragment.bottom();
             ++m_fragmentIndex;
             continue;
         }
