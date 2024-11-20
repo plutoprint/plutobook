@@ -98,7 +98,7 @@ std::unique_ptr<PageBox> PageBreaker::nextPage()
     pageBox->setPageTop(m_pageTop);
     pageBox->setPageBottom(m_pageTop + (pageHeight / pageBox->pageScale()));
 
-    auto pageBottom = pageBox->pageBottom();
+    auto pageBottom = pageBox->pageTop();
     while(m_fragmentIndex < m_fragments.size()) {
         const auto& fragment = m_fragments[m_fragmentIndex];
         if(fragment.type() == Fragment::Type::ForceBreak) {
@@ -122,6 +122,21 @@ std::unique_ptr<PageBox> PageBreaker::nextPage()
         if(fragment.top() > pageBox->pageBottom())
             break;
         if(fragment.type() == Fragment::Type::BoxStart) {
+            if(!fragment.canBreakInside()) {
+                int depth = 1;
+                do {
+                    ++m_fragmentIndex;
+                    if(m_fragments[m_fragmentIndex].type() == Fragment::Type::BoxStart) ++depth;
+                    else if(m_fragments[m_fragmentIndex].type() == Fragment::Type::BoxEnd) --depth;
+                } while(depth > 0 && m_fragmentIndex < m_fragments.size());
+
+                const auto& fragmentEnd = m_fragments[m_fragmentIndex];
+                assert(fragment.box() == fragmentEnd.box());
+                if(fragmentEnd.bottom() > pageBox->pageBottom())
+                    break;
+                pageBottom = fragmentEnd.bottom();
+            }
+
             ++m_fragmentIndex;
             continue;
         }
