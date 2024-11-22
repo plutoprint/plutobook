@@ -5,9 +5,9 @@
 
 namespace plutobook {
 
-class MultiColumnItem {
+class MultiColumn {
 public:
-    MultiColumnItem() = default;
+    MultiColumn() = default;
 
     float x() const { return m_x; }
     float height() const { return m_height; }
@@ -20,17 +20,16 @@ private:
     float m_height{0};
 };
 
-using MultiColumnItemList = std::pmr::vector<MultiColumnItem>;
+using MultiColumnList = std::pmr::vector<MultiColumn>;
 
 class MultiColumnRow {
 public:
     explicit MultiColumnRow(BoxFrame* box)
-        : m_box(box)
-        , m_items(box->heap())
+        : m_box(box), m_columns(box->heap())
     {}
 
-    const MultiColumnItemList& items() const { return m_items; }
-    MultiColumnItemList& items() { return m_items; }
+    const MultiColumnList& columns() const { return m_columns; }
+    MultiColumnList& columns() { return m_columns; }
 
     bool hasColumnSpan() const { return m_box->hasColumnSpan(); }
 
@@ -43,7 +42,7 @@ public:
 
 private:
     BoxFrame* m_box;
-    MultiColumnItemList m_items;
+    MultiColumnList m_columns;
     float m_y{0};
     float m_width{0};
 };
