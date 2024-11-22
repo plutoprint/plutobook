@@ -3,8 +3,6 @@
 
 #include "blockbox.h"
 
-#include <list>
-
 namespace plutobook {
 
 class MultiColumnItem {
@@ -22,7 +20,7 @@ private:
     float m_height{0};
 };
 
-using MultiColumnItemList = std::pmr::list<MultiColumnItem>;
+using MultiColumnItemList = std::pmr::vector<MultiColumnItem>;
 
 class MultiColumnRow {
 public:

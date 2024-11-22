@@ -259,8 +259,7 @@ BoxLayer* Box::enclosingLayer() const
 {
     for(auto current = this; current; current = current->parentBox()) {
         if(current->hasLayer()) {
-            auto& box = to<BoxModel>(*current);
-            return box.layer();
+            return to<BoxModel>(*current).layer();
         }
     }
 

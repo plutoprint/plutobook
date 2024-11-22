@@ -1,5 +1,4 @@
 #include "multicolumnbox.h"
-#include "linelayout.h"
 
 #include <cmath>
 
