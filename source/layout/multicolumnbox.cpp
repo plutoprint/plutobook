@@ -9,24 +9,25 @@ float MultiColumnContentRun::columnLogicalHeight(float startOffset) const
     return (m_breakOffset - startOffset) / (m_assumedImplicitBreaks + 1);
 }
 
-MultiColumnRowBox* MultiColumnRowBox::create(MultiColumnFlowBox* column, const BoxStyle* parentStyle)
+MultiColumnRowBox* MultiColumnRowBox::create(MultiColumnFlowBox* columnFlow, const BoxStyle* parentStyle)
 {
     auto newStyle = BoxStyle::create(*parentStyle, Display::Block);
-    auto newRow = new (newStyle->heap()) MultiColumnRowBox(column, newStyle);
+    auto newRow = new (newStyle->heap()) MultiColumnRowBox(columnFlow, newStyle);
     newRow->setAnonymous(true);
     return newRow;
 }
 
-MultiColumnRowBox::MultiColumnRowBox(MultiColumnFlowBox* column, const RefPtr<BoxStyle>& style)
+MultiColumnRowBox::MultiColumnRowBox(MultiColumnFlowBox* columnFlow, const RefPtr<BoxStyle>& style)
     : BoxFrame(nullptr, style)
-    , m_column(column), m_runs(style->heap())
+    , m_columnFlowBox(columnFlow)
+    , m_runs(style->heap())
 {
 }
 
 void MultiColumnRowBox::computePreferredWidths(float& minPreferredWidth, float& maxPreferredWidth) const
 {
-    minPreferredWidth = m_column->minPreferredWidth();
-    maxPreferredWidth = m_column->maxPreferredWidth();
+    minPreferredWidth = m_columnFlowBox->minPreferredWidth();
+    maxPreferredWidth = m_columnFlowBox->maxPreferredWidth();
 }
 
 void MultiColumnRowBox::computeWidth(float& x, float& width, float& marginLeft, float& marginRight) const
@@ -103,7 +104,7 @@ void MultiColumnRowBox::addContentRun(float endOffset)
 {
     if(!m_runs.empty() && endOffset <= m_runs.back().breakOffset())
         return;
-    if(m_runs.size() < m_column->columnCount()) {
+    if(m_runs.size() < m_columnFlowBox->columnCount()) {
         m_runs.emplace_back(endOffset);
     }
 }
@@ -137,9 +138,9 @@ float MultiColumnRowBox::calculateColumnHeight(bool balancing) const
     }
 
     auto columnCount = numberOfColumns();
-    if(columnCount <= m_column->columnCount())
+    if(columnCount <= m_columnFlowBox->columnCount())
         return m_columnHeight;
-    if(m_runs.size() >= m_column->columnCount())
+    if(m_runs.size() >= m_columnFlowBox->columnCount())
         return m_columnHeight;
     if(m_columnHeight >= m_maxColumnHeight)
         return m_columnHeight;
@@ -186,7 +187,7 @@ void MultiColumnRowBox::distributeImplicitBreaks()
     addContentRun(m_rowBottom);
     auto columnCount = m_runs.size();
 
-    while(columnCount < m_column->columnCount()) {
+    while(columnCount < m_columnFlowBox->columnCount()) {
         auto index = findRunWithTallestColumns();
         m_runs[index].assumeAnotherImplicitBreak();
         columnCount++;
@@ -223,6 +224,8 @@ void MultiColumnSpanBox::computeHeight(float& y, float& height, float& marginTop
 
 void MultiColumnSpanBox::layout()
 {
+    m_box->layout();
+
     updateWidth();
     updateHeight();
 }
@@ -294,11 +297,11 @@ void MultiColumnFlowBox::updateMinimumColumnHeight(float offset, float minHeight
     }
 }
 
-void MultiColumnFlowBox::skipColumnSpanner(BoxFrame* box, float offset)
+void MultiColumnFlowBox::skipColumnSpanBox(BoxFrame* box, float offset)
 {
-    assert(box->isColumnSpanAll());
-    auto columnSpanner = box->columnSpanBox();
-    auto prevColumnBox = columnSpanner->prevMultiColumnBox();
+    auto columnSpanBox = box->columnSpanBox();
+    assert(columnSpanBox && box->isColumnSpanAll());
+    auto prevColumnBox = columnSpanBox->prevMultiColumnBox();
     if(prevColumnBox && prevColumnBox->isMultiColumnRowBox()) {
         auto columnRow = to<MultiColumnRowBox>(prevColumnBox);
         if(offset < columnRow->rowTop())
@@ -306,9 +309,9 @@ void MultiColumnFlowBox::skipColumnSpanner(BoxFrame* box, float offset)
         columnRow->setRowBottom(offset);
     }
 
-    auto nextColumnBox = columnSpanner->nextMultiColumnBox();
+    auto nextColumnBox = columnSpanBox->nextMultiColumnBox();
     if(nextColumnBox && nextColumnBox->isMultiColumnRowBox()) {
-        auto columnRow = to<MultiColumnRowBox>(prevColumnBox);
+        auto columnRow = to<MultiColumnRowBox>(nextColumnBox);
         columnRow->setRowTop(offset);
         m_currentRow = columnRow;
     }
@@ -316,7 +319,17 @@ void MultiColumnFlowBox::skipColumnSpanner(BoxFrame* box, float offset)
 
 MultiColumnRowBox* MultiColumnFlowBox::columnRowAtOffset(float offset) const
 {
-    return m_lastRow;
+    if(m_currentRow == nullptr)
+        return firstRow();
+    auto row = m_currentRow;
+    while(row->rowTop() > offset) {
+        auto prevRow = row->prevRow();
+        if(prevRow == nullptr)
+            break;
+        row = row->prevRow();
+    }
+
+    return row;
 }
 
 void MultiColumnFlowBox::layoutColumns(bool balancing)

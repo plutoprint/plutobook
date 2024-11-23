@@ -1143,6 +1143,8 @@ public:
     void setPositiveMarginIfLarger(float value) { if(value > m_positiveMargin) { m_positiveMargin = value; } }
     void setNegativeMarginIfLarger(float value) { if(value > m_negativeMargin) { m_negativeMargin = value; } }
 
+    void clearMargin() { m_positiveMargin = 0.f; m_negativeMargin = 0.f; }
+
 private:
     bool m_atTopOfBlock;
     bool m_atBottomOfBlock;
@@ -1409,6 +1411,12 @@ void BlockFlowBox::layoutBlockChild(BoxFrame* child, MarginInfo& marginInfo)
         child->setX(width() - offsetX - child->width());
     }
 
+    if(child->isMultiColumnSpanBox()) {
+        auto spanner = to<MultiColumnSpanBox>(child);
+        spanner->box()->setX(child->x());
+        spanner->box()->setY(child->y());
+    }
+
     setHeight(height() + child->height());
     if(auto childBlock = to<BlockFlowBox>(child)) {
         addOverhangingFloats(childBlock);
@@ -1428,6 +1436,10 @@ void BlockFlowBox::layoutBlockChildren()
         } else if(child->isFloating()) {
             insertFloatingBox(child);
             adjustFloatingBox(marginInfo);
+        } else if(child->isColumnSpanAll()) {
+            setHeight(height() + marginInfo.margin());
+            child->columnSpanBox()->columnFlowBox()->skipColumnSpanBox(child, height());
+            marginInfo.clearMargin();
         } else {
             layoutBlockChild(child, marginInfo);
         }

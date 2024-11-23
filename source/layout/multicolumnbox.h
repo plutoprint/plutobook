@@ -28,7 +28,7 @@ class MultiColumnFlowBox;
 
 class MultiColumnRowBox final : public BoxFrame {
 public:
-    static MultiColumnRowBox* create(MultiColumnFlowBox* column, const BoxStyle* parentStyle);
+    static MultiColumnRowBox* create(MultiColumnFlowBox* columnFlow, const BoxStyle* parentStyle);
 
     bool isMultiColumnRowBox() const final { return true; }
 
@@ -46,7 +46,7 @@ public:
     bool isColumnBalanced() const { return m_isColumnBalanced; }
     void setIsColumnBalanced(bool value) { m_isColumnBalanced = value; }
 
-    MultiColumnFlowBox* column() const { return m_column; }
+    MultiColumnFlowBox* columnFlowBox() const { return m_columnFlowBox; }
     float rowTop() const { return m_rowTop; }
     float rowBottom() const { return m_rowBottom; }
 
@@ -66,7 +66,7 @@ public:
     bool recalculateColumnHeight(bool balancing);
 
 private:
-    MultiColumnRowBox(MultiColumnFlowBox* column, const RefPtr<BoxStyle>& style);
+    MultiColumnRowBox(MultiColumnFlowBox* columnFlow, const RefPtr<BoxStyle>& style);
 
     float constrainColumnHeight(float columnHeight) const;
     float calculateColumnHeight(bool balancing) const;
@@ -77,7 +77,7 @@ private:
 
     void distributeImplicitBreaks();
 
-    MultiColumnFlowBox* m_column;
+    MultiColumnFlowBox* m_columnFlowBox;
     MultiColumnContentRunList m_runs;
     bool m_isColumnBalanced{false};
     float m_rowTop{0};
@@ -100,6 +100,7 @@ public:
     bool isMultiColumnSpanBox() const final { return true; }
 
     BoxFrame* box() const { return m_box; }
+    MultiColumnFlowBox* columnFlowBox() const;
 
     void computePreferredWidths(float& minPreferredWidth, float& maxPreferredWidth) const final;
     void computeWidth(float& x, float& width, float& marginLeft, float& marginRight) const final;
@@ -113,6 +114,11 @@ private:
     MultiColumnSpanBox(BoxFrame* box, const RefPtr<BoxStyle>& style);
     BoxFrame* m_box;
 };
+
+inline MultiColumnFlowBox* MultiColumnSpanBox::columnFlowBox() const
+{
+    return to<BlockFlowBox>(parentBox())->columnFlowBox();
+}
 
 template<>
 struct is_a<MultiColumnSpanBox> {
@@ -138,7 +144,7 @@ public:
     void setColumnBreak(float offset, float spaceShortage);
     void updateMinimumColumnHeight(float offset, float minHeight);
 
-    void skipColumnSpanner(BoxFrame* box, float offset);
+    void skipColumnSpanBox(BoxFrame* box, float offset);
 
     MultiColumnRowBox* columnRowAtOffset(float offset) const;
     BlockFlowBox* columnBlockFlowBox() const;
