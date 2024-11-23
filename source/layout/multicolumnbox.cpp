@@ -23,10 +23,10 @@ MultiColumnRowBox::MultiColumnRowBox(MultiColumnFlowBox* column, const RefPtr<Bo
 {
 }
 
-void MultiColumnRowBox::updatePreferredWidths() const
+void MultiColumnRowBox::computePreferredWidths(float& minPreferredWidth, float& maxPreferredWidth) const
 {
-    m_minPreferredWidth = m_column->minPreferredWidth();
-    m_maxPreferredWidth = m_column->maxPreferredWidth();
+    minPreferredWidth = m_column->minPreferredWidth();
+    maxPreferredWidth = m_column->maxPreferredWidth();
 }
 
 void MultiColumnRowBox::computeWidth(float& x, float& width, float& marginLeft, float& marginRight) const
@@ -201,10 +201,10 @@ MultiColumnSpanBox* MultiColumnSpanBox::create(BoxFrame* box, const BoxStyle* pa
     return newSpanner;
 }
 
-void MultiColumnSpanBox::updatePreferredWidths() const
+void MultiColumnSpanBox::computePreferredWidths(float& minPreferredWidth, float& maxPreferredWidth) const
 {
-    m_minPreferredWidth = m_box->minPreferredWidth();
-    m_maxPreferredWidth = m_box->maxPreferredWidth();
+    minPreferredWidth = m_box->minPreferredWidth();
+    maxPreferredWidth = m_box->maxPreferredWidth();
 }
 
 void MultiColumnSpanBox::computeWidth(float& x, float& width, float& marginLeft, float& marginRight) const
@@ -331,9 +331,9 @@ void MultiColumnFlowBox::layoutColumns(bool balancing)
     }
 }
 
-void MultiColumnFlowBox::updatePreferredWidths() const
+void MultiColumnFlowBox::computePreferredWidths(float& minPreferredWidth, float& maxPreferredWidth) const
 {
-    BlockFlowBox::updatePreferredWidths();
+    BlockFlowBox::computePreferredWidths(minPreferredWidth, maxPreferredWidth);
 
     auto columnBlock = columnBlockFlowBox();
     auto columnStyle = columnBlock->style();
@@ -342,13 +342,13 @@ void MultiColumnFlowBox::updatePreferredWidths() const
 
     auto totalColumnGap = (columnCount - 1) * columnGap;
     if(auto columnWidth = columnStyle->columnWidth()) {
-        m_minPreferredWidth = std::min(m_minPreferredWidth, columnWidth.value());
-        m_maxPreferredWidth = std::max(m_maxPreferredWidth, columnWidth.value());
+        minPreferredWidth = std::min(minPreferredWidth, columnWidth.value());
+        maxPreferredWidth = std::max(maxPreferredWidth, columnWidth.value());
     } else {
-        m_minPreferredWidth = m_minPreferredWidth * columnCount + totalColumnGap;
+        minPreferredWidth = minPreferredWidth * columnCount + totalColumnGap;
     }
 
-    m_maxPreferredWidth = m_maxPreferredWidth * columnCount + totalColumnGap;
+    maxPreferredWidth = maxPreferredWidth * columnCount + totalColumnGap;
 }
 
 void MultiColumnFlowBox::computeWidth(float& x, float& width, float& marginLeft, float& marginRight) const

@@ -32,7 +32,7 @@ public:
 
     bool isMultiColumnRowBox() const final { return true; }
 
-    void updatePreferredWidths() const final;
+    void computePreferredWidths(float& minPreferredWidth, float& maxPreferredWidth) const final;
     void computeWidth(float& x, float& width, float& marginLeft, float& marginRight) const final;
     void computeHeight(float& y, float& height, float& marginTop, float& marginBottom) const final;
     void layout() final;
@@ -101,7 +101,7 @@ public:
 
     BoxFrame* box() const { return m_box; }
 
-    void updatePreferredWidths() const final;
+    void computePreferredWidths(float& minPreferredWidth, float& maxPreferredWidth) const final;
     void computeWidth(float& x, float& width, float& marginLeft, float& marginRight) const final;
     void computeHeight(float& y, float& height, float& marginTop, float& marginBottom) const final;
     void layout() final;
@@ -146,7 +146,7 @@ public:
 
     void layoutColumns(bool balancing);
 
-    void updatePreferredWidths() const final;
+    void computePreferredWidths(float& minPreferredWidth, float& maxPreferredWidth) const final;
     void computeWidth(float& x, float& width, float& marginLeft, float& marginRight) const final;
     void build() final;
     void layout() final;

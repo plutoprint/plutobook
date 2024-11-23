@@ -16,7 +16,7 @@ public:
     bool isBlockBox() const final { return true; }
 
     virtual void computeIntrinsicWidths(float& minWidth, float& maxWidth) const = 0;
-    void updatePreferredWidths() const override;
+    void computePreferredWidths(float& minPreferredWidth, float& maxPreferredWidth) const override;
 
     const PositionedBoxList* positionedBoxes() const { return m_positionedBoxes.get(); }
     bool containsPositonedBoxes() const { return m_positionedBoxes && !m_positionedBoxes->empty(); }

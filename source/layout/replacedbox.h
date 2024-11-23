@@ -15,7 +15,7 @@ public:
     void computeAspectRatioInformation(float& intrinsicWidth, float& intrinsicHeight, double& intrinsicRatio) const;
 
     float computePreferredReplacedWidth() const;
-    void updatePreferredWidths() const override;
+    void computePreferredWidths(float& minPreferredWidth, float& maxPreferredWidth) const override;
 
     void computePositionedReplacedWidth(float& x, float& width, float& marginLeft, float& marginRight) const;
     void computePositionedReplacedHeight(float& y, float& height, float& marginTop, float& marginBottom) const;

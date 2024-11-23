@@ -30,7 +30,7 @@ public:
 
     void updateOverflowRect() final;
     void computeIntrinsicWidths(float& minWidth, float& maxWidth) const final;
-    void updatePreferredWidths() const final;
+    void computePreferredWidths(float& minPreferredWidth, float& maxPreferredWidth) const final;
     void updateBorderWidths() const final;
 
     std::optional<float> firstLineBaseline() const final;

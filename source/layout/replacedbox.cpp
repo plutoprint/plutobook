@@ -73,33 +73,33 @@ float ReplacedBox::computePreferredReplacedWidth() const
     return intrinsicWidth;
 }
 
-void ReplacedBox::updatePreferredWidths() const
+void ReplacedBox::computePreferredWidths(float& minPreferredWidth, float& maxPreferredWidth) const
 {
     auto widthLength = style()->width();
     if(widthLength.isPercent()) {
-        m_maxPreferredWidth = m_minPreferredWidth = intrinsicReplacedWidth();
+        maxPreferredWidth = minPreferredWidth = intrinsicReplacedWidth();
     } else {
-        m_maxPreferredWidth = m_minPreferredWidth = computePreferredReplacedWidth();
+        maxPreferredWidth = minPreferredWidth = computePreferredReplacedWidth();
     }
 
     auto maxWidthLength = style()->maxWidth();
     if(widthLength.isPercent() || maxWidthLength.isPercent()) {
-        m_minPreferredWidth = 0;
+        minPreferredWidth = 0;
     }
 
     auto minWidthLength = style()->minWidth();
     if(minWidthLength.isFixed() && minWidthLength.value() > 0) {
-        m_minPreferredWidth = std::max(m_minPreferredWidth, adjustContentBoxWidth(minWidthLength.value()));
-        m_maxPreferredWidth = std::max(m_maxPreferredWidth, adjustContentBoxWidth(minWidthLength.value()));
+        minPreferredWidth = std::max(minPreferredWidth, adjustContentBoxWidth(minWidthLength.value()));
+        maxPreferredWidth = std::max(maxPreferredWidth, adjustContentBoxWidth(minWidthLength.value()));
     }
 
     if(maxWidthLength.isFixed()) {
-        m_minPreferredWidth = std::min(m_minPreferredWidth, adjustContentBoxWidth(maxWidthLength.value()));
-        m_maxPreferredWidth = std::min(m_maxPreferredWidth, adjustContentBoxWidth(maxWidthLength.value()));
+        minPreferredWidth = std::min(minPreferredWidth, adjustContentBoxWidth(maxWidthLength.value()));
+        maxPreferredWidth = std::min(maxPreferredWidth, adjustContentBoxWidth(maxWidthLength.value()));
     }
 
-    m_minPreferredWidth += borderAndPaddingWidth();
-    m_maxPreferredWidth += borderAndPaddingWidth();
+    minPreferredWidth += borderAndPaddingWidth();
+    maxPreferredWidth += borderAndPaddingWidth();
 }
 
 void ReplacedBox::computePositionedReplacedWidth(float& x, float& width, float& marginLeft, float& marginRight) const

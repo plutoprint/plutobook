@@ -679,23 +679,23 @@ void BoxFrame::setLine(std::unique_ptr<ReplacedLineBox> line)
     m_line = std::move(line);
 }
 
-void BoxFrame::updatePreferredWidths() const
+void BoxFrame::computePreferredWidths(float& minPreferredWidth, float& maxPreferredWidth) const
 {
-    m_minPreferredWidth = 0;
-    m_maxPreferredWidth = 0;
+    minPreferredWidth = 0;
+    maxPreferredWidth = 0;
 }
 
 float BoxFrame::minPreferredWidth() const
 {
     if(m_minPreferredWidth < 0)
-        updatePreferredWidths();
+        computePreferredWidths(m_minPreferredWidth, m_maxPreferredWidth);
     return m_minPreferredWidth;
 }
 
 float BoxFrame::maxPreferredWidth() const
 {
     if(m_maxPreferredWidth < 0)
-        updatePreferredWidths();
+        computePreferredWidths(m_minPreferredWidth, m_maxPreferredWidth);
     return m_maxPreferredWidth;
 }
 

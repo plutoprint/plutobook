@@ -13,32 +13,32 @@ BlockBox::BlockBox(Node* node, const RefPtr<BoxStyle>& style)
     setReplaced(style->isDisplayInlineType());
 }
 
-void BlockBox::updatePreferredWidths() const
+void BlockBox::computePreferredWidths(float& minPreferredWidth, float& maxPreferredWidth) const
 {
-    m_minPreferredWidth = 0;
-    m_maxPreferredWidth = 0;
+    minPreferredWidth = 0;
+    maxPreferredWidth = 0;
 
     auto widthLength = style()->width();
     if(widthLength.isFixed() && !isTableCellBox()) {
-        m_minPreferredWidth = m_maxPreferredWidth = adjustContentBoxWidth(widthLength.value());
+        minPreferredWidth = maxPreferredWidth = adjustContentBoxWidth(widthLength.value());
     } else {
-        computeIntrinsicWidths(m_minPreferredWidth, m_maxPreferredWidth);
+        computeIntrinsicWidths(minPreferredWidth, maxPreferredWidth);
     }
 
     auto maxWidthLength = style()->maxWidth();
     if(maxWidthLength.isFixed()) {
-        m_minPreferredWidth = std::min(m_minPreferredWidth, adjustContentBoxWidth(maxWidthLength.value()));
-        m_maxPreferredWidth = std::min(m_maxPreferredWidth, adjustContentBoxWidth(maxWidthLength.value()));
+        minPreferredWidth = std::min(minPreferredWidth, adjustContentBoxWidth(maxWidthLength.value()));
+        maxPreferredWidth = std::min(maxPreferredWidth, adjustContentBoxWidth(maxWidthLength.value()));
     }
 
     auto minWidthLength = style()->minWidth();
     if(minWidthLength.isFixed() && minWidthLength.value() > 0) {
-        m_minPreferredWidth = std::max(m_minPreferredWidth, adjustContentBoxWidth(minWidthLength.value()));
-        m_maxPreferredWidth = std::max(m_maxPreferredWidth, adjustContentBoxWidth(minWidthLength.value()));
+        minPreferredWidth = std::max(minPreferredWidth, adjustContentBoxWidth(minWidthLength.value()));
+        maxPreferredWidth = std::max(maxPreferredWidth, adjustContentBoxWidth(minWidthLength.value()));
     }
 
-    m_minPreferredWidth += borderAndPaddingWidth();
-    m_maxPreferredWidth += borderAndPaddingWidth();
+    minPreferredWidth += borderAndPaddingWidth();
+    maxPreferredWidth += borderAndPaddingWidth();
 }
 
 void BlockBox::insertPositonedBox(BoxFrame* box)

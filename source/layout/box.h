@@ -390,7 +390,7 @@ public:
     void setOverrideSize(float width, float height) { m_overrideWidth = width; m_overrideHeight = height; }
     void clearOverrideSize() { setOverrideSize(-1, -1); }
 
-    virtual void updatePreferredWidths() const;
+    virtual void computePreferredWidths(float& minPreferredWidth, float& maxPreferredWidth) const;
 
     float minPreferredWidth() const;
     float maxPreferredWidth() const;
@@ -460,7 +460,6 @@ private:
     float m_overflowLeft{0};
     float m_overflowRight{0};
 
-protected:
     mutable float m_minPreferredWidth{-1};
     mutable float m_maxPreferredWidth{-1};
 };

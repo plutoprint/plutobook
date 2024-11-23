@@ -83,37 +83,37 @@ void TableBox::computeIntrinsicWidths(float& minWidth, float& maxPreferredWidth)
     }
 }
 
-void TableBox::updatePreferredWidths() const
+void TableBox::computePreferredWidths(float& minPreferredWidth, float& maxPreferredWidth) const
 {
-    m_minPreferredWidth = 0;
-    m_maxPreferredWidth = 0;
-    computeIntrinsicWidths(m_minPreferredWidth, m_maxPreferredWidth);
+    minPreferredWidth = 0;
+    maxPreferredWidth = 0;
+    computeIntrinsicWidths(minPreferredWidth, maxPreferredWidth);
 
     auto widthLength = style()->width();
     auto minWidthLength = style()->minWidth();
     auto maxWidthLength = style()->maxWidth();
     if(widthLength.isFixed() && widthLength.value() > 0) {
-        m_maxPreferredWidth = std::max(m_minPreferredWidth, adjustContentBoxWidth(widthLength.value()));
+        maxPreferredWidth = std::max(minPreferredWidth, adjustContentBoxWidth(widthLength.value()));
         if(maxWidthLength.isFixed()) {
-            m_maxPreferredWidth = std::min(m_maxPreferredWidth, adjustContentBoxWidth(maxWidthLength.value()));
-            m_maxPreferredWidth = std::max(m_minPreferredWidth, m_maxPreferredWidth);
+            maxPreferredWidth = std::min(maxPreferredWidth, adjustContentBoxWidth(maxWidthLength.value()));
+            maxPreferredWidth = std::max(minPreferredWidth, maxPreferredWidth);
         }
 
-        m_minPreferredWidth = m_maxPreferredWidth;
+        minPreferredWidth = maxPreferredWidth;
     }
 
     if(minWidthLength.isFixed() && minWidthLength.value() > 0) {
-        m_minPreferredWidth = std::max(m_minPreferredWidth, adjustContentBoxWidth(minWidthLength.value()));
-        m_maxPreferredWidth = std::max(m_maxPreferredWidth, adjustContentBoxWidth(minWidthLength.value()));
+        minPreferredWidth = std::max(minPreferredWidth, adjustContentBoxWidth(minWidthLength.value()));
+        maxPreferredWidth = std::max(maxPreferredWidth, adjustContentBoxWidth(minWidthLength.value()));
     }
 
     if(maxWidthLength.isFixed()) {
-        m_maxPreferredWidth = std::min(m_maxPreferredWidth, adjustContentBoxWidth(maxWidthLength.value()));
-        m_maxPreferredWidth = std::max(m_minPreferredWidth, m_maxPreferredWidth);
+        maxPreferredWidth = std::min(maxPreferredWidth, adjustContentBoxWidth(maxWidthLength.value()));
+        maxPreferredWidth = std::max(minPreferredWidth, maxPreferredWidth);
     }
 
-    m_minPreferredWidth += borderAndPaddingWidth();
-    m_maxPreferredWidth += borderAndPaddingWidth();
+    minPreferredWidth += borderAndPaddingWidth();
+    maxPreferredWidth += borderAndPaddingWidth();
 }
 
 void TableBox::updateBorderWidths() const
