@@ -5,49 +5,119 @@
 
 namespace plutobook {
 
-class MultiColumn {
+class MultiColumnContentRun {
 public:
-    MultiColumn() = default;
-
-    float x() const { return m_x; }
-    float height() const { return m_height; }
-
-    void setX(float x) { m_x = x; }
-    void setHeight(float height) { m_height = height; }
-
-private:
-    float m_x{0};
-    float m_height{0};
-};
-
-using MultiColumnList = std::pmr::vector<MultiColumn>;
-
-class MultiColumnRow {
-public:
-    explicit MultiColumnRow(BoxFrame* box)
-        : m_box(box), m_columns(box->heap())
+    explicit MultiColumnContentRun(float breakOffset)
+        : m_breakOffset(breakOffset)
     {}
 
-    const MultiColumnList& columns() const { return m_columns; }
-    MultiColumnList& columns() { return m_columns; }
+    float breakOffset() const { return m_breakOffset; }
+    uint32_t assumedImplicitBreaks() const { return m_assumedImplicitBreaks; }
+    void assumeAnotherImplicitBreak() { ++m_assumedImplicitBreaks; }
 
-    bool hasColumnSpan() const { return m_box->hasColumnSpan(); }
-
-    BoxFrame* box() const { return m_box; }
-    float y() const { return m_y; }
-    float width() const { return m_width; }
-
-    void setY(float y) { m_y = y; }
-    void setWidth(float width) { m_width = width; }
+    float columnLogicalHeight(float startOffset) const;
 
 private:
-    BoxFrame* m_box;
-    MultiColumnList m_columns;
-    float m_y{0};
-    float m_width{0};
+    float m_breakOffset;
+    uint32_t m_assumedImplicitBreaks{0};
 };
 
-using MultiColumnRowList = std::pmr::vector<MultiColumnRow>;
+using MultiColumnContentRunList = std::pmr::vector<MultiColumnContentRun>;
+
+class MultiColumnFlowBox;
+
+class MultiColumnRowBox final : public BoxFrame {
+public:
+    static MultiColumnRowBox* create(MultiColumnFlowBox* column, const BoxStyle* parentStyle);
+
+    bool isMultiColumnRowBox() const final { return true; }
+
+    void updatePreferredWidths() const final;
+    void computeWidth(float& x, float& width, float& marginLeft, float& marginRight) const final;
+    void computeHeight(float& y, float& height, float& marginTop, float& marginBottom) const final;
+    void layout() final;
+
+    void fragmentize(FragmentBuilder& builder, float top) const final {}
+    void paint(const PaintInfo& info, const Point& offset, PaintPhase phase) final {}
+
+    MultiColumnRowBox* prevRow() const;
+    MultiColumnRowBox* nextRow() const;
+
+    bool isColumnBalanced() const { return m_isColumnBalanced; }
+    void setIsColumnBalanced(bool value) { m_isColumnBalanced = value; }
+
+    MultiColumnFlowBox* column() const { return m_column; }
+    float rowTop() const { return m_rowTop; }
+    float rowBottom() const { return m_rowBottom; }
+
+    void setRowTop(float top) { m_rowTop = top; }
+    void setRowBottom(float bottom) { m_rowBottom = bottom; }
+
+    float rowHeight() const { return m_rowBottom - m_rowTop; }
+    float columnHeight() const { return m_columnHeight; }
+
+    uint32_t numberOfColumns() const;
+    float columnTopForOffset(float offset) const;
+
+    void recordSpaceShortage(float spaceShortage);
+    void updateMinimumColumnHeight(float height);
+    void addContentRun(float endOffset);
+
+    bool recalculateColumnHeight(bool balancing);
+
+private:
+    MultiColumnRowBox(MultiColumnFlowBox* column, const RefPtr<BoxStyle>& style);
+
+    float constrainColumnHeight(float columnHeight) const;
+    float calculateColumnHeight(bool balancing) const;
+
+    float rowTopAt(uint32_t columnIndex) const { return m_rowTop + columnIndex + m_columnHeight; }
+    uint32_t columnIndexAtOffset(float offset, bool clampToExistingColumns) const;
+    uint32_t findRunWithTallestColumns() const;
+
+    void distributeImplicitBreaks();
+
+    MultiColumnFlowBox* m_column;
+    MultiColumnContentRunList m_runs;
+    bool m_isColumnBalanced{false};
+    float m_rowTop{0};
+    float m_rowBottom{0};
+    float m_columnHeight{0};
+    float m_maxColumnHeight{0};
+    float m_minSpaceShortage{0};
+    float m_minimumColumnHeight{0};
+};
+
+template<>
+struct is_a<MultiColumnRowBox> {
+    static bool check(const Box& box) { return box.isMultiColumnRowBox(); }
+};
+
+class MultiColumnSpanBox final : public BoxFrame {
+public:
+    static MultiColumnSpanBox* create(BoxFrame* box, const BoxStyle* parentStyle);
+
+    bool isMultiColumnSpanBox() const final { return true; }
+
+    BoxFrame* box() const { return m_box; }
+
+    void updatePreferredWidths() const final;
+    void computeWidth(float& x, float& width, float& marginLeft, float& marginRight) const final;
+    void computeHeight(float& y, float& height, float& marginTop, float& marginBottom) const final;
+    void layout() final;
+
+    void fragmentize(FragmentBuilder& builder, float top) const final {}
+    void paint(const PaintInfo& info, const Point& offset, PaintPhase phase) final {}
+
+private:
+    MultiColumnSpanBox(BoxFrame* box, const RefPtr<BoxStyle>& style);
+    BoxFrame* m_box;
+};
+
+template<>
+struct is_a<MultiColumnSpanBox> {
+    static bool check(const Box& box) { return box.isMultiColumnSpanBox(); }
+};
 
 class MultiColumnFlowBox final : public BlockFlowBox {
 public:
@@ -55,9 +125,26 @@ public:
 
     bool isMultiColumnFlowBox() const final { return true; }
 
+    MultiColumnRowBox* firstRow() const;
+    MultiColumnRowBox* lastRow() const { return m_lastRow; }
+
+    BoxFrame* firstMultiColumnBox() const;
+    BoxFrame* lastMultiColumnBox() const;
+
+    float columnHeightForOffset(float offset) const;
+    float columnRemainingHeightForOffset(float offset, ColumnBoundaryRule rule) const;
+
+    void addForcedColumnBreak(float offset);
+    void setColumnBreak(float offset, float spaceShortage);
+    void updateMinimumColumnHeight(float offset, float minHeight);
+
+    void skipColumnSpanner(BoxFrame* box, float offset);
+
+    MultiColumnRowBox* columnRowAtOffset(float offset) const;
     BlockFlowBox* columnBlockFlowBox() const;
-    const MultiColumnRowList& rows() const { return m_rows; }
     uint32_t columnCount() const { return m_columnCount; }
+
+    void layoutColumns(bool balancing);
 
     void updatePreferredWidths() const final;
     void computeWidth(float& x, float& width, float& marginLeft, float& marginRight) const final;
@@ -68,9 +155,23 @@ public:
 
 private:
     MultiColumnFlowBox(const RefPtr<BoxStyle>& style);
-    MultiColumnRowList m_rows;
+    MultiColumnRowBox* m_currentRow{nullptr};
+    MultiColumnRowBox* m_lastRow{nullptr};
     mutable uint32_t m_columnCount{0};
 };
+
+inline BoxFrame* MultiColumnFlowBox::firstMultiColumnBox() const
+{
+    return nextBoxFrame();
+}
+
+inline BoxFrame* MultiColumnFlowBox::lastMultiColumnBox() const
+{
+    auto box = parentBoxFrame()->lastBoxFrame();
+    if(box && !box->isMultiColumnFlowBox())
+        return box;
+    return nullptr;
+}
 
 inline BlockFlowBox* MultiColumnFlowBox::columnBlockFlowBox() const
 {

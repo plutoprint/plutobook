@@ -101,6 +101,8 @@ public:
     virtual bool isListItemBox() const { return false; }
     virtual bool isInsideListMarkerBox() const { return false; }
     virtual bool isOutsideListMarkerBox() const { return false; }
+    virtual bool isMultiColumnRowBox() const { return false; }
+    virtual bool isMultiColumnSpanBox() const { return false; }
     virtual bool isMultiColumnFlowBox() const { return false; }
     virtual bool isPageBox() const { return false; }
     virtual bool isPageMarginBox() const { return false; }
@@ -144,9 +146,10 @@ public:
     bool isFloatingOrPositioned() const { return m_floating || m_positioned; }
     bool isReplaced() const { return m_replaced; }
     bool isOverflowHidden() const { return m_overflowHidden; }
+    bool isColumnSpanAll() const { return m_isColumnSpanAll; }
+    bool isInsideColumn() const { return m_isInsideColumn; }
     bool hasTransform() const { return m_hasTransform; }
     bool hasLayer() const { return m_hasLayer; }
-    bool hasColumnSpan() const { return m_hasColumnSpan; }
 
     void setAnonymous(bool value) { m_anonymous = value; }
     void setChildrenInline(bool value) { m_childrenInline = value; }
@@ -155,9 +158,10 @@ public:
     void setPositioned(bool value) { m_positioned = value; }
     void setReplaced(bool value) { m_replaced = value; }
     void setOverflowHidden(bool value) { m_overflowHidden = value; }
+    void setIsColumnSpanAll(bool value) { m_isColumnSpanAll = value; }
+    void setIsInsideColumn(bool value) { m_isInsideColumn = value; }
     void setHasTransform(bool value) { m_hasTransform = value; }
     void setHasLayer(bool value) { m_hasLayer = value; }
-    void setHasColumnSpan(bool value) { m_hasColumnSpan = value; }
 
     Heap* heap() const { return m_style->heap(); }
     Document* document() const { return m_style->document(); }
@@ -191,9 +195,10 @@ private:
     bool m_positioned : 1 {false};
     bool m_replaced : 1 {false};
     bool m_overflowHidden : 1 {false};
+    bool m_isColumnSpanAll : 1 {false};
+    bool m_isInsideColumn : 1 {false};
     bool m_hasTransform : 1 {false};
     bool m_hasLayer : 1 {false};
-    bool m_hasColumnSpan : 1 {false};
 };
 
 class BoxModel : public Box {
@@ -311,6 +316,7 @@ struct is_a<BoxModel> {
 };
 
 class ReplacedLineBox;
+class MultiColumnSpanBox;
 class FragmentBuilder;
 
 class BoxFrame : public BoxModel {
@@ -327,8 +333,14 @@ public:
     BoxFrame* firstBoxFrame() const;
     BoxFrame* lastBoxFrame() const;
 
+    BoxFrame* nextMultiColumnBox() const;
+    BoxFrame* prevMultiColumnBox() const;
+
     ReplacedLineBox* line() const { return m_line.get(); }
     void setLine(std::unique_ptr<ReplacedLineBox> line);
+
+    MultiColumnSpanBox* columnSpanBox() const { return m_columnSpanBox; }
+    void setColumnSpanBox(MultiColumnSpanBox* box) { m_columnSpanBox = box; }
 
     float x() const { return m_x; }
     float y() const { return m_y; }
@@ -433,6 +445,7 @@ public:
 
 private:
     std::unique_ptr<ReplacedLineBox> m_line;
+    MultiColumnSpanBox* m_columnSpanBox{nullptr};
 
     float m_x{0};
     float m_y{0};
@@ -480,6 +493,21 @@ inline BoxFrame* BoxFrame::firstBoxFrame() const
 inline BoxFrame* BoxFrame::lastBoxFrame() const
 {
     return static_cast<BoxFrame*>(lastChild());
+}
+
+inline BoxFrame* BoxFrame::nextMultiColumnBox() const
+{
+    assert(isMultiColumnRowBox() || isMultiColumnSpanBox());
+    return nextBoxFrame();
+}
+
+inline BoxFrame* BoxFrame::prevMultiColumnBox() const
+{
+    assert(isMultiColumnRowBox() || isMultiColumnSpanBox());
+    auto box = prevBoxFrame();
+    if(box && !box->isMultiColumnFlowBox())
+        return box;
+    return nullptr;
 }
 
 inline Rect BoxFrame::visualOverflowRect() const

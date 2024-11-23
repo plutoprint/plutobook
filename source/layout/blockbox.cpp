@@ -518,6 +518,42 @@ std::optional<float> BlockBox::inlineBlockBaseline() const
     return std::nullopt;
 }
 
+float BlockBox::columnHeightForOffset(float offset) const
+{
+    if(auto column = containingColumn())
+        return column->columnHeightForOffset(offset);
+    return 0.f;
+}
+
+float BlockBox::columnRemainingHeightForOffset(float offset, ColumnBoundaryRule rule) const
+{
+    if(auto column = containingColumn())
+        return column->columnRemainingHeightForOffset(offset, rule);
+    return 0.f;
+}
+
+float BlockBox::nextColumnTop(float offset, ColumnBoundaryRule rule) const
+{
+    auto columnHeight = columnHeightForOffset(offset);
+    if(columnHeight == 0.f)
+        return offset;
+    return offset + columnRemainingHeightForOffset(offset, rule);
+}
+
+void BlockBox::setColumnBreak(float offset, float spaceShortage)
+{
+    if(auto column = containingColumn()) {
+        column->setColumnBreak(offset, spaceShortage);
+    }
+}
+
+void BlockBox::updateMinimumColumnHeight(float offset, float minHeight)
+{
+    if(auto column = containingColumn()) {
+        column->updateMinimumColumnHeight(offset, minHeight);
+    }
+}
+
 void BlockBox::paintContents(const PaintInfo& info, const Point& offset, PaintPhase phase)
 {
     for(auto child = firstBoxFrame(); child; child = child->nextBoxFrame()) {
