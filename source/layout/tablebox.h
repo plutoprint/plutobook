@@ -29,7 +29,7 @@ public:
     void addChild(Box* newChild) final;
 
     void updateOverflowRect() final;
-    void computePreferredWidths(float& minWidth, float& maxWidth) const final;
+    void computeIntrinsicWidths(float& minWidth, float& maxWidth) const final;
     void updatePreferredWidths() const final;
     void updateBorderWidths() const final;
 
@@ -87,7 +87,7 @@ public:
     static std::unique_ptr<TableLayoutAlgorithm> create(TableBox* table);
 
     virtual ~TableLayoutAlgorithm() = default;
-    virtual void computePreferredWidths(float& minWidth, float& maxWidth) = 0;
+    virtual void computeIntrinsicWidths(float& minWidth, float& maxWidth) = 0;
     virtual void build() = 0;
     virtual void layout() = 0;
 
@@ -100,7 +100,7 @@ class FixedTableLayoutAlgorithm final : public TableLayoutAlgorithm {
 public:
     static std::unique_ptr<FixedTableLayoutAlgorithm> create(TableBox* table);
 
-    void computePreferredWidths(float& minWidth, float& maxWidth) final;
+    void computeIntrinsicWidths(float& minWidth, float& maxWidth) final;
     void build()  final;
     void layout() final;
 
@@ -125,7 +125,7 @@ class AutoTableLayoutAlgorithm final : public TableLayoutAlgorithm {
 public:
     static std::unique_ptr<AutoTableLayoutAlgorithm> create(TableBox* table);
 
-    void computePreferredWidths(float& minWidth, float& maxWidth) final;
+    void computeIntrinsicWidths(float& minWidth, float& maxWidth) final;
     void build()  final;
     void layout() final;
 

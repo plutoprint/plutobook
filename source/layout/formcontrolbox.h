@@ -21,7 +21,7 @@ public:
     void setRows(uint32_t rows) { m_rows = rows; }
     void setCols(uint32_t cols) { m_cols = cols; }
 
-    void computePreferredWidths(float& minWidth, float& maxWidth) const final;
+    void computeIntrinsicWidths(float& minWidth, float& maxWidth) const final;
     void computeHeight(float& y, float& height, float& marginTop, float& marginBottom) const final;
 
     const char* name() const final { return "TextInputBox"; }
@@ -50,7 +50,7 @@ public:
 
     void addChild(Box* newChild) final;
     void updateOverflowRect() final;
-    void computePreferredWidths(float& minWidth, float& maxWidth) const final;
+    void computeIntrinsicWidths(float& minWidth, float& maxWidth) const final;
     void computeHeight(float& y, float& height, float& marginTop, float& marginBottom) const final;
     void paintContents(const PaintInfo& info, const Point& offset, PaintPhase phase) final;
     void fragmentize(FragmentBuilder& builder, float top) const final;

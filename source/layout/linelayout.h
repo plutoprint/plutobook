@@ -333,7 +333,7 @@ public:
 
     void updateWidth();
     void updateOverflowRect();
-    void computePreferredWidths(float& minWidth, float& maxWidth) const;
+    void computeIntrinsicWidths(float& minWidth, float& maxWidth) const;
     void build();
     void layout();
 

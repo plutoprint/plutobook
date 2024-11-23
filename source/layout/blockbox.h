@@ -15,7 +15,7 @@ public:
 
     bool isBlockBox() const final { return true; }
 
-    virtual void computePreferredWidths(float& minWidth, float& maxWidth) const = 0;
+    virtual void computeIntrinsicWidths(float& minWidth, float& maxWidth) const = 0;
     void updatePreferredWidths() const override;
 
     const PositionedBoxList* positionedBoxes() const { return m_positionedBoxes.get(); }
@@ -143,7 +143,7 @@ public:
     void addChild(Box* newChild) override;
 
     void updateOverflowRect() override;
-    void computePreferredWidths(float& minWidth, float& maxWidth) const override;
+    void computeIntrinsicWidths(float& minWidth, float& maxWidth) const override;
 
     LineLayout* lineLayout() const { return m_lineLayout.get(); }
     const FloatingBoxList* floatingBoxes() const { return m_floatingBoxes.get(); }

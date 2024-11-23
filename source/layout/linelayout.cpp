@@ -1442,7 +1442,7 @@ void LineLayout::updateOverflowRect()
     }
 }
 
-void LineLayout::computePreferredWidths(float& minWidth, float& maxWidth) const
+void LineLayout::computeIntrinsicWidths(float& minWidth, float& maxWidth) const
 {
     LineBreakIterator breakIterator(m_data.text);
     auto currentStyle = m_block->style();

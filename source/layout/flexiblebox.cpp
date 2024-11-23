@@ -247,7 +247,7 @@ void FlexibleBox::updateOverflowRect()
     }
 }
 
-void FlexibleBox::computePreferredWidths(float& minWidth, float& maxWidth) const
+void FlexibleBox::computeIntrinsicWidths(float& minWidth, float& maxWidth) const
 {
     for(auto child = firstBoxFrame(); child; child = child->nextBoxFrame()) {
         if(child->isPositioned())

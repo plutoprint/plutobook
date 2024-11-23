@@ -23,7 +23,7 @@ std::optional<float> TextInputBox::inlineBlockBaseline() const
     return std::nullopt;
 }
 
-void TextInputBox::computePreferredWidths(float& minWidth, float& maxWidth) const
+void TextInputBox::computeIntrinsicWidths(float& minWidth, float& maxWidth) const
 {
     minWidth = maxWidth = m_cols * style()->chFontSize();
 }
@@ -80,7 +80,7 @@ void SelectBox::updateOverflowRect()
     }
 }
 
-void SelectBox::computePreferredWidths(float& minWidth, float& maxWidth) const
+void SelectBox::computeIntrinsicWidths(float& minWidth, float& maxWidth) const
 {
     for(auto child = firstBoxFrame(); child; child = child->nextBoxFrame()) {
         if(child->isPositioned())

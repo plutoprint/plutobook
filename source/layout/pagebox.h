@@ -26,7 +26,7 @@ public:
     void setPageScale(float pageScale) { m_pageScale = pageScale; }
 
     void updateOverflowRect() final;
-    void computePreferredWidths(float& minWidth, float& maxWidth) const final;
+    void computeIntrinsicWidths(float& minWidth, float& maxWidth) const final;
     void computeWidth(float& x, float& width, float& marginLeft, float& marginRight) const final;
     void computeHeight(float& y, float& height, float& marginTop, float& marginBottom) const final;
     void layout() final;

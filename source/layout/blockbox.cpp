@@ -22,7 +22,7 @@ void BlockBox::updatePreferredWidths() const
     if(widthLength.isFixed() && !isTableCellBox()) {
         m_minPreferredWidth = m_maxPreferredWidth = adjustContentBoxWidth(widthLength.value());
     } else {
-        computePreferredWidths(m_minPreferredWidth, m_maxPreferredWidth);
+        computeIntrinsicWidths(m_minPreferredWidth, m_maxPreferredWidth);
     }
 
     auto maxWidthLength = style()->maxWidth();
@@ -657,10 +657,10 @@ void BlockFlowBox::updateOverflowRect()
     }
 }
 
-void BlockFlowBox::computePreferredWidths(float& minWidth, float& maxWidth) const
+void BlockFlowBox::computeIntrinsicWidths(float& minWidth, float& maxWidth) const
 {
     if(isChildrenInline()) {
-        m_lineLayout->computePreferredWidths(minWidth, maxWidth);
+        m_lineLayout->computeIntrinsicWidths(minWidth, maxWidth);
         return;
     }
 

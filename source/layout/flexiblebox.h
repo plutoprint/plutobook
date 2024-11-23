@@ -125,7 +125,7 @@ public:
     void addChild(Box* newChild) final;
 
     void updateOverflowRect() final;
-    void computePreferredWidths(float& minWidth, float& maxWidth) const final;
+    void computeIntrinsicWidths(float& minWidth, float& maxWidth) const final;
 
     std::optional<float> firstLineBaseline() const final;
     std::optional<float> lastLineBaseline() const final;

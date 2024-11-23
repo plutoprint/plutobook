@@ -69,17 +69,17 @@ void TableBox::updateOverflowRect()
     }
 }
 
-void TableBox::computePreferredWidths(float& minWidth, float& maxWidth) const
+void TableBox::computeIntrinsicWidths(float& minWidth, float& maxPreferredWidth) const
 {
     if(!m_columns.empty()) {
-        m_tableLayout->computePreferredWidths(minWidth, maxWidth);
+        m_tableLayout->computeIntrinsicWidths(minWidth, maxPreferredWidth);
         minWidth += borderHorizontalSpacing() * (m_columns.size() + 1);
-        maxWidth += borderHorizontalSpacing() * (m_columns.size() + 1);
+        maxPreferredWidth += borderHorizontalSpacing() * (m_columns.size() + 1);
     }
 
     for(auto caption : m_captions) {
         minWidth = std::max(minWidth, caption->minPreferredWidth());
-        maxWidth = std::max(maxWidth, caption->minPreferredWidth());
+        maxPreferredWidth = std::max(maxPreferredWidth, caption->minPreferredWidth());
     }
 }
 
@@ -87,7 +87,7 @@ void TableBox::updatePreferredWidths() const
 {
     m_minPreferredWidth = 0;
     m_maxPreferredWidth = 0;
-    computePreferredWidths(m_minPreferredWidth, m_maxPreferredWidth);
+    computeIntrinsicWidths(m_minPreferredWidth, m_maxPreferredWidth);
 
     auto widthLength = style()->width();
     auto minWidthLength = style()->minWidth();
@@ -520,7 +520,7 @@ std::unique_ptr<FixedTableLayoutAlgorithm> FixedTableLayoutAlgorithm::create(Tab
     return std::unique_ptr<FixedTableLayoutAlgorithm>(new (table->heap()) FixedTableLayoutAlgorithm(table));
 }
 
-void FixedTableLayoutAlgorithm::computePreferredWidths(float& minWidth, float& maxWidth)
+void FixedTableLayoutAlgorithm::computeIntrinsicWidths(float& minWidth, float& maxWidth)
 {
     for(auto& width : m_widths) {
         if(width.isFixed()) {
@@ -875,7 +875,7 @@ static void distributeSpanCellToColumns(const TableCellBox* cellBox, std::span<T
     }
 }
 
-void AutoTableLayoutAlgorithm::computePreferredWidths(float& minWidth, float& maxWidth)
+void AutoTableLayoutAlgorithm::computeIntrinsicWidths(float& minWidth, float& maxWidth)
 {
     for(auto& columnWidth : m_columnWidths) {
         columnWidth.width = Length::Auto;

@@ -16,7 +16,7 @@ void PageBox::updateOverflowRect()
     }
 }
 
-void PageBox::computePreferredWidths(float& minWidth, float& maxWidth) const
+void PageBox::computeIntrinsicWidths(float& minWidth, float& maxWidth) const
 {
     assert(false);
 }
