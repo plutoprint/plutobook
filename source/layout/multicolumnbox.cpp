@@ -109,17 +109,23 @@ void MultiColumnRowBox::addContentRun(float endOffset)
     }
 }
 
-bool MultiColumnRowBox::recalculateColumnHeight(bool balancing)
+void MultiColumnRowBox::resetColumnHeight(float columnHeight)
 {
-    if(m_isColumnBalanced && !balancing)
+    m_minimumColumnHeight = 0.f;
+    m_maxColumnHeight = columnHeight;
+    m_columnHeight = m_isColumnBalanced ? 0.f : columnHeight;
+    m_runs.clear();
+}
+
+void MultiColumnRowBox::recalculateColumnHeight(bool balancing)
+{
+    if(balancing && m_isColumnBalanced)
         distributeImplicitBreaks();
     if(m_isColumnBalanced) {
         m_columnHeight = constrainColumnHeight(calculateColumnHeight(balancing));
     } else {
         m_columnHeight = constrainColumnHeight(m_columnHeight);
     }
-
-    return false;
 }
 
 float MultiColumnRowBox::constrainColumnHeight(float columnHeight) const
@@ -131,7 +137,7 @@ float MultiColumnRowBox::constrainColumnHeight(float columnHeight) const
 
 float MultiColumnRowBox::calculateColumnHeight(bool balancing) const
 {
-    if(!balancing) {
+    if(balancing) {
         auto index = findRunWithTallestColumns();
         auto startOffset = index == 0 ? m_rowTop : m_runs[index - 1].breakOffset();
         return std::max(m_minimumColumnHeight, m_runs[index].columnLogicalHeight(startOffset));
@@ -340,6 +346,10 @@ void MultiColumnFlowBox::layoutColumns(bool balancing)
         assert(m_lastRow == m_currentRow);
         m_lastRow->setRowBottom(height());
     }
+
+    for(auto row = firstRow(); row; row = row->nextRow()) {
+        row->recalculateColumnHeight(balancing);
+    }
 }
 
 void MultiColumnFlowBox::computePreferredWidths(float& minPreferredWidth, float& maxPreferredWidth) const
@@ -436,6 +446,18 @@ void MultiColumnFlowBox::build()
 
 void MultiColumnFlowBox::layout()
 {
+    auto columnBlock = columnBlockFlowBox();
+    auto columnStyle = columnBlock->style();
+
+    float columnHeight = 0.f;
+    if(auto height = computeHeightUsing(columnStyle->height()))
+        columnHeight = adjustBorderBoxHeight(height.value());
+    columnHeight = constrainBorderBoxHeight(columnHeight);
+
+    for(auto row = firstRow(); row; row = row->nextRow()) {
+        row->resetColumnHeight(columnHeight);
+    }
+
     layoutColumns(false);
     layoutColumns(true);
 }

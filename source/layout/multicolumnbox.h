@@ -63,7 +63,8 @@ public:
     void updateMinimumColumnHeight(float height);
     void addContentRun(float endOffset);
 
-    bool recalculateColumnHeight(bool balancing);
+    void resetColumnHeight(float columnHeight);
+    void recalculateColumnHeight(bool balancing);
 
 private:
     MultiColumnRowBox(MultiColumnFlowBox* columnFlow, const RefPtr<BoxStyle>& style);
