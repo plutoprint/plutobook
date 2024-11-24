@@ -191,7 +191,7 @@ BlockFlowBox* Box::createAnonymousBlock(const BoxStyle* parentStyle)
 
 BlockBox* Box::containingBlock() const
 {
-    if(isColumnSpanAll())
+    if(hasColumnSpanBox())
         return containingColumn()->containingBlock();
     auto parent = parentBox();
     if(position() == Position::Static || position() == Position::Relative || isTextBox()) {
@@ -221,7 +221,7 @@ BlockBox* Box::containingBlock() const
 
 BoxModel* Box::containingBox() const
 {
-    if(isColumnSpanAll())
+    if(hasColumnSpanBox())
         return containingColumn()->containingBox();
     auto parent = parentBox();
     if(!isTextBox()) {
@@ -245,7 +245,7 @@ BoxModel* Box::containingBox() const
 
 MultiColumnFlowBox* Box::containingColumn() const
 {
-    assert(isInsideColumn());
+    assert(isInsideColumnFlow());
     auto parent = parentBox();
     while(parent) {
         if(parent->isMultiColumnFlowBox())

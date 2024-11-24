@@ -201,6 +201,8 @@ public:
     float getClearDelta(BoxFrame* child, float y) const;
     void clearFloats(Clear clear);
 
+    void determineHorizontalPosition(BoxFrame* child) const;
+
     void layoutBlockChild(BoxFrame* child, MarginInfo& marginInfo);
     void layoutBlockChildren();
 

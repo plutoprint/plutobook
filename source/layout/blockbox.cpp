@@ -590,7 +590,8 @@ BlockFlowBox::~BlockFlowBox() = default;
 
 bool BlockFlowBox::avoidsFloats() const
 {
-    return isInline() || isFloating() || isPositioned() || isOverflowHidden() || isRootBox() || isFlexItem();
+    return isInline() || isFloating() || isPositioned() || isOverflowHidden()
+        || hasColumnFlowBox() || hasColumnSpanBox() || isRootBox() || isFlexItem();
 }
 
 void BlockFlowBox::addChild(Box* newChild)
@@ -1349,6 +1350,35 @@ void BlockFlowBox::clearFloats(Clear clear)
     }
 }
 
+void BlockFlowBox::determineHorizontalPosition(BoxFrame* child) const
+{
+    if(style()->isLeftToRightDirection()) {
+        auto offsetX = borderLeft() + paddingLeft() + child->marginLeft();
+        if(containsFloats() && child->avoidsFloats()) {
+            auto startOffset = startOffsetForLine(child->y(), false);
+            if(child->style()->marginLeft().isAuto())
+                offsetX = std::max(offsetX, startOffset + child->marginLeft());
+            else if(startOffset > borderAndPaddingLeft()) {
+                offsetX = std::max(offsetX, startOffset);
+            }
+        }
+
+        child->setX(offsetX);
+    } else {
+        auto offsetX = borderRight() + paddingRight() + child->marginRight();
+        if(containsFloats() && child->avoidsFloats()) {
+            auto startOffset = startOffsetForLine(child->y(), false);
+            if(child->style()->marginRight().isAuto())
+                offsetX = std::max(offsetX, startOffset + child->marginRight());
+            else if(startOffset > borderAndPaddingRight()) {
+                offsetX = std::max(offsetX, startOffset);
+            }
+        }
+
+        child->setX(width() - offsetX - child->width());
+    }
+}
+
 void BlockFlowBox::layoutBlockChild(BoxFrame* child, MarginInfo& marginInfo)
 {
     auto posTop = m_maxPositiveMarginTop;
@@ -1385,32 +1415,7 @@ void BlockFlowBox::layoutBlockChild(BoxFrame* child, MarginInfo& marginInfo)
         marginInfo.setAtTopOfBlock(false);
     }
 
-    if(style()->isLeftToRightDirection()) {
-        auto offsetX = borderLeft() + paddingLeft() + child->marginLeft();
-        if(containsFloats() && child->avoidsFloats()) {
-            auto startOffset = startOffsetForLine(child->y(), false);
-            if(child->style()->marginLeft().isAuto())
-                offsetX = std::max(offsetX, startOffset + child->marginLeft());
-            else if(startOffset > borderAndPaddingLeft()) {
-                offsetX = std::max(offsetX, startOffset);
-            }
-        }
-
-        child->setX(offsetX);
-    } else {
-        auto offsetX = borderRight() + paddingRight() + child->marginRight();
-        if(containsFloats() && child->avoidsFloats()) {
-            auto startOffset = startOffsetForLine(child->y(), false);
-            if(child->style()->marginRight().isAuto())
-                offsetX = std::max(offsetX, startOffset + child->marginRight());
-            else if(startOffset > borderAndPaddingRight()) {
-                offsetX = std::max(offsetX, startOffset);
-            }
-        }
-
-        child->setX(width() - offsetX - child->width());
-    }
-
+    determineHorizontalPosition(child);
     if(child->isMultiColumnSpanBox()) {
         auto spanner = to<MultiColumnSpanBox>(child);
         spanner->box()->setX(child->x());
@@ -1436,10 +1441,15 @@ void BlockFlowBox::layoutBlockChildren()
         } else if(child->isFloating()) {
             insertFloatingBox(child);
             adjustFloatingBox(marginInfo);
-        } else if(child->isColumnSpanAll()) {
+        } else if(child->hasColumnSpanBox()) {
             setHeight(height() + marginInfo.margin());
             child->columnSpanBox()->columnFlowBox()->skipColumnSpanBox(child, height());
             marginInfo.clearMargin();
+        } else if(child->isMultiColumnFlowBox()) {
+            assert(child == m_columnFlowBox);
+            child->setY(top);
+            child->layout();
+            determineHorizontalPosition(child);
         } else {
             layoutBlockChild(child, marginInfo);
         }
@@ -1489,6 +1499,7 @@ void BlockFlowBox::build()
         appendChild(columnFlowBox);
         columnFlowBox->setChildrenInline(isChildrenInline());
         setChildrenInline(false);
+        setHasColumnFlowBox(true);
         m_columnFlowBox = columnFlowBox;
     }
 

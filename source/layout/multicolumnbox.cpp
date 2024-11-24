@@ -197,7 +197,7 @@ void MultiColumnRowBox::distributeImplicitBreaks()
 MultiColumnSpanBox* MultiColumnSpanBox::create(BoxFrame* box, const BoxStyle* parentStyle)
 {
     auto newStyle = BoxStyle::create(*parentStyle, Display::Block);
-    auto newSpanner = new (newStyle->heap()) MultiColumnSpanBox(box,newStyle);
+    auto newSpanner = new (newStyle->heap()) MultiColumnSpanBox(box, newStyle);
     newSpanner->setAnonymous(true);
     return newSpanner;
 }
@@ -300,7 +300,7 @@ void MultiColumnFlowBox::updateMinimumColumnHeight(float offset, float minHeight
 void MultiColumnFlowBox::skipColumnSpanBox(BoxFrame* box, float offset)
 {
     auto columnSpanBox = box->columnSpanBox();
-    assert(columnSpanBox && box->isColumnSpanAll());
+    assert(columnSpanBox && box->hasColumnSpanBox());
     auto prevColumnBox = columnSpanBox->prevMultiColumnBox();
     if(prevColumnBox && prevColumnBox->isMultiColumnRowBox()) {
         auto columnRow = to<MultiColumnRowBox>(prevColumnBox);
@@ -319,8 +319,6 @@ void MultiColumnFlowBox::skipColumnSpanBox(BoxFrame* box, float offset)
 
 MultiColumnRowBox* MultiColumnFlowBox::columnRowAtOffset(float offset) const
 {
-    if(m_currentRow == nullptr)
-        return firstRow();
     auto row = m_currentRow;
     while(row->rowTop() > offset) {
         auto prevRow = row->prevRow();
@@ -397,12 +395,12 @@ void MultiColumnFlowBox::build()
     const MultiColumnSpanBox* currentColumnSpanner = nullptr;
     auto child = firstChild();
     while(child) {
-        child->setIsInsideColumn(true);
+        child->setIsInsideColumnFlow(true);
         if(auto box = to<BoxFrame>(child); isValidColumnSpanBox(box)) {
             auto newSpanner = MultiColumnSpanBox::create(box, style());
             parentBox()->addChild(newSpanner);
-            box->setIsColumnSpanAll(true);
             box->setColumnSpanBox(newSpanner);
+            box->setHasColumnSpanBox(true);
             currentColumnSpanner = newSpanner;
         } else if(!child->isFloatingOrPositioned()) {
             if(m_lastRow == nullptr || currentColumnSpanner) {
