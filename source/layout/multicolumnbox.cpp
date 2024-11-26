@@ -32,10 +32,14 @@ void MultiColumnRowBox::computePreferredWidths(float& minPreferredWidth, float& 
 
 void MultiColumnRowBox::computeWidth(float& x, float& width, float& marginLeft, float& marginRight) const
 {
+    width = m_columnFlowBox->columnBlockFlowBox()->contentBoxWidth();
+    width = std::min(width, maxPreferredWidth());
+    width = std::max(width, minPreferredWidth());
 }
 
 void MultiColumnRowBox::computeHeight(float& y, float& height, float& marginTop, float& marginBottom) const
 {
+    height = m_columnHeight;
 }
 
 void MultiColumnRowBox::layout()
@@ -111,33 +115,43 @@ void MultiColumnRowBox::addContentRun(float endOffset)
 
 void MultiColumnRowBox::resetColumnHeight(float columnHeight)
 {
+    m_runs.clear();
     m_minimumColumnHeight = 0.f;
     m_maxColumnHeight = columnHeight;
-    m_columnHeight = m_isColumnBalanced ? 0.f : columnHeight;
-    m_runs.clear();
+    if(columnHeight > 0.f && !m_isFillBalance) {
+        m_columnHeight = columnHeight;
+        m_isHeightAuto = false;
+    } else {
+        m_columnHeight = 0.f;
+        m_isHeightAuto = true;
+    }
 }
 
-void MultiColumnRowBox::recalculateColumnHeight(bool balancing)
+bool MultiColumnRowBox::recalculateColumnHeight(bool balancing)
 {
-    if(balancing && m_isColumnBalanced)
+    auto prevColumnHeight = m_columnHeight;
+    if(!balancing && m_isHeightAuto)
         distributeImplicitBreaks();
-    if(m_isColumnBalanced) {
-        m_columnHeight = constrainColumnHeight(calculateColumnHeight(balancing));
-    } else {
-        m_columnHeight = constrainColumnHeight(m_columnHeight);
-    }
+    if(m_isHeightAuto)
+        m_columnHeight = calculateColumnHeight(balancing);
+    m_columnHeight = constrainColumnHeight(m_columnHeight);
+    if(prevColumnHeight == m_columnHeight)
+        return false;
+    m_minSpaceShortage = 0.f;
+    m_runs.clear();
+    return true;
 }
 
 float MultiColumnRowBox::constrainColumnHeight(float columnHeight) const
 {
-    if(columnHeight > m_maxColumnHeight)
+    if(m_maxColumnHeight > 0.f && columnHeight > m_maxColumnHeight)
         columnHeight = m_maxColumnHeight;
     return columnHeight;
 }
 
 float MultiColumnRowBox::calculateColumnHeight(bool balancing) const
 {
-    if(balancing) {
+    if(!balancing) {
         auto index = findRunWithTallestColumns();
         auto startOffset = index == 0 ? m_rowTop : m_runs[index - 1].breakOffset();
         return std::max(m_minimumColumnHeight, m_runs[index].columnLogicalHeight(startOffset));
@@ -148,7 +162,7 @@ float MultiColumnRowBox::calculateColumnHeight(bool balancing) const
         return m_columnHeight;
     if(m_runs.size() >= m_columnFlowBox->columnCount())
         return m_columnHeight;
-    if(m_columnHeight >= m_maxColumnHeight)
+    if(m_maxColumnHeight > 0.f && m_columnHeight >= m_maxColumnHeight)
         return m_columnHeight;
     return m_columnHeight + m_minSpaceShortage;
 }
@@ -342,13 +356,16 @@ void MultiColumnFlowBox::layoutColumns(bool balancing)
     if(m_currentRow)
         m_currentRow->setRowTop(0.f);
     BlockFlowBox::layout();
-    if(m_lastRow) {
-        assert(m_lastRow == m_currentRow);
-        m_lastRow->setRowBottom(height());
+    if(m_currentRow) {
+        assert(m_currentRow == m_lastRow);
+        m_currentRow->setRowBottom(height());
     }
 
     for(auto row = firstRow(); row; row = row->nextRow()) {
-        row->recalculateColumnHeight(balancing);
+        if(row->recalculateColumnHeight(balancing)) {
+            layoutColumns(true);
+            return;
+        }
     }
 }
 
@@ -401,7 +418,7 @@ static bool isValidColumnSpanBox(BoxFrame* box)
 
 void MultiColumnFlowBox::build()
 {
-    auto columnBalance = style()->columnFill() == ColumnFill::Balance;
+    auto fillBalance = style()->columnFill() == ColumnFill::Balance;
     const MultiColumnSpanBox* currentColumnSpanner = nullptr;
     auto child = firstChild();
     while(child) {
@@ -416,7 +433,7 @@ void MultiColumnFlowBox::build()
             if(m_lastRow == nullptr || currentColumnSpanner) {
                 auto newRow = MultiColumnRowBox::create(this, style());
                 parentBox()->addChild(newRow);
-                newRow->setIsColumnBalanced(columnBalance || currentColumnSpanner);
+                newRow->setIsFillBalance(fillBalance || currentColumnSpanner);
                 currentColumnSpanner = nullptr;
                 m_lastRow = newRow;
             }
@@ -450,16 +467,13 @@ void MultiColumnFlowBox::layout()
     auto columnStyle = columnBlock->style();
 
     float columnHeight = 0.f;
-    if(auto height = computeHeightUsing(columnStyle->height()))
-        columnHeight = adjustBorderBoxHeight(height.value());
-    columnHeight = constrainBorderBoxHeight(columnHeight);
+    if(auto height = columnBlock->computeHeightUsing(columnStyle->height()))
+        columnHeight = columnBlock->adjustContentBoxHeight(height.value());
+    columnHeight = columnBlock->constrainContentBoxHeight(columnHeight);
 
-    for(auto row = firstRow(); row; row = row->nextRow()) {
+    for(auto row = firstRow(); row; row = row->nextRow())
         row->resetColumnHeight(columnHeight);
-    }
-
     layoutColumns(false);
-    layoutColumns(true);
 }
 
 MultiColumnFlowBox::MultiColumnFlowBox(const RefPtr<BoxStyle>& style)

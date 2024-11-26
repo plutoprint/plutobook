@@ -43,8 +43,10 @@ public:
     MultiColumnRowBox* prevRow() const;
     MultiColumnRowBox* nextRow() const;
 
-    bool isColumnBalanced() const { return m_isColumnBalanced; }
-    void setIsColumnBalanced(bool value) { m_isColumnBalanced = value; }
+    bool isFillBalance() const { return m_isFillBalance; }
+    void setIsFillBalance(bool value) { m_isFillBalance = value; }
+
+    bool isHeightAuto() const { return m_isHeightAuto; }
 
     MultiColumnFlowBox* columnFlowBox() const { return m_columnFlowBox; }
     float rowTop() const { return m_rowTop; }
@@ -64,7 +66,7 @@ public:
     void addContentRun(float endOffset);
 
     void resetColumnHeight(float columnHeight);
-    void recalculateColumnHeight(bool balancing);
+    bool recalculateColumnHeight(bool balancing);
 
 private:
     MultiColumnRowBox(MultiColumnFlowBox* columnFlow, const RefPtr<BoxStyle>& style);
@@ -80,7 +82,8 @@ private:
 
     MultiColumnFlowBox* m_columnFlowBox;
     MultiColumnContentRunList m_runs;
-    bool m_isColumnBalanced{false};
+    bool m_isFillBalance{true};
+    bool m_isHeightAuto{true};
     float m_rowTop{0};
     float m_rowBottom{0};
     float m_columnHeight{0};
