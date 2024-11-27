@@ -1,8 +1,9 @@
 #include "linebox.h"
 #include "textbox.h"
 #include "blockbox.h"
-#include "textshape.h"
+#include "multicolumnbox.h"
 #include "graphicscontext.h"
+#include "textshape.h"
 #include "boxlayer.h"
 
 #include <cmath>
@@ -598,6 +599,24 @@ void RootLineBox::updateLineTopAndBottom(const LineBox* line)
     m_lineBottom = std::max(m_lineBottom, line->y() + line->height());
 }
 
+float RootLineBox::adjustLineInColumnFlow(float y, float maxHeight) const
+{
+    auto column = m_box->containingColumn();
+    column->updateMinimumColumnHeight(y, maxHeight);
+    auto columnHeight = column->columnHeightForOffset(y);
+    if(columnHeight == 0.f || maxHeight > columnHeight)
+        return 0.f;
+    auto remainingHeight = column->columnRemainingHeightForOffset(y, AssociateWithLatterColumn);
+    if(remainingHeight < maxHeight) {
+        column->setColumnBreak(y, maxHeight - remainingHeight);
+        return remainingHeight;
+    }
+
+    if(m_lineIndex > 0 && remainingHeight == columnHeight)
+        column->setColumnBreak(y, maxHeight);
+    return 0.f;
+}
+
 float RootLineBox::alignInHorizontalDirection(float startOffset)
 {
     return placeInHorizontalDirection(startOffset, box());
@@ -614,9 +633,11 @@ float RootLineBox::alignInVerticalDirection(float blockHeight)
         adjustMaxAscentAndDescent(maxAscent, maxDescent, maxPositionTop, maxPositionBottom);
     }
 
+    auto maxHeight = maxAscent + maxDescent;
+    if(m_box->isInsideColumnFlow())
+        blockHeight += adjustLineInColumnFlow(blockHeight, maxHeight);
     m_lineTop = blockHeight;
     m_lineBottom = blockHeight;
-    auto maxHeight = maxAscent + maxDescent;
     placeInVerticalDirection(blockHeight, maxHeight, maxAscent, this);
     return blockHeight + maxHeight;
 }

@@ -1379,6 +1379,46 @@ void BlockFlowBox::determineHorizontalPosition(BoxFrame* child) const
     }
 }
 
+float BlockFlowBox::applyColumnBreakBefore(const BoxFrame* child, float offset) const
+{
+    return offset;
+}
+
+float BlockFlowBox::applyColumnBreakInside(const BoxFrame* child, float offset) const
+{
+    return offset;
+}
+
+float BlockFlowBox::applyColumnBreakAfter(const BoxFrame* child, float offset, MarginInfo& marginInfo) const
+{
+    return offset;
+}
+
+void BlockFlowBox::adjustBlockChildInColumnFlow(BoxFrame* child)
+{
+    auto newOffset = applyColumnBreakBefore(child, child->y());
+    auto adjustedOffset = applyColumnBreakInside(child, newOffset);
+    auto maxHeight = child->height();
+
+    auto column = child->containingColumn();
+    if(adjustedOffset > newOffset) {
+        column->setColumnBreak(newOffset, maxHeight - newOffset - adjustedOffset);
+    } else {
+        auto columnHeight = column->columnHeightForOffset(newOffset);
+        if(columnHeight > 0.f) {
+            auto remainingHeight = column->columnRemainingHeightForOffset(newOffset, AssociateWithLatterColumn);
+            if(remainingHeight < maxHeight) {
+                column->setColumnBreak(newOffset, maxHeight - remainingHeight);
+            } else if(columnHeight == remainingHeight && child->y() > 0.f) {
+                column->setColumnBreak(newOffset, maxHeight);
+            }
+        }
+    }
+
+    setHeight(height() + (newOffset - child->y()));
+    child->setY(newOffset);
+}
+
 void BlockFlowBox::layoutBlockChild(BoxFrame* child, MarginInfo& marginInfo)
 {
     auto posTop = m_maxPositiveMarginTop;
@@ -1411,18 +1451,21 @@ void BlockFlowBox::layoutBlockChild(BoxFrame* child, MarginInfo& marginInfo)
     }
 
     child->setY(offsetY + clearDelta);
+    if(child->isInsideColumnFlow())
+        adjustBlockChildInColumnFlow(child);
     if(marginInfo.atTopOfBlock() && !child->isSelfCollapsingBlock()) {
         marginInfo.setAtTopOfBlock(false);
     }
 
     determineHorizontalPosition(child);
-    if(child->isMultiColumnSpanBox()) {
-        auto spanner = to<MultiColumnSpanBox>(child);
+    if(auto spanner = to<MultiColumnSpanBox>(child)) {
         spanner->box()->setX(child->x());
         spanner->box()->setY(child->y());
     }
 
     setHeight(height() + child->height());
+    if(child->isInsideColumnFlow())
+        setHeight(applyColumnBreakAfter(child, height(), marginInfo));
     if(auto childBlock = to<BlockFlowBox>(child)) {
         addOverhangingFloats(childBlock);
     }

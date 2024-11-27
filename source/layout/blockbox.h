@@ -9,6 +9,8 @@ namespace plutobook {
 
 using PositionedBoxList = std::pmr::set<BoxFrame*>;
 
+enum ColumnBoundaryRule { AssociateWithFormerColumn, AssociateWithLatterColumn };
+
 class BlockBox : public BoxFrame {
 public:
     BlockBox(Node* node, const RefPtr<BoxStyle>& style);
@@ -62,8 +64,6 @@ public:
     std::optional<float> firstLineBaseline() const override;
     std::optional<float> lastLineBaseline() const override;
     std::optional<float> inlineBlockBaseline() const override;
-
-    enum ColumnBoundaryRule { AssociateWithFormerColumn, AssociateWithLatterColumn };
 
     float columnHeightForOffset(float offset) const;
     float columnRemainingHeightForOffset(float offset, ColumnBoundaryRule rule) const;
@@ -203,6 +203,11 @@ public:
 
     void determineHorizontalPosition(BoxFrame* child) const;
 
+    float applyColumnBreakBefore(const BoxFrame* child, float offset) const;
+    float applyColumnBreakInside(const BoxFrame* child, float offset) const;
+    float applyColumnBreakAfter(const BoxFrame* child, float offset, MarginInfo& marginInfo) const;
+
+    void adjustBlockChildInColumnFlow(BoxFrame* child);
     void layoutBlockChild(BoxFrame* child, MarginInfo& marginInfo);
     void layoutBlockChildren();
 

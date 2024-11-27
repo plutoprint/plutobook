@@ -74,7 +74,7 @@ private:
     float constrainColumnHeight(float columnHeight) const;
     float calculateColumnHeight(bool balancing) const;
 
-    float rowTopAt(uint32_t columnIndex) const { return m_rowTop + columnIndex + m_columnHeight; }
+    float rowTopAt(uint32_t columnIndex) const { return m_rowTop + columnIndex * m_columnHeight; }
     uint32_t columnIndexAtOffset(float offset, bool clampToExistingColumns) const;
     uint32_t findRunWithTallestColumns() const;
 
