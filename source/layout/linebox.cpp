@@ -599,21 +599,21 @@ void RootLineBox::updateLineTopAndBottom(const LineBox* line)
     m_lineBottom = std::max(m_lineBottom, line->y() + line->height());
 }
 
-float RootLineBox::adjustLineInColumnFlow(float y, float maxHeight) const
+float RootLineBox::adjustLineInColumnFlow(float offset, float lineHeight) const
 {
     auto column = m_box->containingColumn();
-    column->updateMinimumColumnHeight(y, maxHeight);
-    auto columnHeight = column->columnHeightForOffset(y);
-    if(columnHeight == 0.f || maxHeight > columnHeight)
+    auto columnHeight = column->columnHeightForOffset(offset);
+    column->updateMinimumColumnHeight(offset, lineHeight);
+    if(columnHeight == 0.f || lineHeight > columnHeight)
         return 0.f;
-    auto remainingHeight = column->columnRemainingHeightForOffset(y, AssociateWithLatterColumn);
-    if(remainingHeight < maxHeight) {
-        column->setColumnBreak(y, maxHeight - remainingHeight);
+    auto remainingHeight = column->columnRemainingHeightForOffset(offset, AssociateWithLatterColumn);
+    if(remainingHeight < lineHeight) {
+        column->setColumnBreak(offset, lineHeight - remainingHeight);
         return remainingHeight;
     }
 
     if(m_lineIndex > 0 && remainingHeight == columnHeight)
-        column->setColumnBreak(y, maxHeight);
+        column->setColumnBreak(offset, lineHeight);
     return 0.f;
 }
 

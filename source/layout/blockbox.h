@@ -65,13 +65,6 @@ public:
     std::optional<float> lastLineBaseline() const override;
     std::optional<float> inlineBlockBaseline() const override;
 
-    float columnHeightForOffset(float offset) const;
-    float columnRemainingHeightForOffset(float offset, ColumnBoundaryRule rule) const;
-    float nextColumnTop(float offset, ColumnBoundaryRule rule) const;
-
-    void setColumnBreak(float offset, float spaceShortage);
-    void updateMinimumColumnHeight(float offset, float minHeight);
-
     virtual void paintContents(const PaintInfo& info, const Point& offset, PaintPhase phase);
     void paint(const PaintInfo& info, const Point& offset, PaintPhase phase) override;
 

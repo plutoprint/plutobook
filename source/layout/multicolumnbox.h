@@ -46,7 +46,7 @@ public:
     bool isFillBalance() const { return m_isFillBalance; }
     void setIsFillBalance(bool value) { m_isFillBalance = value; }
 
-    bool isHeightAuto() const { return m_isHeightAuto; }
+    bool requiresBalancing() const { return m_requiresBalancing; }
 
     MultiColumnFlowBox* columnFlowBox() const { return m_columnFlowBox; }
     float rowTop() const { return m_rowTop; }
@@ -83,7 +83,7 @@ private:
     MultiColumnFlowBox* m_columnFlowBox;
     MultiColumnContentRunList m_runs;
     bool m_isFillBalance{true};
-    bool m_isHeightAuto{true};
+    bool m_requiresBalancing{true};
     float m_rowTop{0};
     float m_rowBottom{0};
     float m_columnHeight{0};

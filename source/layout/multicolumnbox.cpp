@@ -86,12 +86,13 @@ uint32_t MultiColumnRowBox::numberOfColumns() const
 
 float MultiColumnRowBox::columnTopForOffset(float offset) const
 {
-    return rowTopAt(columnIndexAtOffset(offset, false));
+    auto columnIndex = columnIndexAtOffset(offset, false);
+    return m_rowTop + columnIndex * m_columnHeight;
 }
 
 void MultiColumnRowBox::recordSpaceShortage(float spaceShortage)
 {
-    if(spaceShortage >= m_minSpaceShortage)
+    if(m_minSpaceShortage > 0.f && spaceShortage >= m_minSpaceShortage)
         return;
     assert(spaceShortage > 0);
     m_minSpaceShortage = spaceShortage;
@@ -118,21 +119,21 @@ void MultiColumnRowBox::resetColumnHeight(float columnHeight)
     m_runs.clear();
     m_minimumColumnHeight = 0.f;
     m_maxColumnHeight = columnHeight;
-    if(columnHeight > 0.f && !m_isFillBalance) {
+    if(!m_isFillBalance && columnHeight > 0.f) {
         m_columnHeight = columnHeight;
-        m_isHeightAuto = false;
+        m_requiresBalancing = false;
     } else {
         m_columnHeight = 0.f;
-        m_isHeightAuto = true;
+        m_requiresBalancing = true;
     }
 }
 
 bool MultiColumnRowBox::recalculateColumnHeight(bool balancing)
 {
     auto prevColumnHeight = m_columnHeight;
-    if(!balancing && m_isHeightAuto)
+    if(m_requiresBalancing && !balancing)
         distributeImplicitBreaks();
-    if(m_isHeightAuto)
+    if(m_requiresBalancing)
         m_columnHeight = calculateColumnHeight(balancing);
     m_columnHeight = constrainColumnHeight(m_columnHeight);
     if(prevColumnHeight == m_columnHeight)
@@ -164,6 +165,7 @@ float MultiColumnRowBox::calculateColumnHeight(bool balancing) const
         return m_columnHeight;
     if(m_maxColumnHeight > 0.f && m_columnHeight >= m_maxColumnHeight)
         return m_columnHeight;
+    assert(m_minSpaceShortage > 0.f);
     return m_columnHeight + m_minSpaceShortage;
 }
 
@@ -418,21 +420,24 @@ static bool isValidColumnSpanBox(BoxFrame* box)
 
 void MultiColumnFlowBox::build()
 {
-    auto fillBalance = style()->columnFill() == ColumnFill::Balance;
+    auto columnBlock = columnBlockFlowBox();
+    auto columnStyle = columnBlock->style();
+
+    auto fillBalance = columnStyle->columnFill() == ColumnFill::Balance;
     const MultiColumnSpanBox* currentColumnSpanner = nullptr;
     auto child = firstChild();
     while(child) {
         child->setIsInsideColumnFlow(true);
         if(auto box = to<BoxFrame>(child); isValidColumnSpanBox(box)) {
-            auto newSpanner = MultiColumnSpanBox::create(box, style());
-            parentBox()->addChild(newSpanner);
+            auto newSpanner = MultiColumnSpanBox::create(box, columnStyle);
+            columnBlock->addChild(newSpanner);
             box->setColumnSpanBox(newSpanner);
             box->setHasColumnSpanBox(true);
             currentColumnSpanner = newSpanner;
         } else if(!child->isFloatingOrPositioned()) {
             if(m_lastRow == nullptr || currentColumnSpanner) {
-                auto newRow = MultiColumnRowBox::create(this, style());
-                parentBox()->addChild(newRow);
+                auto newRow = MultiColumnRowBox::create(this, columnStyle);
+                columnBlock->addChild(newRow);
                 newRow->setIsFillBalance(fillBalance || currentColumnSpanner);
                 currentColumnSpanner = nullptr;
                 m_lastRow = newRow;
@@ -479,6 +484,7 @@ void MultiColumnFlowBox::layout()
 MultiColumnFlowBox::MultiColumnFlowBox(const RefPtr<BoxStyle>& style)
     : BlockFlowBox(nullptr, style)
 {
+    setIsInsideColumnFlow(true);
 }
 
 } // namespace plutobook

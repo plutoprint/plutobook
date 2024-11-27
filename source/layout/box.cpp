@@ -246,13 +246,12 @@ BoxModel* Box::containingBox() const
 MultiColumnFlowBox* Box::containingColumn() const
 {
     assert(isInsideColumnFlow());
-    auto parent = parentBox();
-    while(parent) {
-        if(parent->isMultiColumnFlowBox())
-            return to<MultiColumnFlowBox>(parent);
-        parent = parent->parentBox();
-    }
-
+    auto box = const_cast<Box*>(this);
+    do {
+        if(auto column = to<MultiColumnFlowBox>(box))
+            return column;
+        box = box->parentBox();
+    } while(box);
     return nullptr;
 }
 

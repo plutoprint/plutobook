@@ -518,42 +518,6 @@ std::optional<float> BlockBox::inlineBlockBaseline() const
     return std::nullopt;
 }
 
-float BlockBox::columnHeightForOffset(float offset) const
-{
-    if(auto column = containingColumn())
-        return column->columnHeightForOffset(offset);
-    return 0.f;
-}
-
-float BlockBox::columnRemainingHeightForOffset(float offset, ColumnBoundaryRule rule) const
-{
-    if(auto column = containingColumn())
-        return column->columnRemainingHeightForOffset(offset, rule);
-    return 0.f;
-}
-
-float BlockBox::nextColumnTop(float offset, ColumnBoundaryRule rule) const
-{
-    auto columnHeight = columnHeightForOffset(offset);
-    if(columnHeight == 0.f)
-        return offset;
-    return offset + columnRemainingHeightForOffset(offset, rule);
-}
-
-void BlockBox::setColumnBreak(float offset, float spaceShortage)
-{
-    if(auto column = containingColumn()) {
-        column->setColumnBreak(offset, spaceShortage);
-    }
-}
-
-void BlockBox::updateMinimumColumnHeight(float offset, float minHeight)
-{
-    if(auto column = containingColumn()) {
-        column->updateMinimumColumnHeight(offset, minHeight);
-    }
-}
-
 void BlockBox::paintContents(const PaintInfo& info, const Point& offset, PaintPhase phase)
 {
     for(auto child = firstBoxFrame(); child; child = child->nextBoxFrame()) {
@@ -1386,6 +1350,17 @@ float BlockFlowBox::applyColumnBreakBefore(const BoxFrame* child, float offset) 
 
 float BlockFlowBox::applyColumnBreakInside(const BoxFrame* child, float offset) const
 {
+    if(child->style()->columnBreakInside() == BreakInside::Auto)
+        return offset;
+    auto column = child->containingColumn();
+    auto columnHeight = column->columnHeightForOffset(offset);
+    auto childHeight = child->height();
+    column->updateMinimumColumnHeight(offset, childHeight);
+    if(columnHeight == 0.f)
+        return offset;
+    auto remainingHeight = column->columnRemainingHeightForOffset(offset, AssociateWithLatterColumn);
+    if(remainingHeight < childHeight && remainingHeight < columnHeight)
+        return offset + remainingHeight;
     return offset;
 }
 
@@ -1398,19 +1373,21 @@ void BlockFlowBox::adjustBlockChildInColumnFlow(BoxFrame* child)
 {
     auto newOffset = applyColumnBreakBefore(child, child->y());
     auto adjustedOffset = applyColumnBreakInside(child, newOffset);
-    auto maxHeight = child->height();
+    auto childHeight = child->height();
 
     auto column = child->containingColumn();
     if(adjustedOffset > newOffset) {
-        column->setColumnBreak(newOffset, maxHeight - newOffset - adjustedOffset);
+        auto delta = adjustedOffset - newOffset;
+        column->setColumnBreak(newOffset, childHeight - delta);
+        newOffset += delta;
     } else {
         auto columnHeight = column->columnHeightForOffset(newOffset);
         if(columnHeight > 0.f) {
             auto remainingHeight = column->columnRemainingHeightForOffset(newOffset, AssociateWithLatterColumn);
-            if(remainingHeight < maxHeight) {
-                column->setColumnBreak(newOffset, maxHeight - remainingHeight);
+            if(remainingHeight < childHeight) {
+                column->setColumnBreak(newOffset, childHeight - remainingHeight);
             } else if(columnHeight == remainingHeight && child->y() > 0.f) {
-                column->setColumnBreak(newOffset, maxHeight);
+                column->setColumnBreak(newOffset, childHeight);
             }
         }
     }
