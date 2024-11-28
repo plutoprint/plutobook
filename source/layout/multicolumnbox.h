@@ -37,8 +37,8 @@ public:
     void computeHeight(float& y, float& height, float& marginTop, float& marginBottom) const final;
     void layout() final;
 
-    void fragmentize(FragmentBuilder& builder, float top) const final {}
-    void paint(const PaintInfo& info, const Point& offset, PaintPhase phase) final {}
+    void fragmentize(FragmentBuilder& builder, float top) const final;
+    void paint(const PaintInfo& info, const Point& offset, PaintPhase phase) final;
 
     MultiColumnRowBox* prevRow() const;
     MultiColumnRowBox* nextRow() const;
@@ -111,8 +111,8 @@ public:
     void computeHeight(float& y, float& height, float& marginTop, float& marginBottom) const final;
     void layout() final;
 
-    void fragmentize(FragmentBuilder& builder, float top) const final {}
-    void paint(const PaintInfo& info, const Point& offset, PaintPhase phase) final {}
+    void fragmentize(FragmentBuilder& builder, float top) const final;
+    void paint(const PaintInfo& info, const Point& offset, PaintPhase phase) final;
 
 private:
     MultiColumnSpanBox(BoxFrame* box, const RefPtr<BoxStyle>& style);
@@ -160,6 +160,9 @@ public:
     void computeWidth(float& x, float& width, float& marginLeft, float& marginRight) const final;
     void build() final;
     void layout() final;
+
+    void fragmentize(FragmentBuilder& builder, float top) const final;
+    void paint(const PaintInfo& info, const Point& offset, PaintPhase phase) final;
 
     const char* name() const final { return "MultiColumnFlowBox"; }
 

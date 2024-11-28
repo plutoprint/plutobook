@@ -48,6 +48,14 @@ void MultiColumnRowBox::layout()
     updateHeight();
 }
 
+void MultiColumnRowBox::fragmentize(FragmentBuilder& builder, float top) const
+{
+}
+
+void MultiColumnRowBox::paint(const PaintInfo& info, const Point& offset, PaintPhase phase)
+{
+}
+
 MultiColumnRowBox* MultiColumnRowBox::prevRow() const
 {
     for(auto box = prevSibling(); box; box = box->prevSibling()) {
@@ -250,6 +258,15 @@ void MultiColumnSpanBox::layout()
 
     updateWidth();
     updateHeight();
+}
+
+void MultiColumnSpanBox::fragmentize(FragmentBuilder& builder, float top) const
+{
+}
+
+void MultiColumnSpanBox::paint(const PaintInfo& info, const Point& offset, PaintPhase phase)
+{
+    m_box->paint(info, offset, phase);
 }
 
 MultiColumnSpanBox::MultiColumnSpanBox(BoxFrame* box, const RefPtr<BoxStyle>& style)
@@ -479,6 +496,14 @@ void MultiColumnFlowBox::layout()
     for(auto row = firstRow(); row; row = row->nextRow())
         row->resetColumnHeight(columnHeight);
     layoutColumns(false);
+}
+
+void MultiColumnFlowBox::fragmentize(FragmentBuilder& builder, float top) const
+{
+}
+
+void MultiColumnFlowBox::paint(const PaintInfo& info, const Point& offset, PaintPhase phase)
+{
 }
 
 MultiColumnFlowBox::MultiColumnFlowBox(const RefPtr<BoxStyle>& style)
