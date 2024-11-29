@@ -294,6 +294,17 @@ MultiColumnRowBox* MultiColumnFlowBox::firstRow() const
     return nullptr;
 }
 
+MultiColumnRowBox* MultiColumnFlowBox::lastRow() const
+{
+    for(auto box = parentBox()->lastChild(); box; box = box->prevSibling()) {
+        if(auto row = to<MultiColumnRowBox>(box)) {
+            return row;
+        }
+    }
+
+    return nullptr;
+}
+
 float MultiColumnFlowBox::columnHeightForOffset(float offset) const
 {
     if(auto row = columnRowAtOffset(offset))
@@ -376,7 +387,7 @@ void MultiColumnFlowBox::layoutColumns(bool balancing)
         m_currentRow->setRowTop(0.f);
     BlockFlowBox::layout();
     if(m_currentRow) {
-        assert(m_currentRow == m_lastRow);
+        assert(m_currentRow == lastRow());
         m_currentRow->setRowBottom(height());
     }
 
@@ -437,11 +448,11 @@ static bool isValidColumnSpanBox(BoxFrame* box)
 
 void MultiColumnFlowBox::build()
 {
+    MultiColumnRowBox* currentColumnRow = nullptr;
     auto columnBlock = columnBlockFlowBox();
     auto columnStyle = columnBlock->style();
-
     auto fillBalance = columnStyle->columnFill() == ColumnFill::Balance;
-    const MultiColumnSpanBox* currentColumnSpanner = nullptr;
+
     auto child = firstChild();
     while(child) {
         child->setIsInsideColumnFlow(true);
@@ -450,17 +461,19 @@ void MultiColumnFlowBox::build()
             columnBlock->addChild(newSpanner);
             box->setColumnSpanBox(newSpanner);
             box->setHasColumnSpanBox(true);
-            currentColumnSpanner = newSpanner;
+            if(currentColumnRow)
+                currentColumnRow->setIsFillBalance(true);
+            currentColumnRow = nullptr;
         } else if(!child->isFloatingOrPositioned()) {
-            if(m_lastRow == nullptr || currentColumnSpanner) {
+            if(currentColumnRow == nullptr) {
                 auto newRow = MultiColumnRowBox::create(this, columnStyle);
                 columnBlock->addChild(newRow);
-                newRow->setIsFillBalance(fillBalance || currentColumnSpanner);
-                currentColumnSpanner = nullptr;
-                m_lastRow = newRow;
+                newRow->setIsFillBalance(fillBalance);
+                currentColumnRow = newRow;
             }
 
-            if(child->firstChild()) {
+            if(child->firstChild() && !child->isInline() && !child->isFlexibleBox()
+                && !child->isTableBox() && !child->style()->hasColumns()) {
                 child = child->firstChild();
                 continue;
             }

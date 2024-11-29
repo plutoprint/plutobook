@@ -136,7 +136,7 @@ public:
     bool isMultiColumnFlowBox() const final { return true; }
 
     MultiColumnRowBox* firstRow() const;
-    MultiColumnRowBox* lastRow() const { return m_lastRow; }
+    MultiColumnRowBox* lastRow() const;
 
     BoxFrame* firstMultiColumnBox() const;
     BoxFrame* lastMultiColumnBox() const;
@@ -169,7 +169,6 @@ public:
 private:
     MultiColumnFlowBox(const RefPtr<BoxStyle>& style);
     MultiColumnRowBox* m_currentRow{nullptr};
-    MultiColumnRowBox* m_lastRow{nullptr};
     mutable uint32_t m_columnCount{0};
 };
 
