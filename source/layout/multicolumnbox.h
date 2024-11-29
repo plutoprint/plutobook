@@ -40,6 +40,9 @@ public:
     void fragmentize(FragmentBuilder& builder, float top) const final;
     void paint(const PaintInfo& info, const Point& offset, PaintPhase phase) final;
 
+    Rect columnRectAt(uint32_t columnIndex) const;
+    Rect rowRectAt(uint32_t columnIndex) const;
+
     MultiColumnRowBox* prevRow() const;
     MultiColumnRowBox* nextRow() const;
 
@@ -75,6 +78,8 @@ private:
     float calculateColumnHeight(bool balancing) const;
 
     float rowTopAt(uint32_t columnIndex) const { return m_rowTop + columnIndex * m_columnHeight; }
+    float rowHeightAt(uint32_t columnIndex) const;
+
     uint32_t columnIndexAtOffset(float offset, bool clampToExistingColumns) const;
     uint32_t findRunWithTallestColumns() const;
 
@@ -134,6 +139,7 @@ public:
     static MultiColumnFlowBox* create(const BoxStyle* parentStyle);
 
     bool isMultiColumnFlowBox() const final { return true; }
+    bool requiresLayer() const final { return true; }
 
     MultiColumnRowBox* firstRow() const;
     MultiColumnRowBox* lastRow() const;
@@ -152,7 +158,9 @@ public:
 
     MultiColumnRowBox* columnRowAtOffset(float offset) const;
     BlockFlowBox* columnBlockFlowBox() const;
+
     uint32_t columnCount() const { return m_columnCount; }
+    float columnGap() const { return m_columnGap; }
 
     void layoutColumns(bool balancing);
 
@@ -170,6 +178,7 @@ private:
     MultiColumnFlowBox(const RefPtr<BoxStyle>& style);
     MultiColumnRowBox* m_currentRow{nullptr};
     mutable uint32_t m_columnCount{0};
+    float m_columnGap{0};
 };
 
 inline BoxFrame* MultiColumnFlowBox::firstMultiColumnBox() const
