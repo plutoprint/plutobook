@@ -203,7 +203,7 @@ public:
     float lineBottom() const { return m_lineBottom; }
     void updateLineTopAndBottom(const LineBox* line);
 
-    float adjustLineInColumnFlow(float offset, float lineHeight) const;
+    float adjustLineBoxInColumnFlow(float offset, float lineHeight) const;
     float alignInHorizontalDirection(float startOffset);
     float alignInVerticalDirection(float blockHeight);
 

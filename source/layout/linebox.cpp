@@ -599,7 +599,7 @@ void RootLineBox::updateLineTopAndBottom(const LineBox* line)
     m_lineBottom = std::max(m_lineBottom, line->y() + line->height());
 }
 
-float RootLineBox::adjustLineInColumnFlow(float offset, float lineHeight) const
+float RootLineBox::adjustLineBoxInColumnFlow(float offset, float lineHeight) const
 {
     auto column = m_box->containingColumn();
     auto columnHeight = column->columnHeightForOffset(offset);
@@ -635,7 +635,7 @@ float RootLineBox::alignInVerticalDirection(float blockHeight)
 
     auto maxHeight = maxAscent + maxDescent;
     if(m_box->isInsideColumnFlow())
-        blockHeight += adjustLineInColumnFlow(blockHeight, maxHeight);
+        blockHeight += adjustLineBoxInColumnFlow(blockHeight, maxHeight);
     m_lineTop = blockHeight;
     m_lineBottom = blockHeight;
     placeInVerticalDirection(blockHeight, maxHeight, maxAscent, this);

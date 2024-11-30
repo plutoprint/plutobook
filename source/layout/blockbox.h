@@ -197,8 +197,8 @@ public:
     void determineHorizontalPosition(BoxFrame* child) const;
 
     float applyColumnBreakBefore(const BoxFrame* child, float offset) const;
-    float applyColumnBreakInside(const BoxFrame* child, float offset) const;
     float applyColumnBreakAfter(const BoxFrame* child, float offset, MarginInfo& marginInfo) const;
+    float applyColumnBreakInside(const BoxFrame* child, float offset) const;
 
     void adjustBlockChildInColumnFlow(BoxFrame* child);
     void layoutBlockChild(BoxFrame* child, MarginInfo& marginInfo);

@@ -1345,6 +1345,26 @@ void BlockFlowBox::determineHorizontalPosition(BoxFrame* child) const
 
 float BlockFlowBox::applyColumnBreakBefore(const BoxFrame* child, float offset) const
 {
+    if(child->style()->columnBreakBefore() != BreakBetween::Always)
+        return offset;
+    auto column = child->containingColumn();
+    auto columnHeight = column->columnHeightForOffset(offset);
+    column->addForcedColumnBreak(offset);
+    if(columnHeight > 0.f)
+        offset += column->columnRemainingHeightForOffset(offset, AssociateWithFormerColumn);
+    return offset;
+}
+
+float BlockFlowBox::applyColumnBreakAfter(const BoxFrame* child, float offset, MarginInfo& marginInfo) const
+{
+    if(child->style()->columnBreakAfter() != BreakBetween::Always)
+        return offset;
+    auto column = child->containingColumn();
+    auto columnHeight = column->columnHeightForOffset(offset);
+    column->addForcedColumnBreak(offset);
+    if(columnHeight > 0.f)
+        offset += column->columnRemainingHeightForOffset(offset, AssociateWithFormerColumn);
+    marginInfo.clearMargin();
     return offset;
 }
 
@@ -1361,11 +1381,6 @@ float BlockFlowBox::applyColumnBreakInside(const BoxFrame* child, float offset) 
     auto remainingHeight = column->columnRemainingHeightForOffset(offset, AssociateWithLatterColumn);
     if(remainingHeight < childHeight && remainingHeight < columnHeight)
         return offset + remainingHeight;
-    return offset;
-}
-
-float BlockFlowBox::applyColumnBreakAfter(const BoxFrame* child, float offset, MarginInfo& marginInfo) const
-{
     return offset;
 }
 
@@ -1406,8 +1421,13 @@ void BlockFlowBox::layoutBlockChild(BoxFrame* child, MarginInfo& marginInfo)
     auto estimatedTop = height();
     if(!marginInfo.canCollapseWithMarginTop())
         estimatedTop += std::max(marginInfo.margin(), child->marginTop());
-    child->setY(estimatedTop + getClearDelta(child, estimatedTop));
+    estimatedTop += getClearDelta(child, estimatedTop);
+    if(child->isInsideColumnFlow()) {
+        estimatedTop = applyColumnBreakBefore(child, estimatedTop);
+        estimatedTop = applyColumnBreakInside(child, estimatedTop);
+    }
 
+    child->setY(estimatedTop);
     child->layout();
 
     auto offsetY = collapseMargins(child, marginInfo);
