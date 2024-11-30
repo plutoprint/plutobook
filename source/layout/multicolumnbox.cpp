@@ -116,7 +116,7 @@ void MultiColumnRowBox::recordSpaceShortage(float spaceShortage)
 {
     if(m_minSpaceShortage > 0.f && spaceShortage >= m_minSpaceShortage)
         return;
-    assert(spaceShortage > 0);
+    assert(spaceShortage > 0.f);
     m_minSpaceShortage = spaceShortage;
 }
 
@@ -131,7 +131,7 @@ void MultiColumnRowBox::addContentRun(float endOffset)
 {
     if(!m_runs.empty() && endOffset <= m_runs.back().breakOffset())
         return;
-    if(m_runs.size() < m_columnFlowBox->columnCount()) {
+    if(m_requiresBalancing && m_runs.size() < m_columnFlowBox->columnCount()) {
         m_runs.emplace_back(endOffset);
     }
 }
@@ -153,10 +153,12 @@ void MultiColumnRowBox::resetColumnHeight(float columnHeight)
 bool MultiColumnRowBox::recalculateColumnHeight(bool balancing)
 {
     auto prevColumnHeight = m_columnHeight;
-    if(m_requiresBalancing && !balancing)
-        distributeImplicitBreaks();
-    if(m_requiresBalancing)
+    if(m_requiresBalancing) {
+        if(!balancing)
+            distributeImplicitBreaks();
         m_columnHeight = calculateColumnHeight(balancing);
+    }
+
     m_columnHeight = constrainColumnHeight(m_columnHeight);
     if(prevColumnHeight == m_columnHeight)
         return false;
@@ -409,7 +411,7 @@ MultiColumnRowBox* MultiColumnFlowBox::columnRowAtOffset(float offset) const
     return row;
 }
 
-void MultiColumnFlowBox::layoutColumns(bool balancing)
+bool MultiColumnFlowBox::layoutColumns(bool balancing)
 {
     m_currentRow = firstRow();
     if(m_currentRow)
@@ -420,12 +422,10 @@ void MultiColumnFlowBox::layoutColumns(bool balancing)
         m_currentRow->setRowBottom(height());
     }
 
-    for(auto row = firstRow(); row; row = row->nextRow()) {
-        if(row->recalculateColumnHeight(balancing)) {
-            layoutColumns(true);
-            return;
-        }
-    }
+    bool changed = false;
+    for(auto row = firstRow(); row; row = row->nextRow())
+        changed |= row->recalculateColumnHeight(balancing);
+    return changed;
 }
 
 void MultiColumnFlowBox::computePreferredWidths(float& minPreferredWidth, float& maxPreferredWidth) const
@@ -534,9 +534,14 @@ void MultiColumnFlowBox::layout()
         columnHeight = columnBlock->adjustContentBoxHeight(height.value());
     columnHeight = columnBlock->constrainContentBoxHeight(columnHeight);
 
-    for(auto row = firstRow(); row; row = row->nextRow())
+    for(auto row = firstRow(); row; row = row->nextRow()) {
         row->resetColumnHeight(columnHeight);
-    layoutColumns(false);
+    }
+
+    auto changed = layoutColumns(false);
+    while(changed) {
+        changed = layoutColumns(true);
+    }
 }
 
 void MultiColumnFlowBox::fragmentize(FragmentBuilder& builder, float top) const

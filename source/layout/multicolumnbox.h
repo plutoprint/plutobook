@@ -162,7 +162,7 @@ public:
     uint32_t columnCount() const { return m_columnCount; }
     float columnGap() const { return m_columnGap; }
 
-    void layoutColumns(bool balancing);
+    bool layoutColumns(bool balancing);
 
     void computePreferredWidths(float& minPreferredWidth, float& maxPreferredWidth) const final;
     void computeWidth(float& x, float& width, float& marginLeft, float& marginRight) const final;
