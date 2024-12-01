@@ -17,6 +17,12 @@ MultiColumnRowBox* MultiColumnRowBox::create(MultiColumnFlowBox* columnFlow, con
     return newRow;
 }
 
+void MultiColumnRowBox::updateOverflowRect()
+{
+    BoxFrame::updateOverflowRect();
+    addOverflowRect(columnRectAt(numberOfColumns() - 1));
+}
+
 MultiColumnRowBox::MultiColumnRowBox(MultiColumnFlowBox* columnFlow, const RefPtr<BoxStyle>& style)
     : BoxFrame(nullptr, style)
     , m_columnFlowBox(columnFlow)
@@ -44,6 +50,7 @@ void MultiColumnRowBox::layout()
 {
     updateWidth();
     updateHeight();
+    updateOverflowRect();
 }
 
 void MultiColumnRowBox::fragmentize(FragmentBuilder& builder, float top) const
@@ -261,6 +268,12 @@ MultiColumnSpanBox* MultiColumnSpanBox::create(BoxFrame* box, const BoxStyle* pa
     return newSpanner;
 }
 
+void MultiColumnSpanBox::updateOverflowRect()
+{
+    BoxFrame::updateOverflowRect();
+    addOverflowRect(m_box->visualOverflowRect());
+}
+
 void MultiColumnSpanBox::computePreferredWidths(float& minPreferredWidth, float& maxPreferredWidth) const
 {
     minPreferredWidth = m_box->minPreferredWidth();
@@ -287,6 +300,7 @@ void MultiColumnSpanBox::layout()
 
     updateWidth();
     updateHeight();
+    updateOverflowRect();
 }
 
 void MultiColumnSpanBox::fragmentize(FragmentBuilder& builder, float top) const

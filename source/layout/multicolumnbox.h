@@ -31,6 +31,9 @@ public:
     static MultiColumnRowBox* create(MultiColumnFlowBox* columnFlow, const BoxStyle* parentStyle);
 
     bool isMultiColumnRowBox() const final { return true; }
+    bool requiresLayer() const final { return false; }
+
+    void updateOverflowRect() final;
 
     void computePreferredWidths(float& minPreferredWidth, float& maxPreferredWidth) const final;
     void computeWidth(float& x, float& width, float& marginLeft, float& marginRight) const final;
@@ -107,9 +110,12 @@ public:
     static MultiColumnSpanBox* create(BoxFrame* box, const BoxStyle* parentStyle);
 
     bool isMultiColumnSpanBox() const final { return true; }
+    bool requiresLayer() const final { return false; }
 
     BoxFrame* box() const { return m_box; }
     MultiColumnFlowBox* columnFlowBox() const;
+
+    void updateOverflowRect() final;
 
     void computePreferredWidths(float& minPreferredWidth, float& maxPreferredWidth) const final;
     void computeWidth(float& x, float& width, float& marginLeft, float& marginRight) const final;

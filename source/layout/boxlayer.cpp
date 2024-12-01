@@ -46,7 +46,7 @@ void BoxLayer::layout()
     m_overflowRect = m_box->visualOverflowRect();
     for(auto child : m_children) {
         child->layout();
-        if(!m_box->isOverflowHidden()) {
+        if(!m_box->isOverflowHidden() && !child->box()->isMultiColumnFlowBox()) {
             auto overflowRect = child->transform().mapRect(child->overflowRect());
             overflowRect.move(child->location());
             m_overflowRect.unite(overflowRect);
