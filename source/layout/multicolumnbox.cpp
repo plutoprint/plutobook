@@ -1,4 +1,5 @@
 #include "multicolumnbox.h"
+#include "borderpainter.h"
 
 #include <cmath>
 
@@ -59,6 +60,41 @@ void MultiColumnRowBox::fragmentize(FragmentBuilder& builder, float top) const
 
 void MultiColumnRowBox::paint(const PaintInfo& info, const Point& offset, PaintPhase phase)
 {
+    if(phase != PaintPhase::Decorations || style()->visibility() != Visibility::Visible)
+        return;
+    auto columnBlock = m_columnFlowBox->columnBlockFlowBox();
+    auto columnStyle = columnBlock->style();
+    auto columnDirection = columnStyle->direction();
+
+    auto columnRuleStyle = columnStyle->columnRuleStyle();
+    auto columnRuleColor = columnStyle->columnRuleColor();
+    auto columnRuleWidth = columnStyle->columnRuleWidth();
+    if(columnRuleStyle <= LineStyle::Hidden || columnRuleWidth <= 0.f || !columnRuleColor.isVisible())
+        return;
+    auto columnGap = m_columnFlowBox->columnGap();
+    auto columnWidth = m_columnFlowBox->width();
+    auto columnCount = numberOfColumns();
+
+    Point adjustedOffset(offset + location());
+    auto currentOffset = columnDirection == Direction::Ltr ? 0.f : width();
+    auto ruleOffset = columnDirection == Direction::Ltr ? 0.f : width();
+    auto boxSide = columnDirection == Direction::Ltr ? BoxSideLeft : BoxSideRight;
+    for(uint32_t columnIndex = 0; columnIndex < columnCount; ++columnIndex) {
+        if(columnDirection == Direction::Ltr) {
+            ruleOffset += columnWidth + columnGap / 2.f;
+            currentOffset += columnWidth + columnGap;
+        } else {
+            ruleOffset -= columnWidth + columnGap / 2.f;
+            currentOffset -= columnWidth + columnGap;
+        }
+
+        if(columnIndex < columnCount - 1) {
+            Rect ruleRect(adjustedOffset.x + ruleOffset - columnRuleWidth / 2.f, adjustedOffset.y, columnRuleWidth, m_columnHeight);
+            BorderPainter::paintBoxSide(*info, boxSide, columnRuleStyle, columnRuleColor, ruleRect);
+        }
+
+        ruleOffset = currentOffset;
+    }
 }
 
 Rect MultiColumnRowBox::columnRectAt(uint32_t columnIndex) const
@@ -564,6 +600,7 @@ void MultiColumnFlowBox::fragmentize(FragmentBuilder& builder, float top) const
 
 void MultiColumnFlowBox::paint(const PaintInfo& info, const Point& offset, PaintPhase phase)
 {
+    BlockFlowBox::paint(info, offset, phase);
 }
 
 MultiColumnFlowBox::MultiColumnFlowBox(const RefPtr<BoxStyle>& style)

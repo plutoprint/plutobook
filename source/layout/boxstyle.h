@@ -806,8 +806,11 @@ public:
 
     Color columnRuleColor() const;
     LineStyle columnRuleStyle() const;
+    float columnRuleWidth() const;
+
     ColumnSpan columnSpan() const;
     ColumnFill columnFill() const;
+
     std::optional<float> columnWidth() const;
     std::optional<float> columnGap() const;
     std::optional<int> columnCount() const;

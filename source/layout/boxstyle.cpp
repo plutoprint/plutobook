@@ -1030,7 +1030,7 @@ int BoxStyle::orphans() const
 
 Color BoxStyle::columnRuleColor() const
 {
-    auto value = get(CSSPropertyID::OutlineColor);
+    auto value = get(CSSPropertyID::ColumnRuleColor);
     if(value == nullptr)
         return m_color;
     return convertColor(*value);
@@ -1042,6 +1042,14 @@ LineStyle BoxStyle::columnRuleStyle() const
     if(value == nullptr)
         return LineStyle::None;
     return convertLineStyle(*value);
+}
+
+float BoxStyle::columnRuleWidth() const
+{
+    auto value = get(CSSPropertyID::ColumnRuleWidth);
+    if(value == nullptr)
+        return 3.0;
+    return convertLineWidth(*value);
 }
 
 ColumnSpan BoxStyle::columnSpan() const

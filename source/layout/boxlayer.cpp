@@ -1,6 +1,6 @@
 #include "boxlayer.h"
 #include "graphicscontext.h"
-#include "box.h"
+#include "multicolumnbox.h"
 
 namespace plutobook {
 
@@ -84,6 +84,12 @@ void BoxLayer::paintLayer(BoxLayer* rootLayer, GraphicsContext& context, const R
 
         location += currentLayer->location();
         currentLayer = parentLayer;
+    }
+
+    if(m_box->isMultiColumnFlowBox()) {
+        assert(m_box->position() == Position::Static && !m_box->hasTransform());
+        paintLayerColumnContents(rootLayer, context, rect, location);
+        return;
     }
 
     if(m_box->position() == Position::Fixed && !rootLayer->parent()) {
@@ -174,6 +180,33 @@ void BoxLayer::paintLayerContents(BoxLayer* rootLayer, GraphicsContext& context,
     if(compositing && !m_box->isSVGRootBox())
         context.popGroup(m_opacity, m_box->style()->blendMode());
     if(clipping) {
+        context.restore();
+    }
+}
+
+void BoxLayer::paintLayerColumnContents(BoxLayer* rootLayer, GraphicsContext& context, const Rect& rect, const Point& offset)
+{
+    const auto& column = to<MultiColumnFlowBox>(*m_box);
+    for(auto row = column.firstRow(); row; row = row->nextRow()) {
+        auto clipRect = row->visualOverflowRect();
+        clipRect.move(row->location() + offset - column.location());
+        if(clipRect.isEmpty())
+            continue;
+        context.save();
+        context.clipRect(clipRect);
+
+        const auto columnCount = row->numberOfColumns();
+        for(uint32_t columnIndex = 0; columnIndex < columnCount; ++columnIndex) {
+            auto rowRect = row->rowRectAt(columnIndex);
+            auto columnRect = row->columnRectAt(columnIndex);
+            auto translation = (columnRect.origin() - rowRect.origin()) + row->location() - column.location();
+
+            context.save();
+            context.translate(translation.x, translation.y);
+            paintLayerContents(rootLayer, context, rect, offset);
+            context.restore();
+        }
+
         context.restore();
     }
 }

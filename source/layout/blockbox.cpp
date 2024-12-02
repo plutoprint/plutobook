@@ -521,7 +521,7 @@ std::optional<float> BlockBox::inlineBlockBaseline() const
 void BlockBox::paintContents(const PaintInfo& info, const Point& offset, PaintPhase phase)
 {
     for(auto child = firstBoxFrame(); child; child = child->nextBoxFrame()) {
-        if(!child->isFloating() && !child->hasLayer()) {
+        if(!child->isFloating() && !child->hasLayer() && !child->hasColumnSpanBox()) {
             child->paint(info, offset, phase);
         }
     }

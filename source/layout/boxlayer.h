@@ -45,6 +45,7 @@ public:
     void paint(GraphicsContext& context, const Rect& rect);
     void paintLayer(BoxLayer* rootLayer, GraphicsContext& context, const Rect& rect);
     void paintLayerContents(BoxLayer* rootLayer, GraphicsContext& context, const Rect& rect, const Point& offset);
+    void paintLayerColumnContents(BoxLayer* rootLayer, GraphicsContext& context, const Rect& rect, const Point& offset);
 
 private:
     BoxLayer(BoxModel* box, BoxLayer* parent);
