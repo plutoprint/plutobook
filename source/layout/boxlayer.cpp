@@ -207,6 +207,7 @@ void BoxLayer::paintLayerColumnContents(BoxLayer* rootLayer, GraphicsContext& co
             context.restore();
         }
 
+        row->paintColumnRules(context, offset - column.location());
         context.restore();
     }
 }

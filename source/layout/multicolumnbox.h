@@ -43,6 +43,8 @@ public:
     void fragmentize(FragmentBuilder& builder, float top) const final;
     void paint(const PaintInfo& info, const Point& offset, PaintPhase phase) final;
 
+    void paintColumnRules(GraphicsContext& context, const Point& offset);
+
     Rect columnRectAt(uint32_t columnIndex) const;
     Rect rowRectAt(uint32_t columnIndex) const;
 

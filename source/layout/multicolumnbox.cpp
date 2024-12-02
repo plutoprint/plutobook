@@ -60,7 +60,11 @@ void MultiColumnRowBox::fragmentize(FragmentBuilder& builder, float top) const
 
 void MultiColumnRowBox::paint(const PaintInfo& info, const Point& offset, PaintPhase phase)
 {
-    if(phase != PaintPhase::Decorations || style()->visibility() != Visibility::Visible)
+}
+
+void MultiColumnRowBox::paintColumnRules(GraphicsContext& context, const Point& offset)
+{
+    if(style()->visibility() != Visibility::Visible)
         return;
     auto columnBlock = m_columnFlowBox->columnBlockFlowBox();
     auto columnStyle = columnBlock->style();
@@ -76,24 +80,24 @@ void MultiColumnRowBox::paint(const PaintInfo& info, const Point& offset, PaintP
     auto columnCount = numberOfColumns();
 
     Point adjustedOffset(offset + location());
-    auto currentOffset = columnDirection == Direction::Ltr ? 0.f : width();
+    auto columnOffset = columnDirection == Direction::Ltr ? 0.f : width();
     auto ruleOffset = columnDirection == Direction::Ltr ? 0.f : width();
     auto boxSide = columnDirection == Direction::Ltr ? BoxSideLeft : BoxSideRight;
     for(uint32_t columnIndex = 0; columnIndex < columnCount; ++columnIndex) {
         if(columnDirection == Direction::Ltr) {
             ruleOffset += columnWidth + columnGap / 2.f;
-            currentOffset += columnWidth + columnGap;
+            columnOffset += columnWidth + columnGap;
         } else {
             ruleOffset -= columnWidth + columnGap / 2.f;
-            currentOffset -= columnWidth + columnGap;
+            columnOffset -= columnWidth + columnGap;
         }
 
         if(columnIndex < columnCount - 1) {
             Rect ruleRect(adjustedOffset.x + ruleOffset - columnRuleWidth / 2.f, adjustedOffset.y, columnRuleWidth, m_columnHeight);
-            BorderPainter::paintBoxSide(*info, boxSide, columnRuleStyle, columnRuleColor, ruleRect);
+            BorderPainter::paintBoxSide(context, boxSide, columnRuleStyle, columnRuleColor, ruleRect);
         }
 
-        ruleOffset = currentOffset;
+        ruleOffset = columnOffset;
     }
 }
 
