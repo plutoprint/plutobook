@@ -147,6 +147,8 @@ public:
     bool isReplaced() const { return m_replaced; }
     bool isOverflowHidden() const { return m_overflowHidden; }
     bool isInsideColumnFlow() const { return m_isInsideColumnFlow; }
+    bool isInNormalFlow() const;
+
     bool hasColumnFlowBox() const { return m_hasColumnFlowBox; }
     bool hasColumnSpanBox() const { return m_hasColumnSpanBox; }
     bool hasTransform() const { return m_hasTransform; }
@@ -160,6 +162,7 @@ public:
     void setReplaced(bool value) { m_replaced = value; }
     void setOverflowHidden(bool value) { m_overflowHidden = value; }
     void setIsInsideColumnFlow(bool value) { m_isInsideColumnFlow = value; }
+
     void setHasColumnFlowBox(bool value) { m_hasColumnFlowBox = value; }
     void setHasColumnSpanBox(bool value) { m_hasColumnSpanBox = value; }
     void setHasTransform(bool value) { m_hasTransform = value; }

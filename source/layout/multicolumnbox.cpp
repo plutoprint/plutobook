@@ -70,10 +70,10 @@ void MultiColumnRowBox::paintColumnRules(GraphicsContext& context, const Point& 
     auto columnStyle = columnBlock->style();
     auto columnDirection = columnStyle->direction();
 
+    auto columnRuleWidth = columnStyle->columnRuleWidth();
     auto columnRuleStyle = columnStyle->columnRuleStyle();
     auto columnRuleColor = columnStyle->columnRuleColor();
-    auto columnRuleWidth = columnStyle->columnRuleWidth();
-    if(columnRuleStyle <= LineStyle::Hidden || columnRuleWidth <= 0.f || !columnRuleColor.isVisible())
+    if(columnRuleWidth <= 0.f || columnRuleStyle <= LineStyle::Hidden || !columnRuleColor.isVisible())
         return;
     auto columnGap = m_columnFlowBox->columnGap();
     auto columnWidth = m_columnFlowBox->width();
@@ -455,11 +455,11 @@ void MultiColumnFlowBox::skipColumnSpanBox(BoxFrame* box, float offset)
 MultiColumnRowBox* MultiColumnFlowBox::columnRowAtOffset(float offset) const
 {
     auto row = m_currentRow;
-    while(row->rowTop() > offset) {
+    while(row && row->rowTop() > offset) {
         auto prevRow = row->prevRow();
         if(prevRow == nullptr)
             break;
-        row = row->prevRow();
+        row = prevRow;
     }
 
     return row;
@@ -537,8 +537,8 @@ void MultiColumnFlowBox::build()
 
     auto child = firstChild();
     while(child) {
-        child->setIsInsideColumnFlow(true);
-        if(auto box = to<BoxFrame>(child); isValidColumnSpanBox(box)) {
+        auto box = to<BoxFrame>(child);
+        if(isValidColumnSpanBox(box)) {
             auto newSpanner = MultiColumnSpanBox::create(box, columnStyle);
             columnBlock->addChild(newSpanner);
             box->setColumnSpanBox(newSpanner);
@@ -554,6 +554,7 @@ void MultiColumnFlowBox::build()
                 currentColumnRow = newRow;
             }
 
+            child->setIsInsideColumnFlow(true);
             if(child->firstChild() && !child->isInline() && !child->isFlexibleBox()
                 && !child->isTableBox() && !child->style()->hasColumns()) {
                 child = child->firstChild();

@@ -148,6 +148,7 @@ public:
 
     bool isMultiColumnFlowBox() const final { return true; }
     bool requiresLayer() const final { return true; }
+    bool avoidsFloats() const final { return true; }
 
     MultiColumnRowBox* firstRow() const;
     MultiColumnRowBox* lastRow() const;

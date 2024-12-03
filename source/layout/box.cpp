@@ -245,13 +245,13 @@ BoxModel* Box::containingBox() const
 
 MultiColumnFlowBox* Box::containingColumn() const
 {
-    assert(isInsideColumnFlow());
-    auto box = const_cast<Box*>(this);
-    do {
-        if(auto column = to<MultiColumnFlowBox>(box))
-            return column;
-        box = box->parentBox();
-    } while(box);
+    assert(isInsideColumnFlow() || hasColumnSpanBox());
+    for(auto current = this; current; current = current->parentBox()) {
+        if(auto column = to<MultiColumnFlowBox>(current)) {
+            return const_cast<MultiColumnFlowBox*>(column);
+        }
+    }
+
     return nullptr;
 }
 
@@ -284,6 +284,18 @@ bool Box::isRootBox() const
 bool Box::isFlexItem() const
 {
     return m_parentBox && m_parentBox->isFlexibleBox();
+}
+
+bool Box::isInNormalFlow() const
+{
+    auto parent = parentBox();
+    while(parent && !parent->isBoxView()) {
+        if(parent->isFloatingOrPositioned())
+            return false;
+        parent = parent->parentBox();
+    }
+
+    return true;
 }
 
 void Box::build()
