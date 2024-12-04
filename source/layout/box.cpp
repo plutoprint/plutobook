@@ -258,6 +258,12 @@ MultiColumnFlowBox* Box::containingColumn() const
 
 BoxLayer* Box::enclosingLayer() const
 {
+    if(hasColumnSpanBox()) {
+        auto container = containingBlock();
+        assert(container->hasLayer());
+        return container->layer();
+    }
+
     for(auto current = this; current; current = current->parentBox()) {
         if(current->hasLayer()) {
             return to<BoxModel>(*current).layer();
@@ -680,7 +686,7 @@ BoxFrame::BoxFrame(Node* node, const RefPtr<BoxStyle>& style)
 
 bool BoxFrame::requiresLayer() const
 {
-    return isPositioned() || isRelPositioned() || isOverflowHidden() || hasTransform()
+    return isPositioned() || isRelPositioned() || isOverflowHidden() || hasTransform() || hasColumnFlowBox()
         || style()->hasOpacity() || style()->hasBlendMode() || style()->zIndex();
 }
 

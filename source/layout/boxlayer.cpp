@@ -14,7 +14,7 @@ void BoxLayer::layout()
     m_borderRect = m_box->borderBoundingBox();
     if(auto box = to<BoxFrame>(m_box))
         m_borderRect.move(box->location());
-    if(!m_box->isPositioned()) {
+    if(!m_box->isPositioned() && !m_box->hasColumnSpanBox()) {
         auto parent = m_box->parentBox();
         while(parent && !parent->hasLayer()) {
             if(auto box = to<BoxFrame>(parent)) {

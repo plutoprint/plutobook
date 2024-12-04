@@ -616,7 +616,7 @@ void BlockFlowBox::updateOverflowRect()
     }
 
     for(auto child = firstBoxFrame(); child; child = child->nextBoxFrame()) {
-        if(!child->isFloatingOrPositioned()) {
+        if(!child->isFloatingOrPositioned() && !child->hasColumnSpanBox()) {
             addOverflowRect(child, child->x(), child->y());
         }
     }
@@ -633,7 +633,7 @@ void BlockFlowBox::computeIntrinsicWidths(float& minWidth, float& maxWidth) cons
     float floatRightWidth = 0;
     const auto nowrap = style()->whiteSpace() == WhiteSpace::Nowrap;
     for(auto child = firstBoxFrame(); child; child = child->nextBoxFrame()) {
-        if(child->isPositioned())
+        if(child->isPositioned() || child->hasColumnSpanBox())
             continue;
         auto childStyle = child->style();
         if(child->isFloating() || child->avoidsFloats()) {
@@ -1335,7 +1335,7 @@ void BlockFlowBox::estimateMarginTop(BoxFrame* child, float& positiveMarginTop, 
 
     auto grandChild = childBlock->firstBoxFrame();
     for(; grandChild; grandChild = grandChild->nextBoxFrame()) {
-        if(!grandChild->isFloatingOrPositioned()) {
+        if(!grandChild->isFloatingOrPositioned() && !grandChild->hasColumnSpanBox()) {
             break;
         }
     }
