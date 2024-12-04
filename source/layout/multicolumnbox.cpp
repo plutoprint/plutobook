@@ -569,7 +569,7 @@ void MultiColumnFlowBox::computeWidth(float& x, float& width, float& marginLeft,
 
 static bool isValidColumnSpanBox(BoxFrame* box)
 {
-    return box && box->style()->columnSpan() == ColumnSpan::All && !box->isInline() && !box->isFloatingOrPositioned();
+    return box && !box->isInline() && !box->isFloatingOrPositioned() && box->style()->columnSpan() == ColumnSpan::All;
 }
 
 void MultiColumnFlowBox::build()
@@ -599,7 +599,8 @@ void MultiColumnFlowBox::build()
                 currentColumnRow = newRow;
             }
 
-            child->setIsInsideColumnFlow(true);
+            if(!child->isInline())
+                child->setIsInsideColumnFlow(true);
             if(child->firstChild() && !child->isInline() && !child->isFlexibleBox()
                 && !child->isTableBox() && !child->style()->hasColumns()) {
                 child = child->firstChild();
