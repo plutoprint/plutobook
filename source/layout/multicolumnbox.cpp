@@ -390,8 +390,46 @@ MultiColumnRowBox* MultiColumnFlowBox::lastRow() const
     return nullptr;
 }
 
+float MultiColumnFlowBox::applyColumnBreakBefore(const BoxFrame* child, float offset)
+{
+    if(child->style()->columnBreakBefore() != BreakBetween::Always)
+        return offset;
+    auto columnHeight = columnHeightForOffset(offset);
+    addForcedColumnBreak(offset);
+    if(columnHeight > 0.f)
+        offset += columnRemainingHeightForOffset(offset, AssociateWithFormerColumn);
+    return offset;
+}
+
+float MultiColumnFlowBox::applyColumnBreakAfter(const BoxFrame* child, float offset)
+{
+    if(child->style()->columnBreakAfter() != BreakBetween::Always)
+        return offset;
+    auto columnHeight = columnHeightForOffset(offset);
+    addForcedColumnBreak(offset);
+    if(columnHeight > 0.f)
+        offset += columnRemainingHeightForOffset(offset, AssociateWithFormerColumn);
+    return offset;
+}
+
+float MultiColumnFlowBox::applyColumnBreakInside(const BoxFrame* child, float offset)
+{
+    if(child->style()->columnBreakInside() == BreakInside::Auto)
+        return offset;
+    auto columnHeight = columnHeightForOffset(offset);
+    auto childHeight = child->height();
+    updateMinimumColumnHeight(offset, childHeight);
+    if(columnHeight == 0.f)
+        return offset;
+    auto remainingHeight = columnRemainingHeightForOffset(offset, AssociateWithLatterColumn);
+    if(remainingHeight < childHeight && remainingHeight < columnHeight)
+        return offset + remainingHeight;
+    return offset;
+}
+
 float MultiColumnFlowBox::columnHeightForOffset(float offset) const
 {
+    offset += m_rowOffset;
     if(auto row = columnRowAtOffset(offset))
         return row->columnHeight();
     return 0.f;
@@ -399,6 +437,7 @@ float MultiColumnFlowBox::columnHeightForOffset(float offset) const
 
 float MultiColumnFlowBox::columnRemainingHeightForOffset(float offset, ColumnBoundaryRule rule) const
 {
+    offset += m_rowOffset;
     if(auto row = columnRowAtOffset(offset)) {
         assert(row->columnHeight() > 0.f);
         auto columnBottom = row->columnTopForOffset(offset) + row->columnHeight();
@@ -413,6 +452,7 @@ float MultiColumnFlowBox::columnRemainingHeightForOffset(float offset, ColumnBou
 
 void MultiColumnFlowBox::addForcedColumnBreak(float offset)
 {
+    offset += m_rowOffset;
     if(auto row = columnRowAtOffset(offset)) {
         row->addContentRun(offset);
     }
@@ -420,6 +460,7 @@ void MultiColumnFlowBox::addForcedColumnBreak(float offset)
 
 void MultiColumnFlowBox::setColumnBreak(float offset, float spaceShortage)
 {
+    offset += m_rowOffset;
     if(auto row = columnRowAtOffset(offset)) {
         row->recordSpaceShortage(spaceShortage);
     }
@@ -427,6 +468,7 @@ void MultiColumnFlowBox::setColumnBreak(float offset, float spaceShortage)
 
 void MultiColumnFlowBox::updateMinimumColumnHeight(float offset, float minHeight)
 {
+    offset += m_rowOffset;
     if(auto row = columnRowAtOffset(offset)) {
         row->updateMinimumColumnHeight(minHeight);
     }
@@ -434,6 +476,7 @@ void MultiColumnFlowBox::updateMinimumColumnHeight(float offset, float minHeight
 
 void MultiColumnFlowBox::skipColumnSpanBox(BoxFrame* box, float offset)
 {
+    offset += m_rowOffset;
     auto columnSpanBox = box->columnSpanBox();
     assert(columnSpanBox && box->hasColumnSpanBox());
     auto prevColumnBox = columnSpanBox->prevMultiColumnBox();
@@ -454,8 +497,9 @@ void MultiColumnFlowBox::skipColumnSpanBox(BoxFrame* box, float offset)
 
 MultiColumnRowBox* MultiColumnFlowBox::columnRowAtOffset(float offset) const
 {
+    assert(m_currentRow && offset >= m_rowOffset);
     auto row = m_currentRow;
-    while(row && row->rowTop() > offset) {
+    while(row->rowTop() > offset) {
         auto prevRow = row->prevRow();
         if(prevRow == nullptr)
             break;
@@ -471,6 +515,7 @@ bool MultiColumnFlowBox::layoutColumns(bool balancing)
     if(m_currentRow)
         m_currentRow->setRowTop(0.f);
     BlockFlowBox::layout();
+    assert(m_rowOffset == 0.f);
     if(m_currentRow) {
         assert(m_currentRow == lastRow());
         m_currentRow->setRowBottom(height());

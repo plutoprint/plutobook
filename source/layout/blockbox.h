@@ -194,14 +194,12 @@ public:
     float getClearDelta(BoxFrame* child, float y) const;
     void clearFloats(Clear clear);
 
+    void estimateMarginTop(BoxFrame* child, float& positiveMarginTop, float& negativeMarginTop) const;
+    float estimateVerticalPosition(BoxFrame* child, MultiColumnFlowBox* column, const MarginInfo& marginInfo) const;
     void determineHorizontalPosition(BoxFrame* child) const;
 
-    float applyColumnBreakBefore(const BoxFrame* child, float offset) const;
-    float applyColumnBreakAfter(const BoxFrame* child, float offset, MarginInfo& marginInfo) const;
-    float applyColumnBreakInside(const BoxFrame* child, float offset) const;
-
-    void adjustBlockChildInColumnFlow(BoxFrame* child);
-    void layoutBlockChild(BoxFrame* child, MarginInfo& marginInfo);
+    void adjustBlockChildInColumnFlow(BoxFrame* child, MultiColumnFlowBox* column);
+    void layoutBlockChild(BoxFrame* child, MultiColumnFlowBox* column, MarginInfo& marginInfo);
     void layoutBlockChildren();
 
     void layout() override;
@@ -218,10 +216,10 @@ private:
     std::unique_ptr<FloatingBoxList> m_floatingBoxes;
     MultiColumnFlowBox* m_columnFlowBox{nullptr};
 
-    float m_maxPositiveMarginTop{0};
-    float m_maxNegativeMarginTop{0};
-    float m_maxPositiveMarginBottom{0};
-    float m_maxNegativeMarginBottom{0};
+    float m_maxPositiveMarginTop{-1};
+    float m_maxNegativeMarginTop{-1};
+    float m_maxPositiveMarginBottom{-1};
+    float m_maxNegativeMarginBottom{-1};
 };
 
 template<>

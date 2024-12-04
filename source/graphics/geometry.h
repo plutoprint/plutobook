@@ -196,6 +196,9 @@ public:
     constexpr void inflate(float dx, float dy) { x -= dx; y -= dy; w += dx * 2.f; h += dy * 2.f; }
     constexpr void inflate(float d) { inflate(d, d); }
 
+    constexpr Rect moved(float dx, float dy) const { return Rect(x + dx, y + dy, w, h); }
+    constexpr Rect moved(const Point& point) const { return moved(point.x, point.y); }
+
     constexpr Rect intersected(const Rect& rect) const;
     constexpr Rect united(const Rect& rect) const;
     constexpr Rect extended(const Point& point) const;
@@ -285,7 +288,7 @@ constexpr Rect& Rect::unite(const Rect& o)
 
 constexpr Rect& Rect::extend(const Point& o)
 {
-    *this = extend(o);
+    *this = extended(o);
     return *this;
 }
 

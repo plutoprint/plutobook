@@ -1213,8 +1213,14 @@ float BlockFlowBox::collapseMargins(BoxFrame* child, MarginInfo& marginInfo)
 
 void BlockFlowBox::updateMaxMargins()
 {
-    if(isTableCellBox())
+    if(isTableCellBox()) {
+        m_maxPositiveMarginTop = 0.f;
+        m_maxNegativeMarginTop = 0.f;
+        m_maxPositiveMarginBottom = 0.f;
+        m_maxNegativeMarginBottom = 0.f;
         return;
+    }
+
     m_maxPositiveMarginTop = std::max(0.f, m_marginTop);
     m_maxNegativeMarginTop = std::max(0.f, -m_marginTop);
     m_maxPositiveMarginBottom = std::max(0.f, m_marginBottom);
@@ -1314,6 +1320,52 @@ void BlockFlowBox::clearFloats(Clear clear)
     }
 }
 
+void BlockFlowBox::estimateMarginTop(BoxFrame* child, float& positiveMarginTop, float& negativeMarginTop) const
+{
+    positiveMarginTop = std::max(positiveMarginTop, child->marginTop());
+    negativeMarginTop = std::max(negativeMarginTop, -child->marginTop());
+
+    auto childBlock = to<BlockFlowBox>(child);
+    if(childBlock == nullptr || childBlock->isChildrenInline())
+        return;
+    MarginInfo childMarginInfo(childBlock, childBlock->borderAndPaddingTop(), childBlock->borderAndPaddingBottom());
+    if(!childMarginInfo.canCollapseMarginTopWithChildren()) {
+        return;
+    }
+
+    auto grandChild = childBlock->firstBoxFrame();
+    for(; grandChild; grandChild = grandChild->nextBoxFrame()) {
+        if(!grandChild->isFloatingOrPositioned()) {
+            break;
+        }
+    }
+
+    if(grandChild && grandChild->style()->clear() == Clear::None) {
+        grandChild->updateVerticalMargins();
+        estimateMarginTop(grandChild, positiveMarginTop, negativeMarginTop);
+    }
+}
+
+float BlockFlowBox::estimateVerticalPosition(BoxFrame* child, MultiColumnFlowBox* column, const MarginInfo& marginInfo) const
+{
+    auto estimatedTop = height();
+    if(!marginInfo.canCollapseWithMarginTop()) {
+        float positiveMarginTop = child->maxMarginTop(true);
+        float negativeMarginTop = child->maxMarginTop(false);
+        if(positiveMarginTop < 0.f && negativeMarginTop < 0.f)
+            estimateMarginTop(child, positiveMarginTop, negativeMarginTop);
+        estimatedTop += std::max(positiveMarginTop, marginInfo.positiveMargin()) - std::max(negativeMarginTop, marginInfo.negativeMargin());
+    }
+
+    estimatedTop += getClearDelta(child, estimatedTop);
+    if(isInsideColumnFlow()) {
+        estimatedTop = column->applyColumnBreakBefore(child, estimatedTop);
+        estimatedTop = column->applyColumnBreakInside(child, estimatedTop);
+    }
+
+    return estimatedTop;
+}
+
 void BlockFlowBox::determineHorizontalPosition(BoxFrame* child) const
 {
     if(style()->isLeftToRightDirection()) {
@@ -1343,54 +1395,12 @@ void BlockFlowBox::determineHorizontalPosition(BoxFrame* child) const
     }
 }
 
-float BlockFlowBox::applyColumnBreakBefore(const BoxFrame* child, float offset) const
+void BlockFlowBox::adjustBlockChildInColumnFlow(BoxFrame* child, MultiColumnFlowBox* column)
 {
-    if(child->style()->columnBreakBefore() != BreakBetween::Always)
-        return offset;
-    auto column = child->containingColumn();
-    auto columnHeight = column->columnHeightForOffset(offset);
-    column->addForcedColumnBreak(offset);
-    if(columnHeight > 0.f)
-        offset += column->columnRemainingHeightForOffset(offset, AssociateWithFormerColumn);
-    return offset;
-}
+    auto newOffset = column->applyColumnBreakBefore(child, child->y());
+    auto adjustedOffset = column->applyColumnBreakInside(child, newOffset);
 
-float BlockFlowBox::applyColumnBreakAfter(const BoxFrame* child, float offset, MarginInfo& marginInfo) const
-{
-    if(child->style()->columnBreakAfter() != BreakBetween::Always)
-        return offset;
-    auto column = child->containingColumn();
-    auto columnHeight = column->columnHeightForOffset(offset);
-    column->addForcedColumnBreak(offset);
-    if(columnHeight > 0.f)
-        offset += column->columnRemainingHeightForOffset(offset, AssociateWithFormerColumn);
-    marginInfo.clearMargin();
-    return offset;
-}
-
-float BlockFlowBox::applyColumnBreakInside(const BoxFrame* child, float offset) const
-{
-    if(child->style()->columnBreakInside() == BreakInside::Auto)
-        return offset;
-    auto column = child->containingColumn();
-    auto columnHeight = column->columnHeightForOffset(offset);
     auto childHeight = child->height();
-    column->updateMinimumColumnHeight(offset, childHeight);
-    if(columnHeight == 0.f)
-        return offset;
-    auto remainingHeight = column->columnRemainingHeightForOffset(offset, AssociateWithLatterColumn);
-    if(remainingHeight < childHeight && remainingHeight < columnHeight)
-        return offset + remainingHeight;
-    return offset;
-}
-
-void BlockFlowBox::adjustBlockChildInColumnFlow(BoxFrame* child)
-{
-    auto newOffset = applyColumnBreakBefore(child, child->y());
-    auto adjustedOffset = applyColumnBreakInside(child, newOffset);
-    auto childHeight = child->height();
-
-    auto column = child->containingColumn();
     if(adjustedOffset > newOffset) {
         auto delta = adjustedOffset - newOffset;
         column->setColumnBreak(newOffset, childHeight - delta);
@@ -1411,22 +1421,16 @@ void BlockFlowBox::adjustBlockChildInColumnFlow(BoxFrame* child)
     child->setY(newOffset);
 }
 
-void BlockFlowBox::layoutBlockChild(BoxFrame* child, MarginInfo& marginInfo)
+void BlockFlowBox::layoutBlockChild(BoxFrame* child, MultiColumnFlowBox* column, MarginInfo& marginInfo)
 {
     auto posTop = m_maxPositiveMarginTop;
     auto negTop = m_maxNegativeMarginTop;
 
     child->updateVerticalMargins();
 
-    auto estimatedTop = height();
-    if(!marginInfo.canCollapseWithMarginTop())
-        estimatedTop += std::max(marginInfo.margin(), child->marginTop());
-    estimatedTop += getClearDelta(child, estimatedTop);
-    if(child->isInsideColumnFlow()) {
-        estimatedTop = applyColumnBreakBefore(child, estimatedTop);
-        estimatedTop = applyColumnBreakInside(child, estimatedTop);
-    }
-
+    auto estimatedTop = estimateVerticalPosition(child, column, marginInfo);
+    if(isInsideColumnFlow())
+        column->enterChild(estimatedTop);
     child->setY(estimatedTop);
     child->layout();
 
@@ -1448,8 +1452,8 @@ void BlockFlowBox::layoutBlockChild(BoxFrame* child, MarginInfo& marginInfo)
     }
 
     child->setY(offsetY + clearDelta);
-    if(child->isInsideColumnFlow())
-        adjustBlockChildInColumnFlow(child);
+    if(isInsideColumnFlow())
+        adjustBlockChildInColumnFlow(child, column);
     if(marginInfo.atTopOfBlock() && !child->isSelfCollapsingBlock()) {
         marginInfo.setAtTopOfBlock(false);
     }
@@ -1461,8 +1465,11 @@ void BlockFlowBox::layoutBlockChild(BoxFrame* child, MarginInfo& marginInfo)
     }
 
     setHeight(height() + child->height());
-    if(child->isInsideColumnFlow())
-        setHeight(applyColumnBreakAfter(child, height(), marginInfo));
+    if(isInsideColumnFlow()) {
+        setHeight(column->applyColumnBreakAfter(child, height()));
+        column->leaveChild(estimatedTop);
+    }
+
     if(auto childBlock = to<BlockFlowBox>(child)) {
         addOverhangingFloats(childBlock);
     }
@@ -1470,6 +1477,8 @@ void BlockFlowBox::layoutBlockChild(BoxFrame* child, MarginInfo& marginInfo)
 
 void BlockFlowBox::layoutBlockChildren()
 {
+    auto column = containingColumn();
+
     auto top = borderTop() + paddingTop();
     auto bottom = borderBottom() + paddingBottom();
 
@@ -1491,7 +1500,7 @@ void BlockFlowBox::layoutBlockChildren()
             child->layout();
             determineHorizontalPosition(child);
         } else {
-            layoutBlockChild(child, marginInfo);
+            layoutBlockChild(child, column, marginInfo);
         }
     }
 

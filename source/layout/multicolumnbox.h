@@ -156,6 +156,10 @@ public:
     BoxFrame* firstMultiColumnBox() const;
     BoxFrame* lastMultiColumnBox() const;
 
+    float applyColumnBreakBefore(const BoxFrame* child, float offset);
+    float applyColumnBreakAfter(const BoxFrame* child, float offset);
+    float applyColumnBreakInside(const BoxFrame* child, float offset);
+
     float columnHeightForOffset(float offset) const;
     float columnRemainingHeightForOffset(float offset, ColumnBoundaryRule rule) const;
 
@@ -164,12 +168,15 @@ public:
     void updateMinimumColumnHeight(float offset, float minHeight);
 
     void skipColumnSpanBox(BoxFrame* box, float offset);
+    void enterChild(float offset) { m_rowOffset += offset; }
+    void leaveChild(float offset) { m_rowOffset -= offset; }
 
     MultiColumnRowBox* columnRowAtOffset(float offset) const;
     BlockFlowBox* columnBlockFlowBox() const;
 
     uint32_t columnCount() const { return m_columnCount; }
     float columnGap() const { return m_columnGap; }
+    float rowOffset() const { return m_rowOffset; }
 
     bool layoutColumns(bool balancing);
 
@@ -188,6 +195,7 @@ private:
     MultiColumnRowBox* m_currentRow{nullptr};
     mutable uint32_t m_columnCount{0};
     float m_columnGap{0};
+    float m_rowOffset{0};
 };
 
 inline BoxFrame* MultiColumnFlowBox::firstMultiColumnBox() const

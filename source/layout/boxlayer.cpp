@@ -200,10 +200,11 @@ void BoxLayer::paintLayerColumnContents(BoxLayer* rootLayer, GraphicsContext& co
             auto rowRect = row->rowRectAt(columnIndex);
             auto columnRect = row->columnRectAt(columnIndex);
             auto translation = (columnRect.origin() - rowRect.origin()) + row->location() - column.location();
+            auto rectangle = rect.moved(-translation);
 
             context.save();
             context.translate(translation.x, translation.y);
-            paintLayerContents(rootLayer, context, rect, offset);
+            paintLayerContents(rootLayer, context, rectangle, offset);
             context.restore();
         }
 
