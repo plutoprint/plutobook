@@ -312,7 +312,7 @@ public:
     const CounterMap* getTargetCounters(const HeapString& id) const;
     void addTargetCounters(const HeapString& id, const CounterMap& counters);
 
-    HeapString getTargetCounterText(const HeapString& id, const GlobalString& name, const GlobalString& listStyle, const HeapString& separator);
+    HeapString getTargetCounterText(const HeapString& fragment, const GlobalString& name, const GlobalString& listStyle, const HeapString& separator);
     HeapString getCountersText(const CounterMap& counters, const GlobalString& name, const GlobalString& listStyle, const HeapString& separator);
 
     void addAuthorJavaScript(const std::string_view& content);

@@ -123,6 +123,7 @@ private:
     void addText(const HeapString& text);
     void addLeaderText(const HeapString& text);
     void addLeader(const RefPtr<CSSValue>& value);
+    void addTargetCounter(const RefPtr<CSSFunctionValue>& function);
     void addImage(RefPtr<Image> image);
     void addQuote(CSSValueID value);
 
@@ -192,6 +193,36 @@ void ContentBoxBuilder::addLeader(const RefPtr<CSSValue>& value)
     }
 }
 
+void ContentBoxBuilder::addTargetCounter(const RefPtr<CSSFunctionValue>& function)
+{
+    HeapString fragment;
+    GlobalString identifier;
+    HeapString seperator;
+    GlobalString listStyle;
+
+    size_t index = 0;
+
+    assert(function->id() == CSSValueID::TargetCounter || function->id() == CSSValueID::TargetCounters);
+    if(auto attr = to<CSSUnaryFunctionValue>(function->at(index))) {
+        assert(attr->id() == CSSValueID::Attr);
+        fragment = m_element->getAttribute(to<CSSCustomIdentValue>(*attr->value()).value());
+    } else {
+        fragment = to<CSSLocalUrlValue>(*function->at(index)).value();
+    }
+
+    ++index;
+
+    identifier = to<CSSCustomIdentValue>(*function->at(index++)).value();
+    if(function->id() == CSSValueID::TargetCounters)
+        seperator = to<CSSStringValue>(*function->at(index++)).value();
+    if(index < function->size()) {
+        listStyle = to<CSSCustomIdentValue>(*function->at(index++)).value();
+        assert(index == function->size());
+    }
+
+    addText(m_element->document()->getTargetCounterText(fragment, identifier, listStyle, seperator));
+}
+
 void ContentBoxBuilder::addImage(RefPtr<Image> image)
 {
     if(image == nullptr)
@@ -257,6 +288,8 @@ void ContentBoxBuilder::build()
             addImage(image->fetch(m_element->document()));
         } else if(auto counter = to<CSSCounterValue>(value)) {
             addText(m_counters.counterText(counter->identifier(), counter->listStyle(), counter->separator()));
+        } else if(auto targetCounter = to<CSSFunctionValue>(value)) {
+            addTargetCounter(targetCounter);
         } else if(auto ident = to<CSSIdentValue>(value)) {
             addQuote(ident->value());
         } else {

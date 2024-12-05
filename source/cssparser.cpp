@@ -2312,7 +2312,7 @@ RefPtr<CSSValue> CSSParser::consumeContentTargetCounter(CSSTokenStream& input, C
         if(separator == nullptr)
             return nullptr;
         values.push_back(std::move(separator));
-        input.consumeIncludingWhitespace();
+        input.consumeWhitespace();
     }
 
     if(input.consumeCommaIncludingWhitespace()) {
@@ -2320,7 +2320,7 @@ RefPtr<CSSValue> CSSParser::consumeContentTargetCounter(CSSTokenStream& input, C
         if(listStyle == nullptr)
             return nullptr;
         values.push_back(std::move(listStyle));
-        input.consumeIncludingWhitespace();
+        input.consumeWhitespace();
     }
 
     if(!input.empty())

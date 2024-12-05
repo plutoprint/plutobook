@@ -705,9 +705,11 @@ void Document::addTargetCounters(const HeapString& id, const CounterMap& counter
     m_counterCache.emplace(id, counters);
 }
 
-HeapString Document::getTargetCounterText(const HeapString& id, const GlobalString& name, const GlobalString& listStyle, const HeapString& separator)
+HeapString Document::getTargetCounterText(const HeapString& fragment, const GlobalString& name, const GlobalString& listStyle, const HeapString& separator)
 {
-    if(auto counters = getTargetCounters(id))
+    if(fragment.empty() || fragment.front() != '#')
+        return emptyGlo;
+    if(auto counters = getTargetCounters(fragment.substring(1)))
         return getCountersText(*counters, name, listStyle, separator);
     return emptyGlo;
 }
