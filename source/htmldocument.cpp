@@ -282,7 +282,7 @@ void HTMLElement::buildPseudoBox(Counters& counters, Box* parent, PseudoType pse
     auto box = Box::create(nullptr, style);
     parent->addChild(box);
     if(pseudoType == PseudoType::Before || pseudoType == PseudoType::After) {
-        counters.update(box);
+        counters.update(box, nullptr);
         buildPseudoBox(counters, box, PseudoType::Marker);
     }
 
@@ -298,7 +298,7 @@ void HTMLElement::buildBox(Counters& counters, Box* parent)
     if(box == nullptr)
         return;
     parent->addChild(box);
-    counters.update(box);
+    counters.update(box, this);
     counters.push();
     buildPseudoBox(counters, box, PseudoType::Marker);
     buildPseudoBox(counters, box, PseudoType::Before);

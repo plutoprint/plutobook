@@ -60,7 +60,7 @@ void Counters::set(const GlobalString& name, int value)
     }
 }
 
-void Counters::update(const Box* box)
+void Counters::update(const Box* box, HTMLElement* element)
 {
     auto hasListItem = false;
     static const GlobalString listItem("list-item");
@@ -89,58 +89,35 @@ void Counters::update(const Box* box)
         }
     }
 
-    if(hasListItem)
-        return;
-    auto element = to<HTMLElement>(box->node());
-    if(box->isListItemBox()) {
-        if(element && element->tagName() == liTag) {
+    if(element && !hasListItem) {
+        if(element->tagName() == olTag) {
+            auto olElement = static_cast<HTMLOLElement*>(element);
+            reset(listItem, olElement->start() - 1);
+            hasListItem = true;
+        } else if(element->tagName() == ulTag
+            || element->tagName() == dirTag
+            || element->tagName() == menuTag) {
+            reset(listItem, 0);
+            hasListItem = true;
+        } else if(element->tagName() == liTag) {
             auto liElement = static_cast<HTMLLIElement*>(element);
             if(auto value = liElement->value()) {
                 reset(listItem, *value);
-                return;
+                hasListItem = true;
             }
         }
+    }
 
+    if(!hasListItem && box->isListItemBox())
         increment(listItem, 1);
-        return;
-    }
-
-    if(element == nullptr)
-        return;
-    if(element->tagName() == olTag) {
-        auto olElement = static_cast<HTMLOLElement*>(element);
-        reset(listItem, olElement->start() - 1);
-        return;
-    }
-
-    if(element->tagName() == ulTag
-        || element->tagName() == dirTag
-        || element->tagName() == menuTag) {
-        reset(listItem, 0);
+    if(element && !m_values.empty() && !element->id().empty()) {
+        m_document->addTargetCounters(element->id(), m_values);
     }
 }
 
 HeapString Counters::counterText(const GlobalString& name, const GlobalString& listStyle, const HeapString& separator) const
 {
-    auto heap = m_document->heap();
-    auto it = m_values.find(name);
-    if(it == m_values.end())
-        return heap->createString(m_document->getCounterText(0, listStyle));
-    if(separator.empty()) {
-        int value = 0;
-        if(!it->second.empty())
-            value = it->second.back();
-        return heap->createString(m_document->getCounterText(value, listStyle));
-    }
-
-    std::string text;
-    for(auto value : it->second) {
-        if(!text.empty())
-            text += separator.value();
-        text += m_document->getCounterText(value, listStyle);
-    }
-
-    return heap->createString(text);
+    return m_document->getCountersText(m_values, name, listStyle, separator);
 }
 
 HeapString Counters::markerText(const GlobalString& listStyle) const

@@ -10,6 +10,7 @@ namespace plutobook {
 
 class Box;
 class Document;
+class HTMLElement;
 class GlobalString;
 class HeapString;
 
@@ -28,7 +29,7 @@ public:
     void decreaseQuoteDepth() { --m_quoteDepth; }
     size_t quoteDepth() const { return m_quoteDepth; }
 
-    void update(const Box* box);
+    void update(const Box* box, HTMLElement* element);
 
     HeapString counterText(const GlobalString& name, const GlobalString& listStyle, const HeapString& separator) const;
     HeapString markerText(const GlobalString& listStyle) const;

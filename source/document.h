@@ -257,9 +257,12 @@ class Font;
 struct FontDescription;
 struct FontDataDescription;
 
+using CounterMap = std::map<GlobalString, std::vector<int>>;
+
 using DocumentElementMap = std::pmr::multimap<HeapString, Element*, std::less<>>;
 using DocumentResourceMap = std::pmr::map<Url, RefPtr<Resource>>;
 using DocumentFontMap = std::pmr::map<FontDescription, RefPtr<Font>>;
+using DocumentCounterMap = std::pmr::map<HeapString, CounterMap, std::less<>>;
 
 class BoxView;
 class GraphicsContext;
@@ -305,6 +308,12 @@ public:
     Element* getElementById(const std::string_view& id) const;
     void addElementById(const HeapString& id, Element* element);
     void removeElementById(const HeapString& id, Element* element);
+
+    const CounterMap* getTargetCounters(const HeapString& id) const;
+    void addTargetCounters(const HeapString& id, const CounterMap& counters);
+
+    HeapString getTargetCounterText(const HeapString& id, const GlobalString& name, const GlobalString& listStyle, const HeapString& separator);
+    HeapString getCountersText(const CounterMap& counters, const GlobalString& name, const GlobalString& listStyle, const HeapString& separator);
 
     void addAuthorJavaScript(const std::string_view& content);
     void addUserJavaScript(const std::string_view& content);
@@ -364,6 +373,7 @@ private:
     DocumentElementMap m_idCache;
     DocumentResourceMap m_resourceCache;
     DocumentFontMap m_fontCache;
+    DocumentCounterMap m_counterCache;
     CSSStyleSheet m_styleSheet;
 };
 

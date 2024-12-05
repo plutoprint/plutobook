@@ -497,6 +497,7 @@ Document::Document(Book* book, Heap* heap, ResourceFetcher* fetcher, Url url)
     , m_idCache(heap)
     , m_resourceCache(heap)
     , m_fontCache(heap)
+    , m_counterCache(heap)
     , m_styleSheet(this)
 {
 }
@@ -688,6 +689,49 @@ void Document::removeElementById(const HeapString& id, Element* element)
             break;
         }
     }
+}
+
+const CounterMap* Document::getTargetCounters(const HeapString& id) const
+{
+    auto it = m_counterCache.find(id);
+    if(it == m_counterCache.end())
+        return nullptr;
+    return &it->second;
+}
+
+void Document::addTargetCounters(const HeapString& id, const CounterMap& counters)
+{
+    assert(!id.empty() && !counters.empty());
+    m_counterCache.emplace(id, counters);
+}
+
+HeapString Document::getTargetCounterText(const HeapString& id, const GlobalString& name, const GlobalString& listStyle, const HeapString& separator)
+{
+    if(auto counters = getTargetCounters(id))
+        return getCountersText(*counters, name, listStyle, separator);
+    return emptyGlo;
+}
+
+HeapString Document::getCountersText(const CounterMap& counters, const GlobalString& name, const GlobalString& listStyle, const HeapString& separator)
+{
+    auto it = counters.find(name);
+    if(it == counters.end())
+        return m_heap->createString(getCounterText(0, listStyle));
+    if(separator.empty()) {
+        int value = 0;
+        if(!it->second.empty())
+            value = it->second.back();
+        return m_heap->createString(getCounterText(value, listStyle));
+    }
+
+    std::string text;
+    for(auto value : it->second) {
+        if(!text.empty())
+            text += separator.value();
+        text += getCounterText(value, listStyle);
+    }
+
+    return m_heap->createString(text);
 }
 
 void Document::addAuthorJavaScript(const std::string_view& content)
