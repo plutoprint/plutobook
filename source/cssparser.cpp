@@ -1978,11 +1978,34 @@ RefPtr<CSSValue> CSSParser::consumeStringOrCustomIdent(CSSTokenStream& input)
     return consumeCustomIdent(input);
 }
 
+RefPtr<CSSValue> CSSParser::consumeAttr(CSSTokenStream& input)
+{
+    if(input->type() != CSSToken::Type::Function || !identMatches("attr", 4, input->data()))
+        return nullptr;
+    CSSTokenStreamGuard guard(input);
+    auto block = input.consumeBlock();
+    block.consumeWhitespace();
+    auto value = consumeCustomIdent(block);
+    if(value == nullptr || !block.empty())
+        return nullptr;
+    input.consumeWhitespace();
+    guard.release();
+
+    return CSSUnaryFunctionValue::create(m_heap, CSSValueID::Attr, std::move(value));
+}
+
 RefPtr<CSSValue> CSSParser::consumeLocalUrl(CSSTokenStream& input)
 {
     if(auto token = consumeUrlToken(input))
         return CSSLocalUrlValue::create(m_heap, m_heap->createString(token->data()));
     return nullptr;
+}
+
+RefPtr<CSSValue> CSSParser::consumeLocalUrlOrAttr(CSSTokenStream &input)
+{
+    if(auto value = consumeAttr(input))
+        return value;
+    return consumeLocalUrl(input);
 }
 
 RefPtr<CSSValue> CSSParser::consumeLocalUrlOrNone(CSSTokenStream& input)
@@ -2187,6 +2210,8 @@ RefPtr<CSSValue> CSSParser::consumeContent(CSSTokenStream& input)
         auto value = consumeString(input);
         if(value == nullptr)
             value = consumeImage(input);
+        if(value == nullptr)
+            value = consumeAttr(input);
         if(value == nullptr && input->type() == CSSToken::Type::Ident) {
             static const CSSIdentValueEntry table[] = {
                 {"open-quote", CSSValueID::OpenQuote},
@@ -2202,14 +2227,16 @@ RefPtr<CSSValue> CSSParser::consumeContent(CSSTokenStream& input)
             auto name = input->data();
             auto block = input.consumeBlock();
             block.consumeWhitespace();
-            if(identMatches("attr", 4, name))
-                value = consumeContentAttr(block);
-            else if(identMatches("counter", 7, name))
-                value = consumeContentCounter(block, false);
-            else if(identMatches("counters", 8, name))
-                value = consumeContentCounter(block, true);
-            else if(identMatches("leader", 6, name))
+            if(identMatches("leader", 6, name))
                 value = consumeContentLeader(block);
+            else if(identMatches("counter", 7, name))
+                value = consumeContentCounter(block, CSSValueID::Counter);
+            else if(identMatches("counters", 8, name))
+                value = consumeContentCounter(block, CSSValueID::Counters);
+            else if(identMatches("target-counter", 14, name))
+                value = consumeContentTargetCounter(block, CSSValueID::TargetCounter);
+            else if(identMatches("target-counters", 15, name))
+                value = consumeContentTargetCounter(block, CSSValueID::TargetCounters);
             input.consumeWhitespace();
         }
 
@@ -2218,45 +2245,6 @@ RefPtr<CSSValue> CSSParser::consumeContent(CSSTokenStream& input)
         values.push_back(std::move(value));
     } while(!input.empty());
     return CSSListValue::create(m_heap, std::move(values));
-}
-
-RefPtr<CSSValue> CSSParser::consumeContentAttr(CSSTokenStream& input)
-{
-    auto value = consumeCustomIdent(input);
-    if(value == nullptr || !input.empty())
-        return nullptr;
-    return CSSUnaryFunctionValue::create(m_heap, CSSValueID::Attr, std::move(value));
-}
-
-RefPtr<CSSValue> CSSParser::consumeContentCounter(CSSTokenStream& input, bool counters)
-{
-    if(input->type() != CSSToken::Type::Ident)
-        return nullptr;
-    auto identifier = GlobalString(input->data());
-    input.consumeIncludingWhitespace();
-    HeapString separator;
-    if(counters) {
-        if(input->type() != CSSToken::Type::Comma)
-            return nullptr;
-        input.consumeIncludingWhitespace();
-        if(input->type() != CSSToken::Type::String)
-            return nullptr;
-        separator = m_heap->createString(input->data());
-        input.consumeIncludingWhitespace();
-    }
-
-    GlobalString listStyle("decimal");
-    if(input->type() == CSSToken::Type::Comma) {
-        input.consumeIncludingWhitespace();
-        if(input->type() != CSSToken::Type::Ident || identMatches("none", 4, input->data()))
-            return nullptr;
-        listStyle = GlobalString(input->data());
-        input.consumeIncludingWhitespace();
-    }
-
-    if(!input.empty())
-        return nullptr;
-    return CSSCounterValue::create(m_heap, identifier, listStyle, separator);
 }
 
 RefPtr<CSSValue> CSSParser::consumeContentLeader(CSSTokenStream& input)
@@ -2273,6 +2261,71 @@ RefPtr<CSSValue> CSSParser::consumeContentLeader(CSSTokenStream& input)
     if(value == nullptr || !input.empty())
         return nullptr;
     return CSSUnaryFunctionValue::create(m_heap, CSSValueID::Leader, std::move(value));
+}
+
+RefPtr<CSSValue> CSSParser::consumeContentCounter(CSSTokenStream& input, CSSValueID id)
+{
+    if(input->type() != CSSToken::Type::Ident)
+        return nullptr;
+    auto identifier = GlobalString(input->data());
+    input.consumeIncludingWhitespace();
+    HeapString separator;
+    if(id == CSSValueID::Counters) {
+        if(!input.consumeCommaIncludingWhitespace())
+            return nullptr;
+        if(input->type() != CSSToken::Type::String)
+            return nullptr;
+        separator = m_heap->createString(input->data());
+        input.consumeIncludingWhitespace();
+    }
+
+    GlobalString listStyle("decimal");
+    if(input.consumeCommaIncludingWhitespace()) {
+        if(input->type() != CSSToken::Type::Ident || identMatches("none", 4, input->data()))
+            return nullptr;
+        listStyle = GlobalString(input->data());
+        input.consumeIncludingWhitespace();
+    }
+
+    if(!input.empty())
+        return nullptr;
+    return CSSCounterValue::create(m_heap, identifier, listStyle, separator);
+}
+
+RefPtr<CSSValue> CSSParser::consumeContentTargetCounter(CSSTokenStream& input, CSSValueID id)
+{
+    auto fragment = consumeLocalUrlOrAttr(input);
+    if(fragment == nullptr || !input.consumeCommaIncludingWhitespace())
+        return nullptr;
+    auto identifier = consumeCustomIdent(input);
+    if(identifier == nullptr) {
+        return nullptr;
+    }
+
+    CSSValueList values(m_heap);
+    values.push_back(std::move(fragment));
+    values.push_back(std::move(identifier));
+    if(id == CSSValueID::TargetCounters) {
+        if(!input.consumeCommaIncludingWhitespace())
+            return nullptr;
+        auto separator = consumeString(input);
+        if(separator == nullptr)
+            return nullptr;
+        values.push_back(std::move(separator));
+        input.consumeIncludingWhitespace();
+    }
+
+    if(input.consumeCommaIncludingWhitespace()) {
+        auto listStyle = consumeCustomIdent(input);
+        if(listStyle == nullptr)
+            return nullptr;
+        values.push_back(std::move(listStyle));
+        input.consumeIncludingWhitespace();
+    }
+
+    if(!input.empty())
+        return nullptr;
+    return CSSFunctionValue::create(m_heap, id, std::move(values));
 }
 
 RefPtr<CSSValue> CSSParser::consumeCounter(CSSTokenStream& input, bool increment)

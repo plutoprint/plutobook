@@ -60,7 +60,7 @@ void Counters::set(const GlobalString& name, int value)
     }
 }
 
-void Counters::update(const Box* box, HTMLElement* element)
+void Counters::update(const Box* box)
 {
     auto hasListItem = false;
     static const GlobalString listItem("list-item");
@@ -89,6 +89,7 @@ void Counters::update(const Box* box, HTMLElement* element)
         }
     }
 
+    auto element = to<HTMLElement>(box->node());
     if(element && !hasListItem) {
         if(element->tagName() == olTag) {
             auto olElement = static_cast<HTMLOLElement*>(element);

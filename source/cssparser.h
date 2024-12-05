@@ -109,7 +109,9 @@ private:
     RefPtr<CSSValue> consumeString(CSSTokenStream& input);
     RefPtr<CSSValue> consumeCustomIdent(CSSTokenStream& input);
     RefPtr<CSSValue> consumeStringOrCustomIdent(CSSTokenStream& input);
+    RefPtr<CSSValue> consumeAttr(CSSTokenStream& input);
     RefPtr<CSSValue> consumeLocalUrl(CSSTokenStream& input);
+    RefPtr<CSSValue> consumeLocalUrlOrAttr(CSSTokenStream& input);
     RefPtr<CSSValue> consumeLocalUrlOrNone(CSSTokenStream& input);
     RefPtr<CSSValue> consumeUrl(CSSTokenStream& input);
     RefPtr<CSSValue> consumeUrlOrNone(CSSTokenStream& input);
@@ -122,9 +124,9 @@ private:
     RefPtr<CSSValue> consumeListStyleType(CSSTokenStream& input);
     RefPtr<CSSValue> consumeQuotes(CSSTokenStream& input);
     RefPtr<CSSValue> consumeContent(CSSTokenStream& input);
-    RefPtr<CSSValue> consumeContentAttr(CSSTokenStream& input);
-    RefPtr<CSSValue> consumeContentCounter(CSSTokenStream& input, bool counters);
     RefPtr<CSSValue> consumeContentLeader(CSSTokenStream& input);
+    RefPtr<CSSValue> consumeContentCounter(CSSTokenStream& input, CSSValueID id);
+    RefPtr<CSSValue> consumeContentTargetCounter(CSSTokenStream& input, CSSValueID id);
     RefPtr<CSSValue> consumeCounter(CSSTokenStream& input, bool increment);
     RefPtr<CSSValue> consumePage(CSSTokenStream& input);
     RefPtr<CSSValue> consumeSize(CSSTokenStream& input);
