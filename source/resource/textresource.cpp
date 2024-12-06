@@ -1,7 +1,8 @@
 #include "textresource.h"
-#include "plutobook.hpp"
 #include "stringutils.h"
 #include "url.h"
+
+#include "plutobook.hpp"
 
 namespace plutobook {
 

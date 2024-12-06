@@ -47,15 +47,11 @@ void MultiColumnRowBox::computeHeight(float& y, float& height, float& marginTop,
     height = m_columnHeight;
 }
 
-void MultiColumnRowBox::layout()
+void MultiColumnRowBox::layout(PageBuilder* paginator, MultiColumnFlowBox* columnizer)
 {
     updateWidth();
     updateHeight();
     updateOverflowRect();
-}
-
-void MultiColumnRowBox::fragmentize(FragmentBuilder& builder, float top) const
-{
 }
 
 void MultiColumnRowBox::paint(const PaintInfo& info, const Point& offset, PaintPhase phase)
@@ -334,17 +330,13 @@ void MultiColumnSpanBox::computeHeight(float& y, float& height, float& marginTop
     marginBottom = m_box->marginBottom();
 }
 
-void MultiColumnSpanBox::layout()
+void MultiColumnSpanBox::layout(PageBuilder* paginator, MultiColumnFlowBox* columnizer)
 {
-    m_box->layout();
+    m_box->layout(nullptr, nullptr);
 
     updateWidth();
     updateHeight();
     updateOverflowRect();
-}
-
-void MultiColumnSpanBox::fragmentize(FragmentBuilder& builder, float top) const
-{
 }
 
 void MultiColumnSpanBox::paint(const PaintInfo& info, const Point& offset, PaintPhase phase)
@@ -514,7 +506,7 @@ bool MultiColumnFlowBox::layoutColumns(bool balancing)
     m_currentRow = firstRow();
     if(m_currentRow)
         m_currentRow->setRowTop(0.f);
-    BlockFlowBox::layout();
+    BlockFlowBox::layout(nullptr, this);
     assert(m_rowOffset == 0.f);
     if(m_currentRow) {
         assert(m_currentRow == lastRow());
@@ -567,6 +559,26 @@ void MultiColumnFlowBox::computeWidth(float& x, float& width, float& marginLeft,
     }
 }
 
+void MultiColumnFlowBox::layout(PageBuilder* paginator, MultiColumnFlowBox* columnizer)
+{
+    auto columnBlock = columnBlockFlowBox();
+    auto columnStyle = columnBlock->style();
+
+    float columnHeight = 0.f;
+    if(auto height = columnBlock->computeHeightUsing(columnStyle->height()))
+        columnHeight = columnBlock->adjustContentBoxHeight(height.value());
+    columnHeight = columnBlock->constrainContentBoxHeight(columnHeight);
+
+    for(auto row = firstRow(); row; row = row->nextRow()) {
+        row->resetColumnHeight(columnHeight);
+    }
+
+    auto changed = layoutColumns(false);
+    while(changed) {
+        changed = layoutColumns(true);
+    }
+}
+
 static bool isValidColumnSpanBox(BoxFrame* box)
 {
     return box && !box->isInline() && !box->isFloatingOrPositioned() && box->style()->columnSpan() == ColumnSpan::All;
@@ -599,8 +611,6 @@ void MultiColumnFlowBox::build()
                 currentColumnRow = newRow;
             }
 
-            if(!child->isInline())
-                child->setIsInsideColumnFlow(true);
             if(child->firstChild() && !child->isInline() && !child->isFlexibleBox()
                 && !child->isTableBox() && !child->style()->hasColumns()) {
                 child = child->firstChild();
@@ -625,30 +635,6 @@ void MultiColumnFlowBox::build()
     BlockFlowBox::build();
 }
 
-void MultiColumnFlowBox::layout()
-{
-    auto columnBlock = columnBlockFlowBox();
-    auto columnStyle = columnBlock->style();
-
-    float columnHeight = 0.f;
-    if(auto height = columnBlock->computeHeightUsing(columnStyle->height()))
-        columnHeight = columnBlock->adjustContentBoxHeight(height.value());
-    columnHeight = columnBlock->constrainContentBoxHeight(columnHeight);
-
-    for(auto row = firstRow(); row; row = row->nextRow()) {
-        row->resetColumnHeight(columnHeight);
-    }
-
-    auto changed = layoutColumns(false);
-    while(changed) {
-        changed = layoutColumns(true);
-    }
-}
-
-void MultiColumnFlowBox::fragmentize(FragmentBuilder& builder, float top) const
-{
-}
-
 void MultiColumnFlowBox::paint(const PaintInfo& info, const Point& offset, PaintPhase phase)
 {
     BlockFlowBox::paint(info, offset, phase);
@@ -657,7 +643,6 @@ void MultiColumnFlowBox::paint(const PaintInfo& info, const Point& offset, Paint
 MultiColumnFlowBox::MultiColumnFlowBox(const RefPtr<BoxStyle>& style)
     : BlockFlowBox(nullptr, style)
 {
-    setIsInsideColumnFlow(true);
 }
 
 } // namespace plutobook

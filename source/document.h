@@ -272,6 +272,7 @@ class Book;
 class PageSize;
 class PageMargins;
 class PageBox;
+class PageBuilder;
 
 using PageBoxList = std::pmr::vector<std::unique_ptr<PageBox>>;
 
@@ -348,8 +349,8 @@ public:
     void finishParsingDocument() override;
     void buildBox(Counters& counters, Box* parent) override;
     void build();
-    void layout();
 
+    void layout(PageBuilder* paginator);
     void render(GraphicsContext& context, const Rect& rect);
 
     PageBoxList& pages() { return m_pages; }
@@ -358,8 +359,6 @@ public:
     void renderPage(GraphicsContext& context, uint32_t pageIndex);
     PageSize pageSizeAt(uint32_t pageIndex) const;
     uint32_t pageCount() const;
-
-    void paginate();
 
 private:
     template<typename ResourceType>

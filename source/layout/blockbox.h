@@ -195,19 +195,18 @@ public:
     void clearFloats(Clear clear);
 
     void estimateMarginTop(BoxFrame* child, float& positiveMarginTop, float& negativeMarginTop) const;
-    float estimateVerticalPosition(BoxFrame* child, MultiColumnFlowBox* column, const MarginInfo& marginInfo) const;
+    float estimateVerticalPosition(BoxFrame* child, MultiColumnFlowBox* columnizer, const MarginInfo& marginInfo) const;
     void determineHorizontalPosition(BoxFrame* child) const;
 
-    void adjustBlockChildInColumnFlow(BoxFrame* child, MultiColumnFlowBox* column);
-    void layoutBlockChild(BoxFrame* child, MultiColumnFlowBox* column, MarginInfo& marginInfo);
-    void layoutBlockChildren();
+    void adjustBlockChildInColumnFlow(BoxFrame* child, MultiColumnFlowBox* columnizer);
+    void layoutBlockChild(BoxFrame* child, PageBuilder* paginator, MultiColumnFlowBox* columnizer, MarginInfo& marginInfo);
+    void layoutBlockChildren(PageBuilder* paginator, MultiColumnFlowBox* columnizer);
 
-    void layout() override;
+    void layout(PageBuilder* paginator, MultiColumnFlowBox* column) override;
     void build() override;
 
     void paintFloats(const PaintInfo& info, const Point& offset);
     void paintContents(const PaintInfo& info, const Point& offset, PaintPhase phase) override;
-    void fragmentize(FragmentBuilder& builder, float top) const override;
 
     const char* name() const override { return "BlockFlowBox"; }
 

@@ -41,6 +41,7 @@ class BoxModel;
 class BlockBox;
 class BlockFlowBox;
 class MultiColumnFlowBox;
+class PageBuilder;
 
 class Box : public HeapMember {
 public:
@@ -150,8 +151,6 @@ public:
     bool isFloatingOrPositioned() const { return m_floating || m_positioned; }
     bool isReplaced() const { return m_replaced; }
     bool isOverflowHidden() const { return m_overflowHidden; }
-    bool isInsideColumnFlow() const { return m_isInsideColumnFlow; }
-    bool isInNormalFlow() const;
 
     bool hasColumnFlowBox() const { return m_hasColumnFlowBox; }
     bool hasColumnSpanBox() const { return m_hasColumnSpanBox; }
@@ -165,7 +164,6 @@ public:
     void setPositioned(bool value) { m_positioned = value; }
     void setReplaced(bool value) { m_replaced = value; }
     void setOverflowHidden(bool value) { m_overflowHidden = value; }
-    void setIsInsideColumnFlow(bool value) { m_isInsideColumnFlow = value; }
 
     void setHasColumnFlowBox(bool value) { m_hasColumnFlowBox = value; }
     void setHasColumnSpanBox(bool value) { m_hasColumnSpanBox = value; }
@@ -184,8 +182,8 @@ public:
     virtual const Rect& paintBoundingBox() const { return Rect::Invalid; }
     virtual const Transform& localTransform() const { return Transform::Identity; }
 
+    virtual void layout(PageBuilder* paginator, MultiColumnFlowBox* columnizer);
     virtual void build();
-    virtual void layout();
 
     virtual const char* name() const { return "Box"; }
 
@@ -204,7 +202,6 @@ private:
     bool m_positioned : 1 {false};
     bool m_replaced : 1 {false};
     bool m_overflowHidden : 1 {false};
-    bool m_isInsideColumnFlow : 1 {false};
     bool m_hasColumnFlowBox : 1 {false};
     bool m_hasColumnSpanBox : 1 {false};
     bool m_hasTransform : 1 {false};
@@ -327,7 +324,6 @@ struct is_a<BoxModel> {
 
 class ReplacedLineBox;
 class MultiColumnSpanBox;
-class FragmentBuilder;
 
 class BoxFrame : public BoxModel {
 public:
@@ -449,7 +445,6 @@ public:
 
     virtual void paintOutlines(const PaintInfo& info, const Point& offset);
     virtual void paintDecorations(const PaintInfo& info, const Point& offset);
-    virtual void fragmentize(FragmentBuilder& builder, float top) const;
 
     const char* name() const override { return "BoxFrame"; }
 

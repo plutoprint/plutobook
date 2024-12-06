@@ -1,10 +1,11 @@
 #include "boxstyle.h"
 #include "cssrule.h"
 #include "document.h"
-#include "plutobook.hpp"
 #include "imageresource.h"
 #include "fontresource.h"
 #include "geometry.h"
+
+#include "plutobook.hpp"
 
 namespace plutobook {
 

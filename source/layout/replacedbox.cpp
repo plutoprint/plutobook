@@ -2,7 +2,6 @@
 #include "blockbox.h"
 #include "imageresource.h"
 #include "graphicscontext.h"
-#include "fragmentbuilder.h"
 #include "document.h"
 
 namespace plutobook {
@@ -392,7 +391,7 @@ void ReplacedBox::computeHeight(float& y, float& height, float& marginTop, float
     computeVerticalMargins(marginTop, marginBottom);
 }
 
-void ReplacedBox::layout()
+void ReplacedBox::layout(PageBuilder* paginator, MultiColumnFlowBox* columnizer)
 {
     updateWidth();
     updateHeight();
@@ -418,11 +417,6 @@ void ReplacedBox::paint(const PaintInfo& info, const Point& offset, PaintPhase p
         paintDecorations(info, adjustedOffset);
         paintReplaced(info, adjustedOffset);
     }
-}
-
-void ReplacedBox::fragmentize(FragmentBuilder& builder, float top) const
-{
-    builder.handleReplacedBox(this, top);
 }
 
 ImageBox::ImageBox(Node* node, const RefPtr<BoxStyle>& style)

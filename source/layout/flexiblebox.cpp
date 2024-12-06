@@ -1,6 +1,5 @@
 #include "flexiblebox.h"
 #include "boxlayer.h"
-#include "fragmentbuilder.h"
 
 #include <ranges>
 #include <list>
@@ -90,7 +89,7 @@ float FlexItem::computeFlexBaseSize() const
         flexBasis = m_box->style()->height();
     auto height = computeHeightUsing(flexBasis);
     if(height == std::nullopt)
-        m_box->layout();
+        m_box->layout(nullptr, nullptr);
     return height.value_or(m_box->height() - m_box->borderAndPaddingHeight());
 }
 
@@ -398,28 +397,7 @@ float FlexibleBox::borderAndPaddingAfter() const
     return borderEnd() + paddingEnd();
 }
 
-void FlexibleBox::build()
-{
-    auto alignItems = style()->alignItems();
-    for(auto child = firstBoxFrame(); child; child = child->nextBoxFrame()) {
-        if(child->isPositioned())
-            continue;
-        auto childStyle = child->style();
-        auto order = childStyle->order();
-        auto flexGlow = childStyle->flexGrow();
-        auto flexShrink = childStyle->flexShrink();
-        auto alignSelf = childStyle->alignSelf();
-        if(alignSelf == AlignItem::Auto)
-            alignSelf = alignItems;
-        m_items.emplace_back(child, order, flexGlow, flexShrink, alignSelf);
-    }
-
-    auto compare_func = [](auto& a, auto& b) { return a.order() < b.order(); };
-    std::stable_sort(m_items.begin(), m_items.end(), compare_func);
-    BlockBox::build();
-}
-
-void FlexibleBox::layout()
+void FlexibleBox::layout(PageBuilder* paginator, MultiColumnFlowBox* columnizer)
 {
     updateWidth();
     setHeight(borderAndPaddingHeight());
@@ -584,7 +562,7 @@ void FlexibleBox::layout()
                 child->setOverrideHeight(item.targetMainBorderBoxSize());
             }
 
-            child->layout();
+            child->layout(nullptr, nullptr);
 
             if(autoMarginCount > 0) {
                 auto childStyle = child->style();
@@ -785,14 +763,14 @@ void FlexibleBox::layout()
                     childHeight = item.constrainHeight(childHeight) + child->borderAndPaddingHeight();
                     if(childHeight != child->height()) {
                         child->setOverrideHeight(childHeight);
-                        child->layout();
+                        child->layout(nullptr, nullptr);
                     }
                 } else if(isVerticalFlow() && childStyle->width().isAuto()) {
                     auto childWidth = line.crossSize() - child->marginWidth() - child->borderAndPaddingWidth();
                     childWidth = item.constrainWidth(childWidth) + child->borderAndPaddingWidth();
                     if(childWidth != child->width()) {
                         child->setOverrideWidth(childWidth);
-                        child->layout();
+                        child->layout(nullptr, nullptr);
                     }
                 }
             }
@@ -857,6 +835,27 @@ void FlexibleBox::layout()
     updateOverflowRect();
 }
 
+void FlexibleBox::build()
+{
+    auto alignItems = style()->alignItems();
+    for(auto child = firstBoxFrame(); child; child = child->nextBoxFrame()) {
+        if(child->isPositioned())
+            continue;
+        auto childStyle = child->style();
+        auto order = childStyle->order();
+        auto flexGlow = childStyle->flexGrow();
+        auto flexShrink = childStyle->flexShrink();
+        auto alignSelf = childStyle->alignSelf();
+        if(alignSelf == AlignItem::Auto)
+            alignSelf = alignItems;
+        m_items.emplace_back(child, order, flexGlow, flexShrink, alignSelf);
+    }
+
+    auto compare_func = [](auto& a, auto& b) { return a.order() < b.order(); };
+    std::stable_sort(m_items.begin(), m_items.end(), compare_func);
+    BlockBox::build();
+}
+
 void FlexibleBox::paintContents(const PaintInfo& info, const Point& offset, PaintPhase phase)
 {
     if(phase == PaintPhase::Contents) {
@@ -870,11 +869,6 @@ void FlexibleBox::paintContents(const PaintInfo& info, const Point& offset, Pain
             }
         }
     }
-}
-
-void FlexibleBox::fragmentize(FragmentBuilder& builder, float top) const
-{
-    builder.handleReplacedBox(this, top);
 }
 
 } // namespace plutobook

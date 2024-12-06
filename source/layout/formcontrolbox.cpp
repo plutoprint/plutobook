@@ -1,6 +1,5 @@
 #include "formcontrolbox.h"
 #include "htmldocument.h"
-#include "fragmentbuilder.h"
 #include "boxlayer.h"
 
 namespace plutobook {
@@ -135,12 +134,7 @@ void SelectBox::paintContents(const PaintInfo& info, const Point& offset, PaintP
     }
 }
 
-void SelectBox::fragmentize(FragmentBuilder& builder, float top) const
-{
-    builder.handleReplacedBox(this, top);
-}
-
-void SelectBox::layout()
+void SelectBox::layout(PageBuilder* paginator, MultiColumnFlowBox* columnizer)
 {
     updateWidth();
     setHeight(borderAndPaddingTop());
@@ -153,7 +147,7 @@ void SelectBox::layout()
             continue;
         }
 
-        child->layout();
+        child->layout(paginator, columnizer);
         child->setY(height() + child->marginTop());
         child->setX(borderStart() + paddingStart() + child->marginLeft());
         if(style()->isRightToLeftDirection())

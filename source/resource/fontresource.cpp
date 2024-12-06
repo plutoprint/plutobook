@@ -1,8 +1,9 @@
 #include "fontresource.h"
-#include "plutobook.hpp"
 #include "document.h"
 #include "stringutils.h"
 #include "boxstyle.h"
+
+#include "plutobook.hpp"
 
 #include <fontconfig/fontconfig.h>
 #include <fontconfig/fcfreetype.h>

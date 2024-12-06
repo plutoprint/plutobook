@@ -245,8 +245,6 @@ BoxModel* Box::containingBox() const
 
 MultiColumnFlowBox* Box::containingColumn() const
 {
-    if(!isInsideColumnFlow())
-        return nullptr;
     for(auto current = this; current; current = current->parentBox()) {
         if(auto column = to<MultiColumnFlowBox>(current)) {
             return const_cast<MultiColumnFlowBox*>(column);
@@ -293,16 +291,9 @@ bool Box::isFlexItem() const
     return m_parentBox && m_parentBox->isFlexibleBox();
 }
 
-bool Box::isInNormalFlow() const
+void Box::layout(PageBuilder* paginator, MultiColumnFlowBox* columnizer)
 {
-    auto parent = parentBox();
-    while(parent && !parent->isBoxView()) {
-        if(parent->isFloatingOrPositioned())
-            return false;
-        parent = parent->parentBox();
-    }
-
-    return true;
+    assert(false);
 }
 
 void Box::build()
@@ -312,11 +303,6 @@ void Box::build()
         child->build();
         child = child->nextSibling();
     }
-}
-
-void Box::layout()
-{
-    assert(false);
 }
 
 BoxModel::BoxModel(Node* node, const RefPtr<BoxStyle>& style)
@@ -948,11 +934,6 @@ void BoxFrame::paintDecorations(const PaintInfo& info, const Point& offset)
     Rect borderRect(offset, size());
     paintBackground(info, borderRect);
     paintBorder(info, borderRect);
-}
-
-void BoxFrame::fragmentize(FragmentBuilder& builder, float top) const
-{
-    assert(false);
 }
 
 } // namespace plutobook

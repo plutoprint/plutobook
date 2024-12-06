@@ -1,7 +1,8 @@
 #include "resource.h"
 #include "stringutils.h"
-#include "plutobook.hpp"
 #include "url.h"
+
+#include "plutobook.hpp"
 
 #ifdef PLUTOBOOK_HAS_CURL
 #include <curl/curl.h>

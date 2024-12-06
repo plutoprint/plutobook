@@ -4,7 +4,6 @@
 #include "blockbox.h"
 #include "linebox.h"
 #include "document.h"
-#include "fragmentbuilder.h"
 
 #include <ranges>
 
@@ -924,7 +923,7 @@ void LineBreaker::handleReplaced(const LineItem& item)
         return;
     }
 
-    box.layout();
+    box.layout(nullptr, nullptr);
 
     run.canBreakAfter = canBreakAfter(run);
     run.width = box.width() + box.marginLeft() + box.marginRight();
@@ -1254,7 +1253,7 @@ LineBuilder::LineBuilder(BlockFlowBox* block, RootLineBoxList& lines)
 {
 }
 
-void LineBuilder::buildLine(const LineInfo& info)
+void LineBuilder::buildLine(PageBuilder* paginator, MultiColumnFlowBox* columnizer, const LineInfo& info)
 {
     if(m_parentLine) {
         m_parentLine = nullptr;
@@ -1317,7 +1316,7 @@ void LineBuilder::buildLine(const LineInfo& info)
     rootLine->setIsEmptyLine(info.isEmptyLine());
     rootLine->setIsFirstLine(info.isFirstLine());
     rootLine->alignInHorizontalDirection(startOffset + info.lineOffset());
-    auto blockHeight = rootLine->alignInVerticalDirection(m_block->height());
+    auto blockHeight = rootLine->alignInVerticalDirection(paginator, columnizer, m_block->height());
     if(!rootLine->isEmptyLine()) {
         m_block->setHeight(blockHeight);
     }
@@ -1413,7 +1412,7 @@ void LineBuilder::handleReplaced(const LineItemRun& run)
     if(box->isPositioned())
         box->containingBlock()->insertPositonedBox(box);
     if(box->isOutsideListMarkerBox())
-        box->layout();
+        box->layout(nullptr, nullptr);
     auto line = ReplacedLineBox::create(box);
     addLineBox(line.get());
     box->setLine(std::move(line));
@@ -1574,6 +1573,62 @@ void LineLayout::computeIntrinsicWidths(float& minWidth, float& maxWidth) const
     maxWidth = std::max(maxWidth, inlineMaxWidth);
 }
 
+void LineLayout::layout(PageBuilder* paginator, MultiColumnFlowBox* columnizer)
+{
+    if(!m_lines.empty()) {
+        for(auto& line : m_lines) {
+            line->setY(0.f);
+            auto blockHeight = line->alignInVerticalDirection(paginator, columnizer, m_block->height());
+            if(!line->isEmptyLine()) {
+                m_block->setHeight(blockHeight);
+            }
+        }
+
+        m_block->setHeight(m_block->height() + m_block->borderAndPaddingBottom());
+        return;
+    }
+
+    auto child = m_block->firstChild();
+    while(child) {
+        if(auto box = to<TextBox>(child)) {
+            box->lines().clear();
+        } else if(auto box = to<InlineBox>(child)) {
+            box->lines().clear();
+            if(child->firstChild()) {
+                child = child->firstChild();
+                continue;
+            }
+        } else if(auto box = to<BoxFrame>(child)) {
+            box->setLine(nullptr);
+        } else {
+            assert(false);
+        }
+
+        while(true) {
+            if(child->nextSibling()) {
+                child = child->nextSibling();
+                break;
+            }
+
+            child = child->parentBox();
+            if(child == m_block) {
+                child = nullptr;
+                break;
+            }
+        }
+    }
+
+    LineBreaker breaker(m_block, m_data);
+    LineBuilder builder(m_block, m_lines);
+    while(!breaker.isDone()) {
+        builder.buildLine(paginator, columnizer, breaker.nextLine());
+    }
+
+    if(breaker.hasUnpositionedFloats())
+        m_block->positionNewFloats();
+    m_block->setHeight(m_block->height() + m_block->borderAndPaddingBottom());
+}
+
 void LineLayout::build()
 {
     LineItemsBuilder builder(m_data);
@@ -1620,75 +1675,12 @@ void LineLayout::build()
     builder.exitBlock(m_block);
 }
 
-void LineLayout::layout()
-{
-    if(!m_lines.empty()) {
-        for(auto& line : m_lines) {
-            line->setY(0.f);
-            auto blockHeight = line->alignInVerticalDirection(m_block->height());
-            if(!line->isEmptyLine()) {
-                m_block->setHeight(blockHeight);
-            }
-        }
-
-        m_block->setHeight(m_block->height() + m_block->borderAndPaddingBottom());
-        return;
-    }
-
-    auto child = m_block->firstChild();
-    while(child) {
-        if(auto box = to<TextBox>(child)) {
-            box->lines().clear();
-        } else if(auto box = to<InlineBox>(child)) {
-            box->lines().clear();
-            if(child->firstChild()) {
-                child = child->firstChild();
-                continue;
-            }
-        } else if(auto box = to<BoxFrame>(child)) {
-            box->setLine(nullptr);
-        } else {
-            assert(false);
-        }
-
-        while(true) {
-            if(child->nextSibling()) {
-                child = child->nextSibling();
-                break;
-            }
-
-            child = child->parentBox();
-            if(child == m_block) {
-                child = nullptr;
-                break;
-            }
-        }
-    }
-
-    LineBreaker breaker(m_block, m_data);
-    LineBuilder builder(m_block, m_lines);
-    while(!breaker.isDone()) {
-        builder.buildLine(breaker.nextLine());
-    }
-
-    if(breaker.hasUnpositionedFloats())
-        m_block->positionNewFloats();
-    m_block->setHeight(m_block->height() + m_block->borderAndPaddingBottom());
-}
-
 void LineLayout::paint(const PaintInfo& info, const Point& offset, PaintPhase phase)
 {
     if(phase == PaintPhase::Contents || phase == PaintPhase::Outlines) {
         for(auto& line : m_lines) {
             line->paint(info, offset, phase);
         }
-    }
-}
-
-void LineLayout::fragmentize(FragmentBuilder& builder, float top) const
-{
-    for(auto& line : m_lines) {
-        builder.handleLineBox(*line, top);
     }
 }
 

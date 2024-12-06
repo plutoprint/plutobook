@@ -1,10 +1,11 @@
 #include "imageresource.h"
 #include "textresource.h"
-#include "plutobook.hpp"
 #include "svgdocument.h"
 #include "stringutils.h"
 #include "graphicscontext.h"
 #include "geometry.h"
+
+#include "plutobook.hpp"
 
 #include <cairo.h>
 #ifdef PLUTOBOOK_HAS_WEBP
@@ -278,7 +279,7 @@ RefPtr<SVGImage> SVGImage::create(const std::string_view& content, ResourceFetch
     }
 
     document->build();
-    document->layout();
+    document->layout(nullptr);
 
     cairo_rectangle_t rectangle = {0, 0, document->width(), document->height()};
     auto surface = cairo_recording_surface_create(CAIRO_CONTENT_COLOR_ALPHA, &rectangle);

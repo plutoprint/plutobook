@@ -1,5 +1,6 @@
 #include "plutobook.hpp"
 #include "htmldocument.h"
+#include "pagebuilder.h"
 #include "xmldocument.h"
 #include "textresource.h"
 #include "imageresource.h"
@@ -334,14 +335,14 @@ float Book::documentHeight() const
 
 uint32_t Book::pageCount() const
 {
-    if(auto document = paginateIfNeeded())
+    if(auto document = layoutIfNeeded())
         return document->pageCount();
     return 0;
 }
 
 PageSize Book::pageSizeAt(uint32_t pageIndex) const
 {
-    if(auto document = paginateIfNeeded())
+    if(auto document = layoutIfNeeded())
         return document->pageSizeAt(pageIndex);
     return m_pageSize;
 }
@@ -422,7 +423,6 @@ void Book::clearContent()
     m_heap->release();
     m_needsBuild = true;
     m_needsLayout = true;
-    m_needsPagination = true;
 }
 
 void Book::renderPage(Canvas& canvas, uint32_t pageIndex) const
@@ -441,7 +441,7 @@ void Book::renderPage(plutobook_canvas_t* canvas, uint32_t pageIndex) const
 
 void Book::renderPage(cairo_t* canvas, uint32_t pageIndex) const
 {
-    if(auto document = paginateIfNeeded()) {
+    if(auto document = layoutIfNeeded()) {
         GraphicsContext context(canvas);
         document->renderPage(context, pageIndex);
     }
@@ -571,21 +571,15 @@ Document* Book::layoutIfNeeded() const
 {
     auto document = buildIfNeeded();
     if(document && m_needsLayout) {
-        document->layout();
-        m_needsLayout = false;
+        if(m_mediaType == MediaType::Print) {
+            PageBuilder builder(this);
+            document->layout(&builder);
+        } else {
+            document->layout(nullptr);
+        }
     }
 
-    return document;
-}
-
-Document* Book::paginateIfNeeded() const
-{
-    auto document = layoutIfNeeded();
-    if(document && m_needsPagination) {
-        document->paginate();
-        m_needsPagination = false;
-    }
-
+    m_needsLayout = false;
     return document;
 }
 

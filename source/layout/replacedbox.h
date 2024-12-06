@@ -35,11 +35,10 @@ public:
 
     void computeWidth(float& x, float& width, float& marginLeft, float& marginRight) const override;
     void computeHeight(float& y, float& height, float& marginTop, float& marginBottom) const override;
-    void layout() override;
+    void layout(PageBuilder* paginator, MultiColumnFlowBox* columnizer) override;
 
     virtual void paintReplaced(const PaintInfo& info, const Point& offset) = 0;
     void paint(const PaintInfo& info, const Point& offset, PaintPhase phase) override;
-    void fragmentize(FragmentBuilder& builder, float top) const override;
 
     const char* name() const override { return "ReplacedBox"; }
 };

@@ -12,8 +12,8 @@
 #include "imageresource.h"
 #include "fontresource.h"
 #include "stringutils.h"
+
 #include "plutobook.hpp"
-#include "fragmentbuilder.h"
 
 namespace plutobook {
 
@@ -887,9 +887,9 @@ void Document::build()
     buildBox(counters, nullptr);
 }
 
-void Document::layout()
+void Document::layout(PageBuilder* paginator)
 {
-    box()->layout();
+    box()->layout(paginator, nullptr);
 }
 
 void Document::render(GraphicsContext& context, const Rect& rect)
@@ -924,11 +924,6 @@ PageSize Document::pageSizeAt(uint32_t pageIndex) const
 uint32_t Document::pageCount() const
 {
     return m_pages.size();
-}
-
-void Document::paginate()
-{
-    PageBuilder(this).build();
 }
 
 template<typename ResourceType>

@@ -1,6 +1,5 @@
 #include "htmldocument.h"
 #include "htmlparser.h"
-#include "plutobook.hpp"
 #include "cssrule.h"
 #include "counters.h"
 #include "textbox.h"
@@ -11,6 +10,8 @@
 #include "textresource.h"
 #include "imageresource.h"
 #include "stringutils.h"
+
+#include "plutobook.hpp"
 
 #include <unicode/uchar.h>
 #include <unicode/uiter.h>

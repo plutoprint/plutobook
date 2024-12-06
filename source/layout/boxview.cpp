@@ -1,6 +1,7 @@
 #include "boxview.h"
 #include "boxlayer.h"
 #include "document.h"
+
 #include "plutobook.hpp"
 
 namespace plutobook {
@@ -27,9 +28,9 @@ void BoxView::computeHeight(float& y, float& height, float& marginTop, float& ma
     height = document()->viewportHeight();
 }
 
-void BoxView::layout()
+void BoxView::layout(PageBuilder* paginator, MultiColumnFlowBox* columnizer)
 {
-    BlockFlowBox::layout();
+    BlockFlowBox::layout(paginator, columnizer);
     layer()->layout();
 }
 

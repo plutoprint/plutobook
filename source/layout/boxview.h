@@ -5,6 +5,8 @@
 
 namespace plutobook {
 
+class PageBox;
+
 class BoxView final : public BlockFlowBox {
 public:
     BoxView(Document* document, const RefPtr<BoxStyle>& style);
@@ -13,17 +15,21 @@ public:
     bool requiresLayer() const final { return true; }
     BoxStyle* backgroundStyle() const { return m_backgroundStyle; }
 
+    void setCurrentPage(PageBox* page) { m_currentPage = page; }
+    PageBox* currentPage() const { return m_currentPage; }
+
     bool isPrintMedia() const;
 
     void computeWidth(float& x, float& width, float& marginLeft, float& marginRight) const final;
     void computeHeight(float& y, float& height, float& marginTop, float& marginBottom) const final;
-    void layout() final;
+    void layout(PageBuilder* paginator, MultiColumnFlowBox* columnizer) final;
     void build() final;
 
     const char* name() const final { return "BoxView"; }
 
 private:
     BoxStyle* m_backgroundStyle{nullptr};
+    PageBox* m_currentPage{nullptr};
 };
 
 template<>

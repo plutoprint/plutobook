@@ -3,7 +3,6 @@
 #include "linebox.h"
 #include "linelayout.h"
 #include "boxlayer.h"
-#include "fragmentbuilder.h"
 
 namespace plutobook {
 
@@ -59,7 +58,7 @@ void BlockBox::layoutPositionedBoxes()
 {
     if(m_positionedBoxes) {
         for(auto box : *m_positionedBoxes) {
-            box->layout();
+            box->layout(nullptr, nullptr);
         }
     }
 }
@@ -740,7 +739,7 @@ void BlockFlowBox::insertFloatingBox(BoxFrame* box)
     if(containsFloat(box))
         return;
 
-    box->layout();
+    box->layout(nullptr, nullptr);
 
     FloatingBox floatingBox(box);
     floatingBox.setWidth(box->width() + box->marginWidth());
@@ -1346,7 +1345,7 @@ void BlockFlowBox::estimateMarginTop(BoxFrame* child, float& positiveMarginTop, 
     }
 }
 
-float BlockFlowBox::estimateVerticalPosition(BoxFrame* child, MultiColumnFlowBox* column, const MarginInfo& marginInfo) const
+float BlockFlowBox::estimateVerticalPosition(BoxFrame* child, MultiColumnFlowBox* columnizer, const MarginInfo& marginInfo) const
 {
     auto estimatedTop = height();
     if(!marginInfo.canCollapseWithMarginTop()) {
@@ -1358,9 +1357,9 @@ float BlockFlowBox::estimateVerticalPosition(BoxFrame* child, MultiColumnFlowBox
     }
 
     estimatedTop += getClearDelta(child, estimatedTop);
-    if(isInsideColumnFlow()) {
-        estimatedTop = column->applyColumnBreakBefore(child, estimatedTop);
-        estimatedTop = column->applyColumnBreakInside(child, estimatedTop);
+    if(columnizer) {
+        estimatedTop = columnizer->applyColumnBreakBefore(child, estimatedTop);
+        estimatedTop = columnizer->applyColumnBreakInside(child, estimatedTop);
     }
 
     return estimatedTop;
@@ -1395,24 +1394,24 @@ void BlockFlowBox::determineHorizontalPosition(BoxFrame* child) const
     }
 }
 
-void BlockFlowBox::adjustBlockChildInColumnFlow(BoxFrame* child, MultiColumnFlowBox* column)
+void BlockFlowBox::adjustBlockChildInColumnFlow(BoxFrame* child, MultiColumnFlowBox* columnizer)
 {
-    auto newOffset = column->applyColumnBreakBefore(child, child->y());
-    auto adjustedOffset = column->applyColumnBreakInside(child, newOffset);
+    auto newOffset = columnizer->applyColumnBreakBefore(child, child->y());
+    auto adjustedOffset = columnizer->applyColumnBreakInside(child, newOffset);
 
     auto childHeight = child->height();
     if(adjustedOffset > newOffset) {
         auto delta = adjustedOffset - newOffset;
-        column->setColumnBreak(newOffset, childHeight - delta);
+        columnizer->setColumnBreak(newOffset, childHeight - delta);
         newOffset += delta;
     } else {
-        auto columnHeight = column->columnHeightForOffset(newOffset);
+        auto columnHeight = columnizer->columnHeightForOffset(newOffset);
         if(columnHeight > 0.f) {
-            auto remainingHeight = column->columnRemainingHeightForOffset(newOffset, AssociateWithLatterColumn);
+            auto remainingHeight = columnizer->columnRemainingHeightForOffset(newOffset, AssociateWithLatterColumn);
             if(remainingHeight < childHeight) {
-                column->setColumnBreak(newOffset, childHeight - remainingHeight);
+                columnizer->setColumnBreak(newOffset, childHeight - remainingHeight);
             } else if(columnHeight == remainingHeight && child->y() > 0.f) {
-                column->setColumnBreak(newOffset, childHeight);
+                columnizer->setColumnBreak(newOffset, childHeight);
             }
         }
     }
@@ -1421,18 +1420,18 @@ void BlockFlowBox::adjustBlockChildInColumnFlow(BoxFrame* child, MultiColumnFlow
     child->setY(newOffset);
 }
 
-void BlockFlowBox::layoutBlockChild(BoxFrame* child, MultiColumnFlowBox* column, MarginInfo& marginInfo)
+void BlockFlowBox::layoutBlockChild(BoxFrame* child, PageBuilder* paginator, MultiColumnFlowBox* columnizer, MarginInfo& marginInfo)
 {
     auto posTop = m_maxPositiveMarginTop;
     auto negTop = m_maxNegativeMarginTop;
 
     child->updateVerticalMargins();
 
-    auto estimatedTop = estimateVerticalPosition(child, column, marginInfo);
-    if(isInsideColumnFlow())
-        column->enterChild(estimatedTop);
+    auto estimatedTop = estimateVerticalPosition(child, columnizer, marginInfo);
+    if(columnizer)
+        columnizer->enterChild(estimatedTop);
     child->setY(estimatedTop);
-    child->layout();
+    child->layout(paginator, columnizer);
 
     auto offsetY = collapseMargins(child, marginInfo);
     auto clearDelta = getClearDelta(child, offsetY);
@@ -1452,8 +1451,8 @@ void BlockFlowBox::layoutBlockChild(BoxFrame* child, MultiColumnFlowBox* column,
     }
 
     child->setY(offsetY + clearDelta);
-    if(isInsideColumnFlow())
-        adjustBlockChildInColumnFlow(child, column);
+    if(columnizer)
+        adjustBlockChildInColumnFlow(child, columnizer);
     if(marginInfo.atTopOfBlock() && !child->isSelfCollapsingBlock()) {
         marginInfo.setAtTopOfBlock(false);
     }
@@ -1465,9 +1464,9 @@ void BlockFlowBox::layoutBlockChild(BoxFrame* child, MultiColumnFlowBox* column,
     }
 
     setHeight(height() + child->height());
-    if(isInsideColumnFlow()) {
-        setHeight(column->applyColumnBreakAfter(child, height()));
-        column->leaveChild(estimatedTop);
+    if(columnizer) {
+        setHeight(columnizer->applyColumnBreakAfter(child, height()));
+        columnizer->leaveChild(estimatedTop);
     }
 
     if(auto childBlock = to<BlockFlowBox>(child)) {
@@ -1475,10 +1474,8 @@ void BlockFlowBox::layoutBlockChild(BoxFrame* child, MultiColumnFlowBox* column,
     }
 }
 
-void BlockFlowBox::layoutBlockChildren()
+void BlockFlowBox::layoutBlockChildren(PageBuilder* paginator, MultiColumnFlowBox* columnizer)
 {
-    auto column = containingColumn();
-
     auto top = borderTop() + paddingTop();
     auto bottom = borderBottom() + paddingBottom();
 
@@ -1497,17 +1494,17 @@ void BlockFlowBox::layoutBlockChildren()
         } else if(child->isMultiColumnFlowBox()) {
             assert(child == m_columnFlowBox);
             child->setY(top);
-            child->layout();
+            child->layout(nullptr, columnizer);
             determineHorizontalPosition(child);
         } else {
-            layoutBlockChild(child, column, marginInfo);
+            layoutBlockChild(child, paginator, columnizer, marginInfo);
         }
     }
 
     handleBottomOfBlock(top, bottom, marginInfo);
 }
 
-void BlockFlowBox::layout()
+void BlockFlowBox::layout(PageBuilder* paginator, MultiColumnFlowBox* column)
 {
     if(isChildrenInline()) {
         m_lineLayout->updateWidth();
@@ -1520,9 +1517,9 @@ void BlockFlowBox::layout()
 
     setHeight(borderAndPaddingTop());
     if(isChildrenInline()) {
-        m_lineLayout->layout();
+        m_lineLayout->layout(paginator, column);
     } else {
-        layoutBlockChildren();
+        layoutBlockChildren(paginator, column);
     }
 
     if(avoidsFloats() && floatBottom() > (height() - borderAndPaddingBottom()))
@@ -1589,22 +1586,6 @@ void BlockFlowBox::paintContents(const PaintInfo& info, const Point& offset, Pai
     if(phase == PaintPhase::Floats) {
         paintFloats(info, offset);
     }
-}
-
-void BlockFlowBox::fragmentize(FragmentBuilder& builder, float top) const
-{
-    builder.enterBox(this, top);
-    if(isChildrenInline()) {
-        m_lineLayout->fragmentize(builder, top + y());
-    } else {
-        for(auto child = firstBoxFrame(); child; child = child->nextBoxFrame()) {
-            if(!child->isFloatingOrPositioned()) {
-                child->fragmentize(builder, top + y());
-            }
-        }
-    }
-
-    builder.exitBox(this, top);
 }
 
 } // namespace plutobook

@@ -38,9 +38,8 @@ public:
     void computePreferredWidths(float& minPreferredWidth, float& maxPreferredWidth) const final;
     void computeWidth(float& x, float& width, float& marginLeft, float& marginRight) const final;
     void computeHeight(float& y, float& height, float& marginTop, float& marginBottom) const final;
-    void layout() final;
+    void layout(PageBuilder* paginator, MultiColumnFlowBox* columnizer) final;
 
-    void fragmentize(FragmentBuilder& builder, float top) const final;
     void paint(const PaintInfo& info, const Point& offset, PaintPhase phase) final;
 
     void paintColumnRules(GraphicsContext& context, const Point& offset);
@@ -122,9 +121,8 @@ public:
     void computePreferredWidths(float& minPreferredWidth, float& maxPreferredWidth) const final;
     void computeWidth(float& x, float& width, float& marginLeft, float& marginRight) const final;
     void computeHeight(float& y, float& height, float& marginTop, float& marginBottom) const final;
-    void layout() final;
+    void layout(PageBuilder* paginator, MultiColumnFlowBox* columnizer) final;
 
-    void fragmentize(FragmentBuilder& builder, float top) const final;
     void paint(const PaintInfo& info, const Point& offset, PaintPhase phase) final;
 
 private:
@@ -182,10 +180,9 @@ public:
 
     void computePreferredWidths(float& minPreferredWidth, float& maxPreferredWidth) const final;
     void computeWidth(float& x, float& width, float& marginLeft, float& marginRight) const final;
+    void layout(PageBuilder* paginator, MultiColumnFlowBox* columnizer) final;
     void build() final;
-    void layout() final;
 
-    void fragmentize(FragmentBuilder& builder, float top) const final;
     void paint(const PaintInfo& info, const Point& offset, PaintPhase phase) final;
 
     const char* name() const final { return "MultiColumnFlowBox"; }

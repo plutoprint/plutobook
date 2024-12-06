@@ -3,6 +3,7 @@
 
 #include "globalstring.h"
 #include "blockbox.h"
+
 #include "plutobook.hpp"
 
 namespace plutobook {
@@ -13,6 +14,7 @@ public:
 
     bool isPageBox() const final { return true; }
     bool requiresLayer() const final { return false; }
+
     const PageSize& pageSize() const { return m_pageSize; }
     const GlobalString& pageName() const { return m_pageName; }
     uint32_t pageIndex() const { return m_pageIndex; }
@@ -29,7 +31,7 @@ public:
     void computeIntrinsicWidths(float& minWidth, float& maxWidth) const final;
     void computeWidth(float& x, float& width, float& marginLeft, float& marginRight) const final;
     void computeHeight(float& y, float& height, float& marginTop, float& marginBottom) const final;
-    void layout() final;
+    void layout(PageBuilder* paginator, MultiColumnFlowBox* columnizer) final;
     void build() final;
 
     const char* name() const final { return "PageBox"; }
@@ -39,6 +41,7 @@ private:
     PageSize m_pageSize;
     GlobalString m_pageName;
     uint32_t m_pageIndex;
+
     float m_pageTop{0};
     float m_pageBottom{0};
     float m_pageScale{1};
