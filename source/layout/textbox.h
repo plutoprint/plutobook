@@ -63,20 +63,6 @@ struct is_a<WordBreakBox> {
     static bool check(const Box& box) { return box.isWordBreakBox(); }
 };
 
-class LeaderTextBox final : public TextBox {
-public:
-    LeaderTextBox(const RefPtr<BoxStyle>& style);
-
-    bool isLeaderTextBox() const final { return true; }
-
-    const char* name() const final { return "LeaderTextBox"; }
-};
-
-template<>
-struct is_a<LeaderTextBox> {
-    static bool check(const Box& box) { return box.isLeaderTextBox(); }
-};
-
 } // namespace plutobook
 
 #endif // PLUTOBOOK_TEXTBOX_H

@@ -91,7 +91,11 @@ public:
     virtual bool isTextBox() const { return false; }
     virtual bool isLineBreakBox() const { return false; }
     virtual bool isWordBreakBox() const { return false; }
-    virtual bool isLeaderTextBox() const { return false; }
+    virtual bool isContentBox() const { return false; }
+    virtual bool isLeaderBox() const { return false; }
+    virtual bool isTargetCounterBox() const { return false; }
+    virtual bool isPageCounterBox() const { return false; }
+    virtual bool isPagesCounterBox() const { return false; }
     virtual bool isInlineBox() const { return false; }
     virtual bool isBlockBox() const { return false; }
     virtual bool isBlockFlowBox() const { return false; }

@@ -31,9 +31,4 @@ WordBreakBox::WordBreakBox(Node* node, const RefPtr<BoxStyle>& style)
 {
 }
 
-LeaderTextBox::LeaderTextBox(const RefPtr<BoxStyle>& style)
-    : TextBox(nullptr, style)
-{
-}
-
 } // namespace plutobook

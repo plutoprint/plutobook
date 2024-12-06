@@ -528,7 +528,7 @@ void LineItemsBuilder::appendText(Box* box, const UString& text)
     }
 
     restoreTrailingCollapsibleSpaceIfRemoved();
-    if(box->isLeaderTextBox()) {
+    if(box->isLeaderBox()) {
         appendTextItem(LineItem::Type::LeaderText, box, text);
         return;
     }
