@@ -115,6 +115,7 @@ plutobook_sources = [
     'source/layout/boxlayer.cpp',
     'source/layout/boxstyle.cpp',
     'source/layout/boxview.cpp',
+    'source/layout/contentbox.cpp',
     'source/layout/flexiblebox.cpp',
     'source/layout/formcontrolbox.cpp',
     'source/layout/fragmentbuilder.cpp',
