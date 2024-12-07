@@ -391,7 +391,7 @@ void ReplacedBox::computeHeight(float& y, float& height, float& marginTop, float
     computeVerticalMargins(marginTop, marginBottom);
 }
 
-void ReplacedBox::layout(PageBuilder* paginator, MultiColumnFlowBox* columnizer)
+void ReplacedBox::layout(FragmentBuilder* fragmentainer)
 {
     updateWidth();
     updateHeight();

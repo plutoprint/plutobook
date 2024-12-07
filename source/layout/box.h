@@ -40,8 +40,7 @@ class BoxView;
 class BoxModel;
 class BlockBox;
 class BlockFlowBox;
-class MultiColumnFlowBox;
-class PageBuilder;
+class FragmentBuilder;
 
 class Box : public HeapMember {
 public:
@@ -77,7 +76,6 @@ public:
 
     BlockBox* containingBlock() const;
     BoxModel* containingBox() const;
-    MultiColumnFlowBox* containingColumn() const;
     BoxLayer* enclosingLayer() const;
     BoxView* view() const;
 
@@ -182,7 +180,7 @@ public:
     virtual const Rect& paintBoundingBox() const { return Rect::Invalid; }
     virtual const Transform& localTransform() const { return Transform::Identity; }
 
-    virtual void layout(PageBuilder* paginator, MultiColumnFlowBox* columnizer);
+    virtual void layout(FragmentBuilder* fragmentainer);
     virtual void build();
 
     virtual const char* name() const { return "Box"; }

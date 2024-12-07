@@ -9,8 +9,6 @@ namespace plutobook {
 
 using PositionedBoxList = std::pmr::set<BoxFrame*>;
 
-enum ColumnBoundaryRule { AssociateWithFormerColumn, AssociateWithLatterColumn };
-
 class BlockBox : public BoxFrame {
 public:
     BlockBox(Node* node, const RefPtr<BoxStyle>& style);
@@ -195,14 +193,14 @@ public:
     void clearFloats(Clear clear);
 
     void estimateMarginTop(BoxFrame* child, float& positiveMarginTop, float& negativeMarginTop) const;
-    float estimateVerticalPosition(BoxFrame* child, MultiColumnFlowBox* columnizer, const MarginInfo& marginInfo) const;
+    float estimateVerticalPosition(BoxFrame* child, FragmentBuilder* fragmentainer, const MarginInfo& marginInfo) const;
     void determineHorizontalPosition(BoxFrame* child) const;
 
-    void adjustBlockChildInColumnFlow(BoxFrame* child, MultiColumnFlowBox* columnizer);
-    void layoutBlockChild(BoxFrame* child, PageBuilder* paginator, MultiColumnFlowBox* columnizer, MarginInfo& marginInfo);
-    void layoutBlockChildren(PageBuilder* paginator, MultiColumnFlowBox* columnizer);
+    void adjustBlockChildInColumnFlow(BoxFrame* child, FragmentBuilder* fragmentainer);
+    void layoutBlockChild(BoxFrame* child, FragmentBuilder* fragmentainer, MarginInfo& marginInfo);
+    void layoutBlockChildren(FragmentBuilder* fragmentainer);
 
-    void layout(PageBuilder* paginator, MultiColumnFlowBox* column) override;
+    void layout(FragmentBuilder* fragmentainer) override;
     void build() override;
 
     void paintFloats(const PaintInfo& info, const Point& offset);

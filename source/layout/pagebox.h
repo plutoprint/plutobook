@@ -31,7 +31,7 @@ public:
     void computeIntrinsicWidths(float& minWidth, float& maxWidth) const final;
     void computeWidth(float& x, float& width, float& marginLeft, float& marginRight) const final;
     void computeHeight(float& y, float& height, float& marginTop, float& marginBottom) const final;
-    void layout(PageBuilder* paginator, MultiColumnFlowBox* columnizer) final;
+    void layout(FragmentBuilder* fragmentainer) final;
     void build() final;
 
     const char* name() const final { return "PageBox"; }

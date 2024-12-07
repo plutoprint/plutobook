@@ -191,8 +191,7 @@ struct is_a<FlowLineBox> {
 };
 
 class BlockFlowBox;
-class MultiColumnFlowBox;
-class PageBuilder;
+class FragmentBuilder;
 
 class RootLineBox final : public FlowLineBox {
 public:
@@ -205,9 +204,9 @@ public:
     float lineBottom() const { return m_lineBottom; }
     void updateLineTopAndBottom(const LineBox* line);
 
-    float adjustLineBoxInColumnFlow(MultiColumnFlowBox* columnizer, float offset, float lineHeight) const;
     float alignInHorizontalDirection(float startOffset);
-    float alignInVerticalDirection(PageBuilder* paginator, MultiColumnFlowBox* columnizer, float blockHeight);
+    float alignInVerticalDirection(FragmentBuilder* fragmentainer, float blockHeight);
+    float adjustLineBoxInColumnFlow(FragmentBuilder* fragmentainer, float offset, float lineHeight) const;
 
 private:
     RootLineBox(BlockFlowBox* box);

@@ -151,7 +151,7 @@ public:
     const FlexItemList& items() { return m_items; }
     const FlexLineList& lines() const { return m_lines; }
 
-    void layout(PageBuilder* paginator, MultiColumnFlowBox* columnizer) final;
+    void layout(FragmentBuilder* fragmentainer) final;
     void build() final;
 
     void paintContents(const PaintInfo& info, const Point& offset, PaintPhase phase) final;

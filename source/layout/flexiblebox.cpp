@@ -89,7 +89,7 @@ float FlexItem::computeFlexBaseSize() const
         flexBasis = m_box->style()->height();
     auto height = computeHeightUsing(flexBasis);
     if(height == std::nullopt)
-        m_box->layout(nullptr, nullptr);
+        m_box->layout(nullptr);
     return height.value_or(m_box->height() - m_box->borderAndPaddingHeight());
 }
 
@@ -397,7 +397,7 @@ float FlexibleBox::borderAndPaddingAfter() const
     return borderEnd() + paddingEnd();
 }
 
-void FlexibleBox::layout(PageBuilder* paginator, MultiColumnFlowBox* columnizer)
+void FlexibleBox::layout(FragmentBuilder* fragmentainer)
 {
     updateWidth();
     setHeight(borderAndPaddingHeight());
@@ -562,7 +562,7 @@ void FlexibleBox::layout(PageBuilder* paginator, MultiColumnFlowBox* columnizer)
                 child->setOverrideHeight(item.targetMainBorderBoxSize());
             }
 
-            child->layout(nullptr, nullptr);
+            child->layout(nullptr);
 
             if(autoMarginCount > 0) {
                 auto childStyle = child->style();
@@ -763,14 +763,14 @@ void FlexibleBox::layout(PageBuilder* paginator, MultiColumnFlowBox* columnizer)
                     childHeight = item.constrainHeight(childHeight) + child->borderAndPaddingHeight();
                     if(childHeight != child->height()) {
                         child->setOverrideHeight(childHeight);
-                        child->layout(nullptr, nullptr);
+                        child->layout(nullptr);
                     }
                 } else if(isVerticalFlow() && childStyle->width().isAuto()) {
                     auto childWidth = line.crossSize() - child->marginWidth() - child->borderAndPaddingWidth();
                     childWidth = item.constrainWidth(childWidth) + child->borderAndPaddingWidth();
                     if(childWidth != child->width()) {
                         child->setOverrideWidth(childWidth);
-                        child->layout(nullptr, nullptr);
+                        child->layout(nullptr);
                     }
                 }
             }

@@ -285,12 +285,12 @@ float TableBox::availableHorizontalSpace() const
     return availableWidth();
 }
 
-void TableBox::layout(PageBuilder* paginator, MultiColumnFlowBox* columnizer)
+void TableBox::layout(FragmentBuilder* fragmentainer)
 {
     updateWidth();
     setHeight(0.f);
     auto layoutCaption = [&](TableCaptionBox* caption) {
-        caption->layout(paginator, columnizer);
+        caption->layout(fragmentainer);
         caption->setX(caption->marginLeft());
         caption->setY(height() + caption->marginTop());
         setHeight(caption->y() + caption->height() + caption->marginBottom());
@@ -326,7 +326,7 @@ void TableBox::layout(PageBuilder* paginator, MultiColumnFlowBox* columnizer)
 
         auto totalSectionHeight = borderVerticalSpacing();
         for(auto section : m_sections) {
-            section->layout(paginator, columnizer);
+            section->layout(fragmentainer);
             totalSectionHeight += section->height() + borderVerticalSpacing();
         }
 
@@ -338,7 +338,7 @@ void TableBox::layout(PageBuilder* paginator, MultiColumnFlowBox* columnizer)
         }
 
         for(auto section : m_sections) {
-            section->layoutRows(paginator, columnizer);
+            section->layoutRows(fragmentainer);
             section->setX(borderAndPaddingLeft());
             section->setY(height() + borderVerticalSpacing());
             setHeight(section->y() + section->height());
@@ -1075,7 +1075,7 @@ static void distributeSpanCellToRows(const TableCellBox* cellBox, std::span<Tabl
     }
 }
 
-void TableSectionBox::layoutRows(PageBuilder* paginator, MultiColumnFlowBox* columnizer)
+void TableSectionBox::layoutRows(FragmentBuilder* fragmentainer)
 {
     float position = 0.f;
     auto verticalSpacing = table()->borderVerticalSpacing();
@@ -1095,7 +1095,7 @@ void TableSectionBox::layoutRows(PageBuilder* paginator, MultiColumnFlowBox* col
 
             cellBox->setY(position);
             if(cellBox->updateIntrinsicPaddings(rowHeight)) {
-                cellBox->layout(nullptr, nullptr);
+                cellBox->layout(nullptr);
             }
         }
 
@@ -1105,7 +1105,7 @@ void TableSectionBox::layoutRows(PageBuilder* paginator, MultiColumnFlowBox* col
     setHeight(std::max(0.f, position - verticalSpacing));
 }
 
-void TableSectionBox::layout(PageBuilder* paginator, MultiColumnFlowBox* columnizer)
+void TableSectionBox::layout(FragmentBuilder* fragmentainer)
 {
     setWidth(table()->contentBoxWidth());
     auto& columns = table()->columns();
@@ -1131,7 +1131,7 @@ void TableSectionBox::layout(PageBuilder* paginator, MultiColumnFlowBox* columni
             cellBox->clearOverrideSize();
             cellBox->setOverrideWidth(width);
             cellBox->updatePaddingWidths();
-            cellBox->layout(nullptr, nullptr);
+            cellBox->layout(nullptr);
         }
     }
 

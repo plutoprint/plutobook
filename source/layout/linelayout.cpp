@@ -923,7 +923,7 @@ void LineBreaker::handleReplaced(const LineItem& item)
         return;
     }
 
-    box.layout(nullptr, nullptr);
+    box.layout(nullptr);
 
     run.canBreakAfter = canBreakAfter(run);
     run.width = box.width() + box.marginLeft() + box.marginRight();
@@ -1253,7 +1253,7 @@ LineBuilder::LineBuilder(BlockFlowBox* block, RootLineBoxList& lines)
 {
 }
 
-void LineBuilder::buildLine(PageBuilder* paginator, MultiColumnFlowBox* columnizer, const LineInfo& info)
+void LineBuilder::buildLine(FragmentBuilder* fragmentainer, const LineInfo& info)
 {
     if(m_parentLine) {
         m_parentLine = nullptr;
@@ -1316,7 +1316,7 @@ void LineBuilder::buildLine(PageBuilder* paginator, MultiColumnFlowBox* columniz
     rootLine->setIsEmptyLine(info.isEmptyLine());
     rootLine->setIsFirstLine(info.isFirstLine());
     rootLine->alignInHorizontalDirection(startOffset + info.lineOffset());
-    auto blockHeight = rootLine->alignInVerticalDirection(paginator, columnizer, m_block->height());
+    auto blockHeight = rootLine->alignInVerticalDirection(fragmentainer, m_block->height());
     if(!rootLine->isEmptyLine()) {
         m_block->setHeight(blockHeight);
     }
@@ -1412,7 +1412,7 @@ void LineBuilder::handleReplaced(const LineItemRun& run)
     if(box->isPositioned())
         box->containingBlock()->insertPositonedBox(box);
     if(box->isOutsideListMarkerBox())
-        box->layout(nullptr, nullptr);
+        box->layout(nullptr);
     auto line = ReplacedLineBox::create(box);
     addLineBox(line.get());
     box->setLine(std::move(line));
@@ -1573,12 +1573,12 @@ void LineLayout::computeIntrinsicWidths(float& minWidth, float& maxWidth) const
     maxWidth = std::max(maxWidth, inlineMaxWidth);
 }
 
-void LineLayout::layout(PageBuilder* paginator, MultiColumnFlowBox* columnizer)
+void LineLayout::layout(FragmentBuilder* fragmentainer)
 {
     if(!m_lines.empty()) {
         for(auto& line : m_lines) {
             line->setY(0.f);
-            auto blockHeight = line->alignInVerticalDirection(paginator, columnizer, m_block->height());
+            auto blockHeight = line->alignInVerticalDirection(fragmentainer, m_block->height());
             if(!line->isEmptyLine()) {
                 m_block->setHeight(blockHeight);
             }
@@ -1621,7 +1621,7 @@ void LineLayout::layout(PageBuilder* paginator, MultiColumnFlowBox* columnizer)
     LineBreaker breaker(m_block, m_data);
     LineBuilder builder(m_block, m_lines);
     while(!breaker.isDone()) {
-        builder.buildLine(paginator, columnizer, breaker.nextLine());
+        builder.buildLine(fragmentainer, breaker.nextLine());
     }
 
     if(breaker.hasUnpositionedFloats())

@@ -58,7 +58,7 @@ public:
     float borderVerticalSpacing() const { return m_borderVerticalSpacing; }
     float availableHorizontalSpace() const;
 
-    void layout(PageBuilder* paginator, MultiColumnFlowBox* columnizer) final;
+    void layout(FragmentBuilder* fragmentainer) final;
     void build() final;
 
     void paintDecorations(const PaintInfo& info, const Point& offset) final;
@@ -159,8 +159,8 @@ public:
 
     void distributeExcessHeightToRows(float distributableHeight);
 
-    void layoutRows(PageBuilder* paginator, MultiColumnFlowBox* columnizer);
-    void layout(PageBuilder* paginator, MultiColumnFlowBox* columnizer) final;
+    void layoutRows(FragmentBuilder* fragmentainer);
+    void layout(FragmentBuilder* fragmentainer) final;
     void build() final;
 
     void paint(const PaintInfo& info, const Point& offset, PaintPhase phase) final;

@@ -2,6 +2,7 @@
 #define PLUTOBOOK_MULTICOLUMNBOX_H
 
 #include "blockbox.h"
+#include "fragmentbuilder.h"
 
 namespace plutobook {
 
@@ -38,7 +39,7 @@ public:
     void computePreferredWidths(float& minPreferredWidth, float& maxPreferredWidth) const final;
     void computeWidth(float& x, float& width, float& marginLeft, float& marginRight) const final;
     void computeHeight(float& y, float& height, float& marginTop, float& marginBottom) const final;
-    void layout(PageBuilder* paginator, MultiColumnFlowBox* columnizer) final;
+    void layout(FragmentBuilder* fragmentainer) final;
 
     void paint(const PaintInfo& info, const Point& offset, PaintPhase phase) final;
 
@@ -121,7 +122,7 @@ public:
     void computePreferredWidths(float& minPreferredWidth, float& maxPreferredWidth) const final;
     void computeWidth(float& x, float& width, float& marginLeft, float& marginRight) const final;
     void computeHeight(float& y, float& height, float& marginTop, float& marginBottom) const final;
-    void layout(PageBuilder* paginator, MultiColumnFlowBox* columnizer) final;
+    void layout(FragmentBuilder* fragmentainer) final;
 
     void paint(const PaintInfo& info, const Point& offset, PaintPhase phase) final;
 
@@ -140,7 +141,7 @@ struct is_a<MultiColumnSpanBox> {
     static bool check(const Box& box) { return box.isMultiColumnSpanBox(); }
 };
 
-class MultiColumnFlowBox final : public BlockFlowBox {
+class MultiColumnFlowBox final : public BlockFlowBox, public FragmentBuilder {
 public:
     static MultiColumnFlowBox* create(const BoxStyle* parentStyle);
 
@@ -154,20 +155,21 @@ public:
     BoxFrame* firstMultiColumnBox() const;
     BoxFrame* lastMultiColumnBox() const;
 
-    float applyColumnBreakBefore(const BoxFrame* child, float offset);
-    float applyColumnBreakAfter(const BoxFrame* child, float offset);
-    float applyColumnBreakInside(const BoxFrame* child, float offset);
+    float applyFragmentBreakBefore(const BoxFrame* child, float offset) final;
+    float applyFragmentBreakAfter(const BoxFrame* child, float offset) final;
+    float applyFragmentBreakInside(const BoxFrame* child, float offset) final;
 
-    float columnHeightForOffset(float offset) const;
-    float columnRemainingHeightForOffset(float offset, ColumnBoundaryRule rule) const;
+    float fragmentHeightForOffset(float offset) const final;
+    float fragmentRemainingHeightForOffset(float offset, FragmentBoundaryRule rule) const final;
 
-    void addForcedColumnBreak(float offset);
-    void setColumnBreak(float offset, float spaceShortage);
-    void updateMinimumColumnHeight(float offset, float minHeight);
+    void addForcedFragmentBreak(float offset) final;
+    void setFragmentBreak(float offset, float spaceShortage) final;
+    void updateMinimumFragmentHeight(float offset, float minHeight) final;
+
+    void enterFragment(const BoxFrame* child, float offset) final;
+    void leaveFragment(const BoxFrame* child, float offset) final;
 
     void skipColumnSpanBox(BoxFrame* box, float offset);
-    void enterChild(float offset) { m_rowOffset += offset; }
-    void leaveChild(float offset) { m_rowOffset -= offset; }
 
     MultiColumnRowBox* columnRowAtOffset(float offset) const;
     BlockFlowBox* columnBlockFlowBox() const;
@@ -180,7 +182,7 @@ public:
 
     void computePreferredWidths(float& minPreferredWidth, float& maxPreferredWidth) const final;
     void computeWidth(float& x, float& width, float& marginLeft, float& marginRight) const final;
-    void layout(PageBuilder* paginator, MultiColumnFlowBox* columnizer) final;
+    void layout(FragmentBuilder* fragmentainer) final;
     void build() final;
 
     void paint(const PaintInfo& info, const Point& offset, PaintPhase phase) final;

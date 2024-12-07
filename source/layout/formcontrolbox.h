@@ -53,7 +53,7 @@ public:
     void computeIntrinsicWidths(float& minWidth, float& maxWidth) const final;
     void computeHeight(float& y, float& height, float& marginTop, float& marginBottom) const final;
     void paintContents(const PaintInfo& info, const Point& offset, PaintPhase phase) final;
-    void layout(PageBuilder* paginator, MultiColumnFlowBox* columnizer) final;
+    void layout(FragmentBuilder* fragmentainer) final;
 
     const char* name() const final { return "SelectBox"; }
 

@@ -12,6 +12,7 @@
 #include "imageresource.h"
 #include "fontresource.h"
 #include "stringutils.h"
+#include "fragmentbuilder.h"
 
 #include "plutobook.hpp"
 
@@ -889,7 +890,7 @@ void Document::build()
 
 void Document::layout(PageBuilder* paginator)
 {
-    box()->layout(paginator, nullptr);
+    box()->layout(paginator);
 }
 
 void Document::render(GraphicsContext& context, const Rect& rect)

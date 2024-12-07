@@ -599,29 +599,12 @@ void RootLineBox::updateLineTopAndBottom(const LineBox* line)
     m_lineBottom = std::max(m_lineBottom, line->y() + line->height());
 }
 
-float RootLineBox::adjustLineBoxInColumnFlow(MultiColumnFlowBox* columnizer, float offset, float lineHeight) const
-{
-    auto columnHeight = columnizer->columnHeightForOffset(offset);
-    columnizer->updateMinimumColumnHeight(offset, lineHeight);
-    if(columnHeight == 0.f || lineHeight > columnHeight)
-        return 0.f;
-    auto remainingHeight = columnizer->columnRemainingHeightForOffset(offset, AssociateWithLatterColumn);
-    if(remainingHeight < lineHeight) {
-        columnizer->setColumnBreak(offset, lineHeight - remainingHeight);
-        return remainingHeight;
-    }
-
-    if(m_lineIndex > 0 && remainingHeight == columnHeight)
-        columnizer->setColumnBreak(offset, lineHeight);
-    return 0.f;
-}
-
 float RootLineBox::alignInHorizontalDirection(float startOffset)
 {
     return placeInHorizontalDirection(startOffset, box());
 }
 
-float RootLineBox::alignInVerticalDirection(PageBuilder* paginator, MultiColumnFlowBox* columnizer, float blockHeight)
+float RootLineBox::alignInVerticalDirection(FragmentBuilder* fragmentainer, float blockHeight)
 {
     float maxAscent = 0.f;
     float maxDescent = 0.f;
@@ -633,12 +616,29 @@ float RootLineBox::alignInVerticalDirection(PageBuilder* paginator, MultiColumnF
     }
 
     auto maxHeight = maxAscent + maxDescent;
-    if(columnizer)
-        blockHeight += adjustLineBoxInColumnFlow(columnizer, blockHeight, maxHeight);
+    if(fragmentainer && maxHeight > 0.f)
+        blockHeight += adjustLineBoxInColumnFlow(fragmentainer, blockHeight, maxHeight);
     m_lineTop = blockHeight;
     m_lineBottom = blockHeight;
     placeInVerticalDirection(blockHeight, maxHeight, maxAscent, this);
     return blockHeight + maxHeight;
+}
+
+float RootLineBox::adjustLineBoxInColumnFlow(FragmentBuilder* fragmentainer, float offset, float lineHeight) const
+{
+    auto columnHeight = fragmentainer->fragmentHeightForOffset(offset);
+    fragmentainer->updateMinimumFragmentHeight(offset, lineHeight);
+    if(columnHeight == 0.f || lineHeight > columnHeight)
+        return 0.f;
+    auto remainingHeight = fragmentainer->fragmentRemainingHeightForOffset(offset, AssociateWithLatterFragment);
+    if(remainingHeight < lineHeight) {
+        fragmentainer->setFragmentBreak(offset, lineHeight - remainingHeight);
+        return remainingHeight;
+    }
+
+    if(m_lineIndex > 0 && remainingHeight == columnHeight)
+        fragmentainer->setFragmentBreak(offset, lineHeight);
+    return 0.f;
 }
 
 RootLineBox::RootLineBox(BlockFlowBox* box)

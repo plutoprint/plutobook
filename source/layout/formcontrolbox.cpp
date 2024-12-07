@@ -134,7 +134,7 @@ void SelectBox::paintContents(const PaintInfo& info, const Point& offset, PaintP
     }
 }
 
-void SelectBox::layout(PageBuilder* paginator, MultiColumnFlowBox* columnizer)
+void SelectBox::layout(FragmentBuilder* fragmentainer)
 {
     updateWidth();
     setHeight(borderAndPaddingTop());
@@ -147,7 +147,7 @@ void SelectBox::layout(PageBuilder* paginator, MultiColumnFlowBox* columnizer)
             continue;
         }
 
-        child->layout(paginator, columnizer);
+        child->layout(fragmentainer);
         child->setY(height() + child->marginTop());
         child->setX(borderStart() + paddingStart() + child->marginLeft());
         if(style()->isRightToLeftDirection())

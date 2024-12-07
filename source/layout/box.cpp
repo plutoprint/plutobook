@@ -243,17 +243,6 @@ BoxModel* Box::containingBox() const
     return to<BoxModel>(parent);
 }
 
-MultiColumnFlowBox* Box::containingColumn() const
-{
-    for(auto current = this; current; current = current->parentBox()) {
-        if(auto column = to<MultiColumnFlowBox>(current)) {
-            return const_cast<MultiColumnFlowBox*>(column);
-        }
-    }
-
-    return nullptr;
-}
-
 BoxLayer* Box::enclosingLayer() const
 {
     if(hasColumnSpanBox()) {
@@ -291,7 +280,7 @@ bool Box::isFlexItem() const
     return m_parentBox && m_parentBox->isFlexibleBox();
 }
 
-void Box::layout(PageBuilder* paginator, MultiColumnFlowBox* columnizer)
+void Box::layout(FragmentBuilder* fragmentainer)
 {
     assert(false);
 }

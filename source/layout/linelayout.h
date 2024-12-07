@@ -294,8 +294,7 @@ private:
 class LineBox;
 class FlowLineBox;
 class RootLineBox;
-class MultiColumnFlowBox;
-class PageBuilder;
+class FragmentBuilder;
 
 using RootLineBoxList = std::pmr::vector<std::unique_ptr<RootLineBox>>;
 
@@ -303,7 +302,7 @@ class LineBuilder {
 public:
     LineBuilder(BlockFlowBox* block, RootLineBoxList& lines);
 
-    void buildLine(PageBuilder* paginator, MultiColumnFlowBox* columnizer, const LineInfo& info);
+    void buildLine(FragmentBuilder* fragmentainer, const LineInfo& info);
 
 private:
     void addLineBox(LineBox* childLine);
@@ -317,7 +316,7 @@ private:
     uint32_t m_lineIndex{0};
 };
 
-class PageBuilder;
+class FragmentBuilder;
 class PaintInfo;
 class Point;
 class Rect;
@@ -337,7 +336,7 @@ public:
     void updateWidth();
     void updateOverflowRect();
     void computeIntrinsicWidths(float& minWidth, float& maxWidth) const;
-    void layout(PageBuilder* paginator, MultiColumnFlowBox* columnizer);
+    void layout(FragmentBuilder* fragmentainer);
     void build();
 
     void paint(const PaintInfo& info, const Point& offset, PaintPhase phase);

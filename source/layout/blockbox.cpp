@@ -58,7 +58,7 @@ void BlockBox::layoutPositionedBoxes()
 {
     if(m_positionedBoxes) {
         for(auto box : *m_positionedBoxes) {
-            box->layout(nullptr, nullptr);
+            box->layout(nullptr);
         }
     }
 }
@@ -739,7 +739,7 @@ void BlockFlowBox::insertFloatingBox(BoxFrame* box)
     if(containsFloat(box))
         return;
 
-    box->layout(nullptr, nullptr);
+    box->layout(nullptr);
 
     FloatingBox floatingBox(box);
     floatingBox.setWidth(box->width() + box->marginWidth());
@@ -1345,7 +1345,7 @@ void BlockFlowBox::estimateMarginTop(BoxFrame* child, float& positiveMarginTop, 
     }
 }
 
-float BlockFlowBox::estimateVerticalPosition(BoxFrame* child, MultiColumnFlowBox* columnizer, const MarginInfo& marginInfo) const
+float BlockFlowBox::estimateVerticalPosition(BoxFrame* child, FragmentBuilder* fragmentainer, const MarginInfo& marginInfo) const
 {
     auto estimatedTop = height();
     if(!marginInfo.canCollapseWithMarginTop()) {
@@ -1357,9 +1357,9 @@ float BlockFlowBox::estimateVerticalPosition(BoxFrame* child, MultiColumnFlowBox
     }
 
     estimatedTop += getClearDelta(child, estimatedTop);
-    if(columnizer) {
-        estimatedTop = columnizer->applyColumnBreakBefore(child, estimatedTop);
-        estimatedTop = columnizer->applyColumnBreakInside(child, estimatedTop);
+    if(fragmentainer) {
+        estimatedTop = fragmentainer->applyFragmentBreakBefore(child, estimatedTop);
+        estimatedTop = fragmentainer->applyFragmentBreakInside(child, estimatedTop);
     }
 
     return estimatedTop;
@@ -1394,24 +1394,24 @@ void BlockFlowBox::determineHorizontalPosition(BoxFrame* child) const
     }
 }
 
-void BlockFlowBox::adjustBlockChildInColumnFlow(BoxFrame* child, MultiColumnFlowBox* columnizer)
+void BlockFlowBox::adjustBlockChildInColumnFlow(BoxFrame* child, FragmentBuilder* fragmentainer)
 {
-    auto newOffset = columnizer->applyColumnBreakBefore(child, child->y());
-    auto adjustedOffset = columnizer->applyColumnBreakInside(child, newOffset);
+    auto newOffset = fragmentainer->applyFragmentBreakBefore(child, child->y());
+    auto adjustedOffset = fragmentainer->applyFragmentBreakInside(child, newOffset);
 
     auto childHeight = child->height();
     if(adjustedOffset > newOffset) {
         auto delta = adjustedOffset - newOffset;
-        columnizer->setColumnBreak(newOffset, childHeight - delta);
+        fragmentainer->setFragmentBreak(newOffset, childHeight - delta);
         newOffset += delta;
     } else {
-        auto columnHeight = columnizer->columnHeightForOffset(newOffset);
+        auto columnHeight = fragmentainer->fragmentHeightForOffset(newOffset);
         if(columnHeight > 0.f) {
-            auto remainingHeight = columnizer->columnRemainingHeightForOffset(newOffset, AssociateWithLatterColumn);
+            auto remainingHeight = fragmentainer->fragmentRemainingHeightForOffset(newOffset, AssociateWithLatterFragment);
             if(remainingHeight < childHeight) {
-                columnizer->setColumnBreak(newOffset, childHeight - remainingHeight);
+                fragmentainer->setFragmentBreak(newOffset, childHeight - remainingHeight);
             } else if(columnHeight == remainingHeight && child->y() > 0.f) {
-                columnizer->setColumnBreak(newOffset, childHeight);
+                fragmentainer->setFragmentBreak(newOffset, childHeight);
             }
         }
     }
@@ -1420,18 +1420,18 @@ void BlockFlowBox::adjustBlockChildInColumnFlow(BoxFrame* child, MultiColumnFlow
     child->setY(newOffset);
 }
 
-void BlockFlowBox::layoutBlockChild(BoxFrame* child, PageBuilder* paginator, MultiColumnFlowBox* columnizer, MarginInfo& marginInfo)
+void BlockFlowBox::layoutBlockChild(BoxFrame* child, FragmentBuilder* fragmentainer, MarginInfo& marginInfo)
 {
     auto posTop = m_maxPositiveMarginTop;
     auto negTop = m_maxNegativeMarginTop;
 
     child->updateVerticalMargins();
 
-    auto estimatedTop = estimateVerticalPosition(child, columnizer, marginInfo);
-    if(columnizer)
-        columnizer->enterChild(estimatedTop);
+    auto estimatedTop = estimateVerticalPosition(child, fragmentainer, marginInfo);
+    if(fragmentainer)
+        fragmentainer->enterFragment(child, estimatedTop);
     child->setY(estimatedTop);
-    child->layout(paginator, columnizer);
+    child->layout(fragmentainer);
 
     auto offsetY = collapseMargins(child, marginInfo);
     auto clearDelta = getClearDelta(child, offsetY);
@@ -1451,8 +1451,8 @@ void BlockFlowBox::layoutBlockChild(BoxFrame* child, PageBuilder* paginator, Mul
     }
 
     child->setY(offsetY + clearDelta);
-    if(columnizer)
-        adjustBlockChildInColumnFlow(child, columnizer);
+    if(fragmentainer)
+        adjustBlockChildInColumnFlow(child, fragmentainer);
     if(marginInfo.atTopOfBlock() && !child->isSelfCollapsingBlock()) {
         marginInfo.setAtTopOfBlock(false);
     }
@@ -1464,9 +1464,9 @@ void BlockFlowBox::layoutBlockChild(BoxFrame* child, PageBuilder* paginator, Mul
     }
 
     setHeight(height() + child->height());
-    if(columnizer) {
-        setHeight(columnizer->applyColumnBreakAfter(child, height()));
-        columnizer->leaveChild(estimatedTop);
+    if(fragmentainer) {
+        setHeight(fragmentainer->applyFragmentBreakAfter(child, height()));
+        fragmentainer->leaveFragment(child, estimatedTop);
     }
 
     if(auto childBlock = to<BlockFlowBox>(child)) {
@@ -1474,7 +1474,7 @@ void BlockFlowBox::layoutBlockChild(BoxFrame* child, PageBuilder* paginator, Mul
     }
 }
 
-void BlockFlowBox::layoutBlockChildren(PageBuilder* paginator, MultiColumnFlowBox* columnizer)
+void BlockFlowBox::layoutBlockChildren(FragmentBuilder* fragmentainer)
 {
     auto top = borderTop() + paddingTop();
     auto bottom = borderBottom() + paddingBottom();
@@ -1494,17 +1494,17 @@ void BlockFlowBox::layoutBlockChildren(PageBuilder* paginator, MultiColumnFlowBo
         } else if(child->isMultiColumnFlowBox()) {
             assert(child == m_columnFlowBox);
             child->setY(top);
-            child->layout(nullptr, columnizer);
+            child->layout(nullptr);
             determineHorizontalPosition(child);
         } else {
-            layoutBlockChild(child, paginator, columnizer, marginInfo);
+            layoutBlockChild(child, fragmentainer, marginInfo);
         }
     }
 
     handleBottomOfBlock(top, bottom, marginInfo);
 }
 
-void BlockFlowBox::layout(PageBuilder* paginator, MultiColumnFlowBox* column)
+void BlockFlowBox::layout(FragmentBuilder* fragmentainer)
 {
     if(isChildrenInline()) {
         m_lineLayout->updateWidth();
@@ -1517,9 +1517,9 @@ void BlockFlowBox::layout(PageBuilder* paginator, MultiColumnFlowBox* column)
 
     setHeight(borderAndPaddingTop());
     if(isChildrenInline()) {
-        m_lineLayout->layout(paginator, column);
+        m_lineLayout->layout(fragmentainer);
     } else {
-        layoutBlockChildren(paginator, column);
+        layoutBlockChildren(fragmentainer);
     }
 
     if(avoidsFloats() && floatBottom() > (height() - borderAndPaddingBottom()))

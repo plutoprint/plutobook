@@ -28,9 +28,9 @@ void BoxView::computeHeight(float& y, float& height, float& marginTop, float& ma
     height = document()->viewportHeight();
 }
 
-void BoxView::layout(PageBuilder* paginator, MultiColumnFlowBox* columnizer)
+void BoxView::layout(FragmentBuilder* fragmentainer)
 {
-    BlockFlowBox::layout(paginator, columnizer);
+    BlockFlowBox::layout(fragmentainer);
     layer()->layout();
 }
 

@@ -43,7 +43,7 @@ void PageBox::computeHeight(float& y, float& height, float& marginTop, float& ma
     height = m_pageSize.height() / units::px;
 }
 
-void PageBox::layout(PageBuilder* paginator, MultiColumnFlowBox* columnizer)
+void PageBox::layout(FragmentBuilder* fragmentainer)
 {
     updateWidth();
     updateHeight();

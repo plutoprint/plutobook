@@ -47,7 +47,7 @@ void MultiColumnRowBox::computeHeight(float& y, float& height, float& marginTop,
     height = m_columnHeight;
 }
 
-void MultiColumnRowBox::layout(PageBuilder* paginator, MultiColumnFlowBox* columnizer)
+void MultiColumnRowBox::layout(FragmentBuilder* fragmentainer)
 {
     updateWidth();
     updateHeight();
@@ -330,9 +330,9 @@ void MultiColumnSpanBox::computeHeight(float& y, float& height, float& marginTop
     marginBottom = m_box->marginBottom();
 }
 
-void MultiColumnSpanBox::layout(PageBuilder* paginator, MultiColumnFlowBox* columnizer)
+void MultiColumnSpanBox::layout(FragmentBuilder* fragmentainer)
 {
-    m_box->layout(nullptr, nullptr);
+    m_box->layout(nullptr);
 
     updateWidth();
     updateHeight();
@@ -382,44 +382,44 @@ MultiColumnRowBox* MultiColumnFlowBox::lastRow() const
     return nullptr;
 }
 
-float MultiColumnFlowBox::applyColumnBreakBefore(const BoxFrame* child, float offset)
+float MultiColumnFlowBox::applyFragmentBreakBefore(const BoxFrame* child, float offset)
 {
     if(child->style()->columnBreakBefore() != BreakBetween::Always)
         return offset;
-    auto columnHeight = columnHeightForOffset(offset);
-    addForcedColumnBreak(offset);
+    auto columnHeight = fragmentHeightForOffset(offset);
+    addForcedFragmentBreak(offset);
     if(columnHeight > 0.f)
-        offset += columnRemainingHeightForOffset(offset, AssociateWithFormerColumn);
+        offset += fragmentRemainingHeightForOffset(offset, AssociateWithFormerFragment);
     return offset;
 }
 
-float MultiColumnFlowBox::applyColumnBreakAfter(const BoxFrame* child, float offset)
+float MultiColumnFlowBox::applyFragmentBreakAfter(const BoxFrame* child, float offset)
 {
     if(child->style()->columnBreakAfter() != BreakBetween::Always)
         return offset;
-    auto columnHeight = columnHeightForOffset(offset);
-    addForcedColumnBreak(offset);
+    auto columnHeight = fragmentHeightForOffset(offset);
+    addForcedFragmentBreak(offset);
     if(columnHeight > 0.f)
-        offset += columnRemainingHeightForOffset(offset, AssociateWithFormerColumn);
+        offset += fragmentRemainingHeightForOffset(offset, AssociateWithFormerFragment);
     return offset;
 }
 
-float MultiColumnFlowBox::applyColumnBreakInside(const BoxFrame* child, float offset)
+float MultiColumnFlowBox::applyFragmentBreakInside(const BoxFrame* child, float offset)
 {
     if(child->style()->columnBreakInside() == BreakInside::Auto)
         return offset;
-    auto columnHeight = columnHeightForOffset(offset);
+    auto columnHeight = fragmentHeightForOffset(offset);
     auto childHeight = child->height();
-    updateMinimumColumnHeight(offset, childHeight);
+    updateMinimumFragmentHeight(offset, childHeight);
     if(columnHeight == 0.f)
         return offset;
-    auto remainingHeight = columnRemainingHeightForOffset(offset, AssociateWithLatterColumn);
+    auto remainingHeight = fragmentRemainingHeightForOffset(offset, AssociateWithLatterFragment);
     if(remainingHeight < childHeight && remainingHeight < columnHeight)
         return offset + remainingHeight;
     return offset;
 }
 
-float MultiColumnFlowBox::columnHeightForOffset(float offset) const
+float MultiColumnFlowBox::fragmentHeightForOffset(float offset) const
 {
     offset += m_rowOffset;
     if(auto row = columnRowAtOffset(offset))
@@ -427,14 +427,14 @@ float MultiColumnFlowBox::columnHeightForOffset(float offset) const
     return 0.f;
 }
 
-float MultiColumnFlowBox::columnRemainingHeightForOffset(float offset, ColumnBoundaryRule rule) const
+float MultiColumnFlowBox::fragmentRemainingHeightForOffset(float offset, FragmentBoundaryRule rule) const
 {
     offset += m_rowOffset;
     if(auto row = columnRowAtOffset(offset)) {
         assert(row->columnHeight() > 0.f);
         auto columnBottom = row->columnTopForOffset(offset) + row->columnHeight();
         auto remainingHeight = columnBottom - offset;
-        if(rule == AssociateWithFormerColumn)
+        if(rule == AssociateWithFormerFragment)
             return std::fmod(remainingHeight, row->columnHeight());
         return remainingHeight;
     }
@@ -442,7 +442,7 @@ float MultiColumnFlowBox::columnRemainingHeightForOffset(float offset, ColumnBou
     return 0.f;
 }
 
-void MultiColumnFlowBox::addForcedColumnBreak(float offset)
+void MultiColumnFlowBox::addForcedFragmentBreak(float offset)
 {
     offset += m_rowOffset;
     if(auto row = columnRowAtOffset(offset)) {
@@ -450,7 +450,7 @@ void MultiColumnFlowBox::addForcedColumnBreak(float offset)
     }
 }
 
-void MultiColumnFlowBox::setColumnBreak(float offset, float spaceShortage)
+void MultiColumnFlowBox::setFragmentBreak(float offset, float spaceShortage)
 {
     offset += m_rowOffset;
     if(auto row = columnRowAtOffset(offset)) {
@@ -458,12 +458,22 @@ void MultiColumnFlowBox::setColumnBreak(float offset, float spaceShortage)
     }
 }
 
-void MultiColumnFlowBox::updateMinimumColumnHeight(float offset, float minHeight)
+void MultiColumnFlowBox::updateMinimumFragmentHeight(float offset, float minHeight)
 {
     offset += m_rowOffset;
     if(auto row = columnRowAtOffset(offset)) {
         row->updateMinimumColumnHeight(minHeight);
     }
+}
+
+void MultiColumnFlowBox::enterFragment(const BoxFrame* child, float offset)
+{
+    m_rowOffset += offset;
+}
+
+void MultiColumnFlowBox::leaveFragment(const BoxFrame* child, float offset)
+{
+    m_rowOffset -= offset;
 }
 
 void MultiColumnFlowBox::skipColumnSpanBox(BoxFrame* box, float offset)
@@ -506,7 +516,7 @@ bool MultiColumnFlowBox::layoutColumns(bool balancing)
     m_currentRow = firstRow();
     if(m_currentRow)
         m_currentRow->setRowTop(0.f);
-    BlockFlowBox::layout(nullptr, this);
+    BlockFlowBox::layout(this);
     assert(m_rowOffset == 0.f);
     if(m_currentRow) {
         assert(m_currentRow == lastRow());
@@ -559,7 +569,7 @@ void MultiColumnFlowBox::computeWidth(float& x, float& width, float& marginLeft,
     }
 }
 
-void MultiColumnFlowBox::layout(PageBuilder* paginator, MultiColumnFlowBox* columnizer)
+void MultiColumnFlowBox::layout(FragmentBuilder* fragmentainer)
 {
     auto columnBlock = columnBlockFlowBox();
     auto columnStyle = columnBlock->style();
