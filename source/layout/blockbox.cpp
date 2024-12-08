@@ -1432,6 +1432,9 @@ void BlockFlowBox::layoutBlockChild(BoxFrame* child, FragmentBuilder* fragmentai
         fragmentainer->enterFragment(child, estimatedTop);
     child->setY(estimatedTop);
     child->layout(fragmentainer);
+    if(fragmentainer) {
+        fragmentainer->leaveFragment(child, estimatedTop);
+    }
 
     auto offsetY = collapseMargins(child, marginInfo);
     auto clearDelta = getClearDelta(child, offsetY);
@@ -1464,11 +1467,8 @@ void BlockFlowBox::layoutBlockChild(BoxFrame* child, FragmentBuilder* fragmentai
     }
 
     setHeight(height() + child->height());
-    if(fragmentainer) {
+    if(fragmentainer)
         setHeight(fragmentainer->applyFragmentBreakAfter(child, height()));
-        fragmentainer->leaveFragment(child, estimatedTop);
-    }
-
     if(auto childBlock = to<BlockFlowBox>(child)) {
         addOverhangingFloats(childBlock);
     }
