@@ -11,17 +11,17 @@ PageBuilder::PageBuilder(const Book* book)
 
 float PageBuilder::applyFragmentBreakBefore(const BoxFrame* child, float offset)
 {
-    return 0.f;
+    return offset;
 }
 
 float PageBuilder::applyFragmentBreakAfter(const BoxFrame* child, float offset)
 {
-    return 0.f;
+    return offset;
 }
 
 float PageBuilder::applyFragmentBreakInside(const BoxFrame* child, float offset)
 {
-    return 0.f;
+    return offset;
 }
 
 float PageBuilder::fragmentHeightForOffset(float offset) const
