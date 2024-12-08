@@ -23,8 +23,13 @@ public:
     virtual void setFragmentBreak(float offset, float spaceShortage) = 0;
     virtual void updateMinimumFragmentHeight(float offset, float minHeight) = 0;
 
-    virtual void enterFragment(const BoxFrame* child, float offset) = 0;
-    virtual void leaveFragment(const BoxFrame* child, float offset) = 0;
+    virtual void enterFragment(const BoxFrame* child, float offset) { m_fragmentOffset += offset; }
+    virtual void leaveFragment(const BoxFrame* child, float offset) { m_fragmentOffset -= offset; }
+
+    float fragmentOffset() const { return m_fragmentOffset; }
+
+private:
+    float m_fragmentOffset = 0;
 };
 
 class Book;

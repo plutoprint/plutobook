@@ -48,10 +48,12 @@ void PageBuilder::updateMinimumFragmentHeight(float offset, float minHeight)
 
 void PageBuilder::enterFragment(const BoxFrame* child, float offset)
 {
+    FragmentBuilder::enterFragment(child, offset);
 }
 
 void PageBuilder::leaveFragment(const BoxFrame* child, float offset)
 {
+    FragmentBuilder::leaveFragment(child, offset);
 }
 
 } // namespace plutobook

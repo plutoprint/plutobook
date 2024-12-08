@@ -1410,7 +1410,7 @@ void BlockFlowBox::adjustBlockChildInColumnFlow(BoxFrame* child, FragmentBuilder
             auto remainingHeight = fragmentainer->fragmentRemainingHeightForOffset(newOffset, AssociateWithLatterFragment);
             if(remainingHeight < childHeight) {
                 fragmentainer->setFragmentBreak(newOffset, childHeight - remainingHeight);
-            } else if(columnHeight == remainingHeight && child->y() > 0.f) {
+            } else if(columnHeight == remainingHeight && child->y() + fragmentainer->fragmentOffset()) {
                 fragmentainer->setFragmentBreak(newOffset, childHeight);
             }
         }

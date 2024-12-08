@@ -176,7 +176,6 @@ public:
 
     uint32_t columnCount() const { return m_columnCount; }
     float columnGap() const { return m_columnGap; }
-    float rowOffset() const { return m_rowOffset; }
 
     bool layoutColumns(bool balancing);
 
@@ -194,7 +193,6 @@ private:
     MultiColumnRowBox* m_currentRow{nullptr};
     mutable uint32_t m_columnCount{0};
     float m_columnGap{0};
-    float m_rowOffset{0};
 };
 
 inline BoxFrame* MultiColumnFlowBox::firstMultiColumnBox() const
