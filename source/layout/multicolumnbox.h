@@ -42,7 +42,6 @@ public:
     void layout(FragmentBuilder* fragmentainer) final;
 
     void paint(const PaintInfo& info, const Point& offset, PaintPhase phase) final;
-
     void paintColumnRules(GraphicsContext& context, const Point& offset);
 
     Rect columnRectAt(uint32_t columnIndex) const;

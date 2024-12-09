@@ -1,5 +1,6 @@
 #include "boxview.h"
 #include "boxlayer.h"
+#include "pagebox.h"
 #include "document.h"
 
 #include "plutobook.hpp"
@@ -16,6 +17,20 @@ bool BoxView::isPrintMedia() const
     if(auto book = document()->book())
         return book->mediaType() == MediaType::Print;
     return false;
+}
+
+float BoxView::availableWidth() const
+{
+    if(m_currentPage)
+        return m_currentPage->width();
+    return document()->viewportWidth();
+}
+
+std::optional<float> BoxView::availableHeight() const
+{
+    if(m_currentPage)
+        return m_currentPage->height();
+    return document()->viewportHeight();
 }
 
 void BoxView::computeWidth(float& x, float& width, float& marginLeft, float& marginRight) const

@@ -911,6 +911,7 @@ void Document::renderPage(GraphicsContext& context, uint32_t pageIndex)
     context.scale(page->pageScale(), page->pageScale());
     context.translate(-pageRect.x, -pageRect.y);
     context.clipRect(pageRect);
+    box()->setCurrentPage(page.get());
     box()->layer()->paint(context, pageRect);
     context.restore();
 }

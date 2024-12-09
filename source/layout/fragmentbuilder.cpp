@@ -1,4 +1,7 @@
 #include "fragmentbuilder.h"
+#include "document.h"
+#include "boxview.h"
+#include "pagebox.h"
 
 #include "plutobook.hpp"
 
@@ -7,6 +10,17 @@ namespace plutobook {
 PageBuilder::PageBuilder(const Book* book)
     : m_book(book)
 {
+    auto document = book->document();
+    auto style = document->styleForPage(emptyGlo, 0, PseudoType::FirstPage);
+    auto page = PageBox::create(style, emptyGlo, 0);
+
+    page->build();
+    page->layout(nullptr);
+    page->setPageTop(0);
+    page->setPageBottom(page->height());
+
+    document->box()->setCurrentPage(page.get());
+    document->pages().push_back(std::move(page));
 }
 
 float PageBuilder::applyFragmentBreakBefore(const BoxFrame* child, float offset)
