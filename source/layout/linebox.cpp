@@ -1,7 +1,7 @@
 #include "linebox.h"
 #include "textbox.h"
 #include "blockbox.h"
-#include "multicolumnbox.h"
+#include "fragmentbuilder.h"
 #include "graphicscontext.h"
 #include "textshape.h"
 #include "boxlayer.h"
@@ -617,18 +617,18 @@ float RootLineBox::alignInVerticalDirection(FragmentBuilder* fragmentainer, floa
 
     auto maxHeight = maxAscent + maxDescent;
     if(fragmentainer && maxHeight > 0.f)
-        blockHeight += adjustLineBoxInColumnFlow(fragmentainer, blockHeight, maxHeight);
+        blockHeight += adjustLineBoxInFragmentFlow(fragmentainer, blockHeight, maxHeight);
     m_lineTop = blockHeight;
     m_lineBottom = blockHeight;
     placeInVerticalDirection(blockHeight, maxHeight, maxAscent, this);
     return blockHeight + maxHeight;
 }
 
-float RootLineBox::adjustLineBoxInColumnFlow(FragmentBuilder* fragmentainer, float offset, float lineHeight) const
+float RootLineBox::adjustLineBoxInFragmentFlow(FragmentBuilder* fragmentainer, float offset, float lineHeight) const
 {
-    auto columnHeight = fragmentainer->fragmentHeightForOffset(offset);
+    auto fragmentHeight = fragmentainer->fragmentHeightForOffset(offset);
     fragmentainer->updateMinimumFragmentHeight(offset, lineHeight);
-    if(columnHeight == 0.f || lineHeight > columnHeight)
+    if(fragmentHeight == 0.f || lineHeight > fragmentHeight)
         return 0.f;
     auto remainingHeight = fragmentainer->fragmentRemainingHeightForOffset(offset, AssociateWithLatterFragment);
     if(remainingHeight < lineHeight) {
@@ -636,7 +636,7 @@ float RootLineBox::adjustLineBoxInColumnFlow(FragmentBuilder* fragmentainer, flo
         return remainingHeight;
     }
 
-    if(m_lineIndex > 0 && remainingHeight == columnHeight)
+    if(m_lineIndex > 0 && remainingHeight == fragmentHeight)
         fragmentainer->setFragmentBreak(offset, lineHeight);
     return 0.f;
 }

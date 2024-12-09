@@ -58,6 +58,7 @@ public:
     float borderVerticalSpacing() const { return m_borderVerticalSpacing; }
     float availableHorizontalSpace() const;
 
+    void layoutCaption(TableCaptionBox* caption, FragmentBuilder* fragmentainer);
     void layout(FragmentBuilder* fragmentainer) final;
     void build() final;
 

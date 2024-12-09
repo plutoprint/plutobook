@@ -206,7 +206,7 @@ public:
 
     float alignInHorizontalDirection(float startOffset);
     float alignInVerticalDirection(FragmentBuilder* fragmentainer, float blockHeight);
-    float adjustLineBoxInColumnFlow(FragmentBuilder* fragmentainer, float offset, float lineHeight) const;
+    float adjustLineBoxInFragmentFlow(FragmentBuilder* fragmentainer, float offset, float lineHeight) const;
 
 private:
     RootLineBox(BlockFlowBox* box);
