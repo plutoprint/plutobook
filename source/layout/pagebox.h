@@ -10,7 +10,7 @@ namespace plutobook {
 
 class PageBox final : public BlockBox {
 public:
-    static std::unique_ptr<PageBox> create(const RefPtr<BoxStyle>& style, const GlobalString& pageName, uint32_t pageIndex);
+    static std::unique_ptr<PageBox> create(const RefPtr<BoxStyle>& style, const PageSize& pageSize, const GlobalString& pageName, uint32_t pageIndex, float pageTop);
 
     bool isPageBox() const final { return true; }
     bool requiresLayer() const final { return false; }
@@ -18,14 +18,7 @@ public:
     const PageSize& pageSize() const { return m_pageSize; }
     const GlobalString& pageName() const { return m_pageName; }
     uint32_t pageIndex() const { return m_pageIndex; }
-
     float pageTop() const { return m_pageTop; }
-    float pageBottom() const { return m_pageBottom; }
-    float pageScale() const { return m_pageScale; }
-
-    void setPageTop(float pageTop) { m_pageTop = pageTop; }
-    void setPageBottom(float pageBottom) { m_pageBottom = pageBottom; }
-    void setPageScale(float pageScale) { m_pageScale = pageScale; }
 
     void updateOverflowRect() final;
     void computeIntrinsicWidths(float& minWidth, float& maxWidth) const final;
@@ -37,14 +30,11 @@ public:
     const char* name() const final { return "PageBox"; }
 
 private:
-    PageBox(const RefPtr<BoxStyle>& style, const GlobalString& pageName, uint32_t pageIndex);
+    PageBox(const RefPtr<BoxStyle>& style, const PageSize& pageSize, const GlobalString& pageName, uint32_t pageIndex, float pageTop);
     PageSize m_pageSize;
     GlobalString m_pageName;
     uint32_t m_pageIndex;
-
-    float m_pageTop{0};
-    float m_pageBottom{0};
-    float m_pageScale{1};
+    float m_pageTop;
 };
 
 template<>
@@ -61,12 +51,18 @@ public:
     bool isPageMarginBox() const final { return true; }
     bool requiresLayer() const final { return false; }
     PageMarginType marginType() const { return m_marginType; }
+    PageBox* pageBox() const;
 
     const char* name() const final { return "PageMarginBox"; }
 
 private:
     PageMarginType m_marginType;
 };
+
+inline PageBox* PageMarginBox::pageBox() const
+{
+    return static_cast<PageBox*>(parentBox());
+}
 
 template<>
 struct is_a<PageMarginBox> {

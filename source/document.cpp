@@ -903,12 +903,11 @@ void Document::renderPage(GraphicsContext& context, uint32_t pageIndex)
     if(pageIndex >= m_pages.size())
         return;
     const auto& page = m_pages[pageIndex];
-    Rect pageRect(0, page->pageTop(), (page->width() - page->marginWidth()) / page->pageScale(), page->pageBottom() - page->pageTop());
+    Rect pageRect(0, page->pageTop(), page->width() - page->marginWidth(), page->height() - page->marginHeight());
     if(pageRect.isEmpty())
         return;
     context.save();
     context.translate(page->marginLeft(), page->marginTop());
-    context.scale(page->pageScale(), page->pageScale());
     context.translate(-pageRect.x, -pageRect.y);
     context.clipRect(pageRect);
     box()->setCurrentPage(page.get());

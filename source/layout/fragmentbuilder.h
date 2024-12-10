@@ -33,6 +33,8 @@ private:
 };
 
 class Book;
+class Document;
+class PageBox;
 
 class PageBuilder final : public FragmentBuilder {
 public:
@@ -54,6 +56,8 @@ public:
 
 private:
     const Book* m_book;
+    Document* m_document;
+    PageBox* m_currentPage{nullptr};
 };
 
 } // namespace plutobook
