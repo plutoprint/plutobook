@@ -84,7 +84,7 @@ struct LineItemsData {
     LineItems items;
     UString text;
     bool isBidiEnabled{false};
-    bool isBlockLevel{false};
+    bool isBlockLevel{true};
 };
 
 class TextBox;
@@ -210,6 +210,7 @@ inline void LineInfo::reset()
 
     m_isLastLine = false;
     m_lineOffset = 0.f;
+    m_lineStyle = nullptr;
 }
 
 class BidiParagraph {
@@ -229,11 +230,11 @@ private:
 class LineBreaker {
 public:
     LineBreaker(BlockFlowBox* block, LineItemsData& data);
+    ~LineBreaker();
 
     const LineInfo& nextLine();
 
     bool isDone() const { return m_itemIndex == m_data.items.size(); }
-    bool hasUnpositionedFloats() const { return m_hasUnpositionedFloats; }
 
 private:
     enum class LineBreakState {

@@ -580,6 +580,13 @@ LineBreaker::LineBreaker(BlockFlowBox* block, LineItemsData& data)
     setCurrentStyle(m_block->style());
 }
 
+LineBreaker::~LineBreaker()
+{
+    if(m_hasUnpositionedFloats)
+        m_block->positionNewFloats();
+    m_block->setHeight(m_block->height() + m_block->borderAndPaddingBottom());
+}
+
 const LineInfo& LineBreaker::nextLine()
 {
     m_line.reset();
@@ -1623,10 +1630,6 @@ void LineLayout::layout(FragmentBuilder* fragmentainer)
     while(!breaker.isDone()) {
         builder.buildLine(fragmentainer, breaker.nextLine());
     }
-
-    if(breaker.hasUnpositionedFloats())
-        m_block->positionNewFloats();
-    m_block->setHeight(m_block->height() + m_block->borderAndPaddingBottom());
 }
 
 void LineLayout::build()
