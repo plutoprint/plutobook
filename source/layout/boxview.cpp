@@ -22,14 +22,14 @@ bool BoxView::isPrintMedia() const
 float BoxView::availableWidth() const
 {
     if(m_currentPage)
-        return m_currentPage->width();
+        return m_currentPage->width() - m_currentPage->marginWidth();
     return document()->viewportWidth();
 }
 
 std::optional<float> BoxView::availableHeight() const
 {
     if(m_currentPage)
-        return m_currentPage->height();
+        return m_currentPage->height() - m_currentPage->marginHeight();
     return document()->viewportHeight();
 }
 
