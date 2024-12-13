@@ -683,6 +683,7 @@ public:
     void setDisplay(Display display) { m_display = display; }
     void setPosition(Position position) { m_position = position; }
     void setFloating(Float floating) { m_floating = floating; }
+    void setDirection(Direction direction) { m_direction = direction; }
 
     Display display() const { return m_display; }
     Position position() const { return m_position; }

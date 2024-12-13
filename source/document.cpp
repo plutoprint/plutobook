@@ -652,9 +652,11 @@ Element* Document::bodyElement() const
     return nullptr;
 }
 
-BoxStyle* Document::backgroundStyle() const
+BoxStyle* Document::bodyStyle() const
 {
-    return box()->backgroundStyle();
+    if(auto element = bodyElement())
+        return element->style();
+    return nullptr;
 }
 
 BoxStyle* Document::rootStyle() const
@@ -666,6 +668,11 @@ BoxStyle* Document::rootStyle() const
     }
 
     return style();
+}
+
+BoxStyle* Document::backgroundStyle() const
+{
+    return box()->backgroundStyle();
 }
 
 Element* Document::getElementById(const std::string_view& id) const

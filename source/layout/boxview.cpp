@@ -51,14 +51,13 @@ void BoxView::layout(FragmentBuilder* fragmentainer)
 
 void BoxView::build()
 {
+    auto bodyStyle = document()->bodyStyle();
+    if(bodyStyle)
+        style()->setDirection(bodyStyle->direction());
     m_backgroundStyle = document()->rootStyle();
-    if(m_backgroundStyle && !m_backgroundStyle->hasBackground()) {
-        if(auto bodyElement = document()->bodyElement()) {
-            auto bodyStyle = bodyElement->style();
-            if(bodyStyle && bodyStyle->hasBackground()) {
-                m_backgroundStyle = bodyStyle;
-            }
-        }
+    if(m_backgroundStyle && !m_backgroundStyle->hasBackground()
+        && bodyStyle && bodyStyle->hasBackground()) {
+        m_backgroundStyle = bodyStyle;
     }
 
     BlockFlowBox::build();

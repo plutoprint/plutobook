@@ -303,8 +303,10 @@ public:
     Element* rootElement() const { return m_rootElement; }
     ResourceFetcher* customResourceFetcher() const { return m_customResourceFetcher; }
     Element* bodyElement() const;
-    BoxStyle* backgroundStyle() const;
+
+    BoxStyle* bodyStyle() const;
     BoxStyle* rootStyle() const;
+    BoxStyle* backgroundStyle() const;
 
     Element* getElementById(const std::string_view& id) const;
     void addElementById(const HeapString& id, Element* element);

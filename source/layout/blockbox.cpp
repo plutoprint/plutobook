@@ -1418,7 +1418,6 @@ void BlockFlowBox::determineHorizontalPosition(BoxFrame* child) const
     }
 }
 
-
 void BlockFlowBox::layoutBlockChild(BoxFrame* child, FragmentBuilder* fragmentainer, MarginInfo& marginInfo)
 {
     auto posTop = m_maxPositiveMarginTop;
