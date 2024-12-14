@@ -79,6 +79,9 @@ public:
     BoxLayer* enclosingLayer() const;
     BoxView* view() const;
 
+    bool canContainFixedPositionBoxes() const;
+    bool canContainAbsolutelyPositionedBoxes() const;
+
     bool isBodyBox() const;
     bool isRootBox() const;
     bool isListMarkerBox() const { return isInsideListMarkerBox() || isOutsideListMarkerBox(); }

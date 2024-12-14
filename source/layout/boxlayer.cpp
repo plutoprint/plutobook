@@ -9,6 +9,22 @@ std::unique_ptr<BoxLayer> BoxLayer::create(BoxModel* box, BoxLayer* parent)
     return std::unique_ptr<BoxLayer>(new (box->heap()) BoxLayer(box, parent));
 }
 
+BoxLayer* BoxLayer::containingLayer() const
+{
+    auto parentLayer = parent();
+    if(m_box->position() == Position::Fixed) {
+        while(parentLayer && !parentLayer->box()->canContainFixedPositionBoxes()) {
+            parentLayer = parentLayer->parent();
+        }
+    } else if(m_box->position() == Position::Absolute) {
+        while(parentLayer && !parentLayer->box()->canContainAbsolutelyPositionedBoxes()) {
+            parentLayer = parentLayer->parent();
+        }
+    }
+
+    return parentLayer;
+}
+
 void BoxLayer::layout()
 {
     m_borderRect = m_box->borderBoundingBox();
@@ -64,26 +80,8 @@ void BoxLayer::paintLayer(BoxLayer* rootLayer, GraphicsContext& context, const R
     Point location;
     auto currentLayer = this;
     while(currentLayer && currentLayer != rootLayer) {
-        auto position = currentLayer->box()->position();
-        auto parentLayer = currentLayer->parent();
-        if(position == Position::Fixed) {
-            for(; parentLayer; parentLayer = parentLayer->parent()) {
-                auto box = parentLayer->box();
-                if(box->isBoxView() || box->hasTransform()) {
-                    break;
-                }
-            }
-        } else if(position == Position::Absolute) {
-            for(; parentLayer; parentLayer = parentLayer->parent()) {
-                auto box = parentLayer->box();
-                if(box->isBoxView() || box->isPositioned() || box->isRelPositioned() || box->hasTransform()) {
-                    break;
-                }
-            }
-        }
-
         location += currentLayer->location();
-        currentLayer = parentLayer;
+        currentLayer = currentLayer->containingLayer();
     }
 
     if(m_box->isMultiColumnFlowBox()) {

@@ -20,6 +20,8 @@ public:
 
     BoxModel* box() const { return m_box; }
     BoxLayer* parent() const { return m_parent; }
+    BoxLayer* containingLayer() const;
+
     int zIndex() const { return m_zIndex; }
 
     float staticTop() const { return m_staticTop; }

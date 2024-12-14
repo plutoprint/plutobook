@@ -201,14 +201,12 @@ BlockBox* Box::containingBlock() const
     }
 
     if(position() == Position::Fixed) {
-        while(parent && !(parent->isBoxView() || (parent->hasTransform() && parent->isBlockBox())))
+        while(parent && !parent->canContainFixedPositionBoxes())
             parent = parent->parentBox();
         return to<BlockBox>(parent);
     }
 
-    while(parent && parent->position() == Position::Static) {
-        if(parent->hasTransform() && parent->isBlockBox())
-            break;
+    while(parent && !parent->canContainAbsolutelyPositionedBoxes()) {
         parent = parent->parentBox();
     }
 
@@ -263,6 +261,16 @@ BoxLayer* Box::enclosingLayer() const
 BoxView* Box::view() const
 {
     return document()->box();
+}
+
+bool Box::canContainFixedPositionBoxes() const
+{
+    return isBoxView() || (hasTransform() && isBlockBox());
+}
+
+bool Box::canContainAbsolutelyPositionedBoxes() const
+{
+    return style()->position() != Position::Static || isBoxView() || (hasTransform() && isBlockBox());
 }
 
 bool Box::isBodyBox() const
