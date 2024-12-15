@@ -269,7 +269,7 @@ void BlockBox::computePositionedWidth(float& x, float& width, float& marginLeft,
 {
     auto container = containingBox();
     auto containerWidth = container->availableWidthForPositioned();
-    auto containerDirection = container->direction();
+    auto containerDirection = container->style()->direction();
 
     auto marginLeftLength = style()->marginLeft();
     auto marginRightLength = style()->marginRight();

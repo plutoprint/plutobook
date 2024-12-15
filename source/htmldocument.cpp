@@ -74,7 +74,7 @@ void HTMLElement::buildFirstLetterPseudoBox(Box* parent)
         return;
     auto child = parent->firstChild();
     while(child) {
-        if(child->pseudoType() == PseudoType::FirstLetter || child->isReplaced()
+        if(child->style()->pseudoType() == PseudoType::FirstLetter || child->isReplaced()
             || child->isLineBreakBox() || child->isWordBreakBox()) {
             return;
         }

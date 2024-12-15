@@ -409,7 +409,7 @@ float FlowLineBox::placeInHorizontalDirection(float offsetX, const BlockFlowBox*
         auto& line = to<ReplacedLineBox>(*child);
         auto& box = to<BoxFrame>(*child->box());
         if(box.isOutsideListMarkerBox()) {
-            if(block->direction() == Direction::Ltr) {
+            if(block->style()->direction() == Direction::Ltr) {
                 line.setX(-box.width() - box.marginRight());
             } else {
                 line.setX(block->width() + box.marginLeft());

@@ -184,7 +184,7 @@ inline FlexDirection FlexItem::flexDirection() const
 
 inline Direction FlexItem::direction() const
 {
-    return flexBox()->direction();
+    return flexBox()->style()->direction();
 }
 
 inline bool FlexItem::isHorizontalFlow() const

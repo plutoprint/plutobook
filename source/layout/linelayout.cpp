@@ -72,7 +72,7 @@ void LineItemsBuilder::appendReplaced(Box* box)
 
 void LineItemsBuilder::enterInline(Box* box)
 {
-    auto direction = box->direction();
+    auto direction = box->style()->direction();
     switch(box->style()->unicodeBidi()) {
     case UnicodeBidi::Normal:
         break;
@@ -102,7 +102,7 @@ void LineItemsBuilder::exitInline(Box* box)
 
 void LineItemsBuilder::enterBlock(Box* box)
 {
-    auto direction = box->direction();
+    auto direction = box->style()->direction();
     switch(box->style()->unicodeBidi()) {
     case UnicodeBidi::BidiOverride:
     case UnicodeBidi::IsolateOverride:
@@ -119,7 +119,7 @@ void LineItemsBuilder::exitBlock(Box* box)
     removeTrailingCollapsibleSpaceIfExists();
 
     thread_local BidiParagraph bidi;
-    if(!bidi.setParagraph(m_data.text, box->direction())) {
+    if(!bidi.setParagraph(m_data.text, box->style()->direction())) {
         m_data.isBidiEnabled = false;
         return;
     }
@@ -1297,14 +1297,14 @@ void LineBuilder::buildLine(FragmentBuilder* fragmentainer, const LineInfo& info
                 auto& lines = box.lines();
                 if(run->type() == LineItem::Type::InlineStart) {
                     auto& firstLine = lines.front();
-                    if(box.direction() == Direction::Ltr) {
+                    if(box.style()->direction() == Direction::Ltr) {
                         firstLine->setHasLeftEdge(true);
                     } else {
                         firstLine->setHasRightEdge(true);
                     }
                 } else {
                     auto& lastLine = lines.back();
-                    if(box.direction() == Direction::Ltr) {
+                    if(box.style()->direction() == Direction::Ltr) {
                         lastLine->setHasRightEdge(true);
                     } else {
                         lastLine->setHasLeftEdge(true);

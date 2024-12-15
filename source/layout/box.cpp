@@ -194,19 +194,25 @@ BlockBox* Box::containingBlock() const
     if(hasColumnSpanBox())
         return to<BoxFrame>(*this).columnSpanBox()->containingBlock();
     auto parent = parentBox();
-    if(position() == Position::Static || position() == Position::Relative || isTextBox()) {
+    if(style()->position() == Position::Static || style()->position() == Position::Relative || isTextBox()) {
         while(parent && !parent->isBlockBox())
             parent = parent->parentBox();
         return to<BlockBox>(parent);
     }
 
-    if(position() == Position::Fixed) {
-        while(parent && !parent->canContainFixedPositionBoxes())
+    if(style()->position() == Position::Fixed) {
+        while(parent && !parent->isBoxView()) {
+            if(parent->hasTransform() && parent->isBlockBox())
+                break;
             parent = parent->parentBox();
+        }
+
         return to<BlockBox>(parent);
     }
 
-    while(parent && !parent->canContainAbsolutelyPositionedBoxes()) {
+    while(parent && parent->style()->position() == Position::Static) {
+        if(parent->hasTransform() && parent->isBlockBox())
+            break;
         parent = parent->parentBox();
     }
 
@@ -223,14 +229,14 @@ BoxModel* Box::containingBox() const
         return to<BoxFrame>(*this).columnSpanBox()->containingBox();
     auto parent = parentBox();
     if(!isTextBox()) {
-        if(position() == Position::Fixed) {
+        if(style()->position() == Position::Fixed) {
             while(parent && !parent->isBoxView()) {
                 if(parent->hasTransform() && parent->isBlockBox())
                     break;
                 parent = parent->parentBox();
             }
-        } else if(position() == Position::Absolute) {
-            while(parent && parent->position() == Position::Static) {
+        } else if(style()->position() == Position::Absolute) {
+            while(parent && parent->style()->position() == Position::Static) {
                 if(parent->hasTransform() && parent->isBlockBox())
                     break;
                 parent = parent->parentBox();
@@ -261,16 +267,6 @@ BoxLayer* Box::enclosingLayer() const
 BoxView* Box::view() const
 {
     return document()->box();
-}
-
-bool Box::canContainFixedPositionBoxes() const
-{
-    return isBoxView() || (hasTransform() && isBlockBox());
-}
-
-bool Box::canContainAbsolutelyPositionedBoxes() const
-{
-    return style()->position() != Position::Static || isBoxView() || (hasTransform() && isBlockBox());
 }
 
 bool Box::isBodyBox() const
@@ -733,7 +729,7 @@ void BoxFrame::computeHorizontalStaticDistance(Length& leftLength, Length& right
     if(!leftLength.isAuto() || !rightLength.isAuto())
         return;
     auto parent = parentBox();
-    if(parent->direction() == Direction::Ltr) {
+    if(parent->style()->direction() == Direction::Ltr) {
         auto staticPosition = layer()->staticLeft() - container->borderLeft();
         for(; parent && parent != container; parent = parent->containingBox()) {
             if(auto box = to<BoxFrame>(parent)) {

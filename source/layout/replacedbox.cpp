@@ -105,7 +105,7 @@ void ReplacedBox::computePositionedReplacedWidth(float& x, float& width, float& 
 {
     auto container = containingBox();
     auto containerWidth = container->availableWidthForPositioned();
-    auto containerDirection = container->direction();
+    auto containerDirection = container->style()->direction();
 
     auto marginLeftLength = style()->marginLeft();
     auto marginRightLength = style()->marginRight();

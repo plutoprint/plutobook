@@ -406,7 +406,7 @@ void TableBox::build()
     TableSectionBox* footerSection = nullptr;
     for(auto child = firstChild(); child; child = child->nextSibling()) {
         if(auto section = to<TableSectionBox>(child)) {
-            switch(section->display()) {
+            switch(section->style()->display()) {
             case Display::TableHeaderGroup:
                 if(!headerSection)
                     headerSection = section;
@@ -422,7 +422,7 @@ void TableBox::build()
                 assert(false);
             }
         } else if(auto column = to<TableColumnBox>(child)) {
-            if(column->display() == Display::TableColumn) {
+            if(column->style()->display() == Display::TableColumn) {
                 addColumn(column);
             } else {
                 if(auto child = column->firstChild()) {
@@ -1152,7 +1152,7 @@ void TableSectionBox::layout(FragmentBuilder* fragmentainer)
     setWidth(table()->contentBoxWidth());
     auto& columns = table()->columns();
     auto horizontalSpacing = table()->borderHorizontalSpacing();
-    auto direction = table()->direction();
+    auto direction = table()->style()->direction();
     for(auto rowBox : m_rows) {
         for(auto& [col, cell] : rowBox->cells()) {
             auto cellBox = cell.box();
@@ -1539,7 +1539,7 @@ TableCollapsedBorderEdge TableCollapsedBorderEdges::calcBottomEdge(const TableCe
 TableCollapsedBorderEdge TableCollapsedBorderEdges::calcLeftEdge(const TableCellBox* cellBox)
 {
     auto table = cellBox->table();
-    auto direction = table->direction();
+    auto direction = table->style()->direction();
     auto cellBefore = direction == Direction::Ltr ? table->cellBefore(cellBox) : table->cellAfter(cellBox);
     auto edge = getLeftEdge(TableCollapsedBorderSource::Cell, cellBox->style());
     if(cellBefore) {
@@ -1598,7 +1598,7 @@ TableCollapsedBorderEdge TableCollapsedBorderEdges::calcLeftEdge(const TableCell
 TableCollapsedBorderEdge TableCollapsedBorderEdges::calcRightEdge(const TableCellBox* cellBox)
 {
     auto table = cellBox->table();
-    auto direction = table->direction();
+    auto direction = table->style()->direction();
     auto cellAfter = direction == Direction::Ltr ? table->cellAfter(cellBox) : table->cellBefore(cellBox);
     auto edge = getRightEdge(TableCollapsedBorderSource::Cell, cellBox->style());
     if(cellAfter) {

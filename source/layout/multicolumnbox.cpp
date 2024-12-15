@@ -102,7 +102,7 @@ void MultiColumnRowBox::paintColumnRules(GraphicsContext& context, const Point& 
 Rect MultiColumnRowBox::columnRectAt(uint32_t columnIndex) const
 {
     Rect columnRect(0, 0, m_columnFlowBox->width(), rowHeightAt(columnIndex));
-    if(m_columnFlowBox->direction() == Direction::Ltr) {
+    if(m_columnFlowBox->style()->direction() == Direction::Ltr) {
         columnRect.x += columnIndex * (columnRect.w + m_columnFlowBox->columnGap());
     } else {
         columnRect.x += width() - columnRect.w - columnIndex * (columnRect.w + m_columnFlowBox->columnGap());

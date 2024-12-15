@@ -79,9 +79,6 @@ public:
     BoxLayer* enclosingLayer() const;
     BoxView* view() const;
 
-    bool canContainFixedPositionBoxes() const;
-    bool canContainAbsolutelyPositionedBoxes() const;
-
     bool isBodyBox() const;
     bool isRootBox() const;
     bool isListMarkerBox() const { return isInsideListMarkerBox() || isOutsideListMarkerBox(); }
@@ -143,12 +140,12 @@ public:
     virtual bool isSVGResourceRadialGradientBox() const { return false; }
 
     bool isAnonymous() const { return m_anonymous; }
-    bool isAnonymousBlock() const { return m_anonymous && display() == Display::Block && pseudoType() == PseudoType::None; }
+    bool isAnonymousBlock() const { return m_anonymous && m_style->display() == Display::Block && m_style->pseudoType() == PseudoType::None; }
     bool isChildrenInline() const { return m_childrenInline; }
     bool isInline() const { return m_inline; }
     bool isFloating() const { return m_floating; }
     bool isPositioned() const { return m_positioned; }
-    bool isRelPositioned() const { return position() == Position::Relative; }
+    bool isRelPositioned() const { return m_style->position() == Position::Relative; }
     bool isFloatingOrPositioned() const { return m_floating || m_positioned; }
     bool isReplaced() const { return m_replaced; }
     bool isOverflowHidden() const { return m_overflowHidden; }
@@ -173,10 +170,6 @@ public:
 
     Heap* heap() const { return m_style->heap(); }
     Document* document() const { return m_style->document(); }
-    PseudoType pseudoType() const { return m_style->pseudoType(); }
-    Display display() const { return m_style->display(); }
-    Position position() const { return m_style->position(); }
-    Direction direction() const { return m_style->direction(); }
 
     virtual const Rect& fillBoundingBox() const { return Rect::Invalid; }
     virtual const Rect& strokeBoundingBox() const { return Rect::Invalid; }
@@ -286,14 +279,14 @@ public:
     float paddingStart(Direction direction) const { return direction == Direction::Ltr ? paddingLeft() : paddingRight(); }
     float paddingEnd(Direction direction) const { return direction == Direction::Ltr ? paddingRight() : paddingLeft(); }
 
-    float marginStart() const { return marginStart(direction()); }
-    float marginEnd() const { return marginEnd(direction()); }
+    float marginStart() const { return marginStart(style()->direction()); }
+    float marginEnd() const { return marginEnd(style()->direction()); }
 
-    float borderStart() const { return borderStart(direction()); }
-    float borderEnd() const { return borderEnd(direction()); }
+    float borderStart() const { return borderStart(style()->direction()); }
+    float borderEnd() const { return borderEnd(style()->direction()); }
 
-    float paddingStart() const { return paddingStart(direction()); }
-    float paddingEnd() const { return paddingEnd(direction()); }
+    float paddingStart() const { return paddingStart(style()->direction()); }
+    float paddingEnd() const { return paddingEnd(style()->direction()); }
 
     void build() override;
 

@@ -12,12 +12,16 @@ std::unique_ptr<BoxLayer> BoxLayer::create(BoxModel* box, BoxLayer* parent)
 BoxLayer* BoxLayer::containingLayer() const
 {
     auto parentLayer = parent();
-    if(m_box->position() == Position::Fixed) {
-        while(parentLayer && !parentLayer->box()->canContainFixedPositionBoxes()) {
+    if(m_box->style()->position() == Position::Fixed) {
+        while(parentLayer && !parentLayer->box()->isBoxView()) {
+            if(parentLayer->box()->hasTransform())
+                break;
             parentLayer = parentLayer->parent();
         }
-    } else if(m_box->position() == Position::Absolute) {
-        while(parentLayer && !parentLayer->box()->canContainAbsolutelyPositionedBoxes()) {
+    } else if(m_box->style()->position() == Position::Absolute) {
+        while(parentLayer && parentLayer->box()->style()->position() == Position::Static) {
+            if(parentLayer->box()->hasTransform())
+                break;
             parentLayer = parentLayer->parent();
         }
     }
@@ -85,12 +89,12 @@ void BoxLayer::paintLayer(BoxLayer* rootLayer, GraphicsContext& context, const R
     }
 
     if(m_box->isMultiColumnFlowBox()) {
-        assert(m_box->position() == Position::Static && !m_box->hasTransform());
+        assert(m_box->style()->position() == Position::Static && !m_box->hasTransform());
         paintLayerColumnContents(rootLayer, context, rect, location);
         return;
     }
 
-    if(m_box->position() == Position::Fixed && !rootLayer->parent()) {
+    if(m_box->style()->position() == Position::Fixed && !rootLayer->parent()) {
         location.x += std::max(0.f, rect.x);
         location.y += std::max(0.f, rect.y);
     }
