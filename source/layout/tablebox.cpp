@@ -69,17 +69,17 @@ void TableBox::updateOverflowRect()
     }
 }
 
-void TableBox::computeIntrinsicWidths(float& minWidth, float& maxPreferredWidth) const
+void TableBox::computeIntrinsicWidths(float& minWidth, float& maxWidth) const
 {
     if(!m_columns.empty()) {
-        m_tableLayout->computeIntrinsicWidths(minWidth, maxPreferredWidth);
+        m_tableLayout->computeIntrinsicWidths(minWidth, maxWidth);
         minWidth += borderHorizontalSpacing() * (m_columns.size() + 1);
-        maxPreferredWidth += borderHorizontalSpacing() * (m_columns.size() + 1);
+        maxWidth += borderHorizontalSpacing() * (m_columns.size() + 1);
     }
 
     for(auto caption : m_captions) {
         minWidth = std::max(minWidth, caption->minPreferredWidth());
-        maxPreferredWidth = std::max(maxPreferredWidth, caption->minPreferredWidth());
+        maxWidth = std::max(maxWidth, caption->minPreferredWidth());
     }
 }
 
