@@ -217,7 +217,7 @@ static AlignmentBaseline resolveDominantBaseline(const Box* box)
     switch(style->dominantBaseline()) {
     case DominantBaseline::Auto:
     case DominantBaseline::UseScript:
-        return AlignmentBaseline::Alphabetic;
+        return AlignmentBaseline::Auto;
     case DominantBaseline::NoChange:
     case DominantBaseline::ResetSize:
         return resolveDominantBaseline(box->parentBox());
@@ -241,16 +241,24 @@ static AlignmentBaseline resolveDominantBaseline(const Box* box)
         assert(false);
     }
 
-    return AlignmentBaseline::Alphabetic;
+    return AlignmentBaseline::Auto;
 }
 
 static float calculateBaselineOffset(const Box* box)
 {
     const auto* style = box->style();
     auto baseline = style->alignmentBaseline();
-    if(baseline == AlignmentBaseline::Baseline)
+    if(baseline == AlignmentBaseline::Auto || baseline == AlignmentBaseline::Baseline) {
         baseline = resolveDominantBaseline(box);
+    }
+
     auto baselineShift = calculateBaselineShift(style);
+    auto parent = box->parentBox();
+    while(parent && (parent->isSVGTSpanBox() || parent->isSVGTextBox())) {
+        baselineShift += calculateBaselineShift(parent->style());
+        parent = parent->parentBox();
+    }
+
     switch(baseline) {
     case AlignmentBaseline::BeforeEdge:
     case AlignmentBaseline::TextBeforeEdge:

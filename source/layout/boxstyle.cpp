@@ -1395,6 +1395,8 @@ AlignmentBaseline BoxStyle::alignmentBaseline() const
         return AlignmentBaseline::Baseline;
     auto& ident = to<CSSIdentValue>(*value);
     switch(ident.value()) {
+    case CSSValueID::Auto:
+        return AlignmentBaseline::Auto;
     case CSSValueID::Baseline:
         return AlignmentBaseline::Baseline;
     case CSSValueID::BeforeEdge:
@@ -1421,7 +1423,7 @@ AlignmentBaseline BoxStyle::alignmentBaseline() const
         assert(false);
     }
 
-    return AlignmentBaseline::Baseline;
+    return AlignmentBaseline::Auto;
 }
 
 DominantBaseline BoxStyle::dominantBaseline() const

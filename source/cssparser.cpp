@@ -3390,12 +3390,13 @@ RefPtr<CSSValue> CSSParser::consumeLonghand(CSSTokenStream& input, CSSPropertyID
 
     case CSSPropertyID::AlignmentBaseline: {
         static const CSSIdentValueEntry table[] = {
+            {"auto", CSSValueID::Auto},
             {"baseline", CSSValueID::Baseline},
             {"before-edge", CSSValueID::BeforeEdge},
             {"text-before-edge", CSSValueID::TextBeforeEdge},
             {"middle", CSSValueID::Middle},
             {"central", CSSValueID::Central},
-            {"after-Edge", CSSValueID::AfterEdge},
+            {"after-edge", CSSValueID::AfterEdge},
             {"text-after-edge", CSSValueID::TextAfterEdge},
             {"ideographic", CSSValueID::Ideographic},
             {"alphabetic", CSSValueID::Alphabetic},

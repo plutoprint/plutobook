@@ -530,6 +530,7 @@ private:
 };
 
 enum class AlignmentBaseline : uint8_t {
+    Auto,
     Baseline,
     BeforeEdge,
     TextBeforeEdge,
