@@ -224,8 +224,8 @@ CSSToken CSSTokenizer::consumeNumericToken()
     assert(isNumberSequence());
     auto numberType = CSSToken::NumberType::Integer;
     auto numberSign = CSSToken::NumberSign::None;
-    double fraction = 0;
     double integer = 0;
+    double fraction = 0;
     int exponent = 0;
     int expsign = 1;
 

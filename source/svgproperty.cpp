@@ -70,15 +70,12 @@ constexpr bool IS_NUM(int cc) { return cc >= '0' && cc <= '9'; }
 template<typename T>
 inline bool parseNumber(std::string_view& input, T& output)
 {
-    T integer, fraction;
-    int sign, expsign, exponent;
-
     constexpr T maxValue = std::numeric_limits<T>::max();
-    fraction = 0;
-    integer = 0;
-    exponent = 0;
-    sign = 1;
-    expsign = 1;
+    T integer = 0;
+    T fraction = 0;
+    int exponent = 0;
+    int sign = 1;
+    int expsign = 1;
 
     if(!input.empty() && input.front() == '+')
         input.remove_prefix(1);
