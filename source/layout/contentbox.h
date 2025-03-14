@@ -50,6 +50,8 @@ public:
     void setSeperator(const HeapString& seperator) { m_seperator = seperator; }
     void setListStyle(const GlobalString& listStyle) { m_listStyle = listStyle; }
 
+    void build() final;
+
     const char* name() const final { return "TargetCounterBox"; }
 
 private:

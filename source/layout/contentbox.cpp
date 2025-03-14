@@ -22,6 +22,11 @@ TargetCounterBox::TargetCounterBox(const RefPtr<BoxStyle>& style)
 {
 }
 
+void TargetCounterBox::build()
+{
+    setText(document()->getTargetCounterText(m_fragment, m_identifier, m_listStyle, m_seperator));
+}
+
 PageCounterBox::PageCounterBox(const RefPtr<BoxStyle>& style)
     : ContentBox(style)
 {
