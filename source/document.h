@@ -312,7 +312,6 @@ public:
     void addElementById(const HeapString& id, Element* element);
     void removeElementById(const HeapString& id, Element* element);
 
-    const CounterMap* getTargetCounters(const HeapString& id) const;
     void addTargetCounters(const HeapString& id, const CounterMap& counters);
 
     HeapString getTargetCounterText(const HeapString& fragment, const GlobalString& name, const GlobalString& listStyle, const HeapString& separator);

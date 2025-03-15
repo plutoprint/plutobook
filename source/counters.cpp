@@ -17,7 +17,7 @@ void Counters::push()
 
 void Counters::pop()
 {
-    for(auto name : m_scopes.back()) {
+    for(auto& name : m_scopes.back()) {
         m_values[name].pop_back();
     }
 
@@ -60,10 +60,11 @@ void Counters::set(const GlobalString& name, int value)
     }
 }
 
+static const GlobalString listItem("list-item");
+
 void Counters::update(const Box* box)
 {
     auto hasListItem = false;
-    static const GlobalString listItem("list-item");
     for(auto id : { CSSPropertyID::CounterReset, CSSPropertyID::CounterIncrement, CSSPropertyID::CounterSet }) {
         auto value = box->style()->get(id);
         if(value == nullptr || value->id() == CSSValueID::None)
@@ -123,15 +124,11 @@ HeapString Counters::counterText(const GlobalString& name, const GlobalString& l
 
 HeapString Counters::markerText(const GlobalString& listStyle) const
 {
-    static const GlobalString name("list-item");
-    auto heap = m_document->heap();
-    auto it = m_values.find(name);
-    if(it == m_values.end())
-        return heap->createString(m_document->getMarkerText(0, listStyle));
     int value = 0;
-    if(!it->second.empty())
+    auto it = m_values.find(listItem);
+    if(it != m_values.end() && !it->second.empty())
         value = it->second.back();
-    return heap->createString(m_document->getMarkerText(value, listStyle));
+    return m_document->heap()->createString(m_document->getMarkerText(value, listStyle));
 }
 
 } // namespace plutobook

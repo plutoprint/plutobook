@@ -699,17 +699,8 @@ void Document::removeElementById(const HeapString& id, Element* element)
     }
 }
 
-const CounterMap* Document::getTargetCounters(const HeapString& id) const
-{
-    auto it = m_counterCache.find(id);
-    if(it == m_counterCache.end())
-        return nullptr;
-    return &it->second;
-}
-
 void Document::addTargetCounters(const HeapString& id, const CounterMap& counters)
 {
-    assert(!id.empty() && !counters.empty());
     m_counterCache.emplace(id, counters);
 }
 
@@ -717,9 +708,10 @@ HeapString Document::getTargetCounterText(const HeapString& fragment, const Glob
 {
     if(fragment.empty() || fragment.front() != '#')
         return emptyGlo;
-    if(auto counters = getTargetCounters(fragment.substring(1)))
-        return getCountersText(*counters, name, listStyle, separator);
-    return emptyGlo;
+    auto it = m_counterCache.find(fragment.substring(1));
+    if(it == m_counterCache.end())
+        return emptyGlo;
+    return getCountersText(it->second, name, listStyle, separator);
 }
 
 HeapString Document::getCountersText(const CounterMap& counters, const GlobalString& name, const GlobalString& listStyle, const HeapString& separator)
