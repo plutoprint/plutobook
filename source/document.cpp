@@ -207,13 +207,15 @@ void ContainerNode::removeChild(Node* child)
     auto previousChild = child->previousSibling();
     if(nextChild)
         nextChild->setPreviousSibling(previousChild);
-    if(previousChild)
+    if(previousChild) {
         previousChild->setNextSibling(nextChild);
+    }
 
     if(m_firstChild == child)
         m_firstChild = nextChild;
-    if(m_lastChild == child)
+    if(m_lastChild == child) {
         m_lastChild = previousChild;
+    }
 
     child->setParentNode(nullptr);
     child->setPreviousSibling(nullptr);

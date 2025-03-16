@@ -98,13 +98,15 @@ void Box::removeChild(Box* child)
     auto prevChild = child->prevSibling();
     if(nextChild)
         nextChild->setPrevSibling(prevChild);
-    if(prevChild)
+    if(prevChild) {
         prevChild->setNextSibling(nextChild);
+    }
 
     if(m_firstChild == child)
         m_firstChild = nextChild;
-    if(m_lastChild == child)
+    if(m_lastChild == child) {
         m_lastChild = prevChild;
+    }
 
     child->setParentBox(nullptr);
     child->setPrevSibling(nullptr);

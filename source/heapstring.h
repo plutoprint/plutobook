@@ -72,7 +72,7 @@ inline HeapString Heap::createString(const std::string_view& value)
 {
     auto content = static_cast<char*>(allocate(value.size(), alignof(char)));
     std::memcpy(content, value.data(), value.size());
-    return HeapString{{content, value.size()}};
+    return HeapString({content, value.size()});
 }
 
 inline HeapString Heap::concatenateString(const std::string_view& a, const std::string_view& b)
@@ -80,7 +80,7 @@ inline HeapString Heap::concatenateString(const std::string_view& a, const std::
     auto content = static_cast<char*>(allocate(a.size() + b.size(), alignof(char)));
     std::memcpy(content, a.data(), a.size());
     std::memcpy(content + a.size(), b.data(), b.size());
-    return HeapString{{content, a.size() + b.size()}};
+    return HeapString({content, a.size() + b.size()});
 }
 
 class HeapMember {

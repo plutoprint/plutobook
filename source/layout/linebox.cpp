@@ -57,8 +57,7 @@ float LineBox::verticalAlignPosition() const
         verticalPosition -= lineHeight() / 2.f;
         verticalPosition += baselinePosition();
     } else if(verticalAlign.type() == VerticalAlignType::Length) {
-        auto& length = verticalAlign.length();
-        verticalPosition -= length.calc(style()->lineHeight());
+        verticalPosition -= verticalAlign.length().calc(style()->lineHeight());
     }
 
     return verticalPosition;
