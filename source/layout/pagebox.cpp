@@ -3,9 +3,9 @@
 
 namespace plutobook {
 
-std::unique_ptr<PageBox> PageBox::create(const RefPtr<BoxStyle>& style, const PageSize& pageSize, const GlobalString& pageName, uint32_t pageIndex, float pageTop)
+std::unique_ptr<PageBox> PageBox::create(const RefPtr<BoxStyle>& style, const PageSize& pageSize, const GlobalString& pageName, uint32_t pageIndex)
 {
-    return std::unique_ptr<PageBox>(new (style->heap()) PageBox(style, pageSize, pageName, pageIndex, pageTop));
+    return std::unique_ptr<PageBox>(new (style->heap()) PageBox(style, pageSize, pageName, pageIndex));
 }
 
 void PageBox::updateOverflowRect()
@@ -54,12 +54,11 @@ void PageBox::build()
     BlockBox::build();
 }
 
-PageBox::PageBox(const RefPtr<BoxStyle>& style, const PageSize& pageSize, const GlobalString& pageName, uint32_t pageIndex, float pageTop)
+PageBox::PageBox(const RefPtr<BoxStyle>& style, const PageSize& pageSize, const GlobalString& pageName, uint32_t pageIndex)
     : BlockBox(nullptr, style)
     , m_pageSize(pageSize)
     , m_pageName(pageName)
     , m_pageIndex(pageIndex)
-    , m_pageTop(pageTop)
 {
 }
 

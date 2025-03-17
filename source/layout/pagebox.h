@@ -10,7 +10,7 @@ namespace plutobook {
 
 class PageBox final : public BlockBox {
 public:
-    static std::unique_ptr<PageBox> create(const RefPtr<BoxStyle>& style, const PageSize& pageSize, const GlobalString& pageName, uint32_t pageIndex, float pageTop);
+    static std::unique_ptr<PageBox> create(const RefPtr<BoxStyle>& style, const PageSize& pageSize, const GlobalString& pageName, uint32_t pageIndex);
 
     bool isPageBox() const final { return true; }
     bool requiresLayer() const final { return false; }
@@ -18,7 +18,15 @@ public:
     const PageSize& pageSize() const { return m_pageSize; }
     const GlobalString& pageName() const { return m_pageName; }
     uint32_t pageIndex() const { return m_pageIndex; }
+
     float pageTop() const { return m_pageTop; }
+    void setPageTop(float pageTop) { m_pageTop = pageTop; }
+
+    float pageBottom() const { return m_pageBottom; }
+    void setPageBottom(float pageBottom) { m_pageBottom = pageBottom; }
+
+    float pageWidth() const { return width() - marginWidth(); }
+    float pageHeight() const { return height() - marginHeight(); }
 
     void updateOverflowRect() final;
     void computeIntrinsicWidths(float& minWidth, float& maxWidth) const final;
@@ -30,11 +38,13 @@ public:
     const char* name() const final { return "PageBox"; }
 
 private:
-    PageBox(const RefPtr<BoxStyle>& style, const PageSize& pageSize, const GlobalString& pageName, uint32_t pageIndex, float pageTop);
+    PageBox(const RefPtr<BoxStyle>& style, const PageSize& pageSize, const GlobalString& pageName, uint32_t pageIndex);
     PageSize m_pageSize;
     GlobalString m_pageName;
     uint32_t m_pageIndex;
-    float m_pageTop;
+
+    float m_pageTop = 0.f;
+    float m_pageBottom = 0.f;
 };
 
 template<>

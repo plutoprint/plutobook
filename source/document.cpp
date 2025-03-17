@@ -904,7 +904,7 @@ void Document::renderPage(GraphicsContext& context, uint32_t pageIndex)
     if(pageIndex >= m_pages.size())
         return;
     const auto& page = m_pages[pageIndex];
-    Rect pageRect(0, page->pageTop(), page->width() - page->marginWidth(), page->height() - page->marginHeight());
+    Rect pageRect(0, page->pageTop(), page->pageWidth(), page->pageHeight());
     if(pageRect.isEmpty())
         return;
     context.save();

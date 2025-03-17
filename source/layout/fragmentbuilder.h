@@ -1,6 +1,9 @@
 #ifndef PLUTOBOOK_FRAGMENTBUILDER_H
 #define PLUTOBOOK_FRAGMENTBUILDER_H
 
+#include <vector>
+#include <memory>
+
 namespace plutobook {
 
 class BoxFrame;
@@ -36,6 +39,8 @@ class Book;
 class Document;
 class PageBox;
 
+using PageBoxList = std::pmr::vector<std::unique_ptr<PageBox>>;
+
 class PageBuilder final : public FragmentBuilder {
 public:
     explicit PageBuilder(const Book* book);
@@ -57,6 +62,7 @@ public:
 private:
     const Book* m_book;
     Document* m_document;
+    PageBoxList& m_pages;
     PageBox* m_currentPage{nullptr};
 };
 
