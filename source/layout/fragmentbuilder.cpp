@@ -17,14 +17,16 @@ PageBuilder::PageBuilder(const Book* book)
 
 float PageBuilder::applyFragmentBreakBefore(const BoxFrame* child, float offset)
 {
-    if(m_currentPage && child->style()->pageBreakBefore() == BreakBetween::Always)
+    addPageUntil(child, offset);
+    if(child->style()->pageBreakBefore() == BreakBetween::Always)
         offset += fragmentRemainingHeightForOffset(offset, AssociateWithFormerFragment);
     return offset;
 }
 
 float PageBuilder::applyFragmentBreakAfter(const BoxFrame* child, float offset)
 {
-    if(m_currentPage && child->style()->pageBreakAfter() == BreakBetween::Always)
+    addPageUntil(child, offset);
+    if(child->style()->pageBreakAfter() == BreakBetween::Always)
         offset += fragmentRemainingHeightForOffset(offset, AssociateWithFormerFragment);
     return offset;
 }
@@ -34,14 +36,14 @@ float PageBuilder::applyFragmentBreakInside(const BoxFrame* child, float offset)
     return offset;
 }
 
-float PageBuilder::fragmentHeightForOffset(float offset) const
+float PageBuilder::fragmentHeightForOffset(float offset)
 {
     if(m_currentPage)
         return m_currentPage->height();
     return 0.f;
 }
 
-float PageBuilder::fragmentRemainingHeightForOffset(float offset, FragmentBoundaryRule rule) const
+float PageBuilder::fragmentRemainingHeightForOffset(float offset, FragmentBoundaryRule rule)
 {
     if(m_currentPage == nullptr)
         return 0.f;
@@ -66,8 +68,23 @@ void PageBuilder::updateMinimumFragmentHeight(float offset, float minHeight)
 void PageBuilder::enterFragment(const BoxFrame* child, float offset)
 {
     FragmentBuilder::enterFragment(child, offset);
-    if(m_currentPage && fragmentOffset() < m_currentPage->pageBottom())
-        return;
+}
+
+void PageBuilder::leaveFragment(const BoxFrame* child, float offset)
+{
+    FragmentBuilder::leaveFragment(child, offset);
+}
+
+void PageBuilder::addPageUntil(const BoxFrame* box, float offset)
+{
+    offset += fragmentOffset();
+    while(m_currentPage == nullptr || offset > m_currentPage->pageBottom()) {
+        addPage(box);
+    }
+}
+
+void PageBuilder::addPage(const BoxFrame* box)
+{
     auto pageStyle = m_document->styleForPage(emptyGlo, 0, PseudoType::FirstPage);
     auto pageSize = pageStyle->getPageSize(m_book->pageSize());
     auto pageBox = PageBox::create(pageStyle, pageSize, emptyGlo, m_pages.size());
@@ -82,11 +99,6 @@ void PageBuilder::enterFragment(const BoxFrame* child, float offset)
     m_currentPage = pageBox.get();
     m_document->box()->setCurrentPage(pageBox.get());
     m_pages.push_back(std::move(pageBox));
-}
-
-void PageBuilder::leaveFragment(const BoxFrame* child, float offset)
-{
-    FragmentBuilder::leaveFragment(child, offset);
 }
 
 } // namespace plutobook

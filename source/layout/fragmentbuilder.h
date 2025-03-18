@@ -19,8 +19,8 @@ public:
     virtual float applyFragmentBreakAfter(const BoxFrame* child, float offset) = 0;
     virtual float applyFragmentBreakInside(const BoxFrame* child, float offset) = 0;
 
-    virtual float fragmentHeightForOffset(float offset) const = 0;
-    virtual float fragmentRemainingHeightForOffset(float offset, FragmentBoundaryRule rule) const = 0;
+    virtual float fragmentHeightForOffset(float offset) = 0;
+    virtual float fragmentRemainingHeightForOffset(float offset, FragmentBoundaryRule rule) = 0;
 
     virtual void addForcedFragmentBreak(float offset) = 0;
     virtual void setFragmentBreak(float offset, float spaceShortage) = 0;
@@ -49,8 +49,8 @@ public:
     float applyFragmentBreakAfter(const BoxFrame* child, float offset) final;
     float applyFragmentBreakInside(const BoxFrame* child, float offset) final;
 
-    float fragmentHeightForOffset(float offset) const final;
-    float fragmentRemainingHeightForOffset(float offset, FragmentBoundaryRule rule) const final;
+    float fragmentHeightForOffset(float offset) final;
+    float fragmentRemainingHeightForOffset(float offset, FragmentBoundaryRule rule) final;
 
     void addForcedFragmentBreak(float offset) final;
     void setFragmentBreak(float offset, float spaceShortage) final;
@@ -60,6 +60,8 @@ public:
     void leaveFragment(const BoxFrame* child, float offset) final;
 
 private:
+    void addPageUntil(const BoxFrame* box, float offset);
+    void addPage(const BoxFrame* box);
     const Book* m_book;
     Document* m_document;
     PageBoxList& m_pages;
