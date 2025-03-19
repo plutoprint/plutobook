@@ -1427,11 +1427,11 @@ void BlockFlowBox::layoutBlockChild(BoxFrame* child, FragmentBuilder* fragmentai
 
     auto estimatedTop = estimateVerticalPosition(child, fragmentainer, marginInfo);
     if(fragmentainer)
-        fragmentainer->enterFragment(child, estimatedTop);
+        fragmentainer->enterFragment(estimatedTop);
     child->setY(estimatedTop);
     child->layout(fragmentainer);
     if(fragmentainer) {
-        fragmentainer->leaveFragment(child, estimatedTop);
+        fragmentainer->leaveFragment(estimatedTop);
     }
 
     auto offsetY = collapseMargins(child, marginInfo);

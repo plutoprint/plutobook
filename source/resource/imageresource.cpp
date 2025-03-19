@@ -279,7 +279,7 @@ RefPtr<SVGImage> SVGImage::create(const std::string_view& content, ResourceFetch
     }
 
     document->build();
-    document->layout(nullptr);
+    document->layout();
 
     cairo_rectangle_t rectangle = {0, 0, document->width(), document->height()};
     auto surface = cairo_recording_surface_create(CAIRO_CONTENT_COLOR_ALPHA, &rectangle);

@@ -1,6 +1,5 @@
 #include "plutobook.hpp"
 #include "htmldocument.h"
-#include "fragmentbuilder.h"
 #include "xmldocument.h"
 #include "textresource.h"
 #include "imageresource.h"
@@ -571,15 +570,10 @@ Document* Book::layoutIfNeeded() const
 {
     auto document = buildIfNeeded();
     if(document && m_needsLayout) {
-        if(m_mediaType == MediaType::Print) {
-            PageBuilder builder(this);
-            document->layout(&builder);
-        } else {
-            document->layout(nullptr);
-        }
+        document->layout();
+        m_needsLayout = false;
     }
 
-    m_needsLayout = false;
     return document;
 }
 

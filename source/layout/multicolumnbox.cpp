@@ -421,7 +421,7 @@ float MultiColumnFlowBox::applyFragmentBreakInside(const BoxFrame* child, float 
     return offset;
 }
 
-float MultiColumnFlowBox::fragmentHeightForOffset(float offset)
+float MultiColumnFlowBox::fragmentHeightForOffset(float offset) const
 {
     offset += fragmentOffset();
     if(auto row = columnRowAtOffset(offset))
@@ -429,7 +429,7 @@ float MultiColumnFlowBox::fragmentHeightForOffset(float offset)
     return 0.f;
 }
 
-float MultiColumnFlowBox::fragmentRemainingHeightForOffset(float offset, FragmentBoundaryRule rule)
+float MultiColumnFlowBox::fragmentRemainingHeightForOffset(float offset, FragmentBoundaryRule rule) const
 {
     offset += fragmentOffset();
     if(auto row = columnRowAtOffset(offset)) {
@@ -466,16 +466,6 @@ void MultiColumnFlowBox::updateMinimumFragmentHeight(float offset, float minHeig
     if(auto row = columnRowAtOffset(offset)) {
         row->updateMinimumColumnHeight(minHeight);
     }
-}
-
-void MultiColumnFlowBox::enterFragment(const BoxFrame* child, float offset)
-{
-    FragmentBuilder::enterFragment(child, offset);
-}
-
-void MultiColumnFlowBox::leaveFragment(const BoxFrame* child, float offset)
-{
-    FragmentBuilder::leaveFragment(child, offset);
 }
 
 void MultiColumnFlowBox::skipColumnSpanBox(BoxFrame* box, float offset)

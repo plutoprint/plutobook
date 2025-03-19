@@ -158,15 +158,12 @@ public:
     float applyFragmentBreakAfter(const BoxFrame* child, float offset) final;
     float applyFragmentBreakInside(const BoxFrame* child, float offset) final;
 
-    float fragmentHeightForOffset(float offset) final;
-    float fragmentRemainingHeightForOffset(float offset, FragmentBoundaryRule rule) final;
+    float fragmentHeightForOffset(float offset) const final;
+    float fragmentRemainingHeightForOffset(float offset, FragmentBoundaryRule rule) const final;
 
     void addForcedFragmentBreak(float offset) final;
     void setFragmentBreak(float offset, float spaceShortage) final;
     void updateMinimumFragmentHeight(float offset, float minHeight) final;
-
-    void enterFragment(const BoxFrame* child, float offset) final;
-    void leaveFragment(const BoxFrame* child, float offset) final;
 
     void skipColumnSpanBox(BoxFrame* box, float offset);
 

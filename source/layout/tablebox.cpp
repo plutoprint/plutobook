@@ -294,14 +294,14 @@ void TableBox::layoutCaption(TableCaptionBox* caption, FragmentBuilder* fragment
     if(fragmentainer) {
         estimatedTop = fragmentainer->applyFragmentBreakBefore(caption, estimatedTop);
         estimatedTop = fragmentainer->applyFragmentBreakInside(caption, estimatedTop);
-        fragmentainer->enterFragment(caption, estimatedTop);
+        fragmentainer->enterFragment(estimatedTop);
     }
 
     caption->layout(fragmentainer);
     caption->setX(caption->marginLeft());
     caption->setY(height() + caption->marginTop());
     if(fragmentainer) {
-        fragmentainer->leaveFragment(caption, estimatedTop);
+        fragmentainer->leaveFragment(estimatedTop);
         adjustBlockChildInFragmentFlow(caption, fragmentainer);
     }
 
@@ -361,14 +361,14 @@ void TableBox::layout(FragmentBuilder* fragmentainer)
             if(fragmentainer) {
                 estimatedTop = fragmentainer->applyFragmentBreakBefore(section, estimatedTop + borderVerticalSpacing());
                 estimatedTop = fragmentainer->applyFragmentBreakInside(section, estimatedTop) - borderVerticalSpacing();
-                fragmentainer->enterFragment(section, estimatedTop);
+                fragmentainer->enterFragment(estimatedTop);
             }
 
             section->layoutRows(fragmentainer);
             section->setX(borderAndPaddingLeft());
             section->setY(height() + borderVerticalSpacing());
             if(fragmentainer) {
-                fragmentainer->leaveFragment(section, estimatedTop);
+                fragmentainer->leaveFragment(estimatedTop);
                 adjustBlockChildInFragmentFlow(section, fragmentainer);
             }
 

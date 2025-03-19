@@ -19,15 +19,6 @@ public:
     const GlobalString& pageName() const { return m_pageName; }
     uint32_t pageIndex() const { return m_pageIndex; }
 
-    float pageTop() const { return m_pageTop; }
-    void setPageTop(float pageTop) { m_pageTop = pageTop; }
-
-    float pageBottom() const { return m_pageBottom; }
-    void setPageBottom(float pageBottom) { m_pageBottom = pageBottom; }
-
-    float pageWidth() const { return width() - marginWidth(); }
-    float pageHeight() const { return height() - marginHeight(); }
-
     void updateOverflowRect() final;
     void computeIntrinsicWidths(float& minWidth, float& maxWidth) const final;
     void computeWidth(float& x, float& width, float& marginLeft, float& marginRight) const final;
@@ -42,9 +33,6 @@ private:
     PageSize m_pageSize;
     GlobalString m_pageName;
     uint32_t m_pageIndex;
-
-    float m_pageTop = 0.f;
-    float m_pageBottom = 0.f;
 };
 
 template<>

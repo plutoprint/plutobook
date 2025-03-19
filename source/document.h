@@ -2,6 +2,7 @@
 #define PLUTOBOOK_DOCUMENT_H
 
 #include "cssstylesheet.h"
+#include "fragmentbuilder.h"
 #include "globalstring.h"
 #include "heapstring.h"
 #include "url.h"
@@ -272,11 +273,10 @@ class Book;
 class PageSize;
 class PageMargins;
 class PageBox;
-class PageBuilder;
 
 using PageBoxList = std::pmr::vector<std::unique_ptr<PageBox>>;
 
-class Document : public ContainerNode {
+class Document : public ContainerNode, public FragmentBuilder {
 public:
     Document(Book* book, Heap* heap, ResourceFetcher* fetcher, Url url);
     ~Document() override;
@@ -350,8 +350,8 @@ public:
     void finishParsingDocument() override;
     void buildBox(Counters& counters, Box* parent) override;
     void build();
+    void layout();
 
-    void layout(PageBuilder* paginator);
     void render(GraphicsContext& context, const Rect& rect);
 
     PageBoxList& pages() { return m_pages; }
@@ -360,6 +360,15 @@ public:
     void renderPage(GraphicsContext& context, uint32_t pageIndex);
     PageSize pageSizeAt(uint32_t pageIndex) const;
     uint32_t pageCount() const;
+
+    float fragmentHeightForOffset(float offset) const final;
+    float fragmentRemainingHeightForOffset(float offset, FragmentBoundaryRule rule) const final;
+
+    float pageWidth() const { return m_pageWidth; }
+    float pageHeight() const { return m_pageHeight; }
+    float pageScale() const { return m_pageScale; }
+
+    bool isPrintMedia() const;
 
 private:
     template<typename ResourceType>
@@ -375,6 +384,10 @@ private:
     DocumentFontMap m_fontCache;
     DocumentCounterMap m_counterCache;
     CSSStyleSheet m_styleSheet;
+
+    float m_pageWidth = 0.f;
+    float m_pageHeight = 0.f;
+    float m_pageScale = 1.f;
 };
 
 inline bool Node::isRootNode() const

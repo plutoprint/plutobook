@@ -18,8 +18,6 @@ public:
     void setCurrentPage(PageBox* page) { m_currentPage = page; }
     PageBox* currentPage() const { return m_currentPage; }
 
-    bool isPrintMedia() const;
-
     float availableWidth() const final;
     std::optional<float> availableHeight() const final;
 

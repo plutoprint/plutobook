@@ -12,9 +12,9 @@
 #include "imageresource.h"
 #include "fontresource.h"
 #include "stringutils.h"
-#include "fragmentbuilder.h"
-
 #include "plutobook.hpp"
+
+#include <cmath>
 
 namespace plutobook {
 
@@ -889,9 +889,76 @@ void Document::build()
     buildBox(counters, nullptr);
 }
 
-void Document::layout(PageBuilder* paginator)
+constexpr PseudoType pagePseudoType(size_t pageIndex)
 {
-    box()->layout(paginator);
+    if(pageIndex == 0)
+        return PseudoType::FirstPage;
+    if(pageIndex % 2 == 0)
+        return PseudoType::RightPage;
+    return PseudoType::LeftPage;
+}
+
+void Document::layout()
+{
+    if(!isPrintMedia()) {
+        box()->layout(nullptr);
+        return;
+    }
+
+    auto pageStyle = document()->styleForPage(emptyGlo, 0, PseudoType::FirstPage);
+    auto pageSize = pageStyle->getPageSize(m_book->pageSize());
+    auto pageScale = pageStyle->pageScale();
+
+    float pageWidth = pageSize.width() / units::px;
+    float pageHeight = pageSize.height() / units::px;
+
+    auto marginLeftLength = pageStyle->marginLeft();
+    auto marginRightLength = pageStyle->marginRight();
+    auto marginTopLength = pageStyle->marginTop();
+    auto marginBottomLength = pageStyle->marginBottom();
+
+    const auto& deviceMargins = document()->book()->pageMargins();
+    float marginTop = marginTopLength.isAuto() ? deviceMargins.top() / units::px : marginTopLength.calcMin(pageWidth);
+    float marginRight = marginRightLength.isAuto() ? deviceMargins.right() / units::px : marginRightLength.calcMin(pageWidth);
+    float marginBottom = marginBottomLength.isAuto() ? deviceMargins.bottom() / units::px : marginBottomLength.calcMin(pageWidth);
+    float marginLeft = marginLeftLength.isAuto() ? deviceMargins.left() / units::px : marginLeftLength.calcMin(pageWidth);
+
+    auto pageContentWidth = pageWidth - marginLeft - marginRight;
+    auto pageContentHeight = pageHeight - marginTop - marginBottom;
+    if(pageContentWidth <= 0.f || pageContentHeight <= 0.f) {
+        return;
+    }
+
+    m_pageScale = pageScale.value_or(1.f);
+    m_pageWidth = pageContentWidth / m_pageScale;
+    m_pageHeight = pageContentHeight / m_pageScale;
+    box()->layout(this);
+
+    if(!pageScale.has_value() && pageContentWidth < document()->width()) {
+        m_pageScale = pageContentWidth / document()->width();
+        m_pageWidth = pageContentWidth / m_pageScale;
+        m_pageHeight = pageContentHeight / m_pageScale;
+        box()->layout(this);
+    }
+
+    size_t pageCount = std::ceil(document()->height() / m_pageHeight);
+    for(size_t pageIndex = 0; pageIndex < pageCount; ++pageIndex) {
+        auto pageStyle = document()->styleForPage(emptyGlo, pageIndex, pagePseudoType(pageIndex));
+        auto pageBox = PageBox::create(pageStyle, pageSize, emptyGlo, pageIndex);
+
+        pageBox->setWidth(pageWidth);
+        pageBox->setHeight(pageHeight);
+
+        pageBox->setMarginTop(marginTop);
+        pageBox->setMarginRight(marginRight);
+        pageBox->setMarginBottom(marginBottom);
+        pageBox->setMarginLeft(marginLeft);
+
+        pageBox->build();
+        pageBox->layout(nullptr);
+
+        m_pages.push_back(std::move(pageBox));
+    }
 }
 
 void Document::render(GraphicsContext& context, const Rect& rect)
@@ -904,11 +971,12 @@ void Document::renderPage(GraphicsContext& context, uint32_t pageIndex)
     if(pageIndex >= m_pages.size())
         return;
     const auto& page = m_pages[pageIndex];
-    Rect pageRect(0, page->pageTop(), page->pageWidth(), page->pageHeight());
+    Rect pageRect(0, pageIndex * m_pageHeight, m_pageWidth, m_pageHeight);
     if(pageRect.isEmpty())
         return;
     context.save();
     context.translate(page->marginLeft(), page->marginTop());
+    context.scale(m_pageScale, m_pageScale);
     context.translate(-pageRect.x, -pageRect.y);
     context.clipRect(pageRect);
     box()->setCurrentPage(page.get());
@@ -926,6 +994,25 @@ PageSize Document::pageSizeAt(uint32_t pageIndex) const
 uint32_t Document::pageCount() const
 {
     return m_pages.size();
+}
+
+float Document::fragmentHeightForOffset(float offset) const
+{
+    return m_pageHeight;
+}
+
+float Document::fragmentRemainingHeightForOffset(float offset, FragmentBoundaryRule rule) const
+{
+    offset += fragmentOffset();
+    auto remainingHeight = m_pageHeight - std::fmod(offset, m_pageHeight);
+    if(rule == AssociateWithFormerFragment)
+        remainingHeight = std::fmod(remainingHeight, m_pageHeight);
+    return remainingHeight;
+}
+
+bool Document::isPrintMedia() const
+{
+    return m_book && m_book->mediaType() == MediaType::Print;
 }
 
 template<typename ResourceType>
