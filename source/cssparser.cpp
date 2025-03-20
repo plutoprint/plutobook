@@ -3360,9 +3360,7 @@ RefPtr<CSSValue> CSSParser::consumeLonghand(CSSTokenStream& input, CSSPropertyID
         static const CSSIdentValueEntry table[] = {
             {"auto", CSSValueID::Auto},
             {"always", CSSValueID::Column},
-            {"avoid", CSSValueID::Avoid},
-            {"left", CSSValueID::Left},
-            {"right", CSSValueID::Right}
+            {"avoid", CSSValueID::Avoid}
         };
 
         return consumeIdent(input, table);
