@@ -909,8 +909,8 @@ void Document::layout()
     auto pageSize = pageStyle->getPageSize(m_book->pageSize());
     auto pageScale = pageStyle->pageScale();
 
-    float pageWidth = pageSize.width() / units::px;
-    float pageHeight = pageSize.height() / units::px;
+    auto pageWidth = pageSize.width() / units::px;
+    auto pageHeight = pageSize.height() / units::px;
 
     auto marginLeftLength = pageStyle->marginLeft();
     auto marginRightLength = pageStyle->marginRight();
@@ -918,10 +918,10 @@ void Document::layout()
     auto marginBottomLength = pageStyle->marginBottom();
 
     const auto& deviceMargins = document()->book()->pageMargins();
-    float marginTop = marginTopLength.isAuto() ? deviceMargins.top() / units::px : marginTopLength.calcMin(pageWidth);
-    float marginRight = marginRightLength.isAuto() ? deviceMargins.right() / units::px : marginRightLength.calcMin(pageWidth);
-    float marginBottom = marginBottomLength.isAuto() ? deviceMargins.bottom() / units::px : marginBottomLength.calcMin(pageWidth);
-    float marginLeft = marginLeftLength.isAuto() ? deviceMargins.left() / units::px : marginLeftLength.calcMin(pageWidth);
+    auto marginTop = marginTopLength.isAuto() ? deviceMargins.top() / units::px : marginTopLength.calcMin(pageWidth);
+    auto marginRight = marginRightLength.isAuto() ? deviceMargins.right() / units::px : marginRightLength.calcMin(pageWidth);
+    auto marginBottom = marginBottomLength.isAuto() ? deviceMargins.bottom() / units::px : marginBottomLength.calcMin(pageWidth);
+    auto marginLeft = marginLeftLength.isAuto() ? deviceMargins.left() / units::px : marginLeftLength.calcMin(pageWidth);
 
     auto pageContentWidth = pageWidth - marginLeft - marginRight;
     auto pageContentHeight = pageHeight - marginTop - marginBottom;
@@ -943,9 +943,11 @@ void Document::layout()
 
     size_t pageCount = std::ceil(document()->height() / m_pageHeight);
     for(size_t pageIndex = 0; pageIndex < pageCount; ++pageIndex) {
-        auto pageStyle = document()->styleForPage(emptyGlo, pageIndex, pagePseudoType(pageIndex));
-        auto pageBox = PageBox::create(pageStyle, pageSize, emptyGlo, pageIndex);
+        if(pageIndex > 0) {
+            pageStyle = document()->styleForPage(emptyGlo, pageIndex, pagePseudoType(pageIndex));
+        }
 
+        auto pageBox = PageBox::create(pageStyle, pageSize, emptyGlo, pageIndex);
         pageBox->setWidth(pageWidth);
         pageBox->setHeight(pageHeight);
 
