@@ -5,14 +5,14 @@ namespace plutobook {
 
 float FragmentBuilder::applyFragmentBreakBefore(const BoxFrame* child, float offset)
 {
-    if(child->style()->pageBreakBefore() == BreakBetween::Always)
+    if(child->style()->breakBefore() >= BreakBetween::Page)
         offset += fragmentRemainingHeightForOffset(offset, AssociateWithFormerFragment);
     return offset;
 }
 
 float FragmentBuilder::applyFragmentBreakAfter(const BoxFrame* child, float offset)
 {
-    if(child->style()->pageBreakAfter() == BreakBetween::Always)
+    if(child->style()->breakAfter() >= BreakBetween::Page)
         offset += fragmentRemainingHeightForOffset(offset, AssociateWithFormerFragment);
     return offset;
 }

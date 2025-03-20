@@ -1113,54 +1113,6 @@ std::optional<int> BoxStyle::columnCount() const
     return convertIntegerOrAuto(*value);
 }
 
-BreakBetween BoxStyle::columnBreakAfter() const
-{
-    auto value = get(CSSPropertyID::ColumnBreakAfter);
-    if(value == nullptr)
-        return BreakBetween::Auto;
-    return convertBreakBetween(*value);
-}
-
-BreakBetween BoxStyle::columnBreakBefore() const
-{
-    auto value = get(CSSPropertyID::ColumnBreakBefore);
-    if(value == nullptr)
-        return BreakBetween::Auto;
-    return convertBreakBetween(*value);
-}
-
-BreakInside BoxStyle::columnBreakInside() const
-{
-    auto value = get(CSSPropertyID::ColumnBreakInside);
-    if(value == nullptr)
-        return BreakInside::Auto;
-    return convertBreakInside(*value);
-}
-
-BreakBetween BoxStyle::pageBreakAfter() const
-{
-    auto value = get(CSSPropertyID::PageBreakAfter);
-    if(value == nullptr)
-        return BreakBetween::Auto;
-    return convertBreakBetween(*value);
-}
-
-BreakBetween BoxStyle::pageBreakBefore() const
-{
-    auto value = get(CSSPropertyID::PageBreakBefore);
-    if(value == nullptr)
-        return BreakBetween::Auto;
-    return convertBreakBetween(*value);
-}
-
-BreakInside BoxStyle::pageBreakInside() const
-{
-    auto value = get(CSSPropertyID::PageBreakInside);
-    if(value == nullptr)
-        return BreakInside::Auto;
-    return convertBreakInside(*value);
-}
-
 std::optional<float> BoxStyle::pageScale() const
 {
     auto value = get(CSSPropertyID::PageScale);
@@ -1711,6 +1663,21 @@ void BoxStyle::set(CSSPropertyID id, RefPtr<CSSValue> value)
         break;
     case CSSPropertyID::BorderCollapse:
         m_borderCollapse = convertBorderCollapse(*value);
+        break;
+    case CSSPropertyID::BreakAfter:
+    case CSSPropertyID::ColumnBreakAfter:
+    case CSSPropertyID::PageBreakAfter:
+        m_breakAfter = convertBreakBetween(*value);
+        break;
+    case CSSPropertyID::BreakBefore:
+    case CSSPropertyID::ColumnBreakBefore:
+    case CSSPropertyID::PageBreakBefore:
+        m_breakBefore = convertBreakBetween(*value);
+        break;
+    case CSSPropertyID::BreakInside:
+    case CSSPropertyID::ColumnBreakInside:
+    case CSSPropertyID::PageBreakInside:
+        m_breakInside = convertBreakInside(*value);
         break;
     case CSSPropertyID::Color:
         m_color = convertColor(*value);
@@ -2952,14 +2919,24 @@ BreakBetween BoxStyle::convertBreakBetween(const CSSValue& value)
     switch(ident.value()) {
     case CSSValueID::Auto:
         return BreakBetween::Auto;
-    case CSSValueID::Always:
-        return BreakBetween::Always;
     case CSSValueID::Avoid:
         return BreakBetween::Avoid;
+    case CSSValueID::AvoidColumn:
+        return BreakBetween::AvoidColumn;
+    case CSSValueID::AvoidPage:
+        return BreakBetween::AvoidPage;
+    case CSSValueID::Column:
+        return BreakBetween::Column;
+    case CSSValueID::Page:
+        return BreakBetween::Page;
     case CSSValueID::Left:
         return BreakBetween::Left;
     case CSSValueID::Right:
         return BreakBetween::Right;
+    case CSSValueID::Recto:
+        return BreakBetween::Recto;
+    case CSSValueID::Verso:
+        return BreakBetween::Verso;
     default:
         assert(false);
     }
@@ -2975,6 +2952,10 @@ BreakInside BoxStyle::convertBreakInside(const CSSValue& value)
         return BreakInside::Auto;
     case CSSValueID::Avoid:
         return BreakInside::Avoid;
+    case CSSValueID::AvoidColumn:
+        return BreakInside::AvoidColumn;
+    case CSSValueID::AvoidPage:
+        return BreakInside::AvoidPage;
     default:
         assert(false);
     }

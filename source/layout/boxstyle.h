@@ -237,15 +237,22 @@ enum class AlignItem : uint8_t {
 
 enum class BreakBetween : uint8_t {
     Auto,
-    Always,
     Avoid,
+    AvoidColumn,
+    AvoidPage,
+    Column,
+    Page,
     Left,
-    Right
+    Right,
+    Recto,
+    Verso
 };
 
 enum class BreakInside : uint8_t {
     Auto,
-    Avoid
+    Avoid,
+    AvoidColumn,
+    AvoidPage
 };
 
 enum class ColumnSpan : uint8_t {
@@ -817,13 +824,9 @@ public:
     std::optional<float> columnGap() const;
     std::optional<int> columnCount() const;
 
-    BreakBetween columnBreakAfter() const;
-    BreakBetween columnBreakBefore() const;
-    BreakInside columnBreakInside() const;
-
-    BreakBetween pageBreakAfter() const;
-    BreakBetween pageBreakBefore() const;
-    BreakInside pageBreakInside() const;
+    BreakBetween breakAfter() const { return m_breakAfter; }
+    BreakBetween breakBefore() const { return m_breakBefore; }
+    BreakInside breakInside() const { return m_breakInside; }
 
     std::optional<float> pageScale() const;
     GlobalString page() const;
@@ -1000,6 +1003,9 @@ private:
     CaptionSide m_captionSide{CaptionSide::Top};
     EmptyCells m_emptyCells{EmptyCells::Show};
     BorderCollapse m_borderCollapse{BorderCollapse::Separate};
+    BreakBetween m_breakAfter{BreakBetween::Auto};
+    BreakBetween m_breakBefore{BreakBetween::Auto};
+    BreakInside m_breakInside{BreakInside::Auto};
     Color m_color{Color::Black};
 };
 

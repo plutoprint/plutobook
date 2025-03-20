@@ -386,7 +386,7 @@ MultiColumnRowBox* MultiColumnFlowBox::lastRow() const
 
 float MultiColumnFlowBox::applyFragmentBreakBefore(const BoxFrame* child, float offset)
 {
-    if(child->style()->columnBreakBefore() != BreakBetween::Always)
+    if(child->style()->breakBefore() != BreakBetween::Column)
         return offset;
     auto columnHeight = fragmentHeightForOffset(offset);
     addForcedFragmentBreak(offset);
@@ -397,7 +397,7 @@ float MultiColumnFlowBox::applyFragmentBreakBefore(const BoxFrame* child, float 
 
 float MultiColumnFlowBox::applyFragmentBreakAfter(const BoxFrame* child, float offset)
 {
-    if(child->style()->columnBreakAfter() != BreakBetween::Always)
+    if(child->style()->breakAfter() != BreakBetween::Column)
         return offset;
     auto columnHeight = fragmentHeightForOffset(offset);
     addForcedFragmentBreak(offset);
@@ -408,7 +408,7 @@ float MultiColumnFlowBox::applyFragmentBreakAfter(const BoxFrame* child, float o
 
 float MultiColumnFlowBox::applyFragmentBreakInside(const BoxFrame* child, float offset)
 {
-    if(child->style()->columnBreakInside() == BreakInside::Auto)
+    if(child->style()->breakInside() == BreakInside::Auto)
         return offset;
     auto columnHeight = fragmentHeightForOffset(offset);
     auto childHeight = child->height();

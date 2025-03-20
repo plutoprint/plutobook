@@ -916,6 +916,9 @@ static CSSPropertyID csspropertyid(const std::string_view& name)
         {"border-width", CSSPropertyID::BorderWidth},
         {"bottom", CSSPropertyID::Bottom},
         {"box-sizing", CSSPropertyID::BoxSizing},
+        {"break-after", CSSPropertyID::BreakAfter},
+        {"break-before", CSSPropertyID::BreakBefore},
+        {"break-inside", CSSPropertyID::BreakInside},
         {"caption-side", CSSPropertyID::CaptionSide},
         {"clear", CSSPropertyID::Clear},
         {"clip", CSSPropertyID::Clip},
@@ -3323,13 +3326,53 @@ RefPtr<CSSValue> CSSParser::consumeLonghand(CSSTokenStream& input, CSSPropertyID
         return consumeIdent(input, table);
     }
 
+    case CSSPropertyID::BreakBefore:
+    case CSSPropertyID::BreakAfter: {
+        static const CSSIdentValueEntry table[] = {
+            {"auto", CSSValueID::Auto},
+            {"avoid", CSSValueID::Avoid},
+            {"avoid-column", CSSValueID::AvoidColumn},
+            {"avoid-page", CSSValueID::AvoidPage},
+            {"column", CSSValueID::Column},
+            {"page", CSSValueID::Page},
+            {"left", CSSValueID::Left},
+            {"right", CSSValueID::Right},
+            {"recto", CSSValueID::Recto},
+            {"verso", CSSValueID::Verso}
+        };
+
+        return consumeIdent(input, table);
+    }
+
+    case CSSPropertyID::BreakInside: {
+        static const CSSIdentValueEntry table[] = {
+            {"auto", CSSValueID::Auto},
+            {"avoid", CSSValueID::Avoid},
+            {"avoid-column", CSSValueID::AvoidColumn},
+            {"avoid-page", CSSValueID::AvoidPage}
+        };
+
+        return consumeIdent(input, table);
+    }
+
     case CSSPropertyID::ColumnBreakBefore:
-    case CSSPropertyID::ColumnBreakAfter:
+    case CSSPropertyID::ColumnBreakAfter: {
+        static const CSSIdentValueEntry table[] = {
+            {"auto", CSSValueID::Auto},
+            {"always", CSSValueID::Column},
+            {"avoid", CSSValueID::Avoid},
+            {"left", CSSValueID::Left},
+            {"right", CSSValueID::Right}
+        };
+
+        return consumeIdent(input, table);
+    }
+
     case CSSPropertyID::PageBreakBefore:
     case CSSPropertyID::PageBreakAfter: {
         static const CSSIdentValueEntry table[] = {
             {"auto", CSSValueID::Auto},
-            {"always", CSSValueID::Always},
+            {"always", CSSValueID::Page},
             {"avoid", CSSValueID::Avoid},
             {"left", CSSValueID::Left},
             {"right", CSSValueID::Right}
