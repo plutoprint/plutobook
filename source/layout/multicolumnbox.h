@@ -154,9 +154,7 @@ public:
     BoxFrame* firstMultiColumnBox() const;
     BoxFrame* lastMultiColumnBox() const;
 
-    float applyFragmentBreakBefore(const BoxFrame* child, float offset) final;
-    float applyFragmentBreakAfter(const BoxFrame* child, float offset) final;
-    float applyFragmentBreakInside(const BoxFrame* child, float offset) final;
+    FragmentType fragmentType() const final { return FragmentType::Column; }
 
     float fragmentHeightForOffset(float offset) const final;
     float fragmentRemainingHeightForOffset(float offset, FragmentBoundaryRule rule) const final;

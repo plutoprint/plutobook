@@ -384,43 +384,6 @@ MultiColumnRowBox* MultiColumnFlowBox::lastRow() const
     return nullptr;
 }
 
-float MultiColumnFlowBox::applyFragmentBreakBefore(const BoxFrame* child, float offset)
-{
-    if(child->style()->breakBefore() != BreakBetween::Column)
-        return offset;
-    auto columnHeight = fragmentHeightForOffset(offset);
-    addForcedFragmentBreak(offset);
-    if(columnHeight > 0.f)
-        offset += fragmentRemainingHeightForOffset(offset, AssociateWithFormerFragment);
-    return offset;
-}
-
-float MultiColumnFlowBox::applyFragmentBreakAfter(const BoxFrame* child, float offset)
-{
-    if(child->style()->breakAfter() != BreakBetween::Column)
-        return offset;
-    auto columnHeight = fragmentHeightForOffset(offset);
-    addForcedFragmentBreak(offset);
-    if(columnHeight > 0.f)
-        offset += fragmentRemainingHeightForOffset(offset, AssociateWithFormerFragment);
-    return offset;
-}
-
-float MultiColumnFlowBox::applyFragmentBreakInside(const BoxFrame* child, float offset)
-{
-    if(child->style()->breakInside() == BreakInside::Auto)
-        return offset;
-    auto columnHeight = fragmentHeightForOffset(offset);
-    auto childHeight = child->height();
-    updateMinimumFragmentHeight(offset, childHeight);
-    if(columnHeight == 0.f)
-        return offset;
-    auto remainingHeight = fragmentRemainingHeightForOffset(offset, AssociateWithLatterFragment);
-    if(remainingHeight < childHeight && remainingHeight < columnHeight)
-        return offset + remainingHeight;
-    return offset;
-}
-
 float MultiColumnFlowBox::fragmentHeightForOffset(float offset) const
 {
     offset += fragmentOffset();

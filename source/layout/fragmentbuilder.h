@@ -5,12 +5,19 @@ namespace plutobook {
 
 class BoxFrame;
 
+enum class FragmentType {
+    Column,
+    Page
+};
+
 enum FragmentBoundaryRule { AssociateWithFormerFragment, AssociateWithLatterFragment };
 
 class FragmentBuilder {
 public:
     FragmentBuilder() = default;
     virtual ~FragmentBuilder() = default;
+
+    virtual FragmentType fragmentType() const = 0;
 
     virtual float applyFragmentBreakBefore(const BoxFrame* child, float offset);
     virtual float applyFragmentBreakAfter(const BoxFrame* child, float offset);

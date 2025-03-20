@@ -361,6 +361,8 @@ public:
     PageSize pageSizeAt(uint32_t pageIndex) const;
     uint32_t pageCount() const;
 
+    FragmentType fragmentType() const final { return FragmentType::Page; }
+
     float fragmentHeightForOffset(float offset) const final;
     float fragmentRemainingHeightForOffset(float offset, FragmentBoundaryRule rule) const final;
 
