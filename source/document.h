@@ -308,6 +308,9 @@ public:
     BoxStyle* rootStyle() const;
     BoxStyle* backgroundStyle() const;
 
+    Rect backgroundRect() const;
+    Rect pageRectAt(uint32_t pageIndex) const;
+
     Element* getElementById(const std::string_view& id) const;
     void addElementById(const HeapString& id, Element* element);
     void removeElementById(const HeapString& id, Element* element);

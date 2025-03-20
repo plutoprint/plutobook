@@ -677,6 +677,16 @@ BoxStyle* Document::backgroundStyle() const
     return box()->backgroundStyle();
 }
 
+Rect Document::backgroundRect() const
+{
+    return box()->backgroundRect();
+}
+
+Rect Document::pageRectAt(uint32_t pageIndex) const
+{
+    return Rect(0, pageIndex * m_pageHeight, m_pageWidth, m_pageHeight);
+}
+
 Element* Document::getElementById(const std::string_view& id) const
 {
     auto it = m_idCache.find(id);

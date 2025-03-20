@@ -1,5 +1,6 @@
 #include "boxview.h"
 #include "boxlayer.h"
+#include "pagebox.h"
 #include "document.h"
 
 namespace plutobook {
@@ -7,6 +8,13 @@ namespace plutobook {
 BoxView::BoxView(Document* document, const RefPtr<BoxStyle>& style)
     : BlockFlowBox(document, style)
 {
+}
+
+Rect BoxView::backgroundRect() const
+{
+    if(m_currentPage)
+        return document()->pageRectAt(m_currentPage->pageIndex());
+    return Rect(0, 0, document()->width(), document()->height());
 }
 
 float BoxView::availableWidth() const
@@ -25,12 +33,10 @@ std::optional<float> BoxView::availableHeight() const
 
 void BoxView::computeWidth(float& x, float& width, float& marginLeft, float& marginRight) const
 {
-    width = document()->viewportWidth();
 }
 
 void BoxView::computeHeight(float& y, float& height, float& marginTop, float& marginBottom) const
 {
-    height = document()->viewportHeight();
 }
 
 void BoxView::layout(FragmentBuilder* fragmentainer)

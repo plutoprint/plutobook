@@ -15,6 +15,8 @@ public:
     bool requiresLayer() const final { return true; }
     BoxStyle* backgroundStyle() const { return m_backgroundStyle; }
 
+    Rect backgroundRect() const;
+
     void setCurrentPage(PageBox* page) { m_currentPage = page; }
     PageBox* currentPage() const { return m_currentPage; }
 
