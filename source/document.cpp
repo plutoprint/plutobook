@@ -980,20 +980,11 @@ void Document::render(GraphicsContext& context, const Rect& rect)
 
 void Document::renderPage(GraphicsContext& context, uint32_t pageIndex)
 {
-    if(pageIndex >= m_pages.size())
-        return;
-    const auto& page = m_pages[pageIndex];
-    Rect pageRect(0, pageIndex * m_pageHeight, m_pageWidth, m_pageHeight);
-    if(pageRect.isEmpty())
-        return;
-    context.save();
-    context.translate(page->marginLeft(), page->marginTop());
-    context.scale(m_pageScale, m_pageScale);
-    context.translate(-pageRect.x, -pageRect.y);
-    context.clipRect(pageRect);
-    box()->setCurrentPage(page.get());
-    box()->layer()->paint(context, pageRect);
-    context.restore();
+    if(pageIndex < m_pages.size()) {
+        const auto& page = m_pages[pageIndex];
+        box()->setCurrentPage(page.get());
+        page->layer()->paint(context, pageRectAt(pageIndex));
+    }
 }
 
 PageSize Document::pageSizeAt(uint32_t pageIndex) const

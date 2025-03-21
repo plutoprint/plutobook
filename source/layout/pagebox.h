@@ -13,7 +13,7 @@ public:
     static std::unique_ptr<PageBox> create(const RefPtr<BoxStyle>& style, const PageSize& pageSize, const GlobalString& pageName, uint32_t pageIndex);
 
     bool isPageBox() const final { return true; }
-    bool requiresLayer() const final { return false; }
+    bool requiresLayer() const final { return true; }
 
     const PageSize& pageSize() const { return m_pageSize; }
     const GlobalString& pageName() const { return m_pageName; }
@@ -25,6 +25,8 @@ public:
     void computeHeight(float& y, float& height, float& marginTop, float& marginBottom) const final;
     void layout(FragmentBuilder* fragmentainer) final;
     void build() final;
+
+    void paintContents(const PaintInfo& info, const Point& offset, PaintPhase phase) final;
 
     const char* name() const final { return "PageBox"; }
 

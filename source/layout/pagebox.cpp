@@ -1,5 +1,6 @@
 #include "pagebox.h"
 #include "document.h"
+#include "graphicscontext.h"
 
 namespace plutobook {
 
@@ -33,11 +34,26 @@ void PageBox::layout(FragmentBuilder* fragmentainer)
 {
     updateWidth();
     updateHeight();
+    updateOverflowRect();
 }
 
 void PageBox::build()
 {
     BlockBox::build();
+}
+
+void PageBox::paintContents(const PaintInfo& info, const Point& offset, PaintPhase phase)
+{
+    auto pageRect = document()->pageRectAt(m_pageIndex);
+    if(phase == PaintPhase::Contents && !pageRect.isEmpty()) {
+        info->save();
+        info->translate(marginLeft(), marginTop());
+        info->scale(document()->pageScale(), document()->pageScale());
+        info->translate(-pageRect.x, -pageRect.y);
+        info->clipRect(pageRect);
+        document()->render(*info, pageRect);
+        info->restore();
+    }
 }
 
 PageBox::PageBox(const RefPtr<BoxStyle>& style, const PageSize& pageSize, const GlobalString& pageName, uint32_t pageIndex)
