@@ -298,6 +298,9 @@ public:
     float viewportWidth() const;
     float viewportHeight() const;
 
+    float availableWidth() const;
+    float availableHeight() const;
+
     TextNode* createTextNode(const std::string_view& value);
     Element* createElement(const GlobalString& namespaceURI, const GlobalString& tagName);
     Element* rootElement() const { return m_rootElement; }

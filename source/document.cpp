@@ -536,6 +536,20 @@ float Document::viewportHeight() const
     return 0.f;
 }
 
+float Document::availableWidth() const
+{
+    if(isPrintMedia())
+        return m_pageWidth;
+    return viewportWidth();
+}
+
+float Document::availableHeight() const
+{
+    if(isPrintMedia())
+        return m_pageHeight;
+    return viewportHeight();
+}
+
 TextNode* Document::createTextNode(const std::string_view& value)
 {
     return new (m_heap) TextNode(this, m_heap->createString(value));

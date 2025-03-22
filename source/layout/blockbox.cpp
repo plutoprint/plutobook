@@ -3,6 +3,7 @@
 #include "linebox.h"
 #include "linelayout.h"
 #include "boxlayer.h"
+#include "document.h"
 
 namespace plutobook {
 
@@ -65,6 +66,8 @@ void BlockBox::layoutPositionedBoxes()
 
 std::optional<float> BlockBox::availableHeight() const
 {
+    if(isBoxView())
+        return document()->availableHeight();
     if(hasOverrideHeight())
         return overrideHeight() - borderAndPaddingHeight();
     if(isAnonymous())

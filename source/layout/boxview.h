@@ -20,9 +20,6 @@ public:
     void setCurrentPage(PageBox* page) { m_currentPage = page; }
     PageBox* currentPage() const { return m_currentPage; }
 
-    float availableWidth() const final;
-    std::optional<float> availableHeight() const final;
-
     void computeWidth(float& x, float& width, float& marginLeft, float& marginRight) const final;
     void computeHeight(float& y, float& height, float& marginTop, float& marginBottom) const final;
     void layout(FragmentBuilder* fragmentainer) final;

@@ -515,6 +515,8 @@ Point BoxModel::relativePositionOffset() const
 
 float BoxModel::availableWidthForPositioned() const
 {
+    if(isBoxView())
+        return document()->availableWidth();
     auto rect = borderBoundingBox();
     if(rect.w > 0.f)
         return rect.w - borderLeft() - borderRight();
@@ -523,6 +525,8 @@ float BoxModel::availableWidthForPositioned() const
 
 float BoxModel::availableHeightForPositioned() const
 {
+    if(isBoxView())
+        return document()->availableHeight();
     auto rect = borderBoundingBox();
     if(rect.h > 0.f)
         return rect.h - borderTop() - borderBottom();

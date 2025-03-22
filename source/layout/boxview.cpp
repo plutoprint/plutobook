@@ -17,22 +17,9 @@ Rect BoxView::backgroundRect() const
     return Rect(0, 0, document()->width(), document()->height());
 }
 
-float BoxView::availableWidth() const
-{
-    if(document()->isPrintMedia())
-        return document()->pageWidth();
-    return document()->viewportWidth();
-}
-
-std::optional<float> BoxView::availableHeight() const
-{
-    if(document()->isPrintMedia())
-        return document()->pageHeight();
-    return document()->viewportHeight();
-}
-
 void BoxView::computeWidth(float& x, float& width, float& marginLeft, float& marginRight) const
 {
+    width = document()->availableWidth();
 }
 
 void BoxView::computeHeight(float& y, float& height, float& marginTop, float& marginBottom) const
