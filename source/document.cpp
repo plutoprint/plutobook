@@ -951,7 +951,7 @@ void Document::layout()
         box()->layout(this);
     }
 
-    size_t pageCount = std::ceil(document()->height() / m_pageHeight);
+    size_t pageCount = std::ceil(document()->height() / (m_pageHeight + 0.001f));
     for(size_t pageIndex = 0; pageIndex < pageCount; ++pageIndex) {
         if(pageIndex > 0) {
             pageStyle = document()->styleForPage(emptyGlo, pageIndex, pagePseudoType(pageIndex));
