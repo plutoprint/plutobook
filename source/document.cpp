@@ -998,6 +998,7 @@ void Document::renderPage(GraphicsContext& context, uint32_t pageIndex)
         const auto& page = m_pages[pageIndex];
         box()->setCurrentPage(page.get());
         page->layer()->paint(context, page->borderBoxRect());
+        box()->setCurrentPage(nullptr);
     }
 }
 
