@@ -1197,7 +1197,7 @@ void BlockFlowBox::handleBottomOfBlock(float top, float bottom, MarginInfo& marg
     }
 }
 
-float BlockFlowBox::collapseMargins(BoxFrame* child, MarginInfo& marginInfo)
+float BlockFlowBox::collapseMargins(BoxFrame* child, FragmentBuilder* fragmentainer, MarginInfo& marginInfo)
 {
     auto posTop = child->maxMarginTop(true);
     auto negTop = child->maxMarginTop(false);
@@ -1211,7 +1211,8 @@ float BlockFlowBox::collapseMargins(BoxFrame* child, MarginInfo& marginInfo)
         m_maxNegativeMarginTop = std::max(negTop, m_maxNegativeMarginTop);
     }
 
-    auto top = height();
+    auto beforeCollapseTop = height();
+    auto top = beforeCollapseTop;
     if(child->isSelfCollapsingBlock()) {
         auto collapsedPosTop = std::max(marginInfo.positiveMargin(), child->maxMarginTop(true));
         auto collapsedNegTop = std::max(marginInfo.negativeMargin(), child->maxMarginTop(false));
@@ -1232,6 +1233,15 @@ float BlockFlowBox::collapseMargins(BoxFrame* child, MarginInfo& marginInfo)
 
         marginInfo.setPositiveMargin(child->maxMarginBottom(true));
         marginInfo.setNegativeMargin(child->maxMarginBottom(false));
+    }
+
+    if(fragmentainer &&  top > beforeCollapseTop) {
+        auto fragmentHeight = fragmentainer->fragmentHeightForOffset(beforeCollapseTop);
+        if(fragmentHeight > 0.f) {
+            auto newTop = std::min(top, beforeCollapseTop + fragmentainer->fragmentRemainingHeightForOffset(beforeCollapseTop, AssociateWithLatterFragment));
+            setHeight(height() + (newTop - top));
+            top = newTop;
+        }
     }
 
     return top;
@@ -1383,6 +1393,13 @@ float BlockFlowBox::estimateVerticalPosition(BoxFrame* child, FragmentBuilder* f
         estimatedTop += std::max(positiveMarginTop, marginInfo.positiveMargin()) - std::max(negativeMarginTop, marginInfo.negativeMargin());
     }
 
+    if(fragmentainer && estimatedTop > height()) {
+        auto fragmentHeight = fragmentainer->fragmentHeightForOffset(height());
+        if(fragmentHeight > 0.f) {
+            estimatedTop = std::min(estimatedTop, height() + fragmentainer->fragmentRemainingHeightForOffset(height(), AssociateWithLatterFragment));
+        }
+    }
+
     estimatedTop += getClearDelta(child, estimatedTop);
     if(fragmentainer) {
         estimatedTop = fragmentainer->applyFragmentBreakBefore(child, estimatedTop);
@@ -1437,7 +1454,7 @@ void BlockFlowBox::layoutBlockChild(BoxFrame* child, FragmentBuilder* fragmentai
         fragmentainer->leaveFragment(estimatedTop);
     }
 
-    auto offsetY = collapseMargins(child, marginInfo);
+    auto offsetY = collapseMargins(child, fragmentainer, marginInfo);
     auto clearDelta = getClearDelta(child, offsetY);
     if(clearDelta && child->isSelfCollapsingBlock()) {
         marginInfo.setPositiveMargin(std::max(child->maxMarginTop(true), child->maxMarginBottom(true)));
@@ -1468,8 +1485,13 @@ void BlockFlowBox::layoutBlockChild(BoxFrame* child, FragmentBuilder* fragmentai
     }
 
     setHeight(height() + child->height());
-    if(fragmentainer)
-        setHeight(fragmentainer->applyFragmentBreakAfter(child, height()));
+    if(fragmentainer) {
+        auto newHeight = fragmentainer->applyFragmentBreakAfter(child, height());
+        if(newHeight > height())
+            marginInfo.clearMargin();
+        setHeight(newHeight);
+    }
+
     if(auto childBlock = to<BlockFlowBox>(child)) {
         addOverhangingFloats(childBlock);
     }
