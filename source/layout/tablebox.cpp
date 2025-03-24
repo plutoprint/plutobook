@@ -1118,6 +1118,16 @@ void TableSectionBox::layoutRows(FragmentBuilder* fragmentainer)
         if(fragmentainer) {
             position = fragmentainer->applyFragmentBreakBefore(rowBox, position + verticalSpacing);
             position = fragmentainer->applyFragmentBreakInside(rowBox, position) - verticalSpacing;
+            if(table()->borderCollapse() == BorderCollapse::Collapse) {
+                auto fragmentHeight = fragmentainer->fragmentHeightForOffset(position);
+                auto remainingHeight = fragmentainer->fragmentRemainingHeightForOffset(position, AssociateWithLatterFragment);
+                if(fragmentHeight > 0.f && remainingHeight == fragmentHeight) {
+                    float borderTop = 0.f;
+                    for(auto& [col, cell] : rowBox->cells())
+                        borderTop = std::max(borderTop, cell->borderTop());
+                    position += borderTop;
+                }
+            }
         }
 
         rowBox->setX(0.f);

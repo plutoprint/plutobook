@@ -954,18 +954,18 @@ void Document::layout()
     }
 
     m_pageScale = pageScale.value_or(1.f);
-    m_pageWidth = pageContentWidth / m_pageScale;
-    m_pageHeight = pageContentHeight / m_pageScale;
+    m_pageWidth = std::round(pageContentWidth / m_pageScale);
+    m_pageHeight = std::round(pageContentHeight / m_pageScale);
     box()->layout(this);
 
-    if(!pageScale.has_value() && pageContentWidth < document()->width()) {
-        m_pageScale = pageContentWidth / document()->width();
-        m_pageWidth = pageContentWidth / m_pageScale;
-        m_pageHeight = pageContentHeight / m_pageScale;
+    if(!pageScale.has_value() && m_pageWidth < document()->width()) {
+        m_pageScale = m_pageWidth / document()->width();
+        m_pageWidth = std::round(m_pageWidth / m_pageScale);
+        m_pageHeight = std::round(m_pageHeight / m_pageScale);
         box()->layout(this);
     }
 
-    size_t pageCount = std::ceil(document()->height() / (m_pageHeight + 0.001f));
+    size_t pageCount = std::ceil(document()->height() / m_pageHeight);
     for(size_t pageIndex = 0; pageIndex < pageCount; ++pageIndex) {
         if(pageIndex > 0) {
             pageStyle = document()->styleForPage(emptyGlo, pageIndex, pagePseudoType(pageIndex));
