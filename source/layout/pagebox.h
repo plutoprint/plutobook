@@ -49,9 +49,12 @@ public:
     PageMarginBox(const RefPtr<BoxStyle>& style, PageMarginType marginType);
 
     bool isPageMarginBox() const final { return true; }
-    bool requiresLayer() const final { return false; }
+    bool requiresLayer() const final { return true; }
     PageMarginType marginType() const { return m_marginType; }
     PageBox* pageBox() const;
+
+    void layout(FragmentBuilder* fragmentainer) final;
+    void build() final;
 
     const char* name() const final { return "PageMarginBox"; }
 
@@ -67,6 +70,28 @@ inline PageBox* PageMarginBox::pageBox() const
 template<>
 struct is_a<PageMarginBox> {
     static bool check(const Box& box) { return box.isPageMarginBox(); }
+};
+
+class Counters;
+
+class PageBoxBuilder {
+public:
+    PageBoxBuilder(Document* document, const PageSize& pageSize, float pageWidth, float pageHeight, float marginTop, float marginRight, float marginBottom, float marginLeft);
+
+    void build();
+
+private:
+    void buildPageMargin(const Counters& counters, PageBox* pageBox, PageMarginType marginType);
+    void buildPageMargins(const Counters& counters, PageBox* pageBox);
+
+    Document* m_document;
+    PageSize m_pageSize;
+    float m_pageWidth;
+    float m_pageHeight;
+    float m_marginTop;
+    float m_marginRight;
+    float m_marginBottom;
+    float m_marginLeft;
 };
 
 } // namespace plutobook

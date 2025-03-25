@@ -54,7 +54,7 @@ void ContentBoxBuilder::addText(const HeapString& text)
         return;
     }
 
-    auto box = new (m_element->heap()) TextBox(nullptr, m_parentStyle);
+    auto box = new (m_parentStyle->heap()) TextBox(nullptr, m_parentStyle);
     box->setText(text);
     m_parentBox->addChild(box);
     m_lastTextBox = box;
@@ -64,23 +64,23 @@ void ContentBoxBuilder::addLeaderText(const HeapString& text)
 {
     if(text.empty())
         return;
-    auto box = new (m_element->heap()) LeaderBox(m_parentStyle);
+    auto box = new (m_parentStyle->heap()) LeaderBox(m_parentStyle);
     box->setText(text);
     m_parentBox->addChild(box);
     m_lastTextBox = nullptr;
 }
 
-void ContentBoxBuilder::addLeader(const RefPtr<CSSValue>& value)
+void ContentBoxBuilder::addLeader(const CSSValue& value)
 {
     static const GlobalString dotted(".");
     static const GlobalString solid("_");
     static const GlobalString space(" ");
-    if(auto string = to<CSSStringValue>(value)) {
-        addLeaderText(string->value());
+    if(is<CSSStringValue>(value)) {
+        addLeaderText(to<CSSStringValue>(value).value());
         return;
     }
 
-    auto& ident = to<CSSIdentValue>(*value);
+    auto& ident = to<CSSIdentValue>(value);
     switch(ident.value()) {
     case CSSValueID::Dotted:
         addLeaderText(dotted);
@@ -96,42 +96,43 @@ void ContentBoxBuilder::addLeader(const RefPtr<CSSValue>& value)
     }
 }
 
-void ContentBoxBuilder::addTargetCounter(const RefPtr<CSSFunctionValue>& function)
+void ContentBoxBuilder::addCounter(const CSSCounterValue& counter)
 {
-    assert(function->id() == CSSValueID::TargetCounter || function->id() == CSSValueID::TargetCounters);
+    addText(m_counters.counterText(counter.identifier(), counter.listStyle(), counter.separator()));
+}
+
+static const HeapString& getAttribute(const Element* element, const CSSValue& value)
+{
+    if(element)
+        return element->getAttribute(to<CSSCustomIdentValue>(value).value());
+    return emptyGlo;
+}
+
+void ContentBoxBuilder::addTargetCounter(const CSSFunctionValue& function)
+{
+    assert(function.id() == CSSValueID::TargetCounter || function.id() == CSSValueID::TargetCounters);
     auto style = BoxStyle::create(*m_parentStyle, Display::Inline);
-    auto box = new (m_element->heap()) TargetCounterBox(style);
+    auto box = new (m_parentStyle->heap()) TargetCounterBox(style);
 
     size_t index = 0;
 
-    if(auto attr = to<CSSUnaryFunctionValue>(function->at(index))) {
+    if(auto attr = to<CSSUnaryFunctionValue>(function.at(index))) {
         assert(attr->id() == CSSValueID::Attr);
-        box->setFragment(m_element->getAttribute(to<CSSCustomIdentValue>(*attr->value()).value()));
+        box->setFragment(getAttribute(m_element, *attr->value()));
     } else {
-        box->setFragment(to<CSSLocalUrlValue>(*function->at(index)).value());
+        box->setFragment(to<CSSLocalUrlValue>(*function.at(index)).value());
     }
 
     ++index;
 
-    box->setIdentifier(to<CSSCustomIdentValue>(*function->at(index++)).value());
-    if(function->id() == CSSValueID::TargetCounters)
-        box->setSeperator(to<CSSStringValue>(*function->at(index++)).value());
-    if(index < function->size()) {
-        box->setListStyle(to<CSSCustomIdentValue>(*function->at(index++)).value());
-        assert(index == function->size());
+    box->setIdentifier(to<CSSCustomIdentValue>(*function.at(index++)).value());
+    if(function.id() == CSSValueID::TargetCounters)
+        box->setSeperator(to<CSSStringValue>(*function.at(index++)).value());
+    if(index < function.size()) {
+        box->setListStyle(to<CSSCustomIdentValue>(*function.at(index++)).value());
+        assert(index == function.size());
     }
 
-    m_parentBox->addChild(box);
-    m_lastTextBox = nullptr;
-}
-
-void ContentBoxBuilder::addImage(RefPtr<Image> image)
-{
-    if(image == nullptr)
-        return;
-    auto style = BoxStyle::create(*m_parentStyle, Display::Inline);
-    auto box = new (m_element->heap()) ImageBox(nullptr, style);
-    box->setImage(std::move(image));
     m_parentBox->addChild(box);
     m_lastTextBox = nullptr;
 }
@@ -149,6 +150,17 @@ void ContentBoxBuilder::addQuote(CSSValueID value)
     if(openquote) {
         m_counters.increaseQuoteDepth();
     }
+}
+
+void ContentBoxBuilder::addImage(RefPtr<Image> image)
+{
+    if(image == nullptr)
+        return;
+    auto style = BoxStyle::create(*m_parentStyle, Display::Inline);
+    auto box = new (m_parentStyle->heap()) ImageBox(nullptr, style);
+    box->setImage(std::move(image));
+    m_parentBox->addChild(box);
+    m_lastTextBox = nullptr;
 }
 
 void ContentBoxBuilder::build()
@@ -187,21 +199,20 @@ void ContentBoxBuilder::build()
         if(auto string = to<CSSStringValue>(value)) {
             addText(string->value());
         } else if(auto image = to<CSSImageValue>(value)) {
-            addImage(image->fetch(m_element->document()));
+            addImage(image->fetch(m_parentStyle->document()));
         } else if(auto counter = to<CSSCounterValue>(value)) {
-            addText(m_counters.counterText(counter->identifier(), counter->listStyle(), counter->separator()));
+            addCounter(*counter);
         } else if(auto function = to<CSSFunctionValue>(value)) {
-            addTargetCounter(function);
+            addTargetCounter(*function);
         } else if(auto ident = to<CSSIdentValue>(value)) {
             addQuote(ident->value());
         } else {
             auto& function = to<CSSUnaryFunctionValue>(*value);
             if(function.id() == CSSValueID::Attr) {
-                auto& name = to<CSSCustomIdentValue>(*function.value());
-                addText(m_element->getAttribute(name.value()));
+                addText(getAttribute(m_element, *function.value()));
             } else {
                 assert(function.id() == CSSValueID::Leader);
-                addLeader(function.value());
+                addLeader(*function.value());
             }
         }
     }

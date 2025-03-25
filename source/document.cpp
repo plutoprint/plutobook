@@ -539,14 +539,14 @@ float Document::viewportHeight() const
 float Document::availableWidth() const
 {
     if(isPrintMedia())
-        return m_pageWidth;
+        return m_pageContentWidth;
     return viewportWidth();
 }
 
 float Document::availableHeight() const
 {
     if(isPrintMedia())
-        return m_pageHeight;
+        return m_pageContentHeight;
     return viewportHeight();
 }
 
@@ -694,11 +694,6 @@ BoxStyle* Document::backgroundStyle() const
 Rect Document::backgroundRect() const
 {
     return box()->backgroundRect();
-}
-
-Rect Document::pageRectAt(uint32_t pageIndex) const
-{
-    return Rect(0, pageIndex * m_pageHeight, m_pageWidth, m_pageHeight);
 }
 
 Element* Document::getElementById(const std::string_view& id) const
@@ -909,17 +904,8 @@ void Document::buildBox(Counters& counters, Box* parent)
 
 void Document::build()
 {
-    Counters counters(this);
+    Counters counters(this, 0);
     buildBox(counters, nullptr);
-}
-
-constexpr PseudoType pagePseudoType(size_t pageIndex)
-{
-    if(pageIndex == 0)
-        return PseudoType::FirstPage;
-    if(pageIndex % 2 == 0)
-        return PseudoType::RightPage;
-    return PseudoType::LeftPage;
 }
 
 void Document::layout()
@@ -953,38 +939,19 @@ void Document::layout()
         return;
     }
 
-    m_pageScale = pageScale.value_or(1.f);
-    m_pageWidth = std::round(pageContentWidth / m_pageScale);
-    m_pageHeight = std::round(pageContentHeight / m_pageScale);
+    m_pageContentScale = pageScale.value_or(1.f);
+    m_pageContentWidth = std::round(pageContentWidth / m_pageContentScale);
+    m_pageContentHeight = std::round(pageContentHeight / m_pageContentScale);
     box()->layout(this);
 
-    if(!pageScale.has_value() && m_pageWidth < document()->width()) {
-        m_pageScale = m_pageWidth / document()->width();
-        m_pageWidth = std::round(m_pageWidth / m_pageScale);
-        m_pageHeight = std::round(m_pageHeight / m_pageScale);
+    if(!pageScale.has_value() && m_pageContentWidth < document()->width()) {
+        m_pageContentScale = m_pageContentWidth / document()->width();
+        m_pageContentWidth = std::round(m_pageContentWidth / m_pageContentScale);
+        m_pageContentHeight = std::round(m_pageContentHeight / m_pageContentScale);
         box()->layout(this);
     }
 
-    size_t pageCount = std::ceil(document()->height() / m_pageHeight);
-    for(size_t pageIndex = 0; pageIndex < pageCount; ++pageIndex) {
-        if(pageIndex > 0) {
-            pageStyle = document()->styleForPage(emptyGlo, pageIndex, pagePseudoType(pageIndex));
-        }
-
-        auto pageBox = PageBox::create(pageStyle, pageSize, emptyGlo, pageIndex);
-        pageBox->setWidth(pageWidth);
-        pageBox->setHeight(pageHeight);
-
-        pageBox->setMarginTop(marginTop);
-        pageBox->setMarginRight(marginRight);
-        pageBox->setMarginBottom(marginBottom);
-        pageBox->setMarginLeft(marginLeft);
-
-        pageBox->build();
-        pageBox->layout(nullptr);
-
-        m_pages.push_back(std::move(pageBox));
-    }
+    PageBoxBuilder(this, pageSize, pageWidth, pageHeight, marginTop, marginRight, marginBottom, marginLeft).build();
 }
 
 void Document::render(GraphicsContext& context, const Rect& rect)
@@ -1016,16 +983,21 @@ uint32_t Document::pageCount() const
 
 float Document::fragmentHeightForOffset(float offset) const
 {
-    return m_pageHeight;
+    return m_pageContentHeight;
 }
 
 float Document::fragmentRemainingHeightForOffset(float offset, FragmentBoundaryRule rule) const
 {
     offset += fragmentOffset();
-    auto remainingHeight = m_pageHeight - std::fmod(offset, m_pageHeight);
+    auto remainingHeight = m_pageContentHeight - std::fmod(offset, m_pageContentHeight);
     if(rule == AssociateWithFormerFragment)
-        remainingHeight = std::fmod(remainingHeight, m_pageHeight);
+        remainingHeight = std::fmod(remainingHeight, m_pageContentHeight);
     return remainingHeight;
+}
+
+Rect Document::pageContentRectAt(uint32_t pageIndex) const
+{
+    return Rect(0, pageIndex * m_pageContentHeight, m_pageContentWidth, m_pageContentHeight);
 }
 
 bool Document::isPrintMedia() const

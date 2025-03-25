@@ -13,7 +13,7 @@ BoxView::BoxView(Document* document, const RefPtr<BoxStyle>& style)
 Rect BoxView::backgroundRect() const
 {
     if(m_currentPage)
-        return document()->pageRectAt(m_currentPage->pageIndex());
+        return document()->pageContentRectAt(m_currentPage->pageIndex());
     return Rect(0, 0, document()->width(), document()->height());
 }
 

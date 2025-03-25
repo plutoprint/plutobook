@@ -15,7 +15,7 @@ class HeapString;
 
 class Counters {
 public:
-    explicit Counters(Document* document);
+    Counters(Document* document, size_t pageCount);
 
     void push();
     void pop();
@@ -26,6 +26,8 @@ public:
 
     void increaseQuoteDepth() { ++m_quoteDepth; }
     void decreaseQuoteDepth() { --m_quoteDepth; }
+
+    size_t pageCount() const { return m_pageCount; }
     size_t quoteDepth() const { return m_quoteDepth; }
 
     void update(const Box* box);
@@ -37,6 +39,7 @@ private:
     Document* m_document;
     std::vector<std::set<GlobalString>> m_scopes;
     std::map<GlobalString, std::vector<int>> m_values;
+    size_t m_pageCount;
     size_t m_quoteDepth{0};
 };
 

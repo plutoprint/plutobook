@@ -5,9 +5,18 @@
 
 namespace plutobook {
 
-Counters::Counters(Document* document)
+static const GlobalString pageGlo("page");
+static const GlobalString pagesGlo("pages");
+static const GlobalString listItemGlo("list-item");
+
+Counters::Counters(Document* document, size_t pageCount)
     : m_document(document)
+    , m_pageCount(pageCount)
 {
+    if(m_pageCount) {
+        m_scopes.push_back({pagesGlo});
+        m_values[pagesGlo].push_back(pageCount);
+    }
 }
 
 void Counters::push()
@@ -60,20 +69,22 @@ void Counters::set(const GlobalString& name, int value)
     }
 }
 
-static const GlobalString listItem("list-item");
-
 void Counters::update(const Box* box)
 {
-    auto hasListItem = false;
+    auto hasListItemCounter = false;
+    auto hasPageCounter = false;
     for(auto id : { CSSPropertyID::CounterReset, CSSPropertyID::CounterIncrement, CSSPropertyID::CounterSet }) {
-        auto value = box->style()->get(id);
-        if(value == nullptr || value->id() == CSSValueID::None)
+        auto counters = box->style()->get(id);
+        if(counters == nullptr || counters->id() == CSSValueID::None)
             continue;
-        for(auto& counter : to<CSSListValue>(*value)) {
+        for(auto& counter : to<CSSListValue>(*counters)) {
             auto& pair = to<CSSPairValue>(*counter);
             auto& name = to<CSSCustomIdentValue>(*pair.first());
             auto& value = to<CSSIntegerValue>(*pair.second());
-            hasListItem |= listItem == name.value();
+            hasListItemCounter |= listItemGlo == name.value();
+            hasPageCounter |= pageGlo == name.value();
+            if(m_pageCount > 0 && pagesGlo == name.value())
+                continue;
             switch(id) {
             case CSSPropertyID::CounterReset:
                 reset(name.value(), value.value());
@@ -91,27 +102,29 @@ void Counters::update(const Box* box)
     }
 
     auto element = to<HTMLElement>(box->node());
-    if(element && !hasListItem) {
+    if(element && !hasListItemCounter) {
         if(element->tagName() == olTag) {
             auto olElement = static_cast<HTMLOLElement*>(element);
-            reset(listItem, olElement->start() - 1);
-            hasListItem = true;
+            reset(listItemGlo, olElement->start() - 1);
+            hasListItemCounter = true;
         } else if(element->tagName() == ulTag
             || element->tagName() == dirTag
             || element->tagName() == menuTag) {
-            reset(listItem, 0);
-            hasListItem = true;
+            reset(listItemGlo, 0);
+            hasListItemCounter = true;
         } else if(element->tagName() == liTag) {
             auto liElement = static_cast<HTMLLIElement*>(element);
             if(auto value = liElement->value()) {
-                reset(listItem, *value);
-                hasListItem = true;
+                reset(listItemGlo, *value);
+                hasListItemCounter = true;
             }
         }
     }
 
-    if(!hasListItem && box->isListItemBox())
-        increment(listItem, 1);
+    if(!hasListItemCounter && box->isListItemBox())
+        increment(listItemGlo, 1);
+    if(!hasPageCounter && box->isPageBox())
+        increment(pageGlo, 1);
     if(element && !m_values.empty() && !element->id().empty()) {
         m_document->addTargetCounters(element->id(), m_values);
     }
@@ -125,7 +138,7 @@ HeapString Counters::counterText(const GlobalString& name, const GlobalString& l
 HeapString Counters::markerText(const GlobalString& listStyle) const
 {
     int value = 0;
-    auto it = m_values.find(listItem);
+    auto it = m_values.find(listItemGlo);
     if(it != m_values.end() && !it->second.empty())
         value = it->second.back();
     return m_document->heap()->createString(m_document->getMarkerText(value, listStyle));

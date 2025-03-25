@@ -156,8 +156,9 @@ void BoxLayer::paintLayerContents(BoxLayer* rootLayer, GraphicsContext& context,
     if(compositing && !m_box->isSVGRootBox())
         context.pushGroup();
     Point adjustedOffset(offset);
-    if(auto box = to<BoxFrame>(m_box)) {
-        adjustedOffset -= box->location();
+    if(m_box->isBoxFrame() && !m_box->isPageMarginBox()) {
+        auto& box = to<BoxFrame>(*m_box);
+        adjustedOffset -= box.location();
     }
 
     PaintInfo paintInfo(context, rect);

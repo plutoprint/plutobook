@@ -96,7 +96,10 @@ struct is_a<PagesCounterBox> {
 
 class Counters;
 class Element;
+
 class CSSFunctionValue;
+class CSSCustomIdentValue;
+class CSSCounterValue;
 
 class ContentBoxBuilder {
 public:
@@ -107,10 +110,11 @@ public:
 private:
     void addText(const HeapString& text);
     void addLeaderText(const HeapString& text);
-    void addLeader(const RefPtr<CSSValue>& value);
-    void addTargetCounter(const RefPtr<CSSFunctionValue>& function);
-    void addImage(RefPtr<Image> image);
+    void addLeader(const CSSValue& value);
+    void addCounter(const CSSCounterValue& counter);
+    void addTargetCounter(const CSSFunctionValue& function);
     void addQuote(CSSValueID value);
+    void addImage(RefPtr<Image> image);
 
     Counters& m_counters;
     Element* m_element;

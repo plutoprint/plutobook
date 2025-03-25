@@ -312,7 +312,6 @@ public:
     BoxStyle* backgroundStyle() const;
 
     Rect backgroundRect() const;
-    Rect pageRectAt(uint32_t pageIndex) const;
 
     Element* getElementById(const std::string_view& id) const;
     void addElementById(const HeapString& id, Element* element);
@@ -372,9 +371,11 @@ public:
     float fragmentHeightForOffset(float offset) const final;
     float fragmentRemainingHeightForOffset(float offset, FragmentBoundaryRule rule) const final;
 
-    float pageWidth() const { return m_pageWidth; }
-    float pageHeight() const { return m_pageHeight; }
-    float pageScale() const { return m_pageScale; }
+    Rect pageContentRectAt(uint32_t pageIndex) const;
+
+    float pageContentWidth() const { return m_pageContentWidth; }
+    float pageContentHeight() const { return m_pageContentHeight; }
+    float pageContentScale() const { return m_pageContentScale; }
 
     bool isPrintMedia() const;
 
@@ -393,9 +394,9 @@ private:
     DocumentCounterMap m_counterCache;
     CSSStyleSheet m_styleSheet;
 
-    float m_pageWidth = 0.f;
-    float m_pageHeight = 0.f;
-    float m_pageScale = 1.f;
+    float m_pageContentWidth = 0.f;
+    float m_pageContentHeight = 0.f;
+    float m_pageContentScale = 1.f;
 };
 
 inline bool Node::isRootNode() const
