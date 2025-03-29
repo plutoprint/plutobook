@@ -101,11 +101,11 @@ void ContentBoxBuilder::addCounter(const CSSCounterValue& counter)
     addText(m_counters.counterText(counter.identifier(), counter.listStyle(), counter.separator()));
 }
 
-static const HeapString& getAttribute(const Element* element, const CSSValue& value)
+static const HeapString& getAttributeText(const Element* element, const CSSValue& value)
 {
-    if(element)
-        return element->getAttribute(to<CSSCustomIdentValue>(value).value());
-    return emptyGlo;
+    if(element == nullptr)
+        return emptyGlo;
+    return element->getAttribute(to<CSSCustomIdentValue>(value).value());
 }
 
 void ContentBoxBuilder::addTargetCounter(const CSSFunctionValue& function)
@@ -118,7 +118,7 @@ void ContentBoxBuilder::addTargetCounter(const CSSFunctionValue& function)
 
     if(auto attr = to<CSSUnaryFunctionValue>(function.at(index))) {
         assert(attr->id() == CSSValueID::Attr);
-        box->setFragment(getAttribute(m_element, *attr->value()));
+        box->setFragment(getAttributeText(m_element, *attr->value()));
     } else {
         box->setFragment(to<CSSLocalUrlValue>(*function.at(index)).value());
     }
@@ -209,7 +209,7 @@ void ContentBoxBuilder::build()
         } else {
             auto& function = to<CSSUnaryFunctionValue>(*value);
             if(function.id() == CSSValueID::Attr) {
-                addText(getAttribute(m_element, *function.value()));
+                addText(getAttributeText(m_element, *function.value()));
             } else {
                 assert(function.id() == CSSValueID::Leader);
                 addLeader(*function.value());

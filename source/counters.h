@@ -4,7 +4,7 @@
 #include <map>
 #include <set>
 #include <vector>
-#include <cstddef>
+#include <cstdint>
 
 namespace plutobook {
 
@@ -15,7 +15,7 @@ class HeapString;
 
 class Counters {
 public:
-    Counters(Document* document, size_t pageCount);
+    Counters(Document* document, uint32_t pageCount);
 
     void push();
     void pop();
@@ -27,8 +27,8 @@ public:
     void increaseQuoteDepth() { ++m_quoteDepth; }
     void decreaseQuoteDepth() { --m_quoteDepth; }
 
-    size_t pageCount() const { return m_pageCount; }
-    size_t quoteDepth() const { return m_quoteDepth; }
+    uint32_t pageCount() const { return m_pageCount; }
+    uint32_t quoteDepth() const { return m_quoteDepth; }
 
     void update(const Box* box);
 
@@ -39,8 +39,8 @@ private:
     Document* m_document;
     std::vector<std::set<GlobalString>> m_scopes;
     std::map<GlobalString, std::vector<int>> m_values;
-    size_t m_pageCount;
-    size_t m_quoteDepth{0};
+    uint32_t m_pageCount;
+    uint32_t m_quoteDepth{0};
 };
 
 } // namespace plutobook

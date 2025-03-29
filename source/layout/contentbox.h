@@ -97,9 +97,8 @@ struct is_a<PagesCounterBox> {
 class Counters;
 class Element;
 
-class CSSFunctionValue;
-class CSSCustomIdentValue;
 class CSSCounterValue;
+class CSSFunctionValue;
 
 class ContentBoxBuilder {
 public:

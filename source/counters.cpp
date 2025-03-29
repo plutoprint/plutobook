@@ -9,7 +9,7 @@ static const GlobalString pageGlo("page");
 static const GlobalString pagesGlo("pages");
 static const GlobalString listItemGlo("list-item");
 
-Counters::Counters(Document* document, size_t pageCount)
+Counters::Counters(Document* document, uint32_t pageCount)
     : m_document(document)
     , m_pageCount(pageCount)
 {
@@ -83,7 +83,7 @@ void Counters::update(const Box* box)
             auto& value = to<CSSIntegerValue>(*pair.second());
             hasListItemCounter |= listItemGlo == name.value();
             hasPageCounter |= pageGlo == name.value();
-            if(m_pageCount > 0 && pagesGlo == name.value())
+            if(m_pageCount && pagesGlo == name.value())
                 continue;
             switch(id) {
             case CSSPropertyID::CounterReset:

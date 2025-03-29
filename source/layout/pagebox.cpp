@@ -17,9 +17,6 @@ std::unique_ptr<PageBox> PageBox::create(const RefPtr<BoxStyle>& style, const Pa
 void PageBox::updateOverflowRect()
 {
     BlockBox::updateOverflowRect();
-    for(auto child = firstBoxFrame(); child; child = child->nextBoxFrame()) {
-        addOverflowRect(child, child->x(), child->y());
-    }
 }
 
 void PageBox::computeIntrinsicWidths(float& minWidth, float& maxWidth) const
@@ -103,7 +100,7 @@ PageBoxBuilder::PageBoxBuilder(Document* document, const PageSize& pageSize, flo
 {
 }
 
-constexpr PseudoType pagePseudoType(size_t pageIndex)
+constexpr PseudoType pagePseudoType(uint32_t pageIndex)
 {
     if(pageIndex == 0)
         return PseudoType::FirstPage;
@@ -115,12 +112,9 @@ constexpr PseudoType pagePseudoType(size_t pageIndex)
 void PageBoxBuilder::build()
 {
     Counters counters(m_document, std::ceil(m_document->height() / m_document->pageContentHeight()));
-    for(size_t pageIndex = 0; pageIndex < counters.pageCount(); ++pageIndex) {
+    for(uint32_t pageIndex = 0; pageIndex < counters.pageCount(); ++pageIndex) {
         auto pageStyle = m_document->styleForPage(emptyGlo, pageIndex, pagePseudoType(pageIndex));
         auto pageBox = PageBox::create(pageStyle, m_pageSize, emptyGlo, pageIndex);
-
-        counters.update(pageBox.get());
-        buildPageMargins(counters, pageBox.get());
 
         pageBox->setWidth(m_pageWidth);
         pageBox->setHeight(m_pageHeight);
@@ -129,6 +123,9 @@ void PageBoxBuilder::build()
         pageBox->setMarginRight(m_marginRight);
         pageBox->setMarginBottom(m_marginBottom);
         pageBox->setMarginLeft(m_marginLeft);
+
+        counters.update(pageBox.get());
+        buildPageMargins(counters, pageBox.get());
 
         pageBox->build();
         pageBox->layout(nullptr);
