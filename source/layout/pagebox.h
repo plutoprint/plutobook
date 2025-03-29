@@ -29,9 +29,9 @@ public:
     void computeWidth(float& x, float& width, float& marginLeft, float& marginRight) const final;
     void computeHeight(float& y, float& height, float& marginTop, float& marginBottom) const final;
     void layout(FragmentBuilder* fragmentainer) final;
-    void build() final;
 
     void layoutCornerPageMargin(PageMarginBox* cornerBox, const Rect& cornerRect);
+    void layoutEdgePageMargin(PageMarginBox* edgeBox, const Rect& edgeRect, float mainAxisSize);
     void layoutEdgePageMargins(PageMarginBox* edgeStartBox, PageMarginBox* edgeCenterBox, PageMarginBox* edgeEndBox, const Rect& edgeRect);
 
     void paintContents(const PaintInfo& info, const Point& offset, PaintPhase phase) final;
@@ -62,8 +62,13 @@ public:
     PageMarginType marginType() const { return m_marginType; }
     PageBox* pageBox() const;
 
+    bool isHorizontalFlow() const;
+    bool isVerticalFlow() const;
+
     PageMarginBox* nextMarginBox() const;
     PageMarginBox* prevMarginBox() const;
+
+    void resolveMargins(const Size& availableSize);
 
     void layout(FragmentBuilder* fragmentainer) final;
     void build() final;

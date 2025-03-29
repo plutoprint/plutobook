@@ -47,7 +47,7 @@ public:
     }
 
 private:
-    std::array<PageMarginBox*, 16> entries;
+    std::array<PageMarginBox*, 16> entries = {};
 };
 
 void PageBox::layout(FragmentBuilder* fragmentainer)
@@ -91,12 +91,19 @@ void PageBox::layout(FragmentBuilder* fragmentainer)
     updateOverflowRect();
 }
 
-void PageBox::build()
+void PageBox::layoutCornerPageMargin(PageMarginBox* cornerBox, const Rect& cornerRect)
 {
-    BlockBox::build();
+    if(cornerBox == nullptr) {
+        return;
+    }
+
+    cornerBox->layout(nullptr);
+    cornerBox->resolveMargins(cornerRect.size());
+    cornerBox->setX(cornerRect.x + cornerBox->marginLeft());
+    cornerBox->setY(cornerRect.y + cornerBox->marginTop());
 }
 
-void PageBox::layoutCornerPageMargin(PageMarginBox* cornerBox, const Rect& cornerRect)
+void PageBox::layoutEdgePageMargin(PageMarginBox* edgeBox, const Rect& edgeRect, float mainAxisSize)
 {
 }
 
@@ -130,6 +137,120 @@ PageMarginBox::PageMarginBox(const RefPtr<BoxStyle>& style, PageMarginType margi
     : BlockFlowBox(nullptr, style)
     , m_marginType(marginType)
 {
+}
+
+bool PageMarginBox::isHorizontalFlow() const
+{
+    switch(m_marginType) {
+    case PageMarginType::TopLeftCorner:
+    case PageMarginType::TopRightCorner:
+    case PageMarginType::RightTop:
+    case PageMarginType::RightMiddle:
+    case PageMarginType::RightBottom:
+    case PageMarginType::BottomRightCorner:
+    case PageMarginType::BottomLeftCorner:
+    case PageMarginType::LeftTop:
+    case PageMarginType::LeftMiddle:
+    case PageMarginType::LeftBottom:
+        return true;
+    default:
+        return false;
+    }
+}
+
+bool PageMarginBox::isVerticalFlow() const
+{
+    switch(m_marginType) {
+    case PageMarginType::TopLeftCorner:
+    case PageMarginType::TopLeft:
+    case PageMarginType::TopCenter:
+    case PageMarginType::TopRight:
+    case PageMarginType::TopRightCorner:
+    case PageMarginType::BottomRightCorner:
+    case PageMarginType::BottomLeft:
+    case PageMarginType::BottomCenter:
+    case PageMarginType::BottomRight:
+    case PageMarginType::BottomLeftCorner:
+        return true;
+    default:
+        return false;
+    }
+}
+
+void PageMarginBox::resolveMargins(const Size& availableSize)
+{
+    auto marginTopLength = style()->marginTop();
+    auto marginRightLength = style()->marginRight();
+    auto marginBottomLength = style()->marginBottom();
+    auto marginLeftLength = style()->marginLeft();
+
+    auto marginTop = marginTopLength.calcMin(availableSize.h);
+    auto marginRight = marginRightLength.calcMin(availableSize.w);
+    auto marginBottom = marginBottomLength.calcMin(availableSize.h);
+    auto marginLeft = marginLeftLength.calcMin(availableSize.w);
+
+    if(isVerticalFlow()) {
+        auto availableSpace = std::max(0.f, availableSize.h - marginTop - marginBottom - height());
+
+        float autoMarginOffset = 0.f;
+        if(marginTopLength.isAuto() && marginBottomLength.isAuto())
+            autoMarginOffset += availableSpace / 2.f;
+        else
+            autoMarginOffset += availableSpace;
+        if(marginTopLength.isAuto())
+            marginTop += autoMarginOffset;
+        if(marginBottomLength.isAuto()) {
+            marginBottom += autoMarginOffset;
+        }
+
+        auto additionalSpace = availableSize.h - marginTop - marginBottom - height();
+        switch(m_marginType) {
+        case PageMarginType::TopLeftCorner:
+        case PageMarginType::TopLeft:
+        case PageMarginType::TopCenter:
+        case PageMarginType::TopRight:
+        case PageMarginType::TopRightCorner:
+            marginTop += additionalSpace;
+            break;
+        default:
+            marginBottom += additionalSpace;
+            break;
+        }
+    }
+
+    if(isHorizontalFlow()) {
+        auto availableSpace = std::max(0.f, availableSize.w - marginLeft - marginRight - width());
+
+        float autoMarginOffset = 0.f;
+        if(marginLeftLength.isAuto() && marginRightLength.isAuto())
+            autoMarginOffset += availableSpace / 2.f;
+        else
+            autoMarginOffset += availableSpace;
+        if(marginLeftLength.isAuto())
+            marginLeft += autoMarginOffset;
+        if(marginRightLength.isAuto()) {
+            marginRight += autoMarginOffset;
+        }
+
+        auto additionalSpace = availableSize.h - marginLeft - marginRight - width();
+        switch(m_marginType) {
+        case PageMarginType::TopLeftCorner:
+        case PageMarginType::BottomLeftCorner:
+        case PageMarginType::LeftTop:
+        case PageMarginType::LeftMiddle:
+        case PageMarginType::LeftBottom:
+            marginLeft += additionalSpace;
+            break;
+        default:
+            marginRight += additionalSpace;
+            break;
+        }
+    }
+
+    setMarginTop(marginTop);
+    setMarginRight(marginRight);
+    setMarginBottom(marginBottom);
+    setMarginLeft(marginLeft);
 }
 
 void PageMarginBox::layout(FragmentBuilder* fragmentainer)
@@ -195,8 +316,8 @@ void PageBoxBuilder::buildPageMargin(const Counters& counters, PageBox* pageBox,
         return;
     }
 
-    Counters marginCounters(counters);
     auto marginBox = new (m_document->heap()) PageMarginBox(marginStyle, marginType);
+    Counters marginCounters(counters);
     marginCounters.update(marginBox);
     ContentBoxBuilder(marginCounters, nullptr, marginBox).build();
     pageBox->addChild(marginBox);
