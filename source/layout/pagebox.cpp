@@ -34,13 +34,59 @@ void PageBox::computeHeight(float& y, float& height, float& marginTop, float& ma
     assert(false);
 }
 
+class PageMarginMap {
+public:
+    PageMarginMap() = default;
+
+    PageMarginBox* operator[](PageMarginType type) const {
+        return entries[static_cast<size_t>(type)];
+    }
+
+    PageMarginBox*& operator[](PageMarginType type) {
+        return entries[static_cast<size_t>(type)];
+    }
+
+private:
+    std::array<PageMarginBox*, 16> entries;
+};
+
 void PageBox::layout(FragmentBuilder* fragmentainer)
 {
-    auto child = firstBoxFrame();
-    while(child) {
-        child->layout(nullptr);
-        child = child->nextBoxFrame();
+    PageMarginMap margins;
+    for(auto child = firstMarginBox(); child; child = child->nextMarginBox()) {
+        margins[child->marginType()] = child;
     }
+
+    auto pageWidth = width();
+    auto pageHeight = height();
+
+    auto leftWidth = marginLeft();
+    auto rightWidth = marginRight();
+
+    auto topHeight = marginTop();
+    auto bottomHeight = marginBottom();
+
+    Rect topLeftCornerRect(0, 0, leftWidth, topHeight);
+    Rect topRightCornerRect(pageWidth - rightWidth, 0, rightWidth, topHeight);
+    Rect bottomRightCornerRect(pageWidth - rightWidth, pageHeight - bottomHeight, rightWidth, bottomHeight);
+    Rect bottomLeftCornerRect(0, pageHeight - bottomHeight, leftWidth, bottomHeight);
+
+    Rect topEdgeRect(leftWidth, 0, pageWidth - leftWidth - rightWidth, topHeight);
+    Rect rightEdgeRect(pageWidth - rightWidth, topHeight, rightWidth, pageHeight - topHeight - bottomHeight);
+    Rect bottomEdgeRect(leftWidth, pageHeight - bottomHeight, pageWidth - leftWidth - rightWidth, bottomHeight);
+    Rect leftEdgeRect(0, topHeight, leftWidth, pageHeight - topHeight - bottomHeight);
+
+    layoutCornerPageMargin(margins[PageMarginType::TopLeftCorner], topLeftCornerRect);
+    layoutEdgePageMargins(margins[PageMarginType::TopLeft], margins[PageMarginType::TopCenter], margins[PageMarginType::TopRight], topEdgeRect);
+
+    layoutCornerPageMargin(margins[PageMarginType::TopRightCorner], topRightCornerRect);
+    layoutEdgePageMargins(margins[PageMarginType::RightTop], margins[PageMarginType::RightMiddle], margins[PageMarginType::RightBottom], rightEdgeRect);
+
+    layoutCornerPageMargin(margins[PageMarginType::BottomRightCorner], bottomRightCornerRect);
+    layoutEdgePageMargins(margins[PageMarginType::BottomLeft], margins[PageMarginType::BottomCenter], margins[PageMarginType::BottomRight], bottomEdgeRect);
+
+    layoutCornerPageMargin(margins[PageMarginType::BottomLeftCorner], bottomLeftCornerRect);
+    layoutEdgePageMargins(margins[PageMarginType::LeftTop], margins[PageMarginType::LeftMiddle], margins[PageMarginType::LeftBottom], leftEdgeRect);
 
     updateOverflowRect();
 }
@@ -48,6 +94,14 @@ void PageBox::layout(FragmentBuilder* fragmentainer)
 void PageBox::build()
 {
     BlockBox::build();
+}
+
+void PageBox::layoutCornerPageMargin(PageMarginBox* cornerBox, const Rect& cornerRect)
+{
+}
+
+void PageBox::layoutEdgePageMargins(PageMarginBox* edgeStartBox, PageMarginBox* edgeCenterBox, PageMarginBox* edgeEndBox, const Rect& edgeRect)
+{
 }
 
 void PageBox::paintContents(const PaintInfo& info, const Point& offset, PaintPhase phase)
@@ -136,10 +190,39 @@ void PageBoxBuilder::build()
 
 void PageBoxBuilder::buildPageMargin(const Counters& counters, PageBox* pageBox, PageMarginType marginType)
 {
+    auto marginStyle = m_document->styleForPageMargin(pageBox->pageName(), pageBox->pageIndex(), marginType, *pageBox->style());
+    if(marginStyle == nullptr) {
+        return;
+    }
+
+    Counters marginCounters(counters);
+    auto marginBox = new (m_document->heap()) PageMarginBox(marginStyle, marginType);
+    marginCounters.update(marginBox);
+    ContentBoxBuilder(marginCounters, nullptr, marginBox).build();
+    pageBox->addChild(marginBox);
 }
 
 void PageBoxBuilder::buildPageMargins(const Counters& counters, PageBox* pageBox)
 {
+    buildPageMargin(counters, pageBox, PageMarginType::TopLeftCorner);
+    buildPageMargin(counters, pageBox, PageMarginType::TopLeft);
+    buildPageMargin(counters, pageBox, PageMarginType::TopCenter);
+    buildPageMargin(counters, pageBox, PageMarginType::TopRight);
+
+    buildPageMargin(counters, pageBox, PageMarginType::TopRightCorner);
+    buildPageMargin(counters, pageBox, PageMarginType::RightTop);
+    buildPageMargin(counters, pageBox, PageMarginType::RightMiddle);
+    buildPageMargin(counters, pageBox, PageMarginType::RightBottom);
+
+    buildPageMargin(counters, pageBox, PageMarginType::BottomRightCorner);
+    buildPageMargin(counters, pageBox, PageMarginType::BottomLeft);
+    buildPageMargin(counters, pageBox, PageMarginType::BottomCenter);
+    buildPageMargin(counters, pageBox, PageMarginType::BottomRight);
+
+    buildPageMargin(counters, pageBox, PageMarginType::BottomRightCorner);
+    buildPageMargin(counters, pageBox, PageMarginType::LeftTop);
+    buildPageMargin(counters, pageBox, PageMarginType::LeftMiddle);
+    buildPageMargin(counters, pageBox, PageMarginType::LeftBottom);
 }
 
 } // namespace plutobook

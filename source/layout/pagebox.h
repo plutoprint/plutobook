@@ -8,6 +8,8 @@
 
 namespace plutobook {
 
+class PageMarginBox;
+
 class PageBox final : public BlockBox {
 public:
     static std::unique_ptr<PageBox> create(const RefPtr<BoxStyle>& style, const PageSize& pageSize, const GlobalString& pageName, uint32_t pageIndex);
@@ -19,6 +21,9 @@ public:
     const GlobalString& pageName() const { return m_pageName; }
     uint32_t pageIndex() const { return m_pageIndex; }
 
+    PageMarginBox* firstMarginBox() const;
+    PageMarginBox* lastMarginBox() const;
+
     void updateOverflowRect() final;
     void computeIntrinsicWidths(float& minWidth, float& maxWidth) const final;
     void computeWidth(float& x, float& width, float& marginLeft, float& marginRight) const final;
@@ -26,12 +31,16 @@ public:
     void layout(FragmentBuilder* fragmentainer) final;
     void build() final;
 
+    void layoutCornerPageMargin(PageMarginBox* cornerBox, const Rect& cornerRect);
+    void layoutEdgePageMargins(PageMarginBox* edgeStartBox, PageMarginBox* edgeCenterBox, PageMarginBox* edgeEndBox, const Rect& edgeRect);
+
     void paintContents(const PaintInfo& info, const Point& offset, PaintPhase phase) final;
 
     const char* name() const final { return "PageBox"; }
 
 private:
     PageBox(const RefPtr<BoxStyle>& style, const PageSize& pageSize, const GlobalString& pageName, uint32_t pageIndex);
+
     PageSize m_pageSize;
     GlobalString m_pageName;
     uint32_t m_pageIndex;
@@ -53,6 +62,9 @@ public:
     PageMarginType marginType() const { return m_marginType; }
     PageBox* pageBox() const;
 
+    PageMarginBox* nextMarginBox() const;
+    PageMarginBox* prevMarginBox() const;
+
     void layout(FragmentBuilder* fragmentainer) final;
     void build() final;
 
@@ -65,6 +77,26 @@ private:
 inline PageBox* PageMarginBox::pageBox() const
 {
     return static_cast<PageBox*>(parentBox());
+}
+
+inline PageMarginBox* PageBox::firstMarginBox() const
+{
+    return static_cast<PageMarginBox*>(firstChild());
+}
+
+inline PageMarginBox* PageBox::lastMarginBox() const
+{
+    return static_cast<PageMarginBox*>(lastChild());
+}
+
+inline PageMarginBox* PageMarginBox::nextMarginBox() const
+{
+    return static_cast<PageMarginBox*>(nextSibling());
+}
+
+inline PageMarginBox* PageMarginBox::prevMarginBox() const
+{
+    return static_cast<PageMarginBox*>(prevSibling());
 }
 
 template<>

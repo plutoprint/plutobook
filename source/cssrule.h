@@ -1453,7 +1453,6 @@ struct is_a<CSSCounterStyleRule> {
 };
 
 enum class PageMarginType : uint8_t {
-    None,
     TopLeftCorner,
     TopLeft,
     TopCenter,
@@ -1469,7 +1468,8 @@ enum class PageMarginType : uint8_t {
     LeftBottom,
     RightTop,
     RightMiddle,
-    RightBottom
+    RightBottom,
+    None
 };
 
 constexpr PageMarginType kPageMarginTypes[] = {
