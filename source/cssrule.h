@@ -1458,37 +1458,18 @@ enum class PageMarginType : uint8_t {
     TopCenter,
     TopRight,
     TopRightCorner,
-    BottomLeftCorner,
-    BottomLeft,
-    BottomCenter,
-    BottomRight,
-    BottomRightCorner,
-    LeftTop,
-    LeftMiddle,
-    LeftBottom,
     RightTop,
     RightMiddle,
     RightBottom,
+    BottomRightCorner,
+    BottomLeft,
+    BottomCenter,
+    BottomRight,
+    BottomLeftCorner,
+    LeftTop,
+    LeftMiddle,
+    LeftBottom,
     None
-};
-
-constexpr PageMarginType kPageMarginTypes[] = {
-    PageMarginType::TopLeftCorner,
-    PageMarginType::TopLeft,
-    PageMarginType::TopCenter,
-    PageMarginType::TopRight,
-    PageMarginType::TopRightCorner,
-    PageMarginType::BottomLeftCorner,
-    PageMarginType::BottomLeft,
-    PageMarginType::BottomCenter,
-    PageMarginType::BottomRight,
-    PageMarginType::BottomRightCorner,
-    PageMarginType::LeftTop,
-    PageMarginType::LeftMiddle,
-    PageMarginType::LeftBottom,
-    PageMarginType::RightTop,
-    PageMarginType::RightMiddle,
-    PageMarginType::RightBottom
 };
 
 class CSSPageMarginRule final : public CSSRule {

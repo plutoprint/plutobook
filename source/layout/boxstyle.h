@@ -693,6 +693,9 @@ public:
     void setFloating(Float floating) { m_floating = floating; }
     void setDirection(Direction direction) { m_direction = direction; }
 
+    void setTextAlign(TextAlign textAlign) { m_textAlign = textAlign; }
+    void setVerticalAlignType(VerticalAlignType verticalAlignType) { m_verticalAlignType = verticalAlignType; }
+
     Display display() const { return m_display; }
     Position position() const { return m_position; }
     Float floating() const { return m_floating; }

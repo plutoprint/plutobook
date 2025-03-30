@@ -544,6 +544,75 @@ RefPtr<BoxStyle> PageStyleBuilder::build()
     }
 
     auto newStyle = BoxStyle::create(m_parentStyle, m_pseudoType, Display::Block);
+    switch(m_marginType) {
+    case PageMarginType::None:
+        break;
+    case PageMarginType::TopLeftCorner:
+        newStyle->setTextAlign(TextAlign::Right);
+        newStyle->setVerticalAlignType(VerticalAlignType::Middle);
+        break;
+    case PageMarginType::TopLeft:
+        newStyle->setTextAlign(TextAlign::Left);
+        newStyle->setVerticalAlignType(VerticalAlignType::Middle);
+        break;
+    case PageMarginType::TopCenter:
+        newStyle->setTextAlign(TextAlign::Center);
+        newStyle->setVerticalAlignType(VerticalAlignType::Middle);
+        break;
+    case PageMarginType::TopRight:
+        newStyle->setTextAlign(TextAlign::Right);
+        newStyle->setVerticalAlignType(VerticalAlignType::Middle);
+        break;
+    case PageMarginType::TopRightCorner:
+        newStyle->setTextAlign(TextAlign::Left);
+        newStyle->setVerticalAlignType(VerticalAlignType::Middle);
+        break;
+    case PageMarginType::RightTop:
+        newStyle->setTextAlign(TextAlign::Center);
+        newStyle->setVerticalAlignType(VerticalAlignType::Top);
+        break;
+    case PageMarginType::RightMiddle:
+        newStyle->setTextAlign(TextAlign::Center);
+        newStyle->setVerticalAlignType(VerticalAlignType::Middle);
+        break;
+    case PageMarginType::RightBottom:
+        newStyle->setTextAlign(TextAlign::Center);
+        newStyle->setVerticalAlignType(VerticalAlignType::Bottom);
+        break;
+    case PageMarginType::BottomRightCorner:
+        newStyle->setTextAlign(TextAlign::Left);
+        newStyle->setVerticalAlignType(VerticalAlignType::Middle);
+        break;
+    case PageMarginType::BottomLeft:
+        newStyle->setTextAlign(TextAlign::Left);
+        newStyle->setVerticalAlignType(VerticalAlignType::Middle);
+        break;
+    case PageMarginType::BottomCenter:
+        newStyle->setTextAlign(TextAlign::Center);
+        newStyle->setVerticalAlignType(VerticalAlignType::Middle);
+        break;
+    case PageMarginType::BottomRight:
+        newStyle->setTextAlign(TextAlign::Right);
+        newStyle->setVerticalAlignType(VerticalAlignType::Middle);
+        break;
+    case PageMarginType::BottomLeftCorner:
+        newStyle->setTextAlign(TextAlign::Right);
+        newStyle->setVerticalAlignType(VerticalAlignType::Middle);
+        break;
+    case PageMarginType::LeftTop:
+        newStyle->setTextAlign(TextAlign::Center);
+        newStyle->setVerticalAlignType(VerticalAlignType::Top);
+        break;
+    case PageMarginType::LeftMiddle:
+        newStyle->setTextAlign(TextAlign::Center);
+        newStyle->setVerticalAlignType(VerticalAlignType::Middle);
+        break;
+    case PageMarginType::LeftBottom:
+        newStyle->setTextAlign(TextAlign::Center);
+        newStyle->setVerticalAlignType(VerticalAlignType::Bottom);
+        break;
+    }
+
     for(auto& property : m_properties) {
         auto id = property.id();
         auto value = property.value();

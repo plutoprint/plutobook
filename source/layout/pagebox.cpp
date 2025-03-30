@@ -179,6 +179,30 @@ bool PageMarginBox::isVerticalFlow() const
     }
 }
 
+void PageMarginBox::updatePaddingWidths() const
+{
+}
+
+bool PageMarginBox::updateIntrinsicPaddings(float availableHeight)
+{
+    float intrinsicPaddingTop = 0.f;
+    switch(style()->verticalAlignType()) {
+    case VerticalAlignType::Middle:
+        intrinsicPaddingTop = (availableHeight - height()) / 2.f;
+        break;
+    case VerticalAlignType::Bottom:
+        intrinsicPaddingTop = availableHeight - height();
+        break;
+    default:
+        return false;
+    }
+
+    auto intrinsicPaddingBottom = availableHeight - height() - intrinsicPaddingTop;
+    m_paddingTop += intrinsicPaddingTop;
+    m_paddingBottom += intrinsicPaddingBottom;
+    return intrinsicPaddingTop || intrinsicPaddingBottom;
+}
+
 void PageMarginBox::resolvePaddings(const Size& availableSize)
 {
     auto paddingTopLength = style()->paddingTop();
@@ -299,6 +323,8 @@ void PageMarginBox::layoutContents(const Size& availableSize)
 
     setWidth(width);
     layout(nullptr);
+    if(updateIntrinsicPaddings(height))
+        layout(nullptr);
     setHeight(height);
 }
 
@@ -387,7 +413,7 @@ void PageBoxBuilder::buildPageMargins(const Counters& counters, PageBox* pageBox
     buildPageMargin(counters, pageBox, PageMarginType::BottomCenter);
     buildPageMargin(counters, pageBox, PageMarginType::BottomRight);
 
-    buildPageMargin(counters, pageBox, PageMarginType::BottomRightCorner);
+    buildPageMargin(counters, pageBox, PageMarginType::BottomLeftCorner);
     buildPageMargin(counters, pageBox, PageMarginType::LeftTop);
     buildPageMargin(counters, pageBox, PageMarginType::LeftMiddle);
     buildPageMargin(counters, pageBox, PageMarginType::LeftBottom);
