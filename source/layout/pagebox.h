@@ -40,7 +40,6 @@ public:
 
 private:
     PageBox(const RefPtr<BoxStyle>& style, const PageSize& pageSize, const GlobalString& pageName, uint32_t pageIndex);
-
     PageSize m_pageSize;
     GlobalString m_pageName;
     uint32_t m_pageIndex;
@@ -68,10 +67,12 @@ public:
     PageMarginBox* nextMarginBox() const;
     PageMarginBox* prevMarginBox() const;
 
+    void resolvePaddings(const Size& availableSize);
     void resolveMargins(const Size& availableSize);
+    void layoutContents(const Size& availableSize);
 
-    void layout(FragmentBuilder* fragmentainer) final;
-    void build() final;
+    void computeWidth(float& x, float& width, float& marginLeft, float& marginRight) const final;
+    void computeHeight(float& y, float& height, float& marginTop, float& marginBottom) const final;
 
     const char* name() const final { return "PageMarginBox"; }
 

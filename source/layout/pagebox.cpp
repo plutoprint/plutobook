@@ -97,8 +97,10 @@ void PageBox::layoutCornerPageMargin(PageMarginBox* cornerBox, const Rect& corne
         return;
     }
 
-    cornerBox->layout(nullptr);
+    cornerBox->resolvePaddings(cornerRect.size());
+    cornerBox->layoutContents(cornerRect.size());
     cornerBox->resolveMargins(cornerRect.size());
+
     cornerBox->setX(cornerRect.x + cornerBox->marginLeft());
     cornerBox->setY(cornerRect.y + cornerBox->marginTop());
 }
@@ -177,6 +179,24 @@ bool PageMarginBox::isVerticalFlow() const
     }
 }
 
+void PageMarginBox::resolvePaddings(const Size& availableSize)
+{
+    auto paddingTopLength = style()->paddingTop();
+    auto paddingRightLength = style()->paddingRight();
+    auto paddingBottomLength = style()->paddingBottom();
+    auto paddingLeftLength = style()->paddingLeft();
+
+    auto paddingTop = paddingTopLength.calcMin(availableSize.h);
+    auto paddingRight = paddingRightLength.calcMin(availableSize.w);
+    auto paddingBottom = paddingBottomLength.calcMin(availableSize.h);
+    auto paddingLeft = paddingLeftLength.calcMin(availableSize.w);
+
+    m_paddingTop = paddingTop;
+    m_paddingRight = paddingRight;
+    m_paddingBottom = paddingBottom;
+    m_paddingLeft = paddingLeft;
+}
+
 void PageMarginBox::resolveMargins(const Size& availableSize)
 {
     auto marginTopLength = style()->marginTop();
@@ -247,20 +267,47 @@ void PageMarginBox::resolveMargins(const Size& availableSize)
         }
     }
 
-    setMarginTop(marginTop);
-    setMarginRight(marginRight);
-    setMarginBottom(marginBottom);
-    setMarginLeft(marginLeft);
+    m_marginTop = marginTop;
+    m_marginRight = marginRight;
+    m_marginBottom = marginBottom;
+    m_marginLeft = marginLeft;
 }
 
-void PageMarginBox::layout(FragmentBuilder* fragmentainer)
+void PageMarginBox::layoutContents(const Size& availableSize)
 {
-    BlockFlowBox::layout(fragmentainer);
+    auto widthLength = style()->width();
+    auto minWidthLength = style()->minWidth();
+    auto maxWidthLength = style()->maxWidth();
+
+    auto heightLength = style()->height();
+    auto minHeightLength = style()->minHeight();
+    auto maxHeightLength = style()->maxHeight();
+
+    auto width = adjustBorderBoxWidth(widthLength.calc(availableSize.w));
+    if(!maxWidthLength.isNone())
+        width = std::min(width, adjustBorderBoxWidth(maxWidthLength.calc(availableSize.w)));
+    if(!minWidthLength.isAuto()) {
+        width = std::max(width, adjustBorderBoxWidth(minWidthLength.calc(availableSize.w)));
+    }
+
+    auto height = adjustBorderBoxHeight(heightLength.calc(availableSize.h));
+    if(!maxHeightLength.isNone())
+        height = std::min(height, adjustBorderBoxHeight(maxHeightLength.calc(availableSize.h)));
+    if(!minHeightLength.isAuto()) {
+        height = std::max(height, adjustBorderBoxHeight(minHeightLength.calc(availableSize.h)));
+    }
+
+    setWidth(width);
+    layout(nullptr);
+    setHeight(height);
 }
 
-void PageMarginBox::build()
+void PageMarginBox::computeWidth(float& x, float& width, float& marginLeft, float& marginRight) const
 {
-    BlockFlowBox::build();
+}
+
+void PageMarginBox::computeHeight(float& y, float& height, float& marginTop, float& marginBottom) const
+{
 }
 
 PageBoxBuilder::PageBoxBuilder(Document* document, const PageSize& pageSize, float pageWidth, float pageHeight, float marginTop, float marginRight, float marginBottom, float marginLeft)
