@@ -1462,13 +1462,13 @@ enum class PageMarginType : uint8_t {
     RightMiddle,
     RightBottom,
     BottomRightCorner,
-    BottomLeft,
-    BottomCenter,
     BottomRight,
+    BottomCenter,
+    BottomLeft,
     BottomLeftCorner,
-    LeftTop,
-    LeftMiddle,
     LeftBottom,
+    LeftMiddle,
+    LeftTop,
     None
 };
 

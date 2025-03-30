@@ -583,33 +583,33 @@ RefPtr<BoxStyle> PageStyleBuilder::build()
         newStyle->setTextAlign(TextAlign::Left);
         newStyle->setVerticalAlignType(VerticalAlignType::Middle);
         break;
-    case PageMarginType::BottomLeft:
-        newStyle->setTextAlign(TextAlign::Left);
+    case PageMarginType::BottomRight:
+        newStyle->setTextAlign(TextAlign::Right);
         newStyle->setVerticalAlignType(VerticalAlignType::Middle);
         break;
     case PageMarginType::BottomCenter:
         newStyle->setTextAlign(TextAlign::Center);
         newStyle->setVerticalAlignType(VerticalAlignType::Middle);
         break;
-    case PageMarginType::BottomRight:
-        newStyle->setTextAlign(TextAlign::Right);
+    case PageMarginType::BottomLeft:
+        newStyle->setTextAlign(TextAlign::Left);
         newStyle->setVerticalAlignType(VerticalAlignType::Middle);
         break;
     case PageMarginType::BottomLeftCorner:
         newStyle->setTextAlign(TextAlign::Right);
         newStyle->setVerticalAlignType(VerticalAlignType::Middle);
         break;
-    case PageMarginType::LeftTop:
+    case PageMarginType::LeftBottom:
         newStyle->setTextAlign(TextAlign::Center);
-        newStyle->setVerticalAlignType(VerticalAlignType::Top);
+        newStyle->setVerticalAlignType(VerticalAlignType::Bottom);
         break;
     case PageMarginType::LeftMiddle:
         newStyle->setTextAlign(TextAlign::Center);
         newStyle->setVerticalAlignType(VerticalAlignType::Middle);
         break;
-    case PageMarginType::LeftBottom:
+    case PageMarginType::LeftTop:
         newStyle->setTextAlign(TextAlign::Center);
-        newStyle->setVerticalAlignType(VerticalAlignType::Bottom);
+        newStyle->setVerticalAlignType(VerticalAlignType::Top);
         break;
     }
 

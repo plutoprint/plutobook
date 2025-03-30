@@ -145,15 +145,15 @@ bool PageMarginBox::isHorizontalFlow() const
 {
     switch(m_marginType) {
     case PageMarginType::TopLeftCorner:
+    case PageMarginType::TopLeft:
+    case PageMarginType::TopCenter:
+    case PageMarginType::TopRight:
     case PageMarginType::TopRightCorner:
-    case PageMarginType::RightTop:
-    case PageMarginType::RightMiddle:
-    case PageMarginType::RightBottom:
     case PageMarginType::BottomRightCorner:
+    case PageMarginType::BottomRight:
+    case PageMarginType::BottomCenter:
+    case PageMarginType::BottomLeft:
     case PageMarginType::BottomLeftCorner:
-    case PageMarginType::LeftTop:
-    case PageMarginType::LeftMiddle:
-    case PageMarginType::LeftBottom:
         return true;
     default:
         return false;
@@ -164,15 +164,15 @@ bool PageMarginBox::isVerticalFlow() const
 {
     switch(m_marginType) {
     case PageMarginType::TopLeftCorner:
-    case PageMarginType::TopLeft:
-    case PageMarginType::TopCenter:
-    case PageMarginType::TopRight:
     case PageMarginType::TopRightCorner:
+    case PageMarginType::RightTop:
+    case PageMarginType::RightMiddle:
+    case PageMarginType::RightBottom:
     case PageMarginType::BottomRightCorner:
-    case PageMarginType::BottomLeft:
-    case PageMarginType::BottomCenter:
-    case PageMarginType::BottomRight:
     case PageMarginType::BottomLeftCorner:
+    case PageMarginType::LeftBottom:
+    case PageMarginType::LeftMiddle:
+    case PageMarginType::LeftTop:
         return true;
     default:
         return false;
@@ -233,7 +233,7 @@ void PageMarginBox::resolveMargins(const Size& availableSize)
     auto marginBottom = marginBottomLength.calcMin(availableSize.h);
     auto marginLeft = marginLeftLength.calcMin(availableSize.w);
 
-    if(isVerticalFlow()) {
+    if(isHorizontalFlow()) {
         auto availableSpace = std::max(0.f, availableSize.h - marginTop - marginBottom - height());
 
         float autoMarginOffset = 0.f;
@@ -262,7 +262,7 @@ void PageMarginBox::resolveMargins(const Size& availableSize)
         }
     }
 
-    if(isHorizontalFlow()) {
+    if(isVerticalFlow()) {
         auto availableSpace = std::max(0.f, availableSize.w - marginLeft - marginRight - width());
 
         float autoMarginOffset = 0.f;
@@ -280,9 +280,9 @@ void PageMarginBox::resolveMargins(const Size& availableSize)
         switch(m_marginType) {
         case PageMarginType::TopLeftCorner:
         case PageMarginType::BottomLeftCorner:
-        case PageMarginType::LeftTop:
-        case PageMarginType::LeftMiddle:
         case PageMarginType::LeftBottom:
+        case PageMarginType::LeftMiddle:
+        case PageMarginType::LeftTop:
             marginLeft += additionalSpace;
             break;
         default:
@@ -409,14 +409,14 @@ void PageBoxBuilder::buildPageMargins(const Counters& counters, PageBox* pageBox
     buildPageMargin(counters, pageBox, PageMarginType::RightBottom);
 
     buildPageMargin(counters, pageBox, PageMarginType::BottomRightCorner);
-    buildPageMargin(counters, pageBox, PageMarginType::BottomLeft);
-    buildPageMargin(counters, pageBox, PageMarginType::BottomCenter);
     buildPageMargin(counters, pageBox, PageMarginType::BottomRight);
+    buildPageMargin(counters, pageBox, PageMarginType::BottomCenter);
+    buildPageMargin(counters, pageBox, PageMarginType::BottomLeft);
 
     buildPageMargin(counters, pageBox, PageMarginType::BottomLeftCorner);
-    buildPageMargin(counters, pageBox, PageMarginType::LeftTop);
-    buildPageMargin(counters, pageBox, PageMarginType::LeftMiddle);
     buildPageMargin(counters, pageBox, PageMarginType::LeftBottom);
+    buildPageMargin(counters, pageBox, PageMarginType::LeftMiddle);
+    buildPageMargin(counters, pageBox, PageMarginType::LeftTop);
 }
 
 } // namespace plutobook
