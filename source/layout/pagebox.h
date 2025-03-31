@@ -70,8 +70,9 @@ public:
     void updatePaddingWidths() const final;
     bool updateIntrinsicPaddings(float availableHeight);
 
-    void resolvePaddings(const Size& availableSize);
-    void resolveMargins(const Size& availableSize);
+    void updatePaddings(const Size& availableSize);
+    void updateMargins(const Size& availableSize);
+    void updateAutoMargins(const Size& availableSize);
     void layoutContents(const Size& availableSize);
 
     void computeWidth(float& x, float& width, float& marginLeft, float& marginRight) const final;
