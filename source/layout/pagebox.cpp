@@ -97,6 +97,7 @@ void PageBox::layoutCornerPageMargin(PageMarginBox* cornerBox, const Rect& corne
         return;
     }
 
+    cornerBox->updateMargins(cornerRect.size());
     cornerBox->updatePaddings(cornerRect.size());
     cornerBox->layoutContents(cornerRect.size());
     cornerBox->updateAutoMargins(cornerRect.size());
@@ -105,7 +106,7 @@ void PageBox::layoutCornerPageMargin(PageMarginBox* cornerBox, const Rect& corne
     cornerBox->setY(cornerRect.y + cornerBox->marginTop());
 }
 
-constexpr bool isHorizontalPageSide(BoxSide side) { return side == BoxSideTop || side == BoxSideBottom; }
+constexpr bool isHorizontalEdge(BoxSide side) { return side == BoxSideTop || side == BoxSideBottom; }
 
 void PageBox::layoutEdgePageMargin(PageMarginBox* edgeBox, const Rect& edgeRect, BoxSide edgeSide, float mainAxisSize)
 {
@@ -114,7 +115,7 @@ void PageBox::layoutEdgePageMargin(PageMarginBox* edgeBox, const Rect& edgeRect,
     }
 
     auto availableSize = edgeRect.size();
-    if(isHorizontalPageSide(edgeSide)) {
+    if(isHorizontalEdge(edgeSide)) {
         availableSize.w = mainAxisSize;
     } else {
         availableSize.h = mainAxisSize;
@@ -126,7 +127,7 @@ void PageBox::layoutEdgePageMargin(PageMarginBox* edgeBox, const Rect& edgeRect,
     edgeBox->updateAutoMargins(edgeRect.size());
 
     auto edgeOffset = edgeRect.origin();
-    if(isHorizontalPageSide(edgeSide)) {
+    if(isHorizontalEdge(edgeSide)) {
         auto availableSpace = edgeRect.w - edgeBox->width() - edgeBox->marginWidth();
         switch(edgeBox->marginType()) {
         case PageMarginType::TopCenter:
@@ -162,9 +163,9 @@ void PageBox::layoutEdgePageMargin(PageMarginBox* edgeBox, const Rect& edgeRect,
 
 void PageBox::layoutEdgePageMargins(PageMarginBox* edgeStartBox, PageMarginBox* edgeCenterBox, PageMarginBox* edgeEndBox, BoxSide edgeSide, const Rect& edgeRect)
 {
-    auto startMainAxisSize = isHorizontalPageSide(edgeSide) ? edgeRect.w / 3.f : edgeRect.h / 3.f;
-    auto centerMainAxisSize = isHorizontalPageSide(edgeSide) ? edgeRect.w / 3.f : edgeRect.h / 3.f;
-    auto endMainAxisSize = isHorizontalPageSide(edgeSide) ? edgeRect.w / 3.f : edgeRect.h / 3.f;
+    auto startMainAxisSize = isHorizontalEdge(edgeSide) ? edgeRect.w / 3.f : edgeRect.h / 3.f;
+    auto centerMainAxisSize = isHorizontalEdge(edgeSide) ? edgeRect.w / 3.f : edgeRect.h / 3.f;
+    auto endMainAxisSize = isHorizontalEdge(edgeSide) ? edgeRect.w / 3.f : edgeRect.h / 3.f;
 
     layoutEdgePageMargin(edgeStartBox, edgeRect, edgeSide, startMainAxisSize);
     layoutEdgePageMargin(edgeCenterBox, edgeRect, edgeSide, centerMainAxisSize);
@@ -255,7 +256,7 @@ bool PageMarginBox::updateIntrinsicPaddings(float availableHeight)
         return false;
     }
 
-    auto intrinsicPaddingBottom = availableHeight - height() - intrinsicPaddingTop;
+    auto intrinsicPaddingBottom = availableHeight - intrinsicPaddingTop - height();
     m_paddingTop += intrinsicPaddingTop;
     m_paddingBottom += intrinsicPaddingBottom;
     return intrinsicPaddingTop || intrinsicPaddingBottom;
