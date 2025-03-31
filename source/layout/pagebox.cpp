@@ -77,16 +77,16 @@ void PageBox::layout(FragmentBuilder* fragmentainer)
     Rect leftEdgeRect(0, topHeight, leftWidth, pageHeight - topHeight - bottomHeight);
 
     layoutCornerPageMargin(margins[PageMarginType::TopLeftCorner], topLeftCornerRect);
-    layoutEdgePageMargins(margins[PageMarginType::TopLeft], margins[PageMarginType::TopCenter], margins[PageMarginType::TopRight], topEdgeRect);
+    layoutEdgePageMargins(margins[PageMarginType::TopLeft], margins[PageMarginType::TopCenter], margins[PageMarginType::TopRight], BoxSideTop, topEdgeRect);
 
     layoutCornerPageMargin(margins[PageMarginType::TopRightCorner], topRightCornerRect);
-    layoutEdgePageMargins(margins[PageMarginType::RightTop], margins[PageMarginType::RightMiddle], margins[PageMarginType::RightBottom], rightEdgeRect);
+    layoutEdgePageMargins(margins[PageMarginType::RightTop], margins[PageMarginType::RightMiddle], margins[PageMarginType::RightBottom], BoxSideRight, rightEdgeRect);
 
     layoutCornerPageMargin(margins[PageMarginType::BottomRightCorner], bottomRightCornerRect);
-    layoutEdgePageMargins(margins[PageMarginType::BottomLeft], margins[PageMarginType::BottomCenter], margins[PageMarginType::BottomRight], bottomEdgeRect);
+    layoutEdgePageMargins(margins[PageMarginType::BottomLeft], margins[PageMarginType::BottomCenter], margins[PageMarginType::BottomRight], BoxSideBottom, bottomEdgeRect);
 
     layoutCornerPageMargin(margins[PageMarginType::BottomLeftCorner], bottomLeftCornerRect);
-    layoutEdgePageMargins(margins[PageMarginType::LeftTop], margins[PageMarginType::LeftMiddle], margins[PageMarginType::LeftBottom], leftEdgeRect);
+    layoutEdgePageMargins(margins[PageMarginType::LeftTop], margins[PageMarginType::LeftMiddle], margins[PageMarginType::LeftBottom], BoxSideLeft, leftEdgeRect);
 
     updateOverflowRect();
 }
@@ -105,14 +105,16 @@ void PageBox::layoutCornerPageMargin(PageMarginBox* cornerBox, const Rect& corne
     cornerBox->setY(cornerRect.y + cornerBox->marginTop());
 }
 
-void PageBox::layoutEdgePageMargin(PageMarginBox* edgeBox, const Rect& edgeRect, float mainAxisSize)
+constexpr bool isHorizontalPageSide(BoxSide side) { return side == BoxSideTop || side == BoxSideBottom; }
+
+void PageBox::layoutEdgePageMargin(PageMarginBox* edgeBox, const Rect& edgeRect, BoxSide edgeSide, float mainAxisSize)
 {
     if(edgeBox == nullptr) {
         return;
     }
 
     auto availableSize = edgeRect.size();
-    if(edgeBox->isHorizontalFlow()) {
+    if(isHorizontalPageSide(edgeSide)) {
         availableSize.w = mainAxisSize;
     } else {
         availableSize.h = mainAxisSize;
@@ -124,7 +126,7 @@ void PageBox::layoutEdgePageMargin(PageMarginBox* edgeBox, const Rect& edgeRect,
     edgeBox->updateAutoMargins(edgeRect.size());
 
     auto edgeOffset = edgeRect.origin();
-    if(edgeBox->isHorizontalFlow()) {
+    if(isHorizontalPageSide(edgeSide)) {
         auto availableSpace = edgeRect.w - edgeBox->width() - edgeBox->marginWidth();
         switch(edgeBox->marginType()) {
         case PageMarginType::TopCenter:
@@ -158,15 +160,15 @@ void PageBox::layoutEdgePageMargin(PageMarginBox* edgeBox, const Rect& edgeRect,
     edgeBox->setY(edgeOffset.y + edgeBox->marginTop());
 }
 
-void PageBox::layoutEdgePageMargins(PageMarginBox* edgeStartBox, PageMarginBox* edgeCenterBox, PageMarginBox* edgeEndBox, const Rect& edgeRect)
+void PageBox::layoutEdgePageMargins(PageMarginBox* edgeStartBox, PageMarginBox* edgeCenterBox, PageMarginBox* edgeEndBox, BoxSide edgeSide, const Rect& edgeRect)
 {
-    float startMainAxisSize = 0;
-    float centerMainAxisSize = 0;
-    float endMainAxisSize = 0;
+    auto startMainAxisSize = isHorizontalPageSide(edgeSide) ? edgeRect.w / 3.f : edgeRect.h / 3.f;
+    auto centerMainAxisSize = isHorizontalPageSide(edgeSide) ? edgeRect.w / 3.f : edgeRect.h / 3.f;
+    auto endMainAxisSize = isHorizontalPageSide(edgeSide) ? edgeRect.w / 3.f : edgeRect.h / 3.f;
 
-    layoutEdgePageMargin(edgeStartBox, edgeRect, startMainAxisSize);
-    layoutEdgePageMargin(edgeCenterBox, edgeRect, centerMainAxisSize);
-    layoutEdgePageMargin(edgeEndBox, edgeRect, endMainAxisSize);
+    layoutEdgePageMargin(edgeStartBox, edgeRect, edgeSide, startMainAxisSize);
+    layoutEdgePageMargin(edgeCenterBox, edgeRect, edgeSide, centerMainAxisSize);
+    layoutEdgePageMargin(edgeEndBox, edgeRect, edgeSide, endMainAxisSize);
 }
 
 void PageBox::paintContents(const PaintInfo& info, const Point& offset, PaintPhase phase)
@@ -346,7 +348,7 @@ void PageMarginBox::updateAutoMargins(const Size& availableSize)
             m_marginRight += autoMarginOffset;
         }
 
-        auto additionalSpace = availableSize.h - m_marginLeft - m_marginRight - width();
+        auto additionalSpace = availableSize.w - m_marginLeft - m_marginRight - width();
         switch(m_marginType) {
         case PageMarginType::TopLeftCorner:
         case PageMarginType::BottomLeftCorner:

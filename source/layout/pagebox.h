@@ -31,8 +31,8 @@ public:
     void layout(FragmentBuilder* fragmentainer) final;
 
     void layoutCornerPageMargin(PageMarginBox* cornerBox, const Rect& cornerRect);
-    void layoutEdgePageMargin(PageMarginBox* edgeBox, const Rect& edgeRect, float mainAxisSize);
-    void layoutEdgePageMargins(PageMarginBox* edgeStartBox, PageMarginBox* edgeCenterBox, PageMarginBox* edgeEndBox, const Rect& edgeRect);
+    void layoutEdgePageMargin(PageMarginBox* edgeBox, const Rect& edgeRect, BoxSide edgeSide, float mainAxisSize);
+    void layoutEdgePageMargins(PageMarginBox* edgeStartBox, PageMarginBox* edgeCenterBox, PageMarginBox* edgeEndBox, BoxSide edgeSide, const Rect& edgeRect);
 
     void paintContents(const PaintInfo& info, const Point& offset, PaintPhase phase) final;
 
