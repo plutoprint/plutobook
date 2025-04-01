@@ -99,7 +99,7 @@ void PageBox::layoutCornerPageMargin(PageMarginBox* cornerBox, const Rect& corne
 
     cornerBox->updateMargins(cornerRect.size());
     cornerBox->updatePaddings(cornerRect.size());
-    cornerBox->layoutContents(cornerRect.size());
+    cornerBox->layoutContent(cornerRect.size());
     cornerBox->updateAutoMargins(cornerRect.size());
 
     cornerBox->setX(cornerRect.x + cornerBox->marginLeft());
@@ -114,14 +114,12 @@ void PageBox::layoutEdgePageMargin(PageMarginBox* edgeBox, const Rect& edgeRect,
         return;
     }
 
-    auto availableSize = edgeRect.size();
     if(isHorizontalEdge(edgeSide)) {
-        availableSize.w = mainAxisSize;
+        edgeBox->layoutContent(mainAxisSize, edgeRect.h, true, false);
     } else {
-        availableSize.h = mainAxisSize;
+        edgeBox->layoutContent(edgeRect.w, mainAxisSize, false, true);
     }
 
-    edgeBox->layoutContents(availableSize);
     edgeBox->updateAutoMargins(edgeRect.size());
 
     auto edgeOffset = edgeRect.origin();
@@ -221,7 +219,7 @@ static PreferredSizeInfo computeEdgePreferredSize(PageMarginBox* edgeBox, const 
 
     auto heightLength = edgeBox->style()->height();
     if(heightLength.isAuto()) {
-        edgeBox->layoutHorizontalContent(edgeRect.w);
+        edgeBox->layoutWidth(edgeRect.w, false);
         return PreferredSizeInfo(PreferredSizeInfo::Auto, edgeBox->height(), edgeBox->height(), edgeBox->marginHeight());
     }
 
@@ -343,6 +341,10 @@ void PageBox::layoutEdgePageMargins(PageMarginBox* edgeStartBox, PageMarginBox* 
         if(preferredMainAxisSizes[EndMargin].isAuto()) {
             mainAxisSizes[EndMargin] = sideSpace - sideSpace / 2.f;
         }
+    }
+
+    for(int i = 0; i < 3; i++) {
+        mainAxisSizes[i] = std::max(0.f, mainAxisSizes[i] - preferredMainAxisSizes[i].marginSize());
     }
 
     layoutEdgePageMargin(edgeStartBox, edgeRect, edgeSide, mainAxisSizes[StartMargin]);
@@ -543,8 +545,26 @@ void PageMarginBox::updateAutoMargins(const Size& availableSize)
     }
 }
 
-void PageMarginBox::layoutHorizontalContent(float availableWidth)
+void PageMarginBox::layoutFixedWidth(float width)
 {
+    setWidth(width);
+    layout(nullptr);
+}
+
+void PageMarginBox::layoutFixedHeight(float height)
+{
+    if(updateIntrinsicPaddings(height))
+        layout(nullptr);
+    setHeight(height);
+}
+
+void PageMarginBox::layoutWidth(float availableWidth, bool fixedWidth)
+{
+    if(fixedWidth) {
+        layoutFixedWidth(availableWidth);
+        return;
+    }
+
     auto widthLength = style()->width();
     auto minWidthLength = style()->minWidth();
     auto maxWidthLength = style()->maxWidth();
@@ -558,12 +578,16 @@ void PageMarginBox::layoutHorizontalContent(float availableWidth)
         width = std::max(width, adjustBorderBoxWidth(minWidthLength.calc(availableWidth)));
     }
 
-    setWidth(width);
-    layout(nullptr);
+    layoutFixedWidth(width);
 }
 
-void PageMarginBox::layoutVerticalContent(float availableHeight)
+void PageMarginBox::layoutHeight(float availableHeight, bool fixedHeight)
 {
+    if(fixedHeight) {
+        layoutFixedHeight(availableHeight);
+        return;
+    }
+
     auto heightLength = style()->height();
     auto minHeightLength = style()->minHeight();
     auto maxHeightLength = style()->maxHeight();
@@ -577,15 +601,13 @@ void PageMarginBox::layoutVerticalContent(float availableHeight)
         height = std::max(height, adjustBorderBoxHeight(minHeightLength.calc(availableHeight)));
     }
 
-    if(updateIntrinsicPaddings(height))
-        layout(nullptr);
-    setHeight(height);
+    layoutFixedHeight(height);
 }
 
-void PageMarginBox::layoutContents(const Size& availableSize)
+void PageMarginBox::layoutContent(float availableWidth, float availableHeight, bool fixedWidth, bool fixedHeight)
 {
-    layoutHorizontalContent(availableSize.w);
-    layoutVerticalContent(availableSize.h);
+    layoutWidth(availableWidth, fixedWidth);
+    layoutHeight(availableHeight, fixedHeight);
 }
 
 void PageMarginBox::computeWidth(float& x, float& width, float& marginLeft, float& marginRight) const

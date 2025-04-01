@@ -74,9 +74,14 @@ public:
     void updateMargins(const Size& availableSize);
     void updateAutoMargins(const Size& availableSize);
 
-    void layoutHorizontalContent(float availableWidth);
-    void layoutVerticalContent(float availableHeight);
-    void layoutContents(const Size& availableSize);
+    void layoutFixedWidth(float availableWidth);
+    void layoutFixedHeight(float availableHeight);
+
+    void layoutWidth(float availableWidth, bool fixedWidth);
+    void layoutHeight(float availableHeight, bool fixedHeight);
+
+    void layoutContent(float availableWidth, float availableHeight, bool fixedWidth, bool fixedHeight);
+    void layoutContent(const Size& availableSize) { layoutContent(availableSize.w, availableSize.h, false, false); }
 
     void computeWidth(float& x, float& width, float& marginLeft, float& marginRight) const final;
     void computeHeight(float& y, float& height, float& marginTop, float& marginBottom) const final;
