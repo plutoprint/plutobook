@@ -77,16 +77,16 @@ void PageBox::layout(FragmentBuilder* fragmentainer)
     Rect leftEdgeRect(0, topHeight, leftWidth, pageHeight - topHeight - bottomHeight);
 
     layoutCornerPageMargin(margins[PageMarginType::TopLeftCorner], topLeftCornerRect);
-    layoutEdgePageMargins(margins[PageMarginType::TopLeft], margins[PageMarginType::TopCenter], margins[PageMarginType::TopRight], BoxSideTop, topEdgeRect);
+    layoutEdgePageMargins(margins[PageMarginType::TopLeft], margins[PageMarginType::TopCenter], margins[PageMarginType::TopRight], topEdgeRect, BoxSideTop);
 
     layoutCornerPageMargin(margins[PageMarginType::TopRightCorner], topRightCornerRect);
-    layoutEdgePageMargins(margins[PageMarginType::RightTop], margins[PageMarginType::RightMiddle], margins[PageMarginType::RightBottom], BoxSideRight, rightEdgeRect);
+    layoutEdgePageMargins(margins[PageMarginType::RightTop], margins[PageMarginType::RightMiddle], margins[PageMarginType::RightBottom], rightEdgeRect, BoxSideRight);
 
     layoutCornerPageMargin(margins[PageMarginType::BottomRightCorner], bottomRightCornerRect);
-    layoutEdgePageMargins(margins[PageMarginType::BottomLeft], margins[PageMarginType::BottomCenter], margins[PageMarginType::BottomRight], BoxSideBottom, bottomEdgeRect);
+    layoutEdgePageMargins(margins[PageMarginType::BottomLeft], margins[PageMarginType::BottomCenter], margins[PageMarginType::BottomRight], bottomEdgeRect, BoxSideBottom);
 
     layoutCornerPageMargin(margins[PageMarginType::BottomLeftCorner], bottomLeftCornerRect);
-    layoutEdgePageMargins(margins[PageMarginType::LeftTop], margins[PageMarginType::LeftMiddle], margins[PageMarginType::LeftBottom], BoxSideLeft, leftEdgeRect);
+    layoutEdgePageMargins(margins[PageMarginType::LeftTop], margins[PageMarginType::LeftMiddle], margins[PageMarginType::LeftBottom], leftEdgeRect, BoxSideLeft);
 
     updateOverflowRect();
 }
@@ -121,8 +121,6 @@ void PageBox::layoutEdgePageMargin(PageMarginBox* edgeBox, const Rect& edgeRect,
         availableSize.h = mainAxisSize;
     }
 
-    edgeBox->updateMargins(edgeRect.size());
-    edgeBox->updatePaddings(availableSize);
     edgeBox->layoutContents(availableSize);
     edgeBox->updateAutoMargins(edgeRect.size());
 
@@ -161,15 +159,190 @@ void PageBox::layoutEdgePageMargin(PageMarginBox* edgeBox, const Rect& edgeRect,
     edgeBox->setY(edgeOffset.y + edgeBox->marginTop());
 }
 
-void PageBox::layoutEdgePageMargins(PageMarginBox* edgeStartBox, PageMarginBox* edgeCenterBox, PageMarginBox* edgeEndBox, BoxSide edgeSide, const Rect& edgeRect)
-{
-    auto startMainAxisSize = isHorizontalEdge(edgeSide) ? edgeRect.w / 3.f : edgeRect.h / 3.f;
-    auto centerMainAxisSize = isHorizontalEdge(edgeSide) ? edgeRect.w / 3.f : edgeRect.h / 3.f;
-    auto endMainAxisSize = isHorizontalEdge(edgeSide) ? edgeRect.w / 3.f : edgeRect.h / 3.f;
+class PreferredSizeInfo {
+public:
+    enum Type {
+        Fixed,
+        Auto
+    };
 
-    layoutEdgePageMargin(edgeStartBox, edgeRect, edgeSide, startMainAxisSize);
-    layoutEdgePageMargin(edgeCenterBox, edgeRect, edgeSide, centerMainAxisSize);
-    layoutEdgePageMargin(edgeEndBox, edgeRect, edgeSide, endMainAxisSize);
+    PreferredSizeInfo() = default;
+    PreferredSizeInfo(Type type, float minSize, float maxSize, float marginSize)
+        : m_type(type), m_minSize(minSize), m_maxSize(maxSize), m_marginSize(marginSize)
+    {}
+
+    bool isAuto() const { return m_type == Type::Auto; }
+
+    float minSize() const { return m_minSize; }
+    float maxSize() const { return m_maxSize; }
+    float marginSize() const { return m_marginSize; }
+
+    float minLength() const { return m_minSize + m_marginSize; }
+    float maxLength() const { return m_maxSize + m_marginSize; }
+
+    PreferredSizeInfo doubled() const {
+        return PreferredSizeInfo(m_type, m_minSize * 2.f, m_maxSize * 2.f, m_marginSize * 2.f);
+    }
+
+private:
+    Type m_type = Type::Fixed;
+    float m_minSize = 0.f;
+    float m_maxSize = 0.f;
+    float m_marginSize = 0.f;
+};
+
+static PreferredSizeInfo computeEdgePreferredSize(PageMarginBox* edgeBox, const Rect& edgeRect, BoxSide edgeSide)
+{
+    if(edgeBox == nullptr) {
+        return PreferredSizeInfo();
+    }
+
+    edgeBox->updateMargins(edgeRect.size());
+    edgeBox->updatePaddings(edgeRect.size());
+
+    if(isHorizontalEdge(edgeSide)) {
+        auto widthLength = edgeBox->style()->width();
+        if(widthLength.isAuto()) {
+            return PreferredSizeInfo(PreferredSizeInfo::Auto, edgeBox->minPreferredWidth(), edgeBox->maxPreferredWidth(), edgeBox->marginWidth());
+        }
+
+        auto minWidthLength = edgeBox->style()->minWidth();
+        auto maxWidthLength = edgeBox->style()->maxWidth();
+
+        auto width = edgeBox->adjustBorderBoxWidth(widthLength.calc(edgeRect.w));
+        if(!maxWidthLength.isNone())
+            width = std::min(width, edgeBox->adjustBorderBoxWidth(maxWidthLength.calc(edgeRect.w)));
+        if(!minWidthLength.isAuto()) {
+            width = std::max(width, edgeBox->adjustBorderBoxWidth(minWidthLength.calc(edgeRect.w)));
+        }
+
+        return PreferredSizeInfo(PreferredSizeInfo::Fixed, width, width, edgeBox->marginWidth());
+    }
+
+    auto heightLength = edgeBox->style()->height();
+    if(heightLength.isAuto()) {
+        edgeBox->layoutHorizontalContent(edgeRect.w);
+        return PreferredSizeInfo(PreferredSizeInfo::Auto, edgeBox->height(), edgeBox->height(), edgeBox->marginHeight());
+    }
+
+    auto minHeightLength = edgeBox->style()->minHeight();
+    auto maxHeightLength = edgeBox->style()->maxHeight();
+
+    auto height = edgeBox->adjustBorderBoxHeight(heightLength.calc(edgeRect.h));
+    if(!maxHeightLength.isNone())
+        height = std::min(height, edgeBox->adjustBorderBoxHeight(maxHeightLength.calc(edgeRect.h)));
+    if(!minHeightLength.isAuto()) {
+        height = std::max(height, edgeBox->adjustBorderBoxHeight(minHeightLength.calc(edgeRect.h)));
+    }
+
+    return PreferredSizeInfo(PreferredSizeInfo::Fixed, height, height, edgeBox->marginHeight());
+}
+
+static void resolveTwoEdgePageMarginLengths(const std::array<PreferredSizeInfo, 3>& preferredMainAxisSizes, float availableMainAxisSize, float& firstMainAxisSize, float* secondMainAxisSize)
+{
+    enum { FirstResolvee = 0, NonResolvee = 1, SecondResolvee = 2 };
+
+    assert(!preferredMainAxisSizes[NonResolvee].isAuto());
+    float availableMainAxisSizeForFlex = availableMainAxisSize;
+    float totalAutoMinSize = 0.f;
+    float totalAutoMaxSize = 0.f;
+    for(int i = 0; i < 3; i++) {
+        if(preferredMainAxisSizes[i].isAuto()) {
+            totalAutoMinSize += preferredMainAxisSizes[i].minLength();
+            totalAutoMaxSize += preferredMainAxisSizes[i].maxLength();
+        } else {
+            availableMainAxisSizeForFlex -= preferredMainAxisSizes[i].minLength();
+        }
+    }
+
+    std::array<float, 3> unflexedSizes = {};
+    std::array<float, 3> flexFactors = {};
+
+    float flexSpace = 0.f;
+    if(availableMainAxisSizeForFlex > totalAutoMaxSize) {
+        flexSpace = availableMainAxisSizeForFlex - totalAutoMaxSize;
+        for(int i = 0; i < 3; i++) {
+            unflexedSizes[i] = preferredMainAxisSizes[i].maxLength();
+            flexFactors[i] = unflexedSizes[i];
+        }
+    } else {
+        flexSpace = availableMainAxisSizeForFlex - totalAutoMinSize;
+        for(int i = 0; i < 3; i++) {
+            unflexedSizes[i] = preferredMainAxisSizes[i].minLength();
+        }
+
+        if(flexSpace > 0.f) {
+            for(int i = 0; i < 3; i++) {
+                flexFactors[i] = preferredMainAxisSizes[i].maxLength() - preferredMainAxisSizes[i].minLength();
+            }
+        } else {
+            for(int i = 0; i < 3; i++) {
+                flexFactors[i] = preferredMainAxisSizes[i].minLength();
+            }
+        }
+    }
+
+    firstMainAxisSize = unflexedSizes[FirstResolvee];
+    if(preferredMainAxisSizes[FirstResolvee].isAuto()) {
+        if(preferredMainAxisSizes[SecondResolvee].isAuto()) {
+            auto totalFlex = flexFactors[FirstResolvee] + flexFactors[SecondResolvee];
+            if(totalFlex > 0.f) {
+                firstMainAxisSize += flexSpace * flexFactors[FirstResolvee] / totalFlex;
+            }
+        } else {
+            firstMainAxisSize = availableMainAxisSize - unflexedSizes[SecondResolvee];
+        }
+    }
+
+    if(secondMainAxisSize) {
+        *secondMainAxisSize = unflexedSizes[SecondResolvee];
+        if(preferredMainAxisSizes[SecondResolvee].isAuto()) {
+            *secondMainAxisSize = availableMainAxisSize - firstMainAxisSize;
+        }
+    }
+}
+
+void PageBox::layoutEdgePageMargins(PageMarginBox* edgeStartBox, PageMarginBox* edgeCenterBox, PageMarginBox* edgeEndBox, const Rect& edgeRect, BoxSide edgeSide)
+{
+    auto availableMainAxisSize = isHorizontalEdge(edgeSide) ? edgeRect.w : edgeRect.h;
+    std::array<PreferredSizeInfo, 3> preferredMainAxisSizes = {
+        computeEdgePreferredSize(edgeStartBox, edgeRect, edgeSide),
+        computeEdgePreferredSize(edgeCenterBox, edgeRect, edgeSide),
+        computeEdgePreferredSize(edgeEndBox, edgeRect, edgeSide)
+    };
+
+    enum { StartMargin = 0, CenterMargin = 1, EndMargin = 2 };
+
+    std::array<float, 3> mainAxisSizes = {};
+    if(edgeCenterBox == nullptr) {
+        resolveTwoEdgePageMarginLengths(preferredMainAxisSizes, availableMainAxisSize, mainAxisSizes[StartMargin], &mainAxisSizes[EndMargin]);
+    } else {
+        if(preferredMainAxisSizes[CenterMargin].isAuto()) {
+            std::array<PreferredSizeInfo, 3> acSizesForStart = { preferredMainAxisSizes[CenterMargin], PreferredSizeInfo(), preferredMainAxisSizes[StartMargin].doubled() };
+            std::array<PreferredSizeInfo, 3> acSizesForEnd = { preferredMainAxisSizes[CenterMargin], PreferredSizeInfo(), preferredMainAxisSizes[EndMargin].doubled() };
+
+            float centerSize1;
+            float centerSize2;
+
+            resolveTwoEdgePageMarginLengths(acSizesForStart, availableMainAxisSize, centerSize1, nullptr);
+            resolveTwoEdgePageMarginLengths(acSizesForEnd, availableMainAxisSize, centerSize2, nullptr);
+
+            mainAxisSizes[CenterMargin] = std::min(centerSize1, centerSize2);
+        }
+
+        auto sideSpace = availableMainAxisSize - mainAxisSizes[CenterMargin];
+        if(preferredMainAxisSizes[StartMargin].isAuto()) {
+            mainAxisSizes[StartMargin] = sideSpace / 2.f;
+        }
+
+        if(preferredMainAxisSizes[EndMargin].isAuto()) {
+            mainAxisSizes[EndMargin] = sideSpace - sideSpace / 2.f;
+        }
+    }
+
+    layoutEdgePageMargin(edgeStartBox, edgeRect, edgeSide, mainAxisSizes[StartMargin]);
+    layoutEdgePageMargin(edgeCenterBox, edgeRect, edgeSide, mainAxisSizes[CenterMargin]);
+    layoutEdgePageMargin(edgeEndBox, edgeRect, edgeSide, mainAxisSizes[EndMargin]);
 }
 
 void PageBox::paintContents(const PaintInfo& info, const Point& offset, PaintPhase phase)
@@ -365,39 +538,49 @@ void PageMarginBox::updateAutoMargins(const Size& availableSize)
     }
 }
 
-void PageMarginBox::layoutContents(const Size& availableSize)
+void PageMarginBox::layoutHorizontalContent(float availableWidth)
 {
     auto widthLength = style()->width();
     auto minWidthLength = style()->minWidth();
     auto maxWidthLength = style()->maxWidth();
 
-    auto heightLength = style()->height();
-    auto minHeightLength = style()->minHeight();
-    auto maxHeightLength = style()->maxHeight();
-
-    auto width = std::max(0.f, availableSize.w - marginWidth());
+    auto width = std::max(0.f, availableWidth - marginWidth());
     if(!widthLength.isAuto())
-        width = adjustBorderBoxWidth(widthLength.calc(availableSize.w));
+        width = adjustBorderBoxWidth(widthLength.calc(availableWidth));
     if(!maxWidthLength.isNone())
-        width = std::min(width, adjustBorderBoxWidth(maxWidthLength.calc(availableSize.w)));
+        width = std::min(width, adjustBorderBoxWidth(maxWidthLength.calc(availableWidth)));
     if(!minWidthLength.isAuto()) {
-        width = std::max(width, adjustBorderBoxWidth(minWidthLength.calc(availableSize.w)));
-    }
-
-    auto height = std::max(0.f, availableSize.h - marginHeight());
-    if(!heightLength.isAuto())
-        height = adjustBorderBoxHeight(heightLength.calc(availableSize.h));
-    if(!maxHeightLength.isNone())
-        height = std::min(height, adjustBorderBoxHeight(maxHeightLength.calc(availableSize.h)));
-    if(!minHeightLength.isAuto()) {
-        height = std::max(height, adjustBorderBoxHeight(minHeightLength.calc(availableSize.h)));
+        width = std::max(width, adjustBorderBoxWidth(minWidthLength.calc(availableWidth)));
     }
 
     setWidth(width);
     layout(nullptr);
+}
+
+void PageMarginBox::layoutVerticalContent(float availableHeight)
+{
+    auto heightLength = style()->height();
+    auto minHeightLength = style()->minHeight();
+    auto maxHeightLength = style()->maxHeight();
+
+    auto height = std::max(0.f, availableHeight - marginHeight());
+    if(!heightLength.isAuto())
+        height = adjustBorderBoxHeight(heightLength.calc(availableHeight));
+    if(!maxHeightLength.isNone())
+        height = std::min(height, adjustBorderBoxHeight(maxHeightLength.calc(availableHeight)));
+    if(!minHeightLength.isAuto()) {
+        height = std::max(height, adjustBorderBoxHeight(minHeightLength.calc(availableHeight)));
+    }
+
     if(updateIntrinsicPaddings(height))
         layout(nullptr);
     setHeight(height);
+}
+
+void PageMarginBox::layoutContents(const Size& availableSize)
+{
+    layoutHorizontalContent(availableSize.w);
+    layoutVerticalContent(availableSize.h);
 }
 
 void PageMarginBox::computeWidth(float& x, float& width, float& marginLeft, float& marginRight) const

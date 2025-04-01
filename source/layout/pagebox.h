@@ -32,7 +32,7 @@ public:
 
     void layoutCornerPageMargin(PageMarginBox* cornerBox, const Rect& cornerRect);
     void layoutEdgePageMargin(PageMarginBox* edgeBox, const Rect& edgeRect, BoxSide edgeSide, float mainAxisSize);
-    void layoutEdgePageMargins(PageMarginBox* edgeStartBox, PageMarginBox* edgeCenterBox, PageMarginBox* edgeEndBox, BoxSide edgeSide, const Rect& edgeRect);
+    void layoutEdgePageMargins(PageMarginBox* edgeStartBox, PageMarginBox* edgeCenterBox, PageMarginBox* edgeEndBox, const Rect& edgeRect, BoxSide edgeSide);
 
     void paintContents(const PaintInfo& info, const Point& offset, PaintPhase phase) final;
 
@@ -73,6 +73,9 @@ public:
     void updatePaddings(const Size& availableSize);
     void updateMargins(const Size& availableSize);
     void updateAutoMargins(const Size& availableSize);
+
+    void layoutHorizontalContent(float availableWidth);
+    void layoutVerticalContent(float availableHeight);
     void layoutContents(const Size& availableSize);
 
     void computeWidth(float& x, float& width, float& marginLeft, float& marginRight) const final;
