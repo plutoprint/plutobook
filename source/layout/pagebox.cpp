@@ -313,7 +313,12 @@ void PageBox::layoutEdgePageMargins(PageMarginBox* edgeStartBox, PageMarginBox* 
 
     enum { StartMargin = 0, CenterMargin = 1, EndMargin = 2 };
 
-    std::array<float, 3> mainAxisSizes = {};
+    std::array<float, 3> mainAxisSizes = {
+        preferredMainAxisSizes[StartMargin].maxLength(),
+        preferredMainAxisSizes[CenterMargin].maxLength(),
+        preferredMainAxisSizes[EndMargin].maxLength()
+    };
+
     if(edgeCenterBox == nullptr) {
         resolveTwoEdgePageMarginLengths(preferredMainAxisSizes, availableMainAxisSize, mainAxisSizes[StartMargin], &mainAxisSizes[EndMargin]);
     } else {
