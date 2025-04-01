@@ -17,8 +17,12 @@ LeaderBox::LeaderBox(const RefPtr<BoxStyle>& style)
 {
 }
 
-TargetCounterBox::TargetCounterBox(const RefPtr<BoxStyle>& style)
+TargetCounterBox::TargetCounterBox(const RefPtr<BoxStyle>& style, const HeapString& fragment, const GlobalString& identifier, const HeapString& seperator, const GlobalString& listStyle)
     : ContentBox(style)
+    , m_fragment(fragment)
+    , m_identifier(identifier)
+    , m_seperator(seperator)
+    , m_listStyle(listStyle)
 {
 }
 
@@ -111,28 +115,39 @@ static const HeapString& getAttributeText(const Element* element, const CSSValue
 void ContentBoxBuilder::addTargetCounter(const CSSFunctionValue& function)
 {
     assert(function.id() == CSSValueID::TargetCounter || function.id() == CSSValueID::TargetCounters);
-    auto style = BoxStyle::create(*m_parentStyle, Display::Inline);
-    auto box = new (m_parentStyle->heap()) TargetCounterBox(style);
+    HeapString fragment;
+    GlobalString identifier;
+    HeapString seperator;
+    GlobalString listStyle;
 
     size_t index = 0;
 
-    if(auto attr = to<CSSUnaryFunctionValue>(function.at(index))) {
-        assert(attr->id() == CSSValueID::Attr);
-        box->setFragment(getAttributeText(m_element, *attr->value()));
+    if(auto value = to<CSSLocalUrlValue>(function.at(index))) {
+        fragment = to<CSSLocalUrlValue>(*value).value();
     } else {
-        box->setFragment(to<CSSLocalUrlValue>(*function.at(index)).value());
+        auto& attr = to<CSSUnaryFunctionValue>(*function.at(index));
+        assert(attr.id() == CSSValueID::Attr);
+        fragment = getAttributeText(m_element, *attr.value());
     }
 
     ++index;
 
-    box->setIdentifier(to<CSSCustomIdentValue>(*function.at(index++)).value());
+    identifier = to<CSSCustomIdentValue>(*function.at(index++)).value();
     if(function.id() == CSSValueID::TargetCounters)
-        box->setSeperator(to<CSSStringValue>(*function.at(index++)).value());
+        seperator = to<CSSStringValue>(*function.at(index++)).value();
     if(index < function.size()) {
-        box->setListStyle(to<CSSCustomIdentValue>(*function.at(index++)).value());
-        assert(index == function.size());
+        listStyle = to<CSSCustomIdentValue>(*function.at(index++)).value();
     }
 
+    assert(index == function.size());
+
+    if(m_element == nullptr) {
+        addText(m_parentStyle->document()->getTargetCounterText(fragment, identifier, listStyle, seperator));
+        return;
+    }
+
+    auto style = BoxStyle::create(*m_parentStyle, Display::Inline);
+    auto box = new (m_parentStyle->heap()) TargetCounterBox(style, fragment, identifier, seperator, listStyle);
     m_parentBox->addChild(box);
     m_lastTextBox = nullptr;
 }

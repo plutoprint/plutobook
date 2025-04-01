@@ -36,7 +36,7 @@ struct is_a<LeaderBox> {
 
 class TargetCounterBox final : public ContentBox {
 public:
-    TargetCounterBox(const RefPtr<BoxStyle>& style);
+    TargetCounterBox(const RefPtr<BoxStyle>& style, const HeapString& fragment, const GlobalString& identifier, const HeapString& seperator, const GlobalString& listStyle);
 
     bool isTargetCounterBox() const final { return true; }
 
@@ -44,11 +44,6 @@ public:
     const GlobalString& identifier() const { return m_identifier; }
     const HeapString& seperator() const { return m_seperator; }
     const GlobalString& listStyle() const { return m_listStyle; }
-
-    void setFragment(const HeapString& fragment) { m_fragment = fragment; }
-    void setIdentifier(const GlobalString& identifier) { m_identifier = identifier; }
-    void setSeperator(const HeapString& seperator) { m_seperator = seperator; }
-    void setListStyle(const GlobalString& listStyle) { m_listStyle = listStyle; }
 
     void build() final;
 
