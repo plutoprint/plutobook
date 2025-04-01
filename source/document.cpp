@@ -928,9 +928,9 @@ void Document::layout()
     auto marginBottomLength = pageStyle->marginBottom();
 
     const auto& deviceMargins = document()->book()->pageMargins();
-    auto marginTop = marginTopLength.isAuto() ? deviceMargins.top() / units::px : marginTopLength.calcMin(pageWidth);
+    auto marginTop = marginTopLength.isAuto() ? deviceMargins.top() / units::px : marginTopLength.calcMin(pageHeight);
     auto marginRight = marginRightLength.isAuto() ? deviceMargins.right() / units::px : marginRightLength.calcMin(pageWidth);
-    auto marginBottom = marginBottomLength.isAuto() ? deviceMargins.bottom() / units::px : marginBottomLength.calcMin(pageWidth);
+    auto marginBottom = marginBottomLength.isAuto() ? deviceMargins.bottom() / units::px : marginBottomLength.calcMin(pageHeight);
     auto marginLeft = marginLeftLength.isAuto() ? deviceMargins.left() / units::px : marginLeftLength.calcMin(pageWidth);
 
     auto pageContentWidth = pageWidth - marginLeft - marginRight;
