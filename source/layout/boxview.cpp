@@ -1,5 +1,4 @@
 #include "boxview.h"
-#include "boxlayer.h"
 #include "pagebox.h"
 #include "document.h"
 
@@ -29,7 +28,7 @@ void BoxView::computeHeight(float& y, float& height, float& marginTop, float& ma
 void BoxView::layout(FragmentBuilder* fragmentainer)
 {
     BlockFlowBox::layout(fragmentainer);
-    layer()->layout();
+    updateLayerPositions();
 }
 
 void BoxView::build()

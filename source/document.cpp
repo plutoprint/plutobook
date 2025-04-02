@@ -956,7 +956,7 @@ void Document::layout()
 
 void Document::render(GraphicsContext& context, const Rect& rect)
 {
-    box()->layer()->paint(context, rect);
+    box()->paintLayer(context, rect);
 }
 
 void Document::renderPage(GraphicsContext& context, uint32_t pageIndex)
@@ -964,7 +964,7 @@ void Document::renderPage(GraphicsContext& context, uint32_t pageIndex)
     if(pageIndex < m_pages.size()) {
         const auto& page = m_pages[pageIndex];
         box()->setCurrentPage(page.get());
-        page->layer()->paint(context, page->borderBoxRect());
+        page->paintLayer(context, page->borderBoxRect());
         box()->setCurrentPage(nullptr);
     }
 }

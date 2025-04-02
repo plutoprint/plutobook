@@ -224,6 +224,9 @@ public:
 
     BoxLayer* layer() const { return m_layer.get(); }
 
+    void paintLayer(GraphicsContext& context, const Rect& rect);
+    void updateLayerPositions();
+
     Point relativePositionOffset() const;
     float availableWidthForPositioned() const;
     float availableHeightForPositioned() const;

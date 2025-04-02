@@ -32,8 +32,11 @@ BoxLayer* BoxLayer::containingLayer() const
 void BoxLayer::layout()
 {
     m_borderRect = m_box->borderBoundingBox();
-    if(auto box = to<BoxFrame>(m_box))
-        m_borderRect.move(box->location());
+    if(m_box->isBoxFrame() && !m_box->isPageMarginBox()) {
+        auto& box = to<BoxFrame>(*m_box);
+        m_borderRect.move(box.location());
+    }
+
     if(!m_box->isPositioned() && !m_box->hasColumnSpanBox()) {
         auto parent = m_box->parentBox();
         while(parent && !parent->hasLayer()) {
@@ -158,7 +161,7 @@ void BoxLayer::paintLayerContents(BoxLayer* rootLayer, GraphicsContext& context,
     Point adjustedOffset(offset);
     if(m_box->isBoxFrame() && !m_box->isPageMarginBox()) {
         auto& box = to<BoxFrame>(*m_box);
-        adjustedOffset -= box.location();
+        adjustedOffset.move(-box.location());
     }
 
     PaintInfo paintInfo(context, rect);

@@ -488,6 +488,16 @@ void BoxModel::paint(const PaintInfo& info, const Point& offset, PaintPhase phas
     assert(false);
 }
 
+void BoxModel::paintLayer(GraphicsContext& context, const Rect& rect)
+{
+    m_layer->paint(context, rect);
+}
+
+void BoxModel::updateLayerPositions()
+{
+    m_layer->layout();
+}
+
 Point BoxModel::relativePositionOffset() const
 {
     auto container = containingBlock();

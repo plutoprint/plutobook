@@ -89,6 +89,7 @@ void PageBox::layout(FragmentBuilder* fragmentainer)
     layoutEdgePageMargins(margins[PageMarginType::LeftTop], margins[PageMarginType::LeftMiddle], margins[PageMarginType::LeftBottom], leftEdgeRect, BoxSideLeft);
 
     updateOverflowRect();
+    updateLayerPositions();
 }
 
 void PageBox::layoutCornerPageMargin(PageMarginBox* cornerBox, const Rect& cornerRect)
