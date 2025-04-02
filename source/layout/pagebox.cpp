@@ -554,6 +554,7 @@ void PageMarginBox::layoutFixedWidth(float width)
 
 void PageMarginBox::layoutFixedHeight(float height)
 {
+    setOverrideHeight(height);
     if(updateIntrinsicPaddings(height))
         layout(nullptr);
     setHeight(height);
