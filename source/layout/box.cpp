@@ -286,6 +286,27 @@ bool Box::isFlexItem() const
     return m_parentBox && m_parentBox->isFlexibleBox();
 }
 
+void Box::paintAnnotation(GraphicsContext& context, const Rect& rect) const
+{
+    if(m_node == nullptr || !m_node->isElementNode())
+        return;
+    const auto& element = to<Element>(*m_node);
+    if(!element.id().empty())
+        context.addLinkDestination(element.id(), rect.origin());
+    if(element.tagName() == aTag) {
+        const auto& href = element.getAttribute(hrefAttr);
+        const auto& baseUrl = document()->baseUrl();
+
+        auto completeUrl = baseUrl.complete(href);
+        auto fragmentName = completeUrl.fragment();
+        if(!fragmentName.empty() && baseUrl == completeUrl.base()) {
+            context.addLinkAnnotation(fragmentName.substr(1), emptyGlo, rect);
+        } else {
+            context.addLinkAnnotation(emptyGlo, completeUrl.value(), rect);
+        }
+    }
+}
+
 void Box::layout(FragmentBuilder* fragmentainer)
 {
     assert(false);
@@ -481,6 +502,7 @@ void BoxModel::paintOutline(const PaintInfo& info, const Rect& borderRect) const
 {
     BorderPainter painter(BorderPainterType::Outline, borderRect, *style(), true, true);
     painter.paint(*info, info.rect());
+    paintAnnotation(*info, borderRect);
 }
 
 void BoxModel::paint(const PaintInfo& info, const Point& offset, PaintPhase phase)

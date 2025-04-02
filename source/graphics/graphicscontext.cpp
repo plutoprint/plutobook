@@ -4,6 +4,7 @@
 #include <cairo.h>
 #include <cmath>
 #include <numbers>
+#include <sstream>
 
 namespace plutobook {
 
@@ -377,6 +378,37 @@ void GraphicsContext::applyMask(const ImageBuffer& maskImage)
     cairo_paint(m_canvas);
     cairo_set_operator(m_canvas, CAIRO_OPERATOR_OVER);
     cairo_set_matrix(m_canvas, &matrix);
+}
+
+void GraphicsContext::addLinkAnnotation(const std::string_view& dest, const std::string_view& uri, const Rect& rect)
+{
+    double x = rect.x, y = rect.y;
+    double w = rect.w, h = rect.h;
+    cairo_user_to_device(m_canvas, &x, &y);
+    cairo_user_to_device_distance(m_canvas, &w, &h);
+
+    std::ostringstream ss;
+    ss << "rect=[" << x << ' '  << y << ' '  << w << ' '  << h << ']';
+    if(!dest.empty()) {
+        ss << " dest=\'" << dest << '\'';
+    } if(!uri.empty()) {
+        ss << " uri=\'" << uri << '\'';
+    }
+
+    cairo_tag_begin(m_canvas, CAIRO_TAG_LINK, ss.str().data());
+    cairo_tag_end(m_canvas, CAIRO_TAG_LINK);
+}
+
+void GraphicsContext::addLinkDestination(const std::string_view& name, const Point& location)
+{
+    double x = location.x, y = location.y;
+    cairo_user_to_device(m_canvas, &x, &y);
+
+    std::ostringstream ss;
+    ss << "name=\'" << name << '\'' << " x=" << x << " y=" << y;
+
+    cairo_tag_begin(m_canvas, CAIRO_TAG_DEST, ss.str().data());
+    cairo_tag_end(m_canvas, CAIRO_TAG_DEST);
 }
 
 std::unique_ptr<ImageBuffer> ImageBuffer::create(const Rect& rect)

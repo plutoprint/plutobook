@@ -171,6 +171,8 @@ public:
     Heap* heap() const { return m_style->heap(); }
     Document* document() const { return m_style->document(); }
 
+    void paintAnnotation(GraphicsContext& context, const Rect& rect) const;
+
     virtual const Rect& fillBoundingBox() const { return Rect::Invalid; }
     virtual const Rect& strokeBoundingBox() const { return Rect::Invalid; }
     virtual const Rect& paintBoundingBox() const { return Rect::Invalid; }
