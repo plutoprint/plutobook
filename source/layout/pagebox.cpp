@@ -673,6 +673,11 @@ void PageBoxBuilder::buildPageMargin(const Counters& counters, PageBox* pageBox,
         return;
     }
 
+    auto content = marginStyle->get(CSSPropertyID::Content);
+    if(content == nullptr || content->id() == CSSValueID::None || content->id() == CSSValueID::Normal) {
+        return;
+    }
+
     auto marginBox = new (m_document->heap()) PageMarginBox(marginStyle, marginType);
     Counters marginCounters(counters);
     marginCounters.update(marginBox);
