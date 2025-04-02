@@ -220,6 +220,7 @@ public:
     void paintOutline(const PaintInfo& info, const Rect& borderRect) const;
 
     virtual void paint(const PaintInfo& info, const Point& offset, PaintPhase phase);
+
     virtual Rect visualOverflowRect() const = 0;
     virtual Rect borderBoundingBox() const = 0;
     virtual bool requiresLayer() const = 0;

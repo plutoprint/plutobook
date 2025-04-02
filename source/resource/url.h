@@ -12,9 +12,11 @@ public:
     explicit Url(const std::string_view& input);
 
     Url complete(std::string_view input) const;
+
     bool protocolIs(const std::string_view& protocol) const;
     bool isHierarchical() const { return m_schemeEnd < m_userBegin && m_value[m_schemeEnd + 1] == '/'; }
     bool isEmpty() const { return m_value.empty(); }
+
     const std::string& value() const { return m_value; }
 
     std::string_view path() const { return componentString(m_portEnd, m_pathEnd); }

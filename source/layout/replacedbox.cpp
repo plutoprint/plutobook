@@ -37,8 +37,9 @@ void ReplacedBox::computeAspectRatioInformation(float& intrinsicWidth, float& in
 float ReplacedBox::computePreferredReplacedWidth() const
 {
     auto widthLength = style()->width();
-    if(widthLength.isFixed())
+    if(widthLength.isFixed()) {
         return adjustContentBoxWidth(widthLength.value());
+    }
 
     float intrinsicWidth = 0.f;
     float intrinsicHeight = 0.f;
@@ -297,8 +298,9 @@ float ReplacedBox::constrainReplacedHeight(float height) const
 
 float ReplacedBox::computeReplacedWidth() const
 {
-    if(auto width = computeReplacedWidthUsing(style()->width()))
+    if(auto width = computeReplacedWidthUsing(style()->width())) {
         return constrainReplacedWidth(*width);
+    }
 
     float intrinsicWidth = 0.f;
     float intrinsicHeight = 0.f;
@@ -323,8 +325,9 @@ float ReplacedBox::computeReplacedWidth() const
 
 float ReplacedBox::computeReplacedHeight() const
 {
-    if(auto height = computeReplacedHeightUsing(style()->height()))
+    if(auto height = computeReplacedHeightUsing(style()->height())) {
         return constrainReplacedHeight(*height);
+    }
 
     float intrinsicWidth = 0.f;
     float intrinsicHeight = 0.f;

@@ -2,6 +2,7 @@
 #include "geometry.h"
 
 #include <cairo.h>
+
 #include <cmath>
 #include <numbers>
 #include <sstream>
@@ -382,6 +383,8 @@ void GraphicsContext::applyMask(const ImageBuffer& maskImage)
 
 void GraphicsContext::addLinkAnnotation(const std::string_view& dest, const std::string_view& uri, const Rect& rect)
 {
+    if(dest.empty() && uri.empty())
+        return;
     double x = rect.x, y = rect.y;
     double w = rect.w, h = rect.h;
     cairo_user_to_device(m_canvas, &x, &y);
@@ -391,7 +394,7 @@ void GraphicsContext::addLinkAnnotation(const std::string_view& dest, const std:
     ss << "rect=[" << x << ' '  << y << ' '  << w << ' '  << h << ']';
     if(!dest.empty()) {
         ss << " dest=\'" << dest << '\'';
-    } if(!uri.empty()) {
+    } else if(!uri.empty()) {
         ss << " uri=\'" << uri << '\'';
     }
 
@@ -401,11 +404,15 @@ void GraphicsContext::addLinkAnnotation(const std::string_view& dest, const std:
 
 void GraphicsContext::addLinkDestination(const std::string_view& name, const Point& location)
 {
-    double x = location.x, y = location.y;
+    if(name.empty())
+        return;
+    double x = location.x;
+    double y = location.y;
     cairo_user_to_device(m_canvas, &x, &y);
 
     std::ostringstream ss;
-    ss << "name=\'" << name << '\'' << " x=" << x << " y=" << y;
+    ss << "name=\'" << name << '\'';
+    ss << " x=" << x << " y=" << y;
 
     cairo_tag_begin(m_canvas, CAIRO_TAG_DEST, ss.str().data());
     cairo_tag_end(m_canvas, CAIRO_TAG_DEST);
