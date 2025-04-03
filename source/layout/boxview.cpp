@@ -18,7 +18,6 @@ Rect BoxView::backgroundRect() const
 
 void BoxView::computeWidth(float& x, float& width, float& marginLeft, float& marginRight) const
 {
-    width = document()->availableWidth();
 }
 
 void BoxView::computeHeight(float& y, float& height, float& marginTop, float& marginBottom) const
@@ -27,6 +26,7 @@ void BoxView::computeHeight(float& y, float& height, float& marginTop, float& ma
 
 void BoxView::layout(FragmentBuilder* fragmentainer)
 {
+    setWidth(document()->availableWidth());
     BlockFlowBox::layout(fragmentainer);
     updateLayerPositions();
 }
