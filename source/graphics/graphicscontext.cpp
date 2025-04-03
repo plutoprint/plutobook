@@ -9,12 +9,12 @@
 
 namespace plutobook {
 
-inline cairo_fill_rule_t to_cairo_fill_rule(FillRule fillRule)
+constexpr cairo_fill_rule_t to_cairo_fill_rule(FillRule fillRule)
 {
     return fillRule == FillRule::NonZero ? CAIRO_FILL_RULE_WINDING : CAIRO_FILL_RULE_EVEN_ODD;
 }
 
-inline cairo_operator_t to_cairo_operator(BlendMode blendMode)
+constexpr cairo_operator_t to_cairo_operator(BlendMode blendMode)
 {
     switch(blendMode) {
     case BlendMode::Normal:
