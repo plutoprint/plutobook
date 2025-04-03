@@ -31,6 +31,7 @@ SVGRenderState::SVGRenderState(const SVGBlendInfo& info, const Box* box, const S
 
 SVGRenderState::~SVGRenderState()
 {
+    m_box->paintAnnotation(m_context, m_box->paintBoundingBox());
     if(m_requiresCompositing) {
         if(m_info.clipper())
             m_info.clipper()->applyClipMask(*this);
