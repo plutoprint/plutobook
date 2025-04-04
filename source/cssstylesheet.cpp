@@ -355,9 +355,10 @@ FontDescription FontDescriptionBuilder::build() const
 class StyleBuilder {
 public:
     virtual ~StyleBuilder() = default;
+    virtual RefPtr<BoxStyle> build() = 0;
+
     void merge(uint32_t specificity, uint32_t position, const CSSPropertyList& properties);
     FontDescription fontDescription() const;
-    virtual RefPtr<BoxStyle> build() = 0;
 
 protected:
     StyleBuilder(const BoxStyle& parentStyle) : m_parentStyle(parentStyle) {}
@@ -545,8 +546,6 @@ RefPtr<BoxStyle> PageStyleBuilder::build()
 
     auto newStyle = BoxStyle::create(m_parentStyle, m_pseudoType, Display::Block);
     switch(m_marginType) {
-    case PageMarginType::None:
-        break;
     case PageMarginType::TopLeftCorner:
         newStyle->setTextAlign(TextAlign::Right);
         newStyle->setVerticalAlignType(VerticalAlignType::Middle);
@@ -610,6 +609,8 @@ RefPtr<BoxStyle> PageStyleBuilder::build()
     case PageMarginType::LeftTop:
         newStyle->setTextAlign(TextAlign::Center);
         newStyle->setVerticalAlignType(VerticalAlignType::Top);
+        break;
+    case PageMarginType::None:
         break;
     }
 

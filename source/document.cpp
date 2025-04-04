@@ -439,25 +439,6 @@ Element* Element::nextElement() const
     return nullptr;
 }
 
-void Element::finishParsingDocument()
-{
-    if(m_tagName == aTag) {
-        const auto& href = getAttribute(hrefAttr);
-        const auto& baseUrl = document()->baseUrl();
-
-        auto completeUrl = baseUrl.complete(href);
-        auto fragmentName = completeUrl.fragment();
-        if(!fragmentName.empty() && baseUrl == completeUrl.base()) {
-            auto element = document()->getElementById(fragmentName.substr(1));
-            if(element && !element->hasAnchorElement()) {
-                element->setAnchorElement(this);
-            }
-        }
-    }
-
-    ContainerNode::finishParsingDocument();
-}
-
 Node* Element::cloneNode(bool deep)
 {
     auto newElement = document()->createElement(m_namespaceURI, m_tagName);
@@ -507,6 +488,25 @@ void Element::serialize(std::ostream& o) const
         o << m_tagName;
         o << '>';
     }
+}
+
+void Element::finishParsingDocument()
+{
+    if(m_tagName == aTag) {
+        const auto& href = getAttribute(hrefAttr);
+        const auto& baseUrl = document()->baseUrl();
+
+        auto completeUrl = baseUrl.complete(href);
+        auto fragmentName = completeUrl.fragment();
+        if(!fragmentName.empty() && baseUrl == completeUrl.base()) {
+            auto element = document()->getElementById(fragmentName.substr(1));
+            if(element && !element->hasAnchorElement()) {
+                element->setAnchorElement(this);
+            }
+        }
+    }
+
+    ContainerNode::finishParsingDocument();
 }
 
 Document::Document(Book* book, Heap* heap, ResourceFetcher* fetcher, Url url)
@@ -687,13 +687,6 @@ Element* Document::bodyElement() const
     return nullptr;
 }
 
-BoxStyle* Document::bodyStyle() const
-{
-    if(auto element = bodyElement())
-        return element->style();
-    return nullptr;
-}
-
 BoxStyle* Document::rootStyle() const
 {
     if(m_rootElement) {
@@ -703,6 +696,13 @@ BoxStyle* Document::rootStyle() const
     }
 
     return style();
+}
+
+BoxStyle* Document::bodyStyle() const
+{
+    if(auto element = bodyElement())
+        return element->style();
+    return nullptr;
 }
 
 BoxStyle* Document::backgroundStyle() const

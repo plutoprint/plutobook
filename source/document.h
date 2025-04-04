@@ -120,6 +120,7 @@ public:
 
     void reparentChildren(ContainerNode* newParent);
     void cloneChildren(ContainerNode* newParent);
+
     std::string textFromChildren() const;
 
     void buildBox(Counters& counters, Box* parent) override;
@@ -199,6 +200,7 @@ public:
     void setAttribute(const Attribute& attribute);
     void setAttribute(const GlobalString& name, const HeapString& value);
     void removeAttribute(const GlobalString& name);
+
     virtual void parseAttribute(const GlobalString& name, const HeapString& value);
     virtual void collectAttributeStyle(std::string& output, const GlobalString& name, const HeapString& value) const {}
 
@@ -213,11 +215,11 @@ public:
     void setAnchorElement(Element* element) { m_anchorElement = element; }
     bool hasAnchorElement() const { return m_anchorElement != nullptr; }
 
-    void finishParsingDocument() override;
     Node* cloneNode(bool deep) override;
     Box* createBox(const RefPtr<BoxStyle>& style) override;
     void buildBox(Counters& counters, Box* parent) override;
     void serialize(std::ostream& o) const override;
+    void finishParsingDocument() override;
 
 private:
     Element* m_anchorElement{nullptr};
@@ -292,6 +294,7 @@ public:
 
     Book* book() const { return m_book; }
     Heap* heap() const { return m_heap; }
+    ResourceFetcher* customResourceFetcher() const { return m_customResourceFetcher; }
 
     const Url& baseUrl() const { return m_baseUrl; }
     void setBaseUrl(Url baseUrl) { m_baseUrl = std::move(baseUrl); }
@@ -309,14 +312,14 @@ public:
 
     TextNode* createTextNode(const std::string_view& value);
     Element* createElement(const GlobalString& namespaceURI, const GlobalString& tagName);
+
     Element* rootElement() const { return m_rootElement; }
-    ResourceFetcher* customResourceFetcher() const { return m_customResourceFetcher; }
     Element* bodyElement() const;
 
-    BoxStyle* bodyStyle() const;
     BoxStyle* rootStyle() const;
-    BoxStyle* backgroundStyle() const;
+    BoxStyle* bodyStyle() const;
 
+    BoxStyle* backgroundStyle() const;
     Rect backgroundRect() const;
 
     Element* getElementById(const std::string_view& id) const;
@@ -346,6 +349,7 @@ public:
 
     std::string getCounterText(int value, const GlobalString& listType);
     std::string getMarkerText(int value, const GlobalString& listType);
+
     RefPtr<FontData> getFontData(const GlobalString& family, const FontDataDescription& description);
     RefPtr<Font> createFont(const FontDescription& description);
 
@@ -357,9 +361,9 @@ public:
 
     Node* cloneNode(bool deep) override;
     Box* createBox(const RefPtr<BoxStyle>& style) override;
-
-    void finishParsingDocument() override;
     void buildBox(Counters& counters, Box* parent) override;
+    void finishParsingDocument() override;
+
     void build();
     void layout();
 

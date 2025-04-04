@@ -212,7 +212,6 @@ using FontVariationList = std::forward_list<FontVariation>;
 constexpr FontSelectionValue kMediumFontSize = 16.f;
 
 struct FontDataDescription {
-    FontDataDescription() = default;
     FontSelectionValue size = kMediumFontSize;
     FontSelectionRequest request;
     FontVariationList variations;
@@ -241,7 +240,6 @@ constexpr bool operator>(const FontDataDescription& a, const FontDataDescription
 using FontFamilyList = std::forward_list<GlobalString>;
 
 struct FontDescription {
-    FontDescription() = default;
     FontFamilyList families;
     FontDataDescription data;
 };
