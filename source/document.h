@@ -209,12 +209,18 @@ public:
     Element* previousElement() const;
     Element* nextElement() const;
 
+    Element* anchorElement() const { return m_anchorElement; }
+    void setAnchorElement(Element* element) { m_anchorElement = element; }
+    bool hasAnchorElement() const { return m_anchorElement != nullptr; }
+
+    void finishParsingDocument() override;
     Node* cloneNode(bool deep) override;
     Box* createBox(const RefPtr<BoxStyle>& style) override;
     void buildBox(Counters& counters, Box* parent) override;
     void serialize(std::ostream& o) const override;
 
 private:
+    Element* m_anchorElement{nullptr};
     GlobalString m_namespaceURI;
     GlobalString m_tagName;
     HeapString m_id;

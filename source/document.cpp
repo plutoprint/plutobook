@@ -439,6 +439,25 @@ Element* Element::nextElement() const
     return nullptr;
 }
 
+void Element::finishParsingDocument()
+{
+    if(m_tagName == aTag) {
+        const auto& href = getAttribute(hrefAttr);
+        const auto& baseUrl = document()->baseUrl();
+
+        auto completeUrl = baseUrl.complete(href);
+        auto fragmentName = completeUrl.fragment();
+        if(!fragmentName.empty() && baseUrl == completeUrl.base()) {
+            auto element = document()->getElementById(fragmentName.substr(1));
+            if(element && !element->hasAnchorElement()) {
+                element->setAnchorElement(this);
+            }
+        }
+    }
+
+    ContainerNode::finishParsingDocument();
+}
+
 Node* Element::cloneNode(bool deep)
 {
     auto newElement = document()->createElement(m_namespaceURI, m_tagName);
