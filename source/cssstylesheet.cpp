@@ -683,7 +683,7 @@ RefPtr<BoxStyle> CSSStyleSheet::pseudoStyleForElement(Element* element, PseudoTy
 
 RefPtr<BoxStyle> CSSStyleSheet::styleForPage(const GlobalString& pageName, uint32_t pageIndex, PseudoType pseudoType) const
 {
-    PageStyleBuilder builder(pageName, pageIndex, PageMarginType::None, pseudoType, *m_document->style());
+    PageStyleBuilder builder(pageName, pageIndex, PageMarginType::None, pseudoType, *m_document->rootStyle());
     builder.add(m_pageRules);
     return builder.build();
 }
