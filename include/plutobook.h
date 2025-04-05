@@ -242,8 +242,8 @@ typedef void (*plutobook_resource_destroy_callback_t)(void* data);
 
 typedef struct _plutobook_resource_data plutobook_resource_data_t;
 
-PLUTOBOOK_API plutobook_resource_data_t* plutobook_resource_data_create_with_copy(const char* content, unsigned int content_length, const char* mime_type, const char* text_encoding);
-PLUTOBOOK_API plutobook_resource_data_t* plutobook_resource_data_create_without_copy(const char* content, unsigned int content_length, const char* mime_type, const char* text_encoding, plutobook_resource_destroy_callback_t destroy_callback, void* closure);
+PLUTOBOOK_API plutobook_resource_data_t* plutobook_resource_data_create(const char* content, unsigned int content_length, const char* mime_type, const char* text_encoding);
+PLUTOBOOK_API plutobook_resource_data_t* plutobook_resource_data_create_with_callback(const char* content, unsigned int content_length, const char* mime_type, const char* text_encoding, plutobook_resource_destroy_callback_t destroy_callback, void* closure);
 PLUTOBOOK_API plutobook_resource_data_t* plutobook_resource_data_reference(plutobook_resource_data_t* resource);
 PLUTOBOOK_API void plutobook_resource_data_destroy(plutobook_resource_data_t* resource);
 PLUTOBOOK_API unsigned int plutobook_resource_data_get_reference_count(const plutobook_resource_data_t* resource);

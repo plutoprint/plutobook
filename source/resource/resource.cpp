@@ -180,7 +180,7 @@ static ResourceData loadDataUrl(std::string_view input)
         }
     }
 
-    return ResourceData::createWithoutCopy(content->data(), content->size(), mimeType, textEncoding, ByteArrayDestroy, content);
+    return ResourceData::createWithCallback(content->data(), content->size(), mimeType, textEncoding, ByteArrayDestroy, content);
 }
 
 static bool mimeTypeFromPath(std::string& mimeType, const std::string_view& path)
@@ -268,7 +268,7 @@ ResourceData DefaultResourceFetcher::loadUrl(const std::string& url)
 
     curl_easy_cleanup(curl);
     if(response == CURLE_OK)
-        return ResourceData::createWithoutCopy(content->data(), content->size(), mimeType, textEncoding, ByteArrayDestroy, content);
+        return ResourceData::createWithCallback(content->data(), content->size(), mimeType, textEncoding, ByteArrayDestroy, content);
     ByteArrayDestroy(content);
     return ResourceData();
 }

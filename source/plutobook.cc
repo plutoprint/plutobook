@@ -161,9 +161,9 @@ static_assert(PLUTOBOOK_STATUS_WRITE_ERROR == static_cast<plutobook_status_t>(CA
 
 plutobook_status_t plutobook_canvas_get_status(const plutobook_canvas_t* canvas)
 {
-    if(canvas == nullptr || cairo_status(canvas->context) || cairo_surface_status(canvas->surface))
-        return PLUTOBOOK_STATUS_CANVAS_ERROR;
-    return PLUTOBOOK_STATUS_SUCCESS;
+    if(canvas && cairo_status(canvas->context) == CAIRO_STATUS_SUCCESS && cairo_surface_status(canvas->surface) == CAIRO_STATUS_SUCCESS)
+        return PLUTOBOOK_STATUS_SUCCESS;
+    return PLUTOBOOK_STATUS_CANVAS_ERROR;
 }
 
 static_assert(PLUTOBOOK_IMAGE_FORMAT_INVALID == static_cast<plutobook_image_format_t>(CAIRO_FORMAT_INVALID), "unexpected plutobook_image_format_t value");
@@ -286,6 +286,8 @@ struct _plutobook_resource_data {
 
 static plutobook_resource_data_t* plutobook_resource_data_create(unsigned int content_length, const char* mime_type, const char* text_encoding)
 {
+    if(mime_type == nullptr) mime_type = "";
+    if(text_encoding == nullptr) text_encoding = "";
     auto mime_type_length = std::strlen(mime_type) + 1ul;
     auto text_encoding_length = std::strlen(text_encoding) + 1ul;
     auto resource = (plutobook_resource_data_t*)(std::malloc(mime_type_length + text_encoding_length + content_length + sizeof(plutobook_resource_data_t)));
@@ -296,29 +298,29 @@ static plutobook_resource_data_t* plutobook_resource_data_create(unsigned int co
     resource->mime_type = (char*)(resource + 1);
     resource->text_encoding = resource->mime_type + mime_type_length;
     resource->content = resource->text_encoding + text_encoding_length;
-    resource->destroy_callback = nullptr;
-    resource->closure = nullptr;
     std::memcpy(resource->mime_type, mime_type, mime_type_length);
     std::memcpy(resource->text_encoding, text_encoding, text_encoding_length);
     return resource;
 }
 
-plutobook_resource_data_t* plutobook_resource_data_create_with_copy(const char* content, unsigned int content_length, const char* mime_type, const char* text_encoding)
+plutobook_resource_data_t* plutobook_resource_data_create(const char* content, unsigned int content_length, const char* mime_type, const char* text_encoding)
 {
     auto resource = plutobook_resource_data_create(content_length, mime_type, text_encoding);
     if(resource == nullptr)
         return nullptr;
     std::memcpy(resource->content, content, content_length);
+    resource->destroy_callback = nullptr;
+    resource->closure = nullptr;
     return resource;
 }
 
-plutobook_resource_data_t* plutobook_resource_data_create_without_copy(const char* content, unsigned int content_length, const char* mime_type, const char* text_encoding, plutobook_resource_destroy_callback_t destroy_callback, void* closure)
+plutobook_resource_data_t* plutobook_resource_data_create_with_callback(const char* content, unsigned int content_length, const char* mime_type, const char* text_encoding, plutobook_resource_destroy_callback_t destroy_callback, void* closure)
 {
     auto resource = plutobook_resource_data_create(0, mime_type, text_encoding);
     if(resource == nullptr)
         return nullptr;
-    resource->content_length = content_length;
     resource->content = (char*)(content);
+    resource->content_length = content_length;
     resource->destroy_callback = destroy_callback;
     resource->closure = closure;
     return resource;

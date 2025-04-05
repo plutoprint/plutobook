@@ -191,10 +191,10 @@ public:
      * @param textEncoding
      * @return
      */
-    static ResourceData createWithCopy(const char* content, size_t contentLength, const std::string& mimeType, const std::string& textEncoding);
+    static ResourceData create(const char* content, size_t contentLength, const std::string& mimeType, const std::string& textEncoding);
 
     /**
-     * @brief createWithoutCopy
+     * @brief createWithCallback
      * @param content
      * @param contentLength
      * @param mimeType
@@ -203,7 +203,7 @@ public:
      * @param closure
      * @return
      */
-    static ResourceData createWithoutCopy(const char* content, size_t contentLength, const std::string& mimeType, const std::string& textEncoding,
+    static ResourceData createWithCallback(const char* content, size_t contentLength, const std::string& mimeType, const std::string& textEncoding,
         plutobook_resource_destroy_callback_t destroyCallback, void* closure);
 
     /**

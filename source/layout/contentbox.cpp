@@ -107,9 +107,7 @@ void ContentBoxBuilder::addCounter(const CSSCounterValue& counter)
 
 static const HeapString& getAttributeText(const Element* element, const CSSValue& value)
 {
-    if(element == nullptr)
-        return emptyGlo;
-    return element->getAttribute(to<CSSCustomIdentValue>(value).value());
+    return element == nullptr ? emptyGlo : element->getAttribute(to<CSSCustomIdentValue>(value).value());
 }
 
 void ContentBoxBuilder::addTargetCounter(const CSSFunctionValue& function)
