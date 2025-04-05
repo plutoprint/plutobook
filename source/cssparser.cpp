@@ -2073,6 +2073,8 @@ RefPtr<CSSValue> CSSParser::consumeColor(CSSTokenStream& input)
         auto name = input->data();
         if(identMatches("rgb", 3, name) || identMatches("rgba", 4, name))
             return consumeRgb(input);
+        if(identMatches("hsl", 3, name) || identMatches("hsla", 4, name))
+            return consumeHsl(input);
         return nullptr;
     }
 
@@ -2098,7 +2100,7 @@ RefPtr<CSSValue> CSSParser::consumeColor(CSSTokenStream& input)
     return nullptr;
 }
 
-inline bool consumeRgbComponent(CSSTokenStream& input, int& component)
+static bool consumeRgbComponent(CSSTokenStream& input, int& component)
 {
     if(input->type() != CSSToken::Type::Number
         && input->type() != CSSToken::Type::Percentage) {
@@ -2108,8 +2110,22 @@ inline bool consumeRgbComponent(CSSTokenStream& input, int& component)
     auto value = input->number();
     if(input->type() == CSSToken::Type::Percentage)
         value *= 2.55;
-    value = std::clamp(value, 0.0, 255.0);
-    component = static_cast<int>(std::round(value));
+    component = std::lroundf(std::clamp(value, 0.0, 255.0));
+    input.consumeIncludingWhitespace();
+    return true;
+}
+
+static bool consumeAlphaComponent(CSSTokenStream& input, float& component)
+{
+    if(input->type() != CSSToken::Type::Number
+        && input->type() != CSSToken::Type::Percentage) {
+        return false;
+    }
+
+    auto value = input->number();
+    if(input->type() == CSSToken::Type::Percentage)
+        value /= 100.0;
+    component = std::clamp(value, 0.0, 1.0);
     input.consumeIncludingWhitespace();
     return true;
 }
@@ -2142,27 +2158,112 @@ RefPtr<CSSValue> CSSParser::consumeRgb(CSSTokenStream& input)
         return nullptr;
     }
 
-    int alpha = 255;
+    float alpha = 1.f;
     if(block->type() == CSSToken::Type::Comma) {
         block.consumeIncludingWhitespace();
-        if(block->type() != CSSToken::Type::Number
-            && block->type() != CSSToken::Type::Percentage) {
+        if(!consumeAlphaComponent(block, alpha)) {
             return nullptr;
         }
-
-        auto value = block->number();
-        if(block->type() == CSSToken::Type::Percentage)
-            value /= 100.0;
-        value = std::clamp(value, 0.0, 1.0);
-        alpha = static_cast<int>(std::round(value * 255.0));
-        block.consumeIncludingWhitespace();
     }
 
     if(!block.empty())
         return nullptr;
     input.consumeWhitespace();
     guard.release();
-    return createColorValue(Color(red, green, blue, alpha));
+    return createColorValue(Color(red, green, blue, std::lroundf(alpha * 255.f)));
+}
+
+static bool consumeHueComponent(CSSTokenStream& input, float& component)
+{
+    if(input->type() != CSSToken::Type::Number
+        && input->type() != CSSToken::Type::Dimension) {
+        return false;
+    }
+
+    component = input->number();
+    if(input->type() == CSSToken::Type::Dimension) {
+        static const CSSIdentEntry<CSSAngleValue::Unit> table[] = {
+            {"deg", CSSAngleValue::Unit::Degrees},
+            {"rad", CSSAngleValue::Unit::Radians},
+            {"grad", CSSAngleValue::Unit::Gradians},
+            {"turn", CSSAngleValue::Unit::Turns}
+        };
+
+        auto unitType = matchIdent(table, input->data());
+        if(unitType == std::nullopt)
+            return false;
+        switch(unitType.value()) {
+        case CSSAngleValue::Unit::Degrees:
+            break;
+        case CSSAngleValue::Unit::Radians:
+            component = component * 180.0 / std::numbers::pi;
+            break;
+        case CSSAngleValue::Unit::Gradians:
+            component = component * 360.0 / 400.0;
+            break;
+        case CSSAngleValue::Unit::Turns:
+            component = component * 360.0;
+            break;
+        }
+    }
+
+    input.consumeIncludingWhitespace();
+    return true;
+}
+
+static int computeHslComponent(float h, float s, float l, float n)
+{
+    auto k = fmodf(n + h / 30.f, 12.f);
+    auto a = s * std::min(l, 1.f - l);
+    auto v = l - a * std::max(-1.f, std::min(1.f, std::min(k - 3.f, 9.f - k)));
+    return std::lroundf(v * 255.f);
+}
+
+RefPtr<CSSValue> CSSParser::consumeHsl(CSSTokenStream& input)
+{
+    assert(input->type() == CSSToken::Type::Function);
+    CSSTokenStreamGuard guard(input);
+    auto block = input.consumeBlock();
+    block.consumeWhitespace();
+
+    float h, s, l, a = 1.f;
+    if(!consumeHueComponent(block, h))
+        return nullptr;
+    if(block->type() != CSSToken::Type::Comma) {
+        return nullptr;
+    }
+
+    block.consumeIncludingWhitespace();
+    if(!consumeAlphaComponent(block, s))
+        return nullptr;
+    if(block->type() != CSSToken::Type::Comma) {
+        return nullptr;
+    }
+
+    block.consumeIncludingWhitespace();
+    if(!consumeAlphaComponent(block, l)) {
+        return nullptr;
+    }
+
+    if(block->type() == CSSToken::Type::Comma) {
+        block.consumeIncludingWhitespace();
+        if(!consumeAlphaComponent(block, a)) {
+            return nullptr;
+        }
+    }
+
+    if(!block.empty())
+        return nullptr;
+    input.consumeWhitespace();
+    guard.release();
+
+    h = std::fmod(h, 360.f);
+    if(h < 0.f) { h += 360.f; }
+
+    auto r = computeHslComponent(h, s, l, 0);
+    auto g = computeHslComponent(h, s, l, 8);
+    auto b = computeHslComponent(h, s, l, 4);
+    return createColorValue(Color(r, g, b, std::lroundf(a * 255.f)));
 }
 
 RefPtr<CSSValue> CSSParser::consumePaint(CSSTokenStream& input)

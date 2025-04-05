@@ -119,6 +119,7 @@ private:
     RefPtr<CSSValue> consumeImageOrNone(CSSTokenStream& input);
     RefPtr<CSSValue> consumeColor(CSSTokenStream& input);
     RefPtr<CSSValue> consumeRgb(CSSTokenStream& input);
+    RefPtr<CSSValue> consumeHsl(CSSTokenStream& input);
 
     RefPtr<CSSValue> consumePaint(CSSTokenStream& input);
     RefPtr<CSSValue> consumeListStyleType(CSSTokenStream& input);
