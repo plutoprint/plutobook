@@ -497,20 +497,20 @@ RefPtr<BoxStyle> ElementStyleBuilder::build()
 
 class PageStyleBuilder final : public StyleBuilder {
 public:
-    PageStyleBuilder(const GlobalString& pageName, size_t pageIndex, PageMarginType marginType, PseudoType pseudoType, const BoxStyle& parentStyle);
+    PageStyleBuilder(const GlobalString& pageName, uint32_t pageIndex, PageMarginType marginType, PseudoType pseudoType, const BoxStyle& parentStyle);
 
     RefPtr<BoxStyle> build() final;
 
 private:
     void add(const CSSPageRuleDataList& rules);
     GlobalString m_pageName;
-    size_t m_pageIndex;
+    uint32_t m_pageIndex;
     PageMarginType m_marginType;
     PseudoType m_pseudoType;
     friend class CSSStyleSheet;
 };
 
-PageStyleBuilder::PageStyleBuilder(const GlobalString& pageName, size_t pageIndex, PageMarginType marginType, PseudoType pseudoType, const BoxStyle& parentStyle)
+PageStyleBuilder::PageStyleBuilder(const GlobalString& pageName, uint32_t pageIndex, PageMarginType marginType, PseudoType pseudoType, const BoxStyle& parentStyle)
     : StyleBuilder(parentStyle)
     , m_pageName(pageName)
     , m_pageIndex(pageIndex)
@@ -681,14 +681,14 @@ RefPtr<BoxStyle> CSSStyleSheet::pseudoStyleForElement(Element* element, PseudoTy
     return builder.build();
 }
 
-RefPtr<BoxStyle> CSSStyleSheet::styleForPage(const GlobalString& pageName, size_t pageIndex, PseudoType pseudoType) const
+RefPtr<BoxStyle> CSSStyleSheet::styleForPage(const GlobalString& pageName, uint32_t pageIndex, PseudoType pseudoType) const
 {
     PageStyleBuilder builder(pageName, pageIndex, PageMarginType::None, pseudoType, *m_document->style());
     builder.add(m_pageRules);
     return builder.build();
 }
 
-RefPtr<BoxStyle> CSSStyleSheet::styleForPageMargin(const GlobalString& pageName, size_t pageIndex, PageMarginType marginType, const BoxStyle& pageStyle) const
+RefPtr<BoxStyle> CSSStyleSheet::styleForPageMargin(const GlobalString& pageName, uint32_t pageIndex, PageMarginType marginType, const BoxStyle& pageStyle) const
 {
     PageStyleBuilder builder(pageName, pageIndex, marginType, pageStyle.pseudoType(), pageStyle);
     builder.add(m_pageRules);

@@ -1611,10 +1611,10 @@ public:
     const uint32_t specificity() const { return m_specificity; }
     const uint32_t position() const { return m_position; }
 
-    bool match(const GlobalString& pageName, size_t pageIndex, PseudoType pseudoType) const;
+    bool match(const GlobalString& pageName, uint32_t pageIndex, PseudoType pseudoType) const;
 
 private:
-    static bool matchSelector(const GlobalString& pageName, size_t pageIndex, PseudoType pseudoType, const CSSSimpleSelector& selector);
+    static bool matchSelector(const GlobalString& pageName, uint32_t pageIndex, PseudoType pseudoType, const CSSSimpleSelector& selector);
     RefPtr<CSSPageRule> m_rule;
     const CSSPageSelector* m_selector;
     uint32_t m_specificity;

@@ -460,7 +460,7 @@ bool CSSRuleData::matchPseudoClassNthLastOfTypeSelector(const Element* element, 
     return selector.matchnth(count);
 }
 
-bool CSSPageRuleData::match(const GlobalString& pageName, size_t pageIndex, PseudoType pseudoType) const
+bool CSSPageRuleData::match(const GlobalString& pageName, uint32_t pageIndex, PseudoType pseudoType) const
 {
     if(m_selector == nullptr)
         return true;
@@ -473,7 +473,7 @@ bool CSSPageRuleData::match(const GlobalString& pageName, size_t pageIndex, Pseu
     return true;
 }
 
-bool CSSPageRuleData::matchSelector(const GlobalString& pageName, size_t pageIndex, PseudoType pseudoType, const CSSSimpleSelector& selector)
+bool CSSPageRuleData::matchSelector(const GlobalString& pageName, uint32_t pageIndex, PseudoType pseudoType, const CSSSimpleSelector& selector)
 {
     switch(selector.matchType()) {
     case CSSSimpleSelector::MatchType::PseudoPageName:

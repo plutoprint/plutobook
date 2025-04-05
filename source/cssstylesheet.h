@@ -95,8 +95,8 @@ public:
 
     RefPtr<BoxStyle> styleForElement(Element* element, const BoxStyle& parentStyle) const;
     RefPtr<BoxStyle> pseudoStyleForElement(Element* element, PseudoType pseudoType, const BoxStyle& parentStyle) const;
-    RefPtr<BoxStyle> styleForPage(const GlobalString& pageName, size_t pageIndex, PseudoType pseudoType) const;
-    RefPtr<BoxStyle> styleForPageMargin(const GlobalString& pageName, size_t pageIndex, PageMarginType marginType, const BoxStyle& pageStyle) const;
+    RefPtr<BoxStyle> styleForPage(const GlobalString& pageName, uint32_t pageIndex, PseudoType pseudoType) const;
+    RefPtr<BoxStyle> styleForPageMargin(const GlobalString& pageName, uint32_t pageIndex, PageMarginType marginType, const BoxStyle& pageStyle) const;
     RefPtr<FontData> getFontData(const GlobalString& family, const FontDataDescription& description) const;
 
     const CSSCounterStyle& getCounterStyle(const GlobalString& name);

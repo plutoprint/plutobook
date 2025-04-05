@@ -838,12 +838,12 @@ RefPtr<BoxStyle> Document::pseudoStyleForElement(Element* element, PseudoType ps
     return m_styleSheet.pseudoStyleForElement(element, pseudoType, parentStyle);
 }
 
-RefPtr<BoxStyle> Document::styleForPage(const GlobalString& pageName, size_t pageIndex, PseudoType pseudoType) const
+RefPtr<BoxStyle> Document::styleForPage(const GlobalString& pageName, uint32_t pageIndex, PseudoType pseudoType) const
 {
     return m_styleSheet.styleForPage(pageName, pageIndex, pseudoType);
 }
 
-RefPtr<BoxStyle> Document::styleForPageMargin(const GlobalString& pageName, size_t pageIndex, PageMarginType marginType, const BoxStyle& pageStyle) const
+RefPtr<BoxStyle> Document::styleForPageMargin(const GlobalString& pageName, uint32_t pageIndex, PageMarginType marginType, const BoxStyle& pageStyle) const
 {
     return m_styleSheet.styleForPageMargin(pageName, pageIndex, marginType, pageStyle);
 }
