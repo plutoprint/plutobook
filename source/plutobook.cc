@@ -24,6 +24,7 @@ static plutobook_canvas_t* plutobook_canvas_create(cairo_surface_t* surface)
 {
     auto context = cairo_create(surface);
     if(cairo_status(context)) {
+        cairo_surface_destroy(surface);
         return nullptr;
     }
 
@@ -46,14 +47,14 @@ void plutobook_canvas_destroy(plutobook_canvas_t* canvas)
 
 void plutobook_canvas_flush(plutobook_canvas_t* canvas)
 {
-    if(canvas == NULL)
+    if(canvas == nullptr)
         return;
     cairo_surface_flush(canvas->surface);
 }
 
 void plutobook_canvas_finish(plutobook_canvas_t* canvas)
 {
-    if(canvas == NULL)
+    if(canvas == nullptr)
         return;
     cairo_surface_finish(canvas->surface);
 }

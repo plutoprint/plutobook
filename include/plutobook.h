@@ -186,9 +186,10 @@ typedef enum _plutobook_status {
 
 typedef plutobook_status_t (*plutobook_stream_write_callback_t)(void* closure, const char* data, unsigned int length);
 
-typedef struct _plutobook_canvas plutobook_canvas_t;
 typedef struct _cairo_surface cairo_surface_t;
 typedef struct _cairo cairo_t;
+
+typedef struct _plutobook_canvas plutobook_canvas_t;
 
 PLUTOBOOK_API void plutobook_canvas_destroy(plutobook_canvas_t* canvas);
 PLUTOBOOK_API void plutobook_canvas_flush(plutobook_canvas_t* canvas);

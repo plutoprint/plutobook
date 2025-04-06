@@ -35,7 +35,7 @@ constexpr XML_Char kXmlNamespaceSep = 1;
 
 bool XMLParser::parse(const std::string_view& content)
 {
-    auto parser = XML_ParserCreateNS(NULL, kXmlNamespaceSep);
+    auto parser = XML_ParserCreateNS(nullptr, kXmlNamespaceSep);
     XML_SetUserData(parser, this);
     XML_SetElementHandler(parser, startElementCallback, endElementCallback);
     XML_SetCharacterDataHandler(parser, characterDataCallback);
