@@ -27,7 +27,6 @@
 #include <cstddef>
 #include <string>
 #include <memory>
-#include <vector>
 
 #include "plutobook.h"
 
@@ -39,6 +38,12 @@ namespace plutobook {
  * that there is no limit or that the maximum possible value is intended.
  */
 constexpr uint32_t kMaxPageCount = PLUTOBOOK_MAX_PAGE_COUNT;
+
+/**
+ * This macro defines an index that is guaranteed to be below the valid page count.
+ * It is typically utilized as a sentinel value to represent an unbounded or minimum value, indicating
+ * that there is no lower limit or that the minimum possible value is intended.
+ */
 constexpr uint32_t kMinPageCount = PLUTOBOOK_MIN_PAGE_COUNT;
 
 /**

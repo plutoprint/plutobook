@@ -77,17 +77,17 @@ PLUTOBOOK_API int plutobook_version(void);
 PLUTOBOOK_API const char* plutobook_version_string(void);
 
 /**
- * @brief plutobook_about
- * @return
- */
-PLUTOBOOK_API const char* plutobook_about(void);
-
-/**
  * This macro defines an index that is guaranteed to exceed the valid page count.
  * It is typically utilized as a sentinel value to represent an unbounded or maximum value, indicating
  * that there is no limit or that the maximum possible value is intended.
  */
 #define PLUTOBOOK_MAX_PAGE_COUNT 0xFFFFFFFFU
+
+/**
+ * This macro defines an index that is guaranteed to be below the valid page count.
+ * It is typically utilized as a sentinel value to represent an unbounded or minimum value, indicating
+ * that there is no lower limit or that the minimum possible value is intended.
+ */
 #define PLUTOBOOK_MIN_PAGE_COUNT 0x00000000U
 
 /**
@@ -106,15 +106,15 @@ PLUTOBOOK_API const char* plutobook_about(void);
 #define PLUTOBOOK_UNITS_PX (72.f / 96.0f)
 
 /**
- * @brief Represents the size of a page in points (1/72 inch).
+ * @brief Defines the dimensions of a page in points (1/72 inch).
  */
 typedef struct _plutobook_page_size {
-    float width;
-    float height;
+    float width;  /**< Page width in points */
+    float height; /**< Page height in points */
 } plutobook_page_size_t;
 
 /**
- * @brief Predefined plutobook_page_size_t objects for common paper sizes.
+ * @brief Predefined macros for common paper sizes.
  */
 #define PLUTOBOOK_PAGE_SIZE_NAMED(name) ((plutobook_page_size_t){PLUTOBOOK_PAGE_WIDTH_##name, PLUTOBOOK_PAGE_HEIGHT_##name})
 
@@ -155,17 +155,17 @@ typedef struct _plutobook_page_size {
 #define PLUTOBOOK_PAGE_SIZE_LEDGER PLUTOBOOK_PAGE_SIZE_NAMED(LEDGER)
 
 /**
- * @brief Represents the margins of a page in points (1/72 inch).
+ * @brief Defines the margins of a page in points (1/72 inch).
  */
 typedef struct _plutobook_page_margins {
-    float top;
-    float right;
-    float bottom;
-    float left;
+    float top;    /**< Top margin in points */
+    float right;  /**< Right margin in points */
+    float bottom; /**< Bottom margin in points */
+    float left;   /**< Left margin in points */
 } plutobook_page_margins_t;
 
 /**
- * @brief Predefined plutobook_page_margins_t objects for common margin settings.
+ * @brief Predefined macros for common margin settings.
  */
 #define PLUTOBOOK_PAGE_MARGINS_NONE ((plutobook_page_margins_t){0, 0, 0, 0})
 #define PLUTOBOOK_PAGE_MARGINS_NORMAL ((plutobook_page_margins_t){72, 72, 72, 72})
@@ -173,12 +173,15 @@ typedef struct _plutobook_page_margins {
 #define PLUTOBOOK_PAGE_MARGINS_MODERATE ((plutobook_page_margins_t){72, 54, 72, 54})
 #define PLUTOBOOK_PAGE_MARGINS_WIDE ((plutobook_page_margins_t){72, 144, 72, 144})
 
+/**
+ * @brief Defines status codes that indicate the result of operations.
+ */
 typedef enum _plutobook_status {
-    PLUTOBOOK_STATUS_SUCCESS = 0,
-    PLUTOBOOK_STATUS_MEMORY_ERROR = 1,
-    PLUTOBOOK_STATUS_LOAD_ERROR = 10,
-    PLUTOBOOK_STATUS_WRITE_ERROR = 11,
-    PLUTOBOOK_STATUS_CANVAS_ERROR = 12
+    PLUTOBOOK_STATUS_SUCCESS = 0,        /** Operation completed successfully. **/
+    PLUTOBOOK_STATUS_MEMORY_ERROR = 1,   /** Memory allocation error. **/
+    PLUTOBOOK_STATUS_LOAD_ERROR = 10,    /** Error loading data. **/
+    PLUTOBOOK_STATUS_WRITE_ERROR = 11,   /** Error writing data. **/
+    PLUTOBOOK_STATUS_CANVAS_ERROR = 12   /** Error with canvas operations. **/
 } plutobook_status_t;
 
 typedef plutobook_status_t (*plutobook_stream_write_callback_t)(void* closure, const char* data, unsigned int length);
