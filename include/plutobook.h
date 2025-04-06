@@ -177,37 +177,174 @@ typedef struct _plutobook_page_margins {
  * @brief Defines status codes that indicate the result of operations.
  */
 typedef enum _plutobook_status {
-    PLUTOBOOK_STATUS_SUCCESS = 0,        /** Operation completed successfully. **/
-    PLUTOBOOK_STATUS_MEMORY_ERROR = 1,   /** Memory allocation error. **/
-    PLUTOBOOK_STATUS_LOAD_ERROR = 10,    /** Error loading data. **/
-    PLUTOBOOK_STATUS_WRITE_ERROR = 11,   /** Error writing data. **/
-    PLUTOBOOK_STATUS_CANVAS_ERROR = 12   /** Error with canvas operations. **/
+    PLUTOBOOK_STATUS_SUCCESS = 0,
+    PLUTOBOOK_STATUS_MEMORY_ERROR = 1,
+    PLUTOBOOK_STATUS_LOAD_ERROR = 10,
+    PLUTOBOOK_STATUS_WRITE_ERROR = 11,
+    PLUTOBOOK_STATUS_CANVAS_ERROR = 12
 } plutobook_status_t;
 
+/**
+ * @brief This type represents a function called when writing data to an output stream.
+ *
+ * @param closure: user-defined closure for the callback.
+ * @param data: buffer containing the data to write.
+ * @param length: the number of bytes to write.
+ * @return `PLUTOBOOK_STATUS_SUCCESS` on success, or `PLUTOBOOK_STATUS_WRITE_ERROR` on failure.
+ */
 typedef plutobook_status_t (*plutobook_stream_write_callback_t)(void* closure, const char* data, unsigned int length);
 
 typedef struct _cairo_surface cairo_surface_t;
 typedef struct _cairo cairo_t;
 
+/**
+ * @brief Represents a 2D drawing interface for creating and manipulating graphical content.
+ */
 typedef struct _plutobook_canvas plutobook_canvas_t;
 
+/**
+ * @brief Destroys the canvas and frees its associated resources.
+ *
+ * @param canvas: A pointer to a `plutobook_canvas_t` object.
+ */
 PLUTOBOOK_API void plutobook_canvas_destroy(plutobook_canvas_t* canvas);
+
+/**
+ * @brief Flushes any pending drawing operations on the canvas.
+ *
+ * @param canvas: A pointer to a `plutobook_canvas_t` object.
+ */
 PLUTOBOOK_API void plutobook_canvas_flush(plutobook_canvas_t* canvas);
+
+/**
+ * @brief Finishes all drawing operations and performs cleanup on the canvas.
+ *
+ * @param canvas: A pointer to a `plutobook_canvas_t` object.
+ */
 PLUTOBOOK_API void plutobook_canvas_finish(plutobook_canvas_t* canvas);
+
+/**
+ * @brief Translates the canvas by a given offset, moving its origin.
+ *
+ * @param canvas: A pointer to a `plutobook_canvas_t` object.
+ * @param tx: The horizontal translation offset.
+ * @param ty: The vertical translation offset.
+ */
 PLUTOBOOK_API void plutobook_canvas_translate(plutobook_canvas_t* canvas, float tx, float ty);
+
+/**
+ * @brief Scales the canvas by the specified factors in the horizontal and vertical directions.
+ *
+ * @param canvas: A pointer to a `plutobook_canvas_t` object.
+ * @param sx: The scaling factor in the horizontal direction.
+ * @param sy: The scaling factor in the vertical direction.
+ */
 PLUTOBOOK_API void plutobook_canvas_scale(plutobook_canvas_t* canvas, float sx, float sy);
+
+/**
+ * @brief Rotates the canvas around the current origin by the specified angle.
+ *
+ * @param canvas: A pointer to a `plutobook_canvas_t` object.
+ * @param angle: The rotation angle in radians.
+ */
 PLUTOBOOK_API void plutobook_canvas_rotate(plutobook_canvas_t* canvas, float angle);
+
+/**
+ * @brief Multiplies the current transformation matrix with the specified matrix.
+ *
+ * @param canvas: A pointer to a `plutobook_canvas_t` object.
+ * @param a: The horizontal scaling factor.
+ * @param b: The horizontal skewing factor.
+ * @param c: The vertical skewing factor.
+ * @param d: The vertical scaling factor.
+ * @param e: The horizontal translation offset.
+ * @param f: The vertical translation offset.
+ */
 PLUTOBOOK_API void plutobook_canvas_transform(plutobook_canvas_t* canvas, float a, float b, float c, float d, float e, float f);
+
+/**
+ * @brief Resets the transformation matrix to the specified matrix.
+ *
+ * @param canvas: A pointer to a `plutobook_canvas_t` object.
+ * @param a: The horizontal scaling factor.
+ * @param b: The horizontal skewing factor.
+ * @param c: The vertical skewing factor.
+ * @param d: The vertical scaling factor.
+ * @param e: The horizontal translation offset.
+ * @param f: The vertical translation offset.
+ */
 PLUTOBOOK_API void plutobook_canvas_set_matrix(plutobook_canvas_t* canvas, float a, float b, float c, float d, float e, float f);
+
+/**
+ * @brief Resets the current transformation matrix to the identity matrix.
+ *
+ * @param canvas: A pointer to a `plutobook_canvas_t` object.
+ */
 PLUTOBOOK_API void plutobook_canvas_reset_matrix(plutobook_canvas_t* canvas);
+
+/**
+ * @brief Intersects the current clip region with the specified rectangle.
+ *
+ * @param canvas: A pointer to a `plutobook_canvas_t` object.
+ * @param x: The x-coordinate of the rectangle’s top-left corner.
+ * @param y: The y-coordinate of the rectangle’s top-left corner.
+ * @param width: The width of the rectangle.
+ * @param height: The height of the rectangle.
+ */
 PLUTOBOOK_API void plutobook_canvas_clip_rect(plutobook_canvas_t* canvas, float x, float y, float width, float height);
+
+/**
+ * @brief Clears the canvas surface with the specified color.
+ *
+ * @param canvas: A pointer to a `plutobook_canvas_t` object.
+ * @param red: The red component of the color, in the range [0, 1].
+ * @param green: The green component of the color, in the range [0, 1].
+ * @param blue: The blue component of the color, in the range [0, 1].
+ * @param alpha: The alpha (transparency) component of the color, in the range [0, 1].
+ */
 PLUTOBOOK_API void plutobook_canvas_clear_surface(plutobook_canvas_t* canvas, float red, float green, float blue, float alpha);
+
+/**
+ * @brief Saves the current state of the canvas.
+ *
+ * @param canvas: A pointer to a `plutobook_canvas_t` object.
+ */
 PLUTOBOOK_API void plutobook_canvas_save_state(plutobook_canvas_t* canvas);
+
+/**
+ * @brief Restores the most recently saved state of the canvas.
+ *
+ * @param canvas: A pointer to a `plutobook_canvas_t` object.
+ */
 PLUTOBOOK_API void plutobook_canvas_restore_state(plutobook_canvas_t* canvas);
+
+/**
+ * @brief Gets the underlying cairo surface associated with the canvas.
+ *
+ * @param canvas: A pointer to a `plutobook_canvas_t` object.
+ * @return A pointer to the underlying `cairo_surface_t`.
+ */
 PLUTOBOOK_API cairo_surface_t* plutobook_canvas_get_surface(const plutobook_canvas_t* canvas);
+
+/**
+ * @brief Gets the underlying cairo context associated with the canvas.
+ *
+ * @param canvas: A pointer to a `plutobook_canvas_t` object.
+ * @return A pointer to the underlying `cairo_t` context.
+ */
 PLUTOBOOK_API cairo_t* plutobook_canvas_get_context(const plutobook_canvas_t* canvas);
+
+/**
+ * @brief Checks whether an error has previously occurred on the canvas.
+ *
+ * @param canvas: A pointer to a `plutobook_canvas_t` object.
+ * @return The status code, which can be `PLUTOBOOK_STATUS_SUCCESS` or `PLUTOBOOK_STATUS_CANVAS_ERROR`.
+ */
 PLUTOBOOK_API plutobook_status_t plutobook_canvas_get_status(const plutobook_canvas_t* canvas);
 
+/**
+ * @brief Defines different memory formats for image data.
+ */
 typedef enum _plutobook_image_format {
     PLUTOBOOK_IMAGE_FORMAT_INVALID = -1,
     PLUTOBOOK_IMAGE_FORMAT_ARGB32 = 0,
@@ -216,14 +353,85 @@ typedef enum _plutobook_image_format {
     PLUTOBOOK_IMAGE_FORMAT_A1 = 3
 } plutobook_image_format_t;
 
+/**
+ * @brief Creates a new canvas for drawing to image data with the specified dimensions and format.
+ *
+ * @param width: The width of the image in pixels.
+ * @param height: The height of the image in pixels.
+ * @param format: The image format used for the canvas.
+ * @return A pointer to the newly created `plutobook_canvas_t` object, or `NULL` on failure.
+ */
 PLUTOBOOK_API plutobook_canvas_t* plutobook_image_canvas_create(int width, int height, plutobook_image_format_t format);
+
+/**
+ * @brief Creates a new canvas for drawing to existing image data.
+ *
+ * @param data: A pointer to the raw image data.
+ * @param width: The width of the image in pixels.
+ * @param height: The height of the image in pixels.
+ * @param stride: The number of bytes in one row of the image, including padding.
+ * @param format: The image format used for the canvas.
+ * @return A pointer to the newly created `plutobook_canvas_t` object, or `NULL` on failure.
+ */
 PLUTOBOOK_API plutobook_canvas_t* plutobook_image_canvas_create_for_data(unsigned char* data, int width, int height, int stride, plutobook_image_format_t format);
+
+/**
+ * @brief Retrieves the image data from the canvas.
+ *
+ * @param canvas: A pointer to the `plutobook_canvas_t` object.
+ * @return A pointer to the image data.
+ */
 PLUTOBOOK_API unsigned char* plutobook_image_canvas_get_data(const plutobook_canvas_t* canvas);
+
+/**
+ * @brief Retrieves the format of the image data on the canvas.
+ *
+ * @param canvas: A pointer to the `plutobook_canvas_t` object.
+ * @return The image format of the canvas.
+ */
 PLUTOBOOK_API plutobook_image_format_t plutobook_image_canvas_get_format(const plutobook_canvas_t* canvas);
+
+/**
+ * @brief Retrieves the width of the image data on the canvas.
+ *
+ * @param canvas: A pointer to the `plutobook_canvas_t` object.
+ * @return The width of the canvas image in pixels.
+ */
 PLUTOBOOK_API int plutobook_image_canvas_get_width(const plutobook_canvas_t* canvas);
+
+/**
+ * @brief Retrieves the height of the image data on the canvas.
+ *
+ * @param canvas: A pointer to the `plutobook_canvas_t` object.
+ * @return The height of the canvas image in pixels.
+ */
 PLUTOBOOK_API int plutobook_image_canvas_get_height(const plutobook_canvas_t* canvas);
+
+/**
+ * @brief Retrieves the stride (the number of bytes per row) of the image data on the canvas.
+ *
+ * @param canvas: A pointer to the `plutobook_canvas_t` object.
+ * @return The stride of the canvas image in bytes.
+ */
 PLUTOBOOK_API int plutobook_image_canvas_get_stride(const plutobook_canvas_t* canvas);
+
+/**
+ * @brief Writes the image data from the canvas to a PNG file.
+ *
+ * @param canvas: A pointer to the `plutobook_canvas_t` object.
+ * @param filename: The path to the file where the PNG image will be saved.
+ * @return A status code indicating success (`PLUTOBOOK_STATUS_SUCCESS`) or an error (`PLUTOBOOK_STATUS_WRITE_ERROR`).
+ */
 PLUTOBOOK_API plutobook_status_t plutobook_image_canvas_write_to_png(const plutobook_canvas_t* canvas, const char* filename);
+
+/**
+ * @brief Writes the image data from the canvas to a PNG stream using a custom write callback.
+ *
+ * @param canvas: A pointer to the `plutobook_canvas_t` object.
+ * @param callback: The callback function for writing the image data to a stream.
+ * @param closure: A user-defined closure passed to the callback.
+ * @return A status code indicating success (`PLUTOBOOK_STATUS_SUCCESS`) or an error (`PLUTOBOOK_STATUS_WRITE_ERROR`).
+ */
 PLUTOBOOK_API plutobook_status_t plutobook_image_canvas_write_to_png_stream(const plutobook_canvas_t* canvas, plutobook_stream_write_callback_t callback, void* closure);
 
 typedef enum _plutobook_pdf_metadata {
