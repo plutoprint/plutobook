@@ -12,6 +12,7 @@
 
 #include <filesystem>
 #include <cstring>
+#include <vector>
 #include <map>
 
 namespace plutobook {
