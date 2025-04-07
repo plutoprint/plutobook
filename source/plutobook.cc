@@ -249,11 +249,11 @@ static_assert(PLUTOBOOK_PDF_METADATA_CREATOR == static_cast<plutobook_pdf_metada
 static_assert(PLUTOBOOK_PDF_METADATA_CREATION_DATE == static_cast<plutobook_pdf_metadata_t>(CAIRO_PDF_METADATA_CREATE_DATE), "unexpected plutobook_pdf_metadata_t value");
 static_assert(PLUTOBOOK_PDF_METADATA_MODIFICATION_DATE == static_cast<plutobook_pdf_metadata_t>(CAIRO_PDF_METADATA_MOD_DATE), "unexpected plutobook_pdf_metadata_t value");
 
-void plutobook_pdf_canvas_set_metadata(plutobook_canvas_t* canvas, plutobook_pdf_metadata_t name, const char* value)
+void plutobook_pdf_canvas_set_metadata(plutobook_canvas_t* canvas, plutobook_pdf_metadata_t metadata, const char* value)
 {
     if(canvas == nullptr)
         return;
-    cairo_pdf_surface_set_metadata(canvas->surface, (cairo_pdf_metadata_t)(name), value);
+    cairo_pdf_surface_set_metadata(canvas->surface, (cairo_pdf_metadata_t)(metadata), value);
 }
 
 void plutobook_pdf_canvas_set_size(plutobook_canvas_t* canvas, plutobook_page_size_t size)
@@ -415,9 +415,9 @@ void plutobook_clear_content(plutobook_t* book)
     book->Book::clearContent();
 }
 
-void plutobook_set_metadata(plutobook_t* book, plutobook_pdf_metadata_t name, const char* value)
+void plutobook_set_metadata(plutobook_t* book, plutobook_pdf_metadata_t metadata, const char* value)
 {
-    switch(name) {
+    switch(metadata) {
     case PLUTOBOOK_PDF_METADATA_TITLE:
         book->Book::setTitle(value);
         break;
@@ -442,9 +442,9 @@ void plutobook_set_metadata(plutobook_t* book, plutobook_pdf_metadata_t name, co
     }
 }
 
-const char* plutobook_get_metadata(const plutobook_t* book, plutobook_pdf_metadata_t name)
+const char* plutobook_get_metadata(const plutobook_t* book, plutobook_pdf_metadata_t metadata)
 {
-    switch(name) {
+    switch(metadata) {
     case PLUTOBOOK_PDF_METADATA_TITLE:
         return book->Book::title().data();
     case PLUTOBOOK_PDF_METADATA_AUTHOR:
@@ -494,6 +494,11 @@ plutobook_page_margins_t plutobook_get_page_margins(const plutobook_t* book)
     return book->Book::pageMargins();
 }
 
+plutobook_media_type_t plutobook_get_media_type(const plutobook_t* book)
+{
+    return (plutobook_media_type_t)(book->Book::mediaType());
+}
+
 unsigned int plutobook_get_page_count(const plutobook_t* book)
 {
     return book->Book::pageCount();
@@ -502,11 +507,6 @@ unsigned int plutobook_get_page_count(const plutobook_t* book)
 plutobook_page_size_t plutobook_get_page_size_at(const plutobook_t* book, unsigned int index)
 {
     return book->Book::pageSizeAt(index);
-}
-
-plutobook_media_type_t plutobook_get_media_type(const plutobook_t* book)
-{
-    return (plutobook_media_type_t)(book->Book::mediaType());
 }
 
 plutobook_status_t plutobook_load_url(plutobook_t* book, const char* url, const char* user_style, const char* user_script)
