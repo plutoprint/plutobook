@@ -359,7 +359,7 @@ typedef enum _plutobook_image_format {
  * @param width: The width of the image in pixels.
  * @param height: The height of the image in pixels.
  * @param format: The image format used for the canvas.
- * @return A pointer to the newly created `plutobook_canvas_t` object, or `NULL` on failure.
+ * @return A pointer to a newly created `plutobook_canvas_t` object, or `NULL` on failure.
  */
 PLUTOBOOK_API plutobook_canvas_t* plutobook_image_canvas_create(int width, int height, plutobook_image_format_t format);
 
@@ -371,14 +371,14 @@ PLUTOBOOK_API plutobook_canvas_t* plutobook_image_canvas_create(int width, int h
  * @param height: The height of the image in pixels.
  * @param stride: The number of bytes in one row of the image, including padding.
  * @param format: The image format used for the canvas.
- * @return A pointer to the newly created `plutobook_canvas_t` object, or `NULL` on failure.
+ * @return A pointer to a newly created `plutobook_canvas_t` object, or `NULL` on failure.
  */
 PLUTOBOOK_API plutobook_canvas_t* plutobook_image_canvas_create_for_data(unsigned char* data, int width, int height, int stride, plutobook_image_format_t format);
 
 /**
  * @brief Retrieves the image data from the canvas.
  *
- * @param canvas: A pointer to the `plutobook_canvas_t` object.
+ * @param canvas: A pointer to a `plutobook_canvas_t` object.
  * @return A pointer to the image data.
  */
 PLUTOBOOK_API unsigned char* plutobook_image_canvas_get_data(const plutobook_canvas_t* canvas);
@@ -386,7 +386,7 @@ PLUTOBOOK_API unsigned char* plutobook_image_canvas_get_data(const plutobook_can
 /**
  * @brief Retrieves the format of the image data on the canvas.
  *
- * @param canvas: A pointer to the `plutobook_canvas_t` object.
+ * @param canvas: A pointer to a `plutobook_canvas_t` object.
  * @return The image format of the canvas.
  */
 PLUTOBOOK_API plutobook_image_format_t plutobook_image_canvas_get_format(const plutobook_canvas_t* canvas);
@@ -394,7 +394,7 @@ PLUTOBOOK_API plutobook_image_format_t plutobook_image_canvas_get_format(const p
 /**
  * @brief Retrieves the width of the image data on the canvas.
  *
- * @param canvas: A pointer to the `plutobook_canvas_t` object.
+ * @param canvas: A pointer to a `plutobook_canvas_t` object.
  * @return The width of the canvas image in pixels.
  */
 PLUTOBOOK_API int plutobook_image_canvas_get_width(const plutobook_canvas_t* canvas);
@@ -402,7 +402,7 @@ PLUTOBOOK_API int plutobook_image_canvas_get_width(const plutobook_canvas_t* can
 /**
  * @brief Retrieves the height of the image data on the canvas.
  *
- * @param canvas: A pointer to the `plutobook_canvas_t` object.
+ * @param canvas: A pointer to a `plutobook_canvas_t` object.
  * @return The height of the canvas image in pixels.
  */
 PLUTOBOOK_API int plutobook_image_canvas_get_height(const plutobook_canvas_t* canvas);
@@ -410,7 +410,7 @@ PLUTOBOOK_API int plutobook_image_canvas_get_height(const plutobook_canvas_t* ca
 /**
  * @brief Retrieves the stride (the number of bytes per row) of the image data on the canvas.
  *
- * @param canvas: A pointer to the `plutobook_canvas_t` object.
+ * @param canvas: A pointer to a `plutobook_canvas_t` object.
  * @return The stride of the canvas image in bytes.
  */
 PLUTOBOOK_API int plutobook_image_canvas_get_stride(const plutobook_canvas_t* canvas);
@@ -418,7 +418,7 @@ PLUTOBOOK_API int plutobook_image_canvas_get_stride(const plutobook_canvas_t* ca
 /**
  * @brief Writes the image data from the canvas to a PNG file.
  *
- * @param canvas: A pointer to the `plutobook_canvas_t` object.
+ * @param canvas: A pointer to a `plutobook_canvas_t` object.
  * @param filename: The path to the file where the PNG image will be saved.
  * @return A status code indicating success (`PLUTOBOOK_STATUS_SUCCESS`) or an error (`PLUTOBOOK_STATUS_WRITE_ERROR`).
  */
@@ -427,13 +427,16 @@ PLUTOBOOK_API plutobook_status_t plutobook_image_canvas_write_to_png(const pluto
 /**
  * @brief Writes the image data from the canvas to a PNG stream using a custom write callback.
  *
- * @param canvas: A pointer to the `plutobook_canvas_t` object.
+ * @param canvas: A pointer to a `plutobook_canvas_t` object.
  * @param callback: The callback function for writing the image data to a stream.
  * @param closure: A user-defined closure passed to the callback.
  * @return A status code indicating success (`PLUTOBOOK_STATUS_SUCCESS`) or an error (`PLUTOBOOK_STATUS_WRITE_ERROR`).
  */
 PLUTOBOOK_API plutobook_status_t plutobook_image_canvas_write_to_png_stream(const plutobook_canvas_t* canvas, plutobook_stream_write_callback_t callback, void* closure);
 
+/**
+ * @brief Defines different metadata fields for a PDF document.
+ */
 typedef enum _plutobook_pdf_metadata {
     PLUTOBOOK_PDF_METADATA_TITLE,
     PLUTOBOOK_PDF_METADATA_AUTHOR,
@@ -444,28 +447,171 @@ typedef enum _plutobook_pdf_metadata {
     PLUTOBOOK_PDF_METADATA_MODIFICATION_DATE
 } plutobook_pdf_metadata_t;
 
+/**
+ * @brief Creates a new canvas for generating a PDF file.
+ *
+ * @param filename: A path to the output PDF file.
+ * @param size: The page size for the PDF.
+ * @return A pointer to a newly created `plutobook_canvas_t` object, or `NULL` on failure.
+ */
 PLUTOBOOK_API plutobook_canvas_t* plutobook_pdf_canvas_create(const char* filename, plutobook_page_size_t size);
+
+/**
+ * @brief Creates a new canvas for generating a PDF and writes it to a stream.
+ *
+ * @param callback: A callback function to write the data to a stream.
+ * @param closure: A user-defined pointer passed to the callback function.
+ * @param size: The page size for the PDF.
+ * @return A pointer to a newly created `plutobook_canvas_t` object, or `NULL` on failure.
+ */
 PLUTOBOOK_API plutobook_canvas_t* plutobook_pdf_canvas_create_for_stream(plutobook_stream_write_callback_t callback, void* closure, plutobook_page_size_t size);
+
+/**
+ * @brief Sets the metadata of the PDF document.
+ *
+ * The `PDF_METADATA_CREATION_DATE` and `PDF_METADATA_MODIFICATION_DATE` values must be in ISO-8601 format: YYYY-MM-DDThh:mm:ss.
+ * An optional timezone of the form "[+/-]hh:mm" or "Z" for UTC time can be appended. All other metadata values can be any string.
+ *
+ * @param canvas: A pointer to a `plutobook_canvas_t` object.
+ * @param name: The metadata type to set.
+ * @param value: The value of the metadata field.
+ */
 PLUTOBOOK_API void plutobook_pdf_canvas_set_metadata(plutobook_canvas_t* canvas, plutobook_pdf_metadata_t name, const char* value);
+
+/**
+ * @brief Sets the size of the PDF page.
+ *
+ * This function should only be called before any drawing operations are performed on the current page.
+ * The simplest way to do this is by calling this function immediately after creating the canvas or 
+ * immediately after completing a page with `plutobook_pdf_canvas_show_page`.
+ *
+ * @param canvas: A pointer to a `plutobook_canvas_t` object.
+ * @param size: The desired size of the PDF page.
+ */
 PLUTOBOOK_API void plutobook_pdf_canvas_set_size(plutobook_canvas_t* canvas, plutobook_page_size_t size);
+
+/**
+ * @brief Finalizes the current page and prepares the canvas for a new page.
+ *
+ * @param canvas: A pointer to a `plutobook_canvas_t` object.
+ */
 PLUTOBOOK_API void plutobook_pdf_canvas_show_page(plutobook_canvas_t* canvas);
 
+/**
+ * @brief A callback function type for resource data destruction.
+ *
+ * @param data: A pointer to the resource data to be destroyed.
+ */
 typedef void (*plutobook_resource_destroy_callback_t)(void* data);
 
+/**
+ * @brief A structure representing the resource data.
+ */
 typedef struct _plutobook_resource_data plutobook_resource_data_t;
 
+/**
+ * @brief Creates a new `plutobook_resource_data_t` object by copying the provided content
+ *
+ * @param content: The content of the resource.
+ * @param content_length: The length of the content in bytes.
+ * @param mime_type: The MIME type of the content.
+ * @param text_encoding: The text encoding used for the content.
+ * @return A pointer to a newly created `plutobook_resource_data_t` object, or `NULL` on failure.
+ */
 PLUTOBOOK_API plutobook_resource_data_t* plutobook_resource_data_create(const char* content, unsigned int content_length, const char* mime_type, const char* text_encoding);
+
+/**
+ * @brief Creates a new `plutobook_resource_data_t` object using the provided content "as is", and uses the `destroy_callback` to free the resource when it's no longer needed.
+ *
+ * @param content: The content of the resource.
+ * @param content_length: The length of the content in bytes.
+ * @param mime_type: The MIME type of the content.
+ * @param text_encoding: The text encoding used for the content.
+ * @param destroy_callback: A callback function that will be called to free the resource when it's no longer needed.
+ * @param closure: A user-defined pointer that will be passed to the `destroy_callback` when called.
+ * @return A pointer to a newly created `plutobook_resource_data_t` object, or `NULL` on failure.
+ */
 PLUTOBOOK_API plutobook_resource_data_t* plutobook_resource_data_create_with_callback(const char* content, unsigned int content_length, const char* mime_type, const char* text_encoding, plutobook_resource_destroy_callback_t destroy_callback, void* closure);
+
+/**
+ * @brief Increases the reference count of a resource data object.
+ *
+ * This function returns a reference to the given `plutobook_resource_data_t` object, incrementing its reference count.
+ * This is useful for managing the lifetime of resource data objects in a reference-counted system.
+ *
+ * @param resource: A pointer to the `plutobook_resource_data_t` object to reference.
+ * @return A pointer to the referenced `plutobook_resource_data_t` object.
+ */
 PLUTOBOOK_API plutobook_resource_data_t* plutobook_resource_data_reference(plutobook_resource_data_t* resource);
+
+/**
+ * @brief Destroys a resource data object and frees its associated memory.
+ *
+ * This function decreases the reference count of the `plutobook_resource_data_t` object, and if the reference count
+ * drops to zero, the resource is destroyed and its memory is freed.
+ *
+ * @param resource: A pointer to the `plutobook_resource_data_t` object to destroy.
+ */
 PLUTOBOOK_API void plutobook_resource_data_destroy(plutobook_resource_data_t* resource);
+
+/**
+ * @brief Gets the current reference count of a resource data object.
+ *
+ * This function returns the number of references to the `plutobook_resource_data_t` object, helping manage the
+ * object's lifetime and determine if it can be safely destroyed.
+ *
+ * @param resource: A pointer to the `plutobook_resource_data_t` object.
+ * @return The current reference count of the `plutobook_resource_data_t` object.
+ */
 PLUTOBOOK_API unsigned int plutobook_resource_data_get_reference_count(const plutobook_resource_data_t* resource);
+
+/**
+ * @brief Retrieves the content of the resource.
+ * @param resource: A pointer to a `plutobook_resource_data_t` object.
+ * @return The content of the resource.
+ */
 PLUTOBOOK_API const char* plutobook_resource_data_get_content(const plutobook_resource_data_t* resource);
+
+/**
+ * @brief Retrieves the length of the resource content.
+ * @param resource: A pointer to a `plutobook_resource_data_t` object.
+ * @return The length of the resource content in bytes.
+ */
 PLUTOBOOK_API unsigned int plutobook_resource_data_get_content_length(const plutobook_resource_data_t* resource);
+
+/**
+ * @brief Retrieves the MIME type of the resource content.
+ * @param resource: A pointer to a `plutobook_resource_data_t` object.
+ * @return The MIME type of the resource content.
+ */
 PLUTOBOOK_API const char* plutobook_resource_data_get_mime_type(const plutobook_resource_data_t* resource);
+
+/**
+ * @brief Retrieves the text encoding used for the resource content.
+ * @param resource: A pointer to a `plutobook_resource_data_t` object.
+ * @return The text encoding used for the resource content.
+ */
 PLUTOBOOK_API const char* plutobook_resource_data_get_text_encoding(const plutobook_resource_data_t* resource);
 
+/**
+ * @brief Defines a callback type for loading resource data from a URL.
+ *
+ * The callback should return a pointer to a `plutobook_resource_data_t` object, which contains the content fetched from the given URL.
+ *
+ * @param closure: A user-defined pointer that will be passed to the callback (can be used for custom state or data).
+ * @param url: The URL of the resource to load.
+ * @return A pointer to a `plutobook_resource_data_t` object containing the fetched resource, or `NULL` if an error occurs.
+ */
 typedef plutobook_resource_data_t* (*plutobook_resource_load_callback_t)(void* closure, const char* url);
 
+/**
+ * @brief Loads resource data from a given URL using the default resource fetcher.
+ *
+ * This function uses a predefined mechanism to fetch resource data from the specified URL and return it as a `plutobook_resource_data_t` object.
+ *
+ * @param url: The URL of the resource to load.
+ * @return A pointer to a `plutobook_resource_data_t` object containing the fetched content, or `NULL` if the loading fails.
+ */
 PLUTOBOOK_API plutobook_resource_data_t* plutobook_default_resource_fetcher_load_url(const char* url);
 
 typedef enum _plutobook_media_type {
