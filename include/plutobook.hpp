@@ -47,38 +47,94 @@ constexpr uint32_t kMaxPageCount = PLUTOBOOK_MAX_PAGE_COUNT;
 constexpr uint32_t kMinPageCount = PLUTOBOOK_MIN_PAGE_COUNT;
 
 /**
- * @brief The PageSize class represents a page size in points (1/72 inch), providing functionality
- * to manipulate and retrieve width and height.
+ * @brief The PageSize class represents the dimensions of a page in points (1/72 inch).
  */
 class PageSize {
 public:
+    /**
+     * @brief Constructs a PageSize object with width and height set to 0.
+     */
     constexpr PageSize() = default;
-    constexpr PageSize(plutobook_page_size_t size) : PageSize(size.width, size.height) {}
-    constexpr explicit PageSize(float size) : PageSize(size, size) {}
-    constexpr PageSize(float width, float height) : m_width(width), m_height(height) {}
-
-    constexpr void setWidth(float width) { m_width = width; }
-    constexpr void setHeight(float height) { m_height = height; }
-
-    constexpr float width() const { return m_width; }
-    constexpr float height() const { return m_height; }
-
-    constexpr PageSize landscape() const;
-    constexpr PageSize portrait() const;
-
-    constexpr operator plutobook_page_size_t() const { return {m_width, m_height}; }
 
     /**
-     * @brief Predefined PageSize objects for common paper sizes.
+     * @brief Constructs a PageSize object from a `plutobook_page_size_t` object.
+     *
+     * @param size: A `plutobook_page_size_t` object.
      */
-    static const PageSize A3;
-    static const PageSize A4;
-    static const PageSize A5;
-    static const PageSize B4;
-    static const PageSize B5;
-    static const PageSize Letter;
-    static const PageSize Legal;
-    static const PageSize Ledger;
+    constexpr PageSize(plutobook_page_size_t size) : PageSize(size.width, size.height) {}
+
+    /**
+     * @brief Constructs a PageSize object with the same width and height.
+     *
+     * @param size: The value to set for both width and height in points.
+     */
+    constexpr explicit PageSize(float size) : PageSize(size, size) {}
+
+    /**
+     * @brief Constructs a PageSize object with the specified width and height.
+     *
+     * @param width: The width of the page in points.
+     * @param height: The height of the page in points.
+     */
+    constexpr PageSize(float width, float height) : m_width(width), m_height(height) {}
+
+    /**
+     * @brief Sets the width of the page.
+     *
+     * @param width: The width of the page in points.
+     */
+    constexpr void setWidth(float width) { m_width = width; }
+
+    /**
+     * @brief Sets the height of the page.
+     *
+     * @param height: The height of the page in points.
+     */
+    constexpr void setHeight(float height) { m_height = height; }
+
+    /**
+     * @brief Gets the width of the page.
+     *
+     * @return The width of the page in points.
+     */
+    constexpr float width() const { return m_width; }
+
+    /**
+     * @brief Gets the height of the page.
+     *
+     * @return The height of the page in points.
+     */
+    constexpr float height() const { return m_height; }
+
+    /**
+     * @brief Returns the page size in landscape orientation.
+     *
+     * @return A `PageSize` object in landscape orientation.
+     */
+    constexpr PageSize landscape() const;
+
+    /**
+     * @brief Returns the page size in portrait orientation.
+     *
+     * @return A `PageSize` object in portrait orientation.
+     */
+    constexpr PageSize portrait() const;
+
+    /**
+     * @brief Converts the `PageSize` object to a `plutobook_page_size_t` object.
+     *
+     * @return A `plutobook_page_size_t` object with the same width and height values.
+     */
+    constexpr operator plutobook_page_size_t() const { return {m_width, m_height}; }
+
+    static const PageSize A3;     ///< Represents the A3 page size (297 x 420 mm).
+    static const PageSize A4;     ///< Represents the A4 page size (210 x 297 mm).
+    static const PageSize A5;     ///< Represents the A5 page size (148 x 210 mm).
+    static const PageSize B4;     ///< Represents the B4 page size (250 x 353 mm).
+    static const PageSize B5;     ///< Represents the B5 page size (176 x 250 mm).
+    static const PageSize Letter; ///< Represents the Letter page size (8.5 x 11 inches).
+    static const PageSize Legal;  ///< Represents the Legal page size (8.5 x 14 inches).
+    static const PageSize Ledger; ///< Represents the Ledger page size (11 x 17 inches).
 
 private:
     float m_width{0};
@@ -109,50 +165,167 @@ inline const PageSize PageSize::Legal = PLUTOBOOK_PAGE_SIZE_LEGAL;
 inline const PageSize PageSize::Ledger = PLUTOBOOK_PAGE_SIZE_LEDGER;
 
 /**
- * @brief The PageMargins class represents the margins of a page in points (1/72 inch), providing functionality
- * to manipulate and retrieve top, right, bottom, and left margins.
+ * @brief The PageMargins class represents the margins of a page in points (1/72 inch).
  */
 class PageMargins {
 public:
+    /**
+     * @brief Constructs a PageMargins object with all margins set to 0.
+     */
     constexpr PageMargins() = default;
+
+    /**
+     * @brief Constructs a PageMargins object from a `plutobook_page_margins_t` object.
+     *
+     * @param margins: A `plutobook_page_margins_t` object.
+     */
     constexpr PageMargins(plutobook_page_margins_t margins)
         : PageMargins(margins.top, margins.right, margins.bottom, margins.left)
     {}
 
+    /**
+     * @brief Constructs a PageMargins object with the same margin on all sides.
+     *
+     * @param margin: The margin value to apply to all four sides in points.
+     */
     constexpr explicit PageMargins(float margin)
         : PageMargins(margin, margin, margin, margin)
     {}
 
+    /**
+     * @brief Constructs a PageMargins object with vertical and horizontal margins.
+     *
+     * @param vertical: The margin for the top and bottom sides, in points.
+     * @param horizontal: The margin for the left and right sides, in points.
+     */
     constexpr PageMargins(float vertical, float horizontal)
-        : PageMargins(vertical, horizontal, horizontal, vertical)
+        : PageMargins(vertical, horizontal, vertical, horizontal)
     {}
 
-    constexpr PageMargins(float top, float rightAndLeft, float bottom)
-        : PageMargins(top, rightAndLeft, bottom, rightAndLeft)
+    /**
+     * @brief Constructs a PageMargins object with vertical and horizontal margins.
+     *
+     * @param top: The top margin in points.
+     * @param horizontal: The margin for the left and right sides, in points.
+     * @param bottom: The bottom margin in points.
+     */
+    constexpr PageMargins(float top, float horizontal, float bottom)
+        : PageMargins(top, horizontal, bottom, horizontal)
     {}
 
+    /**
+     * @brief Constructs a PageMargins object with specific margins for each side.
+     *
+     * @param top: The margin for the top side, in points.
+     * @param right: The margin for the right side, in points.
+     * @param bottom: The margin for the bottom side, in points.
+     * @param left: The margin for the left side, in points.
+     */
     constexpr PageMargins(float top, float right, float bottom, float left)
         : m_top(top), m_right(right), m_bottom(bottom), m_left(left)
     {}
 
+    /**
+     * @brief Sets the top margin.
+     *
+     * @param top: The margin value for the top side, in points.
+     */
     constexpr void setTop(float top) { m_top = top; }
+
+    /**
+     * @brief Sets the right margin.
+     *
+     * @param right: The margin value for the right side, in points.
+     */
     constexpr void setRight(float right) { m_right = right; }
+
+    /**
+     * @brief Sets the bottom margin.
+     *
+     * @param bottom: The margin value for the bottom side, in points.
+     */
     constexpr void setBottom(float bottom) { m_bottom = bottom; }
+
+    /**
+     * @brief Sets the left margin.
+     *
+     * @param left: The margin value for the left side, in points.
+     */
     constexpr void setLeft(float left) { m_left = left; }
 
+    /**
+     * @brief Gets the top margin.
+     *
+     * @return The margin value for the top side, in points.
+     */
     constexpr float top() const { return m_top; }
+
+    /**
+     * @brief Gets the right margin.
+     *
+     * @return The margin value for the right side, in points.
+     */
     constexpr float right() const { return m_right; }
+
+    /**
+     * @brief Gets the bottom margin.
+     *
+     * @return The margin value for the bottom side, in points.
+     */
     constexpr float bottom() const { return m_bottom; }
+
+    /**
+     * @brief Gets the left margin.
+     *
+     * @return The margin value for the left side, in points.
+     */
     constexpr float left() const { return m_left; }
 
+    /**
+     * @brief Converts the `PageMargins` object to a `plutobook_page_margins_t` object.
+     *
+     * @return A `plutobook_page_margins_t` object with the same margin values.
+     */
     constexpr operator plutobook_page_margins_t() const { return {m_top, m_right, m_bottom, m_left}; }
 
     /**
-     * @brief Predefined PageMargins objects for common margin settings.
+     * @brief Represents page margins with zero dimensions on all sides.
+     *
+     * - Top: 0 points
+     * - Right: 0 points
+     * - Bottom: 0 points
+     * - Left: 0 points
      */
     static const PageMargins None;
+
+    /**
+     * @brief Represents normal page margins (72 points or 1 inch on all sides).
+     *
+     * - Top: 72 points (1 inch)
+     * - Right: 72 points (1 inch)
+     * - Bottom: 72 points (1 inch)
+     * - Left: 72 points (1 inch)
+     */
     static const PageMargins Normal;
+
+    /**
+     * @brief Represents narrow page margins (36 points or 0.5 inches on all sides).
+     *
+     * - Top: 36 points (0.5 inches)
+     * - Right: 36 points (0.5 inches)
+     * - Bottom: 36 points (0.5 inches)
+     * - Left: 36 points (0.5 inches)
+     */
     static const PageMargins Narrow;
+
+    /**
+     * @brief Represents moderate page margins.
+     *
+     * - Top: 72 points (1 inch)
+     * - Right: 54 points (0.75 inches)
+     * - Bottom: 72 points (1 inch)
+     * - Left: 54 points (0.75 inches)
+     */
     static const PageMargins Moderate;
 
 private:

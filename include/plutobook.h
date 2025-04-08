@@ -322,7 +322,7 @@ PLUTOBOOK_API void plutobook_canvas_restore_state(plutobook_canvas_t* canvas);
  * @brief Gets the underlying cairo surface associated with the canvas.
  *
  * @param canvas: A pointer to a `plutobook_canvas_t` object.
- * @return A pointer to the underlying `cairo_surface_t`.
+ * @return A pointer to the underlying `cairo_surface_t` object.
  */
 PLUTOBOOK_API cairo_surface_t* plutobook_canvas_get_surface(const plutobook_canvas_t* canvas);
 
@@ -330,7 +330,7 @@ PLUTOBOOK_API cairo_surface_t* plutobook_canvas_get_surface(const plutobook_canv
  * @brief Gets the underlying cairo context associated with the canvas.
  *
  * @param canvas: A pointer to a `plutobook_canvas_t` object.
- * @return A pointer to the underlying `cairo_t` context.
+ * @return A pointer to the underlying `cairo_t` object.
  */
 PLUTOBOOK_API cairo_t* plutobook_canvas_get_context(const plutobook_canvas_t* canvas);
 
