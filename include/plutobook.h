@@ -790,7 +790,7 @@ PLUTOBOOK_API plutobook_status_t plutobook_load_image(plutobook_t* book, const c
  * @brief Loads the document from the specified XML data.
  *
  * @param book: A pointer to a `plutobook_t` object.
- * @param length: The length of the XML data in bytes, or `-1` if null-terminated..
+ * @param length: The length of the XML data in bytes, or `-1` if null-terminated.
  * @param data: The XML data to load the document from.
  * @param user_style: An optional user-defined style to apply.
  * @param user_script: An optional user-defined script to run after the document has loaded.
@@ -804,7 +804,7 @@ PLUTOBOOK_API plutobook_status_t plutobook_load_xml(plutobook_t* book, const cha
  *
  * @param book: A pointer to a `plutobook_t` object.
  * @param data: The HTML data to load the document from.
- * @param length: The length of the HTML data in bytes, or `-1` if null-terminated..
+ * @param length: The length of the HTML data in bytes, or `-1` if null-terminated.
  * @param user_style: An optional user-defined style to apply.
  * @param user_script: An optional user-defined script to run after the document has loaded.
  * @param base_url: The base URL for resolving relative URLs.

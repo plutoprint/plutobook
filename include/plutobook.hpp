@@ -516,21 +516,21 @@ private:
 class PLUTOBOOK_API ResourceFetcher {
 public:
     /**
-     * @brief Virtual destructor
+     * @brief Destructor
      */
     virtual ~ResourceFetcher() = default;
 
     /**
-     * @brief loadUrl
-     * @param url
-     * @return
+     * @brief Loads a resource from the specified URL.
+     * @param url The URL of the resource to load.
+     * @return A `ResourceData` object containing the fetched resource, or a null `ResourceData` if an error occurs.
      */
     virtual ResourceData loadUrl(const std::string& url) = 0;
 };
 
 /**
- * @brief defaultResourceFetcher
- * @return
+ * @brief Returns the default resource fetcher.
+ * @return A pointer to a `ResourceFetcher` instance providing the default implementation.
  */
 ResourceFetcher* defaultResourceFetcher();
 
@@ -540,7 +540,7 @@ ResourceFetcher* defaultResourceFetcher();
 class PLUTOBOOK_API OutputStream {
 public:
     /**
-     * @brief Virtual destructor
+     * @brief Destructor
      */
     virtual ~OutputStream() = default;
 
@@ -649,32 +649,32 @@ public:
     void restoreState();
 
     /**
-     * @brief surface
-     * @return
+     * @brief Gets the underlying cairo surface associated with the canvas.
+     * @return A pointer to the underlying `cairo_surface_t` object.
      */
     cairo_surface_t* surface() const;
 
     /**
-     * @brief context
-     * @return
+     * @brief Gets the underlying cairo context associated with the canvas.
+     * @return A pointer to the underlying `cairo_t` object.
      */
     cairo_t* context() const;
 
     /**
-     * @brief canvas
-     * @return
+     * @brief Gets the underlying canvas.
+     * @return A pointer to the underlying `plutobook_canvas_t` object.
      */
     plutobook_canvas_t* canvas() const { return m_canvas; }
 
     /**
-     * @brief isNull
-     * @return
+     * @brief Checks if the canvas is null.
+     * @return `true` if the canvas is null, otherwise `false`.
      */
-    bool isNull() const { return !m_canvas; }
+    bool isNull() const { return m_canvas == nullptr; }
 
     /**
-     * @brief isGood
-     * @return
+     * @brief Checks whether an error has previously occurred on the canvas.
+     * @return `true` if there are no errors, `false` otherwise.
      */
     bool isGood() const;
 
@@ -685,6 +685,9 @@ protected:
     plutobook_canvas_t* m_canvas;
 };
 
+/**
+ * @brief Defines different memory formats for image data.
+ */
 enum class ImageFormat {
     Invalid = PLUTOBOOK_IMAGE_FORMAT_INVALID,
     ARGB32 = PLUTOBOOK_IMAGE_FORMAT_ARGB32,
@@ -825,12 +828,18 @@ public:
 
     /**
      * @brief Sets the creation date of the PDF document.
+     *
+     * The date must be in ISO-8601 format: YYYY-MM-DDThh:mm:ss, with an optional timezone "[+/-]hh:mm" or "Z" for UTC.
+     *
      * @param creationDate The creation date of the PDF document.
      */
     void setCreationDate(const std::string& creationDate);
 
     /**
      * @brief Sets the modification date of the PDF document.
+     *
+     * The date must be in ISO-8601 format: YYYY-MM-DDThh:mm:ss, with an optional timezone "[+/-]hh:mm" or "Z" for UTC.
+     *
      * @param modificationDate The modification date of the PDF document.
      */
     void setModificationDate(const std::string& modificationDate);
@@ -866,91 +875,97 @@ public:
     Book(const PageSize& size, const PageMargins& margins = PageMargins::Normal, MediaType media = MediaType::Print);
 
     /**
-     * @brief ~Book
+     * @brief Destructor
      */
     ~Book();
 
     /**
-     * @brief setTitle
-     * @param title
+     * @brief Sets the title of the document.
+     * @param title The title of the document.
      */
     void setTitle(std::string title) { m_title = std::move(title); }
 
     /**
-     * @brief title
-     * @return
+     * @brief Gets the title of the document.
+     * @return The title of the document.
      */
     const std::string& title() const { return m_title; }
 
     /**
-     * @brief setAuthor
-     * @param author
+     * @brief Sets the author of the document.
+     * @param author The author of the document.
      */
     void setAuthor(std::string author) { m_author = std::move(author); }
 
     /**
-     * @brief author
-     * @return
+     * @brief Gets the author of the document.
+     * @return The author of the document.
      */
     const std::string& author() const { return m_author; }
 
     /**
-     * @brief setSubject
-     * @param subject
+     * @brief Sets the subject of the document.
+     * @param subject The subject of the document.
      */
     void setSubject(std::string subject) { m_subject = std::move(subject); }
 
     /**
-     * @brief subject
-     * @return
+     * @brief Gets the subject of the document.
+     * @return The subject of the document.
      */
     const std::string& subject() const { return m_subject; }
 
     /**
-     * @brief setKeywords
-     * @param keywords
+     * @brief Sets the keywords associated with the document.
+     * @param keywords The keywords associated with the document.
      */
     void setKeywords(std::string keywords) { m_keywords = std::move(keywords); }
 
     /**
-     * @brief keywords
-     * @return
+     * @brief Gets the keywords associated with the document.
+     * @return The keywords associated with the document.
      */
     const std::string& keywords() const { return m_keywords; }
 
     /**
-     * @brief setCreator
-     * @param creator
+     * @brief Sets the creator of the document.
+     * @param creator The creator of the document.
      */
     void setCreator(std::string creator) { m_creator = std::move(creator); }
 
     /**
-     * @brief creator
-     * @return
+     * @brief Gets the creator of the document.
+     * @return The creator of the document.
      */
     const std::string& creator() const { return m_creator; }
 
     /**
-     * @brief setCreationDate
-     * @param creationDate
+     * @brief Sets the creation date of the document.
+     *
+     * The date must be in ISO-8601 format: YYYY-MM-DDThh:mm:ss, with an optional timezone "[+/-]hh:mm" or "Z" for UTC.
+     *
+     * @param creationDate The creation date of the document.
      */
     void setCreationDate(std::string creationDate) { m_creationDate = std::move(creationDate); }
 
     /**
-     * @brief creationDate
-     * @return
+     * @brief Gets the creation date of the document.
+     * @return The creation date of the document.
      */
     const std::string& creationDate() const { return m_creationDate; }
 
     /**
-     * @brief setModificationDate
-     * @param modificationDate
+     * @brief Sets the modification date of the document.
+     *
+     * The date must be in ISO-8601 format: YYYY-MM-DDThh:mm:ss, with an optional timezone "[+/-]hh:mm" or "Z" for UTC.
+     *
+     * @param modificationDate The modification date of the document.
      */
     void setModificationDate(std::string modificationDate) { m_modificationDate = std::move(modificationDate); }
 
     /**
-     * @brief modificationDate
-     * @return
+     * @brief Gets the modification date of the document.
+     * @return The modification date of the document.
      */
     const std::string& modificationDate() const { return m_modificationDate; }
 
