@@ -59,36 +59,36 @@ public:
     /**
      * @brief Constructs a PageSize object from a `plutobook_page_size_t` object.
      *
-     * @param size: A `plutobook_page_size_t` object.
+     * @param size A `plutobook_page_size_t` object.
      */
     constexpr PageSize(plutobook_page_size_t size) : PageSize(size.width, size.height) {}
 
     /**
      * @brief Constructs a PageSize object with the same width and height.
      *
-     * @param size: The value to set for both width and height in points.
+     * @param size The value to set for both width and height in points.
      */
     constexpr explicit PageSize(float size) : PageSize(size, size) {}
 
     /**
      * @brief Constructs a PageSize object with the specified width and height.
      *
-     * @param width: The width of the page in points.
-     * @param height: The height of the page in points.
+     * @param width The width of the page in points.
+     * @param height The height of the page in points.
      */
     constexpr PageSize(float width, float height) : m_width(width), m_height(height) {}
 
     /**
      * @brief Sets the width of the page.
      *
-     * @param width: The width of the page in points.
+     * @param width The width of the page in points.
      */
     constexpr void setWidth(float width) { m_width = width; }
 
     /**
      * @brief Sets the height of the page.
      *
-     * @param height: The height of the page in points.
+     * @param height The height of the page in points.
      */
     constexpr void setHeight(float height) { m_height = height; }
 
@@ -177,7 +177,7 @@ public:
     /**
      * @brief Constructs a PageMargins object from a `plutobook_page_margins_t` object.
      *
-     * @param margins: A `plutobook_page_margins_t` object.
+     * @param margins A `plutobook_page_margins_t` object.
      */
     constexpr PageMargins(plutobook_page_margins_t margins)
         : PageMargins(margins.top, margins.right, margins.bottom, margins.left)
@@ -186,7 +186,7 @@ public:
     /**
      * @brief Constructs a PageMargins object with the same margin on all sides.
      *
-     * @param margin: The margin value to apply to all four sides in points.
+     * @param margin The margin value to apply to all four sides in points.
      */
     constexpr explicit PageMargins(float margin)
         : PageMargins(margin, margin, margin, margin)
@@ -195,8 +195,8 @@ public:
     /**
      * @brief Constructs a PageMargins object with vertical and horizontal margins.
      *
-     * @param vertical: The margin for the top and bottom sides, in points.
-     * @param horizontal: The margin for the left and right sides, in points.
+     * @param vertical The margin for the top and bottom sides, in points.
+     * @param horizontal The margin for the left and right sides, in points.
      */
     constexpr PageMargins(float vertical, float horizontal)
         : PageMargins(vertical, horizontal, vertical, horizontal)
@@ -205,9 +205,9 @@ public:
     /**
      * @brief Constructs a PageMargins object with vertical and horizontal margins.
      *
-     * @param top: The top margin in points.
-     * @param horizontal: The margin for the left and right sides, in points.
-     * @param bottom: The bottom margin in points.
+     * @param top The top margin in points.
+     * @param horizontal The margin for the left and right sides, in points.
+     * @param bottom The bottom margin in points.
      */
     constexpr PageMargins(float top, float horizontal, float bottom)
         : PageMargins(top, horizontal, bottom, horizontal)
@@ -216,10 +216,10 @@ public:
     /**
      * @brief Constructs a PageMargins object with specific margins for each side.
      *
-     * @param top: The margin for the top side, in points.
-     * @param right: The margin for the right side, in points.
-     * @param bottom: The margin for the bottom side, in points.
-     * @param left: The margin for the left side, in points.
+     * @param top The margin for the top side, in points.
+     * @param right The margin for the right side, in points.
+     * @param bottom The margin for the bottom side, in points.
+     * @param left The margin for the left side, in points.
      */
     constexpr PageMargins(float top, float right, float bottom, float left)
         : m_top(top), m_right(right), m_bottom(bottom), m_left(left)
@@ -228,28 +228,28 @@ public:
     /**
      * @brief Sets the top margin.
      *
-     * @param top: The margin value for the top side, in points.
+     * @param top The margin value for the top side, in points.
      */
     constexpr void setTop(float top) { m_top = top; }
 
     /**
      * @brief Sets the right margin.
      *
-     * @param right: The margin value for the right side, in points.
+     * @param right The margin value for the right side, in points.
      */
     constexpr void setRight(float right) { m_right = right; }
 
     /**
      * @brief Sets the bottom margin.
      *
-     * @param bottom: The margin value for the bottom side, in points.
+     * @param bottom The margin value for the bottom side, in points.
      */
     constexpr void setBottom(float bottom) { m_bottom = bottom; }
 
     /**
      * @brief Sets the left margin.
      *
-     * @param left: The margin value for the left side, in points.
+     * @param left The margin value for the left side, in points.
      */
     constexpr void setLeft(float left) { m_left = left; }
 
@@ -367,10 +367,10 @@ public:
     /**
      * @brief Creates a ResourceData object by copying the provided content.
      *
-     * @param content: The content of the resource.
-     * @param contentLength: The length of the content in bytes.
-     * @param mimeType: The MIME type of the content.
-     * @param textEncoding: The text encoding used for the content.
+     * @param content The content of the resource.
+     * @param contentLength The length of the content in bytes.
+     * @param mimeType The MIME type of the content.
+     * @param textEncoding The text encoding used for the content.
      * @return A `ResourceData` object that owns a copy of the provided content.
      */
     static ResourceData create(const char* content, size_t contentLength, const std::string& mimeType, const std::string& textEncoding);
@@ -380,12 +380,12 @@ public:
      *
      * This method does not copy the content. It takes ownership and ensures cleanup via the specified callback.
      *
-     * @param content: The content of the resource.
-     * @param contentLength: The length of the content in bytes.
-     * @param mimeType: The MIME type of the content.
-     * @param textEncoding: The text encoding used for the content.
-     * @param destroyCallback: A callback function that is called when the resource is destroyed.
-     * @param closure: A pointer to user-defined data that is passed to the destroy callback.
+     * @param content The content of the resource.
+     * @param contentLength The length of the content in bytes.
+     * @param mimeType The MIME type of the content.
+     * @param textEncoding The text encoding used for the content.
+     * @param destroyCallback A callback function that is called when the resource is destroyed.
+     * @param closure A pointer to user-defined data that is passed to the destroy callback.
      * @return A `ResourceData` object that manages the content using the destroy callback.
      */
     static ResourceData createWithCallback(const char* content, size_t contentLength, const std::string& mimeType, const std::string& textEncoding, plutobook_resource_destroy_callback_t destroyCallback, void* closure);
@@ -398,7 +398,7 @@ public:
     /**
      * @brief Constructs a `ResourceData` object by adopting a bare pointer to the resource without modifying the reference count.
      *
-     * @param data: A bare pointer to a `plutobook_resource_data_t` object.
+     * @param data A bare pointer to a `plutobook_resource_data_t` object.
      */
     explicit ResourceData(plutobook_resource_data_t* data) : m_data(data) {}
 
@@ -408,7 +408,7 @@ public:
      * The move constructor releases the underlying resource from the provided `ResourceData` object and takes ownership of it,
      * effectively leaving the original object in a null state.
      *
-     * @param resource: A `ResourceData` object.
+     * @param resource A `ResourceData` object.
      */
     ResourceData(ResourceData&& resource) : m_data(resource.release()) {}
 
@@ -418,7 +418,7 @@ public:
      * This constructor shares the underlying resource from the provided `ResourceData` object
      * by incrementing its reference count, allowing multiple `ResourceData` objects to share ownership.
      *
-     * @param resource: A `ResourceData` object to share the resource from.
+     * @param resource A `ResourceData` object to share the resource from.
      */
     ResourceData(const ResourceData& resource);
 
@@ -436,7 +436,7 @@ public:
      * This operator performs a deep copy of the underlying resource by sharing ownership with the `resource`
      * object. The reference count of the underlying resource is incremented to reflect the new ownership.
      *
-     * @param resource: A `ResourceData` object to copy the resource from.
+     * @param resource A `ResourceData` object to copy the resource from.
      * @return A reference to the current `ResourceData` object after the assignment.
      */
     ResourceData& operator=(const ResourceData& resource);
@@ -446,7 +446,7 @@ public:
      * This operator releases the underlying resource from the `resource` object and takes ownership of it,
      * leaving the original object in a null state.
      *
-     * @param resource: A `ResourceData` object to move the resource from.
+     * @param resource A `ResourceData` object to move the resource from.
      * @return A reference to the current `ResourceData` object after the assignment.
      */
     ResourceData& operator=(ResourceData&& resource);
@@ -457,7 +457,7 @@ public:
      * This function swaps the resource data between the current object and the provided `resource` object.
      * After the swap, both objects will share their respective resources.
      *
-     * @param resource: The `ResourceData` object to swap with.
+     * @param resource The `ResourceData` object to swap with.
      */
     void swap(ResourceData& resource);
 
@@ -874,7 +874,7 @@ public:
      *
      * @param size The initial page size.
      * @param margins The initial page margins.
-     * @param media: The media type used for media queries.
+     * @param media The media type used for media queries.
      */
     Book(const PageSize& size, const PageMargins& margins = PageMargins::Normal, MediaType media = MediaType::Print);
 
@@ -1218,7 +1218,7 @@ public:
     /**
      * @brief Sets a custom resource fetcher to be used for loading external resources.
      *
-     * @param fetcher: A pointer to a `ResourceFetcher` object. Pass `nullptr` to clear the custom fetcher.
+     * @param fetcher A pointer to a `ResourceFetcher` object. Pass `nullptr` to clear the custom fetcher.
      */
     void setCustomResourceFetcher(ResourceFetcher* fetcher) { m_customResourceFetcher = fetcher; }
 
