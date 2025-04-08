@@ -777,8 +777,8 @@ PLUTOBOOK_API plutobook_status_t plutobook_load_data(plutobook_t* book, const ch
  * @param book: A pointer to a `plutobook_t` object.
  * @param data: The image data to load the document from.
  * @param length: The length of the image data in bytes.
- * @param mime_type: The MIME type of the data.
- * @param text_encoding: The text encoding of the data.
+ * @param mime_type: The MIME type of the image data.
+ * @param text_encoding: The text encoding of the image data.
  * @param user_style: An optional user-defined style to apply.
  * @param user_script: An optional user-defined script to run after the document has loaded.
  * @param base_url: The base URL for resolving relative URLs.
@@ -790,8 +790,8 @@ PLUTOBOOK_API plutobook_status_t plutobook_load_image(plutobook_t* book, const c
  * @brief Loads the document from the specified XML data.
  *
  * @param book: A pointer to a `plutobook_t` object.
+ * @param data: The XML data to load the document from, encoded in UTF-8.
  * @param length: The length of the XML data in bytes, or `-1` if null-terminated.
- * @param data: The XML data to load the document from.
  * @param user_style: An optional user-defined style to apply.
  * @param user_script: An optional user-defined script to run after the document has loaded.
  * @param base_url: The base URL for resolving relative URLs.
@@ -803,7 +803,7 @@ PLUTOBOOK_API plutobook_status_t plutobook_load_xml(plutobook_t* book, const cha
  * @brief Loads the document from the specified HTML data.
  *
  * @param book: A pointer to a `plutobook_t` object.
- * @param data: The HTML data to load the document from.
+ * @param data: The HTML data to load the document from, encoded in UTF-8.
  * @param length: The length of the HTML data in bytes, or `-1` if null-terminated.
  * @param user_style: An optional user-defined style to apply.
  * @param user_script: An optional user-defined script to run after the document has loaded.
@@ -915,22 +915,22 @@ PLUTOBOOK_API plutobook_status_t plutobook_write_to_pdf_stream(const plutobook_t
 PLUTOBOOK_API plutobook_status_t plutobook_write_to_pdf_stream_range(const plutobook_t* book, plutobook_stream_write_callback_t callback, void* closure, unsigned int from_page, unsigned int to_page, int page_step);
 
 /**
- * @brief Writes the document to a PNG image file.
+ * @brief Writes the entire document to a PNG image file.
  *
  * @param book: A pointer to a `plutobook_t` object.
  * @param filename: The file path where the PNG image will be written.
- * @param format: The image format to use for the PNG file.
+ * @param format: The image format to use for the image data.
  * @return `PLUTOBOOK_STATUS_SUCCESS` on success, or `PLUTOBOOK_STATUS_WRITE_ERROR` on failure.
  */
 PLUTOBOOK_API plutobook_status_t plutobook_write_to_png(const plutobook_t* book, const char* filename, plutobook_image_format_t format);
 
 /**
- * @brief Writes the document to a PNG image stream.
+ * @brief Writes the entire document to a PNG image stream using a callback function.
  *
  * @param book: A pointer to a `plutobook_t` object.
  * @param callback: A callback function to handle the image data stream.
  * @param closure: A pointer to user-defined data to pass to the callback function.
- * @param format: The image format to use for the PNG file.
+ * @param format: The image format to use for the image data.
  * @return `PLUTOBOOK_STATUS_SUCCESS` on success, or `PLUTOBOOK_STATUS_WRITE_ERROR` on failure.
  */
 PLUTOBOOK_API plutobook_status_t plutobook_write_to_png_stream(const plutobook_t* book, plutobook_stream_write_callback_t callback, void* closure, plutobook_image_format_t format);

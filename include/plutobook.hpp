@@ -859,6 +859,9 @@ public:
 class Heap;
 class Document;
 
+/**
+ * @brief Defines the different media types used for CSS @media queries.
+ */
 enum class MediaType {
     Print = PLUTOBOOK_MEDIA_TYPE_PRINT,
     Screen = PLUTOBOOK_MEDIA_TYPE_SCREEN
@@ -867,10 +870,11 @@ enum class MediaType {
 class PLUTOBOOK_API Book {
 public:
     /**
-     * @brief Book
-     * @param size
-     * @param margins
-     * @param media
+     * @brief Constructs a Book object with the given page size, margins, and media type.
+     *
+     * @param size The initial page size.
+     * @param margins The initial page margins.
+     * @param media: The media type used for media queries.
      */
     Book(const PageSize& size, const PageMargins& margins = PageMargins::Normal, MediaType media = MediaType::Print);
 
@@ -970,268 +974,268 @@ public:
     const std::string& modificationDate() const { return m_modificationDate; }
 
     /**
-     * @brief viewportWidth
-     * @return
+     * @brief Returns the width of the viewport.
+     * @return The width of the viewport in pixels.
      */
     float viewportWidth() const;
 
     /**
-     * @brief viewportHeight
-     * @return
+     * @brief Returns the height of the viewport.
+     * @return The height of the viewport in pixels.
      */
     float viewportHeight() const;
 
     /**
-     * @brief documentWidth
-     * @return
+     * @brief Returns the width of the document.
+     * @return The width of the document in pixels.
      */
     float documentWidth() const;
 
     /**
-     * @brief documentHeight
-     * @return
+     * @brief Returns the height of the document.
+     * @return The height of the document in pixels.
      */
     float documentHeight() const;
 
     /**
-     * @brief pageSize
-     * @return
+     * @brief Returns the initial page size.
+     * @return The initial page size.
      */
     const PageSize& pageSize() const { return m_pageSize; }
 
     /**
-     * @brief pageMargins
-     * @return
+     * @brief Returns the initial page margins.
+     * @return The initial page margins.
      */
     const PageMargins& pageMargins() const { return m_pageMargins; }
 
     /**
-     * @brief mediaType
-     * @return
+     * @brief Returns the media type used for media queries.
+     * @return The media type used for media queries.
      */
     MediaType mediaType() const { return m_mediaType; }
 
     /**
-     * @brief pageCount
-     * @return
+     * @brief Returns the number of pages in the document.
+     * @return The number of pages in the document.
      */
     uint32_t pageCount() const;
 
     /**
-     * @brief pageSizeAt
-     * @param pageIndex
-     * @return
+     * @brief Returns the page size at the specified index.
+     * @param pageIndex The index of the page.
+     * @return The size of the page at the specified index.
      */
     PageSize pageSizeAt(uint32_t pageIndex) const;
 
     /**
-     * @brief loadUrl
-     * @param url
-     * @param userStyle
-     * @param userScript
-     * @return
+     * @brief Loads the document from the specified URL.
+     * @param url The URL to load the document from.
+     * @param userStyle An optional user-defined style to apply.
+     * @param userScript An optional user-defined script to run after the document has loaded.
+     * @return `true` on success, or `false` on failure.
      */
     bool loadUrl(const std::string_view& url, const std::string_view& userStyle = {}, const std::string_view& userScript = {});
 
     /**
-     * @brief loadData
-     * @param data
-     * @param length
-     * @param mimeType
-     * @param textEncoding
-     * @param userStyle
-     * @param userScript
-     * @param baseUrl
-     * @return
+     * @brief Loads the document from the specified data.
+     * @param data The data to load the document from.
+     * @param length The length of the data in bytes.
+     * @param mimeType The MIME type of the data.
+     * @param textEncoding The text encoding of the data.
+     * @param userStyle An optional user-defined style to apply.
+     * @param userScript An optional user-defined script to run after the document has loaded.
+     * @param baseUrl The base URL for resolving relative URLs.
+     * @return `true` on success, or `false` on failure.
      */
     bool loadData(const char* data, size_t length, const std::string_view& mimeType = {}, const std::string_view& textEncoding = {},
         const std::string_view& userStyle = {}, const std::string_view& userScript = {}, const std::string_view& baseUrl = {});
 
     /**
-     * @brief loadImage
-     * @param data
-     * @param length
-     * @param mimeType
-     * @param textEncoding
-     * @param userStyle
-     * @param userScript
-     * @param baseUrl
-     * @return
+     * @brief Loads the document from the specified image data.
+     * @param data The image data to load the document from.
+     * @param length The length of the image data in bytes.
+     * @param mimeType The MIME type of the image data.
+     * @param textEncoding The text encoding of the image data.
+     * @param userStyle An optional user-defined style to apply.
+     * @param userScript An optional user-defined script to run after the document has loaded.
+     * @param baseUrl The base URL for resolving relative URLs.
+     * @return `true` on success, or `false` on failure.
      */
     bool loadImage(const char* data, size_t length, const std::string_view& mimeType = {}, const std::string_view& textEncoding = {},
         const std::string_view& userStyle = {}, const std::string_view& userScript = {}, const std::string_view& baseUrl = {});
 
     /**
-     * @brief loadXml
-     * @param content
-     * @param userStyle
-     * @param userScript
-     * @param baseUrl
-     * @return
+     * @brief Loads the document from the specified XML data.
+     * @param content The XML data to load the document from, encoded in UTF-8.
+     * @param userStyle An optional user-defined style to apply.
+     * @param userScript An optional user-defined script to run after the document has loaded.
+     * @param baseUrl The base URL for resolving relative URLs.
+     * @return `true` on success, or `false` on failure.
      */
     bool loadXml(const std::string_view& content, const std::string_view& userStyle = {}, const std::string_view& userScript = {}, const std::string_view& baseUrl = {});
 
     /**
-     * @brief loadHtml
-     * @param content
-     * @param userStyle
-     * @param userScript
-     * @param baseUrl
-     * @return
+     * @brief Loads the document from the specified HTML data.
+     * @param content The HTML data to load the document from, encoded in UTF-8.
+     * @param userStyle An optional user-defined style to apply.
+     * @param userScript An optional user-defined script to run after the document has loaded.
+     * @param baseUrl The base URL for resolving relative URLs.
+     * @return `true` on success, or `false` on failure.
      */
     bool loadHtml(const std::string_view& content, const std::string_view& userStyle = {}, const std::string_view& userScript = {}, const std::string_view& baseUrl = {});
 
     /**
-     * @brief clearContent
+     * @brief Clears the content of the document.
      */
     void clearContent();
 
     /**
-     * @brief renderPage
-     * @param canvas
-     * @param pageIndex
+     * @brief Renders the specified page to the given canvas.
+     * @param canvas The canvas to render the page on.
+     * @param pageIndex The index of the page to render.
      */
     void renderPage(Canvas& canvas, uint32_t pageIndex) const;
 
     /**
-     * @brief renderPage
-     * @param canvas
-     * @param pageIndex
+     * @brief Renders the specified page to the given canvas.
+     * @param canvas The canvas to render the page on.
+     * @param pageIndex The index of the page to render.
      */
     void renderPage(plutobook_canvas_t* canvas, uint32_t pageIndex) const;
 
     /**
-     * @brief renderPage
-     * @param canvas
-     * @param pageIndex
+     * @brief Renders the specified page to the given canvas.
+     * @param canvas The canvas to render the page on.
+     * @param pageIndex The index of the page to render.
      */
     void renderPage(cairo_t* canvas, uint32_t pageIndex) const;
 
     /**
-     * @brief renderDocument
-     * @param canvas
+     * @brief Renders the entire document to the given canvas.
+     * @param canvas The canvas to render the entire document on.
      */
     void renderDocument(Canvas& canvas) const;
 
     /**
-     * @brief renderDocument
-     * @param canvas
-     * @param x
-     * @param y
-     * @param width
-     * @param height
+     * @brief Renders a specific rectangular portion of the document to the given canvas.
+     * @param canvas The canvas to render the document portion on.
+     * @param x The x-coordinate of the top-left corner of the rectangle.
+     * @param y The y-coordinate of the top-left corner of the rectangle.
+     * @param width The width of the rectangle to render.
+     * @param height The height of the rectangle to render.
      */
     void renderDocument(Canvas& canvas, float x, float y, float width, float height) const;
 
     /**
-     * @brief renderDocument
-     * @param canvas
+     * @brief Renders the entire document to the given canvas.
+     * @param canvas The canvas to render the entire document on.
      */
     void renderDocument(plutobook_canvas_t* canvas) const;
 
     /**
-     * @brief renderDocument
-     * @param canvas
-     * @param x
-     * @param y
-     * @param width
-     * @param height
+     * @brief Renders a specific rectangular portion of the document to the given canvas.
+     * @param canvas The canvas to render the document portion on.
+     * @param x The x-coordinate of the top-left corner of the rectangle.
+     * @param y The y-coordinate of the top-left corner of the rectangle.
+     * @param width The width of the rectangle to render.
+     * @param height The height of the rectangle to render.
      */
     void renderDocument(plutobook_canvas_t* canvas, float x, float y, float width, float height) const;
 
     /**
-     * @brief renderDocument
-     * @param canvas
+     * @brief Renders the entire document to the given canvas.
+     * @param canvas The canvas to render the entire document on.
      */
     void renderDocument(cairo_t* canvas) const;
 
     /**
-     * @brief renderDocument
-     * @param canvas
-     * @param x
-     * @param y
-     * @param width
-     * @param height
+     * @brief Renders a specific rectangular portion of the document to the given canvas.
+     * @param canvas The canvas to render the document portion on.
+     * @param x The x-coordinate of the top-left corner of the rectangle.
+     * @param y The y-coordinate of the top-left corner of the rectangle.
+     * @param width The width of the rectangle to render.
+     * @param height The height of the rectangle to render.
      */
     void renderDocument(cairo_t* canvas, float x, float y, float width, float height) const;
 
     /**
-     * @brief writeToPdf
-     * @param filename
-     * @param fromPage
-     * @param toPage
-     * @param pageStep
-     * @return
+     * @brief Writes a range of pages from the document to a PDF file.
+     * @param filename The name of the PDF file to write the document to.
+     * @param fromPage The starting page number.
+     * @param toPage The ending page number.
+     * @param pageStep The step value for iterating through pages.
+     * @return `true` on success, or `false` on failure.
      */
     bool writeToPdf(const std::string& filename, uint32_t fromPage = kMinPageCount, uint32_t toPage = kMaxPageCount, int pageStep = 1) const;
 
     /**
-     * @brief writeToPdf
-     * @param output
-     * @param fromPage
-     * @param toPage
-     * @param pageStep
-     * @return
+     * @brief Writes the entire document to a PDF stream using a callback function.
+     * @param output The output stream where the PDF document will be written.
+     * @param fromPage The starting page number.
+     * @param toPage The ending page number.
+     * @param pageStep The step value for iterating through pages.
+     * @return `true` on success, or `false` on failure.
      */
     bool writeToPdf(OutputStream& output, uint32_t fromPage = kMinPageCount, uint32_t toPage = kMaxPageCount, int pageStep = 1) const;
 
     /**
-     * @brief writeToPdf
-     * @param callback
-     * @param closure
-     * @param fromPage
-     * @param toPage
-     * @param pageStep
-     * @return
+     * @brief Writes the entire document to a PDF stream using a callback function.
+     * @param callback A callback function used for writing the PDF stream.
+     * @param closure A user-defined pointer passed to the callback function for additional data.
+     * @param fromPage The starting page number.
+     * @param toPage The ending page number.
+     * @param pageStep The step value for iterating through pages.
+     * @return `true` on success, or `false` on failure.
      */
     bool writeToPdf(plutobook_stream_write_callback_t callback, void* closure, uint32_t fromPage = kMinPageCount, uint32_t toPage = kMaxPageCount, int pageStep = 1) const;
 
     /**
-     * @brief writeToPng
-     * @param filename
-     * @param format
-     * @return
+     * @brief Writes the entire document to a PNG image file.
+     * @param filename The file path where the PNG image will be written.
+     * @param format The image format to use for the image data.
+     * @return `true` on success, or `false` on failure.
      */
     bool writeToPng(const std::string& filename, ImageFormat format = ImageFormat::ARGB32) const;
 
     /**
-     * @brief writeToPng
-     * @param output
-     * @param format
-     * @return
+     * @brief Writes the entire document to a PNG image stream.
+     * @param output The output stream where the PNG image will be written.
+     * @param format The image format to use for the image data.
+     * @return `true` on success, or `false` on failure.
      */
     bool writeToPng(OutputStream& output, ImageFormat format = ImageFormat::ARGB32) const;
 
     /**
-     * @brief writeToPng
-     * @param callback
-     * @param closure
-     * @param format
-     * @return
+     * @brief Writes the entire document to a PNG image stream using a callback function.
+     * @param callback A callback function to handle the image data stream.
+     * @param closure A pointer to user-defined data to pass to the callback function.
+     * @param format The image format to use for the image data.
+     * @return `true` on success, or `false` on failure.
      */
     bool writeToPng(plutobook_stream_write_callback_t callback, void* closure, ImageFormat format = ImageFormat::ARGB32) const;
 
     /**
-     * @brief setCustomResourceFetcher
-     * @param fetcher
+     * @brief Sets a custom resource fetcher to be used for loading external resources.
+     *
+     * @param fetcher: A pointer to a `ResourceFetcher` object. Pass `nullptr` to clear the custom fetcher.
      */
     void setCustomResourceFetcher(ResourceFetcher* fetcher) { m_customResourceFetcher = fetcher; }
 
     /**
-     * @brief customResourceFetcher
-     * @return
+     * @brief Retrieves the currently set custom resource fetcher.
+     *
+     * @return A pointer to the `ResourceFetcher` instance, or `nullptr` if none is set.
      */
     ResourceFetcher* customResourceFetcher() const { return m_customResourceFetcher; }
 
     /**
-     * @brief heap
-     * @return
+     * @internal
      */
     Heap* heap() const { return m_heap.get(); }
 
     /**
-     * @brief document
-     * @return
+     * @internal
      */
     Document* document() const { return m_document.get(); }
 
