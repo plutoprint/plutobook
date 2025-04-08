@@ -359,123 +359,155 @@ constexpr float px = PLUTOBOOK_UNITS_PX;
 
 } // units
 
+/**
+ * @brief The ResourceData class represents a piece of fetched data (resource).
+ */
 class PLUTOBOOK_API ResourceData {
 public:
     /**
-     * @brief createWithCopy
-     * @param content
-     * @param contentLength
-     * @param mimeType
-     * @param textEncoding
-     * @return
+     * @brief Creates a ResourceData object by copying the provided content.
+     *
+     * @param content: The content of the resource.
+     * @param contentLength: The length of the content in bytes.
+     * @param mimeType: The MIME type of the content.
+     * @param textEncoding: The text encoding used for the content.
+     * @return A `ResourceData` object that owns a copy of the provided content.
      */
     static ResourceData create(const char* content, size_t contentLength, const std::string& mimeType, const std::string& textEncoding);
 
     /**
-     * @brief createWithCallback
-     * @param content
-     * @param contentLength
-     * @param mimeType
-     * @param textEncoding
-     * @param destroyCallback
-     * @param closure
-     * @return
+     * @brief Creates a ResourceData object using the provided content "as is", and uses the provided callback to clean up the resource when it is no longer needed.
+     *
+     * This method does not copy the content. It takes ownership and ensures cleanup via the specified callback.
+     *
+     * @param content: The content of the resource.
+     * @param contentLength: The length of the content in bytes.
+     * @param mimeType: The MIME type of the content.
+     * @param textEncoding: The text encoding used for the content.
+     * @param destroyCallback: A callback function that is called when the resource is destroyed.
+     * @param closure: A pointer to user-defined data that is passed to the destroy callback.
+     * @return A `ResourceData` object that manages the content using the destroy callback.
      */
-    static ResourceData createWithCallback(const char* content, size_t contentLength, const std::string& mimeType, const std::string& textEncoding,
-        plutobook_resource_destroy_callback_t destroyCallback, void* closure);
+    static ResourceData createWithCallback(const char* content, size_t contentLength, const std::string& mimeType, const std::string& textEncoding, plutobook_resource_destroy_callback_t destroyCallback, void* closure);
 
     /**
-     * @brief ResourceData
+     * @brief Constructs a ResourceData object by initializing the underlying resource with a null pointer.
      */
-    ResourceData() = default;
+    ResourceData() : m_data(nullptr) {}
 
     /**
-     * @brief ResourceData
-     * @param data
+     * @brief Constructs a `ResourceData` object by adopting a bare pointer to the resource without modifying the reference count.
+     *
+     * @param data: A bare pointer to a `plutobook_resource_data_t` object.
      */
     explicit ResourceData(plutobook_resource_data_t* data) : m_data(data) {}
 
     /**
-     * @brief ResourceData
-     * @param resource
+     * @brief Constructs a ResourceData object by transferring ownership from another `ResourceData` object.
+     *
+     * The move constructor releases the underlying resource from the provided `ResourceData` object and takes ownership of it,
+     * effectively leaving the original object in a null state.
+     *
+     * @param resource: A `ResourceData` object.
      */
     ResourceData(ResourceData&& resource) : m_data(resource.release()) {}
 
     /**
-     * @brief ResourceData
-     * @param resource
+     * @brief Constructs a ResourceData object by sharing the underlying resource.
+     *
+     * This constructor shares the underlying resource from the provided `ResourceData` object
+     * by incrementing its reference count, allowing multiple `ResourceData` objects to share ownership.
+     *
+     * @param resource: A `ResourceData` object to share the resource from.
      */
     ResourceData(const ResourceData& resource);
 
     /**
-     * @brief ~ResourceData
+     * @brief Destroys the `ResourceData` object by decreasing the reference count of the underlying resource.
+     *
+     * When the `ResourceData` object is destroyed, it decreases the reference count of the underlying
+     * resource. If the reference count reaches zero, the resource is released and its memory is freed.
      */
     ~ResourceData();
 
     /**
-     * @brief Copy assignment operator
-     * @param resource
-     * @return
+     * @brief Copy assignment operator that shares ownership of the underlying resource.
+     *
+     * This operator performs a deep copy of the underlying resource by sharing ownership with the `resource`
+     * object. The reference count of the underlying resource is incremented to reflect the new ownership.
+     *
+     * @param resource: A `ResourceData` object to copy the resource from.
+     * @return A reference to the current `ResourceData` object after the assignment.
      */
     ResourceData& operator=(const ResourceData& resource);
 
     /**
-     * @brief Move assignment operator
-     * @param resource
-     * @return
+     * @brief Move assignment operator that transfers ownership of the underlying resource.
+     * This operator releases the underlying resource from the `resource` object and takes ownership of it,
+     * leaving the original object in a null state.
+     *
+     * @param resource: A `ResourceData` object to move the resource from.
+     * @return A reference to the current `ResourceData` object after the assignment.
      */
     ResourceData& operator=(ResourceData&& resource);
 
     /**
-     * @brief swap
-     * @param resource
+     * @brief Swaps the underlying resources of two `ResourceData` objects.
+     *
+     * This function swaps the resource data between the current object and the provided `resource` object.
+     * After the swap, both objects will share their respective resources.
+     *
+     * @param resource: The `ResourceData` object to swap with.
      */
     void swap(ResourceData& resource);
 
     /**
-     * @brief content
-     * @return
+     * @brief Retrieves the content of the resource.
+     * @return A pointer to the content of the resource.
      */
     const char* content() const;
 
     /**
-     * @brief contentLength
-     * @return
+     * @brief Retrieves the length of the resource content.
+     * @return The length of the resource content in bytes.
      */
     size_t contentLength() const;
 
     /**
-     * @brief mimeType
-     * @return
+     * @brief Retrieves the MIME type of the resource content.
+     * @return The MIME type of the resource content.
      */
     std::string_view mimeType() const;
 
     /**
-     * @brief textEncoding
-     * @return
+     * @brief Retrieves the text encoding used for the resource content.
+     * @return The text encoding used for the resource content.
      */
     std::string_view textEncoding() const;
 
     /**
-     * @brief release
-     * @return
+     * @brief Releases the underlying resource and transfers ownership.
+     * @return A pointer to the underlying `plutobook_resource_data_t` object, which is now owned by the caller.
      */
     plutobook_resource_data_t* release();
 
     /**
-     * @brief data
-     * @return
+     * @brief Retrieves the underlying resource.
+     * @return A pointer to the underlying `plutobook_resource_data_t` resource.
      */
     plutobook_resource_data_t* data() const { return m_data; }
 
     /**
-     * @brief isNull
-     * @return
+     * @brief Checks if the resource is null.
+     *
+     * This function checks if the resource data is null (i.e., not initialized or invalid).
+     *
+     * @return `true` if the resource is null, otherwise `false`.
      */
     bool isNull() const { return m_data == nullptr; }
 
 private:
-    plutobook_resource_data_t* m_data{nullptr};
+    plutobook_resource_data_t* m_data;
 };
 
 /**

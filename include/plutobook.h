@@ -510,7 +510,7 @@ typedef void (*plutobook_resource_destroy_callback_t)(void* data);
 typedef struct _plutobook_resource_data plutobook_resource_data_t;
 
 /**
- * @brief Creates a new `plutobook_resource_data_t` object by copying the provided content
+ * @brief Creates a new `plutobook_resource_data_t` object by copying the provided content.
  *
  * @param content: The content of the resource.
  * @param content_length: The length of the content in bytes.
