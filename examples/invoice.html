@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Invoice</title>
+  <link rel="stylesheet" href="invoice.css" />
+</head>
+<body>
+  <div class="invoice-box">
+    <!-- Header Section -->
+    <div class="invoice-header">
+      <div class="company-details">
+        <h1 class="company-name">Your Company</h1>
+        <p>
+          123 Main Street<br />
+          City, State, ZIP Code
+        </p>
+      </div>
+      <div class="invoice-title">
+        <h2>Invoice</h2>
+        <p>
+          Invoice #: 12345<br />
+          Date: June 1, 2025
+        </p>
+      </div>
+    </div>
+
+    <!-- Billing Section -->
+    <div class="invoice-billing">
+      <div class="billing-to">
+        <h3>Billed To:</h3>
+        <p>
+          John Doe<br />
+          456 Another Ave<br />
+          Another City, State, ZIP
+        </p>
+      </div>
+      <div class="invoice-info">
+        <p><strong>Due Date:</strong> June 15, 2025</p>
+        <p><strong>Payment Method:</strong> Credit Card</p>
+      </div>
+    </div>
+
+    <!-- Invoice Table -->
+    <table class="invoice-table">
+      <thead>
+        <tr>
+          <th>Description</th>
+          <th>Quantity</th>
+          <th>Unit Price</th>
+          <th>Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Web Design Service</td>
+          <td>1</td>
+          <td>$1,000.00</td>
+          <td>$1,000.00</td>
+        </tr>
+        <tr>
+          <td>Website Hosting (1 year)</td>
+          <td>1</td>
+          <td>$200.00</td>
+          <td>$200.00</td>
+        </tr>
+        <tr>
+          <td>Maintenance</td>
+          <td>12</td>
+          <td>$50.00</td>
+          <td>$600.00</td>
+        </tr>
+      </tbody>
+      <tfoot>
+        <tr class="subtotal">
+          <td colspan="3">Subtotal</td>
+          <td>$1,800.00</td>
+        </tr>
+        <tr class="tax">
+          <td colspan="3">Tax (10%)</td>
+          <td>$180.00</td>
+        </tr>
+        <tr class="total">
+          <td colspan="3">Total</td>
+          <td>$1,980.00</td>
+        </tr>
+      </tfoot>
+    </table>
+
+    <!-- Footer Section -->
+    <div class="invoice-footer">
+      <p>Payment is due within 15 days. Thank you for your business!</p>
+    </div>
+  </div>
+</body>
+</html>
