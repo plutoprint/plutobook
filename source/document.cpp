@@ -557,16 +557,16 @@ float Document::viewportHeight() const
 
 float Document::availableWidth() const
 {
-    if(isPrintMedia())
+    if(m_book)
         return m_pageContentWidth;
-    return viewportWidth();
+    return 0.f;
 }
 
 float Document::availableHeight() const
 {
-    if(isPrintMedia())
+    if(m_book)
         return m_pageContentHeight;
-    return viewportHeight();
+    return 0.f;
 }
 
 TextNode* Document::createTextNode(const std::string_view& value)
@@ -929,7 +929,7 @@ void Document::build()
 
 void Document::layout()
 {
-    if(!isPrintMedia()) {
+    if(m_book == nullptr) {
         box()->layout(nullptr);
         return;
     }
@@ -946,7 +946,7 @@ void Document::layout()
     auto marginTopLength = pageStyle->marginTop();
     auto marginBottomLength = pageStyle->marginBottom();
 
-    const auto& deviceMargins = document()->book()->pageMargins();
+    const auto& deviceMargins = m_book->pageMargins();
     auto marginTop = marginTopLength.isAuto() ? deviceMargins.top() / units::px : marginTopLength.calcMin(pageHeight);
     auto marginRight = marginRightLength.isAuto() ? deviceMargins.right() / units::px : marginRightLength.calcMin(pageWidth);
     auto marginBottom = marginBottomLength.isAuto() ? deviceMargins.bottom() / units::px : marginBottomLength.calcMin(pageHeight);
@@ -1017,11 +1017,6 @@ float Document::fragmentRemainingHeightForOffset(float offset, FragmentBoundaryR
 Rect Document::pageContentRectAt(uint32_t pageIndex) const
 {
     return Rect(0, pageIndex * m_pageContentHeight, m_pageContentWidth, m_pageContentHeight);
-}
-
-bool Document::isPrintMedia() const
-{
-    return m_book && m_book->mediaType() == MediaType::Print;
 }
 
 template<typename ResourceType>

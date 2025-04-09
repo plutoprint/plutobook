@@ -387,8 +387,6 @@ public:
     float pageContentHeight() const { return m_pageContentHeight; }
     float pageContentScale() const { return m_pageContentScale; }
 
-    bool isPrintMedia() const;
-
 private:
     template<typename ResourceType>
     RefPtr<ResourceType> fetchResource(const Url& url);
