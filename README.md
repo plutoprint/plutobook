@@ -33,40 +33,46 @@ int main() {
 }
 ```
 
-## Installation
+## Installation Guide
 
-Ensure you have [Meson](http://mesonbuild.com) and [Ninja](http://ninja-build.org) installed.
+To build and install **PlutoBook**, you will need [Meson](http://mesonbuild.com) and [Ninja](http://ninja-build.org) installed on your system.
+
+### Prerequisites
+
+PlutoBook depends on the following external libraries:
+
+- **Required:** `cairo`, `freetype`, `harfbuzz`, `fontconfig`, `expat`, `icu`
+- **Optional:** `curl`, `turbojpeg`, `webp` (enable additional features)
+
+> **Note:** For faster builds, it is recommended to install precompiled versions of these libraries through your system's package manager. Otherwise, Meson will build them from source, which may significantly increase build time.
+
+For Ubuntu/Debian users, use the following command to install both required and optional dependencies:
+
+```bash
+sudo apt-get install -y libcairo2-dev libexpat1-dev libicu-dev \
+    libfreetype6-dev libfontconfig1-dev libharfbuzz-dev \
+    libcurl4-openssl-dev libturbojpeg0-dev libwebp-dev \
+    ninja-build meson
+```
+
+### Build and Installation
+
+Clone the repository, then build and install the project using the following commands:
 
 ```bash
 git clone https://github.com/plutoprint/plutobook.git
 cd plutobook
 meson setup build
 ninja -C build
-ninja -C build install
+sudo ninja -C build install
 ```
 
-## Dependencies
-
-PlutoBook relies on several external libraries for functionality. Make sure you have the following installed:
-
-* Required:
-    * Cairo: https://www.cairographics.org
-    * Expat: https://libexpat.github.io
-    * ICU: http://icu-project.org
-    * FreeType: https://www.freetype.org
-    * FontConfig: https://www.freedesktop.org/wiki/Software/fontconfig
-    * HarfBuzz: https://harfbuzz.github.io
-* Optional:
-    * Curl: https://curl.se
-    * TurboJPEG: https://libjpeg-turbo.org
-    * WebP: https://developers.google.com/speed/webp
-
-## API Documentation (Work in Progress)
+## API Documentation
 
 Detailed information on PlutoBook's functionalities can be found in the header files:
 
-* [plutobook.h](include/plutobook.h) (C API)
-* [plutobook.hpp](include/plutobook.hpp) (C++ API)
+* [plutobook.h](https://github.com/plutoprint/plutobook/blob/main/include/plutobook.h) (C API)
+* [plutobook.hpp](https://github.com/plutoprint/plutobook/blob/main/include/plutobook.hpp) (C++ API)
 
 ## Contributions
 
@@ -74,4 +80,4 @@ Contributions to PlutoBook are welcome! Feel free to open issues for bug reports
 
 ## License
 
-PlutoBook is licensed under the [MIT License](LICENSE), allowing for both personal and commercial use.
+PlutoBook is licensed under the [MIT License](https://github.com/plutoprint/plutobook/blob/main/LICENSE), allowing for both personal and commercial use.
