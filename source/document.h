@@ -222,12 +222,12 @@ public:
     void finishParsingDocument() override;
 
 private:
-    Element* m_anchorElement{nullptr};
     GlobalString m_namespaceURI;
     GlobalString m_tagName;
     HeapString m_id;
     ClassNameList m_classNames;
     AttributeList m_attributes;
+    Element* m_anchorElement{nullptr};
 };
 
 template<>
