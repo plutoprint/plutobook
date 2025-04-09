@@ -959,14 +959,14 @@ void Document::layout()
     }
 
     m_pageContentScale = pageScale.value_or(1.f);
-    m_pageContentWidth = std::round(pageContentWidth / m_pageContentScale);
-    m_pageContentHeight = std::round(pageContentHeight / m_pageContentScale);
+    m_pageContentWidth = std::ceil(pageContentWidth / m_pageContentScale);
+    m_pageContentHeight = std::ceil(pageContentHeight / m_pageContentScale);
     box()->layout(this);
 
     if(!pageScale.has_value() && m_pageContentWidth < document()->width()) {
         m_pageContentScale = m_pageContentWidth / document()->width();
-        m_pageContentWidth = std::round(m_pageContentWidth / m_pageContentScale);
-        m_pageContentHeight = std::round(m_pageContentHeight / m_pageContentScale);
+        m_pageContentWidth = std::ceil(m_pageContentWidth / m_pageContentScale);
+        m_pageContentHeight = std::ceil(m_pageContentHeight / m_pageContentScale);
         box()->layout(this);
     }
 
