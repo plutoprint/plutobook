@@ -410,10 +410,14 @@ void TableBox::build()
             case Display::TableHeaderGroup:
                 if(!headerSection)
                     headerSection = section;
+                else
+                    m_sections.push_back(section);
                 break;
             case Display::TableFooterGroup:
                 if(!footerSection)
                     footerSection = section;
+                else
+                    m_sections.push_back(section);
                 break;
             case Display::TableRowGroup:
                 m_sections.push_back(section);
