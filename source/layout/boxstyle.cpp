@@ -1113,14 +1113,12 @@ std::optional<int> BoxStyle::columnCount() const
     return convertIntegerOrAuto(*value);
 }
 
-constexpr auto kMinPageScaleFactor = 1.f / 100.f;
-
 std::optional<float> BoxStyle::pageScale() const
 {
     auto value = get(CSSPropertyID::PageScale);
     if(value == nullptr || value->id() == CSSValueID::Auto)
         return std::nullopt;
-    return std::max(kMinPageScaleFactor, convertNumberOrPercent(*value));
+    return convertNumberOrPercent(*value);
 }
 
 GlobalString BoxStyle::page() const

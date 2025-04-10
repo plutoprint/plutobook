@@ -927,6 +927,8 @@ void Document::build()
     buildBox(counters, nullptr);
 }
 
+constexpr auto kMinPageScaleFactor = 1.f / 100.f;
+
 void Document::layout()
 {
     if(m_book == nullptr) {
@@ -958,7 +960,7 @@ void Document::layout()
         return;
     }
 
-    m_pageContentScale = pageScale.value_or(1.f);
+    m_pageContentScale = std::max(kMinPageScaleFactor, pageScale.value_or(1.f));
     m_pageContentWidth = std::ceil(pageContentWidth / m_pageContentScale);
     m_pageContentHeight = std::ceil(pageContentHeight / m_pageContentScale);
     box()->layout(this);
