@@ -46,7 +46,7 @@ PlutoBook depends on the following external libraries:
 
 > **Note:** For faster builds, it is recommended to install precompiled versions of these libraries through your system's package manager. Otherwise, Meson will build them from source, which may significantly increase build time.
 
-For Ubuntu/Debian users, use the following command to install both required and optional dependencies:
+For **Ubuntu/Debian** users, use the following command to install both required and optional dependencies:
 
 ```bash
 sudo apt-get install -y libcairo2-dev libexpat1-dev libicu-dev \
