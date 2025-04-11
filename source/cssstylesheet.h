@@ -4,7 +4,6 @@
 #include "pointer.h"
 
 #include <memory_resource>
-#include <forward_list>
 #include <vector>
 #include <memory>
 #include <map>
@@ -24,12 +23,10 @@ class CSSCounterStyle;
 class CSSMediaRule;
 
 enum class CSSStyleOrigin : uint8_t;
-enum class CSSMediaType : uint8_t;
 
 using CSSRuleList = std::pmr::vector<RefPtr<CSSRule>>;
 using CSSRuleDataList = std::pmr::vector<CSSRuleData>;
 using CSSPageRuleDataList = std::pmr::vector<CSSPageRuleData>;
-using CSSMediaList = std::pmr::forward_list<CSSMediaType>;
 
 class Heap;
 

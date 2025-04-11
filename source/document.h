@@ -256,6 +256,13 @@ inline const GlobalString& Node::tagName() const
     return emptyGlo;
 }
 
+
+class CSSMediaQuery;
+class CSSMediaFeature;
+
+using CSSMediaQueryList = std::pmr::forward_list<CSSMediaQuery>;
+using CSSMediaFeatureList = std::pmr::forward_list<CSSMediaFeature>;
+
 class Resource;
 class TextResource;
 class ImageResource;
@@ -337,8 +344,10 @@ public:
     void addAuthorStyleSheet(const std::string_view& content, Url baseUrl);
     void addUserStyleSheet(const std::string_view& content);
 
-    bool supportsMediaType(CSSMediaType mediaType) const;
-    bool supportsMediaQueries(const CSSMediaList& queries) const;
+    bool supportsMediaFeature(const CSSMediaFeature& feature) const;
+    bool supportsMediaFeatures(const CSSMediaFeatureList& features) const;
+    bool supportsMediaQuery(const CSSMediaQuery& query) const;
+    bool supportsMediaQueries(const CSSMediaQueryList& queries) const;
     bool supportsMedia(const std::string_view& type, const std::string_view& media) const;
 
     RefPtr<BoxStyle> styleForElement(Element* element, const BoxStyle& parentStyle) const;

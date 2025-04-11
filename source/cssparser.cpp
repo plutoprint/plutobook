@@ -68,36 +68,131 @@ static std::optional<T> matchIdent(const CSSIdentEntry<T>(&table)[N], const std:
     return std::nullopt;
 }
 
-static bool consumeMediaQueries(CSSTokenStream& input, CSSMediaList& queries)
+static bool consumeIdentToken(CSSTokenStream& input, const char* name, int length)
 {
-    input.consumeWhitespace();
-    if(!input.empty()) {
-        static const CSSIdentEntry<CSSMediaType> table[] = {
-            {"all", CSSMediaType::All},
-            {"screen", CSSMediaType::Screen},
-            {"print", CSSMediaType::Print}
-        };
-
-        do {
-            if(input->type() != CSSToken::Type::Ident)
-                return false;
-            auto mediaType = matchIdent(table, input->data());
-            if(mediaType == std::nullopt)
-                return false;
-            queries.push_front(mediaType.value());
-        } while(input.consumeCommaIncludingWhitespace());
+    if(input->type() == CSSToken::Type::Ident && identMatches(name, length, input->data())) {
+        input.consumeIncludingWhitespace();
+        return true;
     }
 
+    return false;
+}
+
+CSSMediaQueryList CSSParser::parseMediaQueries(const std::string_view& content)
+{
+    CSSMediaQueryList queries(m_heap);
+    CSSTokenizer tokenizer(content);
+    CSSTokenStream input(tokenizer.tokenize());
+    consumeMediaQueries(input, queries);
+    return queries;
+}
+
+static CSSMediaQuery::Type consumeMediaType(CSSTokenStream& input)
+{
+    if(consumeIdentToken(input, "all", 3))
+        return CSSMediaQuery::Type::All;
+    if(consumeIdentToken(input, "print", 5))
+        return CSSMediaQuery::Type::Print;
+    if(consumeIdentToken(input, "screen", 6))
+        return CSSMediaQuery::Type::Screen;
+    return CSSMediaQuery::Type::None;
+}
+
+static CSSMediaQuery::Restrictor consumeMediaRestrictor(CSSTokenStream& input)
+{
+    if(consumeIdentToken(input, "only", 4))
+        return CSSMediaQuery::Restrictor::Only;
+    if(consumeIdentToken(input, "not", 3))
+        return CSSMediaQuery::Restrictor::Not;
+    return CSSMediaQuery::Restrictor::None;
+}
+
+bool CSSParser::consumeMediaFeature(CSSTokenStream& input, CSSMediaFeatureList& features)
+{
+    if(input->type() != CSSToken::Type::LeftParenthesis)
+        return false;
+    static const CSSIdentEntry<CSSPropertyID> table[] = {
+        {"width", CSSPropertyID::Width},
+        {"min-width", CSSPropertyID::MinWidth},
+        {"max-width", CSSPropertyID::MaxWidth},
+        {"height", CSSPropertyID::Height},
+        {"min-height", CSSPropertyID::MinHeight},
+        {"max-height", CSSPropertyID::MaxHeight},
+        {"orientation", CSSPropertyID::Orientation}
+    };
+
+    auto block = input.consumeBlock();
+    block.consumeWhitespace();
+    if(block->type() != CSSToken::Type::Ident)
+        return false;
+    auto id = matchIdent(table, block->data());
+    if(id == std::nullopt)
+        return false;
+    block.consumeIncludingWhitespace();
+    if(block->type() == CSSToken::Type::Colon) {
+        block.consumeIncludingWhitespace();
+        RefPtr<CSSValue> value;
+        switch(id.value()) {
+        case CSSPropertyID::Width:
+        case CSSPropertyID::MinWidth:
+        case CSSPropertyID::MaxWidth:
+        case CSSPropertyID::Height:
+        case CSSPropertyID::MinHeight:
+        case CSSPropertyID::MaxHeight:
+            value = consumeLength(block, false, false);
+            break;
+        case CSSPropertyID::Orientation:
+            value = consumeOrientation(block);
+            break;
+        default:
+            assert(false);
+        }
+
+        block.consumeWhitespace();
+        if(value && block.empty()) {
+            features.emplace_front(*id, std::move(value));
+            input.consumeWhitespace();
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool CSSParser::consumeMediaFeatures(CSSTokenStream& input, CSSMediaFeatureList& features)
+{
+    do {
+        if(!consumeMediaFeature(input, features))
+            return false;
+    } while(consumeIdentToken(input, "and", 3));
     return true;
 }
 
-bool CSSParser::parseMediaQueries(CSSMediaList& queries, const std::string_view& content)
+bool CSSParser::consumeMediaQuery(CSSTokenStream& input, CSSMediaQueryList& queries)
 {
-    if(content.empty())
-        return true;
-    CSSTokenizer tokenizer(content);
-    CSSTokenStream input(tokenizer.tokenize());
-    return consumeMediaQueries(input, queries);
+    auto restrictor = consumeMediaRestrictor(input);
+    auto type = consumeMediaType(input);
+    if(restrictor != CSSMediaQuery::Restrictor::None && type == CSSMediaQuery::Type::None)
+        return false;
+    CSSMediaFeatureList features(m_heap);
+    if(type != CSSMediaQuery::Type::None && consumeIdentToken(input, "and", 3) && !consumeMediaFeatures(input, features))
+        return false;
+    if(type == CSSMediaQuery::Type::None && !consumeMediaFeatures(input, features)) {
+        return false;
+    }
+
+    queries.emplace_front(type, restrictor, std::move(features));
+    return true;
+}
+
+bool CSSParser::consumeMediaQueries(CSSTokenStream& input, CSSMediaQueryList& queries)
+{
+    input.consumeWhitespace();
+    do {
+        if(!consumeMediaQuery(input, queries))
+            return false;
+    } while(input.consumeCommaIncludingWhitespace());
+    return true;
 }
 
 RefPtr<CSSRule> CSSParser::consumeRule(CSSTokenStream& input)
@@ -204,7 +299,7 @@ RefPtr<CSSImportRule> CSSParser::consumeImportRule(CSSTokenStream& input)
     auto token = consumeStringOrUrlToken(input);
     if(token == nullptr)
         return nullptr;
-    CSSMediaList queries(m_heap);
+    CSSMediaQueryList queries(m_heap);
     if(!consumeMediaQueries(input, queries))
         return nullptr;
     return CSSImportRule::create(m_heap, m_origin, m_baseUrl.complete(token->data()), std::move(queries));
@@ -234,7 +329,7 @@ RefPtr<CSSNamespaceRule> CSSParser::consumeNamespaceRule(CSSTokenStream& input)
 
 RefPtr<CSSMediaRule> CSSParser::consumeMediaRule(CSSTokenStream& prelude, CSSTokenStream& block)
 {
-    CSSMediaList queries(m_heap);
+    CSSMediaQueryList queries(m_heap);
     if(!consumeMediaQueries(prelude, queries))
         return nullptr;
     CSSRuleList rules(m_heap);
@@ -2481,18 +2576,10 @@ RefPtr<CSSValue> CSSParser::consumeSize(CSSTokenStream& input)
             {"letter", CSSValueID::Letter}
         };
 
-        if(size == nullptr && (size = consumeIdent(input, table))) {
+        if(size == nullptr && (size = consumeIdent(input, table)))
             continue;
-        }
-        {
-            static const CSSIdentValueEntry table[] = {
-                {"portrait", CSSValueID::Portrait},
-                {"landscape", CSSValueID::Landscape}
-            };
-
-            if(orientation == nullptr && (orientation = consumeIdent(input, table))) {
-                continue;
-            }
+        if(orientation == nullptr && (orientation = consumeOrientation(input))) {
+            continue;
         }
 
         break;
@@ -2505,6 +2592,16 @@ RefPtr<CSSValue> CSSParser::consumeSize(CSSTokenStream& input)
     if(orientation == nullptr)
         return size;
     return CSSPairValue::create(m_heap, size, orientation);
+}
+
+RefPtr<CSSValue> CSSParser::consumeOrientation(CSSTokenStream& input)
+{
+    static const CSSIdentValueEntry table[] = {
+        {"portrait", CSSValueID::Portrait},
+        {"landscape", CSSValueID::Landscape}
+    };
+
+    return consumeIdent(input, table);
 }
 
 RefPtr<CSSValue> CSSParser::consumeFontSize(CSSTokenStream& input)

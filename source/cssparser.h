@@ -29,10 +29,14 @@ public:
 
     CSSRuleList parseSheet(const std::string_view& content);
     CSSPropertyList parseStyle(const std::string_view& content);
-
-    static bool parseMediaQueries(CSSMediaList& queries, const std::string_view& content);
+    CSSMediaQueryList parseMediaQueries(const std::string_view& content);
 
 private:
+    bool consumeMediaFeature(CSSTokenStream& input, CSSMediaFeatureList& features);
+    bool consumeMediaFeatures(CSSTokenStream& input, CSSMediaFeatureList& features);
+    bool consumeMediaQuery(CSSTokenStream& input, CSSMediaQueryList& queries);
+    bool consumeMediaQueries(CSSTokenStream& input, CSSMediaQueryList& queries);
+
     RefPtr<CSSRule> consumeRule(CSSTokenStream& input);
     RefPtr<CSSRule> consumeAtRule(CSSTokenStream& input);
     RefPtr<CSSStyleRule> consumeStyleRule(CSSTokenStream& input);
@@ -130,6 +134,7 @@ private:
     RefPtr<CSSValue> consumeContentTargetCounter(CSSTokenStream& input, CSSValueID id);
     RefPtr<CSSValue> consumeCounter(CSSTokenStream& input, bool increment);
     RefPtr<CSSValue> consumePage(CSSTokenStream& input);
+    RefPtr<CSSValue> consumeOrientation(CSSTokenStream& input);
     RefPtr<CSSValue> consumeSize(CSSTokenStream& input);
     RefPtr<CSSValue> consumeFontSize(CSSTokenStream& input);
     RefPtr<CSSValue> consumeFontWeight(CSSTokenStream& input);

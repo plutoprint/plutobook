@@ -902,8 +902,8 @@ enum class CSSPropertyID : uint16_t {
     AdditiveSymbols,
     AlignContent,
     AlignItems,
-    AlignSelf,
     AlignmentBaseline,
+    AlignSelf,
     Background,
     BackgroundAttachment,
     BackgroundClip,
@@ -964,9 +964,9 @@ enum class CSSPropertyID : uint16_t {
     ColumnRuleColor,
     ColumnRuleStyle,
     ColumnRuleWidth,
+    Columns,
     ColumnSpan,
     ColumnWidth,
-    Columns,
     Content,
     CounterIncrement,
     CounterReset,
@@ -1033,6 +1033,7 @@ enum class CSSPropertyID : uint16_t {
     Negative,
     Opacity,
     Order,
+    Orientation,
     Orphans,
     Outline,
     OutlineColor,
@@ -1075,8 +1076,8 @@ enum class CSSPropertyID : uint16_t {
     Suffix,
     Symbols,
     System,
-    TabSize,
     TableLayout,
+    TabSize,
     TextAlign,
     TextAnchor,
     TextDecoration,
@@ -1309,32 +1310,71 @@ struct is_a<CSSStyleRule> {
     static bool check(const CSSRule& value) { return value.type() == CSSRuleType::Style; }
 };
 
-enum class CSSMediaType : uint8_t {
-    All,
-    Print,
-    Screen
+class CSSMediaFeature {
+public:
+    CSSMediaFeature(CSSPropertyID id, RefPtr<CSSValue> value)
+        : m_id(id), m_value(std::move(value))
+    {}
+
+    CSSPropertyID id() const { return m_id; }
+    const RefPtr<CSSValue>& value() const { return m_value; }
+
+private:
+    CSSPropertyID m_id;
+    RefPtr<CSSValue> m_value;
 };
 
-using CSSMediaList = std::pmr::forward_list<CSSMediaType>;
+using CSSMediaFeatureList = std::pmr::forward_list<CSSMediaFeature>;
+
+class CSSMediaQuery : public HeapMember {
+public:
+    enum class Type {
+        None,
+        All,
+        Print,
+        Screen
+    };
+
+    enum class Restrictor {
+        None,
+        Only,
+        Not
+    };
+
+    CSSMediaQuery(Type type, Restrictor restrictor, CSSMediaFeatureList features)
+        : m_type(type), m_restrictor(restrictor), m_features(std::move(features))
+    {}
+
+    Type type() const { return m_type; }
+    Restrictor restrictor() const { return m_restrictor; }
+    const CSSMediaFeatureList& features() const { return m_features; }
+
+private:
+    Type m_type;
+    Restrictor m_restrictor;
+    CSSMediaFeatureList m_features;
+};
+
+using CSSMediaQueryList = std::pmr::forward_list<CSSMediaQuery>;
 
 class CSSMediaRule final : public CSSRule {
 public:
-    static RefPtr<CSSMediaRule> create(Heap* heap, CSSMediaList queries, CSSRuleList rules);
+    static RefPtr<CSSMediaRule> create(Heap* heap, CSSMediaQueryList queries, CSSRuleList rules);
 
-    const CSSMediaList& queries() const { return m_queries; }
+    const CSSMediaQueryList& queries() const { return m_queries; }
     const CSSRuleList& rules() const { return m_rules; }
     CSSRuleType type() const final { return CSSRuleType::Media; }
 
 private:
-    CSSMediaRule(CSSMediaList queries, CSSRuleList rules)
+    CSSMediaRule(CSSMediaQueryList queries, CSSRuleList rules)
         : m_queries(std::move(queries)), m_rules(std::move(rules))
     {}
 
-    CSSMediaList m_queries;
+    CSSMediaQueryList m_queries;
     CSSRuleList m_rules;
 };
 
-inline RefPtr<CSSMediaRule> CSSMediaRule::create(Heap* heap, CSSMediaList queries, CSSRuleList rules)
+inline RefPtr<CSSMediaRule> CSSMediaRule::create(Heap* heap, CSSMediaQueryList queries, CSSRuleList rules)
 {
     return adoptPtr(new (heap) CSSMediaRule(std::move(queries), std::move(rules)));
 }
@@ -1346,24 +1386,24 @@ struct is_a<CSSMediaRule> {
 
 class CSSImportRule final : public CSSRule {
 public:
-    static RefPtr<CSSImportRule> create(Heap* heap, CSSStyleOrigin origin, Url href, CSSMediaList queries);
+    static RefPtr<CSSImportRule> create(Heap* heap, CSSStyleOrigin origin, Url href, CSSMediaQueryList queries);
 
     CSSStyleOrigin origin() const { return m_origin; }
     const Url& href() const { return m_href; }
-    const CSSMediaList& queries() const { return m_queries; }
+    const CSSMediaQueryList& queries() const { return m_queries; }
     CSSRuleType type() const final { return CSSRuleType::Import; }
 
 private:
-    CSSImportRule(CSSStyleOrigin origin, Url href, CSSMediaList queries)
+    CSSImportRule(CSSStyleOrigin origin, Url href, CSSMediaQueryList queries)
         : m_origin(origin), m_href(std::move(href)), m_queries(std::move(queries))
     {}
 
     CSSStyleOrigin m_origin;
     Url m_href;
-    CSSMediaList m_queries;
+    CSSMediaQueryList m_queries;
 };
 
-inline RefPtr<CSSImportRule> CSSImportRule::create(Heap* heap, CSSStyleOrigin origin, Url href, CSSMediaList queries)
+inline RefPtr<CSSImportRule> CSSImportRule::create(Heap* heap, CSSStyleOrigin origin, Url href, CSSMediaQueryList queries)
 {
     return adoptPtr(new (heap) CSSImportRule(origin, std::move(href), std::move(queries)));
 }

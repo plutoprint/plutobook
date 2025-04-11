@@ -794,21 +794,104 @@ void Document::addUserStyleSheet(const std::string_view& content)
     m_styleSheet.parseStyle(content, CSSStyleOrigin::User, m_baseUrl);
 }
 
-bool Document::supportsMediaType(CSSMediaType mediaType) const
+static float convertMediaLengthValue(float viewportWidth, float viewportHeight, const CSSValue& value)
 {
-    if(m_book == nullptr || mediaType == CSSMediaType::All)
-        return true;
-    if(mediaType == CSSMediaType::Print)
-        return m_book->mediaType() == MediaType::Print;
-    return m_book->mediaType() == MediaType::Screen;
+    constexpr auto dpi = 96.0;
+    const auto& length = to<CSSLengthValue>(value);
+    switch(length.units()) {
+    case CSSLengthValue::Units::None:
+    case CSSLengthValue::Units::Pixels:
+        return length.value();
+    case CSSLengthValue::Units::Inches:
+        return length.value() * dpi;
+    case CSSLengthValue::Units::Centimeters:
+        return length.value() * dpi / 2.54;
+    case CSSLengthValue::Units::Millimeters:
+        return length.value() * dpi / 25.4;
+    case CSSLengthValue::Units::Points:
+        return length.value() * dpi / 72.0;
+    case CSSLengthValue::Units::Picas:
+        return length.value() * dpi / 6.0;
+    case CSSLengthValue::Units::Ems:
+    case CSSLengthValue::Units::Rems:
+        return length.value() * kMediumFontSize;
+    case CSSLengthValue::Units::Exs:
+    case CSSLengthValue::Units::Chs:
+        return length.value() * kMediumFontSize / 2.f;
+    case CSSLengthValue::Units::ViewportWidth:
+        return length.value() * viewportWidth / 100.0;
+    case CSSLengthValue::Units::ViewportHeight:
+        return length.value() * viewportHeight / 100.0;
+    case CSSLengthValue::Units::ViewportMin:
+        return length.value() * std::min(viewportWidth, viewportHeight) / 100.0;
+    case CSSLengthValue::Units::ViewportMax:
+        return length.value() * std::max(viewportWidth, viewportHeight) / 100.0;
+    default:
+        assert(false);
+    }
+
+    return 0.0;
 }
 
-bool Document::supportsMediaQueries(const CSSMediaList& queries) const
+bool Document::supportsMediaFeature(const CSSMediaFeature& feature) const
 {
-    if(queries.empty())
-        return true;
-    for(auto& mediaType : queries) {
-        if(supportsMediaType(mediaType)) {
+    const auto viewportWidth = m_book->viewportWidth();
+    const auto viewportHeight = m_book->viewportHeight();
+    if(feature.id() == CSSPropertyID::Orientation) {
+        const auto& orientation = to<CSSIdentValue>(*feature.value());
+        if(orientation.value() == CSSValueID::Portrait)
+            return viewportWidth < viewportHeight;
+        assert(orientation.value() == CSSValueID::Landscape);
+        return viewportWidth > viewportHeight;
+    }
+
+    const auto value = convertMediaLengthValue(viewportWidth, viewportHeight, *feature.value());
+    if(feature.id() == CSSPropertyID::Width)
+        return viewportWidth == value;
+    if(feature.id() == CSSPropertyID::MinWidth)
+        return viewportWidth >= value;
+    if(feature.id() == CSSPropertyID::MaxWidth) {
+        return viewportWidth <= value;
+    }
+
+    if(feature.id() == CSSPropertyID::Height)
+        return viewportHeight == value;
+    if(feature.id() == CSSPropertyID::MinHeight)
+        return viewportHeight >= value;
+    assert(feature.id() == CSSPropertyID::MaxHeight);
+    return viewportHeight <= value;
+}
+
+bool Document::supportsMediaFeatures(const CSSMediaFeatureList& features) const
+{
+    for(const auto& feature : features) {
+        if(!supportsMediaFeature(feature)) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+bool Document::supportsMediaQuery(const CSSMediaQuery& query) const
+{
+    if(query.type() == CSSMediaQuery::Type::Print && m_book->mediaType() != MediaType::Print)
+        return query.restrictor() == CSSMediaQuery::Restrictor::Not;
+    if(query.type() == CSSMediaQuery::Type::Screen && m_book->mediaType() != MediaType::Screen) {
+        return query.restrictor() == CSSMediaQuery::Restrictor::Not;
+    }
+
+    if(supportsMediaFeatures(query.features()))
+        return query.restrictor() != CSSMediaQuery::Restrictor::Not;
+    return query.restrictor() == CSSMediaQuery::Restrictor::Not;
+}
+
+bool Document::supportsMediaQueries(const CSSMediaQueryList& queries) const
+{
+    if(m_book == nullptr)
+        return false;
+    for(const auto& query : queries) {
+        if(supportsMediaQuery(query)) {
             return true;
         }
     }
@@ -818,14 +901,13 @@ bool Document::supportsMediaQueries(const CSSMediaList& queries) const
 
 bool Document::supportsMedia(const std::string_view& type, const std::string_view& media) const
 {
-    if(type.empty() || equals(type, "text/css", isXMLDocument())) {
-        CSSMediaList queries(heap());
-        if(CSSParser::parseMediaQueries(queries, media)) {
-            return supportsMediaQueries(queries);
-        }
+    if(!media.empty() && (type.empty() || equals(type, "text/css", isXMLDocument()))) {
+        CSSParser parser(CSSStyleOrigin::Author, m_heap, m_baseUrl);
+        CSSMediaQueryList queries(parser.parseMediaQueries(media));
+        return supportsMediaQueries(queries);
     }
 
-    return false;
+    return media.empty();
 }
 
 RefPtr<BoxStyle> Document::styleForElement(Element* element, const BoxStyle& parentStyle) const
