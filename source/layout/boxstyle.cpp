@@ -1844,7 +1844,7 @@ float BoxStyle::chFontSize() const
 {
     if(auto fontData = m_font->primaryFont())
         return fontData->zeroWidth();
-    return 0.f;
+    return fontSize() / 2.f;
 }
 
 float BoxStyle::remFontSize() const
@@ -2204,43 +2204,7 @@ FontFeatureList BoxStyle::fontFeatures() const
 
 float BoxStyle::convertLengthValue(const CSSValue& value) const
 {
-    constexpr auto dpi = 96.0;
-    auto& length = to<CSSLengthValue>(value);
-    switch(length.units()) {
-    case CSSLengthValue::Units::None:
-    case CSSLengthValue::Units::Pixels:
-        return length.value();
-    case CSSLengthValue::Units::Inches:
-        return length.value() * dpi;
-    case CSSLengthValue::Units::Centimeters:
-        return length.value() * dpi / 2.54;
-    case CSSLengthValue::Units::Millimeters:
-        return length.value() * dpi / 25.4;
-    case CSSLengthValue::Units::Points:
-        return length.value() * dpi / 72.0;
-    case CSSLengthValue::Units::Picas:
-        return length.value() * dpi / 6.0;
-    case CSSLengthValue::Units::Ems:
-        return length.value() * fontSize();
-    case CSSLengthValue::Units::Exs:
-        return length.value() * exFontSize();
-    case CSSLengthValue::Units::Rems:
-        return length.value() * remFontSize();
-    case CSSLengthValue::Units::Chs:
-        return length.value() * chFontSize();
-    case CSSLengthValue::Units::ViewportWidth:
-        return length.value() * viewportWidth() / 100.0;
-    case CSSLengthValue::Units::ViewportHeight:
-        return length.value() * viewportHeight() / 100.0;
-    case CSSLengthValue::Units::ViewportMin:
-        return length.value() * viewportMin() / 100.0;
-    case CSSLengthValue::Units::ViewportMax:
-        return length.value() * viewportMax() / 100.0;
-    default:
-        assert(false);
-    }
-
-    return 0.0;
+    return CSSLengthResolver(document(), font()).resolveLength(value);
 }
 
 float BoxStyle::convertLineWidth(const CSSValue& value) const

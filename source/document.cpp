@@ -794,45 +794,6 @@ void Document::addUserStyleSheet(const std::string_view& content)
     m_styleSheet.parseStyle(content, CSSStyleOrigin::User, m_baseUrl);
 }
 
-static float convertMediaLengthValue(float viewportWidth, float viewportHeight, const CSSValue& value)
-{
-    constexpr auto dpi = 96.0;
-    const auto& length = to<CSSLengthValue>(value);
-    switch(length.units()) {
-    case CSSLengthValue::Units::None:
-    case CSSLengthValue::Units::Pixels:
-        return length.value();
-    case CSSLengthValue::Units::Inches:
-        return length.value() * dpi;
-    case CSSLengthValue::Units::Centimeters:
-        return length.value() * dpi / 2.54;
-    case CSSLengthValue::Units::Millimeters:
-        return length.value() * dpi / 25.4;
-    case CSSLengthValue::Units::Points:
-        return length.value() * dpi / 72.0;
-    case CSSLengthValue::Units::Picas:
-        return length.value() * dpi / 6.0;
-    case CSSLengthValue::Units::Ems:
-    case CSSLengthValue::Units::Rems:
-        return length.value() * kMediumFontSize;
-    case CSSLengthValue::Units::Exs:
-    case CSSLengthValue::Units::Chs:
-        return length.value() * kMediumFontSize / 2.f;
-    case CSSLengthValue::Units::ViewportWidth:
-        return length.value() * viewportWidth / 100.0;
-    case CSSLengthValue::Units::ViewportHeight:
-        return length.value() * viewportHeight / 100.0;
-    case CSSLengthValue::Units::ViewportMin:
-        return length.value() * std::min(viewportWidth, viewportHeight) / 100.0;
-    case CSSLengthValue::Units::ViewportMax:
-        return length.value() * std::max(viewportWidth, viewportHeight) / 100.0;
-    default:
-        assert(false);
-    }
-
-    return 0.0;
-}
-
 bool Document::supportsMediaFeature(const CSSMediaFeature& feature) const
 {
     const auto viewportWidth = m_book->viewportWidth();
@@ -845,7 +806,8 @@ bool Document::supportsMediaFeature(const CSSMediaFeature& feature) const
         return viewportWidth > viewportHeight;
     }
 
-    const auto value = convertMediaLengthValue(viewportWidth, viewportHeight, *feature.value());
+    const CSSLengthResolver lengthResolver(this, nullptr);
+    const auto value = lengthResolver.resolveLength(*feature.value());
     if(feature.id() == CSSPropertyID::Width)
         return viewportWidth == value;
     if(feature.id() == CSSPropertyID::MinWidth)

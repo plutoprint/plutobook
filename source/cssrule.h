@@ -562,6 +562,29 @@ struct is_a<CSSLengthValue> {
     static bool check(const CSSValue& value) { return value.type() == CSSValueType::Length; }
 };
 
+class Font;
+
+class CSSLengthResolver {
+public:
+    CSSLengthResolver(const Document* document, const Font* font);
+
+    float resolveLength(const CSSValue& value) const;
+
+private:
+    float emFontSize() const;
+    float exFontSize() const;
+    float chFontSize() const;
+    float remFontSize() const;
+
+    float viewportWidth() const;
+    float viewportHeight() const;
+    float viewportMin() const;
+    float viewportMax() const;
+
+    const Document* m_document;
+    const Font* m_font;
+};
+
 class CSSStringValue final : public CSSValue {
 public:
     static RefPtr<CSSStringValue> create(Heap* heap, const HeapString& value);

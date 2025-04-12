@@ -1,6 +1,7 @@
 #include "cssrule.h"
 #include "cssparser.h"
 #include "document.h"
+#include "fontresource.h"
 #include "imageresource.h"
 #include "boxstyle.h"
 #include "uastylesheet.h"
@@ -8,9 +9,115 @@
 
 #include <unicode/uiter.h>
 
-#include <set>
-
 namespace plutobook {
+
+CSSLengthResolver::CSSLengthResolver(const Document* document, const Font* font)
+    : m_document(document), m_font(font)
+{
+}
+
+float CSSLengthResolver::resolveLength(const CSSValue& value) const
+{
+    constexpr auto dpi = 96.f;
+    const auto& length = to<CSSLengthValue>(value);
+    switch(length.units()) {
+    case CSSLengthValue::Units::None:
+    case CSSLengthValue::Units::Pixels:
+        return length.value();
+    case CSSLengthValue::Units::Inches:
+        return length.value() * dpi;
+    case CSSLengthValue::Units::Centimeters:
+        return length.value() * dpi / 2.54f;
+    case CSSLengthValue::Units::Millimeters:
+        return length.value() * dpi / 25.4f;
+    case CSSLengthValue::Units::Points:
+        return length.value() * dpi / 72.f;
+    case CSSLengthValue::Units::Picas:
+        return length.value() * dpi / 6.f;
+    case CSSLengthValue::Units::Ems:
+        return length.value() * emFontSize();
+    case CSSLengthValue::Units::Exs:
+        return length.value() * exFontSize();
+    case CSSLengthValue::Units::Rems:
+        return length.value() * remFontSize();
+    case CSSLengthValue::Units::Chs:
+        return length.value() * chFontSize();
+    case CSSLengthValue::Units::ViewportWidth:
+        return length.value() * viewportWidth() / 100.f;
+    case CSSLengthValue::Units::ViewportHeight:
+        return length.value() * viewportHeight() / 100.f;
+    case CSSLengthValue::Units::ViewportMin:
+        return length.value() * viewportMin() / 100.f;
+    case CSSLengthValue::Units::ViewportMax:
+        return length.value() * viewportMax() / 100.f;
+    default:
+        assert(false);
+    }
+
+    return 0.f;
+}
+
+float CSSLengthResolver::emFontSize() const
+{
+    if(m_font == nullptr)
+        return kMediumFontSize;
+    return m_font->size();
+}
+
+float CSSLengthResolver::exFontSize() const
+{
+    if(m_font == nullptr)
+        return kMediumFontSize / 2.f;
+    if(auto fontData = m_font->primaryFont())
+        return fontData->xHeight();
+    return m_font->size() / 2.f;
+}
+
+float CSSLengthResolver::chFontSize() const
+{
+    if(m_font == nullptr)
+        return kMediumFontSize / 2.f;
+    if(auto fontData = m_font->primaryFont())
+        return fontData->zeroWidth();
+    return m_font->size() / 2.f;
+}
+
+float CSSLengthResolver::remFontSize() const
+{
+    if(m_document == nullptr)
+        return kMediumFontSize;
+    if(auto style = m_document->rootStyle())
+        return style->fontSize();
+    return kMediumFontSize;
+}
+
+float CSSLengthResolver::viewportWidth() const
+{
+    if(m_document)
+        return m_document->viewportWidth();
+    return 0.f;
+}
+
+float CSSLengthResolver::viewportHeight() const
+{
+    if(m_document)
+        return m_document->viewportWidth();
+    return 0.f;
+}
+
+float CSSLengthResolver::viewportMin() const
+{
+    if(m_document)
+        return std::min(m_document->viewportWidth(), m_document->viewportHeight());
+    return 0.f;
+}
+
+float CSSLengthResolver::viewportMax() const
+{
+    if(m_document)
+        return std::max(m_document->viewportWidth(), m_document->viewportHeight());
+    return 0.f;
+}
 
 RefPtr<CSSImageValue> CSSImageValue::create(Heap* heap, Url value)
 {
