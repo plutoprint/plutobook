@@ -119,9 +119,11 @@ public:
     {}
 
     const CSSToken& get() const {
-        static const CSSToken eofToken(CSSToken::Type::EndOfFile);
-        if(m_begin == m_end)
+        if(m_begin == m_end) {
+            static CSSToken eofToken(CSSToken::Type::EndOfFile);
             return eofToken;
+        }
+
         return *m_begin;
     }
 
