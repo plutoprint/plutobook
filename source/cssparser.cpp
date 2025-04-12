@@ -188,10 +188,13 @@ bool CSSParser::consumeMediaQuery(CSSTokenStream& input, CSSMediaQueryList& quer
 bool CSSParser::consumeMediaQueries(CSSTokenStream& input, CSSMediaQueryList& queries)
 {
     input.consumeWhitespace();
-    do {
-        if(!consumeMediaQuery(input, queries))
-            return false;
-    } while(input.consumeCommaIncludingWhitespace());
+    if(!input.empty()) {
+        do {
+            if(!consumeMediaQuery(input, queries))
+                return false;
+        } while(input.consumeCommaIncludingWhitespace());
+    }
+
     return true;
 }
 

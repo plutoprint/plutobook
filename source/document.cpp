@@ -888,8 +888,8 @@ bool Document::supportsMediaQuery(const CSSMediaQuery& query) const
 
 bool Document::supportsMediaQueries(const CSSMediaQueryList& queries) const
 {
-    if(m_book == nullptr)
-        return false;
+    if(m_book == nullptr || queries.empty())
+        return true;
     for(const auto& query : queries) {
         if(supportsMediaQuery(query)) {
             return true;
@@ -901,13 +901,15 @@ bool Document::supportsMediaQueries(const CSSMediaQueryList& queries) const
 
 bool Document::supportsMedia(const std::string_view& type, const std::string_view& media) const
 {
-    if(!media.empty() && (type.empty() || equals(type, "text/css", isXMLDocument()))) {
+    if(m_book == nullptr || media.empty())
+        return true;
+    if(type.empty() || equals(type, "text/css", isXMLDocument())) {
         CSSParser parser(CSSStyleOrigin::Author, m_heap, m_baseUrl);
         CSSMediaQueryList queries(parser.parseMediaQueries(media));
         return supportsMediaQueries(queries);
     }
 
-    return media.empty();
+    return false;
 }
 
 RefPtr<BoxStyle> Document::styleForElement(Element* element, const BoxStyle& parentStyle) const
