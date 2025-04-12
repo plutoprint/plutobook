@@ -806,8 +806,7 @@ bool Document::supportsMediaFeature(const CSSMediaFeature& feature) const
         return viewportWidth > viewportHeight;
     }
 
-    const CSSLengthResolver lengthResolver(this, nullptr);
-    const auto value = lengthResolver.resolveLength(*feature.value());
+    const auto value = CSSLengthResolver(this, nullptr).resolveLength(*feature.value());
     if(feature.id() == CSSPropertyID::Width)
         return viewportWidth == value;
     if(feature.id() == CSSPropertyID::MinWidth)
