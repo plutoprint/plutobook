@@ -75,6 +75,11 @@ SVGBoxModel::SVGBoxModel(SVGElement* element, const RefPtr<BoxStyle>& style)
     setInline(false);
 }
 
+void SVGBoxModel::layout()
+{
+    m_paintBoundingBox = Rect::Invalid;
+}
+
 void SVGBoxModel::build()
 {
     m_clipper = element()->getClipper(style()->clipPath());

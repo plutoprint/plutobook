@@ -17,19 +17,18 @@ using GradientStop = std::pair<float, Color>;
 using GradientStops = std::vector<GradientStop>;
 
 struct LinearGradientValues {
-    float x0 = 0.f;
-    float y0 = 0.f;
     float x1 = 0.f;
     float y1 = 0.f;
+    float x2 = 0.f;
+    float y2 = 0.f;
 };
 
 struct RadialGradientValues {
-    float x0 = 0.f;
-    float y0 = 0.f;
-    float r0 = 0.f;
-    float x1 = 0.f;
-    float y1 = 0.f;
-    float r1 = 0.f;
+    float fx = 0.f;
+    float fy = 0.f;
+    float cx = 0.f;
+    float cy = 0.f;
+    float r = 0.f;
 };
 
 enum class SpreadMethod {

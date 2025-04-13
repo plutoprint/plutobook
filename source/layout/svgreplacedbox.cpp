@@ -61,6 +61,20 @@ const Rect& SVGRootBox::paintBoundingBox() const
     return m_paintBoundingBox;
 }
 
+void SVGRootBox::layout(FragmentBuilder* fragmentainer)
+{
+    ReplacedBox::layout(fragmentainer);
+
+    m_fillBoundingBox = Rect::Invalid;
+    m_strokeBoundingBox = Rect::Invalid;
+    m_paintBoundingBox = Rect::Invalid;
+    for(auto child = firstChild(); child; child = child->nextSibling()) {
+        if(auto box = to<SVGBoxModel>(child)) {
+            box->layout();
+        }
+    }
+}
+
 void SVGRootBox::build()
 {
     m_clipper = element()->getClipper(style()->clipPath());
@@ -121,8 +135,24 @@ void SVGRootBox::paintReplaced(const PaintInfo& info, const Point& offset)
 
 SVGImageBox::SVGImageBox(SVGImageElement* element, const RefPtr<BoxStyle>& style)
     : SVGBoxModel(element, style)
-    , m_image(element->image())
 {
+}
+
+const Rect& SVGImageBox::fillBoundingBox() const
+{
+    if(m_fillBoundingBox.isValid())
+        return m_fillBoundingBox;
+    SVGLengthContext lengthContext(element());
+    m_fillBoundingBox.x = lengthContext.valueForLength(element()->x());
+    m_fillBoundingBox.y = lengthContext.valueForLength(element()->y());
+    m_fillBoundingBox.w = lengthContext.valueForLength(element()->width());
+    m_fillBoundingBox.h = lengthContext.valueForLength(element()->height());
+    return m_fillBoundingBox;
+}
+
+const Rect& SVGImageBox::strokeBoundingBox() const
+{
+    return fillBoundingBox();
 }
 
 void SVGImageBox::render(const SVGRenderState& state) const
@@ -130,7 +160,7 @@ void SVGImageBox::render(const SVGRenderState& state) const
     if(m_image == nullptr || state.mode() != SVGRenderMode::Painting || style()->visibility() != Visibility::Visible)
         return;
     auto& preserveAspectRatio = element()->preserveAspectRatio();
-    Rect dstRect(m_viewportRect);
+    Rect dstRect(fillBoundingBox());
     Rect srcRect(0, 0, m_image->width(), m_image->height());
     preserveAspectRatio.transformRect(dstRect, srcRect);
 
@@ -139,13 +169,15 @@ void SVGImageBox::render(const SVGRenderState& state) const
     m_image->draw(*newState, dstRect, srcRect);
 }
 
+void SVGImageBox::layout()
+{
+    m_fillBoundingBox = Rect::Invalid;
+    SVGBoxModel::layout();
+}
+
 void SVGImageBox::build()
 {
-    SVGLengthContext lengthContext(element());
-    m_viewportRect.x = lengthContext.valueForLength(element()->x());
-    m_viewportRect.y = lengthContext.valueForLength(element()->y());
-    m_viewportRect.w = lengthContext.valueForLength(element()->width());
-    m_viewportRect.h = lengthContext.valueForLength(element()->height());
+    m_image = element()->image();
     SVGBoxModel::build();
 }
 

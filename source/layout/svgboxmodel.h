@@ -96,6 +96,7 @@ public:
     SVGElement* element() const;
     const Rect& paintBoundingBox() const override;
     virtual void render(const SVGRenderState& state) const = 0;
+    virtual void layout();
     void build() override;
 
     const SVGResourceClipperBox* clipper() const { return m_clipper; }

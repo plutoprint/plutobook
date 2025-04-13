@@ -639,10 +639,8 @@ Element* Document::createElement(const GlobalString& namespaceURI, const GlobalS
             return new (m_heap) SVGCircleElement(this);
         if(tagName == ellipseTag)
             return new (m_heap) SVGEllipseElement(this);
-        if(tagName == polylineTag)
-            return new (m_heap) SVGPolylineElement(this);
-        if(tagName == polygonTag)
-            return new (m_heap) SVGPolygonElement(this);
+        if(tagName == polylineTag || tagName == polygonTag)
+            return new (m_heap) SVGPolyElement(this, tagName);
         if(tagName == pathTag)
             return new (m_heap) SVGPathElement(this);
         if(tagName == tspanTag)

@@ -307,11 +307,6 @@ void Box::paintAnnotation(GraphicsContext& context, const Rect& rect) const
     }
 }
 
-void Box::layout(FragmentBuilder* fragmentainer)
-{
-    assert(false);
-}
-
 void Box::build()
 {
     auto child = m_firstChild;
@@ -664,6 +659,11 @@ float BoxModel::paddingRight() const
     if(m_paddingRight < 0)
         updatePaddingWidths();
     return m_paddingRight;
+}
+
+void BoxModel::layout(FragmentBuilder* fragmentainer)
+{
+    assert(false);
 }
 
 void BoxModel::build()

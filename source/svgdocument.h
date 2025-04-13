@@ -181,20 +181,36 @@ public:
 };
 
 class SVGResourceMarkerBox;
-class SVGMarkerData;
 
 class SVGGeometryElement : public SVGGraphicsElement {
 public:
     SVGGeometryElement(Document* document, const GlobalString& tagName);
 
     SVGResourceMarkerBox* getMarker(const std::string_view& id) const;
-    SVGMarkerData getMarkerData(const Path& path, const BoxStyle* style) const;
-    Box* createBox(const RefPtr<BoxStyle>& style) final;
-
-    virtual Path path() const = 0;
 };
 
-class SVGLineElement final : public SVGGeometryElement {
+class SVGPathElement final : public SVGGeometryElement {
+public:
+    SVGPathElement(Document* document);
+
+    const Path& path() const { return m_d.value(); }
+
+    Box* createBox(const RefPtr<BoxStyle>& style) final;
+
+private:
+    SVGPath m_d;
+};
+
+class SVGShapeElement : public SVGGeometryElement {
+public:
+    SVGShapeElement(Document* document, const GlobalString& tagName);
+
+    virtual Rect updateShape(Path& path) = 0;
+
+    Box* createBox(const RefPtr<BoxStyle>& style) final;
+};
+
+class SVGLineElement final : public SVGShapeElement {
 public:
     SVGLineElement(Document* document);
 
@@ -203,7 +219,7 @@ public:
     const SVGLength& x2() const { return m_x2; }
     const SVGLength& y2() const { return m_y2; }
 
-    Path path() const final;
+    Rect updateShape(Path& path) final;
 
 private:
     SVGLength m_x1;
@@ -212,7 +228,7 @@ private:
     SVGLength m_y2;
 };
 
-class SVGRectElement final : public SVGGeometryElement {
+class SVGRectElement final : public SVGShapeElement {
 public:
     SVGRectElement(Document* document);
 
@@ -223,7 +239,7 @@ public:
     const SVGLength& rx() const { return m_rx; }
     const SVGLength& ry() const { return m_ry; }
 
-    Path path() const final;
+    Rect updateShape(Path& path) final;
 
 private:
     SVGLength m_x;
@@ -234,23 +250,7 @@ private:
     SVGLength m_ry;
 };
 
-class SVGCircleElement final : public SVGGeometryElement {
-public:
-    SVGCircleElement(Document* document);
-
-    const SVGLength& cx() const { return m_cx; }
-    const SVGLength& cy() const { return m_cy; }
-    const SVGLength& r() const { return m_r; }
-
-    Path path() const final;
-
-private:
-    SVGLength m_cx;
-    SVGLength m_cy;
-    SVGLength m_r;
-};
-
-class SVGEllipseElement final : public SVGGeometryElement {
+class SVGEllipseElement final : public SVGShapeElement {
 public:
     SVGEllipseElement(Document* document);
 
@@ -259,7 +259,7 @@ public:
     const SVGLength& rx() const { return m_rx; }
     const SVGLength& ry() const { return m_ry; }
 
-    Path path() const final;
+    Rect updateShape(Path& path) final;
 
 private:
     SVGLength m_cx;
@@ -268,38 +268,32 @@ private:
     SVGLength m_ry;
 };
 
-class SVGPolyElement : public SVGGeometryElement {
+class SVGCircleElement final : public SVGShapeElement {
+public:
+    SVGCircleElement(Document* document);
+
+    const SVGLength& cx() const { return m_cx; }
+    const SVGLength& cy() const { return m_cy; }
+    const SVGLength& r() const { return m_r; }
+
+    Rect updateShape(Path& path) final;
+
+private:
+    SVGLength m_cx;
+    SVGLength m_cy;
+    SVGLength m_r;
+};
+
+class SVGPolyElement : public SVGShapeElement {
 public:
     SVGPolyElement(Document* document, const GlobalString& tagName);
 
-    const std::vector<Point>& points() const { return m_points.values(); }
+    const SVGPointList& points() const { return m_points; }
+
+    Rect updateShape(Path& path) final;
 
 private:
     SVGPointList m_points;
-};
-
-class SVGPolylineElement final : public SVGPolyElement {
-public:
-    SVGPolylineElement(Document* document);
-
-    Path path() const final;
-};
-
-class SVGPolygonElement final : public SVGPolyElement {
-public:
-    SVGPolygonElement(Document* document);
-
-    Path path() const final;
-};
-
-class SVGPathElement final : public SVGGeometryElement {
-public:
-    SVGPathElement(Document* document);
-
-    Path path() const final { return m_d.value(); }
-
-private:
-    SVGPath m_d;
 };
 
 class SVGTextPositioningElement : public SVGGraphicsElement {

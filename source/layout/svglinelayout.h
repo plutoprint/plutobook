@@ -31,7 +31,7 @@ using SVGTextPositionList = std::vector<SVGTextPosition>;
 
 class SVGLineItemsBuilder final : private LineItemsBuilder {
 public:
-    SVGLineItemsBuilder(LineItemsData& data, SVGCharacterPositions& positions);
+    SVGLineItemsBuilder(LineItemsData& data, SVGTextPositionList& positions);
 
     void appendText(Box* box, const HeapString& data);
 
@@ -42,9 +42,7 @@ public:
     void exitBlock(Box* box);
 
 private:
-    void fillCharacterPositions(const SVGTextPosition& position);
-    SVGCharacterPositions& m_characterPositions;
-    SVGTextPositionList m_textPositions;
+    SVGTextPositionList& m_textPositions;
     uint32_t m_itemIndex = 0;
 };
 
@@ -65,7 +63,7 @@ class SVGTextFragmentsBuilder {
 public:
     SVGTextFragmentsBuilder(SVGTextFragmentList& fragments, const LineItemsData& data, const SVGCharacterPositions& positions);
 
-    void build();
+    void layout();
 
 private:
     void handleTextItem(const LineItem& item);
@@ -87,10 +85,12 @@ public:
 
     Rect boundingRect() const;
     void render(const SVGRenderState& state) const;
+    void layout();
     void build();
 
 private:
     SVGTextBox* m_block;
+    SVGTextPositionList m_textPositions;
     SVGTextFragmentList m_fragments;
     LineItemsData m_data;
 };

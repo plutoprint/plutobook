@@ -5,9 +5,9 @@
 
 namespace plutobook {
 
-SVGLineItemsBuilder::SVGLineItemsBuilder(LineItemsData& data, SVGCharacterPositions& positions)
+SVGLineItemsBuilder::SVGLineItemsBuilder(LineItemsData& data, SVGTextPositionList& positions)
     : LineItemsBuilder(data)
-    , m_characterPositions(positions)
+    , m_textPositions(positions)
 {
 }
 
@@ -41,63 +41,12 @@ void SVGLineItemsBuilder::enterBlock(Box* box)
 void SVGLineItemsBuilder::exitBlock(Box* box)
 {
     LineItemsBuilder::exitBlock(box);
-    auto element = to<SVGTextBox>(*box).element();
-    SVGTextPosition wholePosition(element, 0, m_data.text.length());
-    fillCharacterPositions(wholePosition);
-    for(auto& position : m_textPositions) {
-        fillCharacterPositions(position);
-    }
-}
-
-void SVGLineItemsBuilder::fillCharacterPositions(const SVGTextPosition& position)
-{
-    auto& xList = position.element->x();
-    auto& yList = position.element->y();
-    auto& dxList = position.element->dx();
-    auto& dyList = position.element->dy();
-    auto& rotateList = position.element->rotate();
-
-    auto xListSize = xList.size();
-    auto yListSize = yList.size();
-    auto dxListSize = dxList.size();
-    auto dyListSize = dyList.size();
-    auto rotateListSize = rotateList.size();
-    if(!xListSize && !yListSize && !dxListSize && !dyListSize && !rotateListSize) {
-        return;
-    }
-
-    SVGLengthContext lengthContext(position.element);
-    std::optional<float> lastRotation;
-    for(auto offset = position.startOffset; offset < position.endOffset; ++offset) {
-        auto index = offset - position.startOffset;
-        if(index >= xListSize && index >= yListSize && index >= dxListSize && index >= dyListSize && index >= rotateListSize)
-            break;
-        auto& characterPosition = m_characterPositions[offset];
-        if(index < xListSize)
-            characterPosition.x = lengthContext.valueForLength(xList[index]);
-        if(index < yListSize)
-            characterPosition.y = lengthContext.valueForLength(yList[index]);
-        if(index < dxListSize)
-            characterPosition.dx = lengthContext.valueForLength(dxList[index]);
-        if(index < dyListSize)
-            characterPosition.dy = lengthContext.valueForLength(dyList[index]);
-        if(index < rotateListSize) {
-            characterPosition.rotate = rotateList[index];
-            lastRotation = characterPosition.rotate;
-        }
-    }
-
-    if(lastRotation == std::nullopt)
-        return;
-    auto offset = position.startOffset + rotateList.size();
-    while(offset < position.endOffset) {
-        m_characterPositions[offset++].rotate = lastRotation;
-    }
 }
 
 SVGTextFragmentsBuilder::SVGTextFragmentsBuilder(SVGTextFragmentList& fragments, const LineItemsData& data, const SVGCharacterPositions& positions)
     : m_fragments(fragments), m_data(data), m_positions(positions)
 {
+    m_fragments.clear();
 }
 
 static bool needsTextAnchorAdjustment(const BoxStyle* style)
@@ -140,7 +89,7 @@ static float calculateTextAnchorOffset(const BoxStyle* style, float width)
     return 0.f;
 }
 
-void SVGTextFragmentsBuilder::build()
+void SVGTextFragmentsBuilder::layout()
 {
     for(auto& item : m_data.items) {
         if(item.type() == LineItem::Type::InlineStart || item.type() == LineItem::Type::InlineEnd)
@@ -453,10 +402,69 @@ void SVGLineLayout::render(const SVGRenderState& state) const
     }
 }
 
+static void fillCharacterPositions(const SVGTextPosition& position, SVGCharacterPositions& characterPositions)
+{
+    auto& xList = position.element->x();
+    auto& yList = position.element->y();
+    auto& dxList = position.element->dx();
+    auto& dyList = position.element->dy();
+    auto& rotateList = position.element->rotate();
+
+    auto xListSize = xList.size();
+    auto yListSize = yList.size();
+    auto dxListSize = dxList.size();
+    auto dyListSize = dyList.size();
+    auto rotateListSize = rotateList.size();
+    if(!xListSize && !yListSize && !dxListSize && !dyListSize && !rotateListSize) {
+        return;
+    }
+
+    SVGLengthContext lengthContext(position.element);
+    std::optional<float> lastRotation;
+    for(auto offset = position.startOffset; offset < position.endOffset; ++offset) {
+        auto index = offset - position.startOffset;
+        if(index >= xListSize && index >= yListSize && index >= dxListSize && index >= dyListSize && index >= rotateListSize)
+            break;
+        auto& characterPosition = characterPositions[offset];
+        if(index < xListSize)
+            characterPosition.x = lengthContext.valueForLength(xList[index]);
+        if(index < yListSize)
+            characterPosition.y = lengthContext.valueForLength(yList[index]);
+        if(index < dxListSize)
+            characterPosition.dx = lengthContext.valueForLength(dxList[index]);
+        if(index < dyListSize)
+            characterPosition.dy = lengthContext.valueForLength(dyList[index]);
+        if(index < rotateListSize) {
+            characterPosition.rotate = rotateList[index];
+            lastRotation = characterPosition.rotate;
+        }
+    }
+
+    if(lastRotation == std::nullopt)
+        return;
+    auto offset = position.startOffset + rotateList.size();
+    while(offset < position.endOffset) {
+        characterPositions[offset++].rotate = lastRotation;
+    }
+}
+
+void SVGLineLayout::layout()
+{
+    auto element = to<SVGTextBox>(*m_block).element();
+    SVGTextPosition wholePosition(element, 0, m_data.text.length());
+    SVGCharacterPositions characterPositions;
+
+    fillCharacterPositions(wholePosition, characterPositions);
+    for(auto& position : m_textPositions) {
+        fillCharacterPositions(position, characterPositions);
+    }
+
+    SVGTextFragmentsBuilder(m_fragments, m_data, characterPositions).layout();
+}
+
 void SVGLineLayout::build()
 {
-    SVGCharacterPositions positions;
-    SVGLineItemsBuilder builder(m_data, positions);
+    SVGLineItemsBuilder builder(m_data, m_textPositions);
     builder.enterBlock(m_block);
     auto child = m_block->firstChild();
     while(child) {
@@ -507,8 +515,6 @@ void SVGLineLayout::build()
         assert(visualItems.size() == m_data.items.size());
         m_data.items.swap(visualItems);
     }
-
-    SVGTextFragmentsBuilder(m_fragments, m_data, positions).build();
 }
 
 } // namespace plutobook

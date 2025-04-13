@@ -164,7 +164,7 @@ void GraphicsContext::setColor(const Color& color)
 
 void GraphicsContext::setLinearGradient(const LinearGradientValues& values, const GradientStops& stops, const Transform& transform, SpreadMethod method, float opacity)
 {
-    auto pattern = cairo_pattern_create_linear(values.x0, values.y0, values.x1, values.y1);
+    auto pattern = cairo_pattern_create_linear(values.x1, values.y1, values.x2, values.y2);
     set_cairo_gradient(pattern, stops, transform, method, opacity);
     cairo_set_source(m_canvas, pattern);
     cairo_pattern_destroy(pattern);
@@ -172,7 +172,7 @@ void GraphicsContext::setLinearGradient(const LinearGradientValues& values, cons
 
 void GraphicsContext::setRadialGradient(const RadialGradientValues& values, const GradientStops& stops, const Transform& transform, SpreadMethod method, float opacity)
 {
-    auto pattern = cairo_pattern_create_radial(values.x0, values.y0, values.r0, values.x1, values.y1, values.r1);
+    auto pattern = cairo_pattern_create_radial(values.fx, values.fy, 0, values.cx, values.cy, values.r);
     set_cairo_gradient(pattern, stops, transform, method, opacity);
     cairo_set_source(m_canvas, pattern);
     cairo_pattern_destroy(pattern);

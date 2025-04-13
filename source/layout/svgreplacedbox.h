@@ -19,6 +19,7 @@ public:
     const Rect& fillBoundingBox() const final;
     const Rect& strokeBoundingBox() const final;
     const Rect& paintBoundingBox() const final;
+    void layout(FragmentBuilder* fragmentainer) final;
     void build() final;
 
     float intrinsicReplacedWidth() const final { return 300.f; }
@@ -59,16 +60,17 @@ public:
     SVGImageElement* element() const;
     const RefPtr<Image>& image() const { return m_image; }
     const Transform& localTransform() const final { return element()->transform(); }
-    const Rect& fillBoundingBox() const final { return m_viewportRect; }
-    const Rect& strokeBoundingBox() const final { return m_viewportRect; }
+    const Rect& fillBoundingBox() const final;
+    const Rect& strokeBoundingBox() const final;
     void render(const SVGRenderState& state) const final;
+    void layout() final;
     void build() final;
 
     const char* name() const final { return "SVGImageBox"; }
 
 private:
     RefPtr<Image> m_image;
-    Rect m_viewportRect;
+    mutable Rect m_fillBoundingBox;
 };
 
 template<>

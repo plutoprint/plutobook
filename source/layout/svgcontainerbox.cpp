@@ -39,6 +39,19 @@ const Rect& SVGContainerBox::strokeBoundingBox() const
     return m_strokeBoundingBox;
 }
 
+void SVGContainerBox::layout()
+{
+    SVGBoxModel::layout();
+
+    m_fillBoundingBox = Rect::Invalid;
+    m_strokeBoundingBox = Rect::Invalid;
+    for(auto child = firstChild(); child; child = child->nextSibling()) {
+        if(auto box = to<SVGBoxModel>(child)) {
+            box->layout();
+        }
+    }
+}
+
 void SVGContainerBox::renderChildren(const SVGRenderState& state) const
 {
     for(auto child = firstChild(); child; child = child->nextSibling()) {
@@ -62,6 +75,13 @@ SVGTransformableContainerBox::SVGTransformableContainerBox(SVGGraphicsElement* e
 {
 }
 
+void SVGTransformableContainerBox::render(const SVGRenderState& state) const
+{
+    SVGBlendInfo blendInfo(m_clipper, m_masker, style());
+    SVGRenderState newState(blendInfo, this, state, m_localTransform);
+    renderChildren(newState);
+}
+
 inline const SVGUseElement* toSVGUseElement(const SVGElement* element)
 {
     if(element->tagName() == useTag)
@@ -69,24 +89,20 @@ inline const SVGUseElement* toSVGUseElement(const SVGElement* element)
     return nullptr;
 }
 
-void SVGTransformableContainerBox::build()
+void SVGTransformableContainerBox::layout()
 {
     m_localTransform = element()->transform();
     if(auto useElement = toSVGUseElement(element())) {
         SVGLengthContext lengthContext(useElement);
-        auto tx = lengthContext.valueForLength(useElement->x());
-        auto ty = lengthContext.valueForLength(useElement->y());
-        m_localTransform.translate(tx, ty);
+        const Point translation = {
+            lengthContext.valueForLength(useElement->x()),
+            lengthContext.valueForLength(useElement->y())
+        };
+
+        m_localTransform.translate(translation.x, translation.y);
     }
 
-    SVGContainerBox::build();
-}
-
-void SVGTransformableContainerBox::render(const SVGRenderState& state) const
-{
-    SVGBlendInfo blendInfo(m_clipper, m_masker, style());
-    SVGRenderState newState(blendInfo, this, state, m_localTransform);
-    renderChildren(newState);
+    SVGContainerBox::layout();
 }
 
 SVGViewportContainerBox::SVGViewportContainerBox(SVGSVGElement* element, const RefPtr<BoxStyle>& style)
@@ -97,16 +113,22 @@ SVGViewportContainerBox::SVGViewportContainerBox(SVGSVGElement* element, const R
 
 void SVGViewportContainerBox::render(const SVGRenderState& state) const
 {
-    if(m_clipRect.isEmpty())
-        return;
     SVGBlendInfo blendInfo(m_clipper, m_masker, style());
     SVGRenderState newState(blendInfo, this, state, m_localTransform);
-    if(isOverflowHidden())
-        newState->clipRect(m_clipRect);
+    if(isOverflowHidden()) {
+        SVGLengthContext lengthContext(element());
+        const Rect viewportSize = {
+            lengthContext.valueForLength(element()->width()),
+            lengthContext.valueForLength(element()->height())
+        };
+
+        newState->clipRect(viewportSize);
+    }
+
     renderChildren(newState);
 }
 
-void SVGViewportContainerBox::build()
+void SVGViewportContainerBox::layout()
 {
     SVGLengthContext lengthContext(element());
     const Rect viewportRect = {
@@ -116,9 +138,8 @@ void SVGViewportContainerBox::build()
         lengthContext.valueForLength(element()->height())
     };
 
-    m_clipRect = element()->getClipRect(viewportRect.size());
     m_localTransform = element()->transform() * Transform::translated(viewportRect.x, viewportRect.y) * element()->viewBoxToViewTransform(viewportRect.size());
-    SVGContainerBox::build();
+    SVGContainerBox::layout();
 }
 
 SVGResourceContainerBox::SVGResourceContainerBox(SVGElement* element, const RefPtr<BoxStyle>& style)

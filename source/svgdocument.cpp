@@ -1,7 +1,7 @@
 #include "svgdocument.h"
 #include "svgreplacedbox.h"
 #include "svgresourcebox.h"
-#include "svgshapebox.h"
+#include "svggeometrybox.h"
 #include "svgtextbox.h"
 #include "imageresource.h"
 
@@ -489,98 +489,29 @@ SVGResourceMarkerBox* SVGGeometryElement::getMarker(const std::string_view& id) 
     return to<SVGResourceMarkerBox>(getResourceById(id));
 }
 
-SVGMarkerData SVGGeometryElement::getMarkerData(const Path& path, const BoxStyle* style) const
+SVGPathElement::SVGPathElement(Document* document)
+    : SVGGeometryElement(document, pathTag)
 {
-    auto markerStart = getMarker(style->markerStart());
-    auto markerMid = getMarker(style->markerMid());
-    auto markerEnd = getMarker(style->markerEnd());
-    if(markerStart == nullptr && markerMid == nullptr && markerEnd == nullptr) {
-        return SVGMarkerData();
-    }
-
-    SVGLengthContext lengthContext(this);
-    float strokeWidth = lengthContext.valueForLength(style->strokeWidth());
-    Point origin;
-    Point startPoint;
-    Point inslopePoints[2];
-    Point outslopePoints[2];
-
-    int index = 0;
-    std::array<Point, 3> points;
-    SVGMarkerPositionList positions;
-    PathIterator it(path);
-    while(!it.isDone()) {
-        switch(it.currentSegment(points)) {
-        case PathCommand::MoveTo:
-            startPoint = points[0];
-            inslopePoints[0] = origin;
-            inslopePoints[1] = points[0];
-            origin = points[0];
-            break;
-        case PathCommand::LineTo:
-            inslopePoints[0] = origin;
-            inslopePoints[1] = points[0];
-            origin = points[0];
-            break;
-        case PathCommand::CubicTo:
-            inslopePoints[0] = points[1];
-            inslopePoints[1] = points[2];
-            origin = points[2];
-            break;
-        case PathCommand::Close:
-            inslopePoints[0] = origin;
-            inslopePoints[1] = points[0];
-            origin = startPoint;
-            startPoint = Point();
-            break;
-        }
-
-        it.next();
-
-        if(!it.isDone() && (markerStart || markerMid)) {
-            it.currentSegment(points);
-            outslopePoints[0] = origin;
-            outslopePoints[1] = points[0];
-            if(index == 0 && markerStart) {
-                auto slope = outslopePoints[1] - outslopePoints[0];
-                auto angle = 180.0 * std::atan2(slope.y, slope.x) / std::numbers::pi;
-                auto& orient = markerStart->element()->orient();
-                if(orient.orientType() == SVGAngle::OrientType::AutoStartReverse)
-                    angle -= 180.0;
-                positions.emplace_back(markerStart, origin, angle);
-            }
-
-            if(index > 0 && markerMid) {
-                auto inslope = inslopePoints[1] - inslopePoints[0];
-                auto outslope = outslopePoints[1] - outslopePoints[0];
-                auto inangle = 180.0 * std::atan2(inslope.y, inslope.x) / std::numbers::pi;
-                auto outangle = 180.0 * std::atan2(outslope.y, outslope.x) / std::numbers::pi;
-                if(std::abs(inangle - outangle) > 180.0)
-                    inangle += 360.0;
-                auto angle = (inangle + outangle) * 0.5;
-                positions.emplace_back(markerMid, origin, angle);
-            }
-        }
-
-        if(markerEnd && it.isDone()) {
-            auto slope = inslopePoints[1] - inslopePoints[0];
-            auto angle = 180.0 * std::atan2(slope.y, slope.x) / std::numbers::pi;
-            positions.emplace_back(markerEnd, origin, angle);
-        }
-
-        index += 1;
-    }
-
-    return SVGMarkerData(strokeWidth, std::move(positions));
+    addProperty(dAttr, m_d);
 }
 
-Box* SVGGeometryElement::createBox(const RefPtr<BoxStyle>& style)
+Box* SVGPathElement::createBox(const RefPtr<BoxStyle>& style)
+{
+    return new (heap()) SVGPathBox(this, style);
+}
+
+SVGShapeElement::SVGShapeElement(Document* document, const GlobalString& tagName)
+    : SVGGeometryElement(document, tagName)
+{
+}
+
+Box* SVGShapeElement::createBox(const RefPtr<BoxStyle> &style)
 {
     return new (heap()) SVGShapeBox(this, style);
 }
 
 SVGLineElement::SVGLineElement(Document* document)
-    : SVGGeometryElement(document, lineTag)
+    : SVGShapeElement(document, lineTag)
     , m_x1(SVGLength::Direction::Horizontal, SVGLength::NegativeMode::Allow)
     , m_y1(SVGLength::Direction::Vertical, SVGLength::NegativeMode::Allow)
     , m_x2(SVGLength::Direction::Horizontal, SVGLength::NegativeMode::Allow)
@@ -592,7 +523,7 @@ SVGLineElement::SVGLineElement(Document* document)
     addProperty(y2Attr, m_y2);
 }
 
-Path SVGLineElement::path() const
+Rect SVGLineElement::updateShape(Path& path)
 {
     SVGLengthContext lengthContext(this);
     auto x1 = lengthContext.valueForLength(m_x1);
@@ -600,14 +531,13 @@ Path SVGLineElement::path() const
     auto x2 = lengthContext.valueForLength(m_x2);
     auto y2 = lengthContext.valueForLength(m_y2);
 
-    Path path;
     path.moveTo(x1, y1);
     path.lineTo(x2, y2);
-    return path;
+    return Rect(x1, y1, x2 - x1, y2 - y1);
 }
 
 SVGRectElement::SVGRectElement(Document* document)
-    : SVGGeometryElement(document, rectTag)
+    : SVGShapeElement(document, rectTag)
     , m_x(SVGLength::Direction::Horizontal, SVGLength::NegativeMode::Allow)
     , m_y(SVGLength::Direction::Vertical, SVGLength::NegativeMode::Allow)
     , m_width(SVGLength::Direction::Horizontal, SVGLength::NegativeMode::Forbid)
@@ -623,33 +553,33 @@ SVGRectElement::SVGRectElement(Document* document)
     addProperty(ryAttr, m_ry);
 }
 
-Path SVGRectElement::path() const
+Rect SVGRectElement::updateShape(Path& path)
 {
-    Path path;
     SVGLengthContext lengthContext(this);
     auto width = lengthContext.valueForLength(m_width);
     auto height = lengthContext.valueForLength(m_height);
-    if(width > 0.f && height > 0.f) {
-        auto x = lengthContext.valueForLength(m_x);
-        auto y = lengthContext.valueForLength(m_y);
-
-        auto rx = lengthContext.valueForLength(m_rx);
-        auto ry = lengthContext.valueForLength(m_ry);
-
-        if(rx == 0.f) rx = ry;
-        if(ry == 0.f) ry = rx;
-
-        rx = std::min(rx, width / 2.f);
-        ry = std::min(ry, height / 2.f);
-
-        path.addRoundedRect(Rect(x, y, width, height), RectRadii(rx, ry));
+    if(width <= 0.f || height <= 0.f) {
+        return Rect::Empty;
     }
 
-    return path;
+    auto x = lengthContext.valueForLength(m_x);
+    auto y = lengthContext.valueForLength(m_y);
+
+    auto rx = lengthContext.valueForLength(m_rx);
+    auto ry = lengthContext.valueForLength(m_ry);
+
+    if(rx <= 0.f) rx = ry;
+    if(ry <= 0.f) ry = rx;
+
+    rx = std::min(rx, width / 2.f);
+    ry = std::min(ry, height / 2.f);
+
+    path.addRoundedRect(Rect(x, y, width, height), RectRadii(rx, ry));
+    return Rect(x, y, width, height);
 }
 
 SVGCircleElement::SVGCircleElement(Document* document)
-    : SVGGeometryElement(document, circleTag)
+    : SVGShapeElement(document, circleTag)
     , m_cx(SVGLength::Direction::Horizontal, SVGLength::NegativeMode::Allow)
     , m_cy(SVGLength::Direction::Vertical, SVGLength::NegativeMode::Allow)
     , m_r(SVGLength::Direction::Diagonal, SVGLength::NegativeMode::Forbid)
@@ -659,22 +589,22 @@ SVGCircleElement::SVGCircleElement(Document* document)
     addProperty(rAttr, m_r);
 }
 
-Path SVGCircleElement::path() const
+Rect SVGCircleElement::updateShape(Path& path)
 {
-    Path path;
     SVGLengthContext lengthContext(this);
     auto r = lengthContext.valueForLength(m_r);
-    if(r > 0.f) {
-        auto cx = lengthContext.valueForLength(m_cx);
-        auto cy = lengthContext.valueForLength(m_cy);
-        path.addEllipse(cx, cy, r, r);
+    if(r <= 0.f) {
+        return Rect::Empty;
     }
 
-    return path;
+    auto cx = lengthContext.valueForLength(m_cx);
+    auto cy = lengthContext.valueForLength(m_cy);
+    path.addEllipse(cx, cy, r, r);
+    return Rect(cx - r, cy - r, r + r, r + r);
 }
 
 SVGEllipseElement::SVGEllipseElement(Document* document)
-    : SVGGeometryElement(document, ellipseTag)
+    : SVGShapeElement(document, ellipseTag)
     , m_cx(SVGLength::Direction::Horizontal, SVGLength::NegativeMode::Allow)
     , m_cy(SVGLength::Direction::Vertical, SVGLength::NegativeMode::Allow)
     , m_rx(SVGLength::Direction::Horizontal, SVGLength::NegativeMode::Forbid)
@@ -686,69 +616,42 @@ SVGEllipseElement::SVGEllipseElement(Document* document)
     addProperty(ryAttr, m_ry);
 }
 
-Path SVGEllipseElement::path() const
+Rect SVGEllipseElement::updateShape(Path& path)
 {
-    Path path;
     SVGLengthContext lengthContext(this);
     auto rx = lengthContext.valueForLength(m_rx);
     auto ry = lengthContext.valueForLength(m_ry);
-    if(rx > 0.f && ry > 0.f) {
-        auto cx = lengthContext.valueForLength(m_cx);
-        auto cy = lengthContext.valueForLength(m_cy);
-        path.addEllipse(cx, cy, rx, ry);
+    if(rx <= 0.f || ry <= 0.f) {
+        return Rect::Empty;
     }
 
-    return path;
+    auto cx = lengthContext.valueForLength(m_cx);
+    auto cy = lengthContext.valueForLength(m_cy);
+    path.addEllipse(cx, cy, rx, ry);
+    return Rect(cx - rx, cy - ry, rx + rx, ry + ry);
 }
 
 SVGPolyElement::SVGPolyElement(Document* document, const GlobalString& tagName)
-    : SVGGeometryElement(document, tagName)
+    : SVGShapeElement(document, tagName)
 {
     addProperty(pointsAttr, m_points);
 }
 
-SVGPolylineElement::SVGPolylineElement(Document* document)
-    : SVGPolyElement(document, polylineTag)
+Rect SVGPolyElement::updateShape(Path& path)
 {
-}
-
-Path SVGPolylineElement::path() const
-{
-    Path path;
-    auto& points = this->points();
-    if(!points.empty()) {
-        path.moveTo(points[0].x, points[0].y);
-        for(size_t i = 1; i < points.size(); i++) {
-            path.lineTo(points[i].x, points[i].y);
-        }
+    const auto& points = m_points.values();
+    if(points.empty()) {
+        return Rect::Empty;
     }
 
-    return path;
-}
+    path.moveTo(points[0].x, points[0].y);
+    for(size_t i = 1; i < points.size(); i++) {
+        path.lineTo(points[i].x, points[i].y);
+    }
 
-SVGPolygonElement::SVGPolygonElement(Document* document)
-    : SVGPolyElement(document, polygonTag)
-{
-}
-
-Path SVGPolygonElement::path() const
-{
-    Path path;
-    auto& points = this->points();
-    if(!points.empty()) {
-        path.moveTo(points[0].x, points[0].y);
-        for(size_t i = 1; i < points.size(); i++)
-            path.lineTo(points[i].x, points[i].y);
+    if(tagName() == polygonTag)
         path.close();
-    }
-
-    return path;
-}
-
-SVGPathElement::SVGPathElement(Document* document)
-    : SVGGeometryElement(document, pathTag)
-{
-    addProperty(dAttr, m_d);
+    return path.boundingRect();
 }
 
 SVGTextPositioningElement::SVGTextPositioningElement(Document* document, const GlobalString& tagName)

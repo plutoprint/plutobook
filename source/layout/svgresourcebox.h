@@ -11,18 +11,19 @@ public:
 
     bool isSVGResourceMarkerBox() const final { return true; }
 
+    Point refPoint() const;
+    Size markerSize() const;
+
     SVGMarkerElement* element() const;
     const Transform& localTransform() const final { return m_localTransform; }
     Transform markerTransform(const Point& origin, float angle, float strokeWidth) const;
     Rect markerBoundingBox(const Point& origin, float angle, float strokeWidth) const;
     void renderMarker(const SVGRenderState& state, const Point& origin, float angle, float strokeWidth) const;
-    void build() final;
+    void layout() final;
 
     const char* name() const final { return "SVGResourceMarkerBox"; }
 
 private:
-    Point m_refPoint;
-    Rect m_clipRect;
     Transform m_localTransform;
 };
 
@@ -70,12 +71,8 @@ public:
     SVGMaskElement* element() const;
     Rect maskBoundingBox(const Box* box) const;
     void applyMask(const SVGRenderState& state) const;
-    void build() final;
 
     const char* name() const final { return "SVGResourceMaskerBox"; }
-
-private:
-    Rect m_maskRect;
 };
 
 template<>
@@ -117,13 +114,7 @@ public:
     const char* name() const final { return "SVGResourcePatternBox"; }
 
 private:
-    const SVGResourcePatternBox* m_patternContentBox;
-    Transform m_patternTransform;
-    SVGUnitsType m_patternUnits;
-    SVGUnitsType m_patternContentUnits;
-    SVGPreserveAspectRatio m_preserveAspectRatio;
-    Rect m_viewBox;
-    Rect m_patternRect;
+    SVGPatternAttributes m_attributes;
 };
 
 template<>
@@ -164,12 +155,6 @@ public:
     SVGGradientElement* element() const;
 
     const char* name() const override { return "SVGResourceGradientBox"; }
-
-protected:
-    Transform m_gradientTransform;
-    GradientStops m_gradientStops;
-    SVGUnitsType m_gradientUnits;
-    SpreadMethod m_spreadMethod;
 };
 
 template<>
@@ -194,7 +179,7 @@ public:
     const char* name() const final { return "SVGResourceLinearGradientBox"; }
 
 private:
-    LinearGradientValues m_values;
+    SVGLinearGradientAttributes m_attributes;
 };
 
 template<>
@@ -220,7 +205,7 @@ public:
     const char* name() const final { return "SVGResourceRadialGradientBox"; }
 
 private:
-    RadialGradientValues m_values;
+    SVGRadialGradientAttributes m_attributes;
 };
 
 template<>

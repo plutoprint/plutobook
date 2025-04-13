@@ -123,6 +123,8 @@ public:
     virtual bool isSVGBoxModel() const { return false; }
     virtual bool isSVGRootBox() const { return false; }
     virtual bool isSVGImageBox() const { return false; }
+    virtual bool isSVGGeometryBox() const { return false; }
+    virtual bool isSVGPathBox() const { return false; }
     virtual bool isSVGShapeBox() const { return false; }
     virtual bool isSVGContainerBox() const { return false; }
     virtual bool isSVGHiddenContainerBox() const { return false; }
@@ -178,7 +180,6 @@ public:
     virtual const Rect& paintBoundingBox() const { return Rect::Invalid; }
     virtual const Transform& localTransform() const { return Transform::Identity; }
 
-    virtual void layout(FragmentBuilder* fragmentainer);
     virtual void build();
 
     virtual const char* name() const { return "Box"; }
@@ -293,6 +294,8 @@ public:
 
     float paddingStart() const { return paddingStart(style()->direction()); }
     float paddingEnd() const { return paddingEnd(style()->direction()); }
+
+    virtual void layout(FragmentBuilder* fragmentainer);
 
     void build() override;
 

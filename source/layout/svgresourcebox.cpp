@@ -1,5 +1,5 @@
 #include "svgresourcebox.h"
-#include "svgshapebox.h"
+#include "svggeometrybox.h"
 
 #include <cairo.h>
 
@@ -9,6 +9,28 @@ SVGResourceMarkerBox::SVGResourceMarkerBox(SVGMarkerElement* element, const RefP
     : SVGResourceContainerBox(element, style)
 {
     setOverflowHidden(style->isOverflowHidden());
+}
+
+Point SVGResourceMarkerBox::refPoint() const
+{
+    SVGLengthContext lengthContext(element());
+    const Point refPoint = {
+        lengthContext.valueForLength(element()->refX()),
+        lengthContext.valueForLength(element()->refY())
+    };
+
+    return refPoint;
+}
+
+Size SVGResourceMarkerBox::markerSize() const
+{
+    SVGLengthContext lengthContext(element());
+    const Size markerSize = {
+        lengthContext.valueForLength(element()->markerWidth()),
+        lengthContext.valueForLength(element()->markerHeight())
+    };
+
+    return markerSize;
 }
 
 Transform SVGResourceMarkerBox::markerTransform(const Point& origin, float angle, float strokeWidth) const
@@ -21,9 +43,10 @@ Transform SVGResourceMarkerBox::markerTransform(const Point& origin, float angle
         transform.rotate(angle);
     }
 
+    auto reference = m_localTransform.mapPoint(refPoint());
     if(element()->markerUnits() == SVGMarkerUnitsTypeStrokeWidth)
         transform.scale(strokeWidth, strokeWidth);
-    transform.translate(-m_refPoint.x, -m_refPoint.y);
+    transform.translate(-reference.x, -reference.y);
     return transform * m_localTransform;
 }
 
@@ -34,32 +57,19 @@ Rect SVGResourceMarkerBox::markerBoundingBox(const Point& origin, float angle, f
 
 void SVGResourceMarkerBox::renderMarker(const SVGRenderState& state, const Point& origin, float angle, float strokeWidth) const
 {
-    if(m_clipRect.isEmpty() || state.hasCycleReference(this))
+    if(state.hasCycleReference(this))
         return;
     SVGBlendInfo blendInfo(m_clipper, m_masker, style());
     SVGRenderState newState(blendInfo, this, state, markerTransform(origin, angle, strokeWidth));
     if(isOverflowHidden())
-        newState->clipRect(m_clipRect);
+        newState->clipRect(element()->getClipRect(markerSize()));
     renderChildren(newState);
 }
 
-void SVGResourceMarkerBox::build()
+void SVGResourceMarkerBox::layout()
 {
-    SVGLengthContext lengthContext(element());
-    const Point refPoint = {
-        lengthContext.valueForLength(element()->refX()),
-        lengthContext.valueForLength(element()->refY())
-    };
-
-    const Size markerSize = {
-        lengthContext.valueForLength(element()->markerWidth()),
-        lengthContext.valueForLength(element()->markerHeight())
-    };
-
-    m_clipRect = element()->getClipRect(markerSize);
-    m_localTransform = element()->viewBoxToViewTransform(markerSize);
-    m_refPoint = m_localTransform.mapPoint(refPoint);
-    SVGResourceContainerBox::build();
+    m_localTransform = element()->viewBoxToViewTransform(markerSize());
+    SVGResourceContainerBox::layout();
 }
 
 SVGResourceClipperBox::SVGResourceClipperBox(SVGClipPathElement* element, const RefPtr<BoxStyle>& style)
@@ -71,21 +81,21 @@ bool SVGResourceClipperBox::requiresMasking() const
 {
     if(m_clipper != nullptr)
         return true;
-    const SVGShapeBox* prevClipShape = nullptr;
+    const SVGGeometryBox* prevClipShape = nullptr;
     for(auto child = firstChild(); child; child = child->nextSibling()) {
         if(child->style()->visibility() != Visibility::Visible)
             continue;
-        const SVGShapeBox* clipShape = nullptr;
+        const SVGGeometryBox* clipShape = nullptr;
         if(auto container = to<SVGTransformableContainerBox>(child)) {
             if(container->element()->tagName() != useTag)
                 continue;
             if(container->clipper())
                 return true;
-            clipShape = to<SVGShapeBox>(container->firstChild());
+            clipShape = to<SVGGeometryBox>(container->firstChild());
         } else {
             if(child->isSVGTextBox())
                 return true;
-            clipShape = to<SVGShapeBox>(child);
+            clipShape = to<SVGGeometryBox>(child);
         }
 
         if(clipShape == nullptr)
@@ -125,14 +135,14 @@ void SVGResourceClipperBox::applyClipPath(const SVGRenderState& state) const
         if(child->style()->visibility() != Visibility::Visible)
             continue;
         Transform clipTransform(transform);
-        const SVGShapeBox* clipShape = nullptr;
+        const SVGGeometryBox* clipShape = nullptr;
         if(auto container = to<SVGTransformableContainerBox>(child)) {
             if(container->element()->tagName() != useTag)
                 continue;
             clipTransform.multiply(container->localTransform());
-            clipShape = to<SVGShapeBox>(container->firstChild());
+            clipShape = to<SVGGeometryBox>(container->firstChild());
         } else {
-            clipShape = to<SVGShapeBox>(child);
+            clipShape = to<SVGGeometryBox>(child);
         }
 
         if(clipShape == nullptr)
@@ -183,7 +193,14 @@ Rect SVGResourceMaskerBox::maskBoundingBox(const Box* box) const
         maskBoundingBox.h = maskBoundingBox.h * bbox.h;
     }
 
-    Rect maskRect(m_maskRect);
+    SVGLengthContext lengthContext(element(), element()->maskUnits());
+    Rect maskRect = {
+        lengthContext.valueForLength(element()->x()),
+        lengthContext.valueForLength(element()->y()),
+        lengthContext.valueForLength(element()->width()),
+        lengthContext.valueForLength(element()->height())
+    };
+
     if(element()->maskUnits() == SVGUnitsTypeObjectBoundingBox) {
         auto& bbox = box->fillBoundingBox();
         maskRect.x = maskRect.x * bbox.w + bbox.x;
@@ -199,7 +216,14 @@ void SVGResourceMaskerBox::applyMask(const SVGRenderState& state) const
 {
     if(state.hasCycleReference(this))
         return;
-    Rect maskRect(m_maskRect);
+    SVGLengthContext lengthContext(element(), element()->maskUnits());
+    Rect maskRect = {
+        lengthContext.valueForLength(element()->x()),
+        lengthContext.valueForLength(element()->y()),
+        lengthContext.valueForLength(element()->width()),
+        lengthContext.valueForLength(element()->height())
+    };
+
     if(element()->maskUnits() == SVGUnitsTypeObjectBoundingBox) {
         auto& bbox = state.fillBoundingBox();
         maskRect.x = maskRect.x * bbox.w + bbox.x;
@@ -228,16 +252,6 @@ void SVGResourceMaskerBox::applyMask(const SVGRenderState& state) const
     state->applyMask(*maskImage);
 }
 
-void SVGResourceMaskerBox::build()
-{
-    SVGLengthContext lengthContext(element(), element()->maskUnits());
-    m_maskRect.x = lengthContext.valueForLength(element()->x());
-    m_maskRect.y = lengthContext.valueForLength(element()->y());
-    m_maskRect.w = lengthContext.valueForLength(element()->width());
-    m_maskRect.h = lengthContext.valueForLength(element()->height());
-    SVGResourceContainerBox::build();
-}
-
 SVGResourcePaintServerBox::SVGResourcePaintServerBox(SVGElement* element, const RefPtr<BoxStyle>& style)
     : SVGResourceContainerBox(element, style)
 {
@@ -250,21 +264,7 @@ SVGResourcePatternBox::SVGResourcePatternBox(SVGPatternElement* element, const R
 
 void SVGResourcePatternBox::build()
 {
-    auto attributes = element()->collectPatternAttributes();
-    auto patternContentBox = attributes.patternContentElement()->box();
-    assert(patternContentBox && patternContentBox->isSVGResourcePatternBox());
-    m_patternContentBox = to<SVGResourcePatternBox>(patternContentBox);
-    m_patternTransform = attributes.patternTransform();
-    m_patternUnits = attributes.patternUnits();
-    m_patternContentUnits = attributes.patternContentUnits();
-    m_preserveAspectRatio = attributes.preserveAspectRatio();
-    m_viewBox = attributes.viewBox();
-
-    SVGLengthContext lengthContext(element(), attributes.patternUnits());
-    m_patternRect.x = lengthContext.valueForLength(attributes.x());
-    m_patternRect.y = lengthContext.valueForLength(attributes.y());
-    m_patternRect.w = lengthContext.valueForLength(attributes.width());
-    m_patternRect.h = lengthContext.valueForLength(attributes.height());
+    m_attributes = element()->collectPatternAttributes();
     SVGResourcePaintServerBox::build();
 }
 
@@ -272,8 +272,18 @@ void SVGResourcePatternBox::applyPaint(const SVGRenderState& state, float opacit
 {
     if(state.hasCycleReference(this))
         return;
-    Rect patternRect(m_patternRect);
-    if(m_patternUnits == SVGUnitsTypeObjectBoundingBox) {
+    auto patternContentBox = to<SVGResourcePatternBox>(m_attributes.patternContentElement()->box());
+    if(patternContentBox == nullptr)
+        return;
+    SVGLengthContext lengthContext(element(), m_attributes.patternUnits());
+    Rect patternRect = {
+        lengthContext.valueForLength(m_attributes.x()),
+        lengthContext.valueForLength(m_attributes.y()),
+        lengthContext.valueForLength(m_attributes.width()),
+        lengthContext.valueForLength(m_attributes.height())
+    };
+
+    if(m_attributes.patternUnits() == SVGUnitsTypeObjectBoundingBox) {
         auto& bbox = state.fillBoundingBox();
         patternRect.x = patternRect.x * bbox.w + bbox.x;
         patternRect.y = patternRect.y * bbox.h + bbox.y;
@@ -281,7 +291,7 @@ void SVGResourcePatternBox::applyPaint(const SVGRenderState& state, float opacit
         patternRect.h = patternRect.h * bbox.h;
     }
 
-    auto currentTransform = m_patternTransform * state.currentTransform();
+    auto currentTransform = m_attributes.patternTransform() * state.currentTransform();
     auto xScale = currentTransform.xScale();
     auto yScale = currentTransform.yScale();
 
@@ -291,19 +301,19 @@ void SVGResourcePatternBox::applyPaint(const SVGRenderState& state, float opacit
 
     GraphicsContext context(canvas);
     context.scale(xScale, yScale);
-    if(m_viewBox.isValid()) {
-        context.addTransform(m_preserveAspectRatio.getTransform(m_viewBox, patternRect.size()));
-    } else if(m_patternContentUnits == SVGUnitsTypeObjectBoundingBox) {
+    if(m_attributes.viewBox().isValid()) {
+        context.addTransform(m_attributes.preserveAspectRatio().getTransform(m_attributes.viewBox(), patternRect.size()));
+    } else if(m_attributes.patternContentUnits() == SVGUnitsTypeObjectBoundingBox) {
         auto& bbox = state.fillBoundingBox();
         context.scale(bbox.w, bbox.h);
     }
     {
         SVGBlendInfo blendInfo(m_clipper, m_masker, opacity, BlendMode::Normal);
         SVGRenderState newState(blendInfo, this, &state, SVGRenderMode::Painting, context, context.getTransform());
-        m_patternContentBox->renderChildren(newState);
+        patternContentBox->renderChildren(newState);
     }
 
-    Transform patternTransform(m_patternTransform);
+    Transform patternTransform(m_attributes.patternTransform());
     patternTransform.translate(patternRect.x, patternRect.y);
     patternTransform.scale(1.0 / xScale, 1.0 / yScale);
     state->setPattern(surface, patternTransform);
@@ -361,40 +371,40 @@ constexpr SpreadMethod toSpreadMethod(SVGSpreadMethodType spreadMethodType)
 
 void SVGResourceLinearGradientBox::build()
 {
-    auto attributes = element()->collectGradientAttributes();
-    m_gradientTransform = attributes.gradientTransform();
-    m_gradientStops = buildGradientStops(attributes.gradientContentElement());
-    m_gradientUnits = attributes.gradientUnits();
-    m_spreadMethod = toSpreadMethod(attributes.spreadMethod());
-
-    SVGLengthContext lengthContext(element(), attributes.gradientUnits());
-    m_values.x0 = lengthContext.valueForLength(attributes.x1());
-    m_values.y0 = lengthContext.valueForLength(attributes.y1());
-    m_values.x1 = lengthContext.valueForLength(attributes.x2());
-    m_values.y1 = lengthContext.valueForLength(attributes.y2());
+    m_attributes = element()->collectGradientAttributes();
     SVGResourceGradientBox::build();
 }
 
 void SVGResourceLinearGradientBox::applyPaint(const SVGRenderState& state, float opacity) const
 {
-    if(m_gradientStops.empty()) {
+    auto gradientStops = buildGradientStops(m_attributes.gradientContentElement());
+    if(gradientStops.empty()) {
         state->setColor(Color::Transparent);
         return;
     }
 
-    if((m_gradientStops.size() == 1 || (m_values.x0 == m_values.x1 && m_values.y0 == m_values.y1))) {
-        auto& lastStop = m_gradientStops.back();
+    SVGLengthContext lengthContext(element(), m_attributes.gradientUnits());
+    LinearGradientValues values = {
+        lengthContext.valueForLength(m_attributes.x1()),
+        lengthContext.valueForLength(m_attributes.y1()),
+        lengthContext.valueForLength(m_attributes.x2()),
+        lengthContext.valueForLength(m_attributes.y2())
+    };
+
+    if((gradientStops.size() == 1 || (values.x1 == values.x2 && values.y1 == values.y2))) {
+        auto& lastStop = gradientStops.back();
         state->setColor(lastStop.second.colorWithAlpha(opacity));
         return;
     }
 
-    Transform gradientTransform(m_gradientTransform);
-    if(m_gradientUnits == SVGUnitsTypeObjectBoundingBox) {
+    auto spreadMethod = toSpreadMethod(m_attributes.spreadMethod());
+    auto gradientTransform = m_attributes.gradientTransform();
+    if(m_attributes.gradientUnits() == SVGUnitsTypeObjectBoundingBox) {
         auto& bbox = state.fillBoundingBox();
         gradientTransform.postMultiply(Transform(bbox.w, 0, 0, bbox.h, bbox.x, bbox.y));
     }
 
-    state->setLinearGradient(m_values, m_gradientStops, gradientTransform, m_spreadMethod, opacity);
+    state->setLinearGradient(values, gradientStops, gradientTransform, spreadMethod, opacity);
 }
 
 SVGResourceRadialGradientBox::SVGResourceRadialGradientBox(SVGRadialGradientElement* element, const RefPtr<BoxStyle>& style)
@@ -404,41 +414,41 @@ SVGResourceRadialGradientBox::SVGResourceRadialGradientBox(SVGRadialGradientElem
 
 void SVGResourceRadialGradientBox::build()
 {
-    auto attributes = element()->collectGradientAttributes();
-    m_gradientTransform = attributes.gradientTransform();
-    m_gradientStops = buildGradientStops(attributes.gradientContentElement());
-    m_gradientUnits = attributes.gradientUnits();
-    m_spreadMethod = toSpreadMethod(attributes.spreadMethod());
-
-    SVGLengthContext lengthContext(element(), attributes.gradientUnits());
-    m_values.x0 = lengthContext.valueForLength(attributes.fx());
-    m_values.y0 = lengthContext.valueForLength(attributes.fy());
-    m_values.x1 = lengthContext.valueForLength(attributes.cx());
-    m_values.y1 = lengthContext.valueForLength(attributes.cy());
-    m_values.r1 = lengthContext.valueForLength(attributes.r());
+    m_attributes = element()->collectGradientAttributes();
     SVGResourceGradientBox::build();
 }
 
 void SVGResourceRadialGradientBox::applyPaint(const SVGRenderState& state, float opacity) const
 {
-    if(m_gradientStops.empty()) {
+    auto gradientStops = buildGradientStops(m_attributes.gradientContentElement());
+    if(gradientStops.empty()) {
         state->setColor(Color::Transparent);
         return;
     }
 
-    if(m_values.r1 == 0.f || m_gradientStops.size() == 1) {
-        auto& lastStop = m_gradientStops.back();
+    SVGLengthContext lengthContext(element(), m_attributes.gradientUnits());
+    RadialGradientValues values = {
+        lengthContext.valueForLength(m_attributes.fx()),
+        lengthContext.valueForLength(m_attributes.fy()),
+        lengthContext.valueForLength(m_attributes.cx()),
+        lengthContext.valueForLength(m_attributes.cy()),
+        lengthContext.valueForLength(m_attributes.r())
+    };
+
+    if(values.r == 0.f || gradientStops.size() == 1) {
+        auto& lastStop = gradientStops.back();
         state->setColor(lastStop.second.colorWithAlpha(opacity));
         return;
     }
 
-    Transform gradientTransform(m_gradientTransform);
-    if(m_gradientUnits == SVGUnitsTypeObjectBoundingBox) {
+    auto spreadMethod = toSpreadMethod(m_attributes.spreadMethod());
+    auto gradientTransform = m_attributes.gradientTransform();
+    if(m_attributes.gradientUnits() == SVGUnitsTypeObjectBoundingBox) {
         auto& bbox = state.fillBoundingBox();
         gradientTransform.postMultiply(Transform(bbox.w, 0, 0, bbox.h, bbox.x, bbox.y));
     }
 
-    state->setRadialGradient(m_values, m_gradientStops, gradientTransform, m_spreadMethod, opacity);
+    state->setRadialGradient(values, gradientStops, gradientTransform, spreadMethod, opacity);
 }
 
 } // namespace plutobook

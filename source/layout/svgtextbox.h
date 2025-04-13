@@ -64,6 +64,7 @@ public:
     const Rect& fillBoundingBox() const final;
     const Rect& strokeBoundingBox() const final { return fillBoundingBox(); }
     void render(const SVGRenderState& state) const final;
+    void layout() final;
     void build() final;
 
     const char* name() const final { return "SVGTextBox"; }

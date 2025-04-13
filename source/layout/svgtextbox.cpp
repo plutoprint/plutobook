@@ -48,6 +48,13 @@ void SVGTextBox::render(const SVGRenderState& state) const
     m_lineLayout.render(newState);
 }
 
+void SVGTextBox::layout()
+{
+    m_fillBoundingBox = Rect::Invalid;
+    m_lineLayout.layout();
+    SVGBoxModel::layout();
+}
+
 void SVGTextBox::build()
 {
     m_fill = element()->getPaintServer(style()->fill(), style()->fillOpacity());
