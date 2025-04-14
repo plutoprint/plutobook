@@ -35,10 +35,10 @@ const Rect& SVGGeometryBox::strokeBoundingBox() const
     m_strokeBoundingBox = fillBoundingBox();
     if(style()->hasStroke()) {
         auto strokeData = element()->getStrokeData(style());
-        float caplimit = strokeData.lineWidth() / 2.f;
+        auto caplimit = strokeData.lineWidth() / 2.f;
         if(strokeData.lineCap() == LineCap::Square)
             caplimit *= std::numbers::sqrt2;
-        float joinlimit = strokeData.lineWidth() / 2.f;
+        auto joinlimit = strokeData.lineWidth() / 2.f;
         if(strokeData.lineJoin() == LineJoin::Miter) {
             joinlimit *= strokeData.miterLimit();
         }
@@ -48,7 +48,7 @@ const Rect& SVGGeometryBox::strokeBoundingBox() const
 
     if(!m_markerPositions.empty()) {
         SVGLengthContext lengthContext(element());
-        float strokeWidth = lengthContext.valueForLength(style()->strokeWidth());
+        auto strokeWidth = lengthContext.valueForLength(style()->strokeWidth());
         for(const auto& markerPosition : m_markerPositions) {
             m_strokeBoundingBox.unite(markerPosition.markerBoundingBox(strokeWidth));
         }
@@ -79,7 +79,7 @@ void SVGGeometryBox::render(const SVGRenderState& state) const
 
         if(!m_markerPositions.empty()) {
             SVGLengthContext lengthContext(element());
-            float strokeWidth = lengthContext.valueForLength(style()->strokeWidth());
+            auto strokeWidth = lengthContext.valueForLength(style()->strokeWidth());
             for(const auto& markerPosition : m_markerPositions) {
                 markerPosition.renderMarker(newState, strokeWidth);
             }

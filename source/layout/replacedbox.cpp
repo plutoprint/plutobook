@@ -457,8 +457,8 @@ void ImageBox::paintReplaced(const PaintInfo& info, const Point& offset)
     auto rightWidth = borderRight() + paddingRight();
     auto clipRect = style()->getBorderRoundedRect(borderRect, true, true);
 
-    clipRect.shrink(topWidth, bottomWidth, leftWidth, rightWidth);
     borderRect.shrink(topWidth, bottomWidth, leftWidth, rightWidth);
+    clipRect.shrink(topWidth, bottomWidth, leftWidth, rightWidth);
     if(clipRect.isRounded()) {
         info->save();
         info->clipRoundedRect(clipRect);
