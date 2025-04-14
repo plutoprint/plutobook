@@ -80,7 +80,7 @@ void HTMLElement::buildFirstLetterPseudoBox(Box* parent)
         }
 
         if(auto textBox = to<TextBox>(child)) {
-            auto& text = textBox->text();
+            const auto& text = textBox->text();
             if(auto length = firstLetterTextLength(text)) {
                 auto newTextBox = new (heap()) TextBox(nullptr, style);
                 newTextBox->setText(text.substring(0, length));

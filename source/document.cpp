@@ -294,7 +294,7 @@ const HeapString& Element::lang() const
 
 const Attribute* Element::findAttribute(const GlobalString& name) const
 {
-    for(auto& attribute : m_attributes) {
+    for(const auto& attribute : m_attributes) {
         if(name == attribute.name()) {
             return &attribute;
         }
@@ -305,7 +305,7 @@ const Attribute* Element::findAttribute(const GlobalString& name) const
 
 bool Element::hasAttribute(const GlobalString& name) const
 {
-    for(auto& attribute : m_attributes) {
+    for(const auto& attribute : m_attributes) {
         if(name == attribute.name()) {
             return true;
         }
@@ -316,7 +316,7 @@ bool Element::hasAttribute(const GlobalString& name) const
 
 const HeapString& Element::getAttribute(const GlobalString& name) const
 {
-    for(auto& attribute : m_attributes) {
+    for(const auto& attribute : m_attributes) {
         if(name == attribute.name()) {
             return attribute.value();
         }
@@ -328,7 +328,7 @@ const HeapString& Element::getAttribute(const GlobalString& name) const
 void Element::setAttributes(const AttributeList& attributes)
 {
     assert(m_attributes.empty());
-    for(auto& attribute : attributes) {
+    for(const auto& attribute : attributes) {
         setAttribute(attribute);
     }
 }
@@ -400,7 +400,7 @@ CSSPropertyList Element::inlineStyle()
 CSSPropertyList Element::presentationAttributeStyle()
 {
     std::string output;
-    for(auto& attribute : attributes()) {
+    for(const auto& attribute : attributes()) {
         collectAttributeStyle(output, attribute.name(), attribute.value());
     }
 
@@ -468,7 +468,7 @@ void Element::serialize(std::ostream& o) const
 {
     o << '<';
     o << m_tagName;
-    for(auto& attribute : attributes()) {
+    for(const auto& attribute : attributes()) {
         o << ' ';
         o << attribute.name();
         o << '=';

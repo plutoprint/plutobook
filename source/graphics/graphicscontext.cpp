@@ -63,7 +63,7 @@ static cairo_matrix_t to_cairo_matrix(const Transform& transform)
 
 static void set_cairo_stroke_data(cairo_t* cr, const StrokeData& strokeData)
 {
-    auto& dashes = strokeData.dashArray();
+    const auto& dashes = strokeData.dashArray();
     cairo_set_line_width(cr, strokeData.lineWidth());
     cairo_set_miter_limit(cr, strokeData.miterLimit());
     cairo_set_dash(cr, dashes.data(), dashes.size(), strokeData.dashOffset());
@@ -118,7 +118,7 @@ static void set_cairo_path(cairo_t* cr, const Path& path)
 
 static void set_cairo_gradient(cairo_pattern_t* pattern, const GradientStops& stops, const Transform& transform, SpreadMethod method, float opacity)
 {
-    for(auto& stop : stops) {
+    for(const auto& stop : stops) {
         auto red = stop.second.red() / 255.f;
         auto green = stop.second.green() / 255.f;
         auto blue = stop.second.blue() / 255.f;

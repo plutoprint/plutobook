@@ -23,7 +23,7 @@ float LineBox::height() const
         return style()->fontHeight();
     if(auto box = to<BoxFrame>(m_box))
         return box->height();
-    auto& box = to<BoxModel>(*m_box);
+    const auto& box = to<BoxModel>(*m_box);
     return style()->fontHeight() + box.borderAndPaddingHeight();
 }
 
@@ -337,8 +337,8 @@ void FlowLineBox::computeMaxAscentAndDescent(float& maxAscent, float& maxDescent
         float ascent = 0.f;
         float descent = 0.f;
         if(child->isTextLineBox() && !style()->hasLineHeight()) {
-            auto& line = to<TextLineBox>(*child);
-            auto& shape = line.shape();
+            const auto& line = to<TextLineBox>(*child);
+            const auto& shape = line.shape();
             shape.maxAscentAndDescent(ascent, descent);
         }
 
@@ -381,7 +381,7 @@ float FlowLineBox::placeInHorizontalDirection(float offsetX, const BlockFlowBox*
     offsetX += paddingLeft() + borderLeft();
     for(auto child : m_children) {
         if(child->box()->isPositioned()) {
-            auto& box = to<BoxFrame>(*child->box());
+            const auto& box = to<BoxFrame>(*child->box());
             if(box.style()->isOriginalDisplayBlockType()) {
                 box.layer()->setStaticLeft(block->startOffsetForContent());
             } else if(box.parentBox()->style()->isRightToLeftDirection()) {
@@ -437,7 +437,7 @@ void FlowLineBox::placeInVerticalDirection(float y, float maxHeight, float maxAs
         rootLine->setY(y + maxAscent - baselinePosition());
     for(auto child : m_children) {
         if(child->box()->isPositioned()) {
-            auto& box = to<BoxFrame>(*child->box());
+            const auto& box = to<BoxFrame>(*child->box());
             if(!rootLine->isEmptyLine() && box.style()->isOriginalDisplayBlockType()) {
                 box.layer()->setStaticTop(y + maxHeight);
             } else {
@@ -468,7 +468,7 @@ void FlowLineBox::placeInVerticalDirection(float y, float maxHeight, float maxAs
             assert(child->isTextLineBox() || child->isFlowLineBox());
             auto top = child->baselinePosition() - child->style()->fontAscent();
             if(child->isFlowLineBox()) {
-                auto& box = to<BoxModel>(*child->box());
+                const auto& box = to<BoxModel>(*child->box());
                 top -= box.borderTop() + box.paddingTop();
             }
 

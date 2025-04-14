@@ -169,7 +169,7 @@ void LineItemsBuilder::enterBidi(Box* box, Direction direction, UChar enterLtr, 
 void LineItemsBuilder::exitBidi(Box* box)
 {
     while(!m_bidiControls.empty()) {
-        auto& bidi = m_bidiControls.back();
+        const auto& bidi = m_bidiControls.back();
         if(box != bidi.box)
             break;
         appendOpaqueItem(LineItem::Type::BidiControl, nullptr, bidi.exit);
@@ -215,7 +215,7 @@ LineItem& LineItemsBuilder::appendTextItem(LineItem::Type type, Box* box, const 
 void LineItemsBuilder::removeTrailingCollapsibleSpaceIfExists()
 {
     for(int index = m_data.items.size() - 1; index >= 0; --index) {
-        auto& item = m_data.items[index];
+        const auto& item = m_data.items[index];
         if(item.collapseType() == LineItem::CollapseType::OpaqueToCollapsing)
             continue;
         if(item.collapseType() == LineItem::CollapseType::Collapsible) {
@@ -229,7 +229,7 @@ void LineItemsBuilder::removeTrailingCollapsibleSpaceIfExists()
 void LineItemsBuilder::restoreTrailingCollapsibleSpaceIfRemoved()
 {
     for(int index = m_data.items.size() - 1; index >= 0; --index) {
-        auto& item = m_data.items[index];
+        const auto& item = m_data.items[index];
         if(item.collapseType() == LineItem::CollapseType::OpaqueToCollapsing)
             continue;
         if(item.collapseType() == LineItem::CollapseType::Collapsed) {
@@ -302,13 +302,13 @@ int LineItemsBuilder::insertBreakOpportunityAfterLeadingPreservedSpaces(Box* box
 
 void LineItemsBuilder::appendHardBreak(Box* box)
 {
-    for(auto& bidi : m_bidiControls | std::views::reverse) {
+    for(const auto& bidi : m_bidiControls | std::views::reverse) {
         appendOpaqueItem(LineItem::Type::BidiControl, box, bidi.exit);
     }
 
     auto& item = appendItem(LineItem::Type::HardBreakOpportunity, box, kNewlineCharacter);
     item.setCollapseType(LineItem::CollapseType::Collapsible);
-    for(auto& bidi : m_bidiControls) {
+    for(const auto& bidi : m_bidiControls) {
         appendOpaqueItem(LineItem::Type::BidiControl, box, bidi.enter);
     }
 }
@@ -360,7 +360,7 @@ void LineItemsBuilder::appendTextCollapseWhitespace(Box* box, const UString& tex
         if(index == text.length())
             collapseType = LineItem::CollapseType::Collapsible;
         for(int itemIndex = m_data.items.size() - 1; itemIndex >= 0; --itemIndex) {
-            auto& item = m_data.items[itemIndex];
+            const auto& item = m_data.items[itemIndex];
             if(item.collapseType() == LineItem::CollapseType::OpaqueToCollapsing)
                 continue;
             if(item.collapseType() == LineItem::CollapseType::NotCollapsible) {
@@ -384,7 +384,7 @@ void LineItemsBuilder::appendTextCollapseWhitespace(Box* box, const UString& tex
         }
     } else {
         for(int itemIndex = m_data.items.size() - 1; itemIndex >= 0; --itemIndex) {
-            auto& item = m_data.items[itemIndex];
+            const auto& item = m_data.items[itemIndex];
             if(item.collapseType() == LineItem::CollapseType::OpaqueToCollapsing)
                 continue;
             if(item.collapseType() == LineItem::CollapseType::Collapsible && item.hasCollapsibleNewline()
@@ -599,7 +599,7 @@ const LineInfo& LineBreaker::nextLine()
     m_line.setLineStyle(m_currentStyle);
 
     for(; m_leadingFloatsEndIndex < m_data.items.size(); ++m_leadingFloatsEndIndex) {
-        auto& item = m_data.items[m_leadingFloatsEndIndex];
+        const auto& item = m_data.items[m_leadingFloatsEndIndex];
         if(item.type() == LineItem::Type::NormalText && !item.length())
             continue;
         if(item.type() != LineItem::Type::Floating)
@@ -618,7 +618,7 @@ const LineInfo& LineBreaker::nextLine()
             break;
         }
 
-        auto& item = m_data.items[m_itemIndex];
+        const auto& item = m_data.items[m_itemIndex];
         if(item.type() == LineItem::Type::NormalText) {
             handleNormalText(item);
             continue;
@@ -676,15 +676,15 @@ const LineInfo& LineBreaker::nextLine()
     }
 
     if(!m_line.isEmptyLine() && !m_line.isLastLine()) {
-        auto& runs = m_line.runs();
+        const auto& runs = m_line.runs();
         auto index = runs.size();
         while(index > 0) {
-            auto& run = runs[--index];
+            const auto& run = runs[--index];
             if(run->type() != LineItem::Type::InlineStart) {
                 auto nextIndex = index + 1;
                 if(nextIndex == runs.size())
                     break;
-                auto& nextRun = runs[nextIndex];
+                const auto& nextRun = runs[nextIndex];
                 auto nextTextOffset = nextRun.startOffset;
                 auto nextItemIndex = nextRun.itemIndex;
                 rewindOverflow(nextIndex);
@@ -698,7 +698,7 @@ const LineInfo& LineBreaker::nextLine()
     auto remainingWidth = m_availableWidth - m_currentWidth;
     if(m_hasLeaderText && remainingWidth > 0.f && !m_line.isEmptyLine()) {
         uint32_t leaderCount = 0;
-        for(auto& run : m_line.runs()) {
+        for(const auto& run : m_line.runs()) {
             if(run.hasOnlyTrailingSpaces)
                 break;
             if(run->type() == LineItem::Type::LeaderText) {
@@ -722,7 +722,7 @@ const LineInfo& LineBreaker::nextLine()
     if(blockStyle->textAlign() == TextAlign::Justify && remainingWidth > 0.f && !m_line.isLastLine()) {
         std::vector<uint32_t> expansionOpportunities;
         uint32_t expansionOpportunityCount = 0;
-        for(auto& run : m_line.runs()) {
+        for(const auto& run : m_line.runs()) {
             if(run.hasOnlyTrailingSpaces)
                 break;
             if(run->type() == LineItem::Type::NormalText || run->type() == LineItem::Type::TabulationText) {
@@ -754,7 +754,7 @@ const LineInfo& LineBreaker::nextLine()
         auto& logicalRuns = m_line.runs();
         std::vector<UBiDiLevel> levels;
         levels.reserve(logicalRuns.size());
-        for(auto& run : logicalRuns) {
+        for(const auto& run : logicalRuns) {
             if(run.hasOnlyTrailingSpaces) {
                 levels.push_back(paragraphLevel);
             } else {
@@ -827,7 +827,7 @@ void LineBreaker::handleEmptyText(const LineItem& item)
 
 void LineBreaker::handleLeaderText(const LineItem& item)
 {
-    auto& shape = item.shapeText(m_data);
+    const auto& shape = item.shapeText(m_data);
     auto& run = addItemRun(item);
     run.shape = TextShapeView(shape);
     run.width = shape->width();
@@ -866,7 +866,7 @@ void LineBreaker::handleInlineStart(const LineItem& item)
 
 void LineBreaker::handleInlineEnd(const LineItem& item)
 {
-    auto& box = to<InlineBox>(*item.box());
+    const auto& box = to<InlineBox>(*item.box());
     auto& run = addItemRun(item);
     run.width += box.marginRight();
     run.width += box.paddingRight();
@@ -961,7 +961,7 @@ void LineBreaker::handleHardBreak(const LineItem& item)
     run.hasOnlyTrailingSpaces = true;
     moveToNextOf(item);
     while(m_itemIndex < m_data.items.size()) {
-        auto& item = m_data.items[m_itemIndex];
+        const auto& item = m_data.items[m_itemIndex];
         if(item.type() == LineItem::Type::NormalText && !item.length()) {
             handleEmptyText(item);
         } if(item.type() == LineItem::Type::InlineEnd) {
@@ -1001,7 +1001,7 @@ void LineBreaker::handleBidiControl(const LineItem& item)
             return;
         }
 
-        auto& run = addItemRun(item);
+        const auto& run = addItemRun(item);
         assert(!run.canBreakAfter);
         moveToNextOf(item);
     }
@@ -1148,14 +1148,14 @@ void LineBreaker::rewindOverflow(uint32_t newSize)
 {
     auto& runs = m_line.runs();
     assert(newSize > 0 && newSize < runs.size());
-    auto& run = runs[newSize];
+    const auto& run = runs[newSize];
     if(run->type() == LineItem::Type::NormalText
         || run->type() == LineItem::Type::InlineEnd) {
         setCurrentStyle(run->box()->style());
     } else {
         auto index = newSize;
         while(true) {
-            auto& run = runs[--index];
+            const auto& run = runs[--index];
             auto box = run->box();
             if(run->type() == LineItem::Type::NormalText
                 || run->type() == LineItem::Type::InlineStart) {
@@ -1179,7 +1179,7 @@ void LineBreaker::rewindOverflow(uint32_t newSize)
         runs.pop_back();
     moveToNextOf(runs.back());
     m_currentWidth = 0.f;
-    for(auto& run : runs) {
+    for(const auto& run : runs) {
         m_currentWidth += run.width;
     }
 }
@@ -1204,7 +1204,7 @@ void LineBreaker::handleOverflow()
 
         widthToRewind -= run.width;
         if(run->type() == LineItem::Type::NormalText && widthToRewind < 0.f && run.mayBreakInside) {
-            auto& shape = run->shapeText(m_data);
+            const auto& shape = run->shapeText(m_data);
             auto itemAvailableWidth = std::min(-widthToRewind, run.width - 1);
             breakText(run, *run, shape, itemAvailableWidth);
             if(run.width <= itemAvailableWidth) {
@@ -1267,7 +1267,7 @@ void LineBuilder::buildLine(FragmentBuilder* fragmentainer, const LineInfo& info
         m_lineIndex += 1;
     }
 
-    for(auto& run : info.runs()) {
+    for(const auto& run : info.runs()) {
         switch(run->type()) {
         case LineItem::Type::NormalText:
         case LineItem::Type::TabulationText:
@@ -1290,20 +1290,20 @@ void LineBuilder::buildLine(FragmentBuilder* fragmentainer, const LineInfo& info
     }
 
     if(!info.isEmptyLine()) {
-        for(auto& run : info.runs()) {
+        for(const auto& run : info.runs()) {
             if(run->type() == LineItem::Type::InlineStart
                 || run->type() == LineItem::Type::InlineEnd) {
-                auto& box = to<InlineBox>(*run->box());
-                auto& lines = box.lines();
+                const auto& box = to<InlineBox>(*run->box());
+                const auto& lines = box.lines();
                 if(run->type() == LineItem::Type::InlineStart) {
-                    auto& firstLine = lines.front();
+                    const auto& firstLine = lines.front();
                     if(box.style()->direction() == Direction::Ltr) {
                         firstLine->setHasLeftEdge(true);
                     } else {
                         firstLine->setHasRightEdge(true);
                     }
                 } else {
-                    auto& lastLine = lines.back();
+                    const auto& lastLine = lines.back();
                     if(box.style()->direction() == Direction::Ltr) {
                         lastLine->setHasRightEdge(true);
                     } else {
@@ -1316,7 +1316,7 @@ void LineBuilder::buildLine(FragmentBuilder* fragmentainer, const LineInfo& info
 
     if(m_lines.empty())
         return;
-    auto& rootLine = m_lines.back();
+    const auto& rootLine = m_lines.back();
     if(m_lineIndex != rootLine->lineIndex())
         return;
     auto startOffset = m_block->leftOffsetForLine(m_block->height(), info.isFirstLine());
@@ -1331,11 +1331,11 @@ void LineBuilder::buildLine(FragmentBuilder* fragmentainer, const LineInfo& info
 
 static bool needsLineBox(const InlineBox* box, size_t lineIndex)
 {
-    auto& lines = box->lines();
+    const auto& lines = box->lines();
     if(!lines.empty()) {
-        auto& lastLine = lines.back();
+        const auto& lastLine = lines.back();
         if(lineIndex == lastLine->lineIndex()) {
-            auto& children = lastLine->parentLine()->children();
+            const auto& children = lastLine->parentLine()->children();
             return children.back() != lastLine.get();
         }
     }
@@ -1355,7 +1355,7 @@ void LineBuilder::addLineBox(LineBox* childLine)
     while(true) {
         if(m_block == parentBox) {
             if(!m_lines.empty()) {
-                auto& line = m_lines.back();
+                const auto& line = m_lines.back();
                 if(m_lineIndex == line->lineIndex()) {
                     if(!m_parentLine)
                         m_parentLine = line.get();
@@ -1377,7 +1377,7 @@ void LineBuilder::addLineBox(LineBox* childLine)
         auto box = to<InlineBox>(parentBox);
         auto& lines = box->lines();
         if(!needsLineBox(box, m_lineIndex)) {
-            auto& line = lines.back();
+            const auto& line = lines.back();
             if(!m_parentLine)
                 m_parentLine = line.get();
             line->addChild(childLine);
@@ -1442,7 +1442,7 @@ void LineLayout::updateWidth()
 
 void LineLayout::updateOverflowRect()
 {
-    for(auto& line : m_lines) {
+    for(const auto& line : m_lines) {
         line->updateOverflowRect(line->lineTop(), line->lineBottom());
         m_block->addOverflowRect(line->overflowTop(), line->overflowBottom(), line->overflowLeft(), line->overflowRight());
     }
@@ -1458,7 +1458,7 @@ void LineLayout::computeIntrinsicWidths(float& minWidth, float& maxWidth) const
 
     float inlineMinWidth = 0.f;
     float inlineMaxWidth = 0.f;
-    for(auto& item : m_data.items) {
+    for(const auto& item : m_data.items) {
         if(item.type() == LineItem::Type::NormalText || item.type() == LineItem::Type::TabulationText || item.type() == LineItem::Type::LeaderText) {
             if(item.type() == LineItem::Type::NormalText && !item.length())
                 continue;
@@ -1468,7 +1468,7 @@ void LineLayout::computeIntrinsicWidths(float& minWidth, float& maxWidth) const
                 indentWidth = 0.f;
             }
 
-            auto& shape = item.shapeText(m_data);
+            const auto& shape = item.shapeText(m_data);
             if(currentStyle->autoWrap()) {
                 if(item.type() == LineItem::Type::LeaderText) {
                     inlineMinWidth += shape->width();
@@ -1508,7 +1508,7 @@ void LineLayout::computeIntrinsicWidths(float& minWidth, float& maxWidth) const
                 currentStyle = child.parentBox()->style();
             }
         } else if(item.type() == LineItem::Type::Floating || item.type() == LineItem::Type::Replaced) {
-            auto& child = to<BoxFrame>(*item.box());
+            const auto& child = to<BoxFrame>(*item.box());
             auto childStyle = child.style();
             if(item.type() == LineItem::Type::Floating) {
                 if((floating == Float::Left && childStyle->isClearLeft())
@@ -1583,7 +1583,7 @@ void LineLayout::computeIntrinsicWidths(float& minWidth, float& maxWidth) const
 void LineLayout::layout(FragmentBuilder* fragmentainer)
 {
     if(!m_lines.empty()) {
-        for(auto& line : m_lines) {
+        for(const auto& line : m_lines) {
             line->setY(0.f);
             auto blockHeight = line->alignInVerticalDirection(fragmentainer, m_block->height());
             if(!line->isEmptyLine()) {
@@ -1683,7 +1683,7 @@ void LineLayout::build()
 void LineLayout::paint(const PaintInfo& info, const Point& offset, PaintPhase phase)
 {
     if(phase == PaintPhase::Contents || phase == PaintPhase::Outlines) {
-        for(auto& line : m_lines) {
+        for(const auto& line : m_lines) {
             line->paint(info, offset, phase);
         }
     }

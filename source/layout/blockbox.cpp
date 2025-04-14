@@ -628,7 +628,7 @@ void BlockFlowBox::updateOverflowRect()
 {
     BlockBox::updateOverflowRect();
     if(m_floatingBoxes) {
-        for(auto& item : *m_floatingBoxes) {
+        for(const auto& item : *m_floatingBoxes) {
             auto child = item.box();
             if(!item.isIntruding()) {
                 addOverflowRect(child, item.x() + child->marginLeft(), item.y() + child->marginTop());
@@ -736,10 +736,10 @@ std::optional<float> BlockFlowBox::firstLineBaseline() const
 {
     if(!isChildrenInline())
         return BlockBox::firstLineBaseline();
-    auto& lines = m_lineLayout->lines();
+    const auto& lines = m_lineLayout->lines();
     if(lines.empty())
         return std::nullopt;
-    auto& firstLine = lines.front();
+    const auto& firstLine = lines.front();
     return firstLine->y() + style()->fontAscent();
 }
 
@@ -747,10 +747,10 @@ std::optional<float> BlockFlowBox::lastLineBaseline() const
 {
     if(!isChildrenInline())
         return BlockBox::lastLineBaseline();
-    auto& lines = m_lineLayout->lines();
+    const auto& lines = m_lineLayout->lines();
     if(lines.empty())
         return std::nullopt;
-    auto& lastLine = lines.back();
+    const auto& lastLine = lines.back();
     return lastLine->y() + style()->fontAscent();
 }
 
@@ -845,7 +845,7 @@ void BlockFlowBox::addIntrudingFloats(BlockFlowBox* prevBlock, float offsetX, fl
 {
     if(!prevBlock->containsFloats())
         return;
-    for(auto& item : *prevBlock->floatingBoxes()) {
+    for(const auto& item : *prevBlock->floatingBoxes()) {
         if(item.bottom() > offsetY && !containsFloat(item.box())) {
             FloatingBox floatingBox(item.box());
             floatingBox.setX(offsetX + marginLeft());
@@ -868,7 +868,7 @@ void BlockFlowBox::addOverhangingFloats(BlockFlowBox* childBlock)
 {
     if(!childBlock->containsFloats() || childBlock->avoidsFloats())
         return;
-    for(auto& item : *childBlock->floatingBoxes()) {
+    for(const auto& item : *childBlock->floatingBoxes()) {
         auto floatBottom = item.bottom() + childBlock->y();
         if(floatBottom > height() && !containsFloat(item.box())) {
             FloatingBox floatingBox(item.box());
@@ -945,7 +945,7 @@ bool BlockFlowBox::containsFloat(Box* box) const
 {
     if(!m_floatingBoxes)
         return false;
-    for(auto& floatingBox : *m_floatingBoxes) {
+    for(const auto& floatingBox : *m_floatingBoxes) {
         if(box == floatingBox.box()) {
             return true;
         }
@@ -959,7 +959,7 @@ float BlockFlowBox::leftFloatBottom() const
     if(!m_floatingBoxes)
         return 0;
     float bottom = 0;
-    for(auto& floatingBox : *m_floatingBoxes) {
+    for(const auto& floatingBox : *m_floatingBoxes) {
         if(floatingBox.isPlaced() && floatingBox.type() == Float::Left) {
             bottom = std::max(bottom, floatingBox.bottom());
         }
@@ -973,7 +973,7 @@ float BlockFlowBox::rightFloatBottom() const
     if(!m_floatingBoxes)
         return 0;
     float bottom = 0;
-    for(auto& floatingBox : *m_floatingBoxes) {
+    for(const auto& floatingBox : *m_floatingBoxes) {
         if(floatingBox.isPlaced() && floatingBox.type() == Float::Right) {
             bottom = std::max(bottom, floatingBox.bottom());
         }
@@ -987,7 +987,7 @@ float BlockFlowBox::floatBottom() const
     if(!m_floatingBoxes)
         return 0;
     float bottom = 0;
-    for(auto& floatingBox : *m_floatingBoxes) {
+    for(const auto& floatingBox : *m_floatingBoxes) {
         if(floatingBox.isPlaced()) {
             bottom = std::max(bottom, floatingBox.bottom());
         }
@@ -1001,7 +1001,7 @@ float BlockFlowBox::nextFloatBottom(float y) const
     if(!m_floatingBoxes)
         return 0;
     std::optional<float> bottom;
-    for(auto& floatingBox : *m_floatingBoxes) {
+    for(const auto& floatingBox : *m_floatingBoxes) {
         assert(floatingBox.isPlaced());
         auto floatBottom = floatingBox.bottom();
         if(floatBottom > y) {
@@ -1016,7 +1016,7 @@ float BlockFlowBox::leftOffsetForFloat(float y, float offset, bool indent, float
 {
     if(heightRemaining) *heightRemaining = 1;
     if(m_floatingBoxes) {
-        for(auto& item : *m_floatingBoxes) {
+        for(const auto& item : *m_floatingBoxes) {
             if(item.type() != Float::Left || !item.isPlaced())
                 continue;
             if(item.y() <= y && item.bottom() > y && item.right() > offset) {
@@ -1041,7 +1041,7 @@ float BlockFlowBox::rightOffsetForFloat(float y, float offset, bool indent, floa
 {
     if(heightRemaining) *heightRemaining = 1;
     if(m_floatingBoxes) {
-        for(auto& item : *m_floatingBoxes) {
+        for(const auto& item : *m_floatingBoxes) {
             if(item.type() != Float::Right || !item.isPlaced())
                 continue;
             if(item.y() <= y && item.bottom() > y && item.x() < offset) {
@@ -1584,7 +1584,7 @@ void BlockFlowBox::paintFloats(const PaintInfo& info, const Point& offset)
 {
     if(!m_floatingBoxes)
         return;
-    for(auto& item : *m_floatingBoxes) {
+    for(const auto& item : *m_floatingBoxes) {
         auto child = item.box();
         if(!item.isIntruding() && !child->hasLayer()) {
             Point adjustedOffset = {

@@ -215,7 +215,7 @@ static std::string buildVariationSettings(const FontDataDescription& description
     variations.emplace_front(wghtTag, description.request.weight);
     variations.emplace_front(wdthTag, description.request.width);
     variations.emplace_front(slntTag, description.request.slope);
-    for(auto& variation : description.variations) {
+    for(const auto& variation : description.variations) {
         variations.push_front(variation);
     }
 
@@ -223,7 +223,7 @@ static std::string buildVariationSettings(const FontDataDescription& description
     variations.unique();
 
     std::string output;
-    for(auto& [tag, value] : variations) {
+    for(const auto& [tag, value] : variations) {
         const char name[4] = {
             static_cast<char>(0xFF & (tag.value() >> 24)),
             static_cast<char>(0xFF & (tag.value() >> 16)),
@@ -271,7 +271,7 @@ RefPtr<FontData> SegmentedFontFace::getFontData(const FontDataDescription& descr
     if(fontData != nullptr)
         return fontData;
     FontDataSet fonts;
-    for(auto& face : m_faces) {
+    for(const auto& face : m_faces) {
         if(auto font = face->getFontData(description)) {
             fonts.insert(std::move(font));
         }
@@ -435,7 +435,7 @@ SimpleFontData::~SimpleFontData()
 
 const SimpleFontData* SegmentedFontData::getFontData(uint32_t codepoint) const
 {
-    for(auto& font : m_fonts) {
+    for(const auto& font : m_fonts) {
         if(auto fontData = font->getFontData(codepoint)) {
             return fontData;
         }
@@ -694,7 +694,7 @@ Heap* Font::heap() const
 
 const SimpleFontData* Font::getFontData(uint32_t codepoint) const
 {
-    for(auto& font : m_fonts) {
+    for(const auto& font : m_fonts) {
         if(auto fontData = font->getFontData(codepoint)) {
             return fontData;
         }
@@ -713,13 +713,13 @@ Font::Font(Document* document, const FontDescription& description)
     , m_description(description)
     , m_fonts(document->heap())
 {
-    for(auto& family : description.families) {
+    for(const auto& family : description.families) {
         if(auto font = document->getFontData(family, description.data)) {
             m_fonts.push_back(std::move(font));
         }
     }
 
-    for(auto& font : m_fonts) {
+    for(const auto& font : m_fonts) {
         if(auto fontData = font->getFontData(' ')) {
             m_primaryFont = fontData;
             break;

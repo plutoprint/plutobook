@@ -59,7 +59,7 @@ static bool identMatches(const char* name, int length, const std::string_view& i
 template<typename T, unsigned int N>
 static std::optional<T> matchIdent(const CSSIdentEntry<T>(&table)[N], const std::string_view& ident)
 {
-    for(auto& entry : table) {
+    for(const auto& entry : table) {
         if(identMatches(entry.name, entry.length, ident)) {
             return entry.value;
         }
@@ -1180,7 +1180,7 @@ static CSSPropertyID csspropertyid(const std::string_view& name)
     }
 
     std::string_view lowerName(buffer, name.length());
-    auto it = std::lower_bound(table, std::end(table), lowerName, [](auto& item, auto& name) { return item.name < name; });
+    auto it = std::lower_bound(table, std::end(table), lowerName, [](const auto& item, const auto& name) { return item.name < name; });
     if(it != std::end(table) && it->name == lowerName)
         return it->value;
     return CSSPropertyID::Unknown;

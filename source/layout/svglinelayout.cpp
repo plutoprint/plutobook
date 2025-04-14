@@ -91,7 +91,7 @@ static float calculateTextAnchorOffset(const BoxStyle* style, float width)
 
 void SVGTextFragmentsBuilder::layout()
 {
-    for(auto& item : m_data.items) {
+    for(const auto& item : m_data.items) {
         if(item.type() == LineItem::Type::InlineStart || item.type() == LineItem::Type::InlineEnd)
             continue;
         if(item.type() == LineItem::Type::NormalText) {
@@ -242,7 +242,7 @@ void SVGTextFragmentsBuilder::handleTextItem(const LineItem& item)
     if(item.length() == 0)
         return;
     SVGTextFragment fragment(item);
-    auto& shape = item.shapeText(m_data);
+    const auto& shape = item.shapeText(m_data);
     auto recordTextFragment = [&](auto startOffset, auto endOffset) {
         assert(endOffset > startOffset && (startOffset >= item.startOffset() && startOffset <= item.endOffset()));
         if(shape->direction() == Direction::Ltr) {
@@ -300,7 +300,7 @@ void SVGTextFragmentsBuilder::handleBidiControl(const LineItem& item)
 {
     assert(item.length() == 1);
     if(m_positions.contains(m_characterOffset)) {
-        auto& position = m_positions.at(m_characterOffset);
+        const auto& position = m_positions.at(m_characterOffset);
         m_x = position.x.value_or(m_x) + position.dx.value_or(0);
         m_y = position.y.value_or(m_y) + position.dy.value_or(0);
         if(position.x || position.y) {
@@ -325,7 +325,7 @@ SVGLineLayout::SVGLineLayout(SVGTextBox* block)
 Rect SVGLineLayout::boundingRect() const
 {
     Rect boundingRect = Rect::Invalid;
-    for(auto& fragment : m_fragments) {
+    for(const auto& fragment : m_fragments) {
         if(fragment.item.type() == LineItem::Type::BidiControl)
             continue;
         assert(fragment.item.type() == LineItem::Type::NormalText);
@@ -378,7 +378,7 @@ static void paintTextDecorations(GraphicsContext& context, const Point& offset, 
 
 void SVGLineLayout::render(const SVGRenderState& state) const
 {
-    for(auto& fragment : m_fragments) {
+    for(const auto& fragment : m_fragments) {
         if(fragment.item.type() == LineItem::Type::BidiControl)
             continue;
         assert(fragment.item.type() == LineItem::Type::NormalText);
@@ -404,11 +404,11 @@ void SVGLineLayout::render(const SVGRenderState& state) const
 
 static void fillCharacterPositions(const SVGTextPosition& position, SVGCharacterPositions& characterPositions)
 {
-    auto& xList = position.element->x();
-    auto& yList = position.element->y();
-    auto& dxList = position.element->dx();
-    auto& dyList = position.element->dy();
-    auto& rotateList = position.element->rotate();
+    const auto& xList = position.element->x();
+    const auto& yList = position.element->y();
+    const auto& dxList = position.element->dx();
+    const auto& dyList = position.element->dy();
+    const auto& rotateList = position.element->rotate();
 
     auto xListSize = xList.size();
     auto yListSize = yList.size();
@@ -455,7 +455,7 @@ void SVGLineLayout::layout()
     SVGCharacterPositions characterPositions;
 
     fillCharacterPositions(wholePosition, characterPositions);
-    for(auto& position : m_textPositions) {
+    for(const auto& position : m_textPositions) {
         fillCharacterPositions(position, characterPositions);
     }
 
@@ -501,7 +501,7 @@ void SVGLineLayout::build()
     if(m_data.isBidiEnabled && !m_data.items.empty()) {
         std::vector<UBiDiLevel> levels;
         levels.reserve(m_data.items.size());
-        for(auto& item : m_data.items) {
+        for(const auto& item : m_data.items) {
             levels.push_back(item.bidiLevel());
         }
 

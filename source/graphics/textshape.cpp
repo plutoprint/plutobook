@@ -119,7 +119,7 @@ constexpr bool treatAsSpace(UChar cc)
 
 RefPtr<TextShape> TextShape::createForText(const UString& text, Direction direction, const BoxStyle* style)
 {
-    auto& font = style->font();
+    const auto& font = style->font();
     auto fontFeatures = style->fontFeatures();
     auto letterSpacing = style->letterSpacing();
     auto wordSpacing = style->wordSpacing();
@@ -166,8 +166,8 @@ RefPtr<TextShape> TextShape::createForText(const UString& text, Direction direct
         auto hbScript = hb_script_from_string(scriptName, -1);
 
         std::vector<hb_feature_t> hbFeatures;
-        for(auto& features : {fontFeatures, fontData->features()}) {
-            for(auto& feature : features) {
+        for(const auto& features : {fontFeatures, fontData->features()}) {
+            for(const auto& feature : features) {
                 hb_feature_t hbFeature;
                 hbFeature.tag = feature.first.value();
                 hbFeature.value = feature.second;
@@ -190,10 +190,10 @@ RefPtr<TextShape> TextShape::createForText(const UString& text, Direction direct
         float width = 0.f;
         TextShapeRunGlyphDataList glyphs(heap, numGlyphs);
         for(size_t index = 0; index < numGlyphs; ++index) {
-            auto& glyphData = glyphs[index];
-            auto& glyphInfo = glyphInfos[index];
-            auto& glyphPosition = glyphPositions[index];
+            const auto& glyphInfo = glyphInfos[index];
+            const auto& glyphPosition = glyphPositions[index];
 
+            auto& glyphData = glyphs[index];
             glyphData.glyphIndex = glyphInfo.codepoint;
             glyphData.characterIndex = glyphInfo.cluster;
             glyphData.xOffset = HB_TO_FLT(glyphPosition.x_offset);
@@ -225,7 +225,7 @@ RefPtr<TextShape> TextShape::createForText(const UString& text, Direction direct
 
 RefPtr<TextShape> TextShape::createForTabs(const UString& text, Direction direction, const BoxStyle* style)
 {
-    auto& font = style->font();
+    const auto& font = style->font();
     auto heap = style->heap();
 
     float totalWidth = 0.f;
@@ -267,7 +267,7 @@ uint32_t TextShape::offsetForPosition(float position) const
     if(position <= 0.f)
         return currentOffset;
     float currentPosition = 0;
-    for(auto& run : m_runs) {
+    for(const auto& run : m_runs) {
         if(m_direction == Direction::Rtl)
             currentOffset -= run->length();
         auto runPosition = position - currentPosition;
@@ -290,7 +290,7 @@ float TextShape::positionForOffset(uint32_t offset) const
 
     float position = 0;
     float currentPosition = 0;
-    for(auto& run : m_runs) {
+    for(const auto& run : m_runs) {
         if(currentOffset < run->length()) {
             position = currentPosition + run->positionForVisualOffset(currentOffset, m_direction);
             break;
@@ -321,11 +321,11 @@ uint32_t TextShapeView::expansionOpportunityCount() const
         return 0;
     uint32_t count = 0;
     auto direction = m_shape->direction();
-    auto& text = m_shape->text();
-    for(auto& run : m_shape->runs()) {
-        auto& glyphs = run->glyphs();
+    const auto& text = m_shape->text();
+    for(const auto& run : m_shape->runs()) {
+        const auto& glyphs = run->glyphs();
         for(uint32_t glyphIndex = 0; glyphIndex < glyphs.size(); ++glyphIndex) {
-            auto& glyph = glyphs[glyphIndex];
+            const auto& glyph = glyphs[glyphIndex];
             auto characterIndex = glyph.characterIndex + run->offset();
             if((direction == Direction::Ltr && characterIndex >= m_endOffset)
                 || (direction == Direction::Rtl && characterIndex < m_startOffset)) {
@@ -350,10 +350,10 @@ void TextShapeView::maxAscentAndDescent(float& maxAscent, float& maxDescent) con
     if(m_startOffset == m_endOffset)
         return;
     auto direction = m_shape->direction();
-    for(auto& run : m_shape->runs()) {
-        auto& glyphs = run->glyphs();
+    for(const auto& run : m_shape->runs()) {
+        const auto& glyphs = run->glyphs();
         for(uint32_t glyphIndex = 0; glyphIndex < glyphs.size(); ++glyphIndex) {
-            auto& glyph = glyphs[glyphIndex];
+            const auto& glyph = glyphs[glyphIndex];
             auto characterIndex = glyph.characterIndex + run->offset();
             if((direction == Direction::Ltr && characterIndex >= m_endOffset)
                 || (direction == Direction::Rtl && characterIndex < m_startOffset)) {
@@ -375,11 +375,11 @@ float TextShapeView::width(float expansion) const
         return 0.f;
     float width = 0.f;
     auto direction = m_shape->direction();
-    auto& text = m_shape->text();
-    for(auto& run : m_shape->runs()) {
-        auto& glyphs = run->glyphs();
+    const auto& text = m_shape->text();
+    for(const auto& run : m_shape->runs()) {
+        const auto& glyphs = run->glyphs();
         for(uint32_t glyphIndex = 0; glyphIndex < glyphs.size(); ++glyphIndex) {
-            auto& glyph = glyphs[glyphIndex];
+            const auto& glyph = glyphs[glyphIndex];
             auto characterIndex = glyph.characterIndex + run->offset();
             if((direction == Direction::Ltr && characterIndex >= m_endOffset)
                 || (direction == Direction::Rtl && characterIndex < m_startOffset)) {
@@ -406,13 +406,13 @@ float TextShapeView::draw(GraphicsContext& context, const Point& origin, float e
     auto canvas = context.canvas();
     auto direction = m_shape->direction();
     auto offset = origin;
-    auto& text = m_shape->text();
-    for(auto& run : m_shape->runs()) {
-        auto& glyphs = run->glyphs();
+    const auto& text = m_shape->text();
+    for(const auto& run : m_shape->runs()) {
+        const auto& glyphs = run->glyphs();
         auto glyphBuffer = cairo_glyph_allocate(glyphs.size());
         uint32_t numGlyphs = 0;
         for(uint32_t glyphIndex = 0; glyphIndex < glyphs.size(); ++glyphIndex) {
-            auto& glyph = glyphs[glyphIndex];
+            const auto& glyph = glyphs[glyphIndex];
             auto characterIndex = glyph.characterIndex + run->offset();
             if((direction == Direction::Ltr && characterIndex >= m_endOffset)
                 || (direction == Direction::Rtl && characterIndex < m_startOffset)) {

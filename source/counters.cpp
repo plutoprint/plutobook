@@ -26,7 +26,7 @@ void Counters::push()
 
 void Counters::pop()
 {
-    for(auto& name : m_scopes.back()) {
+    for(const auto& name : m_scopes.back()) {
         m_values[name].pop_back();
     }
 
@@ -77,10 +77,10 @@ void Counters::update(const Box* box)
         auto counters = box->style()->get(id);
         if(counters == nullptr || counters->id() == CSSValueID::None)
             continue;
-        for(auto& counter : to<CSSListValue>(*counters)) {
-            auto& pair = to<CSSPairValue>(*counter);
-            auto& name = to<CSSCustomIdentValue>(*pair.first());
-            auto& value = to<CSSIntegerValue>(*pair.second());
+        for(const auto& counter : to<CSSListValue>(*counters)) {
+            const auto& pair = to<CSSPairValue>(*counter);
+            const auto& name = to<CSSCustomIdentValue>(*pair.first());
+            const auto& value = to<CSSIntegerValue>(*pair.second());
             hasListItemCounter |= listItemGlo == name.value();
             hasPageCounter |= pageGlo == name.value();
             if(m_pageCount && pagesGlo == name.value())

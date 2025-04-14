@@ -457,7 +457,7 @@ ListStylePosition BoxStyle::listStylePosition() const
     auto value = get(CSSPropertyID::ListStylePosition);
     if(value == nullptr)
         return ListStylePosition::Outside;
-    auto& ident = to<CSSIdentValue>(*value);
+    const auto& ident = to<CSSIdentValue>(*value);
     switch(ident.value()) {
     case CSSValueID::Inside:
         return ListStylePosition::Inside;
@@ -499,7 +499,7 @@ BackgroundRepeat BoxStyle::backgroundRepeat() const
     auto value = get(CSSPropertyID::BackgroundRepeat);
     if(value == nullptr)
         return BackgroundRepeat::Repeat;
-    auto& ident = to<CSSIdentValue>(*value);
+    const auto& ident = to<CSSIdentValue>(*value);
     switch(ident.value()) {
     case CSSValueID::Repeat:
         return BackgroundRepeat::Repeat;
@@ -537,7 +537,7 @@ BackgroundAttachment BoxStyle::backgroundAttachment() const
     auto value = get(CSSPropertyID::BackgroundAttachment);
     if(value == nullptr)
         return BackgroundAttachment::Scroll;
-    auto& ident = to<CSSIdentValue>(*value);
+    const auto& ident = to<CSSIdentValue>(*value);
     switch(ident.value()) {
     case CSSValueID::Scroll:
         return BackgroundAttachment::Scroll;
@@ -568,7 +568,7 @@ BackgroundSize BoxStyle::backgroundSize() const
         }
     }
 
-    auto& pair = to<CSSPairValue>(*value);
+    const auto& pair = to<CSSPairValue>(*value);
     auto width = convertLengthOrPercentOrAuto(*pair.first());
     auto height = convertLengthOrPercentOrAuto(*pair.second());
     return BackgroundSize(width, height);
@@ -579,7 +579,7 @@ BackgroundPosition BoxStyle::backgroundPosition() const
     auto value = get(CSSPropertyID::BackgroundPosition);
     if(value == nullptr)
         return BackgroundPosition();
-    auto& pair = to<CSSPairValue>(*value);
+    const auto& pair = to<CSSPairValue>(*value);
     auto horizontal = convertPositionLength(CSSValueID::Left, CSSValueID::Right, *pair.first());
     auto vertical = convertPositionLength(CSSValueID::Top, CSSValueID::Bottom, *pair.second());
     return BackgroundPosition(horizontal, vertical);
@@ -590,7 +590,7 @@ TableLayout BoxStyle::tableLayout() const
     auto value = get(CSSPropertyID::TableLayout);
     if(value == nullptr)
         return TableLayout::Auto;
-    auto& ident = to<CSSIdentValue>(*value);
+    const auto& ident = to<CSSIdentValue>(*value);
     switch(ident.value()) {
     case CSSValueID::Auto:
         return TableLayout::Auto;
@@ -624,7 +624,7 @@ TextAnchor BoxStyle::textAnchor() const
     auto value = get(CSSPropertyID::TextAnchor);
     if(value == nullptr)
         return TextAnchor::Start;
-    auto& ident = to<CSSIdentValue>(*value);
+    const auto& ident = to<CSSIdentValue>(*value);
     switch(ident.value()) {
     case CSSValueID::Start:
         return TextAnchor::Start;
@@ -644,7 +644,7 @@ TextTransform BoxStyle::textTransform() const
     auto value = get(CSSPropertyID::TextTransform);
     if(value == nullptr)
         return TextTransform::None;
-    auto& ident = to<CSSIdentValue>(*value);
+    const auto& ident = to<CSSIdentValue>(*value);
     switch(ident.value()) {
     case CSSValueID::None:
         return TextTransform::None;
@@ -666,7 +666,7 @@ TextOverflow BoxStyle::textOverflow() const
     auto value = get(CSSPropertyID::TextOverflow);
     if(value == nullptr)
         return TextOverflow::Clip;
-    auto& ident = to<CSSIdentValue>(*value);
+    const auto& ident = to<CSSIdentValue>(*value);
     switch(ident.value()) {
     case CSSValueID::Clip:
         return TextOverflow::Clip;
@@ -695,8 +695,8 @@ TextDecorationLine BoxStyle::textDecorationLine() const
     if(value == nullptr || value->id() == CSSValueID::None)
         return TextDecorationLine::None;
     TextDecorationLine decorations = TextDecorationLine::None;
-    for(auto& decoration : to<CSSListValue>(*value)) {
-        auto& ident = to<CSSIdentValue>(*decoration);
+    for(const auto& decoration : to<CSSListValue>(*value)) {
+        const auto& ident = to<CSSIdentValue>(*decoration);
         switch(ident.value()) {
         case CSSValueID::Underline:
             decorations |= TextDecorationLine::Underline;
@@ -720,7 +720,7 @@ TextDecorationStyle BoxStyle::textDecorationStyle() const
     auto value = get(CSSPropertyID::TextDecorationStyle);
     if(value == nullptr)
         return TextDecorationStyle::Solid;
-    auto& ident = to<CSSIdentValue>(*value);
+    const auto& ident = to<CSSIdentValue>(*value);
     switch(ident.value()) {
     case CSSValueID::Solid:
         return TextDecorationStyle::Solid;
@@ -752,7 +752,7 @@ Hyphens BoxStyle::hyphens() const
     auto value = get(CSSPropertyID::Hyphens);
     if(value == nullptr)
         return Hyphens::Manual;
-    auto& ident = to<CSSIdentValue>(*value);
+    const auto& ident = to<CSSIdentValue>(*value);
     switch(ident.value()) {
     case CSSValueID::None:
         return Hyphens::None;
@@ -772,7 +772,7 @@ TabSize BoxStyle::tabSize() const
     auto value = get(CSSPropertyID::TabSize);
     if(value == nullptr)
         return TabSize(TabSize::Type::Space, 8.0);
-    auto& length = to<CSSLengthValue>(*value);
+    const auto& length = to<CSSLengthValue>(*value);
     if(length.units() == CSSLengthValue::Units::None)
         return TabSize(TabSize::Type::Space, length.value());
     return TabSize(TabSize::Type::Length, convertLengthValue(length));
@@ -809,7 +809,7 @@ float BoxStyle::lineHeight() const
         return fontLineSpacing();
     if(auto percent = to<CSSPercentValue>(value))
         return percent->value() * fontSize() / 100.f;
-    auto& length = to<CSSLengthValue>(*value);
+    const auto& length = to<CSSLengthValue>(*value);
     if(length.units() == CSSLengthValue::Units::None)
         return length.value() * fontSize();
     return convertLengthValue(length);
@@ -824,7 +824,7 @@ Overflow BoxStyle::overflow() const
         return Overflow::Visible;
     }
 
-    auto& ident = to<CSSIdentValue>(*value);
+    const auto& ident = to<CSSIdentValue>(*value);
     switch(ident.value()) {
     case CSSValueID::Auto:
         return Overflow::Auto;
@@ -862,7 +862,7 @@ LengthRect BoxStyle::clip() const
     auto value = get(CSSPropertyID::Clip);
     if(value == nullptr || value->id() == CSSValueID::Auto)
         return LengthRect(Length::Auto);
-    auto& rect = to<CSSRectValue>(*value);
+    const auto& rect = to<CSSRectValue>(*value);
     auto left = convertLengthOrPercentOrAuto(*rect.left());
     auto right = convertLengthOrPercentOrAuto(*rect.right());
     auto top = convertLengthOrPercentOrAuto(*rect.top());
@@ -907,7 +907,7 @@ FlexDirection BoxStyle::flexDirection() const
     auto value = get(CSSPropertyID::FlexDirection);
     if(value == nullptr)
         return FlexDirection::Row;
-    auto& ident = to<CSSIdentValue>(*value);
+    const auto& ident = to<CSSIdentValue>(*value);
     switch(ident.value()) {
     case CSSValueID::Row:
         return FlexDirection::Row;
@@ -929,7 +929,7 @@ FlexWrap BoxStyle::flexWrap() const
     auto value = get(CSSPropertyID::FlexWrap);
     if(value == nullptr)
         return FlexWrap::Nowrap;
-    auto& ident = to<CSSIdentValue>(*value);
+    const auto& ident = to<CSSIdentValue>(*value);
     switch(ident.value()) {
     case CSSValueID::Nowrap:
         return FlexWrap::Nowrap;
@@ -1058,7 +1058,7 @@ ColumnSpan BoxStyle::columnSpan() const
     auto value = get(CSSPropertyID::ColumnSpan);
     if(value == nullptr)
         return ColumnSpan::None;
-    auto& ident = to<CSSIdentValue>(*value);
+    const auto& ident = to<CSSIdentValue>(*value);
     switch(ident.value()) {
     case CSSValueID::None:
         return ColumnSpan::None;
@@ -1076,7 +1076,7 @@ ColumnFill BoxStyle::columnFill() const
     auto value = get(CSSPropertyID::ColumnFill);
     if(value == nullptr)
         return ColumnFill::Balance;
-    auto& ident = to<CSSIdentValue>(*value);
+    const auto& ident = to<CSSIdentValue>(*value);
     switch(ident.value()) {
     case CSSValueID::Auto:
         return ColumnFill::Auto;
@@ -1147,9 +1147,9 @@ PageSize BoxStyle::getPageSize(const PageSize& deviceSize) const
         }
     }
 
-    auto& pair = to<CSSPairValue>(*value);
+    const auto& pair = to<CSSPairValue>(*value);
     if(auto size = to<CSSIdentValue>(pair.first())) {
-        auto& orientation = to<CSSIdentValue>(*pair.second());
+        const auto& orientation = to<CSSIdentValue>(*pair.second());
         auto pageSize = convertPageSize(*size);
         switch(orientation.value()) {
         case CSSValueID::Portrait:
@@ -1253,7 +1253,7 @@ LengthList BoxStyle::strokeDasharray() const
         return LengthList();
 
     LengthList dashes;
-    for(auto& dash : to<CSSListValue>(*value)) {
+    for(const auto& dash : to<CSSListValue>(*value)) {
         dashes.push_back(convertLengthOrPercent(*dash));
     }
 
@@ -1265,7 +1265,7 @@ LineCap BoxStyle::strokeLinecap() const
     auto value = get(CSSPropertyID::StrokeLinecap);
     if(value == nullptr)
         return LineCap::Butt;
-    auto& ident = to<CSSIdentValue>(*value);
+    const auto& ident = to<CSSIdentValue>(*value);
     switch(ident.value()) {
     case CSSValueID::Butt:
         return LineCap::Butt;
@@ -1285,7 +1285,7 @@ LineJoin BoxStyle::strokeLinejoin() const
     auto value = get(CSSPropertyID::StrokeLinejoin);
     if(value == nullptr)
         return LineJoin::Miter;
-    auto& ident = to<CSSIdentValue>(*value);
+    const auto& ident = to<CSSIdentValue>(*value);
     switch(ident.value()) {
     case CSSValueID::Miter:
         return LineJoin::Miter;
@@ -1345,7 +1345,7 @@ AlignmentBaseline BoxStyle::alignmentBaseline() const
     auto value = get(CSSPropertyID::AlignmentBaseline);
     if(value == nullptr)
         return AlignmentBaseline::Baseline;
-    auto& ident = to<CSSIdentValue>(*value);
+    const auto& ident = to<CSSIdentValue>(*value);
     switch(ident.value()) {
     case CSSValueID::Auto:
         return AlignmentBaseline::Auto;
@@ -1383,7 +1383,7 @@ DominantBaseline BoxStyle::dominantBaseline() const
     auto value = get(CSSPropertyID::DominantBaseline);
     if(value == nullptr)
         return DominantBaseline::Auto;
-    auto& ident = to<CSSIdentValue>(*value);
+    const auto& ident = to<CSSIdentValue>(*value);
     switch(ident.value()) {
     case CSSValueID::Auto:
         return DominantBaseline::Auto;
@@ -1458,7 +1458,7 @@ Point BoxStyle::getTransformOrigin(float width, float height) const
     auto value = get(CSSPropertyID::TransformOrigin);
     if(value == nullptr)
         return Point(width * 50.f / 100.f, height * 50.f / 100.f);
-    auto& pair = to<CSSPairValue>(*value);
+    const auto& pair = to<CSSPairValue>(*value);
     auto horizontal = convertPositionLength(CSSValueID::Left, CSSValueID::Right, *pair.first());
     auto vertical = convertPositionLength(CSSValueID::Top, CSSValueID::Bottom, *pair.second());
     return Point(horizontal.calc(width), vertical.calc(height));
@@ -1471,8 +1471,8 @@ Transform BoxStyle::getTransform(float width, float height) const
         return Transform();
     auto origin = getTransformOrigin(width, height);
     auto transform = Transform::translated(origin.x, origin.y);
-    for(auto& operation : to<CSSListValue>(*value)) {
-        auto& function = to<CSSFunctionValue>(*operation);
+    for(const auto& operation : to<CSSListValue>(*value)) {
+        const auto& function = to<CSSFunctionValue>(*operation);
         switch(function.id()) {
         case CSSValueID::Translate: {
             float firstValue = convertLengthOrPercent(width, *function.at(0));
@@ -1590,9 +1590,9 @@ const HeapString& BoxStyle::getQuote(bool open, size_t depth) const
         }
     }
 
-    auto& list = to<CSSListValue>(*value);
-    auto& pair = to<CSSPairValue>(*list.at(std::min(depth, list.size() - 1)));
-    auto& quote = open ? pair.first() : pair.second();
+    const auto& list = to<CSSListValue>(*value);
+    const auto& pair = to<CSSPairValue>(*list.at(std::min(depth, list.size() - 1)));
+    const auto& quote = open ? pair.first() : pair.second();
     return to<CSSStringValue>(*quote).value();
 }
 
@@ -1767,7 +1767,7 @@ void BoxStyle::inheritFrom(const BoxStyle& parentStyle)
     m_emptyCells = parentStyle.emptyCells();
     m_borderCollapse = parentStyle.borderCollapse();
     m_color = parentStyle.color();
-    for(auto& [id, value] : parentStyle.properties()) {
+    for(const auto& [id, value] : parentStyle.properties()) {
         switch(id) {
         case CSSPropertyID::Color:
         case CSSPropertyID::Direction:
@@ -1900,7 +1900,7 @@ private:
 
 FontFeaturesBuilder::FontFeaturesBuilder(const CSSPropertyMap& properties)
 {
-    for(auto& [id, value] : properties) {
+    for(const auto& [id, value] : properties) {
         switch(id) {
         case CSSPropertyID::FontKerning:
             m_kerning = value;
@@ -1947,7 +1947,7 @@ void FontFeaturesBuilder::buildKerning(FontFeatureList& features) const
     if(m_kerning == nullptr)
         return;
     constexpr FontTag kernTag("kern");
-    auto& ident = to<CSSIdentValue>(*m_kerning);
+    const auto& ident = to<CSSIdentValue>(*m_kerning);
     switch(ident.id()) {
     case CSSValueID::Auto:
         break;
@@ -1983,8 +1983,8 @@ void FontFeaturesBuilder::buildVariantLigatures(FontFeatureList& features) const
         return;
     }
 
-    for(auto& value : to<CSSListValue>(*m_variantLigatures)) {
-        auto& ident = to<CSSIdentValue>(*value);
+    for(const auto& value : to<CSSListValue>(*m_variantLigatures)) {
+        const auto& ident = to<CSSIdentValue>(*value);
         switch(ident.id()) {
         case CSSValueID::CommonLigatures:
             features.emplace_front(ligaTag, 1);
@@ -2024,7 +2024,7 @@ void FontFeaturesBuilder::buildVariantPosition(FontFeatureList& features) const
         return;
     constexpr FontTag subsTag("subs");
     constexpr FontTag supsTag("sups");
-    auto& ident = to<CSSIdentValue>(*m_variantPosition);
+    const auto& ident = to<CSSIdentValue>(*m_variantPosition);
     switch(ident.id()) {
     case CSSValueID::Normal:
         break;
@@ -2049,7 +2049,7 @@ void FontFeaturesBuilder::buildVariantCaps(FontFeatureList& features) const
     constexpr FontTag c2pcTag("c2pc");
     constexpr FontTag unicTag("unic");
     constexpr FontTag titlTag("titl");
-    auto& ident = to<CSSIdentValue>(*m_variantCaps);
+    const auto& ident = to<CSSIdentValue>(*m_variantCaps);
     switch(ident.id()) {
     case CSSValueID::Normal:
         break;
@@ -2095,8 +2095,8 @@ void FontFeaturesBuilder::buildVariantNumeric(FontFeatureList& features) const
     constexpr FontTag afrcTag("afrc");
     constexpr FontTag ordnTag("ordn");
     constexpr FontTag zeroTag("zero");
-    for(auto& value : to<CSSListValue>(*m_variantNumeric)) {
-        auto& ident = to<CSSIdentValue>(*value);
+    for(const auto& value : to<CSSListValue>(*m_variantNumeric)) {
+        const auto& ident = to<CSSIdentValue>(*value);
         switch(ident.id()) {
         case CSSValueID::LiningNums:
             features.emplace_front(lnumTag, 1);
@@ -2146,8 +2146,8 @@ void FontFeaturesBuilder::buildVariantEastAsian(FontFeatureList& features) const
     constexpr FontTag fwidTag("fwid");
     constexpr FontTag pwidTag("pwid");
     constexpr FontTag rubyTag("ruby");
-    for(auto& value : to<CSSListValue>(*m_variantEastAsian)) {
-        auto& ident = to<CSSIdentValue>(*value);
+    for(const auto& value : to<CSSListValue>(*m_variantEastAsian)) {
+        const auto& ident = to<CSSIdentValue>(*value);
         switch(ident.id()) {
         case CSSValueID::Jis78:
             features.emplace_front(jp78Tag, 1);
@@ -2191,8 +2191,8 @@ void FontFeaturesBuilder::buildFeatureSettings(FontFeatureList& features) const
         return;
     }
 
-    for(auto& value : to<CSSListValue>(*m_featureSettings)) {
-        auto& feature = to<CSSFontFeatureValue>(*value);
+    for(const auto& value : to<CSSListValue>(*m_featureSettings)) {
+        const auto& feature = to<CSSFontFeatureValue>(*value);
         features.emplace_front(feature.tag(), feature.value());
     }
 }
@@ -2210,7 +2210,7 @@ float BoxStyle::convertLengthValue(const CSSValue& value) const
 float BoxStyle::convertLineWidth(const CSSValue& value) const
 {
     if(is<CSSIdentValue>(value)) {
-        auto& ident = to<CSSIdentValue>(value);
+        const auto& ident = to<CSSIdentValue>(value);
         switch(ident.value()) {
         case CSSValueID::Thin:
             return 1.0;
@@ -2229,7 +2229,7 @@ float BoxStyle::convertLineWidth(const CSSValue& value) const
 float BoxStyle::convertSpacing(const CSSValue& value) const
 {
     if(is<CSSIdentValue>(value)) {
-        auto& ident = to<CSSIdentValue>(value);
+        const auto& ident = to<CSSIdentValue>(value);
         assert(ident.value() == CSSValueID::Normal);
         return 0.f;
     }
@@ -2240,7 +2240,7 @@ float BoxStyle::convertSpacing(const CSSValue& value) const
 float BoxStyle::convertLengthOrPercent(float maximum, const CSSValue& value) const
 {
     if(is<CSSPercentValue>(value)) {
-        auto& percent = to<CSSPercentValue>(value);
+        const auto& percent = to<CSSPercentValue>(value);
         return percent.value() * maximum / 100.f;
     }
 
@@ -2250,7 +2250,7 @@ float BoxStyle::convertLengthOrPercent(float maximum, const CSSValue& value) con
 std::optional<float> BoxStyle::convertLengthOrAuto(const CSSValue& value) const
 {
     if(is<CSSIdentValue>(value)) {
-        auto& ident = to<CSSIdentValue>(value);
+        const auto& ident = to<CSSIdentValue>(value);
         assert(ident.value() == CSSValueID::Auto);
         return std::nullopt;
     }
@@ -2261,7 +2261,7 @@ std::optional<float> BoxStyle::convertLengthOrAuto(const CSSValue& value) const
 std::optional<float> BoxStyle::convertLengthOrNormal(const CSSValue& value) const
 {
     if(is<CSSIdentValue>(value)) {
-        auto& ident = to<CSSIdentValue>(value);
+        const auto& ident = to<CSSIdentValue>(value);
         assert(ident.value() == CSSValueID::Normal);
         return std::nullopt;
     }
@@ -2277,7 +2277,7 @@ Length BoxStyle::convertLength(const CSSValue& value) const
 Length BoxStyle::convertLengthOrPercent(const CSSValue& value) const
 {
     if(is<CSSPercentValue>(value)) {
-        auto& percent = to<CSSPercentValue>(value);
+        const auto& percent = to<CSSPercentValue>(value);
         return Length(Length::Type::Percent, percent.value());
     }
 
@@ -2287,7 +2287,7 @@ Length BoxStyle::convertLengthOrPercent(const CSSValue& value) const
 Length BoxStyle::convertLengthOrPercentOrAuto(const CSSValue& value) const
 {
     if(is<CSSIdentValue>(value)) {
-        auto& ident = to<CSSIdentValue>(value);
+        const auto& ident = to<CSSIdentValue>(value);
         assert(ident.value() == CSSValueID::Auto);
         return Length::Auto;
     }
@@ -2298,7 +2298,7 @@ Length BoxStyle::convertLengthOrPercentOrAuto(const CSSValue& value) const
 Length BoxStyle::convertLengthOrPercentOrNone(const CSSValue& value) const
 {
     if(is<CSSIdentValue>(value)) {
-        auto& ident = to<CSSIdentValue>(value);
+        const auto& ident = to<CSSIdentValue>(value);
         assert(ident.value() == CSSValueID::None);
         return Length::None;
     }
@@ -2309,7 +2309,7 @@ Length BoxStyle::convertLengthOrPercentOrNone(const CSSValue& value) const
 Length BoxStyle::convertWidthOrHeightLength(const CSSValue& value) const
 {
     if(is<CSSIdentValue>(value)) {
-        auto& ident = to<CSSIdentValue>(value);
+        const auto& ident = to<CSSIdentValue>(value);
         switch(ident.value()) {
         case CSSValueID::None:
             return Length::None;
@@ -2332,7 +2332,7 @@ Length BoxStyle::convertWidthOrHeightLength(const CSSValue& value) const
 Length BoxStyle::convertPositionLength(CSSValueID min, CSSValueID max, const CSSValue& value) const
 {
     if(is<CSSIdentValue>(value)) {
-        auto& ident = to<CSSIdentValue>(value);
+        const auto& ident = to<CSSIdentValue>(value);
         constexpr auto mid = CSSValueID::Center;
         if(min == ident.value())
             return Length(Length::Type::Percent, 0);
@@ -2348,7 +2348,7 @@ Length BoxStyle::convertPositionLength(CSSValueID min, CSSValueID max, const CSS
 
 LengthSize BoxStyle::convertBorderRadius(const CSSValue& value) const
 {
-    auto& pair = to<CSSPairValue>(value);
+    const auto& pair = to<CSSPairValue>(value);
     auto horizontal = convertLengthOrPercent(*pair.first());
     auto vertical = convertLengthOrPercent(*pair.second());
     return LengthSize(horizontal, vertical);
@@ -2357,7 +2357,7 @@ LengthSize BoxStyle::convertBorderRadius(const CSSValue& value) const
 Color BoxStyle::convertColor(const CSSValue& value) const
 {
     if(is<CSSIdentValue>(value)) {
-        auto& ident = to<CSSIdentValue>(value);
+        const auto& ident = to<CSSIdentValue>(value);
         assert(ident.value() == CSSValueID::CurrentColor);
         return m_color;
     }
@@ -2370,13 +2370,13 @@ Paint BoxStyle::convertPaint(const CSSValue& value) const
     if(value.id() == CSSValueID::None)
         return Paint();
     if(is<CSSLocalUrlValue>(value)) {
-        auto& url = to<CSSLocalUrlValue>(value);
+        const auto& url = to<CSSLocalUrlValue>(value);
         return Paint(url.value());
     }
 
     if(is<CSSPairValue>(value)) {
-        auto& pair = to<CSSPairValue>(value);
-        auto& url = to<CSSLocalUrlValue>(*pair.first());
+        const auto& pair = to<CSSPairValue>(value);
+        const auto& url = to<CSSLocalUrlValue>(*pair.first());
         if(auto ident = to<CSSIdentValue>(pair.second())) {
             if(ident->value() == CSSValueID::None) {
                 return Paint(url.value());
@@ -2397,7 +2397,7 @@ RefPtr<Image> BoxStyle::convertImage(const CSSValue& value) const
 RefPtr<Image> BoxStyle::convertImageOrNone(const CSSValue& value) const
 {
     if(is<CSSIdentValue>(value)) {
-        auto& ident = to<CSSIdentValue>(value);
+        const auto& ident = to<CSSIdentValue>(value);
         assert(ident.value() == CSSValueID::None);
         return nullptr;
     }
@@ -2407,7 +2407,7 @@ RefPtr<Image> BoxStyle::convertImageOrNone(const CSSValue& value) const
 
 Display BoxStyle::convertDisplay(const CSSValue& value)
 {
-    auto& ident = to<CSSIdentValue>(value);
+    const auto& ident = to<CSSIdentValue>(value);
     switch(ident.value()) {
     case CSSValueID::None:
         return Display::None;
@@ -2452,7 +2452,7 @@ Display BoxStyle::convertDisplay(const CSSValue& value)
 
 Position BoxStyle::convertPosition(const CSSValue& value)
 {
-    auto& ident = to<CSSIdentValue>(value);
+    const auto& ident = to<CSSIdentValue>(value);
     switch(ident.value()) {
     case CSSValueID::Static:
         return Position::Static;
@@ -2471,7 +2471,7 @@ Position BoxStyle::convertPosition(const CSSValue& value)
 
 Float BoxStyle::convertFloat(const CSSValue& value)
 {
-    auto& ident = to<CSSIdentValue>(value);
+    const auto& ident = to<CSSIdentValue>(value);
     switch(ident.value()) {
     case CSSValueID::None:
         return Float::None;
@@ -2488,7 +2488,7 @@ Float BoxStyle::convertFloat(const CSSValue& value)
 
 Clear BoxStyle::convertClear(const CSSValue& value)
 {
-    auto& ident = to<CSSIdentValue>(value);
+    const auto& ident = to<CSSIdentValue>(value);
     switch(ident.value()) {
     case CSSValueID::None:
         return Clear::None;
@@ -2508,7 +2508,7 @@ Clear BoxStyle::convertClear(const CSSValue& value)
 VerticalAlignType BoxStyle::convertVerticalAlignType(const CSSValue& value)
 {
     if(is<CSSIdentValue>(value)) {
-        auto& ident = to<CSSIdentValue>(value);
+        const auto& ident = to<CSSIdentValue>(value);
         switch(ident.value()) {
         case CSSValueID::Baseline:
             return VerticalAlignType::Baseline;
@@ -2536,7 +2536,7 @@ VerticalAlignType BoxStyle::convertVerticalAlignType(const CSSValue& value)
 
 Direction BoxStyle::convertDirection(const CSSValue& value)
 {
-    auto& ident = to<CSSIdentValue>(value);
+    const auto& ident = to<CSSIdentValue>(value);
     switch(ident.value()) {
     case CSSValueID::Ltr:
         return Direction::Ltr;
@@ -2551,7 +2551,7 @@ Direction BoxStyle::convertDirection(const CSSValue& value)
 
 UnicodeBidi BoxStyle::convertUnicodeBidi(const CSSValue& value)
 {
-    auto& ident = to<CSSIdentValue>(value);
+    const auto& ident = to<CSSIdentValue>(value);
     switch(ident.value()) {
     case CSSValueID::Normal:
         return UnicodeBidi::Normal;
@@ -2572,7 +2572,7 @@ UnicodeBidi BoxStyle::convertUnicodeBidi(const CSSValue& value)
 
 Visibility BoxStyle::convertVisibility(const CSSValue& value)
 {
-    auto& ident = to<CSSIdentValue>(value);
+    const auto& ident = to<CSSIdentValue>(value);
     switch(ident.value()) {
     case CSSValueID::Visible:
         return Visibility::Visible;
@@ -2589,7 +2589,7 @@ Visibility BoxStyle::convertVisibility(const CSSValue& value)
 
 LineStyle BoxStyle::convertLineStyle(const CSSValue& value)
 {
-    auto& ident = to<CSSIdentValue>(value);
+    const auto& ident = to<CSSIdentValue>(value);
     switch(ident.value()) {
     case CSSValueID::None:
         return LineStyle::None;
@@ -2620,7 +2620,7 @@ LineStyle BoxStyle::convertLineStyle(const CSSValue& value)
 
 BackgroundBox BoxStyle::convertBackgroundBox(const CSSValue& value)
 {
-    auto& ident = to<CSSIdentValue>(value);
+    const auto& ident = to<CSSIdentValue>(value);
     switch(ident.value()) {
     case CSSValueID::BorderBox:
         return BackgroundBox::BorderBox;
@@ -2637,7 +2637,7 @@ BackgroundBox BoxStyle::convertBackgroundBox(const CSSValue& value)
 
 TextAlign BoxStyle::convertTextAlign(const CSSValue& value)
 {
-    auto& ident = to<CSSIdentValue>(value);
+    const auto& ident = to<CSSIdentValue>(value);
     switch(ident.value()) {
     case CSSValueID::Left:
         return TextAlign::Left;
@@ -2660,7 +2660,7 @@ TextAlign BoxStyle::convertTextAlign(const CSSValue& value)
 
 WhiteSpace BoxStyle::convertWhiteSpace(const CSSValue& value)
 {
-    auto& ident = to<CSSIdentValue>(value);
+    const auto& ident = to<CSSIdentValue>(value);
     switch(ident.value()) {
     case CSSValueID::Normal:
         return WhiteSpace::Normal;
@@ -2681,7 +2681,7 @@ WhiteSpace BoxStyle::convertWhiteSpace(const CSSValue& value)
 
 WordBreak BoxStyle::convertWordBreak(const CSSValue& value)
 {
-    auto& ident = to<CSSIdentValue>(value);
+    const auto& ident = to<CSSIdentValue>(value);
     switch(ident.value()) {
     case CSSValueID::Normal:
         return WordBreak::Normal;
@@ -2700,7 +2700,7 @@ WordBreak BoxStyle::convertWordBreak(const CSSValue& value)
 
 BoxSizing BoxStyle::convertBoxSizing(const CSSValue& value)
 {
-    auto& ident = to<CSSIdentValue>(value);
+    const auto& ident = to<CSSIdentValue>(value);
     switch(ident.value()) {
     case CSSValueID::BorderBox:
         return BoxSizing::BorderBox;
@@ -2715,7 +2715,7 @@ BoxSizing BoxStyle::convertBoxSizing(const CSSValue& value)
 
 BlendMode BoxStyle::convertBlendMode(const CSSValue& value)
 {
-    auto& ident = to<CSSIdentValue>(value);
+    const auto& ident = to<CSSIdentValue>(value);
     switch(ident.value()) {
     case CSSValueID::Normal:
         return BlendMode::Normal;
@@ -2758,7 +2758,7 @@ BlendMode BoxStyle::convertBlendMode(const CSSValue& value)
 
 MaskType BoxStyle::convertMaskType(const CSSValue& value)
 {
-    auto& ident = to<CSSIdentValue>(value);
+    const auto& ident = to<CSSIdentValue>(value);
     switch(ident.value()) {
     case CSSValueID::Luminance:
         return MaskType::Luminance;
@@ -2773,7 +2773,7 @@ MaskType BoxStyle::convertMaskType(const CSSValue& value)
 
 AlignContent BoxStyle::convertAlignContent(const CSSValue& value)
 {
-    auto& ident = to<CSSIdentValue>(value);
+    const auto& ident = to<CSSIdentValue>(value);
     switch(ident.value()) {
     case CSSValueID::FlexStart:
         return AlignContent::FlexStart;
@@ -2796,7 +2796,7 @@ AlignContent BoxStyle::convertAlignContent(const CSSValue& value)
 
 AlignItem BoxStyle::convertAlignItem(const CSSValue& value)
 {
-    auto& ident = to<CSSIdentValue>(value);
+    const auto& ident = to<CSSIdentValue>(value);
     switch(ident.value()) {
     case CSSValueID::Auto:
         return AlignItem::Auto;
@@ -2819,7 +2819,7 @@ AlignItem BoxStyle::convertAlignItem(const CSSValue& value)
 
 FillRule BoxStyle::convertFillRule(const CSSValue& value)
 {
-    auto& ident = to<CSSIdentValue>(value);
+    const auto& ident = to<CSSIdentValue>(value);
     switch(ident.value()) {
     case CSSValueID::Nonzero:
         return FillRule::NonZero;
@@ -2834,7 +2834,7 @@ FillRule BoxStyle::convertFillRule(const CSSValue& value)
 
 CaptionSide BoxStyle::convertCaptionSide(const CSSValue& value)
 {
-    auto& ident = to<CSSIdentValue>(value);
+    const auto& ident = to<CSSIdentValue>(value);
     switch(ident.value()) {
     case CSSValueID::Top:
         return CaptionSide::Top;
@@ -2849,7 +2849,7 @@ CaptionSide BoxStyle::convertCaptionSide(const CSSValue& value)
 
 EmptyCells BoxStyle::convertEmptyCells(const CSSValue& value)
 {
-    auto& ident = to<CSSIdentValue>(value);
+    const auto& ident = to<CSSIdentValue>(value);
     switch(ident.value()) {
     case CSSValueID::Show:
         return EmptyCells::Show;
@@ -2864,7 +2864,7 @@ EmptyCells BoxStyle::convertEmptyCells(const CSSValue& value)
 
 BorderCollapse BoxStyle::convertBorderCollapse(const CSSValue& value)
 {
-    auto& ident = to<CSSIdentValue>(value);
+    const auto& ident = to<CSSIdentValue>(value);
     switch(ident.value()) {
     case CSSValueID::Separate:
         return BorderCollapse::Separate;
@@ -2879,7 +2879,7 @@ BorderCollapse BoxStyle::convertBorderCollapse(const CSSValue& value)
 
 BreakBetween BoxStyle::convertBreakBetween(const CSSValue& value)
 {
-    auto& ident = to<CSSIdentValue>(value);
+    const auto& ident = to<CSSIdentValue>(value);
     switch(ident.value()) {
     case CSSValueID::Auto:
         return BreakBetween::Auto;
@@ -2910,7 +2910,7 @@ BreakBetween BoxStyle::convertBreakBetween(const CSSValue& value)
 
 BreakInside BoxStyle::convertBreakInside(const CSSValue& value)
 {
-    auto& ident = to<CSSIdentValue>(value);
+    const auto& ident = to<CSSIdentValue>(value);
     switch(ident.value()) {
     case CSSValueID::Auto:
         return BreakInside::Auto;
@@ -2929,7 +2929,7 @@ BreakInside BoxStyle::convertBreakInside(const CSSValue& value)
 
 PageSize BoxStyle::convertPageSize(const CSSValue& value)
 {
-    auto& ident = to<CSSIdentValue>(value);
+    const auto& ident = to<CSSIdentValue>(value);
     switch(ident.value()) {
     case CSSValueID::A3:
         return PageSize::A3;
@@ -2962,7 +2962,7 @@ int BoxStyle::convertInteger(const CSSValue& value)
 std::optional<int> BoxStyle::convertIntegerOrAuto(const CSSValue& value)
 {
     if(is<CSSIdentValue>(value)) {
-        auto& ident = to<CSSIdentValue>(value);
+        const auto& ident = to<CSSIdentValue>(value);
         assert(ident.value() == CSSValueID::Auto);
         return std::nullopt;
     }
@@ -2978,7 +2978,7 @@ float BoxStyle::convertNumber(const CSSValue& value)
 float BoxStyle::convertNumberOrPercent(const CSSValue& value)
 {
     if(is<CSSPercentValue>(value)) {
-        auto& percent = to<CSSPercentValue>(value);
+        const auto& percent = to<CSSPercentValue>(value);
         return percent.value() / 100.f;
     }
 
@@ -3003,7 +3003,7 @@ HeapString BoxStyle::convertLocalUrl(const CSSValue& value)
 HeapString BoxStyle::convertLocalUrlOrNone(const CSSValue& value)
 {
     if(is<CSSIdentValue>(value)) {
-        auto& ident = to<CSSIdentValue>(value);
+        const auto& ident = to<CSSIdentValue>(value);
         assert(ident.value() == CSSValueID::None);
         return emptyGlo;
     }

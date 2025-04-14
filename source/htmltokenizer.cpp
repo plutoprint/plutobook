@@ -1500,7 +1500,7 @@ bool HTMLTokenizer::flushCharacterBuffer()
         m_currentToken.addToSpaceCharacter(cc);
     }
 
-    auto& data = m_currentToken.data();
+    const auto& data = m_currentToken.data();
     m_characterBuffer.erase(0, data.length());
     return false;
 }

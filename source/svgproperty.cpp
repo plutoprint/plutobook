@@ -140,7 +140,7 @@ bool SVGString::parse(std::string_view input)
 bool SVGEnumerationBase::parse(std::string_view input)
 {
     skipLeadingAndTrailingSpaces(input);
-    for(auto& entry : m_entries) {
+    for(const auto& entry : m_entries) {
         if(input == entry.second) {
             m_value = entry.first;
             return true;
@@ -250,7 +250,7 @@ bool SVGLength::parse(std::string_view input)
         {"ch", UnitType::Ch}
     };
 
-    for(auto& entry : entries) {
+    for(const auto& entry : entries) {
         if(input == entry.name) {
             m_unitType = entry.unitType;
             m_value = value;

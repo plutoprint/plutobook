@@ -41,7 +41,7 @@ inline bool isNumberedHeaderElement(const Element* element)
 
 inline bool isSpecialElement(const Element* element)
 {
-    auto& tagName = element->tagName();
+    const auto& tagName = element->tagName();
     if(element->namespaceURI() == svgNs) {
         return tagName == foreignObjectTag
             || tagName == descTag
@@ -140,7 +140,7 @@ inline bool isHTMLIntegrationPoint(const Element* element)
         auto attribute = element->findAttribute(encodingAttr);
         if(attribute == nullptr)
             return false;
-        auto& encoding = attribute->value();
+        const auto& encoding = attribute->value();
         return equals(encoding, "text/html", false)
             || equals(encoding, "application/xhtml+xml", false);
     }
@@ -169,7 +169,7 @@ inline bool isMathMLTextIntegrationPoint(const Element* element)
 
 inline bool isScopeMarker(const Element* element)
 {
-    auto& tagName = element->tagName();
+    const auto& tagName = element->tagName();
     if(element->namespaceURI() == svgNs) {
         return tagName == foreignObjectTag
             || tagName == descTag
@@ -686,7 +686,7 @@ Element* HTMLParser::createHTMLElement(HTMLTokenView& token) const
 Element* HTMLParser::createElement(HTMLTokenView& token, const GlobalString& namespaceURI) const
 {
     auto element = m_document->createElement(namespaceURI, token.tagName());
-    for(auto& attribute : token.attributes())
+    for(const auto& attribute : token.attributes())
         element->setAttribute(attribute);
     return element;
 }
@@ -1366,7 +1366,7 @@ void HTMLParser::handleInBodyMode(HTMLTokenView& token)
         if(token.tagName() == htmlTag) {
             handleErrorToken(token);
             auto element = m_openElements.htmlElement();
-            for(auto& attribute : token.attributes()) {
+            for(const auto& attribute : token.attributes()) {
                 if(element->hasAttribute(attribute.name()))
                     continue;
                 element->setAttribute(attribute);
@@ -1393,7 +1393,7 @@ void HTMLParser::handleInBodyMode(HTMLTokenView& token)
             handleErrorToken(token);
             m_framesetOk = false;
             auto element = m_openElements.bodyElement();
-            for(auto& attribute : token.attributes()) {
+            for(const auto& attribute : token.attributes()) {
                 if(element->hasAttribute(attribute.name()))
                     continue;
                 element->setAttribute(attribute);
@@ -2729,7 +2729,7 @@ void HTMLParser::handleInForeignContentMode(HTMLTokenView& token)
             return;
         }
 
-        auto& currentNamespace = currentElement()->namespaceURI();
+        const auto& currentNamespace = currentElement()->namespaceURI();
         if(currentNamespace == mathmlNs) {
             adjustMathMLAttributes(token);
         } else if(currentNamespace == svgNs) {

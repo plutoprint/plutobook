@@ -21,12 +21,12 @@ RefPtr<FontData> CSSFontFaceCache::get(const GlobalString& family, const FontDat
     if(it == m_table.end())
         return fontDataCache()->getFontData(family, description);
     FontSelectionAlgorithm algorithm(description.request);
-    for(auto& item : it->second) {
+    for(const auto& item : it->second) {
         algorithm.addCandidate(item.first);
     }
 
     RefPtr<SegmentedFontFace> face;
-    for(auto& item : it->second) {
+    for(const auto& item : it->second) {
         if(face == nullptr || algorithm.isCandidateBetter(item.first, face->description())) {
             face = item.second;
         }
@@ -107,7 +107,7 @@ private:
 FontDescriptionBuilder::FontDescriptionBuilder(const BoxStyle& parentStyle, const CSSPropertyDataList& properties)
     : m_parentStyle(parentStyle)
 {
-    for(auto& property : properties) {
+    for(const auto& property : properties) {
         if(is<CSSInheritValue>(*property.value()))
             continue;
         switch(property.id()) {
@@ -142,8 +142,8 @@ FontFamilyList FontDescriptionBuilder::family() const
     if(is<CSSInitialValue>(*m_family))
         return FontFamilyList();
     FontFamilyList families;
-    for(auto& family : to<CSSListValue>(*m_family)) {
-        auto& name = to<CSSCustomIdentValue>(*family);
+    for(const auto& family : to<CSSListValue>(*m_family)) {
+        const auto& name = to<CSSCustomIdentValue>(*family);
         families.push_front(name.value());
     }
 
@@ -244,7 +244,7 @@ FontSelectionValue FontDescriptionBuilder::weight() const
 
 static FontSelectionValue convertFontStretchIdent(const CSSValue& value)
 {
-    auto& ident = to<CSSIdentValue>(value);
+    const auto& ident = to<CSSIdentValue>(value);
     switch(ident.value()) {
     case CSSValueID::UltraCondensed:
         return kUltraCondensedFontWidth;
@@ -284,7 +284,7 @@ FontSelectionValue FontDescriptionBuilder::stretch() const
 
 static FontSelectionValue convertFontStyleIdent(const CSSValue& value)
 {
-    auto& ident = to<CSSIdentValue>(value);
+    const auto& ident = to<CSSIdentValue>(value);
     switch(ident.value()) {
     case CSSValueID::Normal:
         return kNormalFontSlope;
@@ -312,8 +312,8 @@ FontSelectionValue FontDescriptionBuilder::style() const
         return kNormalFontSlope;
     if(auto ident = to<CSSIdentValue>(m_style))
         return convertFontStyleIdent(*ident);
-    auto& pair = to<CSSPairValue>(*m_style);
-    auto& ident = to<CSSIdentValue>(*pair.first());
+    const auto& pair = to<CSSPairValue>(*m_style);
+    const auto& ident = to<CSSIdentValue>(*pair.first());
     assert(ident.value() == CSSValueID::Oblique);
     return convertFontStyleAngle(*pair.second());
 }
@@ -330,8 +330,8 @@ FontVariationList FontDescriptionBuilder::variationSettings() const
         return variationSettings;
     }
 
-    for(auto& value : to<CSSListValue>(*m_variationSettings)) {
-        auto& variation = to<CSSFontVariationValue>(*value);
+    for(const auto& value : to<CSSListValue>(*m_variationSettings)) {
+        const auto& variation = to<CSSFontVariationValue>(*value);
         variationSettings.emplace_front(variation.tag(), variation.value());
     }
 
@@ -368,8 +368,8 @@ protected:
 
 void StyleBuilder::merge(uint32_t specificity, uint32_t position, const CSSPropertyList& properties)
 {
-    for(auto& property : properties) {
-        auto predicate_func = [&](auto& item) { return item.id() == property.id(); };
+    for(const auto& property : properties) {
+        auto predicate_func = [&](const auto& item) { return item.id() == property.id(); };
         auto it = std::find_if(m_properties.begin(), m_properties.end(), predicate_func);
         CSSPropertyData data(specificity, position, property);
         if(it == m_properties.end()) {
@@ -409,7 +409,7 @@ void ElementStyleBuilder::add(const CSSRuleDataList* rules)
 {
     if(rules == nullptr)
         return;
-    for(auto& rule : *rules) {
+    for(const auto& rule : *rules) {
         if(rule.match(m_element, m_pseudoType)) {
             merge(rule.specificity(), rule.position(), rule.properties());
         }
@@ -436,7 +436,7 @@ RefPtr<BoxStyle> ElementStyleBuilder::build()
     }
 
     auto newStyle = BoxStyle::create(m_element, m_parentStyle, m_pseudoType, Display::Inline);
-    for(auto& property : m_properties) {
+    for(const auto& property : m_properties) {
         auto id = property.id();
         auto value = property.value();
         if(is<CSSInitialValue>(*value)) {
@@ -521,12 +521,12 @@ PageStyleBuilder::PageStyleBuilder(const GlobalString& pageName, uint32_t pageIn
 
 void PageStyleBuilder::add(const CSSPageRuleDataList& rules)
 {
-    for(auto& rule : rules) {
+    for(const auto& rule : rules) {
         if(rule.match(m_pageName, m_pageIndex, m_pseudoType)) {
             if(m_marginType == PageMarginType::None) {
                 merge(rule.specificity(), rule.position(), rule.properties());
             } else {
-                for(auto& margin : rule.margins()) {
+                for(const auto& margin : rule.margins()) {
                     if(m_marginType == margin->marginType()) {
                         merge(rule.specificity(), rule.position(), margin->properties());
                     }
@@ -614,7 +614,7 @@ RefPtr<BoxStyle> PageStyleBuilder::build()
         break;
     }
 
-    for(auto& property : m_properties) {
+    for(const auto& property : m_properties) {
         auto id = property.id();
         auto value = property.value();
         if(is<CSSInitialValue>(*value)) {
@@ -664,9 +664,9 @@ CSSStyleSheet::CSSStyleSheet(Document* document)
 RefPtr<BoxStyle> CSSStyleSheet::styleForElement(Element* element, const BoxStyle& parentStyle) const
 {
     ElementStyleBuilder builder(element, PseudoType::None, parentStyle);
-    for(auto& className : element->classNames())
+    for(const auto& className : element->classNames())
         builder.add(m_classRules.get(className));
-    for(auto& attribute : element->attributes())
+    for(const auto& attribute : element->attributes())
         builder.add(m_attributeRules.get(attribute.name()));
     builder.add(m_idRules.get(element->id()));
     builder.add(m_tagRules.get(element->tagName()));
@@ -721,7 +721,7 @@ std::string CSSStyleSheet::getCounterText(int value, const GlobalString& listTyp
 
 std::string CSSStyleSheet::getMarkerText(int value, const GlobalString& listType)
 {
-    auto& counterStyle = getCounterStyle(listType);
+    const auto& counterStyle = getCounterStyle(listType);
     std::string representation(counterStyle.prefix());
     representation += counterStyle.generateRepresentation(value);
     representation += counterStyle.suffix();
@@ -736,7 +736,7 @@ void CSSStyleSheet::parseStyle(const std::string_view& content, CSSStyleOrigin o
 
 void CSSStyleSheet::addRuleList(const CSSRuleList& rules)
 {
-    for(auto& rule : rules) {
+    for(const auto& rule : rules) {
         switch(rule->type()) {
         case CSSRuleType::Style:
             addStyleRule(to<CSSStyleRule>(rule));
@@ -766,10 +766,10 @@ void CSSStyleSheet::addRuleList(const CSSRuleList& rules)
 
 void CSSStyleSheet::addStyleRule(const RefPtr<CSSStyleRule>& rule)
 {
-    for(auto& selector : rule->selectors()) {
+    for(const auto& selector : rule->selectors()) {
         uint32_t specificity = 0;
-        for(auto& complexSelector : selector) {
-            for(auto& simpleSelector : complexSelector.compoundSelector()) {
+        for(const auto& complexSelector : selector) {
+            for(const auto& simpleSelector : complexSelector.compoundSelector()) {
                 specificity += simpleSelector.specificity();
             }
         }
@@ -779,8 +779,8 @@ void CSSStyleSheet::addStyleRule(const RefPtr<CSSStyleRule>& rule)
         GlobalString tagName;
         GlobalString attrName;
         PseudoType pseudoType = PseudoType::None;
-        auto& lastComplexSelector = selector.front();
-        for(auto& simpleSelector : lastComplexSelector.compoundSelector()) {
+        const auto& lastComplexSelector = selector.front();
+        for(const auto& simpleSelector : lastComplexSelector.compoundSelector()) {
             switch(simpleSelector.matchType()) {
             case CSSSimpleSelector::MatchType::Id:
                 idName = simpleSelector.value();
@@ -843,15 +843,15 @@ void CSSStyleSheet::addImportRule(const RefPtr<CSSImportRule>& rule)
 
 void CSSStyleSheet::addPageRule(const RefPtr<CSSPageRule>& rule)
 {
-    auto& selectors = rule->selectors();
+    const auto& selectors = rule->selectors();
     if(selectors.empty()) {
         m_pageRules.emplace_back(rule, nullptr, 0, m_position);
         return;
     }
 
-    for(auto& selector : selectors) {
+    for(const auto& selector : selectors) {
         uint32_t specificity = 0;
-        for(auto& sel : selector) {
+        for(const auto& sel : selector) {
             switch(sel.matchType()) {
             case CSSSimpleSelector::MatchType::PseudoPageName:
                 specificity += 0x10000;
@@ -902,7 +902,7 @@ private:
 
 CSSFontFaceBuilder::CSSFontFaceBuilder(const CSSPropertyList& properties)
 {
-    for(auto& property : properties) {
+    for(const auto& property : properties) {
         switch(property.id()) {
         case CSSPropertyID::Src:
             m_src = property.value();
@@ -946,7 +946,7 @@ FontSelectionRange CSSFontFaceBuilder::weight() const
         }
     }
 
-    auto& pair = to<CSSPairValue>(*m_weight);
+    const auto& pair = to<CSSPairValue>(*m_weight);
     auto startWeight = convertFontWeightNumber(*pair.first());
     auto endWeight = convertFontWeightNumber(*pair.second());
     if(startWeight > endWeight)
@@ -960,9 +960,9 @@ FontSelectionRange CSSFontFaceBuilder::stretch() const
         return FontSelectionRange(kNormalFontWidth);
     if(auto ident = to<CSSIdentValue>(m_stretch))
         return FontSelectionRange(convertFontStretchIdent(*ident));
-    auto& pair = to<CSSPairValue>(*m_stretch);
-    auto& startPercent = to<CSSPercentValue>(*pair.first());
-    auto& endPercent = to<CSSPercentValue>(*pair.second());
+    const auto& pair = to<CSSPairValue>(*m_stretch);
+    const auto& startPercent = to<CSSPercentValue>(*pair.first());
+    const auto& endPercent = to<CSSPercentValue>(*pair.second());
     if(startPercent.value() > endPercent.value())
         return FontSelectionRange(endPercent.value(), startPercent.value());
     return FontSelectionRange(startPercent.value(), endPercent.value());
@@ -974,8 +974,8 @@ FontSelectionRange CSSFontFaceBuilder::style() const
         return FontSelectionRange(kNormalFontSlope);
     if(auto ident = to<CSSIdentValue>(m_style))
         return FontSelectionRange(convertFontStyleIdent(*ident));
-    auto& list = to<CSSListValue>(*m_style);
-    auto& ident = to<CSSIdentValue>(*list.at(0));
+    const auto& list = to<CSSListValue>(*m_style);
+    const auto& ident = to<CSSIdentValue>(*list.at(0));
     assert(list.size() == 3 && ident.value() == CSSValueID::Oblique);
 
     auto startAngle = convertFontStyleAngle(*list.at(1));
@@ -995,8 +995,8 @@ FontFeatureList CSSFontFaceBuilder::featureSettings() const
         return featureSettings;
     }
 
-    for(auto& value : to<CSSListValue>(*m_featureSettings)) {
-        auto& feature = to<CSSFontFeatureValue>(*value);
+    for(const auto& value : to<CSSListValue>(*m_featureSettings)) {
+        const auto& feature = to<CSSFontFeatureValue>(*value);
         featureSettings.emplace_front(feature.tag(), feature.value());
     }
 
@@ -1013,8 +1013,8 @@ FontVariationList CSSFontFaceBuilder::variationSettings() const
         return variationSettings;
     }
 
-    for(auto& value : to<CSSListValue>(*m_variationSettings)) {
-        auto& variation = to<CSSFontVariationValue>(*value);
+    for(const auto& value : to<CSSListValue>(*m_variationSettings)) {
+        const auto& variation = to<CSSFontVariationValue>(*value);
         variationSettings.emplace_front(variation.tag(), variation.value());
     }
 
@@ -1044,21 +1044,21 @@ RefPtr<FontFace> CSSFontFaceBuilder::build(Document* document) const
 {
     if(m_src == nullptr)
         return nullptr;
-    for(auto& value : to<CSSListValue>(*m_src)) {
-        auto& list = to<CSSListValue>(*value);
+    for(const auto& value : to<CSSListValue>(*m_src)) {
+        const auto& list = to<CSSListValue>(*value);
         if(auto function = to<CSSUnaryFunctionValue>(list.at(0))) {
             assert(function->id() == CSSValueID::Local);
-            auto& family = to<CSSCustomIdentValue>(*function->value());
+            const auto& family = to<CSSCustomIdentValue>(*function->value());
             if(!fontDataCache()->isFamilyAvailable(family.value()))
                 continue;
             return LocalFontFace::create(family.value());
         }
 
-        auto& url = to<CSSUrlValue>(*list.at(0));
+        const auto& url = to<CSSUrlValue>(*list.at(0));
         if(list.size() == 2) {
-            auto& function = to<CSSUnaryFunctionValue>(*list.at(1));
+            const auto& function = to<CSSUnaryFunctionValue>(*list.at(1));
             assert(function.id() == CSSValueID::Format);
-            auto& format = convertStringOrCustomIdent(*function.value());
+            const auto& format = convertStringOrCustomIdent(*function.value());
             if(!FontResource::supportsFormat(format.value())) {
                 continue;
             }

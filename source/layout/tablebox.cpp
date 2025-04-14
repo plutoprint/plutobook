@@ -47,7 +47,7 @@ void TableBox::updateOverflowRect()
         addOverflowRect(caption, caption->x(), caption->y());
     for(auto section : m_sections) {
         for(auto row : section->rows()) {
-            for(auto& [col, cell] : row->cells()) {
+            for(const auto& [col, cell] : row->cells()) {
                 auto cellBox = cell.box();
                 if(cell.inColOrRowSpan())
                     continue;
@@ -55,7 +55,7 @@ void TableBox::updateOverflowRect()
                 addOverflowRect(cellBox, offset.x, offset.y);
                 if(style()->borderCollapse() == BorderCollapse::Separate)
                     continue;
-                auto& edges = cellBox->collapsedBorderEdges();
+                const auto& edges = cellBox->collapsedBorderEdges();
                 auto topHalfWidth = edges.topEdge().width() / 2.f;
                 auto bottomHalfWidth = edges.bottomEdge().width() / 2.f;
                 auto leftHalfWidth = edges.leftEdge().width() / 2.f;
@@ -129,14 +129,14 @@ void TableBox::updateBorderWidths() const
     m_borderRight = 0.f;
     if(auto section = topSection()) {
         auto row = section->firstRow();
-        for(auto& [col, cell] : row->cells()) {
+        for(const auto& [col, cell] : row->cells()) {
             m_borderTop = std::max(m_borderTop, cell->borderTop());
         }
     }
 
     if(auto section = bottomSection()) {
         auto row = section->lastRow();
-        for(auto& [col, cell] : row->cells()) {
+        for(const auto& [col, cell] : row->cells()) {
             m_borderBottom = std::max(m_borderBottom, cell->borderBottom());
         }
     }
@@ -459,10 +459,10 @@ void TableBox::build()
     if(style()->borderCollapse() == BorderCollapse::Collapse) {
         for(auto section : m_sections) {
             for(auto row : section->rows()) {
-                for(auto& [col, cell] : row->cells()) {
+                for(const auto& [col, cell] : row->cells()) {
                     if(cell.inColOrRowSpan())
                         continue;
-                    auto& edges = cell->collapsedBorderEdges();
+                    const auto& edges = cell->collapsedBorderEdges();
                     if(m_collapsedBorderEdges == nullptr)
                         m_collapsedBorderEdges = std::make_unique<TableCollapsedBorderEdgeList>(heap());
                     m_collapsedBorderEdges->insert(edges.topEdge());
@@ -507,11 +507,11 @@ void TableBox::paintContents(const PaintInfo& info, const Point& offset, PaintPh
     }
 
     if(phase == PaintPhase::Decorations && m_collapsedBorderEdges && style()->borderCollapse() == BorderCollapse::Collapse) {
-        for(auto& edge : *m_collapsedBorderEdges) {
+        for(const auto& edge : *m_collapsedBorderEdges) {
             for(auto section : m_sections | std::views::reverse) {
                 Point adjustedOffset(offset + section->location());
                 for(auto row : section->rows() | std::views::reverse) {
-                    for(auto& [col, cell] : row->cells()) {
+                    for(const auto& [col, cell] : row->cells()) {
                         if(!cell.inColOrRowSpan()) {
                             cell->paintCollapsedBorders(info, adjustedOffset, edge);
                         }
@@ -537,7 +537,7 @@ std::unique_ptr<FixedTableLayoutAlgorithm> FixedTableLayoutAlgorithm::create(Tab
 
 void FixedTableLayoutAlgorithm::computeIntrinsicWidths(float& minWidth, float& maxWidth)
 {
-    for(auto& width : m_widths) {
+    for(const auto& width : m_widths) {
         if(width.isFixed()) {
             minWidth += width.value();
             maxWidth += width.value();
@@ -547,7 +547,7 @@ void FixedTableLayoutAlgorithm::computeIntrinsicWidths(float& minWidth, float& m
 
 void FixedTableLayoutAlgorithm::build()
 {
-    auto& columns = m_table->columns();
+    const auto& columns = m_table->columns();
     m_widths.reserve(columns.size());
     for(size_t columnIndex = 0; columnIndex < columns.size(); ++columnIndex) {
         auto columnBox = columns[columnIndex].box();
@@ -566,7 +566,7 @@ void FixedTableLayoutAlgorithm::build()
 
     if(auto section = m_table->topSection()) {
         auto row = section->firstRow();
-        for(auto& [col, cell] : row->cells()) {
+        for(const auto& [col, cell] : row->cells()) {
             if(!cell.inColOrRowSpan() && m_widths[col].isAuto()) {
                 auto cellBox = cell.box();
                 auto cellStyleWidth = cellBox->style()->width();
@@ -592,7 +592,7 @@ void FixedTableLayoutAlgorithm::layout()
     auto& columns = m_table->columns();
     for(size_t columnIndex = 0; columnIndex < columns.size(); ++columnIndex) {
         auto& column = columns[columnIndex];
-        auto& width = m_widths[columnIndex];
+        const auto& width = m_widths[columnIndex];
         if(width.isFixed()) {
             column.setWidth(width.value());
             totalFixedWidth += column.width();
@@ -614,7 +614,7 @@ void FixedTableLayoutAlgorithm::layout()
             totalFixedWidth = 0;
             for(size_t columnIndex = 0; columnIndex < columns.size(); ++columnIndex) {
                 auto& column = columns[columnIndex];
-                auto& width = m_widths[columnIndex];
+                const auto& width = m_widths[columnIndex];
                 if(width.isFixed()) {
                     column.setWidth(width.value() * availableFixedWidth / totalFixed);
                     totalFixedWidth += column.width();
@@ -626,7 +626,7 @@ void FixedTableLayoutAlgorithm::layout()
             totalPercentWidth = 0;
             for(size_t columnIndex = 0; columnIndex < columns.size(); ++columnIndex) {
                 auto& column = columns[columnIndex];
-                auto& width = m_widths[columnIndex];
+                const auto& width = m_widths[columnIndex];
                 if(width.isPercent()) {
                     column.setWidth(0);
                 }
@@ -637,7 +637,7 @@ void FixedTableLayoutAlgorithm::layout()
             auto availablePercentWidth = availableWidth - totalFixedWidth;
             for(size_t columnIndex = 0; columnIndex < columns.size(); ++columnIndex) {
                 auto& column = columns[columnIndex];
-                auto& width = m_widths[columnIndex];
+                const auto& width = m_widths[columnIndex];
                 if(width.isPercent()) {
                     column.setWidth(width.value() * availablePercentWidth / totalPercent);
                 }
@@ -647,7 +647,7 @@ void FixedTableLayoutAlgorithm::layout()
         auto remainingWidth = availableWidth - totalFixedWidth - totalPercentWidth;
         for(size_t columnIndex = 0; columnIndex < columns.size(); ++columnIndex) {
             auto& column = columns[columnIndex];
-            auto& width = m_widths[columnIndex];
+            const auto& width = m_widths[columnIndex];
             if(width.isAuto()) {
                 column.setWidth(remainingWidth / autoColumnCount);
                 remainingWidth -= column.width();
@@ -681,7 +681,7 @@ static std::vector<float> distributeWidthToColumns(float availableWidth, std::sp
     enum { kMinGuess, kPercentageGuess, kSpecifiedGuess, kMaxGuess, kGuessCount };
     float guessWidths[kGuessCount] = {0.f, 0.f, 0.f, 0.f};
     float guessWidthIncreases[kGuessCount] = {0.f, 0.f, 0.f, 0.f};
-    for(auto& column : columns) {
+    for(const auto& column : columns) {
         if(column.width.isPercent()) {
             auto percentWidth = std::max(column.minWidth, column.width.calc(availableWidth));
             guessWidths[kMinGuess] += column.minWidth;
@@ -727,7 +727,7 @@ static std::vector<float> distributeWidthToColumns(float availableWidth, std::sp
         auto percentWidthIncrease = guessWidthIncreases[kPercentageGuess];
         auto distributableWidth = availableWidth - guessWidths[kMinGuess];
         for(size_t columnIndex = 0; columnIndex < columns.size(); ++columnIndex) {
-            auto& column = columns[columnIndex];
+            const auto& column = columns[columnIndex];
             if(column.width.isPercent()) {
                 auto percentWidth = std::max(column.minWidth, column.width.calc(availableWidth));
                 auto columnWidthIncrease = percentWidth - column.minWidth;
@@ -747,7 +747,7 @@ static std::vector<float> distributeWidthToColumns(float availableWidth, std::sp
         auto fixedWidthIncrease = guessWidthIncreases[kSpecifiedGuess];
         auto distributableWidth = availableWidth - guessWidths[kPercentageGuess];
         for(size_t columnIndex = 0; columnIndex < columns.size(); ++columnIndex) {
-            auto& column = columns[columnIndex];
+            const auto& column = columns[columnIndex];
             if(column.width.isPercent()) {
                 widths[columnIndex] = std::max(column.minWidth, column.width.calc(availableWidth));
             } else if(column.width.isFixed()) {
@@ -768,7 +768,7 @@ static std::vector<float> distributeWidthToColumns(float availableWidth, std::sp
         auto autoWidthIncrease = guessWidthIncreases[kMaxGuess];
         auto distributableWidth = availableWidth - guessWidths[kSpecifiedGuess];
         for(size_t columnIndex = 0; columnIndex < columns.size(); ++columnIndex) {
-            auto& column = columns[columnIndex];
+            const auto& column = columns[columnIndex];
             if(column.width.isPercent()) {
                 widths[columnIndex] = std::max(column.minWidth, column.width.calc(availableWidth));
             } else if(column.width.isFixed()) {
@@ -789,7 +789,7 @@ static std::vector<float> distributeWidthToColumns(float availableWidth, std::sp
         auto distributableWidth = availableWidth - guessWidths[kMaxGuess];
         if(autoColumnCount > 0) {
             for(size_t columnIndex = 0; columnIndex < columns.size(); ++columnIndex) {
-                auto& column = columns[columnIndex];
+                const auto& column = columns[columnIndex];
                 if(column.width.isPercent()) {
                     widths[columnIndex] = std::max(column.minWidth, column.width.calc(availableWidth));
                 } else if(column.width.isFixed()) {
@@ -807,7 +807,7 @@ static std::vector<float> distributeWidthToColumns(float availableWidth, std::sp
             }
         } else if(fixedColumnCount > 0 && constrained) {
             for(size_t columnIndex = 0; columnIndex < columns.size(); ++columnIndex) {
-                auto& column = columns[columnIndex];
+                const auto& column = columns[columnIndex];
                 if(column.width.isPercent()) {
                     widths[columnIndex] = std::max(column.minWidth, column.width.calc(availableWidth));
                 } else if(column.width.isFixed()) {
@@ -823,7 +823,7 @@ static std::vector<float> distributeWidthToColumns(float availableWidth, std::sp
             }
         } else if(percentColumnCount > 0) {
             for(size_t columnIndex = 0; columnIndex < columns.size(); ++columnIndex) {
-                auto& column = columns[columnIndex];
+                const auto& column = columns[columnIndex];
                 if(column.width.isPercent()) {
                     auto percentWidth = std::max(column.minWidth, column.width.calc(availableWidth));
                     float delta = 0.f;
@@ -850,7 +850,7 @@ static void distributeSpanCellToColumns(const TableCellBox* cellBox, std::span<T
         float totalPercent = 0.f;
         float totalNonPercentMaxWidth = 0.f;
         size_t nonPercentColumnCount = 0;
-        for(auto& column : columns) {
+        for(const auto& column : columns) {
             if(column.width.isPercent()) {
                 totalPercent += column.width.value();
             } else {
@@ -904,7 +904,7 @@ void AutoTableLayoutAlgorithm::computeIntrinsicWidths(float& minWidth, float& ma
 
     for(auto section : m_table->sections()) {
         for(auto row : section->rows()) {
-            for(auto& [col, cell] : row->cells()) {
+            for(const auto& [col, cell] : row->cells()) {
                 auto cellBox = cell.box();
                 if(cell.inColOrRowSpan() || cellBox->colSpan() > 1)
                     continue;
@@ -928,7 +928,7 @@ void AutoTableLayoutAlgorithm::computeIntrinsicWidths(float& minWidth, float& ma
         }
     }
 
-    for(auto& columnWidth : m_columnWidths) {
+    for(const auto& columnWidth : m_columnWidths) {
         minWidth += columnWidth.minWidth;
         maxWidth += columnWidth.maxWidth;
     }
@@ -936,7 +936,7 @@ void AutoTableLayoutAlgorithm::computeIntrinsicWidths(float& minWidth, float& ma
 
 void AutoTableLayoutAlgorithm::build()
 {
-    auto& columns = m_table->columns();
+    const auto& columns = m_table->columns();
     m_columnWidths.resize(columns.size());
     for(size_t columnIndex = 0; columnIndex < columns.size(); ++columnIndex) {
         auto& columnWidth = m_columnWidths[columnIndex];
@@ -954,7 +954,7 @@ void AutoTableLayoutAlgorithm::build()
 
     for(auto section : m_table->sections()) {
         for(auto row : section->rows()) {
-            for(auto& [col, cell] : row->cells()) {
+            for(const auto& [col, cell] : row->cells()) {
                 if(cell.inColOrRowSpan())
                     continue;
                 auto cellBox = cell.box();
@@ -974,7 +974,7 @@ void AutoTableLayoutAlgorithm::build()
         }
     }
 
-    auto compare_func = [](auto& a, auto& b) { return a->colSpan() < b->colSpan(); };
+    auto compare_func = [](const auto& a, const auto& b) { return a->colSpan() < b->colSpan(); };
     std::sort(m_spanningCells.begin(), m_spanningCells.end(), compare_func);
 }
 
@@ -1027,7 +1027,7 @@ std::optional<float> TableSectionBox::firstLineBaseline() const
     if(auto baseline = firstRowBox->maxBaseline())
         return baseline + firstRowBox->y();
     std::optional<float> baseline;
-    for(auto& [col, cell] : firstRowBox->cells()) {
+    for(const auto& [col, cell] : firstRowBox->cells()) {
         auto cellBox = cell.box();
         if(!cell.inColOrRowSpan() && cellBox->contentBoxHeight()) {
             auto candidate = cellBox->y() + cellBox->borderAndPaddingTop() + cellBox->contentBoxHeight();
@@ -1046,7 +1046,7 @@ std::optional<float> TableSectionBox::lastLineBaseline() const
     if(auto baseline = lastRowBox->maxBaseline())
         return baseline + lastRowBox->y();
     std::optional<float> baseline;
-    for(auto& [col, cell] : lastRowBox->cells()) {
+    for(const auto& [col, cell] : lastRowBox->cells()) {
         auto cellBox = cell.box();
         if(!cell.inColOrRowSpan() && cellBox->contentBoxHeight()) {
             auto candidate = cellBox->y() + cellBox->borderAndPaddingTop() + cellBox->contentBoxHeight();
@@ -1126,7 +1126,7 @@ void TableSectionBox::layoutRows(FragmentBuilder* fragmentainer)
                 auto fragmentHeight = fragmentainer->fragmentHeightForOffset(position);
                 if(fragmentHeight > 0.f && fragmentHeight == fragmentainer->fragmentRemainingHeightForOffset(position, AssociateWithLatterFragment)) {
                     float borderTop = 0.f;
-                    for(auto& [col, cell] : rowBox->cells())
+                    for(const auto& [col, cell] : rowBox->cells())
                         borderTop = std::max(borderTop, cell->borderTop());
                     position += borderTop;
                 }
@@ -1135,7 +1135,7 @@ void TableSectionBox::layoutRows(FragmentBuilder* fragmentainer)
 
         rowBox->setX(0.f);
         rowBox->setY(position);
-        for(auto& [col, cell] : rowBox->cells()) {
+        for(const auto& [col, cell] : rowBox->cells()) {
             auto cellBox = cell.box();
             if(cell.inColOrRowSpan())
                 continue;
@@ -1163,17 +1163,17 @@ void TableSectionBox::layoutRows(FragmentBuilder* fragmentainer)
 void TableSectionBox::layout(FragmentBuilder* fragmentainer)
 {
     setWidth(table()->contentBoxWidth());
-    auto& columns = table()->columns();
+    const auto& columns = table()->columns();
     auto horizontalSpacing = table()->borderHorizontalSpacing();
     auto direction = table()->style()->direction();
     for(auto rowBox : m_rows) {
-        for(auto& [col, cell] : rowBox->cells()) {
+        for(const auto& [col, cell] : rowBox->cells()) {
             auto cellBox = cell.box();
             if(cell.inColOrRowSpan())
                 continue;
             auto width = -horizontalSpacing;
             for(size_t index = 0; index < cellBox->colSpan(); ++index) {
-                auto& column = columns[col + index];
+                const auto& column = columns[col + index];
                 width += horizontalSpacing + column.width();
             }
 
@@ -1194,7 +1194,7 @@ void TableSectionBox::layout(FragmentBuilder* fragmentainer)
         float cellMaxAscent = 0.f;
         float cellMaxDescent = 0.f;
         float cellMaxHeight = rowBox->maxFixedHeight();
-        for(auto& [col, cell] : rowBox->cells()) {
+        for(const auto& [col, cell] : rowBox->cells()) {
             auto cellBox = cell.box();
             if(cell.inColOrRowSpan())
                 continue;
@@ -1259,7 +1259,7 @@ void TableSectionBox::build()
                 rowSpan = std::min(rowSpan, cellBox->rowSpan());
             }
 
-            auto& cells = rowBox->cells();
+            const auto& cells = rowBox->cells();
             while(true) {
                 if(!cells.contains(columnIndex))
                     break;
@@ -1302,7 +1302,7 @@ void TableSectionBox::build()
         }
     }
 
-    auto compare_func = [](auto& a, auto& b) { return a->rowSpan() < b->rowSpan(); };
+    auto compare_func = [](const auto& a, const auto& b) { return a->rowSpan() < b->rowSpan(); };
     std::sort(m_spanningCells.begin(), m_spanningCells.end(), compare_func);
     BoxFrame::build();
 }
@@ -1311,7 +1311,7 @@ void TableSectionBox::paint(const PaintInfo& info, const Point& offset, PaintPha
 {
     Point adjustedOffset(offset + location());
     for(auto rowBox : m_rows) {
-        for(auto& [col, cell] : rowBox->cells()) {
+        for(const auto& [col, cell] : rowBox->cells()) {
             auto cellBox = cell.box();
             if(cell.inColOrRowSpan() || (cellBox->emptyCells() == EmptyCells::Hide && !cellBox->firstChild()))
                 continue;
@@ -1367,7 +1367,7 @@ TableCellBox* TableRowBox::cellAt(uint32_t columnIndex) const
 
 void TableRowBox::paint(const PaintInfo& info, const Point& offset, PaintPhase phase)
 {
-    for(auto& [col, cell] : m_cells) {
+    for(const auto& [col, cell] : m_cells) {
         auto cellBox = cell.box();
         if(cell.inColOrRowSpan() || (cellBox->emptyCells() == EmptyCells::Hide && !cellBox->firstChild()))
             continue;
@@ -1417,7 +1417,7 @@ std::unique_ptr<TableCollapsedBorderEdges> TableCollapsedBorderEdges::create(con
 
 TableCollapsedBorderEdge TableCollapsedBorderEdges::chooseEdge(const TableCollapsedBorderEdge& a, const TableCollapsedBorderEdge& b)
 {
-    auto& edge = a < b ? b : a;
+    const auto& edge = a < b ? b : a;
     if(edge.style() == LineStyle::Hidden)
         return TableCollapsedBorderEdge();
     return edge;
@@ -1733,7 +1733,7 @@ bool TableCellBox::updateIntrinsicPaddings(float rowHeight)
 void TableCellBox::updateBorderWidths() const
 {
     if(table()->borderCollapse() == BorderCollapse::Collapse) {
-        auto& edges = collapsedBorderEdges();
+        const auto& edges = collapsedBorderEdges();
         m_borderTop = edges.topEdge().width() / 2.f;
         m_borderBottom = edges.bottomEdge().width() / 2.f;
         m_borderLeft = edges.leftEdge().width() / 2.f;
@@ -1761,11 +1761,11 @@ void TableCellBox::paintBackgroundBehindCell(const PaintInfo& info, const Point&
 
 void TableCellBox::paintCollapsedBorders(const PaintInfo& info, const Point& offset, const TableCollapsedBorderEdge& currentEdge) const
 {
-    auto& edges = collapsedBorderEdges();
-    auto& topEdge = edges.topEdge();
-    auto& bottomEdge = edges.bottomEdge();
-    auto& leftEdge = edges.leftEdge();
-    auto& rightEdge = edges.rightEdge();
+    const auto& edges = collapsedBorderEdges();
+    const auto& topEdge = edges.topEdge();
+    const auto& bottomEdge = edges.bottomEdge();
+    const auto& leftEdge = edges.leftEdge();
+    const auto& rightEdge = edges.rightEdge();
 
     auto topHalfWidth = topEdge.width() / 2.f;
     auto bottomHalfWidth = bottomEdge.width() / 2.f;

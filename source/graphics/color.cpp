@@ -215,7 +215,7 @@ std::optional<Color> Color::named(const std::string_view& name)
     }
 
     std::string_view lowerName(buffer, name.length());
-    auto it = std::lower_bound(table, std::end(table), lowerName, [](auto& item, auto& name) { return item.name < name; });
+    auto it = std::lower_bound(table, std::end(table), lowerName, [](const auto& item, const auto& name) { return item.name < name; });
     if(it == std::end(table) || it->name != lowerName)
         return std::nullopt;
     return Color(it->value | 0xFF000000);

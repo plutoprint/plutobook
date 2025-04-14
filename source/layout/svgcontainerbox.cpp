@@ -12,7 +12,7 @@ const Rect& SVGContainerBox::fillBoundingBox() const
     if(m_fillBoundingBox.isValid())
         return m_fillBoundingBox;
     for(auto child = firstChild(); child; child = child->nextSibling()) {
-        auto& transform = child->localTransform();
+        const auto& transform = child->localTransform();
         if(child->isSVGHiddenContainerBox())
             continue;
         m_fillBoundingBox.unite(transform.mapRect(child->fillBoundingBox()));
@@ -28,7 +28,7 @@ const Rect& SVGContainerBox::strokeBoundingBox() const
     if(m_strokeBoundingBox.isValid())
         return m_strokeBoundingBox;
     for(auto child = firstChild(); child; child = child->nextSibling()) {
-        auto& transform = child->localTransform();
+        const auto& transform = child->localTransform();
         if(child->isSVGHiddenContainerBox())
             continue;
         m_strokeBoundingBox.unite(transform.mapRect(child->strokeBoundingBox()));

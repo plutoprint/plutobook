@@ -49,7 +49,7 @@ const Rect& SVGGeometryBox::strokeBoundingBox() const
     if(!m_markerPositions.empty()) {
         SVGLengthContext lengthContext(element());
         float strokeWidth = lengthContext.valueForLength(style()->strokeWidth());
-        for(auto& markerPosition : m_markerPositions) {
+        for(const auto& markerPosition : m_markerPositions) {
             m_strokeBoundingBox.unite(markerPosition.markerBoundingBox(strokeWidth));
         }
     }
@@ -80,7 +80,7 @@ void SVGGeometryBox::render(const SVGRenderState& state) const
         if(!m_markerPositions.empty()) {
             SVGLengthContext lengthContext(element());
             float strokeWidth = lengthContext.valueForLength(style()->strokeWidth());
-            for(auto& markerPosition : m_markerPositions) {
+            for(const auto& markerPosition : m_markerPositions) {
                 markerPosition.renderMarker(newState, strokeWidth);
             }
         }
@@ -154,7 +154,7 @@ void SVGGeometryBox::updateMarkerPositions()
             if(index == 0 && m_markerStart) {
                 auto slope = outslopePoints[1] - outslopePoints[0];
                 auto angle = 180.0 * std::atan2(slope.y, slope.x) / std::numbers::pi;
-                auto& orient = m_markerStart->element()->orient();
+                const auto& orient = m_markerStart->element()->orient();
                 if(orient.orientType() == SVGAngle::OrientType::AutoStartReverse)
                     angle -= 180.0;
                 m_markerPositions.emplace_back(m_markerStart, origin, angle);

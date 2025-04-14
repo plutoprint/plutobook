@@ -318,7 +318,7 @@ ResourceData ResourceLoader::loadUrl(const Url& url, ResourceFetcher* customFetc
 Url ResourceLoader::baseUrl()
 {
     std::string path("file://");
-    for(auto& component : std::filesystem::current_path()) {
+    for(const auto& component : std::filesystem::current_path()) {
         if(component.empty())
             continue;
         path += component.string();

@@ -33,7 +33,7 @@ void BoxLayer::layout()
 {
     m_borderRect = m_box->borderBoundingBox();
     if(m_box->isBoxFrame() && !m_box->isPageMarginBox()) {
-        auto& box = to<BoxFrame>(*m_box);
+        const auto& box = to<BoxFrame>(*m_box);
         m_borderRect.move(box.location());
     }
 
@@ -50,7 +50,7 @@ void BoxLayer::layout()
         }
 
         if(parent && parent->isTableRowBox()) {
-            auto& box = to<BoxFrame>(*parent);
+            const auto& box = to<BoxFrame>(*parent);
             m_borderRect.move(-box.location());
         }
     }
@@ -64,7 +64,7 @@ void BoxLayer::layout()
         m_transform = m_box->style()->getTransform(m_borderRect.w, m_borderRect.h);
     }
 
-    auto compare_func = [](auto& a, auto& b) { return a->zIndex() < b->zIndex(); };
+    auto compare_func = [](const auto& a, const auto& b) { return a->zIndex() < b->zIndex(); };
     std::stable_sort(m_children.begin(), m_children.end(), compare_func);
     m_overflowRect = m_box->visualOverflowRect();
     for(auto child : m_children) {
@@ -160,7 +160,7 @@ void BoxLayer::paintLayerContents(BoxLayer* rootLayer, GraphicsContext& context,
         context.pushGroup();
     Point adjustedOffset(offset);
     if(m_box->isBoxFrame() && !m_box->isPageMarginBox()) {
-        auto& box = to<BoxFrame>(*m_box);
+        const auto& box = to<BoxFrame>(*m_box);
         adjustedOffset.move(-box.location());
     }
 

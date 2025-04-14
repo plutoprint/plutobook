@@ -164,7 +164,7 @@ SVGResourcePaintServerBox* SVGGraphicsElement::getPainter(const std::string_view
 SVGPaintServer SVGGraphicsElement::getPaintServer(const Paint& paint, float opacity) const
 {
     auto painter = getPainter(paint.uri());
-    auto& color = paint.color();
+    const auto& color = paint.color();
     return SVGPaintServer(painter, color, opacity);
 }
 
@@ -180,7 +180,7 @@ StrokeData SVGGraphicsElement::getStrokeData(const BoxStyle* style) const
     strokeData.setDashOffset(lengthContext.valueForLength(style->strokeDashoffset()));
 
     DashArray dashArray;
-    for(auto& dash : style->strokeDasharray())
+    for(const auto& dash : style->strokeDasharray())
         dashArray.push_back(lengthContext.valueForLength(dash));
     strokeData.setDashArray(std::move(dashArray));
     return strokeData;
@@ -194,7 +194,7 @@ SVGFitToViewBox::SVGFitToViewBox(SVGElement* element)
 
 Transform SVGFitToViewBox::viewBoxToViewTransform(const Size& viewportSize) const
 {
-    auto& viewBoxRect = m_viewBox.value();
+    const auto& viewBoxRect = m_viewBox.value();
     if(viewBoxRect.isEmpty() || viewportSize.isEmpty())
         return Transform::Identity;
     return m_preserveAspectRatio.getTransform(viewBoxRect, viewportSize);
@@ -202,7 +202,7 @@ Transform SVGFitToViewBox::viewBoxToViewTransform(const Size& viewportSize) cons
 
 Rect SVGFitToViewBox::getClipRect(const Size& viewportSize) const
 {
-    auto& viewBoxRect = m_viewBox.value();
+    const auto& viewBoxRect = m_viewBox.value();
     if(viewBoxRect.isEmpty() || viewportSize.isEmpty())
         return Rect(0, 0, viewportSize.w, viewportSize.h);
     return m_preserveAspectRatio.getClipRect(viewBoxRect, viewportSize);
@@ -357,10 +357,10 @@ Element* SVGUseElement::cloneTargetElement(SVGElement* targetElement)
 {
     if(targetElement == this || isDisallowedElement(targetElement))
         return nullptr;
-    auto& id = targetElement->id();
+    const auto& id = targetElement->id();
     auto parent = parentNode();
     while(parent && parent->isSVGElement()) {
-        auto& element = to<SVGElement>(*parent);
+        const auto& element = to<SVGElement>(*parent);
         if(!id.empty() && id == element.id())
             return nullptr;
         parent = parent->parentNode();
@@ -374,7 +374,7 @@ Element* SVGUseElement::cloneTargetElement(SVGElement* targetElement)
     auto newElement = document()->createElement(svgNs, tagName);
     newElement->setAttributes(targetElement->attributes());
     if(newElement->tagName() == svgTag) {
-        for(auto& attribute : attributes()) {
+        for(const auto& attribute : attributes()) {
             if(attribute.name() == widthAttr || attribute.name() == heightAttr) {
                 newElement->setAttribute(attribute);
             }

@@ -180,9 +180,9 @@ uint32_t CSSSimpleSelector::specificity() const
 {
     if(m_matchType == MatchType::PseudoClassIs || m_matchType == MatchType::PseudoClassNot) {
         uint32_t specificity = 0x0;
-        for(auto& subSelector : m_subSelectors) {
-            for(auto& complexSelector : subSelector) {
-                for(auto& simpleSelector : complexSelector.compoundSelector()) {
+        for(const auto& subSelector : m_subSelectors) {
+            for(const auto& complexSelector : subSelector) {
+                for(const auto& simpleSelector : complexSelector.compoundSelector()) {
                     specificity += simpleSelector.specificity();
                 }
             }
@@ -362,7 +362,7 @@ bool CSSRuleData::matchIdSelector(const Element* element, const CSSSimpleSelecto
 
 bool CSSRuleData::matchClassSelector(const Element* element, const CSSSimpleSelector& selector)
 {
-    for(auto& name : element->classNames()) {
+    for(const auto& name : element->classNames()) {
         if(name == selector.value()) {
             return true;
         }
@@ -426,7 +426,7 @@ bool CSSRuleData::matchAttributeEndsWithSelector(const Element* element, const C
 
 bool CSSRuleData::matchPseudoClassIsSelector(const Element* element, const CSSSimpleSelector& selector)
 {
-    for(auto& subSelector : selector.subSelectors()) {
+    for(const auto& subSelector : selector.subSelectors()) {
         if(matchSelector(element, PseudoType::None, subSelector)) {
             return true;
         }
@@ -571,7 +571,7 @@ bool CSSPageRuleData::match(const GlobalString& pageName, uint32_t pageIndex, Ps
 {
     if(m_selector == nullptr)
         return true;
-    for(auto& sel : *m_selector) {
+    for(const auto& sel : *m_selector) {
         if(!matchSelector(pageName, pageIndex, pseudoType, sel)) {
             return false;
         }
@@ -687,18 +687,18 @@ std::string CSSCounterStyle::generateInitialRepresentation(int value) const
         if(m_additiveSymbols == nullptr)
             return representation;
         if(value == 0) {
-            for(auto& symbol : *m_additiveSymbols) {
-                auto& pair = to<CSSPairValue>(*symbol);
-                auto& weight = to<CSSIntegerValue>(*pair.first());
+            for(const auto& symbol : *m_additiveSymbols) {
+                const auto& pair = to<CSSPairValue>(*symbol);
+                const auto& weight = to<CSSIntegerValue>(*pair.first());
                 if(weight.value() == 0) {
                     representation += counterStyleSymbol(*pair.second());
                     break;
                 }
             }
         } else {
-            for(auto& symbol : *m_additiveSymbols) {
-                auto& pair = to<CSSPairValue>(*symbol);
-                auto& weight = to<CSSIntegerValue>(*pair.first());
+            for(const auto& symbol : *m_additiveSymbols) {
+                const auto& pair = to<CSSPairValue>(*symbol);
+                const auto& weight = to<CSSIntegerValue>(*pair.first());
                 if(weight.value() == 0)
                     continue;
                 size_t repetitions = value / weight.value();
@@ -742,8 +742,7 @@ std::string CSSCounterStyle::generateInitialRepresentation(int value) const
     }
 
     for(auto index : indexes) {
-        auto& symbol = m_symbols->at(index);
-        representation += counterStyleSymbol(*symbol);
+        representation += counterStyleSymbol(*m_symbols->at(index));
     }
 
     return representation;
@@ -840,8 +839,8 @@ bool CSSCounterStyle::rangeContains(int value) const
         }
     }
 
-    for(auto& range : *m_range) {
-        auto& bounds = to<CSSPairValue>(*range);
+    for(const auto& range : *m_range) {
+        const auto& bounds = to<CSSPairValue>(*range);
         auto lowerBound = std::numeric_limits<int>::min();
         auto upperBound = std::numeric_limits<int>::max();
         if(auto bound = to<CSSIntegerValue>(bounds.first()))
@@ -946,12 +945,12 @@ CSSCounterStyle& CSSCounterStyle::defaultStyle()
 CSSCounterStyle::CSSCounterStyle(RefPtr<CSSCounterStyleRule> rule)
     : m_rule(std::move(rule))
 {
-    for(auto& property : m_rule->properties()) {
+    for(const auto& property : m_rule->properties()) {
         switch(property.id()) {
         case CSSPropertyID::System: {
             m_system = to<CSSIdentValue>(property.value());
             if(m_system == nullptr) {
-                auto& pair = to<CSSPairValue>(*property.value());
+                const auto& pair = to<CSSPairValue>(*property.value());
                 m_system = to<CSSIdentValue>(*pair.first());
                 if(m_system->value() == CSSValueID::Fixed) {
                     m_fixed = to<CSSIntegerValue>(*pair.second());
@@ -1011,13 +1010,13 @@ CSSCounterStyle* CSSCounterStyleMap::findCounterStyle(const GlobalString& name) 
 CSSCounterStyleMap::CSSCounterStyleMap(Heap* heap, const CSSRuleList& rules, const CSSCounterStyleMap* parent)
     : m_parent(parent), m_counterStyles(heap)
 {
-    for(auto& rule : rules) {
+    for(const auto& rule : rules) {
         auto& counterStyleRule = to<CSSCounterStyleRule>(*rule);
         auto counterStyle = CSSCounterStyle::create(heap, counterStyleRule);
         m_counterStyles.emplace(counterStyle->name(), std::move(counterStyle));
     }
 
-    for(auto& [name, style] : m_counterStyles) {
+    for(const auto& [name, style] : m_counterStyles) {
         if(style->system() == CSSValueID::Extends) {
             std::set<CSSCounterStyle*> unresolvedStyles;
             std::vector<CSSCounterStyle*> extendsStyles;

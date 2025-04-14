@@ -84,7 +84,7 @@ void ContentBoxBuilder::addLeader(const CSSValue& value)
         return;
     }
 
-    auto& ident = to<CSSIdentValue>(value);
+    const auto& ident = to<CSSIdentValue>(value);
     switch(ident.value()) {
     case CSSValueID::Dotted:
         addLeaderText(dotted);
@@ -123,7 +123,7 @@ void ContentBoxBuilder::addTargetCounter(const CSSFunctionValue& function)
     if(auto value = to<CSSLocalUrlValue>(function.at(index))) {
         fragment = to<CSSLocalUrlValue>(*value).value();
     } else {
-        auto& attr = to<CSSUnaryFunctionValue>(*function.at(index));
+        const auto& attr = to<CSSUnaryFunctionValue>(*function.at(index));
         assert(attr.id() == CSSValueID::Attr);
         fragment = getAttributeText(m_element, *attr.value());
     }
@@ -203,12 +203,12 @@ void ContentBoxBuilder::build()
             return;
         }
 
-        auto& listStyle = to<CSSCustomIdentValue>(*listStyleType);
+        const auto& listStyle = to<CSSCustomIdentValue>(*listStyleType);
         addText(m_counters.markerText(listStyle.value()));
         return;
     }
 
-    for(auto& value : to<CSSListValue>(*content)) {
+    for(const auto& value : to<CSSListValue>(*content)) {
         if(auto string = to<CSSStringValue>(value)) {
             addText(string->value());
         } else if(auto image = to<CSSImageValue>(value)) {
@@ -220,7 +220,7 @@ void ContentBoxBuilder::build()
         } else if(auto ident = to<CSSIdentValue>(value)) {
             addQuote(ident->value());
         } else {
-            auto& function = to<CSSUnaryFunctionValue>(*value);
+            const auto& function = to<CSSUnaryFunctionValue>(*value);
             if(function.id() == CSSValueID::Attr) {
                 addText(getAttributeText(m_element, *function.value()));
             } else {

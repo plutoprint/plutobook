@@ -242,7 +242,7 @@ public:
 
     const Attribute* findAttribute(const GlobalString& name) const {
         assert(m_type == HTMLToken::Type::StartTag || m_type == HTMLToken::Type::EndTag);
-        for(auto& attribute : m_attributes) {
+        for(const auto& attribute : m_attributes) {
             if(name == attribute.name()) {
                 return &attribute;
             }
@@ -253,7 +253,7 @@ public:
 
     bool hasAttribute(const GlobalString& name) const {
         assert(m_type == HTMLToken::Type::StartTag || m_type == HTMLToken::Type::EndTag);
-        for(auto& attribute : m_attributes) {
+        for(const auto& attribute : m_attributes) {
             if(name == attribute.name()) {
                 return true;
             }

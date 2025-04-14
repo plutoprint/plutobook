@@ -27,9 +27,9 @@ Rect InlineBox::visualOverflowRect() const
     float leftSide = 0.f;
     float rightSide = 0.f;
 
-    auto& firstLine = m_lines.front();
-    auto& lastLine = m_lines.back();
-    for(auto& line : m_lines) {
+    const auto& firstLine = m_lines.front();
+    const auto& lastLine = m_lines.back();
+    for(const auto& line : m_lines) {
         if(line == firstLine || leftSide > line->overflowLeft())
             leftSide = line->overflowLeft();
         if(line == firstLine || rightSide < line->overflowRight()) {
@@ -56,9 +56,9 @@ Rect InlineBox::linesBoundingBox() const
     float leftSide = 0.f;
     float rightSide = 0.f;
 
-    auto& firstLine = m_lines.front();
-    auto& lastLine = m_lines.back();
-    for(auto& line : m_lines) {
+    const auto& firstLine = m_lines.front();
+    const auto& lastLine = m_lines.back();
+    for(const auto& line : m_lines) {
         if(line == firstLine || leftSide > line->x())
             leftSide = line->x();
         if(line == firstLine || rightSide < line->x() + line->width()) {
@@ -134,7 +134,7 @@ void InlineBox::addChild(Box* newChild)
 void InlineBox::paint(const PaintInfo& info, const Point& offset, PaintPhase phase)
 {
     if(phase == PaintPhase::Contents || phase == PaintPhase::Outlines) {
-        for(auto& line : m_lines) {
+        for(const auto& line : m_lines) {
             line->paint(info, offset, phase);
         }
     }
