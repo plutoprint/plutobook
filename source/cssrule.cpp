@@ -101,7 +101,7 @@ float CSSLengthResolver::viewportWidth() const
 float CSSLengthResolver::viewportHeight() const
 {
     if(m_document)
-        return m_document->viewportWidth();
+        return m_document->viewportHeight();
     return 0.f;
 }
 
