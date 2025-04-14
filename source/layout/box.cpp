@@ -488,7 +488,7 @@ void BoxModel::paintBackground(const PaintInfo& info, const Rect& borderRect, co
         }
 
         auto backgroundPosition = backgroundStyle.backgroundPosition();
-        const Point position = {
+        const Point positionOffset = {
             backgroundPosition.left().calcMin(positioningArea.w - tileRect.w),
             backgroundPosition.top().calcMin(positioningArea.h - tileRect.h)
         };
@@ -496,18 +496,18 @@ void BoxModel::paintBackground(const PaintInfo& info, const Rect& borderRect, co
         Rect destRect(borderRect);
         auto backgroundRepeat = backgroundStyle.backgroundRepeat();
         if(backgroundRepeat == BackgroundRepeat::Repeat || backgroundRepeat == BackgroundRepeat::RepeatX) {
-            tileRect.x = tileRect.w - std::fmod(position.x + positioningArea.x, tileRect.w);
+            tileRect.x = tileRect.w - std::fmod(positionOffset.x + positioningArea.x, tileRect.w);
         } else {
-            destRect.x += std::max(0.f, position.x + positioningArea.x);
-            tileRect.x = -std::min(0.f, position.x + positioningArea.x);
+            destRect.x += std::max(0.f, positionOffset.x + positioningArea.x);
+            tileRect.x = -std::min(0.f, positionOffset.x + positioningArea.x);
             destRect.w = tileRect.w - tileRect.x;
         }
 
         if(backgroundRepeat == BackgroundRepeat::Repeat || backgroundRepeat == BackgroundRepeat::RepeatY) {
-            tileRect.y = tileRect.h - std::fmod(position.y + positioningArea.y, tileRect.h);
+            tileRect.y = tileRect.h - std::fmod(positionOffset.y + positioningArea.y, tileRect.h);
         } else {
-            destRect.y += std::max(0.f, position.y + positioningArea.y);
-            tileRect.y = -std::min(0.f, position.y + positioningArea.y);
+            destRect.y += std::max(0.f, positionOffset.y + positioningArea.y);
+            tileRect.y = -std::min(0.f, positionOffset.y + positioningArea.y);
             destRect.h = tileRect.h - tileRect.y;
         }
 
