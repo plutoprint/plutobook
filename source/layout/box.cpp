@@ -383,7 +383,7 @@ static Size computeBackgroundImageIntrinsicSize(Image& backgroundImage, const Si
         }
 
         assert(solutionHeight <= positioningAreaSize.h);
-        return Size(solutionWidth, positioningAreaSize.h);
+        return Size(positioningAreaSize.w, solutionHeight);
     }
 
     return positioningAreaSize;
