@@ -117,12 +117,12 @@ void SVGViewportContainerBox::render(const SVGRenderState& state) const
     SVGRenderState newState(blendInfo, this, state, m_localTransform);
     if(isOverflowHidden()) {
         SVGLengthContext lengthContext(element());
-        const Rect viewportSize = {
+        const Size viewportSize = {
             lengthContext.valueForLength(element()->width()),
             lengthContext.valueForLength(element()->height())
         };
 
-        newState->clipRect(viewportSize);
+        newState->clipRect(element()->getClipRect(viewportSize));
     }
 
     renderChildren(newState);

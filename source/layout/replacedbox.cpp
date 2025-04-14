@@ -12,17 +12,6 @@ ReplacedBox::ReplacedBox(Node* node, const RefPtr<BoxStyle>& style)
     setReplaced(true);
 }
 
-void ReplacedBox::computeIntrinsicRatioInformation(float& intrinsicWidth, float& intrinsicHeight, double& intrinsicRatio) const
-{
-    intrinsicWidth = intrinsicReplacedWidth();
-    intrinsicHeight = intrinsicReplacedHeight();
-    if(intrinsicWidth > 0.f && intrinsicHeight > 0.f) {
-        intrinsicRatio = intrinsicWidth / intrinsicHeight;
-    } else {
-        intrinsicRatio = 0.0;
-    }
-}
-
 void ReplacedBox::computeAspectRatioInformation(float& intrinsicWidth, float& intrinsicHeight, double& intrinsicRatio) const
 {
     computeIntrinsicRatioInformation(intrinsicWidth, intrinsicHeight, intrinsicRatio);
@@ -246,7 +235,7 @@ std::optional<float> ReplacedBox::computeReplacedWidthUsing(const Length& widthL
 {
     if(widthLength.isFixed())
         return adjustContentBoxWidth(widthLength.value());
-    if(!document()->isSVGImageDocument() && (widthLength.isPercent() || widthLength.isIntrinsic())) {
+    if(widthLength.isPercent() || widthLength.isIntrinsic()) {
         float containerWidth = 0;
         if(isPositioned())
             containerWidth = containingBox()->availableWidthForPositioned();
@@ -264,7 +253,7 @@ std::optional<float> ReplacedBox::computeReplacedHeightUsing(const Length& heigh
 {
     if(heightLength.isFixed())
         return adjustContentBoxHeight(heightLength.value());
-    if(!document()->isSVGImageDocument() && heightLength.isPercent()) {
+    if(heightLength.isPercent()) {
         float containerHeight = 0;
         if(isPositioned())
             containerHeight = containingBox()->availableHeightForPositioned();
@@ -298,6 +287,8 @@ float ReplacedBox::constrainReplacedHeight(float height) const
 
 float ReplacedBox::computeReplacedWidth() const
 {
+    if(document()->isSVGImageDocument())
+        return document()->availableWidth();
     if(auto width = computeReplacedWidthUsing(style()->width())) {
         return constrainReplacedWidth(*width);
     }
@@ -325,6 +316,8 @@ float ReplacedBox::computeReplacedWidth() const
 
 float ReplacedBox::computeReplacedHeight() const
 {
+    if(document()->isSVGImageDocument())
+        return document()->availableHeight();
     if(auto height = computeReplacedHeightUsing(style()->height())) {
         return constrainReplacedHeight(*height);
     }
@@ -446,6 +439,11 @@ float ImageBox::intrinsicReplacedHeight() const
     return 0.f;
 }
 
+void ImageBox::computeIntrinsicRatioInformation(float& intrinsicWidth, float& intrinsicHeight, double& intrinsicRatio) const
+{
+    m_image->computeIntrinsicDimensions(intrinsicWidth, intrinsicHeight, intrinsicRatio);
+}
+
 void ImageBox::paintReplaced(const PaintInfo& info, const Point& offset)
 {
     if(m_image == nullptr)
@@ -458,13 +456,15 @@ void ImageBox::paintReplaced(const PaintInfo& info, const Point& offset)
     auto leftWidth = borderLeft() + paddingLeft();
     auto rightWidth = borderRight() + paddingRight();
     auto clipRect = style()->getBorderRoundedRect(borderRect, true, true);
+
     clipRect.shrink(topWidth, bottomWidth, leftWidth, rightWidth);
+    borderRect.shrink(topWidth, bottomWidth, leftWidth, rightWidth);
     if(clipRect.isRounded()) {
         info->save();
         info->clipRoundedRect(clipRect);
     }
 
-    borderRect.shrink(topWidth, bottomWidth, leftWidth, rightWidth);
+    m_image->setContainerSize(borderRect.w, borderRect.h);
     m_image->draw(*info, borderRect, Rect(0, 0, m_image->width(), m_image->height()));
     if(clipRect.isRounded()) {
         info->restore();

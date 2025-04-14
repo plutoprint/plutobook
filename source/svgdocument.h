@@ -99,7 +99,7 @@ public:
     const SVGLength& y() const { return m_y; }
     const SVGLength& width() const { return m_width; }
     const SVGLength& height() const { return m_height; }
-    void computeIntrinsicRatioInformation(float& intrinsicWidth, float& intrinsicHeight, double& intrinsicRatio) const;
+    void computeIntrinsicDimensions(float& intrinsicWidth, float& intrinsicHeight, double& intrinsicRatio);
     void collectAttributeStyle(std::string& output, const GlobalString& name, const HeapString& value) const final;
     Box* createBox(const RefPtr<BoxStyle>& style) final;
 

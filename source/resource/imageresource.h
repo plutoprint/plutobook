@@ -3,6 +3,8 @@
 
 #include "resource.h"
 
+#include <memory>
+
 typedef struct _cairo_surface cairo_surface_t;
 
 namespace plutobook {
@@ -28,36 +30,48 @@ struct is_a<ImageResource> {
 };
 
 class GraphicsContext;
+class Point;
+class Size;
 class Rect;
 
 class Image : public RefCounted<Image> {
 public:
-    virtual ~Image();
+    Image() = default;
+    virtual ~Image() = default;
+
     virtual bool isBitmapImage() const { return false; }
     virtual bool isSVGImage() const { return false; }
 
-    void draw(GraphicsContext& context, const Rect& dstRect, const Rect& srcRect);
     void drawTiled(GraphicsContext& context, const Rect& destRect, const Rect& tileRect);
 
-    float width() const { return m_width; }
-    float height() const { return m_height; }
+    virtual void draw(GraphicsContext& context, const Rect& dstRect, const Rect& srcRect) = 0;
+    virtual void drawPattern(GraphicsContext& context, const Rect& destRect, const Size& size, const Size& scale, const Point& phase) = 0;
+    virtual void computeIntrinsicDimensions(float& intrinsicWidth, float& intrinsicHeight, double& intrinsicRatio) = 0;
 
-protected:
-    Image(cairo_surface_t* surface, float width, float height);
-    cairo_surface_t* m_surface;
-    const float m_width;
-    const float m_height;
+    virtual void setContainerSize(float width, float height) {}
+
+    virtual float width() const = 0;
+    virtual float height() const = 0;
 };
 
 class BitmapImage final : public Image {
 public:
     static RefPtr<BitmapImage> create(const char* data, size_t size);
-    static cairo_surface_t* decode(const char* data, size_t size);
 
     bool isBitmapImage() const final { return true; }
 
+    void draw(GraphicsContext& context, const Rect& dstRect, const Rect& srcRect) final;
+    void drawPattern(GraphicsContext& context, const Rect& destRect, const Size& size, const Size& scale, const Point& phase) final;
+    void computeIntrinsicDimensions(float& intrinsicWidth, float& intrinsicHeight, double& intrinsicRatio) final;
+
+    float width() const final;
+    float height() const final;
+
+    ~BitmapImage() final;
+
 private:
-    BitmapImage(cairo_surface_t* surface, float width, float height);
+    BitmapImage(cairo_surface_t* surface) : m_surface(surface) {}
+    cairo_surface_t* m_surface;
 };
 
 template<>
@@ -65,14 +79,28 @@ struct is_a<BitmapImage> {
     static bool check(const Image& value) { return value.isBitmapImage(); }
 };
 
+class SVGDocument;
+class Heap;
+
 class SVGImage final : public Image {
 public:
     static RefPtr<SVGImage> create(const std::string_view& content, ResourceFetcher* fetcher, Url baseUrl);
 
     bool isSVGImage() const final { return true; }
 
+    void draw(GraphicsContext& context, const Rect& dstRect, const Rect& srcRect) final;
+    void drawPattern(GraphicsContext& context, const Rect& destRect, const Size& size, const Size& scale, const Point& phase) final;
+    void computeIntrinsicDimensions(float& intrinsicWidth, float& intrinsicHeight, double& intrinsicRatio) final;
+
+    void setContainerSize(float width, float height) final;
+
+    float width() const final;
+    float height() const final;
+
 private:
-    SVGImage(cairo_surface_t* surface, float width, float height);
+    SVGImage(std::unique_ptr<Heap> heap, std::unique_ptr<SVGDocument> document);
+    std::unique_ptr<Heap> m_heap;
+    std::unique_ptr<SVGDocument> m_document;
 };
 
 template<>

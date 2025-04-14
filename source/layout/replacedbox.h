@@ -11,7 +11,7 @@ public:
 
     bool isReplacedBox() const final { return true; }
 
-    virtual void computeIntrinsicRatioInformation(float& intrinsicWidth, float& intrinsicHeight, double& intrinsicRatio) const;
+    virtual void computeIntrinsicRatioInformation(float& intrinsicWidth, float& intrinsicHeight, double& intrinsicRatio) const = 0;
     void computeAspectRatioInformation(float& intrinsicWidth, float& intrinsicHeight, double& intrinsicRatio) const;
 
     float computePreferredReplacedWidth() const;
@@ -61,6 +61,7 @@ public:
 
     float intrinsicReplacedWidth() const final;
     float intrinsicReplacedHeight() const final;
+    void computeIntrinsicRatioInformation(float& intrinsicWidth, float& intrinsicHeight, double& intrinsicRatio) const final;
 
     void paintReplaced(const PaintInfo& info, const Point& offset) final;
 

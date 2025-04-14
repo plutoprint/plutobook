@@ -345,20 +345,64 @@ void BoxModel::addChild(Box* newChild)
     newTable->addChild(newChild);
 }
 
+static Size computeBackgroundImageIntrinsicSize(Image& backgroundImage, const Size& positioningAreaSize)
+{
+    float intrinsicWidth = 0;
+    float intrinsicHeight = 0;
+    double intrinsicRatio = 0;
+    backgroundImage.computeIntrinsicDimensions(intrinsicWidth, intrinsicHeight, intrinsicRatio);
+    if(intrinsicWidth > 0 && intrinsicHeight > 0) {
+        return Size(intrinsicWidth, intrinsicHeight);
+    }
+
+    if(intrinsicWidth > 0 || intrinsicHeight > 0) {
+        if(intrinsicRatio > 0) {
+            if(intrinsicWidth > 0)
+                return Size(intrinsicWidth, intrinsicWidth / intrinsicRatio);
+            return Size(intrinsicHeight * intrinsicRatio, intrinsicHeight);
+        }
+
+        if(intrinsicWidth > 0)
+            return Size(intrinsicWidth, positioningAreaSize.h);
+        return Size(positioningAreaSize.w, intrinsicHeight);
+    }
+
+    if(intrinsicRatio > 0) {
+        auto solutionWidth = positioningAreaSize.h * intrinsicRatio;
+        auto solutionHeight = positioningAreaSize.w / intrinsicRatio;
+        if(solutionWidth <= positioningAreaSize.w) {
+            if(solutionHeight < positioningAreaSize.h) {
+                auto areaOne = solutionWidth * positioningAreaSize.h;
+                auto areaTwo = solutionHeight * positioningAreaSize.w;
+                if(areaOne < areaTwo)
+                    return Size(positioningAreaSize.w, solutionHeight);
+                return Size(solutionWidth, positioningAreaSize.h);
+            }
+
+            return Size(solutionWidth, positioningAreaSize.h);
+        }
+
+        assert(solutionHeight <= positioningAreaSize.h);
+        return Size(solutionWidth, positioningAreaSize.h);
+    }
+
+    return positioningAreaSize;
+}
+
 void BoxModel::paintBackground(const PaintInfo& info, const Rect& borderRect, const BoxStyle& backgroundStyle, bool includeLeftEdge, bool includeRightEdge) const
 {
-    auto color = backgroundStyle.backgroundColor();
-    auto image = backgroundStyle.backgroundImage();
-    if(image == nullptr && !color.alpha())
+    auto backgroundColor = backgroundStyle.backgroundColor();
+    auto backgroundImage = backgroundStyle.backgroundImage();
+    if(backgroundImage == nullptr && !backgroundColor.alpha())
         return;
-    auto clip = backgroundStyle.backgroundClip();
     auto clipRect = style()->getBorderRoundedRect(borderRect, includeLeftEdge, includeRightEdge);
-    if(clip == BackgroundBox::PaddingBox || clip == BackgroundBox::ContentBox) {
+    auto backgroundClip = backgroundStyle.backgroundClip();
+    if(backgroundClip == BackgroundBox::PaddingBox || backgroundClip == BackgroundBox::ContentBox) {
         auto topWidth = borderTop();
         auto bottomWidth = borderBottom();
         auto leftWidth = borderLeft();
         auto rightWidth = borderRight();
-        if(clip == BackgroundBox::ContentBox) {
+        if(backgroundClip == BackgroundBox::ContentBox) {
             topWidth += paddingTop();
             bottomWidth += paddingBottom();
             leftWidth += paddingLeft();
@@ -374,23 +418,23 @@ void BoxModel::paintBackground(const PaintInfo& info, const Rect& borderRect, co
 
     if(!clipRect.rect().intersects(info.rect()))
         return;
-    auto clipping = clip == BackgroundBox::PaddingBox || clip == BackgroundBox::ContentBox || clipRect.isRounded();
+    auto clipping = backgroundClip == BackgroundBox::PaddingBox || backgroundClip == BackgroundBox::ContentBox || clipRect.isRounded();
     if(clipping) {
         info->save();
         info->clipRoundedRect(clipRect);
     }
 
-    info->setColor(color);
+    info->setColor(backgroundColor);
     info->fillRect(borderRect);
-    if(image && image->width() && image->height()) {
-        auto origin = backgroundStyle.backgroundOrigin();
+    if(backgroundImage) {
         Rect positioningArea(0, 0, borderRect.w, borderRect.h);
-        if(origin == BackgroundBox::PaddingBox || origin == BackgroundBox::ContentBox) {
+        auto backgroundOrigin = backgroundStyle.backgroundOrigin();
+        if(backgroundOrigin == BackgroundBox::PaddingBox || backgroundOrigin == BackgroundBox::ContentBox) {
             auto topWidth = borderTop();
             auto bottomWidth = borderBottom();
             auto leftWidth = borderLeft();
             auto rightWidth = borderRight();
-            if(origin == BackgroundBox::ContentBox) {
+            if(backgroundOrigin == BackgroundBox::ContentBox) {
                 topWidth += paddingTop();
                 bottomWidth += paddingBottom();
                 leftWidth += paddingLeft();
@@ -401,21 +445,22 @@ void BoxModel::paintBackground(const PaintInfo& info, const Rect& borderRect, co
         }
 
         Rect tileRect;
-        auto size = backgroundStyle.backgroundSize();
-        switch(size.type()) {
+        auto intrinsicSize = computeBackgroundImageIntrinsicSize(*backgroundImage, positioningArea.size());
+        auto backgroundSize = backgroundStyle.backgroundSize();
+        switch(backgroundSize.type()) {
         case BackgroundSize::Type::Contain:
         case BackgroundSize::Type::Cover: {
-            auto xScale = positioningArea.w / image->width();
-            auto yScale = positioningArea.h / image->height();
-            auto scale = size.type() == BackgroundSize::Type::Contain ? std::min(xScale, yScale) : std::max(xScale, yScale);
-            tileRect.w = image->width() * scale;
-            tileRect.h = image->height() * scale;
+            auto xScale = positioningArea.w / intrinsicSize.w;
+            auto yScale = positioningArea.h / intrinsicSize.h;
+            auto scale = backgroundSize.type() == BackgroundSize::Type::Contain ? std::min(xScale, yScale) : std::max(xScale, yScale);
+            tileRect.w = intrinsicSize.w * scale;
+            tileRect.h = intrinsicSize.h * scale;
             break;
         }
 
         case BackgroundSize::Type::Length:
-            auto& widthLength = size.width();
-            auto& heightLength = size.height();
+            const auto& widthLength = backgroundSize.width();
+            const auto& heightLength = backgroundSize.height();
             if(widthLength.isFixed())
                 tileRect.w = widthLength.value();
             else if(widthLength.isPercent())
@@ -433,40 +478,43 @@ void BoxModel::paintBackground(const PaintInfo& info, const Rect& borderRect, co
             }
 
             if(widthLength.isAuto() && !heightLength.isAuto()) {
-                tileRect.w = image->width() * tileRect.h / image->height();
+                tileRect.w = intrinsicSize.w * tileRect.h / intrinsicSize.h;
             } else if (!widthLength.isAuto() && heightLength.isAuto()) {
-                tileRect.h = image->height() * tileRect.w / image->width();
+                tileRect.h = intrinsicSize.h * tileRect.w / intrinsicSize.w;
             } else if(widthLength.isAuto() && heightLength.isAuto()) {
-                tileRect.w = image->width();
-                tileRect.h = image->height();
+                tileRect.w = intrinsicSize.w;
+                tileRect.h = intrinsicSize.h;
             }
         }
 
-        auto position = backgroundStyle.backgroundPosition();
-        tileRect.x = position.left().calcMin(positioningArea.w - tileRect.w);
-        tileRect.y = position.top().calcMin(positioningArea.h - tileRect.h);
+        auto backgroundPosition = backgroundStyle.backgroundPosition();
+        const Point position = {
+            backgroundPosition.left().calcMin(positioningArea.w - tileRect.w),
+            backgroundPosition.top().calcMin(positioningArea.h - tileRect.h)
+        };
 
         Rect destRect(borderRect);
-        auto repeat = backgroundStyle.backgroundRepeat();
-        if(repeat == BackgroundRepeat::Repeat || repeat == BackgroundRepeat::RepeatX) {
-            tileRect.x = tileRect.w - std::fmod(tileRect.x + positioningArea.x, tileRect.w);
+        auto backgroundRepeat = backgroundStyle.backgroundRepeat();
+        if(backgroundRepeat == BackgroundRepeat::Repeat || backgroundRepeat == BackgroundRepeat::RepeatX) {
+            tileRect.x = tileRect.w - std::fmod(position.x + positioningArea.x, tileRect.w);
         } else {
-            destRect.x += std::max(0.f, tileRect.x + positioningArea.x);
-            tileRect.x = -std::min(0.f, tileRect.x + positioningArea.x);
+            destRect.x += std::max(0.f, position.x + positioningArea.x);
+            tileRect.x = -std::min(0.f, position.x + positioningArea.x);
             destRect.w = tileRect.w - tileRect.x;
         }
 
-        if(repeat == BackgroundRepeat::Repeat || repeat == BackgroundRepeat::RepeatY) {
-            tileRect.y = tileRect.h - std::fmod(tileRect.y + positioningArea.y, tileRect.h);
+        if(backgroundRepeat == BackgroundRepeat::Repeat || backgroundRepeat == BackgroundRepeat::RepeatY) {
+            tileRect.y = tileRect.h - std::fmod(position.y + positioningArea.y, tileRect.h);
         } else {
-            destRect.y += std::max(0.f, tileRect.y + positioningArea.y);
-            tileRect.y = -std::min(0.f, tileRect.y + positioningArea.y);
+            destRect.y += std::max(0.f, position.y + positioningArea.y);
+            tileRect.y = -std::min(0.f, position.y + positioningArea.y);
             destRect.h = tileRect.h - tileRect.y;
         }
 
         destRect.intersect(borderRect);
         if(destRect.intersects(info.rect())) {
-            image->drawTiled(*info, destRect, tileRect);
+            backgroundImage->setContainerSize(tileRect.w, tileRect.h);
+            backgroundImage->drawTiled(*info, destRect, tileRect);
         }
     }
 

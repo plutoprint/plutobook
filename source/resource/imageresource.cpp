@@ -59,98 +59,6 @@ bool ImageResource::supportsMimeType(const std::string_view& mimeType)
         || equals(mimeType, "image/bmp", false);
 }
 
-Image::~Image()
-{
-    cairo_surface_destroy(m_surface);
-}
-
-void Image::draw(GraphicsContext& context, const Rect& dstRect, const Rect& srcRect)
-{
-    if(dstRect.isEmpty() || srcRect.isEmpty()) {
-        return;
-    }
-
-    assert(m_width > 0.f && m_height > 0.f);
-    auto xScale = srcRect.w / dstRect.w;
-    auto yScale = srcRect.h / dstRect.h;
-    cairo_matrix_t matrix = {xScale, 0, 0, yScale, srcRect.x, srcRect.y};
-
-    auto pattern = cairo_pattern_create_for_surface(m_surface);
-    cairo_pattern_set_matrix(pattern, &matrix);
-    cairo_pattern_set_extend(pattern, CAIRO_EXTEND_PAD);
-
-    auto canvas = context.canvas();
-    cairo_save(canvas);
-    cairo_translate(canvas, dstRect.x, dstRect.y);
-    cairo_rectangle(canvas, 0, 0, dstRect.w, dstRect.h);
-    cairo_set_fill_rule(canvas, CAIRO_FILL_RULE_WINDING);
-    cairo_clip(canvas);
-    cairo_set_source(canvas, pattern);
-    cairo_paint(canvas);
-    cairo_restore(canvas);
-    cairo_pattern_destroy(pattern);
-}
-
-void Image::drawTiled(GraphicsContext& context, const Rect& destRect, const Rect& tileRect)
-{
-    if(destRect.isEmpty() || tileRect.isEmpty()) {
-        return;
-    }
-
-    assert(m_width > 0.f && m_height > 0.f);
-    auto xScale = tileRect.w / m_width;
-    auto yScale = tileRect.h / m_height;
-
-    Rect oneTileRect(destRect.x, destRect.y, tileRect.w, tileRect.h);
-    oneTileRect.x += std::fmod(std::fmod(-tileRect.x, tileRect.w) - tileRect.w, tileRect.w);
-    oneTileRect.y += std::fmod(std::fmod(-tileRect.y, tileRect.h) - tileRect.h, tileRect.h);
-    if(oneTileRect.contains(destRect)) {
-        Rect srcRect = {
-            (destRect.x - oneTileRect.x) / xScale,
-            (destRect.y - oneTileRect.y) / yScale,
-            (destRect.w / xScale),
-            (destRect.h / yScale)
-        };
-
-        draw(context, destRect, srcRect);
-        return;
-    }
-
-    cairo_matrix_t matrix = {xScale, 0, 0, yScale, oneTileRect.x, oneTileRect.y};
-    cairo_matrix_invert(&matrix);
-
-    auto pattern = cairo_pattern_create_for_surface(m_surface);
-    cairo_pattern_set_matrix(pattern, &matrix);
-    cairo_pattern_set_extend(pattern, CAIRO_EXTEND_REPEAT);
-
-    auto canvas = context.canvas();
-    cairo_save(canvas);
-    cairo_rectangle(canvas, destRect.x, destRect.y, destRect.w, destRect.h);
-    cairo_set_source(canvas, pattern);
-    cairo_set_fill_rule(canvas, CAIRO_FILL_RULE_WINDING);
-    cairo_fill(canvas);
-    cairo_restore(canvas);
-    cairo_pattern_destroy(pattern);
-}
-
-Image::Image(cairo_surface_t* surface, float width, float height)
-    : m_surface(surface), m_width(width), m_height(height)
-{
-}
-
-RefPtr<BitmapImage> BitmapImage::create(const char* data, size_t size)
-{
-    auto surface = decode(data, size);
-    if(surface == nullptr)
-        return nullptr;
-    if(cairo_surface_status(surface)) {
-        cairo_surface_destroy(surface);
-        return nullptr;
-    }
-
-    return adoptPtr(new BitmapImage(surface, cairo_image_surface_get_width(surface), cairo_image_surface_get_height(surface)));
-}
-
 #ifdef CAIRO_HAS_PNG_FUNCTIONS
 
 struct png_read_stream_t {
@@ -173,7 +81,7 @@ static cairo_status_t png_read_function(void* closure, uint8_t* data, uint32_t l
 
 #endif // CAIRO_HAS_PNG_FUNCTIONS
 
-cairo_surface_t* BitmapImage::decode(const char* data, size_t size)
+static cairo_surface_t* decodeBitmapImage(const char* data, size_t size)
 {
 #ifdef CAIRO_HAS_PNG_FUNCTIONS
     if(size > 8 && std::memcmp(data, "\x89PNG\r\n\x1A\n", 8) == 0) {
@@ -265,35 +173,201 @@ cairo_surface_t* BitmapImage::decode(const char* data, size_t size)
     return surface;
 }
 
-BitmapImage::BitmapImage(cairo_surface_t* surface, float width, float height)
-    : Image(surface, width, height)
+RefPtr<BitmapImage> BitmapImage::create(const char* data, size_t size)
 {
+    auto surface = decodeBitmapImage(data, size);
+    if(surface == nullptr)
+        return nullptr;
+    return adoptPtr(new BitmapImage(surface));
+}
+
+void Image::drawTiled(GraphicsContext& context, const Rect& destRect, const Rect& tileRect)
+{
+    const Size size(width(), height());
+    if(size.isEmpty() || destRect.isEmpty() || tileRect.isEmpty()) {
+        return;
+    }
+
+    const Size scale(tileRect.w / size.w, tileRect.h / size.h);
+    const Point phase = {
+        destRect.x + std::fmod(std::fmod(-tileRect.x, tileRect.w) - tileRect.w, tileRect.w),
+        destRect.y + std::fmod(std::fmod(-tileRect.y, tileRect.h) - tileRect.h, tileRect.h)
+    };
+
+    const Rect oneTileRect(phase, tileRect.size());
+    if(!oneTileRect.contains(destRect)) {
+        drawPattern(context, destRect, size, scale, phase);
+    } else {
+        const Rect srcRect = {
+            (destRect.x - oneTileRect.x) / scale.w,
+            (destRect.y - oneTileRect.y) / scale.h,
+            (destRect.w / scale.w),
+            (destRect.h / scale.h)
+        };
+
+        draw(context, destRect, srcRect);
+    }
+}
+
+void BitmapImage::draw(GraphicsContext& context, const Rect& dstRect, const Rect& srcRect)
+{
+    if(dstRect.isEmpty() || srcRect.isEmpty()) {
+        return;
+    }
+
+    auto xScale = srcRect.w / dstRect.w;
+    auto yScale = srcRect.h / dstRect.h;
+    cairo_matrix_t matrix = {xScale, 0, 0, yScale, srcRect.x, srcRect.y};
+
+    auto pattern = cairo_pattern_create_for_surface(m_surface);
+    cairo_pattern_set_matrix(pattern, &matrix);
+    cairo_pattern_set_extend(pattern, CAIRO_EXTEND_PAD);
+
+    auto canvas = context.canvas();
+    cairo_save(canvas);
+    cairo_translate(canvas, dstRect.x, dstRect.y);
+    cairo_rectangle(canvas, 0, 0, dstRect.w, dstRect.h);
+    cairo_set_fill_rule(canvas, CAIRO_FILL_RULE_WINDING);
+    cairo_clip(canvas);
+    cairo_set_source(canvas, pattern);
+    cairo_paint(canvas);
+    cairo_restore(canvas);
+    cairo_pattern_destroy(pattern);
+}
+
+void BitmapImage::drawPattern(GraphicsContext& context, const Rect& destRect, const Size& size, const Size& scale, const Point& phase)
+{
+    cairo_matrix_t matrix;
+    cairo_matrix_init(&matrix, scale.w, 0, 0, scale.h, phase.x, phase.y);
+    cairo_matrix_invert(&matrix);
+
+    auto pattern = cairo_pattern_create_for_surface(m_surface);
+    cairo_pattern_set_matrix(pattern, &matrix);
+    cairo_pattern_set_extend(pattern, CAIRO_EXTEND_REPEAT);
+
+    auto canvas = context.canvas();
+    cairo_save(canvas);
+    cairo_rectangle(canvas, destRect.x, destRect.y, destRect.w, destRect.h);
+    cairo_set_source(canvas, pattern);
+    cairo_set_fill_rule(canvas, CAIRO_FILL_RULE_WINDING);
+    cairo_fill(canvas);
+    cairo_restore(canvas);
+    cairo_pattern_destroy(pattern);
+}
+
+void BitmapImage::computeIntrinsicDimensions(float& intrinsicWidth, float& intrinsicHeight, double& intrinsicRatio)
+{
+    intrinsicWidth = cairo_image_surface_get_width(m_surface);
+    intrinsicHeight = cairo_image_surface_get_height(m_surface);
+    if(intrinsicHeight > 0) {
+        intrinsicRatio = intrinsicWidth / intrinsicHeight;
+    } else {
+        intrinsicRatio = 0;
+    }
+}
+
+float BitmapImage::width() const
+{
+    return cairo_image_surface_get_width(m_surface);
+}
+
+float BitmapImage::height() const
+{
+    return cairo_image_surface_get_height(m_surface);
+}
+
+BitmapImage::~BitmapImage()
+{
+    cairo_surface_destroy(m_surface);
 }
 
 RefPtr<SVGImage> SVGImage::create(const std::string_view& content, ResourceFetcher* fetcher, Url baseUrl)
 {
-    Heap heap(1024 * 24);
-    auto document = SVGDocument::create(nullptr, &heap, fetcher, std::move(baseUrl));
-    if(!document->load(content) || !document->rootElement()->isOfType(svgNs, svgTag)) {
+    std::unique_ptr<Heap> heap(new Heap(1024 * 24));
+    auto document = SVGDocument::create(nullptr, heap.get(), fetcher, std::move(baseUrl));
+    if(!document->load(content) || !document->rootElement()->isOfType(svgNs, svgTag))
         return nullptr;
-    }
-
-    document->build();
-    document->layout();
-
-    cairo_rectangle_t rectangle = {0, 0, document->width(), document->height()};
-    auto surface = cairo_recording_surface_create(CAIRO_CONTENT_COLOR_ALPHA, &rectangle);
-    auto canvas = cairo_create(surface);
-
-    GraphicsContext context(canvas);
-    document->render(context, Rect::Infinite);
-    cairo_destroy(canvas);
-    return adoptPtr(new SVGImage(surface, document->width(), document->height()));
+    return adoptPtr(new SVGImage(std::move(heap), std::move(document)));
 }
 
-SVGImage::SVGImage(cairo_surface_t* surface, float width, float height)
-    : Image(surface, width, height)
+void SVGImage::draw(GraphicsContext& context, const Rect& dstRect, const Rect& srcRect)
 {
+    auto xScale = dstRect.w / srcRect.w;
+    auto yScale = dstRect.h / srcRect.h;
+
+    auto xOffset = dstRect.x - (srcRect.x * xScale);
+    auto yOffset = dstRect.y - (srcRect.y * yScale);
+
+    context.save();
+    context.clipRect(dstRect);
+    context.translate(xOffset, yOffset);
+    context.scale(xScale, yScale);
+    m_document->render(context, srcRect);
+    context.restore();
+}
+
+void SVGImage::drawPattern(GraphicsContext& context, const Rect& destRect, const Size& size, const Size& scale, const Point& phase)
+{
+    cairo_matrix_t pattern_matrix;
+    cairo_matrix_init(&pattern_matrix, 1, 0, 0, 1, -phase.x, -phase.y);
+
+    cairo_rectangle_t pattern_rectangle = {0, 0, size.w * scale.w, size.h * scale.h};
+    auto pattern_surface = cairo_recording_surface_create(CAIRO_CONTENT_COLOR_ALPHA, &pattern_rectangle);
+    auto pattern_canvas = cairo_create(pattern_surface);
+
+    auto pattern = cairo_pattern_create_for_surface(pattern_surface);
+    cairo_pattern_set_matrix(pattern, &pattern_matrix);
+    cairo_pattern_set_extend(pattern, CAIRO_EXTEND_REPEAT);
+
+    GraphicsContext pattern_context(pattern_canvas);
+    m_document->render(pattern_context, Rect::Infinite);
+
+    auto canvas = context.canvas();
+    cairo_save(canvas);
+    cairo_rectangle(canvas, destRect.x, destRect.y, destRect.w, destRect.h);
+    cairo_set_source(canvas, pattern);
+    cairo_set_fill_rule(canvas, CAIRO_FILL_RULE_WINDING);
+    cairo_fill(canvas);
+    cairo_restore(canvas);
+
+    cairo_pattern_destroy(pattern);
+    cairo_destroy(pattern_canvas);
+    cairo_surface_destroy(pattern_surface);
+}
+
+static SVGSVGElement* toSVGRootElement(Element* element)
+{
+    assert(element && element->isOfType(svgNs, svgTag));
+    return static_cast<SVGSVGElement*>(element);
+}
+
+void SVGImage::computeIntrinsicDimensions(float& intrinsicWidth, float& intrinsicHeight, double& intrinsicRatio)
+{
+    auto rootElement = toSVGRootElement(m_document->rootElement());
+    rootElement->computeIntrinsicDimensions(intrinsicWidth, intrinsicHeight, intrinsicRatio);
+}
+
+void SVGImage::setContainerSize(float width, float height)
+{
+    if(m_document->setContainerSize(width, height)) {
+        m_document->layout();
+    }
+}
+
+float SVGImage::width() const
+{
+    return m_document->availableWidth();
+}
+
+float SVGImage::height() const
+{
+    return m_document->availableHeight();
+}
+
+SVGImage::SVGImage(std::unique_ptr<Heap> heap, std::unique_ptr<SVGDocument> document)
+    : m_heap(std::move(heap)), m_document(std::move(document))
+{
+    m_document->build();
 }
 
 } // namespace plutobook

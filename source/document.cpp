@@ -557,16 +557,22 @@ float Document::viewportHeight() const
 
 float Document::availableWidth() const
 {
-    if(m_book)
-        return m_pageContentWidth;
-    return 0.f;
+    return m_pageContentWidth;
 }
 
 float Document::availableHeight() const
 {
-    if(m_book)
-        return m_pageContentHeight;
-    return 0.f;
+    return m_pageContentHeight;
+}
+
+bool Document::setContainerSize(float width, float height)
+{
+    assert(isSVGImageDocument());
+    if(width == m_pageContentWidth && height == m_pageContentHeight)
+        return false;
+    m_pageContentWidth = width;
+    m_pageContentHeight = height;
+    return true;
 }
 
 TextNode* Document::createTextNode(const std::string_view& value)

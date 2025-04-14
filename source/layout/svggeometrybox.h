@@ -1,5 +1,5 @@
-#ifndef PLUTOBOOK_SVGSHAPEBOX_H
-#define PLUTOBOOK_SVGSHAPEBOX_H
+#ifndef PLUTOBOOK_SVGGEOMETRYBOX_H
+#define PLUTOBOOK_SVGGEOMETRYBOX_H
 
 #include "svgboxmodel.h"
 
@@ -119,4 +119,4 @@ inline SVGShapeElement* SVGShapeBox::element() const
 
 } // namespace plutobook
 
-#endif // PLUTOBOOK_SVGSHAPEBOX_H
+#endif // PLUTOBOOK_SVGGEOMETRYBOX_H

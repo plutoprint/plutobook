@@ -73,6 +73,11 @@ void SVGRootBox::layout(FragmentBuilder* fragmentainer)
             box->layout();
         }
     }
+
+    auto contentRect = contentBoxRect();
+    auto localTransform = Transform::translated(contentRect.x, contentRect.y);
+    localTransform.multiply(element()->viewBoxToViewTransform(contentRect.size()));
+    addOverflowRect(localTransform.mapRect(paintBoundingBox()));
 }
 
 void SVGRootBox::build()
@@ -85,15 +90,11 @@ void SVGRootBox::build()
 void SVGRootBox::updateOverflowRect()
 {
     ReplacedBox::updateOverflowRect();
-    auto contentRect = contentBoxRect();
-    auto localTransform = Transform::translated(contentRect.x, contentRect.y);
-    localTransform.multiply(element()->viewBoxToViewTransform(contentRect.size()));
-    addOverflowRect(localTransform.mapRect(paintBoundingBox()));
 }
 
 void SVGRootBox::computeIntrinsicRatioInformation(float& intrinsicWidth, float& intrinsicHeight, double& intrinsicRatio) const
 {
-    element()->computeIntrinsicRatioInformation(intrinsicWidth, intrinsicHeight, intrinsicRatio);
+    element()->computeIntrinsicDimensions(intrinsicWidth, intrinsicHeight, intrinsicRatio);
 }
 
 void SVGRootBox::paintReplaced(const PaintInfo& info, const Point& offset)
@@ -113,8 +114,8 @@ void SVGRootBox::paintReplaced(const PaintInfo& info, const Point& offset)
         info->clipRoundedRect(clipRect);
     }
 
-    borderRect.shrink(topWidth, bottomWidth, leftWidth, rightWidth);
     auto currentTransform = info->getTransform();
+    borderRect.shrink(topWidth, bottomWidth, leftWidth, rightWidth);
     currentTransform.translate(borderRect.x, borderRect.y);
     currentTransform.multiply(element()->viewBoxToViewTransform(borderRect.size()));
 
@@ -159,10 +160,11 @@ void SVGImageBox::render(const SVGRenderState& state) const
 {
     if(m_image == nullptr || state.mode() != SVGRenderMode::Painting || style()->visibility() != Visibility::Visible)
         return;
-    auto& preserveAspectRatio = element()->preserveAspectRatio();
     Rect dstRect(fillBoundingBox());
+    m_image->setContainerSize(dstRect.w, dstRect.h);
+
     Rect srcRect(0, 0, m_image->width(), m_image->height());
-    preserveAspectRatio.transformRect(dstRect, srcRect);
+    element()->preserveAspectRatio().transformRect(dstRect, srcRect);
 
     SVGBlendInfo blendInfo(m_clipper, m_masker, style());
     SVGRenderState newState(blendInfo, this, state, element()->transform());

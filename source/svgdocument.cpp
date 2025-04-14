@@ -6,8 +6,6 @@
 #include "imageresource.h"
 
 #include <set>
-#include <numbers>
-#include <cmath>
 
 namespace plutobook {
 
@@ -110,22 +108,23 @@ Size SVGElement::currentViewportSize() const
 {
     auto parent = to<SVGElement>(parentNode());
     if(parent == nullptr) {
-        auto element = static_cast<const SVGSVGElement*>(this);
-        auto& viewBoxRect = element->viewBox();
-        if(viewBoxRect.isValid())
-            return viewBoxRect.size();
-        return Size(300, 150);
+        return to<SVGRootBox>(box())->contentBoxSize();
     }
 
     if(parent->tagName() == svgTag) {
         auto element = static_cast<const SVGSVGElement*>(parent);
-        auto& viewBoxRect = element->viewBox();
+        const auto& viewBoxRect = element->viewBox();
         if(viewBoxRect.isValid())
             return viewBoxRect.size();
+        if(auto rootBox = to<SVGRootBox>(element->box()))
+            return rootBox->contentBoxSize();
         SVGLengthContext lengthContext(element);
-        auto width = lengthContext.valueForLength(element->width());
-        auto height = lengthContext.valueForLength(element->height());
-        return Size(width, height);
+        const  Size viewportSize = {
+            lengthContext.valueForLength(element->width()),
+            lengthContext.valueForLength(element->height())
+        };
+
+        return viewportSize;
     }
 
     return parent->currentViewportSize();
@@ -236,7 +235,7 @@ SVGSVGElement::SVGSVGElement(Document* document)
     addProperty(heightAttr, m_height);
 }
 
-void SVGSVGElement::computeIntrinsicRatioInformation(float& intrinsicWidth, float& intrinsicHeight, double& intrinsicRatio) const
+void SVGSVGElement::computeIntrinsicDimensions(float& intrinsicWidth, float& intrinsicHeight, double& intrinsicRatio)
 {
     SVGLengthContext lengthContext(this);
     if(m_width.unitType() != SVGLength::UnitType::Percent) {
@@ -251,35 +250,13 @@ void SVGSVGElement::computeIntrinsicRatioInformation(float& intrinsicWidth, floa
         intrinsicHeight = 0.f;
     }
 
-    auto& viewBoxRect = viewBox();
+    const auto& viewBoxRect = viewBox();
     if(intrinsicWidth > 0.f && intrinsicHeight > 0.f) {
         intrinsicRatio = intrinsicWidth / intrinsicHeight;
     } else if(!viewBoxRect.isEmpty()) {
         intrinsicRatio = viewBoxRect.w / viewBoxRect.h;
     } else {
         intrinsicRatio = 0.0;
-    }
-
-    if(!document()->isSVGImageDocument())
-        return;
-    if(intrinsicRatio && (!intrinsicWidth || !intrinsicHeight)) {
-        if(!intrinsicWidth && intrinsicHeight)
-            intrinsicWidth = intrinsicHeight * intrinsicRatio;
-        else if(intrinsicWidth && !intrinsicHeight) {
-            intrinsicHeight = intrinsicWidth / intrinsicRatio;
-        }
-    }
-
-    if(viewBoxRect.isValid() && (!intrinsicWidth || !intrinsicHeight)) {
-        intrinsicWidth = viewBoxRect.w;
-        intrinsicHeight = viewBoxRect.h;
-    }
-
-    auto rootBox = to<SVGRootBox>(box());
-    if(rootBox && (!intrinsicWidth || !intrinsicHeight)) {
-        auto& boundingRect = rootBox->paintBoundingBox();
-        intrinsicWidth = boundingRect.right();
-        intrinsicHeight = boundingRect.bottom();
     }
 }
 

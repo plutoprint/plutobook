@@ -317,6 +317,8 @@ public:
     float availableWidth() const;
     float availableHeight() const;
 
+    bool setContainerSize(float width, float height);
+
     TextNode* createTextNode(const std::string_view& value);
     Element* createElement(const GlobalString& namespaceURI, const GlobalString& tagName);
 
