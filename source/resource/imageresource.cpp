@@ -225,12 +225,11 @@ void BitmapImage::draw(GraphicsContext& context, const Rect& dstRect, const Rect
 
     auto canvas = context.canvas();
     cairo_save(canvas);
+    cairo_set_fill_rule(canvas, CAIRO_FILL_RULE_WINDING);
     cairo_translate(canvas, dstRect.x, dstRect.y);
     cairo_rectangle(canvas, 0, 0, dstRect.w, dstRect.h);
-    cairo_set_fill_rule(canvas, CAIRO_FILL_RULE_WINDING);
-    cairo_clip(canvas);
     cairo_set_source(canvas, pattern);
-    cairo_paint(canvas);
+    cairo_fill(canvas);
     cairo_restore(canvas);
     cairo_pattern_destroy(pattern);
 }
@@ -247,9 +246,9 @@ void BitmapImage::drawPattern(GraphicsContext& context, const Rect& destRect, co
 
     auto canvas = context.canvas();
     cairo_save(canvas);
+    cairo_set_fill_rule(canvas, CAIRO_FILL_RULE_WINDING);
     cairo_rectangle(canvas, destRect.x, destRect.y, destRect.w, destRect.h);
     cairo_set_source(canvas, pattern);
-    cairo_set_fill_rule(canvas, CAIRO_FILL_RULE_WINDING);
     cairo_fill(canvas);
     cairo_restore(canvas);
     cairo_pattern_destroy(pattern);
@@ -324,9 +323,9 @@ void SVGImage::drawPattern(GraphicsContext& context, const Rect& destRect, const
 
     auto canvas = context.canvas();
     cairo_save(canvas);
+    cairo_set_fill_rule(canvas, CAIRO_FILL_RULE_WINDING);
     cairo_rectangle(canvas, destRect.x, destRect.y, destRect.w, destRect.h);
     cairo_set_source(canvas, pattern);
-    cairo_set_fill_rule(canvas, CAIRO_FILL_RULE_WINDING);
     cairo_fill(canvas);
     cairo_restore(canvas);
 

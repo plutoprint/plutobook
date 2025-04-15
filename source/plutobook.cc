@@ -116,8 +116,8 @@ void plutobook_canvas_clear_surface(plutobook_canvas_t* canvas, float red, float
     if(canvas == nullptr)
         return;
     cairo_save(canvas->context);
-    cairo_set_source_rgba(canvas->context, red, green, blue, alpha);
     cairo_set_operator(canvas->context, CAIRO_OPERATOR_SOURCE);
+    cairo_set_source_rgba(canvas->context, red, green, blue, alpha);
     cairo_paint(canvas->context);
     cairo_restore(canvas->context);
 }
