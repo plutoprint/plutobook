@@ -99,25 +99,28 @@ void SVGRootBox::computeIntrinsicRatioInformation(float& intrinsicWidth, float& 
 
 void SVGRootBox::paintReplaced(const PaintInfo& info, const Point& offset)
 {
+    const RectOutsets outsets = {
+        borderTop() + paddingTop(),
+        borderRight() + paddingRight(),
+        borderBottom() + paddingBottom(),
+        borderLeft() + paddingLeft()
+    };
+
     Rect borderRect(offset, size());
-    if(borderRect.isEmpty())
+    Rect contentRect(borderRect - outsets);
+    if(contentRect.isEmpty()) {
         return;
-    auto topWidth = borderTop() + paddingTop();
-    auto bottomWidth = borderBottom() + paddingBottom();
-    auto leftWidth = borderLeft() + paddingLeft();
-    auto rightWidth = borderRight() + paddingRight();
+    }
 
     if(isOverflowHidden()) {
         auto clipRect = style()->getBorderRoundedRect(borderRect, true, true);
-        clipRect.shrink(topWidth, bottomWidth, leftWidth, rightWidth);
         info->save();
-        info->clipRoundedRect(clipRect);
+        info->clipRoundedRect(clipRect - outsets);
     }
 
     auto currentTransform = info->getTransform();
-    borderRect.shrink(topWidth, bottomWidth, leftWidth, rightWidth);
-    currentTransform.translate(borderRect.x, borderRect.y);
-    currentTransform.multiply(element()->viewBoxToViewTransform(borderRect.size()));
+    currentTransform.translate(contentRect.x, contentRect.y);
+    currentTransform.multiply(element()->viewBoxToViewTransform(contentRect.size()));
 
     {
         SVGBlendInfo blendInfo(m_clipper, m_masker, style());

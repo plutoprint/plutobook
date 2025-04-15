@@ -448,24 +448,27 @@ void ImageBox::paintReplaced(const PaintInfo& info, const Point& offset)
 {
     if(m_image == nullptr)
         return;
-    Rect borderRect(offset, size());
-    if(borderRect.isEmpty())
-        return;
-    auto topWidth = borderTop() + paddingTop();
-    auto bottomWidth = borderBottom() + paddingBottom();
-    auto leftWidth = borderLeft() + paddingLeft();
-    auto rightWidth = borderRight() + paddingRight();
-    auto clipRect = style()->getBorderRoundedRect(borderRect, true, true);
+    const RectOutsets outsets = {
+        borderTop() + paddingTop(),
+        borderRight() + paddingRight(),
+        borderBottom() + paddingBottom(),
+        borderLeft() + paddingLeft()
+    };
 
-    borderRect.shrink(topWidth, bottomWidth, leftWidth, rightWidth);
-    clipRect.shrink(topWidth, bottomWidth, leftWidth, rightWidth);
+    Rect borderRect(offset, size());
+    Rect contentRect(borderRect - outsets);
+    if(contentRect.isEmpty()) {
+        return;
+    }
+
+    auto clipRect = style()->getBorderRoundedRect(borderRect, true, true) - outsets;
     if(clipRect.isRounded()) {
         info->save();
         info->clipRoundedRect(clipRect);
     }
 
-    m_image->setContainerSize(borderRect.w, borderRect.h);
-    m_image->draw(*info, borderRect, Rect(0, 0, m_image->width(), m_image->height()));
+    m_image->setContainerSize(contentRect.w, contentRect.h);
+    m_image->draw(*info, contentRect, Rect(0, 0, m_image->width(), m_image->height()));
     if(clipRect.isRounded()) {
         info->restore();
     }

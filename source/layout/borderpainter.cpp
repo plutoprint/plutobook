@@ -61,17 +61,17 @@ BorderPainter::BorderPainter(BorderPainterType type, const Rect& borderRect, con
 
     if(m_visibleEdgeCount == 0)
         return;
-    auto topWidth = m_edges[BoxSideTop].width();
-    auto bottomWidth = m_edges[BoxSideBottom].width();
-    auto leftWidth = m_edges[BoxSideLeft].width();
-    auto rightWidth = m_edges[BoxSideRight].width();
     m_outer = style.getBorderRoundedRect(borderRect, includeLeftEdge, includeRightEdge);
     if(type == BorderPainterType::Outline) {
-        m_outer.expand(style.outlineWidth() + style.outlineOffset());
+        m_outer += RectOutsets(style.outlineWidth() + style.outlineOffset());
     }
 
-    m_inner = m_outer;
-    m_inner.shrink(topWidth, bottomWidth, leftWidth, rightWidth);
+    auto topWidth = m_edges[BoxSideTop].width();
+    auto rightWidth = m_edges[BoxSideRight].width();
+    auto bottomWidth = m_edges[BoxSideBottom].width();
+    auto leftWidth = m_edges[BoxSideLeft].width();
+
+    m_inner = m_outer - RectOutsets(topWidth, rightWidth, bottomWidth, leftWidth);
     m_isRounded = m_outer.isRounded();
 }
 
@@ -512,20 +512,17 @@ void BorderPainter::paintBoxSide(GraphicsContext& context, BoxSide side, LineSty
 
     case LineStyle::Double: {
         auto outerTopWidth = m_edges[BoxSideTop].width() / 3.f;
+        auto outerRightWidth = m_edges[BoxSideRight].width() / 3.f;
         auto outerBottomWidth = m_edges[BoxSideBottom].width() / 3.f;
         auto outerLeftWidth = m_edges[BoxSideLeft].width() / 3.f;
-        auto outerRightWidth = m_edges[BoxSideRight].width() / 3.f;
 
         auto innerTopWidth = m_edges[BoxSideTop].width() * 2.f / 3.f;
+        auto innerRightWidth = m_edges[BoxSideRight].width() * 2.f / 3.f;
         auto innerBottomWidth = m_edges[BoxSideBottom].width() * 2.f / 3.f;
         auto innerLeftWidth = m_edges[BoxSideLeft].width() * 2.f / 3.f;
-        auto innerRightWidth = m_edges[BoxSideRight].width() * 2.f / 3.f;
 
-        RoundedRect outerClipRect(m_outer);
-        RoundedRect innerClipRect(m_outer);
-
-        outerClipRect.shrink(outerTopWidth, outerBottomWidth, outerLeftWidth, outerRightWidth);
-        innerClipRect.shrink(innerTopWidth, innerBottomWidth, innerLeftWidth, innerRightWidth);
+        RoundedRect outerClipRect(m_outer - RectOutsets(outerTopWidth, outerRightWidth, outerBottomWidth, outerLeftWidth));
+        RoundedRect innerClipRect(m_outer - RectOutsets(innerTopWidth, innerRightWidth, innerBottomWidth, innerLeftWidth));
 
         context.save();
         context.clipRoundedRect(innerClipRect);
@@ -552,13 +549,11 @@ void BorderPainter::paintBoxSide(GraphicsContext& context, BoxSide side, LineSty
         }
 
         auto topWidth = m_edges[BoxSideTop].width() / 2.f;
+        auto rightWidth = m_edges[BoxSideRight].width() / 2.f;
         auto bottomWidth = m_edges[BoxSideBottom].width() / 2.f;
         auto leftWidth = m_edges[BoxSideLeft].width() / 2.f;
-        auto rightWidth = m_edges[BoxSideRight].width() / 2.f;
 
-        RoundedRect clipRect(m_outer);
-        clipRect.shrink(topWidth, bottomWidth, leftWidth, rightWidth);
-
+        RoundedRect clipRect(m_outer - RectOutsets(topWidth, rightWidth, bottomWidth, leftWidth));
         paintBoxSide(context, side, s1, color, thickness, path);
         context.save();
         context.clipRoundedRect(clipRect);

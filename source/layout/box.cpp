@@ -399,21 +399,21 @@ void BoxModel::paintBackground(const PaintInfo& info, const Rect& borderRect, co
     auto backgroundClip = backgroundStyle.backgroundClip();
     if(backgroundClip == BackgroundBox::PaddingBox || backgroundClip == BackgroundBox::ContentBox) {
         auto topWidth = borderTop();
+        auto rightWidth = borderRight();
         auto bottomWidth = borderBottom();
         auto leftWidth = borderLeft();
-        auto rightWidth = borderRight();
         if(backgroundClip == BackgroundBox::ContentBox) {
             topWidth += paddingTop();
+            rightWidth += paddingRight();
             bottomWidth += paddingBottom();
             leftWidth += paddingLeft();
-            rightWidth += paddingRight();
         }
 
         if(!includeLeftEdge)
             leftWidth = 0.f;
         if(!includeRightEdge)
             rightWidth = 0.f;
-        clipRect.shrink(topWidth, bottomWidth, leftWidth, rightWidth);
+        clipRect.shrink(topWidth, rightWidth, bottomWidth, leftWidth);
     }
 
     if(!clipRect.rect().intersects(info.rect()))
@@ -431,17 +431,17 @@ void BoxModel::paintBackground(const PaintInfo& info, const Rect& borderRect, co
         auto backgroundOrigin = backgroundStyle.backgroundOrigin();
         if(backgroundOrigin == BackgroundBox::PaddingBox || backgroundOrigin == BackgroundBox::ContentBox) {
             auto topWidth = borderTop();
+            auto rightWidth = borderRight();
             auto bottomWidth = borderBottom();
             auto leftWidth = borderLeft();
-            auto rightWidth = borderRight();
             if(backgroundOrigin == BackgroundBox::ContentBox) {
                 topWidth += paddingTop();
+                rightWidth += paddingRight();
                 bottomWidth += paddingBottom();
                 leftWidth += paddingLeft();
-                rightWidth += paddingRight();
             }
 
-            positioningArea.shrink(topWidth, bottomWidth, leftWidth, rightWidth);
+            positioningArea.shrink(topWidth, rightWidth, bottomWidth, leftWidth);
         }
 
         Rect tileRect;

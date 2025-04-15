@@ -62,7 +62,7 @@ void TableBox::updateOverflowRect()
                 auto rightHalfWidth = edges.rightEdge().width() / 2.f;
 
                 Rect borderRect(offset, cellBox->size());
-                borderRect.expand(topHalfWidth, bottomHalfWidth, leftHalfWidth, rightHalfWidth);
+                borderRect.expand(topHalfWidth, rightHalfWidth, bottomHalfWidth, leftHalfWidth);
                 addOverflowRect(borderRect.y, borderRect.bottom(), borderRect.x, borderRect.right());
             }
         }
@@ -1754,7 +1754,8 @@ const TableCollapsedBorderEdges& TableCellBox::collapsedBorderEdges() const
 void TableCellBox::paintBackgroundBehindCell(const PaintInfo& info, const Point& offset, const BoxStyle& backgroundStyle) const
 {
     if(style()->visibility() == Visibility::Visible) {
-        Rect borderRect(offset + location(), size());
+        Point adjustedOffset(offset + location());
+        Rect borderRect(adjustedOffset, size());
         paintBackground(info, borderRect, backgroundStyle);
     }
 }
@@ -1772,8 +1773,9 @@ void TableCellBox::paintCollapsedBorders(const PaintInfo& info, const Point& off
     auto leftHalfWidth = leftEdge.width() / 2.f;
     auto rightHalfWidth = rightEdge.width() / 2.f;
 
-    Rect borderRect(offset + location(), size());
-    borderRect.expand(topHalfWidth, bottomHalfWidth, leftHalfWidth, rightHalfWidth);
+    Point adjustedOffset(offset + location());
+    Rect borderRect(adjustedOffset, size());
+    borderRect.expand(topHalfWidth, rightHalfWidth, bottomHalfWidth, leftHalfWidth);
     if(!borderRect.intersects(info.rect())) {
         return;
     }

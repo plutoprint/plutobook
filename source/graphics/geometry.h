@@ -168,6 +168,21 @@ constexpr bool operator>=(const Size& a, const Size& b)
     return std::tie(a.w, a.h) >= std::tie(b.w, b.h);
 }
 
+class RectOutsets {
+public:
+    constexpr RectOutsets() = default;
+    constexpr explicit RectOutsets(float outset) : t(outset), r(outset), b(outset), l(outset) {}
+    constexpr RectOutsets(float top, float right, float bottom, float left)
+        : t(top), r(right), b(bottom), l(left)
+    {}
+
+public:
+    float t{0};
+    float r{0};
+    float b{0};
+    float l{0};
+};
+
 class Rect {
 public:
     constexpr Rect() = default;
@@ -180,15 +195,17 @@ public:
     constexpr void move(float d) { move(d, d); }
     constexpr void move(const Point& p) { move(p.x, p.y); }
 
-    constexpr void expand(float t, float b, float l, float r) { x -= l; y -= t; w += l + r; h += t + b; }
-    constexpr void expand(float dw, float dh) { w += dw; h += dh; }
-    constexpr void expand(float d) { expand(d, d); }
-    constexpr void expand(const Size& s) { expand(s.w, s.h); }
+    constexpr void expand(float t, float r, float b, float l) { x -= l; y -= t; w += l + r; h += t + b; }
+    constexpr void shrink(float t, float r, float b, float l) { expand(-t, -r, -b, -l); }
 
-    constexpr void shrink(float t, float b, float l, float r) { expand(-t, -b, -l, -r); }
-    constexpr void shrink(float dw, float dh) { expand(-dw, -dh); }
-    constexpr void shrink(float d) { expand(-d, -d); }
-    constexpr void shrink(const Size& s) { expand(-s); }
+    constexpr void expand(const RectOutsets& outsets) { expand(outsets.t, outsets.r, outsets.b, outsets.l); }
+    constexpr void shrink(const RectOutsets& outsets) { shrink(outsets.t, outsets.r, outsets.b, outsets.l); }
+
+    constexpr Rect operator+(const RectOutsets& outsets) const;
+    constexpr Rect operator-(const RectOutsets& outsets) const;
+
+    constexpr Rect& operator+=(const RectOutsets& outsets);
+    constexpr Rect& operator-=(const RectOutsets& outsets);
 
     constexpr void scale(float sx, float sy) { x *= sx; y *= sy; w *= sx; h *= sy; }
     constexpr void scale(float s) { scale(s, s); }
@@ -201,11 +218,9 @@ public:
 
     constexpr Rect intersected(const Rect& rect) const;
     constexpr Rect united(const Rect& rect) const;
-    constexpr Rect extended(const Point& point) const;
 
     constexpr Rect& intersect(const Rect& o);
     constexpr Rect& unite(const Rect& o);
-    constexpr Rect& extend(const Point& o);
 
     constexpr bool contains(const Point& p) const { return p.x >= x && p.x < right() && p.y >= y && p.y < bottom(); }
     constexpr bool contains(const Rect& r) const { return x <= r.x && y <= r.y && right() >= r.right() && bottom() >= r.bottom(); }
@@ -237,6 +252,32 @@ public:
     float h{0};
 };
 
+constexpr Rect Rect::operator+(const RectOutsets& outsets) const
+{
+    Rect rect(*this);
+    rect.expand(outsets);
+    return rect;
+}
+
+constexpr Rect Rect::operator-(const RectOutsets& outsets) const
+{
+    Rect rect(*this);
+    rect.shrink(outsets);
+    return rect;
+}
+
+constexpr Rect& Rect::operator+=(const RectOutsets& outsets)
+{
+    expand(outsets);
+    return *this;
+}
+
+constexpr Rect& Rect::operator-=(const RectOutsets& outsets)
+{
+    shrink(outsets);
+    return *this;
+}
+
 constexpr Rect Rect::intersected(const Rect& rect) const
 {
     if(!rect.isValid())
@@ -265,15 +306,6 @@ constexpr Rect Rect::united(const Rect& rect) const
     return Rect(l, t, r - l, b - t);
 }
 
-constexpr Rect Rect::extended(const Point& point) const
-{
-    float l = std::min(x, point.x);
-    float t = std::min(y, point.y);
-    float r = std::max(x + w, point.x);
-    float b = std::max(y + h, point.y);
-    return Rect(l, t, r - l, b - t);
-}
-
 constexpr Rect& Rect::intersect(const Rect& o)
 {
     *this = intersected(o);
@@ -283,12 +315,6 @@ constexpr Rect& Rect::intersect(const Rect& o)
 constexpr Rect& Rect::unite(const Rect& o)
 {
     *this = united(o);
-    return *this;
-}
-
-constexpr Rect& Rect::extend(const Point& o)
-{
-    *this = extended(o);
     return *this;
 }
 
@@ -335,9 +361,19 @@ public:
         : tl(tl), tr(tr), bl(bl), br(br)
     {}
 
-    constexpr void expand(float t, float b, float l, float r);
-    constexpr void shrink(float t, float b, float l, float r) { expand(-t, -b, -l, -r); }
     constexpr void constrain(float width, float height);
+
+    constexpr void expand(float t, float r, float b, float l);
+    constexpr void shrink(float t, float r, float b, float l) { expand(-t, -r, -b, -l); }
+
+    constexpr void expand(const RectOutsets& outsets) { expand(outsets.t, outsets.r, outsets.b, outsets.l); }
+    constexpr void shrink(const RectOutsets& outsets) { shrink(outsets.t, outsets.r, outsets.b, outsets.l); }
+
+    constexpr RectRadii operator+(const RectOutsets& outsets) const;
+    constexpr RectRadii operator-(const RectOutsets& outsets) const;
+
+    constexpr RectRadii& operator+=(const RectOutsets& outsets);
+    constexpr RectRadii& operator-=(const RectOutsets& outsets);
 
     constexpr bool isZero() const { return tl.isZero() && tr.isZero() && bl.isZero() && br.isZero(); };
 
@@ -373,7 +409,7 @@ constexpr void RectRadii::constrain(float width, float height)
     if(br.isEmpty()) br = Size();
 }
 
-constexpr void RectRadii::expand(float t, float b, float l, float r)
+constexpr void RectRadii::expand(float t, float r, float b, float l)
 {
     if(!tl.isEmpty()) tl.expand(l, t);
     if(!tr.isEmpty()) tr.expand(r, t);
@@ -386,6 +422,32 @@ constexpr void RectRadii::expand(float t, float b, float l, float r)
     if(br.isEmpty()) br = Size();
 }
 
+constexpr RectRadii RectRadii::operator+(const RectOutsets& outsets) const
+{
+    RectRadii radii(*this);
+    radii.expand(outsets);
+    return radii;
+}
+
+constexpr RectRadii RectRadii::operator-(const RectOutsets& outsets) const
+{
+    RectRadii radii(*this);
+    radii.shrink(outsets);
+    return radii;
+}
+
+constexpr RectRadii& RectRadii::operator+=(const RectOutsets& outsets)
+{
+    expand(outsets);
+    return *this;
+}
+
+constexpr RectRadii& RectRadii::operator-=(const RectOutsets& outsets)
+{
+    shrink(outsets);
+    return *this;
+}
+
 class RoundedRect {
 public:
     constexpr RoundedRect() = default;
@@ -395,11 +457,17 @@ public:
 
     constexpr bool isRounded() const { return !m_radii.isZero(); }
 
-    constexpr void expand(float t, float b, float l, float r);
-    constexpr void shrink(float t, float b, float l, float r) { expand(-t, -b, -l, -r); }
+    constexpr void expand(float t, float r, float b, float l);
+    constexpr void shrink(float t, float r, float b, float l) { expand(-t, -r, -b, -l); }
 
-    constexpr void expand(float d) { expand(d, d, d, d); }
-    constexpr void shrink(float d) { expand(-d); }
+    constexpr void expand(const RectOutsets& outsets) { expand(outsets.t, outsets.r, outsets.b, outsets.l); }
+    constexpr void shrink(const RectOutsets& outsets) { shrink(outsets.t, outsets.r, outsets.b, outsets.l); }
+
+    constexpr RoundedRect operator+(const RectOutsets& outsets) const;
+    constexpr RoundedRect operator-(const RectOutsets& outsets) const;
+
+    constexpr RoundedRect& operator+=(const RectOutsets& outsets);
+    constexpr RoundedRect& operator-=(const RectOutsets& outsets);
 
     constexpr const Rect& rect() const { return m_rect; }
     constexpr const RectRadii& radii() const { return m_radii; }
@@ -409,10 +477,36 @@ private:
     RectRadii m_radii;
 };
 
-constexpr void RoundedRect::expand(float t, float b, float l, float r)
+constexpr void RoundedRect::expand(float t, float r, float b, float l)
 {
-    m_rect.expand(t, b, l, r);
-    m_radii.expand(t, b, l, r);
+    m_rect.expand(t, r, b, l);
+    m_radii.expand(t, r, b, l);
+}
+
+constexpr RoundedRect RoundedRect::operator+(const RectOutsets& outsets) const
+{
+    RoundedRect rect(*this);
+    rect.expand(outsets);
+    return rect;
+}
+
+constexpr RoundedRect RoundedRect::operator-(const RectOutsets& outsets) const
+{
+    RoundedRect rect(*this);
+    rect.shrink(outsets);
+    return rect;
+}
+
+constexpr RoundedRect& RoundedRect::operator+=(const RectOutsets& outsets)
+{
+    expand(outsets);
+    return *this;
+}
+
+constexpr RoundedRect& RoundedRect::operator-=(const RectOutsets& outsets)
+{
+    shrink(outsets);
+    return *this;
 }
 
 class Transform {
