@@ -1100,6 +1100,8 @@ static CSSPropertyID csspropertyid(const std::string_view& name)
         {"min-width", CSSPropertyID::MinWidth},
         {"mix-blend-mode", CSSPropertyID::MixBlendMode},
         {"negative", CSSPropertyID::Negative},
+        {"object-fit", CSSPropertyID::ObjectFit},
+        {"object-position", CSSPropertyID::ObjectPosition},
         {"opacity", CSSPropertyID::Opacity},
         {"order", CSSPropertyID::Order},
         {"orphans", CSSPropertyID::Orphans},
@@ -2967,7 +2969,7 @@ RefPtr<CSSValue> CSSParser::consumeTextDecorationLine(CSSTokenStream& input)
     return CSSListValue::create(m_heap, std::move(values));
 }
 
-RefPtr<CSSValue> CSSParser::consumeBackgroundPosition(CSSTokenStream& input)
+RefPtr<CSSValue> CSSParser::consumePositionCoordinate(CSSTokenStream& input)
 {
     RefPtr<CSSValue> first;
     RefPtr<CSSValue> second;
@@ -3349,8 +3351,9 @@ RefPtr<CSSValue> CSSParser::consumeLonghand(CSSTokenStream& input, CSSPropertyID
     case CSSPropertyID::BackgroundSize:
         return consumeBackgroundSize(input);
     case CSSPropertyID::BackgroundPosition:
+    case CSSPropertyID::ObjectPosition:
     case CSSPropertyID::TransformOrigin:
-        return consumeBackgroundPosition(input);
+        return consumePositionCoordinate(input);
     case CSSPropertyID::Transform:
         return consumeTransform(input);
     case CSSPropertyID::PaintOrder:
@@ -3920,6 +3923,18 @@ RefPtr<CSSValue> CSSParser::consumeLonghand(CSSTokenStream& input, CSSPropertyID
         return consumeIdent(input, table);
     }
 
+    case CSSPropertyID::ObjectFit: {
+        static const CSSIdentValueEntry table[] = {
+            {"fill", CSSValueID::Fill},
+            {"contain", CSSValueID::Contain},
+            {"cover", CSSValueID::Cover},
+            {"none", CSSValueID::None},
+            {"scale-down", CSSValueID::ScaleDown}
+        };
+
+        return consumeIdent(input, table);
+    }
+
     default:
         return nullptr;
     }
@@ -3984,7 +3999,7 @@ bool CSSParser::consumeBackground(CSSTokenStream& input, CSSPropertyList& proper
     RefPtr<CSSValue> position;
     RefPtr<CSSValue> size;
     while(!input.empty()) {
-        if(position == nullptr && (position = consumeBackgroundPosition(input))) {
+        if(position == nullptr && (position = consumePositionCoordinate(input))) {
             if(input->type() == CSSToken::Type::Delim && input->delim() == '/') {
                 input.consumeIncludingWhitespace();
                 if(size == nullptr && (size = consumeBackgroundSize(input)))

@@ -579,10 +579,39 @@ LengthPoint BoxStyle::backgroundPosition() const
     auto value = get(CSSPropertyID::BackgroundPosition);
     if(value == nullptr)
         return LengthPoint(Length::ZeroFixed);
-    const auto& pair = to<CSSPairValue>(*value);
-    auto horizontal = convertPositionLength(CSSValueID::Left, CSSValueID::Right, *pair.first());
-    auto vertical = convertPositionLength(CSSValueID::Top, CSSValueID::Bottom, *pair.second());
-    return LengthPoint(horizontal, vertical);
+    return convertPositionCoordinate(*value);
+}
+
+ObjectFit BoxStyle::objectFit() const
+{
+    auto value = get(CSSPropertyID::ObjectFit);
+    if(value == nullptr)
+        return ObjectFit::Fill;
+    const auto& ident = to<CSSIdentValue>(*value);
+    switch(ident.value()) {
+    case CSSValueID::Fill:
+        return ObjectFit::Fill;
+    case CSSValueID::Contain:
+        return ObjectFit::Contain;
+    case CSSValueID::Cover:
+        return ObjectFit::Cover;
+    case CSSValueID::None:
+        return ObjectFit::None;
+    case CSSValueID::ScaleDown:
+        return ObjectFit::ScaleDown;
+    default:
+        assert(false);
+    }
+
+    return ObjectFit::Fill;
+}
+
+LengthPoint BoxStyle::objectPosition() const
+{
+    auto value = get(CSSPropertyID::ObjectPosition);
+    if(value == nullptr)
+        return LengthPoint(Length::ZeroFixed);
+    return convertPositionCoordinate(*value);
 }
 
 TableLayout BoxStyle::tableLayout() const
@@ -1458,10 +1487,8 @@ Point BoxStyle::getTransformOrigin(float width, float height) const
     auto value = get(CSSPropertyID::TransformOrigin);
     if(value == nullptr)
         return Point(width * 50.f / 100.f, height * 50.f / 100.f);
-    const auto& pair = to<CSSPairValue>(*value);
-    auto horizontal = convertPositionLength(CSSValueID::Left, CSSValueID::Right, *pair.first());
-    auto vertical = convertPositionLength(CSSValueID::Top, CSSValueID::Bottom, *pair.second());
-    return Point(horizontal.calc(width), vertical.calc(height));
+    const auto& coordinate = convertPositionCoordinate(*value);
+    return Point(coordinate.x().calc(width), coordinate.y().calc(height));
 }
 
 Transform BoxStyle::getTransform(float width, float height) const
@@ -2329,7 +2356,7 @@ Length BoxStyle::convertWidthOrHeightLength(const CSSValue& value) const
     return convertLengthOrPercent(value);
 }
 
-Length BoxStyle::convertPositionLength(CSSValueID min, CSSValueID max, const CSSValue& value) const
+Length BoxStyle::convertPositionComponent(CSSValueID min, CSSValueID max, const CSSValue& value) const
 {
     if(is<CSSIdentValue>(value)) {
         const auto& ident = to<CSSIdentValue>(value);
@@ -2344,6 +2371,14 @@ Length BoxStyle::convertPositionLength(CSSValueID min, CSSValueID max, const CSS
     }
 
     return convertLengthOrPercent(value);
+}
+
+LengthPoint BoxStyle::convertPositionCoordinate(const CSSValue& value) const
+{
+    const auto& pair = to<CSSPairValue>(value);
+    auto horizontal = convertPositionComponent(CSSValueID::Left, CSSValueID::Right, *pair.first());
+    auto vertical = convertPositionComponent(CSSValueID::Top, CSSValueID::Bottom, *pair.second());
+    return LengthPoint(horizontal, vertical);
 }
 
 LengthSize BoxStyle::convertBorderRadius(const CSSValue& value) const

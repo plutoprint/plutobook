@@ -95,6 +95,14 @@ enum class ListStylePosition : uint8_t {
     Inside
 };
 
+enum class ObjectFit : uint8_t {
+    Fill,
+    Contain,
+    Cover,
+    None,
+    ScaleDown
+};
+
 enum class BackgroundRepeat : uint8_t {
     Repeat,
     RepeatX,
@@ -764,6 +772,9 @@ public:
     BackgroundSize backgroundSize() const;
     LengthPoint backgroundPosition() const;
 
+    ObjectFit objectFit() const;
+    LengthPoint objectPosition() const;
+
     TableLayout tableLayout() const;
     CaptionSide captionSide() const { return m_captionSide; }
     EmptyCells emptyCells() const { return m_emptyCells; }
@@ -938,7 +949,8 @@ public:
     Length convertLengthOrPercentOrAuto(const CSSValue& value) const;
     Length convertLengthOrPercentOrNone(const CSSValue& value) const;
     Length convertWidthOrHeightLength(const CSSValue& value) const;
-    Length convertPositionLength(CSSValueID min, CSSValueID max, const CSSValue& value) const;
+    Length convertPositionComponent(CSSValueID min, CSSValueID max, const CSSValue& value) const;
+    LengthPoint convertPositionCoordinate(const CSSValue& value) const;
     LengthSize convertBorderRadius(const CSSValue& value) const;
     Color convertColor(const CSSValue& value) const;
     Paint convertPaint(const CSSValue& value) const;
