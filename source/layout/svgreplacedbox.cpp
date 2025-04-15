@@ -74,10 +74,12 @@ void SVGRootBox::layout(FragmentBuilder* fragmentainer)
         }
     }
 
-    auto contentRect = contentBoxRect();
-    auto localTransform = Transform::translated(contentRect.x, contentRect.y);
-    localTransform.multiply(element()->viewBoxToViewTransform(contentRect.size()));
-    addOverflowRect(localTransform.mapRect(paintBoundingBox()));
+    if(!isOverflowHidden()) {
+        auto contentRect = contentBoxRect();
+        auto localTransform = Transform::translated(contentRect.x, contentRect.y);
+        localTransform.multiply(element()->viewBoxToViewTransform(contentRect.size()));
+        addOverflowRect(localTransform.mapRect(paintBoundingBox()));
+    }
 }
 
 void SVGRootBox::build()
