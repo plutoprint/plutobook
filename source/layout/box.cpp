@@ -489,8 +489,8 @@ void BoxModel::paintBackground(const PaintInfo& info, const Rect& borderRect, co
 
         auto backgroundPosition = backgroundStyle.backgroundPosition();
         const Point positionOffset = {
-            backgroundPosition.left().calcMin(positioningArea.w - tileRect.w),
-            backgroundPosition.top().calcMin(positioningArea.h - tileRect.h)
+            backgroundPosition.x().calcMin(positioningArea.w - tileRect.w),
+            backgroundPosition.y().calcMin(positioningArea.h - tileRect.h)
         };
 
         Rect destRect(borderRect);

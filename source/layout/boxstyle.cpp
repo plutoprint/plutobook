@@ -574,15 +574,15 @@ BackgroundSize BoxStyle::backgroundSize() const
     return BackgroundSize(width, height);
 }
 
-BackgroundPosition BoxStyle::backgroundPosition() const
+LengthPoint BoxStyle::backgroundPosition() const
 {
     auto value = get(CSSPropertyID::BackgroundPosition);
     if(value == nullptr)
-        return BackgroundPosition();
+        return LengthPoint(Length::ZeroFixed);
     const auto& pair = to<CSSPairValue>(*value);
     auto horizontal = convertPositionLength(CSSValueID::Left, CSSValueID::Right, *pair.first());
     auto vertical = convertPositionLength(CSSValueID::Top, CSSValueID::Bottom, *pair.second());
-    return BackgroundPosition(horizontal, vertical);
+    return LengthPoint(horizontal, vertical);
 }
 
 TableLayout BoxStyle::tableLayout() const
@@ -857,17 +857,17 @@ VerticalAlign BoxStyle::verticalAlign() const
     return VerticalAlign(m_verticalAlignType, convertLengthOrPercent(*value));
 }
 
-LengthRect BoxStyle::clip() const
+LengthBox BoxStyle::clip() const
 {
     auto value = get(CSSPropertyID::Clip);
     if(value == nullptr || value->id() == CSSValueID::Auto)
-        return LengthRect(Length::Auto);
+        return LengthBox(Length::Auto);
     const auto& rect = to<CSSRectValue>(*value);
     auto left = convertLengthOrPercentOrAuto(*rect.left());
     auto right = convertLengthOrPercentOrAuto(*rect.right());
     auto top = convertLengthOrPercentOrAuto(*rect.top());
     auto bottom = convertLengthOrPercentOrAuto(*rect.bottom());
-    return LengthRect(left, right, top, bottom);
+    return LengthBox(left, right, top, bottom);
 }
 
 Length BoxStyle::flexBasis() const

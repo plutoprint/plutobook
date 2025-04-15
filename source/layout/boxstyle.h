@@ -435,6 +435,21 @@ inline float Length::calcMin(float maximum) const
 
 using LengthList = std::vector<Length>;
 
+class LengthPoint {
+public:
+    explicit LengthPoint(const Length& value) : LengthPoint(value, value) {}
+    LengthPoint(const Length& x, const Length& y)
+        : m_x(x), m_y(y)
+    {}
+
+    const Length& x() const { return m_x; }
+    const Length& y() const { return m_y; }
+
+private:
+    Length m_x;
+    Length m_y;
+};
+
 class LengthSize {
 public:
     explicit LengthSize(const Length& value) : LengthSize(value, value) {}
@@ -450,10 +465,10 @@ private:
     Length m_height;
 };
 
-class LengthRect {
+class LengthBox {
 public:
-    explicit LengthRect(const Length& value) : LengthRect(value, value, value, value) {}
-    LengthRect(const Length& left, const Length& right, const Length& top, const Length& bottom)
+    explicit LengthBox(const Length& value) : LengthBox(value, value, value, value) {}
+    LengthBox(const Length& left, const Length& right, const Length& top, const Length& bottom)
         : m_left(left), m_right(right), m_top(top), m_bottom(bottom)
     {}
 
@@ -491,21 +506,6 @@ private:
     Type m_type = Type::Length;
     Length m_width = Length::Auto;
     Length m_height = Length::Auto;
-};
-
-class BackgroundPosition {
-public:
-    BackgroundPosition() = default;
-    BackgroundPosition(const Length& left, const Length& top)
-        : m_left(left), m_top(top)
-    {}
-
-    const Length& left() const { return m_left; }
-    const Length& top() const { return m_top; }
-
-private:
-    Length m_left = Length::ZeroFixed;
-    Length m_top = Length::ZeroFixed;
 };
 
 enum BoxSide {
@@ -762,7 +762,7 @@ public:
     BackgroundBox backgroundClip() const;
     BackgroundAttachment backgroundAttachment() const;
     BackgroundSize backgroundSize() const;
-    BackgroundPosition backgroundPosition() const;
+    LengthPoint backgroundPosition() const;
 
     TableLayout tableLayout() const;
     CaptionSide captionSide() const { return m_captionSide; }
@@ -793,7 +793,7 @@ public:
     Overflow overflow() const;
     std::optional<int> zIndex() const;
     VerticalAlign verticalAlign() const;
-    LengthRect clip() const;
+    LengthBox clip() const;
 
     Length flexBasis() const;
     float flexGrow() const;
