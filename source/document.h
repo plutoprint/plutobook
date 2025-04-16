@@ -282,6 +282,7 @@ using DocumentCounterMap = std::pmr::map<HeapString, CounterMap, std::less<>>;
 
 class BoxView;
 class GraphicsContext;
+class Size;
 class Rect;
 
 class Book;
@@ -317,7 +318,7 @@ public:
     float availableWidth() const;
     float availableHeight() const;
 
-    bool setContainerSize(float width, float height);
+    bool setContainerSize(const Size& containerSize);
 
     TextNode* createTextNode(const std::string_view& value);
     Element* createElement(const GlobalString& namespaceURI, const GlobalString& tagName);

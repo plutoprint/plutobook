@@ -565,9 +565,11 @@ float Document::availableHeight() const
     return m_pageContentHeight;
 }
 
-bool Document::setContainerSize(float width, float height)
+bool Document::setContainerSize(const Size& containerSize)
 {
     assert(isSVGImageDocument());
+    auto width = std::round(containerSize.w);
+    auto height = std::round(containerSize.h);
     if(width == m_pageContentWidth && height == m_pageContentHeight)
         return false;
     m_pageContentWidth = width;

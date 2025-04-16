@@ -30,9 +30,6 @@ public:
     float computeReplacedHeight() const;
     float availableReplacedWidth() const;
 
-    virtual float intrinsicReplacedWidth() const = 0;
-    virtual float intrinsicReplacedHeight() const = 0;
-
     void computeWidth(float& x, float& width, float& marginLeft, float& marginRight) const override;
     void computeHeight(float& y, float& height, float& marginTop, float& marginBottom) const override;
     void layout(FragmentBuilder* fragmentainer) override;
@@ -40,7 +37,13 @@ public:
     virtual void paintReplaced(const PaintInfo& info, const Point& offset) = 0;
     void paint(const PaintInfo& info, const Point& offset, PaintPhase phase) override;
 
+    void setIntrinsicSize(const Size& intrinsicSize) { m_intrinsicSize = intrinsicSize; }
+    Size intrinsicSize() const { return m_intrinsicSize; }
+
     const char* name() const override { return "ReplacedBox"; }
+
+private:
+    Size m_intrinsicSize;
 };
 
 template<>
@@ -59,10 +62,7 @@ public:
     const RefPtr<Image>& image() const { return m_image; }
     void setImage(RefPtr<Image> image);
 
-    float intrinsicReplacedWidth() const final;
-    float intrinsicReplacedHeight() const final;
     void computeIntrinsicRatioInformation(float& intrinsicWidth, float& intrinsicHeight, double& intrinsicRatio) const final;
-
     void paintReplaced(const PaintInfo& info, const Point& offset) final;
 
     const char* name() const final { return "ImageBox"; }

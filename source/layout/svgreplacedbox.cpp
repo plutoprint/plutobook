@@ -7,6 +7,7 @@ namespace plutobook {
 SVGRootBox::SVGRootBox(SVGSVGElement* element, const RefPtr<BoxStyle>& style)
     : ReplacedBox(element, style)
 {
+    setIntrinsicSize(Size(300, 150));
 }
 
 bool SVGRootBox::requiresLayer() const
@@ -61,39 +62,6 @@ const Rect& SVGRootBox::paintBoundingBox() const
     return m_paintBoundingBox;
 }
 
-void SVGRootBox::layout(FragmentBuilder* fragmentainer)
-{
-    ReplacedBox::layout(fragmentainer);
-
-    m_fillBoundingBox = Rect::Invalid;
-    m_strokeBoundingBox = Rect::Invalid;
-    m_paintBoundingBox = Rect::Invalid;
-    for(auto child = firstChild(); child; child = child->nextSibling()) {
-        if(auto box = to<SVGBoxModel>(child)) {
-            box->layout();
-        }
-    }
-
-    if(!isOverflowHidden()) {
-        auto contentRect = contentBoxRect();
-        auto localTransform = Transform::translated(contentRect.x, contentRect.y);
-        localTransform.multiply(element()->viewBoxToViewTransform(contentRect.size()));
-        addOverflowRect(localTransform.mapRect(paintBoundingBox()));
-    }
-}
-
-void SVGRootBox::build()
-{
-    m_clipper = element()->getClipper(style()->clipPath());
-    m_masker = element()->getMasker(style()->mask());
-    ReplacedBox::build();
-}
-
-void SVGRootBox::updateOverflowRect()
-{
-    ReplacedBox::updateOverflowRect();
-}
-
 void SVGRootBox::computeIntrinsicRatioInformation(float& intrinsicWidth, float& intrinsicHeight, double& intrinsicRatio) const
 {
     element()->computeIntrinsicDimensions(intrinsicWidth, intrinsicHeight, intrinsicRatio);
@@ -139,6 +107,34 @@ void SVGRootBox::paintReplaced(const PaintInfo& info, const Point& offset)
     }
 }
 
+void SVGRootBox::layout(FragmentBuilder* fragmentainer)
+{
+    ReplacedBox::layout(fragmentainer);
+
+    m_fillBoundingBox = Rect::Invalid;
+    m_strokeBoundingBox = Rect::Invalid;
+    m_paintBoundingBox = Rect::Invalid;
+    for(auto child = firstChild(); child; child = child->nextSibling()) {
+        if(auto box = to<SVGBoxModel>(child)) {
+            box->layout();
+        }
+    }
+
+    if(!isOverflowHidden()) {
+        auto contentRect = contentBoxRect();
+        auto localTransform = Transform::translated(contentRect.x, contentRect.y);
+        localTransform.multiply(element()->viewBoxToViewTransform(contentRect.size()));
+        addOverflowRect(localTransform.mapRect(paintBoundingBox()));
+    }
+}
+
+void SVGRootBox::build()
+{
+    m_clipper = element()->getClipper(style()->clipPath());
+    m_masker = element()->getMasker(style()->mask());
+    ReplacedBox::build();
+}
+
 SVGImageBox::SVGImageBox(SVGImageElement* element, const RefPtr<BoxStyle>& style)
     : SVGBoxModel(element, style)
 {
@@ -166,9 +162,9 @@ void SVGImageBox::render(const SVGRenderState& state) const
     if(m_image == nullptr || state.mode() != SVGRenderMode::Painting || style()->visibility() != Visibility::Visible)
         return;
     Rect dstRect(fillBoundingBox());
-    m_image->setContainerSize(dstRect.w, dstRect.h);
+    m_image->setContainerSize(dstRect.size());
 
-    Rect srcRect(0, 0, m_image->width(), m_image->height());
+    Rect srcRect(m_image->size());
     element()->preserveAspectRatio().transformRect(dstRect, srcRect);
 
     SVGBlendInfo blendInfo(m_clipper, m_masker, style());

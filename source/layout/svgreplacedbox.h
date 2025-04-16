@@ -16,18 +16,15 @@ public:
     bool requiresLayer() const final;
 
     SVGSVGElement* element() const;
+
     const Rect& fillBoundingBox() const final;
     const Rect& strokeBoundingBox() const final;
     const Rect& paintBoundingBox() const final;
-    void layout(FragmentBuilder* fragmentainer) final;
-    void build() final;
 
-    float intrinsicReplacedWidth() const final { return 300.f; }
-    float intrinsicReplacedHeight() const final { return 150.f; }
-
-    void updateOverflowRect() final;
     void computeIntrinsicRatioInformation(float& intrinsicWidth, float& intrinsicHeight, double& intrinsicRatio) const final;
     void paintReplaced(const PaintInfo& info, const Point& offset) final;
+    void layout(FragmentBuilder* fragmentainer) final;
+    void build() final;
 
     const char* name() const final { return "SVGRootBox"; }
 

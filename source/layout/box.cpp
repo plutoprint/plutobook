@@ -513,7 +513,7 @@ void BoxModel::paintBackground(const PaintInfo& info, const Rect& borderRect, co
 
         destRect.intersect(borderRect);
         if(destRect.intersects(info.rect())) {
-            backgroundImage->setContainerSize(tileRect.w, tileRect.h);
+            backgroundImage->setContainerSize(tileRect.size());
             backgroundImage->drawTiled(*info, destRect, tileRect);
         }
     }

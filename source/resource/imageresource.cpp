@@ -183,12 +183,12 @@ RefPtr<BitmapImage> BitmapImage::create(const char* data, size_t size)
 
 void Image::drawTiled(GraphicsContext& context, const Rect& destRect, const Rect& tileRect)
 {
-    const Size size(width(), height());
-    if(size.isEmpty() || destRect.isEmpty() || tileRect.isEmpty()) {
+    const Size imageSize(size());
+    if(imageSize.isEmpty() || destRect.isEmpty() || tileRect.isEmpty()) {
         return;
     }
 
-    const Size scale(tileRect.w / size.w, tileRect.h / size.h);
+    const Size scale(tileRect.w / imageSize.w, tileRect.h / imageSize.h);
     const Point phase = {
         destRect.x + std::fmod(std::fmod(-tileRect.x, tileRect.w) - tileRect.w, tileRect.w),
         destRect.y + std::fmod(std::fmod(-tileRect.y, tileRect.h) - tileRect.h, tileRect.h)
@@ -196,7 +196,7 @@ void Image::drawTiled(GraphicsContext& context, const Rect& destRect, const Rect
 
     const Rect oneTileRect(phase, tileRect.size());
     if(!oneTileRect.contains(destRect)) {
-        drawPattern(context, destRect, size, scale, phase);
+        drawPattern(context, destRect, imageSize, scale, phase);
     } else {
         const Rect srcRect = {
             (destRect.x - oneTileRect.x) / scale.w,
@@ -265,14 +265,18 @@ void BitmapImage::computeIntrinsicDimensions(float& intrinsicWidth, float& intri
     }
 }
 
-float BitmapImage::width() const
+void BitmapImage::setContainerSize(const Size& size)
 {
-    return cairo_image_surface_get_width(m_surface);
 }
 
-float BitmapImage::height() const
+Size BitmapImage::intrinsicSize() const
 {
-    return cairo_image_surface_get_height(m_surface);
+    return Size(cairo_image_surface_get_width(m_surface), cairo_image_surface_get_height(m_surface));
+}
+
+Size BitmapImage::size() const
+{
+    return intrinsicSize();
 }
 
 BitmapImage::~BitmapImage()
@@ -346,21 +350,42 @@ void SVGImage::computeIntrinsicDimensions(float& intrinsicWidth, float& intrinsi
     rootElement->computeIntrinsicDimensions(intrinsicWidth, intrinsicHeight, intrinsicRatio);
 }
 
-void SVGImage::setContainerSize(float width, float height)
+void SVGImage::setContainerSize(const Size& size)
 {
-    if(m_document->setContainerSize(width, height)) {
+    if(m_document->setContainerSize(size)) {
         m_document->layout();
     }
 }
 
-float SVGImage::width() const
+Size SVGImage::intrinsicSize() const
 {
-    return m_document->availableWidth();
+    float intrinsicWidth = 0.f;
+    float intrinsicHeight = 0.f;
+    double intrinsicRatio = 0.0;
+
+    auto rootElement = toSVGRootElement(m_document->rootElement());
+    rootElement->computeIntrinsicDimensions(intrinsicWidth, intrinsicHeight, intrinsicRatio);
+    if(intrinsicRatio && (!intrinsicWidth || !intrinsicHeight)) {
+        if(!intrinsicWidth && intrinsicHeight)
+            intrinsicWidth = intrinsicHeight * intrinsicRatio;
+        else if(intrinsicWidth && !intrinsicHeight) {
+            intrinsicHeight = intrinsicWidth / intrinsicRatio;
+        }
+    }
+
+    if(intrinsicWidth > 0 && intrinsicHeight > 0) {
+        return Size(intrinsicWidth, intrinsicHeight);
+    }
+
+    const auto& viewBoxRect = rootElement->viewBox();
+    if(viewBoxRect.isValid())
+        return viewBoxRect.size();
+    return Size(300, 150);
 }
 
-float SVGImage::height() const
+Size SVGImage::size() const
 {
-    return m_document->availableHeight();
+    return Size(m_document->availableWidth(), m_document->availableHeight());
 }
 
 SVGImage::SVGImage(std::unique_ptr<Heap> heap, std::unique_ptr<SVGDocument> document)

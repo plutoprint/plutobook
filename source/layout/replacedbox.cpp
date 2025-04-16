@@ -58,7 +58,7 @@ float ReplacedBox::computePreferredReplacedWidth() const
     }
 
     if(!intrinsicWidth)
-        return intrinsicReplacedWidth();
+        return m_intrinsicSize.w;
     return intrinsicWidth;
 }
 
@@ -66,7 +66,7 @@ void ReplacedBox::computePreferredWidths(float& minPreferredWidth, float& maxPre
 {
     auto widthLength = style()->width();
     if(widthLength.isPercent()) {
-        maxPreferredWidth = minPreferredWidth = intrinsicReplacedWidth();
+        maxPreferredWidth = minPreferredWidth = m_intrinsicSize.w;
     } else {
         maxPreferredWidth = minPreferredWidth = computePreferredReplacedWidth();
     }
@@ -310,7 +310,7 @@ float ReplacedBox::computeReplacedWidth() const
     }
 
     if(!intrinsicWidth)
-        return constrainReplacedWidth(intrinsicReplacedWidth());
+        return constrainReplacedWidth(m_intrinsicSize.w);
     return constrainReplacedWidth(intrinsicWidth);
 }
 
@@ -339,7 +339,7 @@ float ReplacedBox::computeReplacedHeight() const
     }
 
     if(!intrinsicHeight)
-        return constrainReplacedHeight(intrinsicReplacedHeight());
+        return constrainReplacedHeight(m_intrinsicSize.h);
     return constrainReplacedHeight(intrinsicHeight);
 }
 
@@ -422,26 +422,15 @@ ImageBox::ImageBox(Node* node, const RefPtr<BoxStyle>& style)
 
 void ImageBox::setImage(RefPtr<Image> image)
 {
+    setIntrinsicSize(image->intrinsicSize());
     m_image = std::move(image);
-}
-
-float ImageBox::intrinsicReplacedWidth() const
-{
-    if(m_image)
-        return m_image->width();
-    return 0.f;
-}
-
-float ImageBox::intrinsicReplacedHeight() const
-{
-    if(m_image)
-        return m_image->height();
-    return 0.f;
 }
 
 void ImageBox::computeIntrinsicRatioInformation(float& intrinsicWidth, float& intrinsicHeight, double& intrinsicRatio) const
 {
-    m_image->computeIntrinsicDimensions(intrinsicWidth, intrinsicHeight, intrinsicRatio);
+    if(m_image) {
+        m_image->computeIntrinsicDimensions(intrinsicWidth, intrinsicHeight, intrinsicRatio);
+    }
 }
 
 void ImageBox::paintReplaced(const PaintInfo& info, const Point& offset)
@@ -467,8 +456,8 @@ void ImageBox::paintReplaced(const PaintInfo& info, const Point& offset)
         info->clipRoundedRect(clipRect);
     }
 
-    m_image->setContainerSize(contentRect.w, contentRect.h);
-    m_image->draw(*info, contentRect, Rect(0, 0, m_image->width(), m_image->height()));
+    m_image->setContainerSize(contentRect.size());
+    m_image->draw(*info, contentRect, Rect(m_image->size()));
     if(clipRect.isRounded()) {
         info->restore();
     }
