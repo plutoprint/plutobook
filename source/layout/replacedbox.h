@@ -30,6 +30,8 @@ public:
     float computeReplacedHeight() const;
     float availableReplacedWidth() const;
 
+    Rect computeObjectFitRect(const Rect& contentRect) const;
+
     void computeWidth(float& x, float& width, float& marginLeft, float& marginRight) const override;
     void computeHeight(float& y, float& height, float& marginTop, float& marginBottom) const override;
     void layout(FragmentBuilder* fragmentainer) override;

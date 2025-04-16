@@ -351,6 +351,42 @@ float ReplacedBox::availableReplacedWidth() const
     return constrainReplacedWidth(containerWidth - marginLeft - marginRight - borderAndPaddingWidth());
 }
 
+static Size computeObjectFitSize(ObjectFit objectFit, const Size& intrinsicSize, const Size& contentSize)
+{
+    if(objectFit == ObjectFit::Fill)
+        return contentSize;
+    if(objectFit == ObjectFit::None) {
+        return intrinsicSize;
+    }
+
+    auto xScale = contentSize.w / intrinsicSize.w;
+    auto yScale = contentSize.h / intrinsicSize.h;
+    auto scale = objectFit == ObjectFit::Cover ? std::max(xScale, yScale) : std::min(xScale, yScale);
+
+    Size objectSize(intrinsicSize.w * scale, intrinsicSize.h * scale);
+    if(objectFit == ObjectFit::ScaleDown && objectSize.w > intrinsicSize.w)
+        return intrinsicSize;
+    return objectSize;
+}
+
+Rect ReplacedBox::computeObjectFitRect(const Rect& contentRect) const
+{
+    if(m_intrinsicSize.isEmpty()) {
+        return contentRect;
+    }
+
+    auto objectFit = style()->objectFit();
+    auto objectPosition = style()->objectPosition();
+
+    Rect objectRect(contentRect.origin(), computeObjectFitSize(objectFit, m_intrinsicSize, contentRect.size()));
+    const Point positionOffset = {
+        objectPosition.x().calcMin(contentRect.w - objectRect.w),
+        objectPosition.y().calcMin(contentRect.h - objectRect.h)
+    };
+
+    return objectRect.moved(positionOffset);
+}
+
 void ReplacedBox::computeWidth(float& x, float& width, float& marginLeft, float& marginRight) const
 {
     if(hasOverrideWidth()) {
@@ -450,15 +486,18 @@ void ImageBox::paintReplaced(const PaintInfo& info, const Point& offset)
         return;
     }
 
+    auto objectRect = computeObjectFitRect(contentRect);
     auto clipRect = style()->getBorderRoundedRect(borderRect, true, true) - outsets;
-    if(clipRect.isRounded()) {
+
+    auto clipping = !contentRect.contains(objectRect) || clipRect.isRounded();
+    if(clipping) {
         info->save();
         info->clipRoundedRect(clipRect);
     }
 
-    m_image->setContainerSize(contentRect.size());
-    m_image->draw(*info, contentRect, Rect(m_image->size()));
-    if(clipRect.isRounded()) {
+    m_image->setContainerSize(objectRect.size());
+    m_image->draw(*info, objectRect, Rect(m_image->size()));
+    if(clipping) {
         info->restore();
     }
 }
