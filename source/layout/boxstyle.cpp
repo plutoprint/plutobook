@@ -610,7 +610,7 @@ LengthPoint BoxStyle::objectPosition() const
 {
     auto value = get(CSSPropertyID::ObjectPosition);
     if(value == nullptr)
-        return LengthPoint(Length::ZeroFixed);
+        return LengthPoint(Length(Length::Type::Percent, 50.f));
     return convertPositionCoordinate(*value);
 }
 
