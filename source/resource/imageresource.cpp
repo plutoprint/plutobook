@@ -236,6 +236,8 @@ void BitmapImage::draw(GraphicsContext& context, const Rect& dstRect, const Rect
 
 void BitmapImage::drawPattern(GraphicsContext& context, const Rect& destRect, const Size& size, const Size& scale, const Point& phase)
 {
+    assert(!destRect.isEmpty() && !size.isEmpty() && !scale.isEmpty());
+
     cairo_matrix_t matrix;
     cairo_matrix_init(&matrix, scale.w, 0, 0, scale.h, phase.x, phase.y);
     cairo_matrix_invert(&matrix);
@@ -295,6 +297,10 @@ RefPtr<SVGImage> SVGImage::create(const std::string_view& content, ResourceFetch
 
 void SVGImage::draw(GraphicsContext& context, const Rect& dstRect, const Rect& srcRect)
 {
+    if(dstRect.isEmpty() || srcRect.isEmpty()) {
+        return;
+    }
+
     auto xScale = dstRect.w / srcRect.w;
     auto yScale = dstRect.h / srcRect.h;
 
@@ -311,6 +317,8 @@ void SVGImage::draw(GraphicsContext& context, const Rect& dstRect, const Rect& s
 
 void SVGImage::drawPattern(GraphicsContext& context, const Rect& destRect, const Size& size, const Size& scale, const Point& phase)
 {
+    assert(!destRect.isEmpty() && !size.isEmpty() && !scale.isEmpty());
+
     cairo_matrix_t pattern_matrix;
     cairo_matrix_init(&pattern_matrix, 1, 0, 0, 1, -phase.x, -phase.y);
 
