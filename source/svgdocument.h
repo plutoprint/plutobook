@@ -300,11 +300,11 @@ class SVGTextPositioningElement : public SVGGraphicsElement {
 public:
     SVGTextPositioningElement(Document* document, const GlobalString& tagName);
 
-    const std::vector<SVGLength>& x() const { return m_x.values(); }
-    const std::vector<SVGLength>& y() const { return m_y.values(); }
-    const std::vector<SVGLength>& dx() const { return m_dx.values(); }
-    const std::vector<SVGLength>& dy() const { return m_dy.values(); }
-    const std::vector<float>& rotate() const { return m_rotate.values(); }
+    const SVGLengthList& x() const { return m_x; }
+    const SVGLengthList& y() const { return m_y; }
+    const SVGLengthList& dx() const { return m_dx; }
+    const SVGLengthList& dy() const { return m_dy; }
+    const SVGNumberList& rotate() const { return m_rotate; }
 
 private:
     SVGLengthList m_x;

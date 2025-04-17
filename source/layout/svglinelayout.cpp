@@ -402,11 +402,11 @@ void SVGLineLayout::render(const SVGRenderState& state) const
 
 static void fillCharacterPositions(const SVGTextPosition& position, SVGCharacterPositions& characterPositions)
 {
-    const auto& xList = position.element->x();
-    const auto& yList = position.element->y();
-    const auto& dxList = position.element->dx();
-    const auto& dyList = position.element->dy();
-    const auto& rotateList = position.element->rotate();
+    const auto& xList = position.element->x().values();
+    const auto& yList = position.element->y().values();
+    const auto& dxList = position.element->dx().values();
+    const auto& dyList = position.element->dy().values();
+    const auto& rotateList = position.element->rotate().values();
 
     auto xListSize = xList.size();
     auto yListSize = yList.size();
