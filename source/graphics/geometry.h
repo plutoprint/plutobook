@@ -572,6 +572,7 @@ public:
     void lineTo(float x1, float y1);
     void cubicTo(float x1, float y1, float x2, float y2, float x3, float y3);
     void close();
+    void clear();
 
     void addEllipse(float cx, float cy, float rx, float ry);
     void addRoundedRect(const RoundedRect& rrect);
@@ -580,11 +581,10 @@ public:
 
     Rect boundingRect() const;
 
-    bool empty() const { return m_commands.empty(); }
-    void clear();
-
     Path& transform(const Transform& transform);
     Path transformed(const Transform& transform) const;
+
+    bool isEmpty() const { return m_commands.empty(); }
 
     const std::vector<PathCommand>& commands() const { return m_commands; }
     const std::vector<Point>& points() const { return m_points; }
