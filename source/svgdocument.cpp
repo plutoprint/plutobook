@@ -163,15 +163,11 @@ SVGResourcePaintServerBox* SVGGraphicsElement::getPainter(const std::string_view
 
 SVGPaintServer SVGGraphicsElement::getPaintServer(const Paint& paint, float opacity) const
 {
-    auto painter = getPainter(paint.uri());
-    const auto& color = paint.color();
-    return SVGPaintServer(painter, color, opacity);
+    return SVGPaintServer(getPainter(paint.uri()), paint.color(), opacity);
 }
 
 StrokeData SVGGraphicsElement::getStrokeData(const BoxStyle* style) const
 {
-    if(!style->hasStroke())
-        return StrokeData();
     SVGLengthContext lengthContext(this);
     StrokeData strokeData(lengthContext.valueForLength(style->strokeWidth()));
     strokeData.setMiterLimit(style->strokeMiterlimit());
@@ -263,17 +259,17 @@ void SVGSVGElement::computeIntrinsicDimensions(float& intrinsicWidth, float& int
 static void addSVGTransformAttributeStyle(std::string& output, const Transform& matrix)
 {
     output += "transform:matrix(";
-    output += std::to_string(matrix.m00);
+    output += std::to_string(matrix.a);
     output += ',';
-    output += std::to_string(matrix.m10);
+    output += std::to_string(matrix.b);
     output += ',';
-    output += std::to_string(matrix.m01);
+    output += std::to_string(matrix.c);
     output += ',';
-    output += std::to_string(matrix.m11);
+    output += std::to_string(matrix.d);
     output += ',';
-    output += std::to_string(matrix.m02);
+    output += std::to_string(matrix.e);
     output += ',';
-    output += std::to_string(matrix.m12);
+    output += std::to_string(matrix.f);
     output += ");";
 }
 
@@ -357,8 +353,8 @@ Element* SVGUseElement::cloneTargetElement(SVGElement* targetElement)
 {
     if(targetElement == this || isDisallowedElement(targetElement))
         return nullptr;
-    const auto& id = targetElement->id();
     auto parent = parentNode();
+    const auto& id = targetElement->id();
     while(parent && parent->isSVGElement()) {
         const auto& element = to<SVGElement>(*parent);
         if(!id.empty() && id == element.id())
@@ -801,8 +797,8 @@ SVGStopElement::SVGStopElement(Document* document)
 
 Color SVGStopElement::stopColorIncludingOpacity() const
 {
-    if(const auto* style = this->style())
-        return style->stopColor().colorWithAlpha(style->stopOpacity());
+    if(const auto* stopStyle = style())
+        return stopStyle->stopColor().colorWithAlpha(stopStyle->stopOpacity());
     return Color::Transparent;
 }
 

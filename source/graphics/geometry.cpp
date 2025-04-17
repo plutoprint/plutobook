@@ -12,38 +12,39 @@ const Rect Rect::Infinite(-FLT_MAX / 2.f, -FLT_MAX / 2.f, FLT_MAX, FLT_MAX);
 
 const Transform Transform::Identity(1, 0, 0, 1, 0, 0);
 
-Transform::Transform(float m00, float m10, float m01, float m11, float m02, float m12)
-    : m00(m00), m10(m10), m01(m01), m11(m11), m02(m02), m12(m12)
+Transform::Transform(float a, float b, float c, float d, float e, float f)
+    : a(a), b(b), c(c), d(d), e(e), f(f)
 {
 }
 
 Transform Transform::inverted() const
 {
-    float det = (this->m00 * this->m11 - this->m10 * this->m01);
-    if(det == 0.f)
+    float det = (a * d - b * c);
+    if(det == 0.f) {
         return Transform();
+    }
 
     float inv_det = 1.f / det;
-    float m00 = this->m00 * inv_det;
-    float m10 = this->m10 * inv_det;
-    float m01 = this->m01 * inv_det;
-    float m11 = this->m11 * inv_det;
-    float m02 = (this->m01 * this->m12 - this->m11 * this->m02) * inv_det;
-    float m12 = (this->m10 * this->m02 - this->m00 * this->m12) * inv_det;
+    float aa = a * inv_det;
+    float bb = b * inv_det;
+    float cc = c * inv_det;
+    float dd = d * inv_det;
+    float ee = (c * f - d * e) * inv_det;
+    float ff = (b * e - a * f) * inv_det;
 
-    return Transform(m11, -m10, -m01, m00, m02, m12);
+    return Transform(dd, -bb, -cc, aa, ee, ff);
 }
 
 Transform Transform::operator*(const Transform& transform) const
 {
-    float m00 = transform.m00 * this->m00 + transform.m10 * this->m01;
-    float m10 = transform.m00 * this->m10 + transform.m10 * this->m11;
-    float m01 = transform.m01 * this->m00 + transform.m11 * this->m01;
-    float m11 = transform.m01 * this->m10 + transform.m11 * this->m11;
-    float m02 = transform.m02 * this->m00 + transform.m12 * this->m01 + this->m02;
-    float m12 = transform.m02 * this->m10 + transform.m12 * this->m11 + this->m12;
+    float aa = transform.a * a + transform.b * c;
+    float bb = transform.a * b + transform.b * d;
+    float cc = transform.c * a + transform.d * c;
+    float dd = transform.c * b + transform.d * d;
+    float ee = transform.e * a + transform.f * c + e;
+    float ff = transform.e * b + transform.f * d + f;
 
-    return Transform(m00, m10, m01, m11, m02, m12);
+    return Transform(aa, bb, cc, dd, ee, ff);
 }
 
 Transform& Transform::operator*=(const Transform& transform)
@@ -58,27 +59,27 @@ Transform& Transform::multiply(const Transform& transform)
 
 Transform& Transform::rotate(float angle)
 {
-    return multiply(rotated(angle));
+    return multiply(makeRotate(angle));
 }
 
 Transform& Transform::rotate(float angle, float cx, float cy)
 {
-    return multiply(rotated(angle, cx, cy));
+    return multiply(makeRotate(angle, cx, cy));
 }
 
 Transform& Transform::scale(float sx, float sy)
 {
-    return multiply(scaled(sx, sy));
+    return multiply(makeScale(sx, sy));
 }
 
 Transform& Transform::shear(float shx, float shy)
 {
-    return multiply(sheared(shx, shy));
+    return multiply(makeShear(shx, shy));
 }
 
 Transform& Transform::translate(float tx, float ty)
 {
-    return multiply(translated(tx, ty));
+    return multiply(makeTranslate(tx, ty));
 }
 
 Transform& Transform::postMultiply(const Transform& transform)
@@ -88,27 +89,27 @@ Transform& Transform::postMultiply(const Transform& transform)
 
 Transform& Transform::postRotate(float angle)
 {
-    return postMultiply(rotated(angle));
+    return postMultiply(makeRotate(angle));
 }
 
 Transform& Transform::postRotate(float angle, float cx, float cy)
 {
-    return postMultiply(rotated(angle, cx, cy));
+    return postMultiply(makeRotate(angle, cx, cy));
 }
 
 Transform& Transform::postScale(float sx, float sy)
 {
-    return postMultiply(scaled(sx, sy));
+    return postMultiply(makeScale(sx, sy));
 }
 
 Transform& Transform::postShear(float shx, float shy)
 {
-    return postMultiply(sheared(shx, shy));
+    return postMultiply(makeShear(shx, shy));
 }
 
 Transform& Transform::postTranslate(float tx, float ty)
 {
-    return postMultiply(translated(tx, ty));
+    return postMultiply(makeTranslate(tx, ty));
 }
 
 Transform& Transform::identity()
@@ -123,7 +124,7 @@ Transform& Transform::invert()
 
 Point Transform::mapPoint(float x, float y) const
 {
-    return Point(x * m00 + y * m01 + m02, x * m10 + y * m11 + m12);
+    return Point(x * a + y * c + e, x * b + y * d + f);
 }
 
 Point Transform::mapPoint(const Point& point) const
@@ -161,17 +162,17 @@ Rect Transform::mapRect(const Rect& rect) const
 
 float Transform::xScale() const
 {
-    return std::sqrt(m00 * m00 + m01 * m01);
+    return std::sqrt(a * a + c * c);
 }
 
 float Transform::yScale() const
 {
-    return std::sqrt(m10 * m10 + m11 * m11);
+    return std::sqrt(b * b + d * d);
 }
 
 constexpr auto pi = std::numbers::pi;
 
-Transform Transform::rotated(float angle)
+Transform Transform::makeRotate(float angle)
 {
     auto c = std::cos(angle * pi / 180.f);
     auto s = std::sin(angle * pi / 180.f);
@@ -179,7 +180,7 @@ Transform Transform::rotated(float angle)
     return Transform(c, s, -s, c, 0, 0);
 }
 
-Transform Transform::rotated(float angle, float cx, float cy)
+Transform Transform::makeRotate(float angle, float cx, float cy)
 {
     auto c = std::cos(angle * pi / 180.f);
     auto s = std::sin(angle * pi / 180.f);
@@ -190,12 +191,12 @@ Transform Transform::rotated(float angle, float cx, float cy)
     return Transform(c, s, -s, c, x, y);
 }
 
-Transform Transform::scaled(float sx, float sy)
+Transform Transform::makeScale(float sx, float sy)
 {
     return Transform(sx, 0, 0, sy, 0, 0);
 }
 
-Transform Transform::sheared(float shx, float shy)
+Transform Transform::makeShear(float shx, float shy)
 {
     auto x = std::tan(shx * pi / 180.f);
     auto y = std::tan(shy * pi / 180.f);
@@ -203,7 +204,7 @@ Transform Transform::sheared(float shx, float shy)
     return Transform(1, y, x, 1, 0, 0);
 }
 
-Transform Transform::translated(float tx, float ty)
+Transform Transform::makeTranslate(float tx, float ty)
 {
     return Transform(1, 0, 0, 1, tx, ty);
 }

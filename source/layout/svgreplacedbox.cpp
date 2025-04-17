@@ -122,7 +122,7 @@ void SVGRootBox::layout(FragmentBuilder* fragmentainer)
 
     if(!isOverflowHidden()) {
         auto contentRect = contentBoxRect();
-        auto localTransform = Transform::translated(contentRect.x, contentRect.y);
+        auto localTransform = Transform::makeTranslate(contentRect.x, contentRect.y);
         localTransform.multiply(element()->viewBoxToViewTransform(contentRect.size()));
         addOverflowRect(localTransform.mapRect(paintBoundingBox()));
     }

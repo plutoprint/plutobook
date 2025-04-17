@@ -1497,7 +1497,7 @@ Transform BoxStyle::getTransform(float width, float height) const
     if(value == nullptr || value->id() == CSSValueID::None)
         return Transform();
     auto origin = getTransformOrigin(width, height);
-    auto transform = Transform::translated(origin.x, origin.y);
+    auto transform = Transform::makeTranslate(origin.x, origin.y);
     for(const auto& operation : to<CSSListValue>(*value)) {
         const auto& function = to<CSSFunctionValue>(*operation);
         switch(function.id()) {

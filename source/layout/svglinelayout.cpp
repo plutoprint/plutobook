@@ -331,9 +331,7 @@ Rect SVGLineLayout::boundingRect() const
         assert(fragment.item.type() == LineItem::Type::NormalText);
         auto style = fragment.item.box()->style();
         auto fragmentRect = Rect(fragment.x, fragment.y - style->fontAscent(), fragment.width, style->fontHeight());
-        auto fragmentTranform = Transform::translated(fragment.x, fragment.y);
-        fragmentTranform.rotate(fragment.angle);
-        fragmentTranform.translate(-fragment.x, -fragment.y);
+        auto fragmentTranform = Transform::makeRotate(fragment.angle, fragment.x, fragment.y);
         boundingRect.unite(fragmentTranform.mapRect(fragmentRect));
     }
 

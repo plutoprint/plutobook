@@ -36,7 +36,7 @@ Size SVGResourceMarkerBox::markerSize() const
 Transform SVGResourceMarkerBox::markerTransform(const Point& origin, float angle, float strokeWidth) const
 {
     const auto& orient = element()->orient();
-    auto transform = Transform::translated(origin.x, origin.y);
+    auto transform = Transform::makeTranslate(origin.x, origin.y);
     if(orient.orientType() == SVGAngle::OrientType::Angle) {
         transform.rotate(orient.value());
     } else {

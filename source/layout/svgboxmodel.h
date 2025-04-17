@@ -51,6 +51,7 @@ public:
     GraphicsContext& context() const { return m_context; }
     const Transform& currentTransform() const { return m_currentTransform; }
     const SVGRenderMode mode() const { return m_mode; }
+
     const Rect& fillBoundingBox() const { return m_box->fillBoundingBox(); }
     const Rect& paintBoundingBox() const { return m_box->paintBoundingBox(); }
 

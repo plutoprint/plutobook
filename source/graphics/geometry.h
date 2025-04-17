@@ -171,7 +171,7 @@ constexpr bool operator>=(const Size& a, const Size& b)
 class RectOutsets {
 public:
     constexpr RectOutsets() = default;
-    constexpr explicit RectOutsets(float outset) : t(outset), r(outset), b(outset), l(outset) {}
+    constexpr explicit RectOutsets(float outset) : RectOutsets(outset, outset, outset, outset) {}
     constexpr RectOutsets(float top, float right, float bottom, float left)
         : t(top), r(right), b(bottom), l(left)
     {}
@@ -390,14 +390,13 @@ constexpr void RectRadii::constrain(float width, float height)
     auto horizontalSum = std::max(tl.w + tr.w, bl.w + br.w);
     if(horizontalSum > width)
         factor = std::min(factor, width / horizontalSum);
-
     auto verticalSum = std::max(tl.h + bl.h, tr.h + br.h);
-    if(verticalSum > height)
+    if(verticalSum > height) {
         factor = std::min(factor, height / verticalSum);
+    }
 
     if(factor == 1.f)
         return;
-
     tl.scale(factor);
     tr.scale(factor);
     bl.scale(factor);
@@ -512,7 +511,7 @@ constexpr RoundedRect& RoundedRect::operator-=(const RectOutsets& outsets)
 class Transform {
 public:
     Transform() = default;
-    Transform(float m00, float m10, float m01, float m11, float m02, float m12);
+    Transform(float a, float b, float c, float d, float e, float f);
 
     Transform inverted() const;
     Transform operator*(const Transform& transform) const;
@@ -542,21 +541,21 @@ public:
     float xScale() const;
     float yScale() const;
 
-    static Transform rotated(float angle);
-    static Transform rotated(float angle, float cx, float cy);
-    static Transform scaled(float sx, float sy);
-    static Transform sheared(float shx, float shy);
-    static Transform translated(float tx, float ty);
+    static Transform makeRotate(float angle);
+    static Transform makeRotate(float angle, float cx, float cy);
+    static Transform makeScale(float sx, float sy);
+    static Transform makeShear(float shx, float shy);
+    static Transform makeTranslate(float tx, float ty);
 
     static const Transform Identity;
 
 public:
-    float m00{1};
-    float m10{0};
-    float m01{0};
-    float m11{1};
-    float m02{0};
-    float m12{0};
+    float a{1};
+    float b{0};
+    float c{0};
+    float d{1};
+    float e{0};
+    float f{0};
 };
 
 enum class PathCommand : uint8_t {

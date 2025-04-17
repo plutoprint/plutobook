@@ -138,7 +138,7 @@ void SVGViewportContainerBox::layout()
         lengthContext.valueForLength(element()->height())
     };
 
-    m_localTransform = element()->transform() * Transform::translated(viewportRect.x, viewportRect.y) * element()->viewBoxToViewTransform(viewportRect.size());
+    m_localTransform = element()->transform() * Transform::makeTranslate(viewportRect.x, viewportRect.y) * element()->viewBoxToViewTransform(viewportRect.size());
     SVGContainerBox::layout();
 }
 
