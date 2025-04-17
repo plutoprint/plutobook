@@ -531,7 +531,6 @@ public:
     Transform& postShear(float shx, float shy);
     Transform& postTranslate(float tx, float ty);
 
-    Transform& identity();
     Transform& invert();
 
     Point mapPoint(float x, float y) const;
@@ -573,9 +572,6 @@ public:
     void lineTo(float x1, float y1);
     void cubicTo(float x1, float y1, float x2, float y2, float x3, float y3);
     void close();
-
-    void quadTo(float cx, float cy, float x1, float y1, float x2, float y2);
-    void arcTo(float cx, float cy, float rx, float ry, float xAxisRotation, bool largeArcFlag, bool sweepFlag, float x, float y);
 
     void addEllipse(float cx, float cy, float rx, float ry);
     void addRoundedRect(const RoundedRect& rrect);

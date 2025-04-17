@@ -112,11 +112,6 @@ Transform& Transform::postTranslate(float tx, float ty)
     return postMultiply(makeTranslate(tx, ty));
 }
 
-Transform& Transform::identity()
-{
-    return (*this = Transform(1, 0, 0, 1, 0, 0));
-}
-
 Transform& Transform::invert()
 {
     return (*this = inverted());
@@ -134,8 +129,9 @@ Point Transform::mapPoint(const Point& point) const
 
 Rect Transform::mapRect(const Rect& rect) const
 {
-    if(!rect.isValid())
+    if(!rect.isValid()) {
         return Rect::Invalid;
+    }
 
     auto x1 = rect.x;
     auto y1 = rect.y;
@@ -170,20 +166,18 @@ float Transform::yScale() const
     return std::sqrt(b * b + d * d);
 }
 
-constexpr auto pi = std::numbers::pi;
-
 Transform Transform::makeRotate(float angle)
 {
-    auto c = std::cos(angle * pi / 180.f);
-    auto s = std::sin(angle * pi / 180.f);
+    auto c = std::cos(angle * std::numbers::pi / 180.f);
+    auto s = std::sin(angle * std::numbers::pi / 180.f);
 
     return Transform(c, s, -s, c, 0, 0);
 }
 
 Transform Transform::makeRotate(float angle, float cx, float cy)
 {
-    auto c = std::cos(angle * pi / 180.f);
-    auto s = std::sin(angle * pi / 180.f);
+    auto c = std::cos(angle * std::numbers::pi / 180.f);
+    auto s = std::sin(angle * std::numbers::pi / 180.f);
 
     auto x = cx * (1 - c) + cy * s;
     auto y = cy * (1 - c) - cx * s;
@@ -198,8 +192,8 @@ Transform Transform::makeScale(float sx, float sy)
 
 Transform Transform::makeShear(float shx, float shy)
 {
-    auto x = std::tan(shx * pi / 180.f);
-    auto y = std::tan(shy * pi / 180.f);
+    auto x = std::tan(shx * std::numbers::pi / 180.f);
+    auto y = std::tan(shy * std::numbers::pi / 180.f);
 
     return Transform(1, y, x, 1, 0, 0);
 }
@@ -233,99 +227,6 @@ void Path::close()
 {
     if(!m_commands.empty() && m_commands.back() != PathCommand::Close) {
         m_commands.push_back(PathCommand::Close);
-    }
-}
-
-void Path::quadTo(float cx, float cy, float x1, float y1, float x2, float y2)
-{
-    auto cx1 = 2.f / 3.f * x1 + 1.f / 3.f * cx;
-    auto cy1 = 2.f / 3.f * y1 + 1.f / 3.f * cy;
-    auto cx2 = 2.f / 3.f * x1 + 1.f / 3.f * x2;
-    auto cy2 = 2.f / 3.f * y1 + 1.f / 3.f * y2;
-    cubicTo(cx1, cy1, cx2, cy2, x2, y2);
-}
-
-void Path::arcTo(float cx, float cy, float rx, float ry, float xAxisRotation, bool largeArcFlag, bool sweepFlag, float x, float y)
-{
-    rx = std::fabs(rx);
-    ry = std::fabs(ry);
-    if(!rx || !ry || (cx == x && cy == y)) {
-        lineTo(x, y);
-        return;
-    }
-
-    float sin_th = std::sin(xAxisRotation * pi / 180.f);
-    float cos_th = std::cos(xAxisRotation * pi / 180.f);
-
-    float dx = (cx - x) / 2.f;
-    float dy = (cy - y) / 2.f;
-    float dx1 = cos_th * dx + sin_th * dy;
-    float dy1 = -sin_th * dx + cos_th * dy;
-
-    float dx1dx1 = dx1 * dx1;
-    float dy1dy1 = dy1 * dy1;
-    float rxrx = rx * rx;
-    float ryry = ry * ry;
-    float check = dx1dx1 / rxrx + dy1dy1 / ryry;
-    if(check > 1.f) {
-        rx = rx * std::sqrt(check);
-        ry = ry * std::sqrt(check);
-    }
-
-    float a00 = cos_th / rx;
-    float a01 = sin_th / rx;
-    float a10 = -sin_th / ry;
-    float a11 = cos_th / ry;
-
-    float x0 = a00 * cx + a01 * cy;
-    float y0 = a10 * cx + a11 * cy;
-    float x1 = a00 * x + a01 * y;
-    float y1 = a10 * x + a11 * y;
-
-    float d = (x1 - x0) * (x1 - x0) + (y1 - y0) * (y1 - y0);
-    float sfactor_sq = 1.f / d - 0.25f;
-    if(sfactor_sq < 0.f) sfactor_sq = 0.f;
-    float sfactor = std::sqrt(sfactor_sq);
-    if(sweepFlag == largeArcFlag) sfactor = -sfactor;
-
-    float xc = 0.5f * (x0 + x1) - sfactor * (y1 - y0);
-    float yc = 0.5f * (y0 + y1) + sfactor * (x1 - x0);
-
-    float th0 = std::atan2(y0 - yc, x0 - xc);
-    float th1 = std::atan2(y1 - yc, x1 - xc);
-    float th_arc = th1 - th0;
-    if(th_arc < 0.f && sweepFlag)
-        th_arc += 2.f * pi;
-    else if(th_arc > 0.f && !sweepFlag) {
-        th_arc -= 2.f * pi;
-    }
-
-    int segments = std::ceil(std::fabs(th_arc / (pi * 0.5f + 0.001f)));
-    for(int i = 0; i < segments; i++) {
-        float th2 = th0 + i * th_arc / segments;
-        float th3 = th0 + (i + 1) * th_arc / segments;
-
-        float a00 = cos_th * rx;
-        float a01 = -sin_th * ry;
-        float a10 = sin_th * rx;
-        float a11 = cos_th * ry;
-
-        float thHalf = 0.5f * (th3 - th2);
-        float t = (8.f / 3.f) * std::sin(thHalf * 0.5f) * std::sin(thHalf * 0.5f) / std::sin(thHalf);
-        float x1 = xc + std::cos(th2) - t * std::sin(th2);
-        float y1 = yc + std::sin(th2) + t * std::cos(th2);
-        float x3 = xc + std::cos(th3);
-        float y3 = yc + std::sin(th3);
-        float x2 = x3 + t * std::sin(th3);
-        float y2 = y3 - t * std::cos(th3);
-
-        float cx1 = a00 * x1 + a01 * y1;
-        float cy1 = a10 * x1 + a11 * y1;
-        float cx2 = a00 * x2 + a01 * y2;
-        float cy2 = a10 * x2 + a11 * y2;
-        float cx3 = a00 * x3 + a01 * y3;
-        float cy3 = a10 * x3 + a11 * y3;
-        cubicTo(cx1, cy1, cx2, cy2, cx3, cy3);
     }
 }
 

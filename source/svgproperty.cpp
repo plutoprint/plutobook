@@ -7,36 +7,38 @@
 
 namespace plutobook {
 
+constexpr bool IS_NUM(int cc) { return cc >= '0' && cc <= '9'; }
+constexpr bool IS_ALPHA(int cc) { return (cc >= 'a' && cc <= 'z') || (cc >= 'A' && cc <= 'Z'); }
 constexpr bool IS_WS(int cc) { return cc == ' ' || cc == '\t' || cc == '\n' || cc == '\r'; }
 
-inline void skipLeadingSpaces(std::string_view& input)
+constexpr void skipLeadingSpaces(std::string_view& input)
 {
     while(!input.empty() && IS_WS(input.front())) {
         input.remove_prefix(1);
     }
 }
 
-inline void skipTrailingSpaces(std::string_view& input)
+constexpr void skipTrailingSpaces(std::string_view& input)
 {
     while(!input.empty() && IS_WS(input.back())) {
         input.remove_suffix(1);
     }
 }
 
-inline void skipLeadingAndTrailingSpaces(std::string_view& input)
+constexpr void skipLeadingAndTrailingSpaces(std::string_view& input)
 {
     skipLeadingSpaces(input);
     skipTrailingSpaces(input);
 }
 
-inline bool skipOptionalSpaces(std::string_view& input)
+constexpr bool skipOptionalSpaces(std::string_view& input)
 {
     while(!input.empty() && IS_WS(input.front()))
         input.remove_prefix(1);
     return !input.empty();
 }
 
-inline bool skipOptionalSpacesOrDelimiter(std::string_view& input, char delimiter)
+constexpr bool skipOptionalSpacesOrDelimiter(std::string_view& input, char delimiter)
 {
     if(!input.empty() && !IS_WS(input.front()) && delimiter != input.front())
         return false;
@@ -50,12 +52,12 @@ inline bool skipOptionalSpacesOrDelimiter(std::string_view& input, char delimite
     return !input.empty();
 }
 
-inline bool skipOptionalSpacesOrComma(std::string_view& input)
+constexpr bool skipOptionalSpacesOrComma(std::string_view& input)
 {
     return skipOptionalSpacesOrDelimiter(input, ',');
 }
 
-inline bool skipString(std::string_view& input, const std::string_view& value)
+constexpr bool skipString(std::string_view& input, const std::string_view& value)
 {
     if(input.size() >= value.size() && value == input.substr(0, value.size())) {
         input.remove_prefix(value.size());
@@ -65,10 +67,8 @@ inline bool skipString(std::string_view& input, const std::string_view& value)
     return false;
 }
 
-constexpr bool IS_NUM(int cc) { return cc >= '0' && cc <= '9'; }
-
 template<typename T>
-inline bool parseNumber(std::string_view& input, T& output)
+static bool parseNumber(std::string_view& input, T& output)
 {
     constexpr T maxValue = std::numeric_limits<T>::max();
     T integer = 0;
@@ -77,9 +77,9 @@ inline bool parseNumber(std::string_view& input, T& output)
     int sign = 1;
     int expsign = 1;
 
-    if(!input.empty() && input.front() == '+')
+    if(!input.empty() && input.front() == '+') {
         input.remove_prefix(1);
-    else if(!input.empty() && input.front() == '-') {
+    } else if(!input.empty() && input.front() == '-') {
         input.remove_prefix(1);
         sign = -1;
     }
@@ -97,7 +97,7 @@ inline bool parseNumber(std::string_view& input, T& output)
         input.remove_prefix(1);
         if(input.empty() || !IS_NUM(input.front()))
             return false;
-        T divisor = 1;
+        T divisor = static_cast<T>(1);
         do {
             fraction = static_cast<T>(10) * fraction + (input.front() - '0');
             divisor *= static_cast<T>(10);
@@ -127,7 +127,7 @@ inline bool parseNumber(std::string_view& input, T& output)
 
     output = sign * (integer + fraction);
     if(exponent)
-        output *= static_cast<T>(std::pow(10.0, expsign * exponent));
+        output *= std::pow<T>(10, expsign * exponent);
     return output >= -maxValue && output <= maxValue;
 }
 
@@ -409,10 +409,118 @@ bool SVGNumberList::parse(std::string_view input)
     return true;
 }
 
-inline bool parseNumberList(std::string_view& input, float* values, int count)
+static void decomposeQuadToCubic(Path& path, const Point& currentPoint, float x1, float y1, float x2, float y2)
+{
+    auto cp1x = 2.f / 3.f * x1 + 1.f / 3.f * currentPoint.x;
+    auto cp1y = 2.f / 3.f * y1 + 1.f / 3.f * currentPoint.y;
+    auto cp2x = 2.f / 3.f * x1 + 1.f / 3.f * x2;
+    auto cp2y = 2.f / 3.f * y1 + 1.f / 3.f * y2;
+
+    path.cubicTo(cp1x, cp1y, cp2x, cp2y, x2, y2);
+}
+
+static void decomposeArcSegmentToCubic(Path& path, float xc, float yc, float th0, float th1, float rx, float ry, float sinTh, float cosTh)
+{
+    auto a00 =  cosTh * rx;
+    auto a01 = -sinTh * ry;
+    auto a10 =  sinTh * rx;
+    auto a11 =  cosTh * ry;
+
+    auto thHalf = 0.5f * (th1 - th0);
+    auto t = (8.f / 3.f) * std::sin(thHalf * 0.5f) * std::sin(thHalf * 0.5f) / std::sin(thHalf);
+
+    auto x1 = xc + std::cos(th0) - t * std::sin(th0);
+    auto y1 = yc + std::sin(th0) + t * std::cos(th0);
+
+    auto x3 = xc + std::cos(th1);
+    auto y3 = yc + std::sin(th1);
+
+    auto x2 = x3 + t * std::sin(th1);
+    auto y2 = y3 - t * std::cos(th1);
+
+    auto cp1x = a00 * x1 + a01 * y1;
+    auto cp1y = a10 * x1 + a11 * y1;
+    auto cp2x = a00 * x2 + a01 * y2;
+    auto cp2y = a10 * x2 + a11 * y2;
+    auto cp3x = a00 * x3 + a01 * y3;
+    auto cp3y = a10 * x3 + a11 * y3;
+
+    path.cubicTo(cp1x, cp1y, cp2x, cp2y, cp3x, cp3y);
+}
+
+static void decomposeArcToCubic(Path& path, const Point& currentPoint, float rx, float ry, float xAxisRotation, bool largeArcFlag, bool sweepFlag, float x, float y)
+{
+    if(rx == 0.f || ry == 0.f || (currentPoint.x == x && currentPoint.y == y)) {
+        path.lineTo(x, y);
+        return;
+    }
+
+    if(rx < 0.f) rx = -rx;
+    if(ry < 0.f) ry = -ry;
+
+    auto sin_th = std::sin(xAxisRotation * std::numbers::pi / 180.f);
+    auto cos_th = std::cos(xAxisRotation * std::numbers::pi / 180.f);
+
+    auto dx = (currentPoint.x - x) / 2.f;
+    auto dy = (currentPoint.y - y) / 2.f;
+
+    auto dx1 = cos_th * dx + sin_th * dy;
+    auto dy1 = -sin_th * dx + cos_th * dy;
+
+    auto dx1dx1 = dx1 * dx1;
+    auto dy1dy1 = dy1 * dy1;
+
+    auto rxrx = rx * rx;
+    auto ryry = ry * ry;
+
+    auto check = dx1dx1 / rxrx + dy1dy1 / ryry;
+    if(check > 1.f) {
+        rx = rx * std::sqrt(check);
+        ry = ry * std::sqrt(check);
+    }
+
+    auto a00 = cos_th / rx;
+    auto a01 = sin_th / rx;
+    auto a10 = -sin_th / ry;
+    auto a11 = cos_th / ry;
+
+    auto x0 = a00 * currentPoint.x + a01 * currentPoint.y;
+    auto y0 = a10 * currentPoint.x + a11 * currentPoint.y;
+
+    auto x1 = a00 * x + a01 * y;
+    auto y1 = a10 * x + a11 * y;
+
+    auto d = (x1 - x0) * (x1 - x0) + (y1 - y0) * (y1 - y0);
+    auto sfactor_sq = 1.f / d - 0.25f;
+    if(sfactor_sq < 0.f) sfactor_sq = 0.f;
+    auto sfactor = std::sqrt(sfactor_sq);
+    if(sweepFlag == largeArcFlag) {
+        sfactor = -sfactor;
+    }
+
+    auto xc = 0.5f * (x0 + x1) - sfactor * (y1 - y0);
+    auto yc = 0.5f * (y0 + y1) + sfactor * (x1 - x0);
+
+    auto th0 = std::atan2(y0 - yc, x0 - xc);
+    auto th1 = std::atan2(y1 - yc, x1 - xc);
+
+    auto th_arc = th1 - th0;
+    if(th_arc < 0.f && sweepFlag) {
+        th_arc += 2.f * std::numbers::pi;
+    } else if(th_arc > 0.f && !sweepFlag) {
+        th_arc -= 2.f * std::numbers::pi;
+    }
+
+    int segments = std::ceil(std::fabs(th_arc / (std::numbers::pi * 0.5f + 0.001f)));
+    for(int i = 0; i < segments; i++) {
+        decomposeArcSegmentToCubic(path, xc, yc, th0 + i * th_arc / segments, th0 + (i + 1) * th_arc / segments, rx, ry, sin_th, cos_th);
+    }
+}
+
+static bool parseNumberList(std::string_view& input, float values[6], int offset, int count)
 {
     for(int i = 0; i < count; i++) {
-        if(!parseNumber(input, values[i]))
+        if(!parseNumber(input, values[i + offset]))
             return false;
         skipOptionalSpacesOrComma(input);
     }
@@ -420,7 +528,7 @@ inline bool parseNumberList(std::string_view& input, float* values, int count)
     return true;
 }
 
-inline bool parseArcFlag(std::string_view& input, bool& flag)
+static bool parseArcFlag(std::string_view& input, bool& flag)
 {
     if(!input.empty() && input.front() == '0')
         flag = false;
@@ -432,8 +540,6 @@ inline bool parseArcFlag(std::string_view& input, bool& flag)
     skipOptionalSpacesOrComma(input);
     return true;
 }
-
-constexpr bool IS_ALPHA(int cc) { return (cc >= 'a' && cc <= 'z') || (cc >= 'A' && cc <= 'Z'); }
 
 bool SVGPath::parse(std::string_view input)
 {
@@ -459,7 +565,7 @@ bool SVGPath::parse(std::string_view input)
         if(!lastCommand && !(command == 'M' || command == 'm'))
             return false;
         if(command == 'M' || command == 'm') {
-            if(!parseNumberList(input, values, 2))
+            if(!parseNumberList(input, values, 0, 2))
                 return false;
             if(command == 'm') {
                 values[0] += currentPoint.x;
@@ -471,7 +577,7 @@ bool SVGPath::parse(std::string_view input)
             startPoint.y = currentPoint.y = values[1];
             command = command == 'm' ? 'l' : 'L';
         } else if(command == 'L' || command == 'l') {
-            if(!parseNumberList(input, values, 2))
+            if(!parseNumberList(input, values, 0, 2))
                 return false;
             if(command == 'l') {
                 values[0] += currentPoint.x;
@@ -482,7 +588,7 @@ bool SVGPath::parse(std::string_view input)
             currentPoint.x = values[0];
             currentPoint.y = values[1];
         } else if(command == 'H' || command == 'h') {
-            if(!parseNumberList(input, values, 1))
+            if(!parseNumberList(input, values, 0, 1))
                 return false;
             if(command == 'h') {
                 values[0] += currentPoint.x;
@@ -491,7 +597,7 @@ bool SVGPath::parse(std::string_view input)
             m_value.lineTo(values[0], currentPoint.y);
             currentPoint.x = values[0];
         } else if(command == 'V' || command == 'v') {
-            if(!parseNumberList(input, values + 1, 1))
+            if(!parseNumberList(input, values, 1, 1))
                 return false;
             if(command == 'v') {
                 values[1] += currentPoint.y;
@@ -500,7 +606,7 @@ bool SVGPath::parse(std::string_view input)
             m_value.lineTo(currentPoint.x, values[1]);
             currentPoint.y = values[1];
         } else if(command == 'Q' || command == 'q') {
-            if(!parseNumberList(input, values, 4))
+            if(!parseNumberList(input, values, 0, 4))
                 return false;
             if(command == 'q') {
                 values[0] += currentPoint.x;
@@ -509,13 +615,13 @@ bool SVGPath::parse(std::string_view input)
                 values[3] += currentPoint.y;
             }
 
-            m_value.quadTo(currentPoint.x, currentPoint.y, values[0], values[1], values[2], values[3]);
+            decomposeQuadToCubic(m_value, currentPoint, values[0], values[1], values[2], values[3]);
             controlPoint.x = values[0];
             controlPoint.y = values[1];
             currentPoint.x = values[2];
             currentPoint.y = values[3];
         } else if(command == 'C' || command == 'c') {
-            if(!parseNumberList(input, values, 6))
+            if(!parseNumberList(input, values, 0, 6))
                 return false;
             if(command == 'c') {
                 values[0] += currentPoint.x;
@@ -540,14 +646,14 @@ bool SVGPath::parse(std::string_view input)
                 values[1] = 2.f * currentPoint.y - controlPoint.y;
             }
 
-            if(!parseNumberList(input, values + 2, 2))
+            if(!parseNumberList(input, values, 2, 2))
                 return false;
             if(command == 't') {
                 values[2] += currentPoint.x;
                 values[3] += currentPoint.y;
             }
 
-            m_value.quadTo(currentPoint.x, currentPoint.y, values[0], values[1], values[2], values[3]);
+            decomposeQuadToCubic(m_value, currentPoint, values[0], values[1], values[2], values[3]);
             controlPoint.x = values[0];
             controlPoint.y = values[1];
             currentPoint.x = values[2];
@@ -561,7 +667,7 @@ bool SVGPath::parse(std::string_view input)
                 values[1] = 2.f * currentPoint.y - controlPoint.y;
             }
 
-            if(!parseNumberList(input, values + 2, 4))
+            if(!parseNumberList(input, values, 2, 4))
                 return false;
             if(command == 's') {
                 values[2] += currentPoint.x;
@@ -576,10 +682,10 @@ bool SVGPath::parse(std::string_view input)
             currentPoint.x = values[4];
             currentPoint.y = values[5];
         } else if(command == 'A' || command == 'a') {
-            if(!parseNumberList(input, values, 3)
+            if(!parseNumberList(input, values,0 , 3)
                 || !parseArcFlag(input, flags[0])
                 || !parseArcFlag(input, flags[1])
-                || !parseNumberList(input, values + 3, 2)) {
+                || !parseNumberList(input, values, 3, 2)) {
                 return false;
             }
 
@@ -588,7 +694,7 @@ bool SVGPath::parse(std::string_view input)
                 values[4] += currentPoint.y;
             }
 
-            m_value.arcTo(currentPoint.x, currentPoint.y, values[0], values[1], values[2], flags[0], flags[1], values[3], values[4]);
+            decomposeArcToCubic(m_value, currentPoint, values[0], values[1], values[2], flags[0], flags[1], values[3], values[4]);
             currentPoint.x = values[3];
             currentPoint.y = values[4];
         } else if(command == 'Z' || command == 'z') {
@@ -601,7 +707,6 @@ bool SVGPath::parse(std::string_view input)
             return false;
         }
 
-        skipOptionalSpacesOrComma(input);
         lastCommand = command;
     }
 
