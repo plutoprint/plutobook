@@ -220,10 +220,10 @@ SVGElement* SVGURIReference::getTargetElement(const Document* document) const
 SVGSVGElement::SVGSVGElement(Document* document)
     : SVGGraphicsElement(document, svgTag)
     , SVGFitToViewBox(this)
-    , m_x(0.f, SVGLength::UnitType::Number, SVGLength::Direction::Horizontal, SVGLength::NegativeMode::Allow)
-    , m_y(0.f, SVGLength::UnitType::Number, SVGLength::Direction::Vertical, SVGLength::NegativeMode::Allow)
-    , m_width(100.f, SVGLength::UnitType::Percent, SVGLength::Direction::Horizontal, SVGLength::NegativeMode::Forbid)
-    , m_height(100.f, SVGLength::UnitType::Percent, SVGLength::Direction::Vertical, SVGLength::NegativeMode::Forbid)
+    , m_x(0.f, SVGLengthType::Number, SVGLengthDirection::Horizontal, SVGLengthNegativeValuesMode::Allow)
+    , m_y(0.f, SVGLengthType::Number, SVGLengthDirection::Vertical, SVGLengthNegativeValuesMode::Allow)
+    , m_width(100.f, SVGLengthType::Percentage, SVGLengthDirection::Horizontal, SVGLengthNegativeValuesMode::Forbid)
+    , m_height(100.f, SVGLengthType::Percentage, SVGLengthDirection::Vertical, SVGLengthNegativeValuesMode::Forbid)
 {
     addProperty(xAttr, m_x);
     addProperty(yAttr, m_y);
@@ -234,13 +234,13 @@ SVGSVGElement::SVGSVGElement(Document* document)
 void SVGSVGElement::computeIntrinsicDimensions(float& intrinsicWidth, float& intrinsicHeight, double& intrinsicRatio)
 {
     SVGLengthContext lengthContext(this);
-    if(m_width.unitType() != SVGLength::UnitType::Percent) {
+    if(m_width.type() != SVGLengthType::Percentage) {
         intrinsicWidth = lengthContext.valueForLength(m_width);
     } else {
         intrinsicWidth = 0.f;
     }
 
-    if(m_height.unitType() != SVGLength::UnitType::Percent) {
+    if(m_height.type() != SVGLengthType::Percentage) {
         intrinsicHeight = lengthContext.valueForLength(m_height);
     } else {
         intrinsicHeight = 0.f;
@@ -294,10 +294,10 @@ Box* SVGSVGElement::createBox(const RefPtr<BoxStyle>& style)
 SVGUseElement::SVGUseElement(Document* document)
     : SVGGraphicsElement(document, useTag)
     , SVGURIReference(this)
-    , m_x(0.f, SVGLength::UnitType::Number, SVGLength::Direction::Horizontal, SVGLength::NegativeMode::Allow)
-    , m_y(0.f, SVGLength::UnitType::Number, SVGLength::Direction::Vertical, SVGLength::NegativeMode::Allow)
-    , m_width(100.f, SVGLength::UnitType::Percent, SVGLength::Direction::Horizontal, SVGLength::NegativeMode::Forbid)
-    , m_height(100.f, SVGLength::UnitType::Percent, SVGLength::Direction::Vertical, SVGLength::NegativeMode::Forbid)
+    , m_x(0.f, SVGLengthType::Number, SVGLengthDirection::Horizontal, SVGLengthNegativeValuesMode::Allow)
+    , m_y(0.f, SVGLengthType::Number, SVGLengthDirection::Vertical, SVGLengthNegativeValuesMode::Allow)
+    , m_width(100.f, SVGLengthType::Percentage, SVGLengthDirection::Horizontal, SVGLengthNegativeValuesMode::Forbid)
+    , m_height(100.f, SVGLengthType::Percentage, SVGLengthDirection::Vertical, SVGLengthNegativeValuesMode::Forbid)
 {
     addProperty(xAttr, m_x);
     addProperty(yAttr, m_y);
@@ -385,10 +385,10 @@ Element* SVGUseElement::cloneTargetElement(SVGElement* targetElement)
 SVGImageElement::SVGImageElement(Document* document)
     : SVGGraphicsElement(document, imageTag)
     , SVGURIReference(this)
-    , m_x(0.f, SVGLength::UnitType::Number, SVGLength::Direction::Horizontal, SVGLength::NegativeMode::Allow)
-    , m_y(0.f, SVGLength::UnitType::Number, SVGLength::Direction::Vertical, SVGLength::NegativeMode::Allow)
-    , m_width(100.f, SVGLength::UnitType::Percent, SVGLength::Direction::Horizontal, SVGLength::NegativeMode::Forbid)
-    , m_height(100.f, SVGLength::UnitType::Percent, SVGLength::Direction::Vertical, SVGLength::NegativeMode::Forbid)
+    , m_x(0.f, SVGLengthType::Number, SVGLengthDirection::Horizontal, SVGLengthNegativeValuesMode::Allow)
+    , m_y(0.f, SVGLengthType::Number, SVGLengthDirection::Vertical, SVGLengthNegativeValuesMode::Allow)
+    , m_width(100.f, SVGLengthType::Percentage, SVGLengthDirection::Horizontal, SVGLengthNegativeValuesMode::Forbid)
+    , m_height(100.f, SVGLengthType::Percentage, SVGLengthDirection::Vertical, SVGLengthNegativeValuesMode::Forbid)
 {
     addProperty(xAttr, m_x);
     addProperty(yAttr, m_y);
@@ -485,10 +485,10 @@ Box* SVGShapeElement::createBox(const RefPtr<BoxStyle> &style)
 
 SVGLineElement::SVGLineElement(Document* document)
     : SVGShapeElement(document, lineTag)
-    , m_x1(SVGLength::Direction::Horizontal, SVGLength::NegativeMode::Allow)
-    , m_y1(SVGLength::Direction::Vertical, SVGLength::NegativeMode::Allow)
-    , m_x2(SVGLength::Direction::Horizontal, SVGLength::NegativeMode::Allow)
-    , m_y2(SVGLength::Direction::Vertical, SVGLength::NegativeMode::Allow)
+    , m_x1(SVGLengthDirection::Horizontal, SVGLengthNegativeValuesMode::Allow)
+    , m_y1(SVGLengthDirection::Vertical, SVGLengthNegativeValuesMode::Allow)
+    , m_x2(SVGLengthDirection::Horizontal, SVGLengthNegativeValuesMode::Allow)
+    , m_y2(SVGLengthDirection::Vertical, SVGLengthNegativeValuesMode::Allow)
 {
     addProperty(x1Attr, m_x1);
     addProperty(y1Attr, m_y1);
@@ -511,12 +511,12 @@ Rect SVGLineElement::updateShape(Path& path) const
 
 SVGRectElement::SVGRectElement(Document* document)
     : SVGShapeElement(document, rectTag)
-    , m_x(SVGLength::Direction::Horizontal, SVGLength::NegativeMode::Allow)
-    , m_y(SVGLength::Direction::Vertical, SVGLength::NegativeMode::Allow)
-    , m_width(SVGLength::Direction::Horizontal, SVGLength::NegativeMode::Forbid)
-    , m_height(SVGLength::Direction::Vertical, SVGLength::NegativeMode::Forbid)
-    , m_rx(SVGLength::Direction::Horizontal, SVGLength::NegativeMode::Forbid)
-    , m_ry(SVGLength::Direction::Vertical, SVGLength::NegativeMode::Forbid)
+    , m_x(SVGLengthDirection::Horizontal, SVGLengthNegativeValuesMode::Allow)
+    , m_y(SVGLengthDirection::Vertical, SVGLengthNegativeValuesMode::Allow)
+    , m_width(SVGLengthDirection::Horizontal, SVGLengthNegativeValuesMode::Forbid)
+    , m_height(SVGLengthDirection::Vertical, SVGLengthNegativeValuesMode::Forbid)
+    , m_rx(SVGLengthDirection::Horizontal, SVGLengthNegativeValuesMode::Forbid)
+    , m_ry(SVGLengthDirection::Vertical, SVGLengthNegativeValuesMode::Forbid)
 {
     addProperty(xAttr, m_x);
     addProperty(yAttr, m_y);
@@ -553,9 +553,9 @@ Rect SVGRectElement::updateShape(Path& path) const
 
 SVGCircleElement::SVGCircleElement(Document* document)
     : SVGShapeElement(document, circleTag)
-    , m_cx(SVGLength::Direction::Horizontal, SVGLength::NegativeMode::Allow)
-    , m_cy(SVGLength::Direction::Vertical, SVGLength::NegativeMode::Allow)
-    , m_r(SVGLength::Direction::Diagonal, SVGLength::NegativeMode::Forbid)
+    , m_cx(SVGLengthDirection::Horizontal, SVGLengthNegativeValuesMode::Allow)
+    , m_cy(SVGLengthDirection::Vertical, SVGLengthNegativeValuesMode::Allow)
+    , m_r(SVGLengthDirection::Diagonal, SVGLengthNegativeValuesMode::Forbid)
 {
     addProperty(cxAttr, m_cx);
     addProperty(cyAttr, m_cy);
@@ -578,10 +578,10 @@ Rect SVGCircleElement::updateShape(Path& path) const
 
 SVGEllipseElement::SVGEllipseElement(Document* document)
     : SVGShapeElement(document, ellipseTag)
-    , m_cx(SVGLength::Direction::Horizontal, SVGLength::NegativeMode::Allow)
-    , m_cy(SVGLength::Direction::Vertical, SVGLength::NegativeMode::Allow)
-    , m_rx(SVGLength::Direction::Horizontal, SVGLength::NegativeMode::Forbid)
-    , m_ry(SVGLength::Direction::Vertical, SVGLength::NegativeMode::Forbid)
+    , m_cx(SVGLengthDirection::Horizontal, SVGLengthNegativeValuesMode::Allow)
+    , m_cy(SVGLengthDirection::Vertical, SVGLengthNegativeValuesMode::Allow)
+    , m_rx(SVGLengthDirection::Horizontal, SVGLengthNegativeValuesMode::Forbid)
+    , m_ry(SVGLengthDirection::Vertical, SVGLengthNegativeValuesMode::Forbid)
 {
     addProperty(cxAttr, m_cx);
     addProperty(cyAttr, m_cy);
@@ -629,10 +629,10 @@ Rect SVGPolyElement::updateShape(Path& path) const
 
 SVGTextPositioningElement::SVGTextPositioningElement(Document* document, const GlobalString& tagName)
     : SVGGraphicsElement(document, tagName)
-    , m_x(SVGLength::Direction::Horizontal, SVGLength::NegativeMode::Allow)
-    , m_y(SVGLength::Direction::Vertical, SVGLength::NegativeMode::Allow)
-    , m_dx(SVGLength::Direction::Horizontal, SVGLength::NegativeMode::Allow)
-    , m_dy(SVGLength::Direction::Vertical, SVGLength::NegativeMode::Allow)
+    , m_x(SVGLengthDirection::Horizontal, SVGLengthNegativeValuesMode::Allow)
+    , m_y(SVGLengthDirection::Vertical, SVGLengthNegativeValuesMode::Allow)
+    , m_dx(SVGLengthDirection::Horizontal, SVGLengthNegativeValuesMode::Allow)
+    , m_dy(SVGLengthDirection::Vertical, SVGLengthNegativeValuesMode::Allow)
 {
     addProperty(xAttr, m_x);
     addProperty(yAttr, m_y);
@@ -664,10 +664,10 @@ Box* SVGTextElement::createBox(const RefPtr<BoxStyle>& style)
 SVGMarkerElement::SVGMarkerElement(Document* document)
     : SVGElement(document, markerTag)
     , SVGFitToViewBox(this)
-    , m_refX(0.f, SVGLength::UnitType::Number, SVGLength::Direction::Horizontal, SVGLength::NegativeMode::Allow)
-    , m_refY(0.f, SVGLength::UnitType::Number, SVGLength::Direction::Vertical, SVGLength::NegativeMode::Allow)
-    , m_markerWidth(3.f, SVGLength::UnitType::Number, SVGLength::Direction::Horizontal, SVGLength::NegativeMode::Forbid)
-    , m_markerHeight(3.f, SVGLength::UnitType::Number, SVGLength::Direction::Vertical, SVGLength::NegativeMode::Forbid)
+    , m_refX(0.f, SVGLengthType::Number, SVGLengthDirection::Horizontal, SVGLengthNegativeValuesMode::Allow)
+    , m_refY(0.f, SVGLengthType::Number, SVGLengthDirection::Vertical, SVGLengthNegativeValuesMode::Allow)
+    , m_markerWidth(3.f, SVGLengthType::Number, SVGLengthDirection::Horizontal, SVGLengthNegativeValuesMode::Forbid)
+    , m_markerHeight(3.f, SVGLengthType::Number, SVGLengthDirection::Vertical, SVGLengthNegativeValuesMode::Forbid)
     , m_markerUnits(SVGMarkerUnitsTypeStrokeWidth)
 {
     addProperty(refXAttr, m_refX);
@@ -697,10 +697,10 @@ Box* SVGClipPathElement::createBox(const RefPtr<BoxStyle>& style)
 
 SVGMaskElement::SVGMaskElement(Document* document)
     : SVGElement(document, maskTag)
-    , m_x(-10.f, SVGLength::UnitType::Percent, SVGLength::Direction::Horizontal, SVGLength::NegativeMode::Allow)
-    , m_y(-10.f, SVGLength::UnitType::Percent, SVGLength::Direction::Vertical, SVGLength::NegativeMode::Allow)
-    , m_width(120.f, SVGLength::UnitType::Percent, SVGLength::Direction::Horizontal, SVGLength::NegativeMode::Forbid)
-    , m_height(120.f, SVGLength::UnitType::Percent, SVGLength::Direction::Vertical, SVGLength::NegativeMode::Forbid)
+    , m_x(-10.f, SVGLengthType::Percentage, SVGLengthDirection::Horizontal, SVGLengthNegativeValuesMode::Allow)
+    , m_y(-10.f, SVGLengthType::Percentage, SVGLengthDirection::Vertical, SVGLengthNegativeValuesMode::Allow)
+    , m_width(120.f, SVGLengthType::Percentage, SVGLengthDirection::Horizontal, SVGLengthNegativeValuesMode::Forbid)
+    , m_height(120.f, SVGLengthType::Percentage, SVGLengthDirection::Vertical, SVGLengthNegativeValuesMode::Forbid)
     , m_maskUnits(SVGUnitsTypeObjectBoundingBox)
     , m_maskContentUnits(SVGUnitsTypeUserSpaceOnUse)
 {
@@ -721,10 +721,10 @@ SVGPatternElement::SVGPatternElement(Document* document)
     : SVGElement(document, patternTag)
     , SVGURIReference(this)
     , SVGFitToViewBox(this)
-    , m_x(SVGLength::Direction::Horizontal, SVGLength::NegativeMode::Allow)
-    , m_y(SVGLength::Direction::Vertical, SVGLength::NegativeMode::Allow)
-    , m_width(SVGLength::Direction::Horizontal, SVGLength::NegativeMode::Forbid)
-    , m_height(SVGLength::Direction::Vertical, SVGLength::NegativeMode::Forbid)
+    , m_x(SVGLengthDirection::Horizontal, SVGLengthNegativeValuesMode::Allow)
+    , m_y(SVGLengthDirection::Vertical, SVGLengthNegativeValuesMode::Allow)
+    , m_width(SVGLengthDirection::Horizontal, SVGLengthNegativeValuesMode::Forbid)
+    , m_height(SVGLengthDirection::Vertical, SVGLengthNegativeValuesMode::Forbid)
     , m_patternUnits(SVGUnitsTypeObjectBoundingBox)
     , m_patternContentUnits(SVGUnitsTypeUserSpaceOnUse)
 {
@@ -838,10 +838,10 @@ void SVGGradientElement::collectGradientAttributes(SVGGradientAttributes& attrib
 
 SVGLinearGradientElement::SVGLinearGradientElement(Document* document)
     : SVGGradientElement(document, linearGradientTag)
-    , m_x1(0.f, SVGLength::UnitType::Percent, SVGLength::Direction::Horizontal, SVGLength::NegativeMode::Allow)
-    , m_y1(0.f, SVGLength::UnitType::Percent, SVGLength::Direction::Vertical, SVGLength::NegativeMode::Allow)
-    , m_x2(100.f, SVGLength::UnitType::Percent, SVGLength::Direction::Horizontal, SVGLength::NegativeMode::Allow)
-    , m_y2(0.f, SVGLength::UnitType::Percent, SVGLength::Direction::Vertical, SVGLength::NegativeMode::Allow)
+    , m_x1(0.f, SVGLengthType::Percentage, SVGLengthDirection::Horizontal, SVGLengthNegativeValuesMode::Allow)
+    , m_y1(0.f, SVGLengthType::Percentage, SVGLengthDirection::Vertical, SVGLengthNegativeValuesMode::Allow)
+    , m_x2(100.f, SVGLengthType::Percentage, SVGLengthDirection::Horizontal, SVGLengthNegativeValuesMode::Allow)
+    , m_y2(0.f, SVGLengthType::Percentage, SVGLengthDirection::Vertical, SVGLengthNegativeValuesMode::Allow)
 {
     addProperty(x1Attr, m_x1);
     addProperty(y1Attr, m_y1);
@@ -890,11 +890,11 @@ Box* SVGLinearGradientElement::createBox(const RefPtr<BoxStyle>& style)
 
 SVGRadialGradientElement::SVGRadialGradientElement(Document* document)
     : SVGGradientElement(document, radialGradientTag)
-    , m_cx(50.f, SVGLength::UnitType::Percent, SVGLength::Direction::Horizontal, SVGLength::NegativeMode::Allow)
-    , m_cy(50.f, SVGLength::UnitType::Percent, SVGLength::Direction::Vertical, SVGLength::NegativeMode::Allow)
-    , m_r(50.f, SVGLength::UnitType::Percent, SVGLength::Direction::Diagonal, SVGLength::NegativeMode::Forbid)
-    , m_fx(0.f, SVGLength::UnitType::Number, SVGLength::Direction::Horizontal, SVGLength::NegativeMode::Allow)
-    , m_fy(0.f, SVGLength::UnitType::Number, SVGLength::Direction::Vertical, SVGLength::NegativeMode::Allow)
+    , m_cx(50.f, SVGLengthType::Percentage, SVGLengthDirection::Horizontal, SVGLengthNegativeValuesMode::Allow)
+    , m_cy(50.f, SVGLengthType::Percentage, SVGLengthDirection::Vertical, SVGLengthNegativeValuesMode::Allow)
+    , m_r(50.f, SVGLengthType::Percentage, SVGLengthDirection::Diagonal, SVGLengthNegativeValuesMode::Forbid)
+    , m_fx(0.f, SVGLengthType::Number, SVGLengthDirection::Horizontal, SVGLengthNegativeValuesMode::Allow)
+    , m_fy(0.f, SVGLengthType::Number, SVGLengthDirection::Vertical, SVGLengthNegativeValuesMode::Allow)
 {
     addProperty(cxAttr, m_cx);
     addProperty(cyAttr, m_cy);

@@ -103,53 +103,54 @@ private:
     OrientType m_orientType = OrientType::Angle;
 };
 
+
+enum class SVGLengthType : uint8_t {
+    Number,
+    Percentage,
+    Ems,
+    Exs,
+    Pixels,
+    Centimeters,
+    Millimeters,
+    Inches,
+    Points,
+    Picas,
+    Rems,
+    Ch
+};
+
+enum class SVGLengthDirection : uint8_t {
+    Horizontal,
+    Vertical,
+    Diagonal
+};
+
+enum class SVGLengthNegativeValuesMode : uint8_t {
+    Allow,
+    Forbid
+};
+
 class SVGLength final : public SVGProperty {
 public:
-    enum class UnitType : uint8_t {
-        Number,
-        Percent,
-        Em,
-        Ex,
-        Px,
-        Cm,
-        Mm,
-        In,
-        Pt,
-        Pc,
-        Rem,
-        Ch
-    };
-
-    enum class Direction : uint8_t {
-        Horizontal,
-        Vertical,
-        Diagonal
-    };
-
-    enum class NegativeMode : uint8_t {
-        Allow,
-        Forbid
-    };
-
-    SVGLength(Direction direction, NegativeMode negativeMode)
-        : SVGLength(0.f, UnitType::Number, direction, negativeMode)
+    SVGLength(SVGLengthDirection direction, SVGLengthNegativeValuesMode negativeMode)
+        : SVGLength(0.f, SVGLengthType::Number, direction, negativeMode)
     {}
 
-    SVGLength(float value, UnitType unitType, Direction direction, NegativeMode negativeMode)
-        : m_value(value), m_unitType(unitType), m_direction(direction), m_negativeMode(negativeMode)
+    SVGLength(float value, SVGLengthType type, SVGLengthDirection direction, SVGLengthNegativeValuesMode negativeMode)
+        : m_value(value), m_type(type), m_direction(direction), m_negativeMode(negativeMode)
     {}
 
     float value() const { return m_value; }
-    UnitType unitType() const { return m_unitType; }
-    Direction direction() const { return m_direction; }
-    NegativeMode negativeMode() const { return m_negativeMode; }
+    SVGLengthType type() const { return m_type; }
+    SVGLengthDirection direction() const { return m_direction; }
+    SVGLengthNegativeValuesMode negativeMode() const { return m_negativeMode; }
     bool parse(std::string_view input) final;
 
 private:
     float m_value;
-    UnitType m_unitType;
-    const Direction m_direction;
-    const NegativeMode m_negativeMode;
+    SVGLengthType m_type;
+    const SVGLengthDirection m_direction;
+    const SVGLengthNegativeValuesMode m_negativeMode;
 };
 
 class Length;
@@ -162,29 +163,29 @@ public:
     {}
 
     float valueForLength(const SVGLength& length) const;
-    float valueForLength(const Length& length, SVGLength::Direction direction = SVGLength::Direction::Diagonal) const;
+    float valueForLength(const Length& length, SVGLengthDirection direction = SVGLengthDirection::Diagonal) const;
 
 private:
-    float viewportDimension(SVGLength::Direction direction) const;
+    float viewportDimension(SVGLengthDirection direction) const;
     const SVGElement* m_element;
     const SVGUnitsType m_unitType;
 };
 
 class SVGLengthList final : public SVGProperty {
 public:
-    SVGLengthList(SVGLength::Direction direction, SVGLength::NegativeMode negativeMode)
+    SVGLengthList(SVGLengthDirection direction, SVGLengthNegativeValuesMode negativeMode)
         : m_direction(direction), m_negativeMode(negativeMode)
     {}
 
     const std::vector<SVGLength>& values() const { return m_values; }
-    SVGLength::Direction direction() const { return m_direction; }
-    SVGLength::NegativeMode negativeMode() const { return m_negativeMode; }
+    SVGLengthDirection direction() const { return m_direction; }
+    SVGLengthNegativeValuesMode negativeMode() const { return m_negativeMode; }
     bool parse(std::string_view input) final;
 
 private:
     std::vector<SVGLength> m_values;
-    const SVGLength::Direction m_direction;
-    const SVGLength::NegativeMode m_negativeMode;
+    const SVGLengthDirection m_direction;
+    const SVGLengthNegativeValuesMode m_negativeMode;
 };
 
 class SVGNumber : public SVGProperty {

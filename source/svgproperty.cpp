@@ -225,35 +225,35 @@ bool SVGLength::parse(std::string_view input)
     skipLeadingAndTrailingSpaces(input);
     if(!parseNumber(input, value))
         return false;
-    if(value < 0.f && m_negativeMode == NegativeMode::Forbid)
+    if(value < 0.f && m_negativeMode == SVGLengthNegativeValuesMode::Forbid)
         return false;
     if(input.empty()) {
         m_value = value;
-        m_unitType = UnitType::Number;
+        m_type = SVGLengthType::Number;
         return true;
     }
 
     static const struct {
         std::string_view name;
-        UnitType unitType;
+        SVGLengthType type;
     } entries[] = {
-        {"%", UnitType::Percent},
-        {"em", UnitType::Em},
-        {"ex", UnitType::Ex},
-        {"px", UnitType::Px},
-        {"cm", UnitType::Cm},
-        {"mm", UnitType::Mm},
-        {"in", UnitType::In},
-        {"pt", UnitType::Pt},
-        {"pc", UnitType::Pc},
-        {"rem", UnitType::Rem},
-        {"ch", UnitType::Ch}
+        {"%", SVGLengthType::Percentage},
+        {"em", SVGLengthType::Ems},
+        {"ex", SVGLengthType::Exs},
+        {"px", SVGLengthType::Pixels},
+        {"cm", SVGLengthType::Centimeters},
+        {"mm", SVGLengthType::Millimeters},
+        {"in", SVGLengthType::Inches},
+        {"pt", SVGLengthType::Points},
+        {"pc", SVGLengthType::Picas},
+        {"rem", SVGLengthType::Rems},
+        {"ch", SVGLengthType::Ch}
     };
 
     for(const auto& entry : entries) {
         if(input == entry.name) {
-            m_unitType = entry.unitType;
             m_value = value;
+            m_type = entry.type;
             return true;
         }
     }
@@ -275,40 +275,40 @@ static const BoxStyle* styleForLengthResolving(const Element* element)
 
 float SVGLengthContext::valueForLength(const SVGLength& length) const
 {
-    if(length.unitType() == SVGLength::UnitType::Percent) {
+    if(length.type() == SVGLengthType::Percentage) {
         if(m_unitType == SVGUnitsTypeUserSpaceOnUse)
             return length.value() * viewportDimension(length.direction()) / 100.f;
         return length.value() / 100.f;
     }
 
     constexpr auto dpi = 96.f;
-    switch(length.unitType()) {
-    case SVGLength::UnitType::Number:
-    case SVGLength::UnitType::Px:
+    switch(length.type()) {
+    case SVGLengthType::Number:
+    case SVGLengthType::Pixels:
         return length.value();
-    case SVGLength::UnitType::In:
+    case SVGLengthType::Inches:
         return length.value() * dpi;
-    case SVGLength::UnitType::Cm:
+    case SVGLengthType::Centimeters:
         return length.value() * dpi / 2.54f;
-    case SVGLength::UnitType::Mm:
+    case SVGLengthType::Millimeters:
         return length.value() * dpi / 25.4f;
-    case SVGLength::UnitType::Pt:
+    case SVGLengthType::Points:
         return length.value() * dpi / 72.f;
-    case SVGLength::UnitType::Pc:
+    case SVGLengthType::Picas:
         return length.value() * dpi / 6.f;
     default:
         break;
     }
 
     if(auto style = styleForLengthResolving(m_element)) {
-        switch(length.unitType()) {
-        case SVGLength::UnitType::Em:
+        switch(length.type()) {
+        case SVGLengthType::Ems:
             return length.value() * style->fontSize();
-        case SVGLength::UnitType::Ex:
+        case SVGLengthType::Exs:
             return length.value() * style->exFontSize();
-        case SVGLength::UnitType::Rem:
+        case SVGLengthType::Rems:
             return length.value() * style->remFontSize();
-        case SVGLength::UnitType::Ch:
+        case SVGLengthType::Ch:
             return length.value() * style->chFontSize();
         default:
             assert(false);
@@ -318,7 +318,7 @@ float SVGLengthContext::valueForLength(const SVGLength& length) const
     return 0.f;
 }
 
-float SVGLengthContext::valueForLength(const Length& length, SVGLength::Direction direction) const
+float SVGLengthContext::valueForLength(const Length& length, SVGLengthDirection direction) const
 {
     if(length.isPercent()) {
         if(m_unitType == SVGUnitsTypeUserSpaceOnUse)
@@ -331,13 +331,13 @@ float SVGLengthContext::valueForLength(const Length& length, SVGLength::Directio
     return 0.f;
 }
 
-float SVGLengthContext::viewportDimension(SVGLength::Direction direction) const
+float SVGLengthContext::viewportDimension(SVGLengthDirection direction) const
 {
     auto viewportSize = m_element->currentViewportSize();
     switch(direction) {
-    case SVGLength::Direction::Horizontal:
+    case SVGLengthDirection::Horizontal:
         return viewportSize.w;
-    case SVGLength::Direction::Vertical:
+    case SVGLengthDirection::Vertical:
         return viewportSize.h;
     default:
         return std::sqrt(viewportSize.w * viewportSize.w + viewportSize.h * viewportSize.h) / std::numbers::sqrt2;
