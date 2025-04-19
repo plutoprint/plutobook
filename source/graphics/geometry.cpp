@@ -232,7 +232,7 @@ void Path::close()
 
 void Path::addEllipse(float cx, float cy, float rx, float ry)
 {
-    constexpr auto kappa = 0.55228474983079339840;
+    constexpr auto kappa = 0.552285f;
 
     auto left = cx - rx;
     auto top = cy - ry;

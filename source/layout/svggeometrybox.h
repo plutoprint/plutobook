@@ -38,6 +38,7 @@ public:
     const Transform& localTransform() const final { return element()->transform(); }
     const Rect& fillBoundingBox() const final;
     const Rect& strokeBoundingBox() const final;
+
     void render(const SVGRenderState& state) const final;
     void layout() override;
     void build() override;

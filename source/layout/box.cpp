@@ -345,12 +345,12 @@ void BoxModel::addChild(Box* newChild)
     newTable->addChild(newChild);
 }
 
-static Size computeBackgroundImageIntrinsicSize(Image& backgroundImage, const Size& positioningAreaSize)
+static Size computeBackgroundImageIntrinsicSize(const RefPtr<Image>& backgroundImage, const Size& positioningAreaSize)
 {
     float intrinsicWidth = 0;
     float intrinsicHeight = 0;
     double intrinsicRatio = 0;
-    backgroundImage.computeIntrinsicDimensions(intrinsicWidth, intrinsicHeight, intrinsicRatio);
+    backgroundImage->computeIntrinsicDimensions(intrinsicWidth, intrinsicHeight, intrinsicRatio);
     if(intrinsicWidth > 0 && intrinsicHeight > 0) {
         return Size(intrinsicWidth, intrinsicHeight);
     }
@@ -445,7 +445,7 @@ void BoxModel::paintBackground(const PaintInfo& info, const Rect& borderRect, co
         }
 
         Rect tileRect;
-        auto intrinsicSize = computeBackgroundImageIntrinsicSize(*backgroundImage, positioningArea.size());
+        auto intrinsicSize = computeBackgroundImageIntrinsicSize(backgroundImage, positioningArea.size());
         auto backgroundSize = backgroundStyle.backgroundSize();
         switch(backgroundSize.type()) {
         case BackgroundSize::Type::Contain:

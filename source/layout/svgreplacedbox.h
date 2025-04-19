@@ -32,6 +32,7 @@ private:
     mutable Rect m_fillBoundingBox = Rect::Invalid;
     mutable Rect m_strokeBoundingBox = Rect::Invalid;
     mutable Rect m_paintBoundingBox = Rect::Invalid;
+
     const SVGResourceClipperBox* m_clipper = nullptr;
     const SVGResourceMaskerBox* m_masker = nullptr;
 };
@@ -55,10 +56,12 @@ public:
     bool isSVGImageBox() const final { return true; }
 
     SVGImageElement* element() const;
+
     const RefPtr<Image>& image() const { return m_image; }
     const Transform& localTransform() const final { return element()->transform(); }
     const Rect& fillBoundingBox() const final;
     const Rect& strokeBoundingBox() const final;
+
     void render(const SVGRenderState& state) const final;
     void layout() final;
     void build() final;

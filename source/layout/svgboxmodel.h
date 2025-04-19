@@ -22,11 +22,12 @@ public:
         : m_clipper(clipper), m_masker(masker), m_opacity(opacity), m_blendMode(blendMode)
     {}
 
-    bool requiresCompositing(SVGRenderMode mode) const;
     const SVGResourceClipperBox* clipper() const { return m_clipper; }
     const SVGResourceMaskerBox* masker() const { return m_masker; }
     const float opacity() const { return m_opacity; }
     const BlendMode blendMode() const { return m_blendMode; }
+
+    bool requiresCompositing(SVGRenderMode mode) const;
 
 private:
     const SVGResourceClipperBox* m_clipper;
