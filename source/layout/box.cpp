@@ -538,14 +538,12 @@ void BoxModel::paintRootBackground(const PaintInfo& info) const
 
 void BoxModel::paintBorder(const PaintInfo& info, const Rect& borderRect, bool includeLeftEdge, bool includeRightEdge) const
 {
-    BorderPainter painter(BorderPainterType::Border, borderRect, *style(), includeLeftEdge, includeRightEdge);
-    painter.paint(*info, info.rect());
+    BorderPainter::paintBorder(info, borderRect, *style(), includeLeftEdge, includeRightEdge);
 }
 
 void BoxModel::paintOutline(const PaintInfo& info, const Rect& borderRect) const
 {
-    BorderPainter painter(BorderPainterType::Outline, borderRect, *style(), true, true);
-    painter.paint(*info, info.rect());
+    BorderPainter::paintOutline(info, borderRect, *style());
     paintAnnotation(*info, borderRect);
 }
 

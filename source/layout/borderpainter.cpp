@@ -1,5 +1,6 @@
 #include "borderpainter.h"
 #include "graphicscontext.h"
+#include "box.h"
 
 #include <cmath>
 
@@ -26,161 +27,6 @@ constexpr bool includesEdge(BorderEdgeFlags flags, BoxSide side)
 constexpr bool includesAdjacentEdges(BorderEdgeFlags flags)
 {
     return (flags & (TopBorderEdge | BottomBorderEdge)) && (flags & (LeftBorderEdge | RightBorderEdge));
-}
-
-BorderPainter::BorderPainter(BorderPainterType type, const Rect& borderRect, const BoxStyle& style, bool includeLeftEdge, bool includeRightEdge)
-{
-    if(type == BorderPainterType::Border) {
-        style.getBorderEdgeInfo(m_edges, includeLeftEdge, includeRightEdge);
-    } else {
-        assert(includeLeftEdge && includeRightEdge);
-        auto outlineEdge = style.getOutlineEdge();
-        for(auto& edge : m_edges) {
-            edge = outlineEdge;
-        }
-    }
-
-    for(auto side : { BoxSideTop, BoxSideRight, BoxSideBottom, BoxSideLeft }) {
-        const auto& edge = m_edges[side];
-        if(edge.isRenderable()) {
-            assert(edge.color().alpha() > 0);
-            if(!edge.color().isOpaque())
-                m_isOpaque = false;
-            m_visibleEdgeSet |= edgeFlagForSide(side);
-            m_visibleEdgeCount++;
-            if(m_visibleEdgeCount == 1) {
-                m_firstVisibleEdge = side;
-                continue;
-            }
-
-            m_isUniformStyle &= edge.style() == m_edges[m_firstVisibleEdge].style();
-            m_isUniformWidth &= edge.width() == m_edges[m_firstVisibleEdge].width();
-            m_isUniformColor &= edge.color() == m_edges[m_firstVisibleEdge].color();
-        }
-    }
-
-    if(m_visibleEdgeCount == 0)
-        return;
-    m_outer = style.getBorderRoundedRect(borderRect, includeLeftEdge, includeRightEdge);
-    if(type == BorderPainterType::Outline) {
-        m_outer += RectOutsets(style.outlineWidth() + style.outlineOffset());
-    }
-
-    auto topWidth = m_edges[BoxSideTop].width();
-    auto rightWidth = m_edges[BoxSideRight].width();
-    auto bottomWidth = m_edges[BoxSideBottom].width();
-    auto leftWidth = m_edges[BoxSideLeft].width();
-
-    m_inner = m_outer - RectOutsets(topWidth, rightWidth, bottomWidth, leftWidth);
-    m_isRounded = m_outer.isRounded();
-}
-
-void BorderPainter::paint(GraphicsContext& context, const Rect& rect) const
-{
-    if(!m_visibleEdgeSet || !rect.intersects(m_outer.rect()))
-        return;
-    const auto& firstEdge = m_edges[m_firstVisibleEdge];
-    if(m_isUniformStyle && m_isUniformColor && (firstEdge.style() == LineStyle::Solid || firstEdge.style() == LineStyle::Double)) {
-        if(m_visibleEdgeSet == AllBorderEdges && (!m_isRounded || firstEdge.style() == LineStyle::Solid)) {
-            if(m_isUniformWidth && !m_isRounded && firstEdge.style() == LineStyle::Solid) {
-                Rect strokeRect(m_outer.rect());
-                strokeRect.inflate(-firstEdge.width() / 2.f);
-                context.setColor(firstEdge.color());
-                context.strokeRect(strokeRect, StrokeData(firstEdge.width()));
-                return;
-            }
-
-            Path path;
-            path.addRoundedRect(m_outer);
-            if(firstEdge.style() == LineStyle::Double) {
-                Rect outerThirdRect(m_outer.rect());
-                Rect innerThirdRect(m_outer.rect());
-                for(auto side : { BoxSideTop, BoxSideRight, BoxSideBottom, BoxSideLeft }) {
-                    const auto& edge = m_edges[side];
-                    auto outerWidth = edge.width() / 3.f;
-                    auto innerWidth = edge.width() * 2.f / 3.f;
-                    switch(side) {
-                    case BoxSideTop:
-                        outerThirdRect.y += outerWidth;
-                        innerThirdRect.y += innerWidth;
-                        outerThirdRect.h -= outerWidth;
-                        innerThirdRect.h -= innerWidth;
-                        break;
-                    case BoxSideRight:
-                        outerThirdRect.w -= outerWidth;
-                        innerThirdRect.w -= innerWidth;
-                        break;
-                    case BoxSideBottom:
-                        outerThirdRect.h -= outerWidth;
-                        innerThirdRect.h -= innerWidth;
-                        break;
-                    case BoxSideLeft:
-                        outerThirdRect.x += outerWidth;
-                        innerThirdRect.x += innerWidth;
-                        outerThirdRect.w -= outerWidth;
-                        innerThirdRect.w -= innerWidth;
-                        break;
-                    }
-                }
-
-                path.addRect(outerThirdRect);
-                path.addRect(innerThirdRect);
-            }
-
-            path.addRoundedRect(m_inner);
-            context.setColor(firstEdge.color());
-            context.fillPath(path, FillRule::EvenOdd);
-            return;
-        }
-
-        if(!m_isRounded && firstEdge.style() == LineStyle::Solid) {
-            Path path;
-            for(auto side : { BoxSideTop, BoxSideRight, BoxSideBottom, BoxSideLeft }) {
-                const auto& edge = m_edges[side];
-                if(edge.isRenderable()) {
-                    Rect sideRect(m_outer.rect());
-                    switch(side) {
-                    case BoxSideTop:
-                        sideRect.h = edge.width();
-                        break;
-                    case BoxSideRight:
-                        sideRect.x = sideRect.right() - edge.width();
-                        sideRect.w = edge.width();
-                        break;
-                    case BoxSideBottom:
-                        sideRect.y = sideRect.bottom() - edge.width();
-                        sideRect.h = edge.width();
-                        break;
-                    case BoxSideLeft:
-                        sideRect.w = edge.width();
-                        break;
-                    }
-
-                    path.addRect(sideRect);
-                }
-            }
-
-            context.setColor(firstEdge.color());
-            context.fillPath(path);
-            return;
-        }
-    }
-
-    if(m_isRounded) {
-        context.save();
-        context.clipRoundedRect(m_outer);
-        context.clipOutRoundedRect(m_inner);
-    }
-
-    if(!m_isOpaque) {
-        paintTranslucentSides(context);
-    } else {
-        paintSides(context, m_visibleEdgeSet);
-    }
-
-    if(m_isRounded) {
-        context.restore();
-    }
 }
 
 static void paintDashedOrDottedBoxSide(GraphicsContext& context, BoxSide side, LineStyle style, const Color& color, float x1, float y1, float x2, float y2, float thickness, float length)
@@ -348,6 +194,130 @@ void BorderPainter::paintBoxSide(GraphicsContext& context, BoxSide side, LineSty
     }
 }
 
+static RectOutsets edgeOutsets(const BorderEdge edges[4], float scale)
+{
+    auto topWidth = edges[BoxSideTop].width() * scale;
+    auto rightWidth = edges[BoxSideRight].width() * scale;
+    auto bottomWidth = edges[BoxSideBottom].width() * scale;
+    auto leftWidth = edges[BoxSideLeft].width() * scale;
+
+    return RectOutsets(topWidth, rightWidth, bottomWidth, leftWidth);
+}
+
+BorderPainter::BorderPainter(BorderPainterType type, const Rect& borderRect, const BoxStyle& style, bool includeLeftEdge, bool includeRightEdge)
+{
+    if(type == BorderPainterType::Border) {
+        style.getBorderEdgeInfo(m_edges, includeLeftEdge, includeRightEdge);
+    } else {
+        assert(includeLeftEdge && includeRightEdge);
+        auto outlineEdge = style.getOutlineEdge();
+        for(auto& edge : m_edges) {
+            edge = outlineEdge;
+        }
+    }
+
+    for(auto side : { BoxSideTop, BoxSideRight, BoxSideBottom, BoxSideLeft }) {
+        const auto& edge = m_edges[side];
+        if(edge.isRenderable()) {
+            assert(edge.color().alpha() > 0);
+            if(!edge.color().isOpaque())
+                m_isOpaque = false;
+            m_visibleEdgeSet |= edgeFlagForSide(side);
+            m_visibleEdgeCount++;
+            if(m_visibleEdgeCount == 1) {
+                m_firstVisibleEdge = side;
+                continue;
+            }
+
+            m_isUniformStyle &= edge.style() == m_edges[m_firstVisibleEdge].style();
+            m_isUniformColor &= edge.color() == m_edges[m_firstVisibleEdge].color();
+        }
+    }
+
+    if(m_visibleEdgeCount == 0)
+        return;
+    m_outer = style.getBorderRoundedRect(borderRect, includeLeftEdge, includeRightEdge);
+    if(type == BorderPainterType::Outline) {
+        m_outer += RectOutsets(style.outlineWidth() + style.outlineOffset());
+    }
+
+    m_inner = m_outer - edgeOutsets(m_edges, 1.f);
+    m_isRounded = m_outer.isRounded();
+}
+
+void BorderPainter::paint(const PaintInfo& info) const
+{
+    if(m_visibleEdgeCount == 0 || !m_outer.rect().intersects(info.rect()))
+        return;
+    const auto& firstEdge = m_edges[m_firstVisibleEdge];
+    if(m_isUniformStyle && m_isUniformColor && (firstEdge.style() == LineStyle::Solid || firstEdge.style() == LineStyle::Double)) {
+        if(m_visibleEdgeSet == AllBorderEdges) {
+            Path path;
+            path.addRoundedRect(m_outer);
+            if(firstEdge.style() == LineStyle::Double) {
+                RoundedRect outerThirdRect(m_outer - edgeOutsets(m_edges, 1.f / 3.f));
+                RoundedRect innerThirdRect(m_outer - edgeOutsets(m_edges, 2.f / 3.f));
+
+                path.addRoundedRect(outerThirdRect);
+                path.addRoundedRect(innerThirdRect);
+            }
+
+            path.addRoundedRect(m_inner);
+            info->setColor(firstEdge.color());
+            info->fillPath(path, FillRule::EvenOdd);
+            return;
+        }
+
+        if(!m_isRounded && firstEdge.style() == LineStyle::Solid) {
+            Path path;
+            for(auto side : { BoxSideTop, BoxSideRight, BoxSideBottom, BoxSideLeft }) {
+                const auto& edge = m_edges[side];
+                if(edge.isRenderable()) {
+                    Rect sideRect(m_outer.rect());
+                    switch(side) {
+                    case BoxSideTop:
+                        sideRect.h = edge.width();
+                        break;
+                    case BoxSideRight:
+                        sideRect.x = sideRect.right() - edge.width();
+                        sideRect.w = edge.width();
+                        break;
+                    case BoxSideBottom:
+                        sideRect.y = sideRect.bottom() - edge.width();
+                        sideRect.h = edge.width();
+                        break;
+                    case BoxSideLeft:
+                        sideRect.w = edge.width();
+                        break;
+                    }
+
+                    path.addRect(sideRect);
+                }
+            }
+
+            info->setColor(firstEdge.color());
+            info->fillPath(path);
+            return;
+        }
+    }
+
+    if(m_isRounded) {
+        info->save();
+        info->clipRoundedRect(m_outer);
+        info->clipOutRoundedRect(m_inner);
+    }
+
+    if(!m_isOpaque) {
+        paintTranslucentSides(*info);
+    } else {
+        paintSides(*info, m_visibleEdgeSet);
+    }
+
+    if(m_isRounded) {
+        info->restore();
+    }
+}
+
 void BorderPainter::paintTranslucentSides(GraphicsContext& context) const
 {
     auto visibleEdgeSet = m_visibleEdgeSet;
@@ -442,7 +412,7 @@ void BorderPainter::paintSides(GraphicsContext& context, BorderEdgeFlags visible
     }
 }
 
-inline bool borderStyleHasUnmatchedColorsAtCorner(BoxSide side, BoxSide adjacentSide, LineStyle style)
+constexpr bool borderStyleHasUnmatchedColorsAtCorner(BoxSide side, BoxSide adjacentSide, LineStyle style)
 {
     if(style == LineStyle::Inset || style == LineStyle::Outset) {
         BorderEdgeFlags topRightFlags = edgeFlagForSide(BoxSideTop) | edgeFlagForSide(BoxSideRight);
@@ -511,18 +481,8 @@ void BorderPainter::paintBoxSide(GraphicsContext& context, BoxSide side, LineSty
     }
 
     case LineStyle::Double: {
-        auto outerTopWidth = m_edges[BoxSideTop].width() / 3.f;
-        auto outerRightWidth = m_edges[BoxSideRight].width() / 3.f;
-        auto outerBottomWidth = m_edges[BoxSideBottom].width() / 3.f;
-        auto outerLeftWidth = m_edges[BoxSideLeft].width() / 3.f;
-
-        auto innerTopWidth = m_edges[BoxSideTop].width() * 2.f / 3.f;
-        auto innerRightWidth = m_edges[BoxSideRight].width() * 2.f / 3.f;
-        auto innerBottomWidth = m_edges[BoxSideBottom].width() * 2.f / 3.f;
-        auto innerLeftWidth = m_edges[BoxSideLeft].width() * 2.f / 3.f;
-
-        RoundedRect outerClipRect(m_outer - RectOutsets(outerTopWidth, outerRightWidth, outerBottomWidth, outerLeftWidth));
-        RoundedRect innerClipRect(m_outer - RectOutsets(innerTopWidth, innerRightWidth, innerBottomWidth, innerLeftWidth));
+        RoundedRect outerClipRect(m_outer - edgeOutsets(m_edges, 1.f / 3.f));
+        RoundedRect innerClipRect(m_outer - edgeOutsets(m_edges, 2.f / 3.f));
 
         context.save();
         context.clipRoundedRect(innerClipRect);
@@ -548,12 +508,7 @@ void BorderPainter::paintBoxSide(GraphicsContext& context, BoxSide side, LineSty
             s2 = LineStyle::Inset;
         }
 
-        auto topWidth = m_edges[BoxSideTop].width() / 2.f;
-        auto rightWidth = m_edges[BoxSideRight].width() / 2.f;
-        auto bottomWidth = m_edges[BoxSideBottom].width() / 2.f;
-        auto leftWidth = m_edges[BoxSideLeft].width() / 2.f;
-
-        RoundedRect clipRect(m_outer - RectOutsets(topWidth, rightWidth, bottomWidth, leftWidth));
+        RoundedRect clipRect(m_outer - edgeOutsets(m_edges, 1.f / 2.f));
         paintBoxSide(context, side, s1, color, thickness, path);
         context.save();
         context.clipRoundedRect(clipRect);

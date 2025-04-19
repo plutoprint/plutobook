@@ -6,24 +6,28 @@
 
 namespace plutobook {
 
-using BorderEdgeFlags = unsigned int;
-
 class GraphicsContext;
+class PaintInfo;
 
 enum class BorderPainterType {
     Border,
     Outline
 };
 
+using BorderEdgeFlags = unsigned int;
+
 class BorderPainter {
 public:
-    BorderPainter(BorderPainterType type, const Rect& borderRect, const BoxStyle& style, bool includeLeftEdge, bool includeRightEdge);
-
-    void paint(GraphicsContext& context, const Rect& rect) const;
+    static void paintBorder(const PaintInfo& info, const Rect& borderRect, const BoxStyle& style, bool includeLeftEdge, bool includeRightEdge);
+    static void paintOutline(const PaintInfo& info, const Rect& borderRect, const BoxStyle& style);
 
     static void paintBoxSide(GraphicsContext& context, BoxSide side, LineStyle style, const Color& color, const Rect& rect);
 
 private:
+    BorderPainter(BorderPainterType type, const Rect& borderRect, const BoxStyle& style, bool includeLeftEdge, bool includeRightEdge);
+
+    void paint(const PaintInfo& info) const;
+
     void paintTranslucentSides(GraphicsContext& context) const;
     void paintSides(GraphicsContext& context, BorderEdgeFlags visibleEdgeSet, const Color* commonColor = nullptr) const;
     void paintSide(GraphicsContext& context, BoxSide side, BoxSide adjacentSide1, BoxSide adjacentSide2, const Color& color, const Rect& rect) const;
@@ -32,19 +36,30 @@ private:
     void clipBoxSide(GraphicsContext& context, BoxSide side) const;
 
     BorderEdge m_edges[4];
-    bool m_isUniformStyle{true};
-    bool m_isUniformWidth{true};
-    bool m_isUniformColor{true};
-    bool m_isOpaque{true};
-    bool m_isRounded{false};
 
+    BorderEdgeFlags m_visibleEdgeSet{0};
     unsigned m_visibleEdgeCount{0};
     unsigned m_firstVisibleEdge{0};
-    BorderEdgeFlags m_visibleEdgeSet{0};
+
+    bool m_isUniformStyle{true};
+    bool m_isUniformColor{true};
+
+    bool m_isOpaque{true};
+    bool m_isRounded{false};
 
     RoundedRect m_inner;
     RoundedRect m_outer;
 };
+
+inline void BorderPainter::paintBorder(const PaintInfo& info, const Rect& borderRect, const BoxStyle& style, bool includeLeftEdge, bool includeRightEdge)
+{
+    BorderPainter(BorderPainterType::Border, borderRect, style, includeLeftEdge, includeRightEdge).paint(info);
+}
+
+inline void BorderPainter::paintOutline(const PaintInfo& info, const Rect& borderRect, const BoxStyle& style)
+{
+    BorderPainter(BorderPainterType::Outline, borderRect, style, true, true).paint(info);
+}
 
 } // namespace plutobook
 
