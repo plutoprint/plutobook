@@ -291,9 +291,9 @@ void Box::paintAnnotation(GraphicsContext& context, const Rect& rect) const
     if(m_node == nullptr || !m_node->isElementNode())
         return;
     const auto& element = to<Element>(*m_node);
-    if(element.hasAnchorElement())
+    if(element.isLinkDestination())
         context.addLinkDestination(element.id(), rect.origin());
-    if(element.tagName() == aTag) {
+    if(element.isLinkSource()) {
         const auto& href = element.getAttribute(hrefAttr);
         const auto& baseUrl = document()->baseUrl();
 

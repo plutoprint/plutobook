@@ -211,9 +211,11 @@ public:
     Element* previousElement() const;
     Element* nextElement() const;
 
-    Element* anchorElement() const { return m_anchorElement; }
-    void setAnchorElement(Element* element) { m_anchorElement = element; }
-    bool hasAnchorElement() const { return m_anchorElement != nullptr; }
+    void setIsLinkDestination(bool value) { m_isLinkDestination = value; }
+    bool isLinkDestination() const { return m_isLinkDestination; }
+
+    void setIsLinkSource(bool value) { m_isLinkSource = value; }
+    bool isLinkSource() const { return m_isLinkSource; }
 
     Node* cloneNode(bool deep) override;
     Box* createBox(const RefPtr<BoxStyle>& style) override;
@@ -227,7 +229,9 @@ private:
     HeapString m_id;
     ClassNameList m_classNames;
     AttributeList m_attributes;
-    Element* m_anchorElement{nullptr};
+
+    bool m_isLinkDestination{false};
+    bool m_isLinkSource{false};
 };
 
 template<>

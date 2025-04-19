@@ -500,9 +500,12 @@ void Element::finishParsingDocument()
         auto fragmentName = completeUrl.fragment();
         if(!fragmentName.empty() && baseUrl == completeUrl.base()) {
             auto element = document()->getElementById(fragmentName.substr(1));
-            if(element && !element->hasAnchorElement()) {
-                element->setAnchorElement(this);
+            if(element) {
+                element->setIsLinkDestination(true);
+                setIsLinkSource(true);
             }
+        } else {
+            setIsLinkSource(!completeUrl.isEmpty());
         }
     }
 

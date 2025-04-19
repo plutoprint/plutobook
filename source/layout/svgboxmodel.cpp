@@ -32,7 +32,7 @@ SVGRenderState::SVGRenderState(const SVGBlendInfo& info, const Box* box, const S
 SVGRenderState::~SVGRenderState()
 {
     const auto& element = to<SVGElement>(*m_box->node());
-    if(m_parent && (element.tagName() == aTag || element.hasAnchorElement()))
+    if(m_parent && (element.isLinkSource() || element.isLinkDestination()))
         m_box->paintAnnotation(m_context, m_box->paintBoundingBox());
     if(m_requiresCompositing) {
         if(m_info.clipper())
