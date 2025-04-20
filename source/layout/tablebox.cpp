@@ -345,7 +345,7 @@ void TableBox::layout(FragmentBuilder* fragmentainer)
 
         auto totalSectionHeight = borderVerticalSpacing();
         for(auto section : m_sections) {
-            section->layout(nullptr);
+            section->layout(fragmentainer);
             totalSectionHeight += section->height() + borderVerticalSpacing();
         }
 
@@ -1147,7 +1147,7 @@ void TableSectionBox::layoutRows(FragmentBuilder* fragmentainer)
 
             cellBox->setY(position);
             if(cellBox->updateIntrinsicPaddings(rowHeight)) {
-                cellBox->layout(nullptr);
+                cellBox->layout(fragmentainer);
             }
         }
 
@@ -1186,7 +1186,7 @@ void TableSectionBox::layout(FragmentBuilder* fragmentainer)
             cellBox->clearOverrideSize();
             cellBox->setOverrideWidth(width);
             cellBox->updatePaddingWidths();
-            cellBox->layout(nullptr);
+            cellBox->layout(fragmentainer);
         }
     }
 
