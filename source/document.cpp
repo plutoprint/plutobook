@@ -1010,19 +1010,20 @@ void Document::layout()
 
     auto pageContentWidth = pageWidth - marginLeft - marginRight;
     auto pageContentHeight = pageHeight - marginTop - marginBottom;
-    if(pageContentWidth <= 0.f || pageContentHeight <= 0.f) {
+
+    m_pageContentScale = std::max(kMinPageScaleFactor, pageScale.value_or(1.f));
+    m_pageContentWidth = std::floor(pageContentWidth / m_pageContentScale);
+    m_pageContentHeight = std::floor(pageContentHeight / m_pageContentScale);
+    if(m_pageContentWidth <= 0.f || m_pageContentHeight <= 0.f) {
         return;
     }
 
-    m_pageContentScale = std::max(kMinPageScaleFactor, pageScale.value_or(1.f));
-    m_pageContentWidth = std::ceil(pageContentWidth / m_pageContentScale);
-    m_pageContentHeight = std::ceil(pageContentHeight / m_pageContentScale);
     box()->layout(this);
 
     if(!pageScale.has_value() && m_pageContentWidth < document()->width()) {
         m_pageContentScale = m_pageContentWidth / document()->width();
-        m_pageContentWidth = std::ceil(m_pageContentWidth / m_pageContentScale);
-        m_pageContentHeight = std::ceil(m_pageContentHeight / m_pageContentScale);
+        m_pageContentWidth = std::floor(m_pageContentWidth / m_pageContentScale);
+        m_pageContentHeight = std::floor(m_pageContentHeight / m_pageContentScale);
         box()->layout(this);
     }
 
@@ -1063,7 +1064,7 @@ float Document::fragmentHeightForOffset(float offset) const
 
 float Document::fragmentRemainingHeightForOffset(float offset, FragmentBoundaryRule rule) const
 {
-    offset += fragmentOffset();
+    offset = std::floor(offset + fragmentOffset());
     auto remainingHeight = m_pageContentHeight - std::fmod(offset, m_pageContentHeight);
     if(rule == AssociateWithFormerFragment)
         remainingHeight = std::fmod(remainingHeight, m_pageContentHeight);
