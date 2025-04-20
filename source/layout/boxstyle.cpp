@@ -1526,10 +1526,10 @@ Transform BoxStyle::getTransform(float width, float height) const
         }
 
         case CSSValueID::ScaleX:
-            transform.scale(0.f, convertNumberOrPercent(*function.at(0)));
+            transform.scale(convertNumberOrPercent(*function.at(0)), 1.f);
             break;
         case CSSValueID::ScaleY:
-            transform.scale(convertNumberOrPercent(*function.at(0)), 0.f);
+            transform.scale(1.f, convertNumberOrPercent(*function.at(0)));
             break;
         case CSSValueID::Skew: {
             float firstValue = convertAngle(*function.at(0));
