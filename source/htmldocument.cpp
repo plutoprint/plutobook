@@ -378,7 +378,9 @@ Box* HTMLImageElement::createBox(const RefPtr<BoxStyle>& style)
 {
     auto image = srcImage();
     auto text = altText();
-    if(!image && !text.empty()) {
+    if(image == nullptr && text.empty())
+        return new (heap()) ImageBox(this, style);
+    if(image == nullptr) {
         auto container = Box::create(this, style);
         auto box = new (heap()) TextBox(nullptr, style);
         box->setText(text);
