@@ -194,10 +194,31 @@ static void addHTMLLengthAttributeStyle(std::string& output, const std::string_v
 {
     if(value.empty())
         return;
+    size_t index = 0;
+    while(index < value.length() && isSpace(value[index]))
+        ++index;
+    size_t begin = index;
+    while(index < value.length() && isDigit(value[index])) {
+        ++index;
+    }
+
+    if(index == begin)
+        return;
+    if(index < value.length() && value[index] == '.') {
+        ++index;
+        while(index < value.length() && isDigit(value[index])) {
+            ++index;
+        }
+    }
+
     output += name;
     output += ':';
-    output += value;
-    output += "px;";
+    output += value.substr(begin, index - begin);
+    if(index < value.length() && value[index] == '%') {
+        output += "%;";
+    } else {
+        output += "px;";
+    }
 }
 
 static void addHTMLUrlAttributeStyle(std::string& output, const std::string_view& name, const std::string_view& value)
