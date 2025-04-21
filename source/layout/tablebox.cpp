@@ -910,7 +910,11 @@ void AutoTableLayoutAlgorithm::computeIntrinsicWidths(float& minWidth, float& ma
                     continue;
                 auto& columnWidth = m_columnWidths[col];
                 columnWidth.minWidth = std::max(columnWidth.minWidth, cellBox->minPreferredWidth());
-                columnWidth.maxWidth = std::max(columnWidth.maxWidth, std::max(columnWidth.maxFixedWidth, cellBox->maxPreferredWidth()));
+                if(columnWidth.maxFixedWidth > 0.f) {
+                    columnWidth.maxWidth = std::max(columnWidth.maxWidth, std::max(columnWidth.minWidth, columnWidth.maxFixedWidth));
+                } else {
+                    columnWidth.maxWidth = std::max(columnWidth.maxWidth, cellBox->maxPreferredWidth());
+                }
             }
         }
     }
