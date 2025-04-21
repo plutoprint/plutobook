@@ -41,7 +41,7 @@ float FragmentBuilder::applyFragmentBreakAfter(const BoxFrame* child, float offs
 
 float FragmentBuilder::applyFragmentBreakInside(const BoxFrame* child, float offset)
 {
-    if(!needsFragmentBreakInside(child->style()->breakInside(), fragmentType()))
+    if(!child->isReplaced() && !needsFragmentBreakInside(child->style()->breakInside(), fragmentType()))
         return offset;
     auto childHeight = child->height();
     if(child->isFloating())
