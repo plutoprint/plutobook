@@ -345,7 +345,7 @@ void TableBox::layout(FragmentBuilder* fragmentainer)
 
         auto totalSectionHeight = borderVerticalSpacing();
         for(auto section : m_sections) {
-            section->layout(fragmentainer);
+            section->layout(nullptr);
             totalSectionHeight += section->height() + borderVerticalSpacing();
         }
 
@@ -1135,6 +1135,7 @@ void TableSectionBox::layoutRows(FragmentBuilder* fragmentainer)
 
         rowBox->setX(0.f);
         rowBox->setY(position);
+        float rowHeightIncreaseForFragmentation = 0;
         for(const auto& [col, cell] : rowBox->cells()) {
             auto cellBox = cell.box();
             if(cell.inColOrRowSpan())
@@ -1146,12 +1147,14 @@ void TableSectionBox::layoutRows(FragmentBuilder* fragmentainer)
             }
 
             cellBox->setY(position);
-            if(cellBox->updateIntrinsicPaddings(rowHeight)) {
-                cellBox->layout(fragmentainer);
+            cellBox->updateIntrinsicPaddings(rowHeight);
+            cellBox->layout(fragmentainer);
+            if(fragmentainer && cellBox->height() > rowHeight) {
+                rowHeightIncreaseForFragmentation = std::max(rowHeightIncreaseForFragmentation, cellBox->height() - rowHeight);
             }
         }
 
-        position += verticalSpacing + rowBox->height();
+        position += verticalSpacing + rowBox->height() + rowHeightIncreaseForFragmentation;
         if(fragmentainer) {
             position = fragmentainer->applyFragmentBreakAfter(rowBox, position);
         }
