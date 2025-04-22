@@ -446,6 +446,8 @@ public:
     void addOverflowRect(float top, float bottom, float left, float right);
     void addOverflowRect(const Rect& overflowRect);
 
+    void adjustBoxInFragmentFlow(BoxFrame* child, FragmentBuilder* fragmentainer);
+
     virtual void paintOutlines(const PaintInfo& info, const Point& offset);
     virtual void paintDecorations(const PaintInfo& info, const Point& offset);
 

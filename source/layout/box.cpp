@@ -1001,6 +1001,32 @@ void BoxFrame::addOverflowRect(const Rect& overflowRect)
     addOverflowRect(overflowRect.y, overflowRect.bottom(), overflowRect.x, overflowRect.right());
 }
 
+void BoxFrame::adjustBoxInFragmentFlow(BoxFrame* child, FragmentBuilder* fragmentainer)
+{
+    auto newOffset = fragmentainer->applyFragmentBreakBefore(child, child->y());
+    auto adjustedOffset = fragmentainer->applyFragmentBreakInside(child, newOffset);
+
+    auto childHeight = child->height();
+    if(adjustedOffset > newOffset) {
+        auto delta = adjustedOffset - newOffset;
+        fragmentainer->setFragmentBreak(newOffset, childHeight - delta);
+        newOffset += delta;
+    } else {
+        auto fragmentHeight = fragmentainer->fragmentHeightForOffset(newOffset);
+        if(fragmentHeight > 0.f) {
+            auto remainingHeight = fragmentainer->fragmentRemainingHeightForOffset(newOffset, AssociateWithLatterFragment);
+            if(remainingHeight < childHeight) {
+                fragmentainer->setFragmentBreak(newOffset, childHeight - remainingHeight);
+            } else if(fragmentHeight == remainingHeight && child->y() + fragmentainer->fragmentOffset()) {
+                fragmentainer->setFragmentBreak(newOffset, childHeight);
+            }
+        }
+    }
+
+    setHeight(height() + (newOffset - child->y()));
+    child->setY(newOffset);
+}
+
 void BoxFrame::paintOutlines(const PaintInfo& info, const Point& offset)
 {
     Rect borderRect(offset, size());

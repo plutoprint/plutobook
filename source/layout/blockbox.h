@@ -63,8 +63,6 @@ public:
     std::optional<float> lastLineBaseline() const override;
     std::optional<float> inlineBlockBaseline() const override;
 
-    void adjustBlockChildInFragmentFlow(BoxFrame* child, FragmentBuilder* fragmentainer);
-
     virtual void paintContents(const PaintInfo& info, const Point& offset, PaintPhase phase);
     void paint(const PaintInfo& info, const Point& offset, PaintPhase phase) override;
 
