@@ -151,7 +151,7 @@ public:
     void collectOverhangingFloats();
     void addIntrudingFloats(BlockFlowBox* prevBlock, float offsetX, float offsetY);
     void addOverhangingFloats(BlockFlowBox* childBlock);
-    void positionNewFloats();
+    void positionNewFloats(FragmentBuilder* fragmentainer);
     bool containsFloat(Box* box) const;
     bool containsFloats() const { return m_floatingBoxes && !m_floatingBoxes->empty(); }
 
@@ -172,7 +172,7 @@ public:
     float endOffsetForLine(float y, bool indent) const { return style()->isRightToLeftDirection() ? leftOffsetForLine(y, indent) : width() - rightOffsetForLine(y, indent); }
     float availableWidthForLine(float y, bool indent) const { return std::max(0.f, rightOffsetForLine(y, indent) - leftOffsetForLine(y, indent)); }
 
-    void adjustFloatingBox(const MarginInfo& marginInfo);
+    void adjustFloatingBox(FragmentBuilder* fragmentainer, const MarginInfo& marginInfo);
     void adjustPositionedBox(BoxFrame* child, const MarginInfo& marginInfo);
 
     void handleBottomOfBlock(float top, float bottom, MarginInfo& marginInfo);
@@ -190,7 +190,6 @@ public:
     float maxMarginBottom(bool positive) const override;
 
     float getClearDelta(BoxFrame* child, float y) const;
-    void clearFloats(Clear clear);
 
     void estimateMarginTop(BoxFrame* child, float& positiveMarginTop, float& negativeMarginTop) const;
     float estimateVerticalPosition(BoxFrame* child, FragmentBuilder* fragmentainer, const MarginInfo& marginInfo) const;

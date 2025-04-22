@@ -574,8 +574,9 @@ void BidiParagraph::reorderVisual(const std::vector<UBiDiLevel>& levels, std::ve
     ubidi_reorderVisual(levels.data(), levels.size(), indices.data());
 }
 
-LineBreaker::LineBreaker(BlockFlowBox* block, LineItemsData& data)
-    : m_block(block), m_data(data), m_breakIterator(data.text)
+LineBreaker::LineBreaker(BlockFlowBox* block, FragmentBuilder* fragmentainer, LineItemsData& data)
+    : m_block(block), m_fragmentainer(fragmentainer)
+    , m_data(data), m_breakIterator(data.text)
 {
     setCurrentStyle(m_block->style());
 }
@@ -583,7 +584,7 @@ LineBreaker::LineBreaker(BlockFlowBox* block, LineItemsData& data)
 LineBreaker::~LineBreaker()
 {
     if(m_hasUnpositionedFloats)
-        m_block->positionNewFloats();
+        m_block->positionNewFloats(m_fragmentainer);
     m_block->setHeight(m_block->height() + m_block->borderAndPaddingBottom());
 }
 
@@ -608,7 +609,7 @@ const LineInfo& LineBreaker::nextLine()
         m_block->insertFloatingBox(box);
     }
 
-    m_block->positionNewFloats();
+    m_block->positionNewFloats(m_fragmentainer);
     m_availableWidth = m_block->availableWidthForLine(m_block->height(), m_line.isFirstLine());
     while(m_state != LineBreakState::Done) {
         if(m_state == LineBreakState::Continue && m_autoWrap && !canFitOnLine())
@@ -907,7 +908,7 @@ void LineBreaker::handleFloating(const LineItem& item)
     auto box = to<BoxFrame>(item.box());
     m_block->insertFloatingBox(box);
     if(!m_hasUnpositionedFloats && canFitOnLine(box->width() + box->marginWidth())) {
-        m_block->positionNewFloats();
+        m_block->positionNewFloats(m_fragmentainer);
         m_availableWidth = m_block->availableWidthForLine(m_block->height(), m_line.isFirstLine());
     } else {
         m_hasUnpositionedFloats = true;
@@ -1227,7 +1228,7 @@ void LineBreaker::handleOverflow()
     }
 
     if(m_block->containsFloats()) {
-        m_block->positionNewFloats();
+        m_block->positionNewFloats(m_fragmentainer);
         float newLineWidth = m_availableWidth;
         float lastFloatBottom = m_block->height();
         float floatBottom = 0.f;
@@ -1255,12 +1256,12 @@ void LineBreaker::handleOverflow()
     }
 }
 
-LineBuilder::LineBuilder(BlockFlowBox* block, RootLineBoxList& lines)
-    : m_block(block), m_lines(lines)
+LineBuilder::LineBuilder(BlockFlowBox* block, FragmentBuilder* fragmentainer, RootLineBoxList& lines)
+    : m_block(block), m_fragmentainer(fragmentainer), m_lines(lines)
 {
 }
 
-void LineBuilder::buildLine(FragmentBuilder* fragmentainer, const LineInfo& info)
+void LineBuilder::buildLine(const LineInfo& info)
 {
     if(m_parentLine) {
         m_parentLine = nullptr;
@@ -1323,7 +1324,7 @@ void LineBuilder::buildLine(FragmentBuilder* fragmentainer, const LineInfo& info
     rootLine->setIsEmptyLine(info.isEmptyLine());
     rootLine->setIsFirstLine(info.isFirstLine());
     rootLine->alignInHorizontalDirection(startOffset + info.lineOffset());
-    auto blockHeight = rootLine->alignInVerticalDirection(fragmentainer, m_block->height());
+    auto blockHeight = rootLine->alignInVerticalDirection(m_fragmentainer, m_block->height());
     if(!rootLine->isEmptyLine()) {
         m_block->setHeight(blockHeight);
     }
@@ -1625,10 +1626,10 @@ void LineLayout::layout(FragmentBuilder* fragmentainer)
         }
     }
 
-    LineBreaker breaker(m_block, m_data);
-    LineBuilder builder(m_block, m_lines);
+    LineBreaker breaker(m_block, fragmentainer, m_data);
+    LineBuilder builder(m_block, fragmentainer, m_lines);
     while(!breaker.isDone()) {
-        builder.buildLine(fragmentainer, breaker.nextLine());
+        builder.buildLine(breaker.nextLine());
     }
 }
 

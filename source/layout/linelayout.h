@@ -227,9 +227,11 @@ private:
     UBiDi* m_ubidi;
 };
 
+class FragmentBuilder;
+
 class LineBreaker {
 public:
-    LineBreaker(BlockFlowBox* block, LineItemsData& data);
+    LineBreaker(BlockFlowBox* block, FragmentBuilder* fragmentainer, LineItemsData& data);
     ~LineBreaker();
 
     const LineInfo& nextLine();
@@ -277,6 +279,7 @@ private:
 
     LineInfo m_line;
     BlockFlowBox* m_block;
+    FragmentBuilder* m_fragmentainer;
     LineItemsData& m_data;
     LineBreakIterator m_breakIterator;
     const BoxStyle* m_currentStyle{nullptr};
@@ -295,15 +298,14 @@ private:
 class LineBox;
 class FlowLineBox;
 class RootLineBox;
-class FragmentBuilder;
 
 using RootLineBoxList = std::pmr::vector<std::unique_ptr<RootLineBox>>;
 
 class LineBuilder {
 public:
-    LineBuilder(BlockFlowBox* block, RootLineBoxList& lines);
+    LineBuilder(BlockFlowBox* block, FragmentBuilder* fragmentainer, RootLineBoxList& lines);
 
-    void buildLine(FragmentBuilder* fragmentainer, const LineInfo& info);
+    void buildLine(const LineInfo& info);
 
 private:
     void addLineBox(LineBox* childLine);
@@ -312,6 +314,7 @@ private:
     void handleReplaced(const LineItemRun& run);
 
     BlockFlowBox* m_block;
+    FragmentBuilder* m_fragmentainer;
     RootLineBoxList& m_lines;
     FlowLineBox* m_parentLine{nullptr};
     uint32_t m_lineIndex{0};

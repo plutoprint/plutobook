@@ -897,12 +897,17 @@ void BoxFrame::computeVerticalMargins(float& marginTop, float& marginBottom) con
     if(isTableCellBox()) {
         marginTop = 0;
         marginBottom = 0;
-        return;
-    }
+    } else {
+        auto calc = [this](const Length& margin) {
+            float containerWidth = 0;
+            if(margin.isPercent())
+                containerWidth = containingBlock()->availableWidth();
+            return margin.calcMin(containerWidth);
+        };
 
-    auto containerWidth = containingBlock()->availableWidth();
-    marginTop = style()->marginTop().calcMin(containerWidth);
-    marginBottom = style()->marginBottom().calcMin(containerWidth);
+        marginTop = calc(style()->marginTop());
+        marginBottom = calc(style()->marginBottom());
+    }
 }
 
 float BoxFrame::computeIntrinsicWidthUsing(const Length& widthLength, float containerWidth) const
