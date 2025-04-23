@@ -1158,16 +1158,24 @@ void TableSectionBox::layoutRows(FragmentBuilder* fragmentainer)
             cellBox->layout(fragmentainer);
             if(fragmentainer && cellBox->height() > rowHeight) {
                 rowHeightIncreaseForFragmentation = std::max(rowHeightIncreaseForFragmentation, cellBox->height() - rowHeight);
+                cellBox->setHeight(rowHeight);
             }
         }
 
-        if(fragmentainer && rowHeightIncreaseForFragmentation > 0.f)
-            rowBox->setHeight(rowHeightIncreaseForFragmentation + rowBox->height());
         if(fragmentainer) {
             fragmentainer->leaveFragment(position);
+            if(rowHeightIncreaseForFragmentation > 0) {
+                for(const auto& [col, cell] : rowBox->cells()) {
+                    auto cellBox = cell.box();
+                    if(!cell.inColSpan()) {
+                        cellBox->setHeight(rowHeightIncreaseForFragmentation + cellBox->height());
+                        cellBox->updateOverflowRect();
+                    }
+                }
+            }
         }
 
-        setHeight(position + rowBox->height());
+        setHeight(position + rowHeightIncreaseForFragmentation + rowBox->height());
         if(rowBox != lastRow())
             setHeight(verticalSpacing + height());
         if(fragmentainer) {
