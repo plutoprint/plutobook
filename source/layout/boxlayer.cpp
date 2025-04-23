@@ -40,18 +40,9 @@ void BoxLayer::layout()
     if(!m_box->isPositioned() && !m_box->hasColumnSpanBox()) {
         auto parent = m_box->parentBox();
         while(parent && !parent->hasLayer()) {
-            if(auto box = to<BoxFrame>(parent)) {
-                if(!box->isTableRowBox()) {
-                    m_borderRect.move(box->location());
-                }
-            }
-
+            if(auto box = to<BoxFrame>(parent))
+                m_borderRect.move(box->location());
             parent = parent->parentBox();
-        }
-
-        if(parent && parent->isTableRowBox()) {
-            const auto& box = to<BoxFrame>(*parent);
-            m_borderRect.move(-box.location());
         }
     }
 

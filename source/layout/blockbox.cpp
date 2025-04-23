@@ -518,6 +518,32 @@ std::optional<float> BlockBox::inlineBlockBaseline() const
     return std::nullopt;
 }
 
+void BlockBox::adjustBlockChildInFragmentFlow(BoxFrame* child, FragmentBuilder* fragmentainer)
+{
+    auto newOffset = fragmentainer->applyFragmentBreakBefore(child, child->y());
+    auto adjustedOffset = fragmentainer->applyFragmentBreakInside(child, newOffset);
+
+    auto childHeight = child->height();
+    if(adjustedOffset > newOffset) {
+        auto delta = adjustedOffset - newOffset;
+        fragmentainer->setFragmentBreak(newOffset, childHeight - delta);
+        newOffset += delta;
+    } else {
+        auto fragmentHeight = fragmentainer->fragmentHeightForOffset(newOffset);
+        if(fragmentHeight > 0.f) {
+            auto remainingHeight = fragmentainer->fragmentRemainingHeightForOffset(newOffset, AssociateWithLatterFragment);
+            if(remainingHeight < childHeight) {
+                fragmentainer->setFragmentBreak(newOffset, childHeight - remainingHeight);
+            } else if(fragmentHeight == remainingHeight && child->y() + fragmentainer->fragmentOffset()) {
+                fragmentainer->setFragmentBreak(newOffset, childHeight);
+            }
+        }
+    }
+
+    setHeight(height() + (newOffset - child->y()));
+    child->setY(newOffset);
+}
+
 void BlockBox::paintContents(const PaintInfo& info, const Point& offset, PaintPhase phase)
 {
     for(auto child = firstBoxFrame(); child; child = child->nextBoxFrame()) {
@@ -1434,7 +1460,7 @@ void BlockFlowBox::layoutBlockChild(BoxFrame* child, FragmentBuilder* fragmentai
 
     child->setY(offsetY + clearDelta);
     if(fragmentainer)
-        adjustBoxInFragmentFlow(child, fragmentainer);
+        adjustBlockChildInFragmentFlow(child, fragmentainer);
     if(marginInfo.atTopOfBlock() && !child->isSelfCollapsingBlock()) {
         marginInfo.setAtTopOfBlock(false);
     }
