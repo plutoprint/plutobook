@@ -870,12 +870,9 @@ void BlockFlowBox::positionNewFloats(FragmentBuilder* fragmentainer)
             floatTop = std::max(floatTop, rightFloatBottom());
         }
 
-        child->updateVerticalMargins();
-
-        auto estimatedTop = floatTop + child->marginTop();
+        auto estimatedTop = floatTop;
         if(fragmentainer)
             fragmentainer->enterFragment(estimatedTop);
-        child->setY(estimatedTop);
         child->layout(fragmentainer);
         if(fragmentainer) {
             fragmentainer->leaveFragment(estimatedTop);
@@ -908,18 +905,17 @@ void BlockFlowBox::positionNewFloats(FragmentBuilder* fragmentainer)
             floatLeft -= child->width() + child->marginWidth();
         }
 
-        child->setX(floatLeft + child->marginLeft());
-        child->setY(floatTop + child->marginTop());
-
         if(fragmentainer) {
-            auto newOffset = fragmentainer->applyFragmentBreakInside(child, child->y());
-            if(!isNearlyEqual(newOffset, estimatedTop)) {
-                fragmentainer->enterFragment(newOffset);
-                child->setY(newOffset);
+            floatTop = fragmentainer->applyFragmentBreakInside(child, floatTop);
+            if(!isNearlyEqual(floatTop, estimatedTop)) {
+                fragmentainer->enterFragment(floatTop);
                 child->layout(fragmentainer);
-                fragmentainer->leaveFragment(newOffset);
+                fragmentainer->leaveFragment(floatTop);
             }
         }
+
+        child->setX(floatLeft + child->marginLeft());
+        child->setY(floatTop + child->marginTop());
 
         floatingBox.setX(floatLeft);
         floatingBox.setY(floatTop);
