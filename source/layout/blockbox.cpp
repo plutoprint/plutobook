@@ -95,11 +95,11 @@ bool BlockBox::shrinkToAvoidFloats() const
 
 float BlockBox::shrinkWidthToAvoidFloats(float marginLeft, float marginRight, const BlockFlowBox* container) const
 {
-    auto availableWidth = container->availableWidthForLine(y(), false) - marginLeft - marginRight;
+    auto availableWidth = container->availableWidthForLine(y()) - marginLeft - marginRight;
     auto marginStart = style()->isLeftToRightDirection() ? marginLeft : marginRight;
     auto marginEnd = style()->isLeftToRightDirection() ? marginRight : marginLeft;
     if(marginStart > 0) {
-        auto lineStartOffset = container->startOffsetForLine(y(), false);
+        auto lineStartOffset = container->startOffsetForLine(y());
         auto contentStartOffset = container->startOffsetForContent();
         auto marginStartOffset = contentStartOffset + marginStart;
         if(lineStartOffset > marginStartOffset) {
@@ -110,7 +110,7 @@ float BlockBox::shrinkWidthToAvoidFloats(float marginLeft, float marginRight, co
     }
 
     if(marginEnd > 0) {
-        auto lineEndOffset = container->endOffsetForLine(y(), false);
+        auto lineEndOffset = container->endOffsetForLine(y());
         auto contentEndOffset = container->endOffsetForContent();
         auto marginEndOffset = contentEndOffset + marginEnd;
         if(lineEndOffset > marginEndOffset) {
@@ -886,20 +886,20 @@ void BlockFlowBox::positionNewFloats(FragmentBuilder* fragmentainer)
         if(childStyle->floating() == Float::Left) {
             float heightRemainingLeft = 1;
             float heightRemainingRight = 1;
-            floatLeft = leftOffsetForFloat(floatTop, leftOffset, false, &heightRemainingLeft);
-            while(rightOffsetForFloat(floatTop, rightOffset, false, &heightRemainingRight) - floatLeft < floatWidth) {
+            floatLeft = leftOffsetForFloat(floatTop, floatTop, leftOffset, false, &heightRemainingLeft);
+            while(rightOffsetForFloat(floatTop, floatTop, rightOffset, false, &heightRemainingRight) - floatLeft < floatWidth) {
                 floatTop += std::min(heightRemainingLeft, heightRemainingRight);
-                floatLeft = leftOffsetForFloat(floatTop, leftOffset, false, &heightRemainingLeft);
+                floatLeft = leftOffsetForFloat(floatTop, floatTop, leftOffset, false, &heightRemainingLeft);
             }
 
             floatLeft = std::max(0.f, floatLeft);
         } else {
             float heightRemainingLeft = 1;
             float heightRemainingRight = 1;
-            floatLeft = rightOffsetForFloat(floatTop, rightOffset, false, &heightRemainingRight);
-            while(floatLeft - leftOffsetForFloat(floatTop, leftOffset, false, &heightRemainingLeft) < floatWidth) {
+            floatLeft = rightOffsetForFloat(floatTop, floatTop, rightOffset, false, &heightRemainingRight);
+            while(floatLeft - leftOffsetForFloat(floatTop, floatTop, leftOffset, false, &heightRemainingLeft) < floatWidth) {
                 floatTop += std::min(heightRemainingLeft, heightRemainingRight);
-                floatLeft = rightOffsetForFloat(floatTop, rightOffset, false, &heightRemainingRight);
+                floatLeft = rightOffsetForFloat(floatTop, floatTop, rightOffset, false, &heightRemainingRight);
             }
 
             floatLeft -= child->width() + child->marginWidth();
@@ -996,13 +996,27 @@ float BlockFlowBox::nextFloatBottom(float y) const
     return bottom.value_or(0.f);
 }
 
-float BlockFlowBox::leftOffsetForFloat(float y, float offset, bool indent, float* heightRemaining) const
+constexpr bool rangesIntersect(float objectTop, float objectBottom, float floatTop, float floatBottom)
+{
+    if(objectTop >= floatBottom || objectBottom < floatTop)
+        return false;
+    if(objectTop >= floatTop)
+        return true;
+    if(objectTop < floatTop && objectBottom > floatBottom)
+        return true;
+    if (objectBottom > objectTop && objectBottom > floatTop && objectBottom <= floatBottom)
+        return true;
+    return false;
+}
+
+float BlockFlowBox::leftOffsetForFloat(float top, float bottom, float offset, bool indent, float* heightRemaining) const
 {
     if(heightRemaining) *heightRemaining = 1;
     if(m_floatingBoxes) {
         for(const auto& item : *m_floatingBoxes) {
-            if(item.type() == Float::Left && item.isPlaced() && item.y() <= y && item.bottom() > y && item.right() > offset) {
-                if(heightRemaining) *heightRemaining = item.bottom() - y;
+            if(item.type() == Float::Left && item.isPlaced()
+                && item.right() > offset && rangesIntersect(top, bottom, item.y(), item.bottom())) {
+                if(heightRemaining) *heightRemaining = item.bottom() - top;
                 offset = std::max(offset, item.right());
             }
         }
@@ -1019,13 +1033,14 @@ float BlockFlowBox::leftOffsetForFloat(float y, float offset, bool indent, float
     return offset;
 }
 
-float BlockFlowBox::rightOffsetForFloat(float y, float offset, bool indent, float* heightRemaining) const
+float BlockFlowBox::rightOffsetForFloat(float top, float bottom, float offset, bool indent, float* heightRemaining) const
 {
     if(heightRemaining) *heightRemaining = 1;
     if(m_floatingBoxes) {
         for(const auto& item : *m_floatingBoxes) {
-            if(item.type() == Float::Right && item.isPlaced() && item.y() <= y && item.bottom() > y && item.x() < offset) {
-                if(heightRemaining) *heightRemaining = item.bottom() - y;
+            if(item.type() == Float::Right && item.isPlaced() && item.x() < offset
+                && rangesIntersect(top, bottom, item.y(), item.bottom())) {
+                if(heightRemaining) *heightRemaining = item.bottom() - top;
                 offset = std::min(offset, item.x());
             }
         }
@@ -1078,10 +1093,10 @@ float BlockFlowBox::lineOffsetForAlignment(float remainingWidth) const
     return 0.f;
 }
 
-float BlockFlowBox::startAlignedOffsetForLine(float y, bool indent) const
+float BlockFlowBox::startAlignedOffsetForLine(float y, float height, bool indent) const
 {
-    auto leftOffset = leftOffsetForLine(y, indent);
-    auto rightOffset = rightOffsetForLine(y, indent);
+    auto leftOffset = leftOffsetForLine(y, height, indent);
+    auto rightOffset = rightOffsetForLine(y, height, indent);
     if(style()->isLeftToRightDirection())
         return leftOffset + lineOffsetForAlignment(rightOffset - leftOffset);
     return width() - leftOffset - lineOffsetForAlignment(rightOffset - leftOffset);
@@ -1158,7 +1173,7 @@ void BlockFlowBox::adjustPositionedBox(BoxFrame* child, const MarginInfo& margin
     auto childLayer = child->layer();
     childLayer->setStaticTop(staticTop);
     if(child->style()->isOriginalDisplayInlineType()) {
-        childLayer->setStaticLeft(startAlignedOffsetForLine(height(), false));
+        childLayer->setStaticLeft(startAlignedOffsetForLine(height()));
     } else {
         childLayer->setStaticLeft(startOffsetForContent());
     }
@@ -1292,7 +1307,7 @@ float BlockFlowBox::getClearDelta(BoxFrame* child, float y) const
     if(!delta && child->avoidsFloats()) {
         auto top = y;
         while(true) {
-            auto availableWidth = availableWidthForLine(top, false);
+            auto availableWidth = availableWidthForLine(top);
             if(availableWidth == availableWidthForContent())
                 return top - y;
             auto childX = child->x();

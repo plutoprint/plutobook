@@ -271,6 +271,8 @@ private:
     void rewindOverflow(uint32_t newSize);
     void handleOverflow();
 
+    void updateAvailableWidth(float lineHeight);
+
     bool canFitOnLine() const { return m_currentWidth <= m_availableWidth; }
     bool canFitOnLine(float extra) const { return extra + m_currentWidth <= m_availableWidth; }
     bool canBreakAfter(const LineItemRun& run) const { return m_autoWrap && m_breakIterator.isBreakable(run.endOffset); }

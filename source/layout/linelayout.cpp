@@ -610,7 +610,7 @@ const LineInfo& LineBreaker::nextLine()
     }
 
     m_block->positionNewFloats(m_fragmentainer);
-    m_availableWidth = m_block->availableWidthForLine(m_block->height(), m_line.isFirstLine());
+    updateAvailableWidth(m_block->style()->lineHeight());
     while(m_state != LineBreakState::Done) {
         if(m_state == LineBreakState::Continue && m_autoWrap && !canFitOnLine())
             handleOverflow();
@@ -909,7 +909,7 @@ void LineBreaker::handleFloating(const LineItem& item)
     m_block->insertFloatingBox(box);
     if(!m_hasUnpositionedFloats && canFitOnLine(box->width() + box->marginWidth())) {
         m_block->positionNewFloats(m_fragmentainer);
-        m_availableWidth = m_block->availableWidthForLine(m_block->height(), m_line.isFirstLine());
+        m_availableWidth = m_block->availableWidthForLine(m_block->height(), 0, m_line.isFirstLine());
     } else {
         m_hasUnpositionedFloats = true;
     }
@@ -1236,7 +1236,7 @@ void LineBreaker::handleOverflow()
             floatBottom = m_block->nextFloatBottom(lastFloatBottom);
             if(floatBottom == 0.f)
                 break;
-            newLineWidth = m_block->availableWidthForLine(floatBottom, m_line.isFirstLine());
+            newLineWidth = m_block->availableWidthForLine(floatBottom, 0, m_line.isFirstLine());
             lastFloatBottom = floatBottom;
             if(newLineWidth >= m_currentWidth) {
                 break;
@@ -1254,6 +1254,14 @@ void LineBreaker::handleOverflow()
     if(breakBefore > 0) {
         rewindOverflow(breakBefore);
     }
+}
+
+void LineBreaker::updateAvailableWidth(float lineHeight)
+{
+    auto leftOffset = m_block->leftOffsetForLine(m_block->height(), lineHeight, m_line.isFirstLine());
+    auto rightOffset = m_block->rightOffsetForLine(m_block->height(), lineHeight, m_line.isFirstLine());
+
+    m_availableWidth = std::max(0.f, rightOffset - leftOffset);
 }
 
 LineBuilder::LineBuilder(BlockFlowBox* block, FragmentBuilder* fragmentainer, RootLineBoxList& lines)

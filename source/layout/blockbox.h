@@ -160,17 +160,19 @@ public:
     float floatBottom() const;
     float nextFloatBottom(float y) const;
 
-    float leftOffsetForFloat(float y, float offset, bool indent, float* heightRemaining = nullptr) const;
-    float rightOffsetForFloat(float y, float offset, bool indent, float* heightRemaining = nullptr) const;
+    float leftOffsetForFloat(float top, float bottom, float offset, bool indent, float* heightRemaining = nullptr) const;
+    float rightOffsetForFloat(float top, float bottom, float offset, bool indent, float* heightRemaining = nullptr) const;
 
     float lineOffsetForAlignment(float remainingWidth) const;
-    float startAlignedOffsetForLine(float y, bool indent) const;
+    float startAlignedOffsetForLine(float y, float height = 0, bool indent = false) const;
 
-    float leftOffsetForLine(float y, bool indent) const { return leftOffsetForFloat(y, leftOffsetForContent(), indent); }
-    float rightOffsetForLine(float y, bool indent) const { return rightOffsetForFloat(y, rightOffsetForContent(), indent); }
-    float startOffsetForLine(float y, bool indent) const { return style()->isLeftToRightDirection() ? leftOffsetForLine(y, indent) : width() - rightOffsetForLine(y, indent); }
-    float endOffsetForLine(float y, bool indent) const { return style()->isRightToLeftDirection() ? leftOffsetForLine(y, indent) : width() - rightOffsetForLine(y, indent); }
-    float availableWidthForLine(float y, bool indent) const { return std::max(0.f, rightOffsetForLine(y, indent) - leftOffsetForLine(y, indent)); }
+    float leftOffsetForLine(float y, float height = 0, bool indent = false) const;
+    float rightOffsetForLine(float y, float height = 0, bool indent = false) const;
+
+    float startOffsetForLine(float y, float height = 0, bool indent = false) const;
+    float endOffsetForLine(float y, float height = 0, bool indent = false) const;
+
+    float availableWidthForLine(float y, float height = 0, bool indent = false) const;
 
     void adjustFloatingBox(FragmentBuilder* fragmentainer, const MarginInfo& marginInfo);
     void adjustPositionedBox(BoxFrame* child, const MarginInfo& marginInfo);
@@ -220,6 +222,31 @@ private:
     float m_maxPositiveMarginBottom{-1};
     float m_maxNegativeMarginBottom{-1};
 };
+
+inline float BlockFlowBox::leftOffsetForLine(float y, float height, bool indent) const
+{
+    return leftOffsetForFloat(y, y + height, leftOffsetForContent(), indent);
+}
+
+inline float BlockFlowBox::rightOffsetForLine(float y, float height, bool indent) const
+{
+    return rightOffsetForFloat(y, y + height, rightOffsetForContent(), indent);
+}
+
+inline float BlockFlowBox::startOffsetForLine(float y, float height, bool indent) const
+{
+    return style()->isLeftToRightDirection() ? leftOffsetForLine(y, height, indent) : width() - rightOffsetForLine(y, height, indent);
+}
+
+inline float BlockFlowBox::endOffsetForLine(float y, float height, bool indent) const
+{
+    return style()->isRightToLeftDirection() ? leftOffsetForLine(y, height, indent) : width() - rightOffsetForLine(y, height, indent);
+}
+
+inline float BlockFlowBox::availableWidthForLine(float y, float height, bool indent) const
+{
+    return std::max(0.f, rightOffsetForLine(y, height, indent) - leftOffsetForLine(y, height, indent));
+}
 
 template<>
 struct is_a<BlockFlowBox> {
