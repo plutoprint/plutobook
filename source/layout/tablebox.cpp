@@ -297,12 +297,18 @@ void TableBox::layoutCaption(TableCaptionBox* caption, FragmentBuilder* fragment
         fragmentainer->enterFragment(estimatedTop);
     }
 
-    caption->layout(fragmentainer);
     caption->setX(caption->marginLeft());
-    caption->setY(height() + caption->marginTop());
+    caption->setY(estimatedTop);
+    caption->layout(fragmentainer);
     if(fragmentainer) {
         fragmentainer->leaveFragment(estimatedTop);
-        adjustBlockChildInFragmentFlow(caption, fragmentainer);
+        auto newOffset = adjustBlockChildInFragmentFlow(caption, fragmentainer, height() + caption->marginTop());
+        if(!isequalf(newOffset, estimatedTop)) {
+            fragmentainer->enterFragment(newOffset);
+            caption->setY(newOffset);
+            caption->layout(fragmentainer);
+            fragmentainer->leaveFragment(newOffset);
+        }
     }
 
     setHeight(height() + caption->height() + caption->marginHeight());
@@ -364,12 +370,18 @@ void TableBox::layout(FragmentBuilder* fragmentainer)
                 fragmentainer->enterFragment(estimatedTop);
             }
 
-            section->layoutRows(fragmentainer);
             section->setX(borderAndPaddingLeft());
-            section->setY(height() + borderVerticalSpacing());
+            section->setY(estimatedTop);
+            section->layoutRows(fragmentainer);
             if(fragmentainer) {
                 fragmentainer->leaveFragment(estimatedTop);
-                adjustBlockChildInFragmentFlow(section, fragmentainer);
+                auto newOffset = adjustBlockChildInFragmentFlow(section, fragmentainer, height() + borderVerticalSpacing());
+                if(!isequalf(newOffset, estimatedTop)) {
+                    fragmentainer->enterFragment(newOffset);
+                    section->setY(newOffset);
+                    section->layoutRows(fragmentainer);
+                    fragmentainer->leaveFragment(newOffset);
+                }
             }
 
             setHeight(section->height() + height() + borderVerticalSpacing());

@@ -9,6 +9,16 @@
 
 namespace plutobook {
 
+constexpr bool isequalf(float a, float b)
+{
+    return a == b;
+}
+
+constexpr bool iszerof(float v)
+{
+    return v == 0.f;
+}
+
 class Point {
 public:
     constexpr Point() = default;

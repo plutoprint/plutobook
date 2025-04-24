@@ -63,7 +63,7 @@ public:
     std::optional<float> lastLineBaseline() const override;
     std::optional<float> inlineBlockBaseline() const override;
 
-    void adjustBlockChildInFragmentFlow(BoxFrame* child, FragmentBuilder* fragmentainer);
+    float adjustBlockChildInFragmentFlow(BoxFrame* child, FragmentBuilder* fragmentainer, float offset);
 
     virtual void paintContents(const PaintInfo& info, const Point& offset, PaintPhase phase);
     void paint(const PaintInfo& info, const Point& offset, PaintPhase phase) override;
@@ -195,6 +195,8 @@ public:
 
     void estimateMarginTop(BoxFrame* child, float& positiveMarginTop, float& negativeMarginTop) const;
     float estimateVerticalPosition(BoxFrame* child, FragmentBuilder* fragmentainer, const MarginInfo& marginInfo) const;
+
+    float determineVerticalPosition(BoxFrame* child, FragmentBuilder* fragmentainer, MarginInfo& marginInfo);
     void determineHorizontalPosition(BoxFrame* child) const;
 
     void layoutBlockChild(BoxFrame* child, FragmentBuilder* fragmentainer, MarginInfo& marginInfo);
