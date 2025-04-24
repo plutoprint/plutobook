@@ -9,14 +9,16 @@
 
 namespace plutobook {
 
-constexpr bool isequalf(float a, float b)
+constexpr auto kDefaultEpsilon = 1e-5f;
+
+constexpr bool isNearlyZero(float v)
 {
-    return a == b;
+    return std::abs(v) <= kDefaultEpsilon;
 }
 
-constexpr bool iszerof(float v)
+constexpr bool isNearlyEqual(float a, float b)
 {
-    return v == 0.f;
+    return isNearlyZero(a - b);
 }
 
 class Point {

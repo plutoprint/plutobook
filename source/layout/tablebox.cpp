@@ -290,28 +290,20 @@ void TableBox::layoutCaption(TableCaptionBox* caption, FragmentBuilder* fragment
 {
     caption->updateVerticalMargins();
 
-    auto estimatedTop = height() + caption->marginTop();
+    auto captionTop = height() + caption->marginTop();
     if(fragmentainer) {
-        estimatedTop = fragmentainer->applyFragmentBreakBefore(caption, estimatedTop);
-        estimatedTop = fragmentainer->applyFragmentBreakInside(caption, estimatedTop);
-        fragmentainer->enterFragment(estimatedTop);
+        captionTop = fragmentainer->applyFragmentBreakBefore(caption, captionTop);
+        fragmentainer->enterFragment(captionTop);
     }
 
     caption->setX(caption->marginLeft());
-    caption->setY(estimatedTop);
+    caption->setY(captionTop);
     caption->layout(fragmentainer);
     if(fragmentainer) {
-        fragmentainer->leaveFragment(estimatedTop);
-        auto newOffset = adjustBlockChildInFragmentFlow(caption, fragmentainer, height() + caption->marginTop());
-        if(!isequalf(newOffset, estimatedTop)) {
-            fragmentainer->enterFragment(newOffset);
-            caption->setY(newOffset);
-            caption->layout(fragmentainer);
-            fragmentainer->leaveFragment(newOffset);
-        }
+        fragmentainer->leaveFragment(captionTop);
     }
 
-    setHeight(height() + caption->height() + caption->marginHeight());
+    setHeight(captionTop + caption->height() + caption->marginBottom());
     if(fragmentainer) {
         setHeight(fragmentainer->applyFragmentBreakAfter(caption, height()));
     }
@@ -337,15 +329,15 @@ void TableBox::layout(FragmentBuilder* fragmentainer)
         setHeight(tableHeight + height());
     } else {
         m_tableLayout->layout();
-        auto position = borderHorizontalSpacing();
+        auto columnLeft = borderHorizontalSpacing();
         for(auto& column : m_columns) {
-            column.setX(position);
-            position += column.width() + borderHorizontalSpacing();
+            column.setX(columnLeft);
+            columnLeft += column.width() + borderHorizontalSpacing();
         }
 
         if(style()->isRightToLeftDirection()) {
             for(auto& column : m_columns) {
-                column.setX(position - column.width() - column.x());
+                column.setX(columnLeft - column.width() - column.x());
             }
         }
 
@@ -363,28 +355,20 @@ void TableBox::layout(FragmentBuilder* fragmentainer)
         }
 
         for(auto section : m_sections) {
-            auto estimatedTop = height() + borderVerticalSpacing();
+            auto sectionTop = height() + borderVerticalSpacing();
             if(fragmentainer) {
-                estimatedTop = fragmentainer->applyFragmentBreakBefore(section, estimatedTop);
-                estimatedTop = fragmentainer->applyFragmentBreakInside(section, estimatedTop);
-                fragmentainer->enterFragment(estimatedTop);
+                sectionTop = fragmentainer->applyFragmentBreakBefore(section, sectionTop);
+                fragmentainer->enterFragment(sectionTop);
             }
 
             section->setX(borderAndPaddingLeft());
-            section->setY(estimatedTop);
+            section->setY(sectionTop);
             section->layoutRows(fragmentainer);
             if(fragmentainer) {
-                fragmentainer->leaveFragment(estimatedTop);
-                auto newOffset = adjustBlockChildInFragmentFlow(section, fragmentainer, height() + borderVerticalSpacing());
-                if(!isequalf(newOffset, estimatedTop)) {
-                    fragmentainer->enterFragment(newOffset);
-                    section->setY(newOffset);
-                    section->layoutRows(fragmentainer);
-                    fragmentainer->leaveFragment(newOffset);
-                }
+                fragmentainer->leaveFragment(sectionTop);
             }
 
-            setHeight(section->height() + height() + borderVerticalSpacing());
+            setHeight(sectionTop + section->height() + borderVerticalSpacing());
             if(fragmentainer) {
                 setHeight(fragmentainer->applyFragmentBreakAfter(section, height()));
             }
@@ -1135,34 +1119,33 @@ void TableSectionBox::layoutRows(FragmentBuilder* fragmentainer)
     auto verticalSpacing = table()->borderVerticalSpacing();
     for(size_t rowIndex = 0; rowIndex < m_rows.size(); ++rowIndex) {
         auto rowBox = m_rows[rowIndex];
-        auto position = height();
+        auto rowTop = height();
         if(fragmentainer) {
-            position = fragmentainer->applyFragmentBreakBefore(rowBox, position);
-            position = fragmentainer->applyFragmentBreakInside(rowBox, position);
+            rowTop = fragmentainer->applyFragmentBreakBefore(rowBox, rowTop);
             if(table()->borderCollapse() == BorderCollapse::Collapse) {
-                auto fragmentHeight = fragmentainer->fragmentHeightForOffset(position);
-                if(fragmentHeight > 0.f && fragmentHeight == fragmentainer->fragmentRemainingHeightForOffset(position, AssociateWithLatterFragment)) {
+                auto fragmentHeight = fragmentainer->fragmentHeightForOffset(rowTop);
+                if(fragmentHeight > 0.f && fragmentHeight == fragmentainer->fragmentRemainingHeightForOffset(rowTop, AssociateWithLatterFragment)) {
                     float borderTop = 0.f;
                     for(const auto& [col, cell] : rowBox->cells())
                         borderTop = std::max(borderTop, cell->borderTop());
-                    position += borderTop;
+                    rowTop += borderTop;
                 }
             }
         }
 
         rowBox->setX(0.f);
-        rowBox->setY(position);
+        rowBox->setY(rowTop);
         if(fragmentainer)
-            fragmentainer->enterFragment(position);
+            fragmentainer->enterFragment(rowTop);
         float rowHeightIncreaseForFragmentation = 0;
         for(const auto& [col, cell] : rowBox->cells()) {
             auto cellBox = cell.box();
             if(cell.inColOrRowSpan())
                 continue;
             auto rowHeight = -verticalSpacing;
-            for(size_t row = 0; row < cellBox->rowSpan(); ++row) {
-                auto rowBox = m_rows[row + rowIndex];
-                rowHeight += verticalSpacing + rowBox->height();
+            for(size_t i = 0; i < cellBox->rowSpan(); ++i) {
+                auto row = m_rows[i + rowIndex];
+                rowHeight += verticalSpacing + row->height();
             }
 
             cellBox->setY(0.f);
@@ -1175,8 +1158,9 @@ void TableSectionBox::layoutRows(FragmentBuilder* fragmentainer)
         }
 
         if(fragmentainer) {
-            fragmentainer->leaveFragment(position);
+            fragmentainer->leaveFragment(rowTop);
             if(rowHeightIncreaseForFragmentation > 0) {
+                rowBox->setHeight(rowHeightIncreaseForFragmentation + rowBox->height());
                 for(const auto& [col, cell] : rowBox->cells()) {
                     auto cellBox = cell.box();
                     if(!cell.inColSpan()) {
@@ -1187,7 +1171,7 @@ void TableSectionBox::layoutRows(FragmentBuilder* fragmentainer)
             }
         }
 
-        setHeight(position + rowHeightIncreaseForFragmentation + rowBox->height());
+        setHeight(rowTop + rowBox->height());
         if(rowBox != lastRow())
             setHeight(verticalSpacing + height());
         if(fragmentainer) {
