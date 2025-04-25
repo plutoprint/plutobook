@@ -577,6 +577,7 @@ void BidiParagraph::reorderVisual(const std::vector<UBiDiLevel>& levels, std::ve
 LineBreaker::LineBreaker(BlockFlowBox* block, FragmentBuilder* fragmentainer, LineItemsData& data)
     : m_block(block), m_fragmentainer(fragmentainer)
     , m_data(data), m_breakIterator(data.text)
+    , m_lineHeight(block->style()->lineHeight())
 {
     setCurrentStyle(m_block->style());
 }
@@ -590,14 +591,13 @@ LineBreaker::~LineBreaker()
 
 const LineInfo& LineBreaker::nextLine()
 {
-    m_line.reset();
+    m_line.reset(m_currentStyle);
     m_state = LineBreakState::Continue;
     m_skipLeadingWhitespace = true;
     m_hasUnpositionedFloats = false;
     m_hasLeaderText = false;
     m_leadingFloatsEndIndex = m_itemIndex;
     m_currentWidth = 0.f;
-    m_line.setLineStyle(m_currentStyle);
 
     for(; m_leadingFloatsEndIndex < m_data.items.size(); ++m_leadingFloatsEndIndex) {
         const auto& item = m_data.items[m_leadingFloatsEndIndex];
@@ -610,7 +610,7 @@ const LineInfo& LineBreaker::nextLine()
     }
 
     m_block->positionNewFloats(m_fragmentainer);
-    updateAvailableWidth(m_block->style()->lineHeight());
+    m_availableWidth = m_block->availableWidthForLine(m_block->height(), m_lineHeight, m_line.isFirstLine());
     while(m_state != LineBreakState::Done) {
         if(m_state == LineBreakState::Continue && m_autoWrap && !canFitOnLine())
             handleOverflow();
@@ -853,6 +853,12 @@ void LineBreaker::handleInlineStart(const LineItem& item)
         m_line.setIsEmptyLine(false);
     }
 
+    if(m_state == LineBreakState::Trailing
+        && run.width < 0.f && m_currentWidth > m_availableWidth
+        && m_currentWidth + run.width <= m_availableWidth) {
+        m_state = LineBreakState::Continue;
+    }
+
     auto wasAutoWrap = m_autoWrap;
     setCurrentStyle(box.style());
     moveToNextOf(item);
@@ -909,7 +915,7 @@ void LineBreaker::handleFloating(const LineItem& item)
     m_block->insertFloatingBox(box);
     if(!m_hasUnpositionedFloats && canFitOnLine(box->width() + box->marginWidth())) {
         m_block->positionNewFloats(m_fragmentainer);
-        m_availableWidth = m_block->availableWidthForLine(m_block->height(), 0, m_line.isFirstLine());
+        m_availableWidth = m_block->availableWidthForLine(m_block->height(), m_lineHeight, m_line.isFirstLine());
     } else {
         m_hasUnpositionedFloats = true;
     }
@@ -1236,7 +1242,7 @@ void LineBreaker::handleOverflow()
             floatBottom = m_block->nextFloatBottom(lastFloatBottom);
             if(floatBottom == 0.f)
                 break;
-            newLineWidth = m_block->availableWidthForLine(floatBottom, 0, m_line.isFirstLine());
+            newLineWidth = m_block->availableWidthForLine(floatBottom, m_lineHeight, m_line.isFirstLine());
             lastFloatBottom = floatBottom;
             if(newLineWidth >= m_currentWidth) {
                 break;
@@ -1254,14 +1260,6 @@ void LineBreaker::handleOverflow()
     if(breakBefore > 0) {
         rewindOverflow(breakBefore);
     }
-}
-
-void LineBreaker::updateAvailableWidth(float lineHeight)
-{
-    auto leftOffset = m_block->leftOffsetForLine(m_block->height(), lineHeight, m_line.isFirstLine());
-    auto rightOffset = m_block->rightOffsetForLine(m_block->height(), lineHeight, m_line.isFirstLine());
-
-    m_availableWidth = std::max(0.f, rightOffset - leftOffset);
 }
 
 LineBuilder::LineBuilder(BlockFlowBox* block, FragmentBuilder* fragmentainer, RootLineBoxList& lines)

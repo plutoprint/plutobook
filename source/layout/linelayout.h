@@ -189,7 +189,7 @@ public:
     void setLineStyle(const BoxStyle* style) { m_lineStyle = style; }
     const BoxStyle* lineStyle() const { return m_lineStyle; }
 
-    void reset();
+    void reset(const BoxStyle* style);
 
 private:
     LineItemRunList m_runs;
@@ -200,7 +200,7 @@ private:
     const BoxStyle* m_lineStyle{nullptr};
 };
 
-inline void LineInfo::reset()
+inline void LineInfo::reset(const BoxStyle* style)
 {
     m_runs.clear();
     if(!m_isEmptyLine) {
@@ -210,7 +210,7 @@ inline void LineInfo::reset()
 
     m_isLastLine = false;
     m_lineOffset = 0.f;
-    m_lineStyle = nullptr;
+    m_lineStyle = style;
 }
 
 class BidiParagraph {
@@ -250,6 +250,7 @@ private:
 
     void moveToNextOf(const LineItem& item);
     void moveToNextOf(const LineItemRun& run);
+
     void setCurrentStyle(const BoxStyle* currentStyle);
 
     void handleNormalText(const LineItem& item);
@@ -268,10 +269,9 @@ private:
     void handleText(const LineItem& item, const RefPtr<TextShape>& shape);
     void breakText(LineItemRun& run, const LineItem& item, const RefPtr<TextShape>& shape, float availableWidth);
     void handleTrailingSpaces(const LineItem& item, const RefPtr<TextShape>& shape);
+
     void rewindOverflow(uint32_t newSize);
     void handleOverflow();
-
-    void updateAvailableWidth(float lineHeight);
 
     bool canFitOnLine() const { return m_currentWidth <= m_availableWidth; }
     bool canFitOnLine(float extra) const { return extra + m_currentWidth <= m_availableWidth; }
@@ -284,6 +284,8 @@ private:
     FragmentBuilder* m_fragmentainer;
     LineItemsData& m_data;
     LineBreakIterator m_breakIterator;
+    float m_lineHeight;
+
     const BoxStyle* m_currentStyle{nullptr};
     LineBreakState m_state{LineBreakState::Continue};
     uint32_t m_itemIndex{0};
