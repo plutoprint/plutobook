@@ -160,14 +160,14 @@ public:
     float floatBottom() const;
     float nextFloatBottom(float y) const;
 
-    float leftOffsetForFloat(float top, float bottom, float offset, bool indent, float* heightRemaining = nullptr) const;
-    float rightOffsetForFloat(float top, float bottom, float offset, bool indent, float* heightRemaining = nullptr) const;
-
-    float lineOffsetForAlignment(float remainingWidth) const;
-    float startAlignedOffsetForLine(float y, float height = 0, bool indent = false) const;
+    float leftOffsetForFloat(float top, float bottom, float offset, float* heightRemaining = nullptr) const;
+    float rightOffsetForFloat(float top, float bottom, float offset, float* heightRemaining = nullptr) const;
 
     float leftOffsetForLine(float y, float height = 0, bool indent = false) const;
     float rightOffsetForLine(float y, float height = 0, bool indent = false) const;
+
+    float lineOffsetForAlignment(float remainingWidth) const;
+    float startAlignedOffsetForLine(float y, float height = 0, bool indent = false) const;
 
     float startOffsetForLine(float y, float height = 0, bool indent = false) const;
     float endOffsetForLine(float y, float height = 0, bool indent = false) const;
@@ -222,16 +222,6 @@ private:
     float m_maxPositiveMarginBottom{-1};
     float m_maxNegativeMarginBottom{-1};
 };
-
-inline float BlockFlowBox::leftOffsetForLine(float y, float height, bool indent) const
-{
-    return leftOffsetForFloat(y, y + height, leftOffsetForContent(), indent);
-}
-
-inline float BlockFlowBox::rightOffsetForLine(float y, float height, bool indent) const
-{
-    return rightOffsetForFloat(y, y + height, rightOffsetForContent(), indent);
-}
 
 inline float BlockFlowBox::startOffsetForLine(float y, float height, bool indent) const
 {
