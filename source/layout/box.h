@@ -243,7 +243,7 @@ public:
     float containingBlockWidthForContent() const { return containingBlockWidthForContent(containingBlock()); }
 
     std::optional<float> containingBlockHeightForContent(const BlockBox* container) const;
-    std::optional<float> containingBlockHeightForContent() const { return containingBlockWidthForContent(containingBlock()); }
+    std::optional<float> containingBlockHeightForContent() const { return containingBlockHeightForContent(containingBlock()); }
 
     void updateMarginWidths();
 
