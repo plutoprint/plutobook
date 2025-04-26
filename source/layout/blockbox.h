@@ -190,6 +190,7 @@ public:
     float maxNegativeMarginBottom() const { return m_maxNegativeMarginBottom; }
 
     bool isSelfCollapsingBlock() const override;
+
     float maxMarginTop(bool positive) const override;
     float maxMarginBottom(bool positive) const override;
 

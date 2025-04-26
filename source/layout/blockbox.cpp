@@ -746,28 +746,27 @@ void BlockFlowBox::collectIntrudingFloats()
     auto parentBlock = to<BlockFlowBox>(parentBox());
     if(parentBlock == nullptr)
         return;
-    auto prev = prevSibling();
-    auto parentHasFloats = false;
-    while(prev && (prev->avoidsFloats() || !prev->isBlockFlowBox())) {
-        if(prev->isFloating())
+    bool parentHasFloats = false;
+    BlockFlowBox* prevBlock = nullptr;
+    for(auto sibling = prevSibling(); sibling; sibling = sibling->prevSibling()) {
+        auto siblingBlock = to<BlockFlowBox>(sibling);
+        if(siblingBlock && !siblingBlock->avoidsFloats()) {
+            prevBlock = siblingBlock;
+            break;
+        }
+
+        if(sibling->isFloating()) {
             parentHasFloats = true;
-        prev = prev->prevSibling();
+        }
     }
 
-    auto offsetX = parentBlock->leftOffsetForContent();
-    auto offsetY = y();
-    if(parentHasFloats)
-        addIntrudingFloats(parentBlock, offsetX, offsetY);
-    auto prevBlock = to<BlockFlowBox>(prev);
-    if(prevBlock == nullptr) {
-        prevBlock = parentBlock;
-    } else {
-        offsetX = 0;
-        offsetY -= prevBlock->y();
-    }
-
-    if(prevBlock->floatBottom() > offsetY) {
-        addIntrudingFloats(prevBlock, offsetX, offsetY);
+    if(parentHasFloats || (!prevBlock && parentBlock->floatBottom() > y()))
+        addIntrudingFloats(parentBlock, parentBlock->leftOffsetForContent(), y());
+    if(prevBlock) {
+        auto offsetY = y() - prevBlock->y();
+        if(prevBlock->floatBottom() > offsetY) {
+            addIntrudingFloats(prevBlock, 0, offsetY);
+        }
     }
 }
 
@@ -792,11 +791,11 @@ void BlockFlowBox::addIntrudingFloats(BlockFlowBox* prevBlock, float offsetX, fl
         return;
     for(const auto& item : *prevBlock->floatingBoxes()) {
         if(item.bottom() > offsetY && !containsFloat(item.box())) {
-            FloatingBox floatingBox(item.box());
-            floatingBox.setX(offsetX + marginLeft());
+            auto leftOffset = offsetX + marginLeft();
             if(prevBlock != parentBox())
-                floatingBox.setX(floatingBox.x() - prevBlock->marginLeft());
-            floatingBox.setX(item.x() - floatingBox.x());
+                leftOffset -= prevBlock->marginLeft();
+            FloatingBox floatingBox(item.box());
+            floatingBox.setX(item.x() - leftOffset);
             floatingBox.setY(item.y() - offsetY);
             floatingBox.setWidth(item.width());
             floatingBox.setHeight(item.height());
@@ -1566,8 +1565,8 @@ void BlockFlowBox::layout(FragmentBuilder* fragmentainer)
         updateWidth();
     }
 
-    collectIntrudingFloats();
     updateMaxMargins();
+    collectIntrudingFloats();
 
     setHeight(borderAndPaddingTop());
     if(isChildrenInline()) {
