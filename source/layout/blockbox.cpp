@@ -71,7 +71,7 @@ std::optional<float> BlockBox::availableHeight() const
     if(hasOverrideHeight())
         return overrideHeight() - borderAndPaddingHeight();
     if(isAnonymous())
-        return containingBlock()->availableHeight();
+        return containingBlockHeightForContent();
     if(isPositioned() && (!style()->height().isAuto() || (!style()->top().isAuto() && !style()->bottom().isAuto()))) {
         float y = 0;
         float height = 0;
@@ -148,7 +148,7 @@ std::optional<float> BlockBox::computeHeightUsing(const Length& heightLength) co
     if(heightLength.isFixed())
         return heightLength.value();
     if(heightLength.isPercent()) {
-        if(auto availableHeight = containingBlock()->availableHeight()) {
+        if(auto availableHeight = containingBlockHeightForContent()) {
             return heightLength.calc(availableHeight.value());
         }
     }
@@ -271,7 +271,7 @@ void BlockBox::computePositionedWidthUsing(const Length& widthLength, const BoxM
 void BlockBox::computePositionedWidth(float& x, float& width, float& marginLeft, float& marginRight) const
 {
     auto container = containingBox();
-    auto containerWidth = container->availableWidthForPositioned();
+    auto containerWidth = containingBlockWidthForPositioned(container);
     auto containerDirection = container->style()->direction();
 
     auto marginLeftLength = style()->marginLeft();
@@ -384,7 +384,7 @@ void BlockBox::computePositionedHeightUsing(const Length& heightLength, const Bo
 void BlockBox::computePositionedHeight(float& y, float& height, float& marginTop, float& marginBottom) const
 {
     auto container = containingBox();
-    auto containerHeight = container->availableHeightForPositioned();
+    auto containerHeight = containingBlockHeightForPositioned(container);
     auto contentHeight = height - borderAndPaddingHeight();
 
     auto marginTopLength = style()->marginTop();
@@ -449,7 +449,7 @@ void BlockBox::computeWidth(float& x, float& width, float& marginLeft, float& ma
     }
 
     auto container = containingBlock();
-    auto containerWidth = std::max(0.f, container->availableWidth());
+    auto containerWidth = std::max(0.f, containingBlockWidthForContent(container));
     width = computeWidthUsing(style()->width(), container, containerWidth);
     width = constrainWidth(width, container, containerWidth);
     if(isTableBox())
@@ -1047,7 +1047,7 @@ float BlockFlowBox::leftOffsetForLine(float y, float height, bool indent) const
         float availableWidth = 0;
         auto textIndentLength = style()->textIndent();
         if(textIndentLength.isPercent())
-            availableWidth = containingBlock()->availableWidth();
+            availableWidth = containingBlockWidthForContent();
         offset += textIndentLength.calcMin(availableWidth);
     }
 
@@ -1061,7 +1061,7 @@ float BlockFlowBox::rightOffsetForLine(float y, float height, bool indent) const
         float availableWidth = 0;
         auto textIndentLength = style()->textIndent();
         if(textIndentLength.isPercent())
-            availableWidth = containingBlock()->availableWidth();
+            availableWidth = containingBlockWidthForContent();
         offset -= textIndentLength.calcMin(availableWidth);
     }
 

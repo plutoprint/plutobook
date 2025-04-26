@@ -26,9 +26,10 @@ public:
     void layoutPositionedBoxes();
 
     float leftOffsetForContent() const { return borderLeft() + paddingLeft(); }
-    float rightOffsetForContent() const { return leftOffsetForContent() + availableWidth(); }
+    float rightOffsetForContent() const { return leftOffsetForContent() + contentBoxWidth(); }
     float startOffsetForContent() const { return style()->isLeftToRightDirection() ? leftOffsetForContent() : width() - rightOffsetForContent(); }
     float endOffsetForContent() const { return style()->isRightToLeftDirection() ? leftOffsetForContent() : width() - rightOffsetForContent(); }
+
     float availableWidthForContent() const { return std::max(0.f, rightOffsetForContent() - leftOffsetForContent()); }
 
     float availableWidth() const { return contentBoxWidth(); }

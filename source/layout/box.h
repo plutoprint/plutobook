@@ -232,8 +232,18 @@ public:
     void updateLayerPositions();
 
     Point relativePositionOffset() const;
-    float availableWidthForPositioned() const;
-    float availableHeightForPositioned() const;
+
+    float containingBlockWidthForPositioned(const BoxModel* container) const;
+    float containingBlockWidthForPositioned() const { return containingBlockWidthForPositioned(containingBox()); }
+
+    float containingBlockHeightForPositioned(const BoxModel* container) const;
+    float containingBlockHeightForPositioned() const { return containingBlockHeightForPositioned(containingBox()); }
+
+    virtual float containingBlockWidthForContent(const BlockBox* container) const;
+    float containingBlockWidthForContent() const { return containingBlockWidthForContent(containingBlock()); }
+
+    std::optional<float> containingBlockHeightForContent(const BlockBox* container) const;
+    std::optional<float> containingBlockHeightForContent() const { return containingBlockWidthForContent(containingBlock()); }
 
     void updateMarginWidths();
 

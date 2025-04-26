@@ -282,8 +282,8 @@ TableCellBox* TableBox::cellAfter(const TableCellBox* cellBox) const
 float TableBox::availableHorizontalSpace() const
 {
     if(!m_columns.empty() && style()->borderCollapse() == BorderCollapse::Separate)
-        return availableWidth() - borderHorizontalSpacing() * (m_columns.size() + 1);
-    return availableWidth();
+        return contentBoxWidth() - borderHorizontalSpacing() * (m_columns.size() + 1);
+    return contentBoxWidth();
 }
 
 void TableBox::layoutCaption(TableCaptionBox* caption, FragmentBuilder* fragmentainer)
@@ -1878,6 +1878,11 @@ void TableCellBox::paintDecorations(const PaintInfo& info, const Point& offset)
 TableCaptionBox::TableCaptionBox(Node* node, const RefPtr<BoxStyle>& style)
     : BlockFlowBox(node, style)
 {
+}
+
+float TableCaptionBox::containingBlockWidthForContent(const BlockBox* container) const
+{
+    return container->width();
 }
 
 } // namespace plutobook

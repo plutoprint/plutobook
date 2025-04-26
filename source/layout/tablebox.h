@@ -483,6 +483,7 @@ public:
 
     bool isTableCaptionBox() const final { return true; }
     bool avoidsFloats() const final { return true; }
+    float containingBlockWidthForContent(const BlockBox* container) const final;
     CaptionSide captionSide() const { return style()->captionSide(); }
 
     const char* name() const final { return "TableCaptionBox"; }

@@ -572,12 +572,12 @@ Point BoxModel::relativePositionOffset() const
 
     Point offset;
     if(!leftLength.isAuto()) {
-        offset.x = leftLength.calc(container->availableWidth());
+        offset.x = leftLength.calc(containingBlockWidthForContent(container));
     } else if(!rightLength.isAuto()) {
-        offset.x = -rightLength.calc(container->availableWidth());
+        offset.x = -rightLength.calc(containingBlockWidthForContent(container));
     }
 
-    auto availableHeight = container->availableHeight();
+    auto availableHeight = containingBlockHeightForContent(container);
     if(!topLength.isAuto() && (availableHeight || !topLength.isPercent())) {
         offset.y = topLength.calc(availableHeight.value_or(0.f));
     } else if(!bottomLength.isAuto() && (availableHeight || !bottomLength.isPercent())) {
@@ -587,24 +587,34 @@ Point BoxModel::relativePositionOffset() const
     return offset;
 }
 
-float BoxModel::availableWidthForPositioned() const
+float BoxModel::containingBlockWidthForPositioned(const BoxModel* container) const
 {
-    if(isBoxView())
+    if(container->isBoxView())
         return document()->availableWidth();
-    auto rect = borderBoundingBox();
+    auto rect = container->borderBoundingBox();
     if(rect.w > 0.f)
-        return rect.w - borderLeft() - borderRight();
+        return rect.w - container->borderLeft() - container->borderRight();
     return 0.f;
 }
 
-float BoxModel::availableHeightForPositioned() const
+float BoxModel::containingBlockHeightForPositioned(const BoxModel* container) const
 {
     if(isBoxView())
         return document()->availableHeight();
-    auto rect = borderBoundingBox();
+    auto rect = container->borderBoundingBox();
     if(rect.h > 0.f)
-        return rect.h - borderTop() - borderBottom();
+        return rect.h - container->borderTop() - container->borderBottom();
     return 0.f;
+}
+
+float BoxModel::containingBlockWidthForContent(const BlockBox* container) const
+{
+    return container->availableWidth();
+}
+
+std::optional<float> BoxModel::containingBlockHeightForContent(const BlockBox* container) const
+{
+    return container->availableHeight();
 }
 
 void BoxModel::updateMarginWidths()
@@ -612,7 +622,7 @@ void BoxModel::updateMarginWidths()
     auto calc = [this](const Length& margin) {
         float containerWidth = 0;
         if(margin.isPercent())
-            containerWidth = containingBlock()->availableWidth();
+            containerWidth = containingBlockWidthForContent();
         return margin.calcMin(containerWidth);
     };
 
@@ -641,7 +651,7 @@ void BoxModel::updatePaddingWidths() const
     auto calc = [this](const Length& padding) {
         float containerWidth = 0;
         if(padding.isPercent())
-            containerWidth = containingBlock()->availableWidth();
+            containerWidth = containingBlockWidthForContent();
         return padding.calcMin(containerWidth);
     };
 
@@ -899,7 +909,7 @@ void BoxFrame::computeVerticalMargins(float& marginTop, float& marginBottom) con
         auto calc = [this](const Length& margin) {
             float containerWidth = 0;
             if(margin.isPercent())
-                containerWidth = containingBlock()->availableWidth();
+                containerWidth = containingBlockWidthForContent();
             return margin.calcMin(containerWidth);
         };
 

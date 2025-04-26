@@ -94,7 +94,7 @@ void ReplacedBox::computePreferredWidths(float& minPreferredWidth, float& maxPre
 void ReplacedBox::computePositionedReplacedWidth(float& x, float& width, float& marginLeft, float& marginRight) const
 {
     auto container = containingBox();
-    auto containerWidth = container->availableWidthForPositioned();
+    auto containerWidth = containingBlockWidthForPositioned(container);
     auto containerDirection = container->style()->direction();
 
     auto marginLeftLength = style()->marginLeft();
@@ -172,7 +172,7 @@ void ReplacedBox::computePositionedReplacedWidth(float& x, float& width, float& 
 void ReplacedBox::computePositionedReplacedHeight(float& y, float& height, float& marginTop, float& marginBottom) const
 {
     auto container = containingBox();
-    auto containerHeight = container->availableHeightForPositioned();
+    auto containerHeight = containingBlockHeightForPositioned(container);
 
     auto marginTopLength = style()->marginTop();
     auto marginBottomLength = style()->marginBottom();
@@ -238,9 +238,9 @@ std::optional<float> ReplacedBox::computeReplacedWidthUsing(const Length& widthL
     if(widthLength.isPercent() || widthLength.isIntrinsic()) {
         float containerWidth = 0;
         if(isPositioned())
-            containerWidth = containingBox()->availableWidthForPositioned();
+            containerWidth = containingBlockWidthForPositioned();
         else
-            containerWidth = containingBlock()->availableWidth();
+            containerWidth = containingBlockWidthForContent();
         if(widthLength.isPercent())
             return adjustContentBoxWidth(widthLength.calcMin(containerWidth));
         return computeIntrinsicWidthUsing(widthLength, containerWidth) - borderAndPaddingWidth();
@@ -256,8 +256,8 @@ std::optional<float> ReplacedBox::computeReplacedHeightUsing(const Length& heigh
     if(heightLength.isPercent()) {
         float containerHeight = 0;
         if(isPositioned())
-            containerHeight = containingBox()->availableHeightForPositioned();
-        else if(auto availableHeight = containingBlock()->availableHeight())
+            containerHeight = containingBlockHeightForPositioned();
+        else if(auto availableHeight = containingBlockHeightForContent())
             containerHeight = availableHeight.value();
         else
             return std::nullopt;
@@ -345,7 +345,7 @@ float ReplacedBox::computeReplacedHeight() const
 
 float ReplacedBox::availableReplacedWidth() const
 {
-    auto containerWidth = containingBlock()->availableWidth();
+    auto containerWidth = containingBlockWidthForContent();
     auto marginLeft = style()->marginLeft().calcMin(containerWidth);
     auto marginRight = style()->marginRight().calcMin(containerWidth);
     return constrainReplacedWidth(containerWidth - marginLeft - marginRight - borderAndPaddingWidth());
@@ -400,7 +400,7 @@ void ReplacedBox::computeWidth(float& x, float& width, float& marginLeft, float&
     }
 
     auto container = containingBlock();
-    auto containerWidth = std::max(0.f, container->availableWidth());
+    auto containerWidth = std::max(0.f, containingBlockWidthForContent(container));
     width = computeReplacedWidth() + borderAndPaddingWidth();
     if(isInline())
         width = std::max(width, minPreferredWidth());

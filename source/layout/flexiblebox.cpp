@@ -20,7 +20,7 @@ std::optional<float> FlexItem::computeWidthUsing(const Length& widthLength) cons
     if(widthLength.isFixed())
         return m_box->adjustContentBoxWidth(widthLength.value());
     if(widthLength.isPercent() || widthLength.isIntrinsic()) {
-        auto containerWidth = flexBox()->availableWidth();
+        auto containerWidth = m_box->containingBlockWidthForContent(flexBox());
         if(widthLength.isPercent())
             return m_box->adjustContentBoxWidth(widthLength.calc(containerWidth));
         return m_box->computeIntrinsicWidthUsing(widthLength, containerWidth) - m_box->borderAndPaddingWidth();
@@ -34,7 +34,7 @@ std::optional<float> FlexItem::computeHeightUsing(const Length& heightLength) co
     if(heightLength.isFixed())
         return m_box->adjustContentBoxHeight(heightLength.value());
     if(heightLength.isPercent()) {
-        if(auto availableHeight = flexBox()->availableHeight()) {
+        if(auto availableHeight = m_box->containingBlockHeightForContent(flexBox())) {
             return m_box->adjustContentBoxHeight(heightLength.calc(availableHeight.value()));
         }
     }
