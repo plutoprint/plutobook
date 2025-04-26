@@ -619,17 +619,10 @@ std::optional<float> BoxModel::containingBlockHeightForContent(const BlockBox* c
 
 void BoxModel::updateMarginWidths()
 {
-    auto calc = [this](const Length& margin) {
-        float containerWidth = 0;
-        if(margin.isPercent())
-            containerWidth = containingBlockWidthForContent();
-        return margin.calcMin(containerWidth);
-    };
-
-    m_marginTop = calc(style()->marginTop());
-    m_marginBottom = calc(style()->marginBottom());
-    m_marginLeft = calc(style()->marginLeft());
-    m_marginRight = calc(style()->marginRight());
+    m_marginTop = resolveMarginOrPaddingLength(style()->marginTop());
+    m_marginBottom = resolveMarginOrPaddingLength(style()->marginBottom());
+    m_marginLeft = resolveMarginOrPaddingLength(style()->marginLeft());
+    m_marginRight = resolveMarginOrPaddingLength(style()->marginRight());
 }
 
 void BoxModel::updateBorderWidths() const
@@ -648,17 +641,18 @@ void BoxModel::updateBorderWidths() const
 
 void BoxModel::updatePaddingWidths() const
 {
-    auto calc = [this](const Length& padding) {
-        float containerWidth = 0;
-        if(padding.isPercent())
-            containerWidth = containingBlockWidthForContent();
-        return padding.calcMin(containerWidth);
-    };
+    m_paddingTop = resolveMarginOrPaddingLength(style()->paddingTop());
+    m_paddingBottom = resolveMarginOrPaddingLength(style()->paddingBottom());
+    m_paddingLeft = resolveMarginOrPaddingLength(style()->paddingLeft());
+    m_paddingRight = resolveMarginOrPaddingLength(style()->paddingRight());
+}
 
-    m_paddingTop = calc(style()->paddingTop());
-    m_paddingBottom = calc(style()->paddingBottom());
-    m_paddingLeft = calc(style()->paddingLeft());
-    m_paddingRight = calc(style()->paddingRight());
+float BoxModel::resolveMarginOrPaddingLength(const Length& length) const
+{
+    float containerWidth = 0;
+    if(length.isPercent())
+        containerWidth = containingBlockWidthForContent();
+    return length.calcMin(containerWidth);
 }
 
 float BoxModel::borderTop() const
@@ -902,20 +896,19 @@ void BoxFrame::computeHorizontalMargins(float& marginLeft, float& marginRight, f
 
 void BoxFrame::computeVerticalMargins(float& marginTop, float& marginBottom) const
 {
-    if(isTableCellBox()) {
-        marginTop = 0;
-        marginBottom = 0;
-    } else {
-        auto calc = [this](const Length& margin) {
-            float containerWidth = 0;
-            if(margin.isPercent())
-                containerWidth = containingBlockWidthForContent();
-            return margin.calcMin(containerWidth);
-        };
+    assert(!isTableCellBox());
+    marginTop = computeMarginTop();
+    marginBottom = computeMarginBottom();
+}
 
-        marginTop = calc(style()->marginTop());
-        marginBottom = calc(style()->marginBottom());
-    }
+float BoxFrame::computeMarginTop() const
+{
+    return resolveMarginOrPaddingLength(style()->marginTop());
+}
+
+float BoxFrame::computeMarginBottom() const
+{
+    return resolveMarginOrPaddingLength(style()->marginBottom());
 }
 
 float BoxFrame::computeIntrinsicWidthUsing(const Length& widthLength, float containerWidth) const

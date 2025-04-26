@@ -288,17 +288,17 @@ float TableBox::availableHorizontalSpace() const
 
 void TableBox::layoutCaption(TableCaptionBox* caption, FragmentBuilder* fragmentainer)
 {
-    caption->updateVerticalMargins();
-
-    auto captionTop = height() + caption->marginTop();
-    if(fragmentainer) {
+    auto captionTop = height();
+    if(fragmentainer)
         captionTop = fragmentainer->applyFragmentBreakBefore(caption, captionTop);
+    captionTop += caption->computeMarginTop();
+    if(fragmentainer) {
         fragmentainer->enterFragment(captionTop);
     }
 
+    caption->layout(fragmentainer);
     caption->setX(caption->marginLeft());
     caption->setY(captionTop);
-    caption->layout(fragmentainer);
     if(fragmentainer) {
         fragmentainer->leaveFragment(captionTop);
     }

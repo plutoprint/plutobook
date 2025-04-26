@@ -863,9 +863,10 @@ void BlockFlowBox::positionFloatingBox(FloatingBox& floatingBox, FragmentBuilder
     if(fragmentainer) {
         floatTop = fragmentainer->applyFragmentBreakInside(child, floatTop);
         if(!isNearlyEqual(offset, floatTop)) {
-            fragmentainer->enterFragment(floatTop);
+            auto newOffset = floatTop + child->marginTop();
+            fragmentainer->enterFragment(newOffset);
             child->layout(fragmentainer);
-            fragmentainer->leaveFragment(floatTop);
+            fragmentainer->leaveFragment(newOffset);
         }
     }
 
@@ -897,11 +898,12 @@ void BlockFlowBox::positionNewFloats(FragmentBuilder* fragmentainer)
             floatTop = std::max(floatTop, rightFloatBottom());
         }
 
+        auto estimatedTop = floatTop + child->computeMarginTop();
         if(fragmentainer)
-            fragmentainer->enterFragment(floatTop);
+            fragmentainer->enterFragment(estimatedTop);
         child->layout(fragmentainer);
         if(fragmentainer) {
-            fragmentainer->leaveFragment(floatTop);
+            fragmentainer->leaveFragment(estimatedTop);
         }
 
         positionFloatingBox(floatingBox, fragmentainer, floatTop);
@@ -1256,10 +1258,8 @@ float BlockFlowBox::collapseMargins(BoxFrame* child, FragmentBuilder* fragmentai
 void BlockFlowBox::updateMaxMargins()
 {
     if(isTableCellBox()) {
-        m_maxPositiveMarginTop = 0.f;
-        m_maxNegativeMarginTop = 0.f;
-        m_maxPositiveMarginBottom = 0.f;
-        m_maxNegativeMarginBottom = 0.f;
+        m_maxPositiveMarginTop = m_maxNegativeMarginTop = 0.f;
+        m_maxPositiveMarginBottom = m_maxNegativeMarginBottom = 0.f;
         return;
     }
 

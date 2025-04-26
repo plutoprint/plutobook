@@ -263,6 +263,8 @@ public:
     virtual void updateBorderWidths() const;
     virtual void updatePaddingWidths() const;
 
+    float resolveMarginOrPaddingLength(const Length& length) const;
+
     float borderTop() const;
     float borderBottom() const;
     float borderLeft() const;
@@ -424,6 +426,9 @@ public:
 
     void computeHorizontalMargins(float& marginLeft, float& marginRight, float childWidth, const BlockBox* container, float containerWidth) const;
     void computeVerticalMargins(float& marginTop, float& marginBottom) const;
+
+    float computeMarginTop() const;
+    float computeMarginBottom() const;
 
     float computeIntrinsicWidthUsing(const Length& widthLength, float containerWidth) const;
 

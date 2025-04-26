@@ -935,11 +935,12 @@ void LineBreaker::handleFloating(const LineItem& item)
         }
     }
 
+    auto estimatedTop = floatTop + box->computeMarginTop();
     if(m_fragmentainer)
-        m_fragmentainer->enterFragment(floatTop);
+        m_fragmentainer->enterFragment(estimatedTop);
     box->layout(m_fragmentainer);
     if(m_fragmentainer) {
-        m_fragmentainer->leaveFragment(floatTop);
+        m_fragmentainer->leaveFragment(estimatedTop);
     }
 
     auto& floatingBox = m_block->insertFloatingBox(box);
