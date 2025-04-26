@@ -735,27 +735,6 @@ std::optional<float> BlockFlowBox::inlineBlockBaseline() const
     return lastLineBaseline();
 }
 
-void BlockFlowBox::insertFloatingBox(BoxFrame* box)
-{
-    if(containsFloat(box))
-        return;
-    if(m_floatingBoxes == nullptr)
-        m_floatingBoxes = std::make_unique<FloatingBoxList>(heap());
-    m_floatingBoxes->emplace_back(box);
-}
-
-void BlockFlowBox::removeFloatingBox(BoxFrame* box)
-{
-    if(m_floatingBoxes == nullptr)
-        return;
-    for(auto it = m_floatingBoxes->begin(); it != m_floatingBoxes->end(); ++it) {
-        if(box == it->box()) {
-            m_floatingBoxes->erase(it);
-            break;
-        }
-    }
-}
-
 void BlockFlowBox::collectIntrudingFloats()
 {
     if(m_floatingBoxes)
@@ -851,6 +830,56 @@ void BlockFlowBox::addOverhangingFloats(BlockFlowBox* childBlock)
     }
 }
 
+void BlockFlowBox::positionFloatingBox(FloatingBox& floatingBox, FragmentBuilder* fragmentainer, float offset)
+{
+    auto child = floatingBox.box();
+    auto leftOffset = leftOffsetForContent();
+    auto rightOffset = rightOffsetForContent();
+    auto floatWidth = std::min(rightOffset - leftOffset, child->width() + child->marginWidth());
+
+    float floatLeft = 0;
+    float floatTop = offset;
+    if(child->style()->floating() == Float::Left) {
+        float heightRemainingLeft = 1;
+        float heightRemainingRight = 1;
+        floatLeft = leftOffsetForFloat(floatTop, floatTop, leftOffset, &heightRemainingLeft);
+        while(rightOffsetForFloat(floatTop, floatTop, rightOffset, &heightRemainingRight) - floatLeft < floatWidth) {
+            floatTop += std::min(heightRemainingLeft, heightRemainingRight);
+            floatLeft = leftOffsetForFloat(floatTop, floatTop, leftOffset, &heightRemainingLeft);
+        }
+
+        floatLeft = std::max(0.f, floatLeft);
+    } else {
+        float heightRemainingLeft = 1;
+        float heightRemainingRight = 1;
+        floatLeft = rightOffsetForFloat(floatTop, floatTop, rightOffset, &heightRemainingRight);
+        while(floatLeft - leftOffsetForFloat(floatTop, floatTop, leftOffset, &heightRemainingLeft) < floatWidth) {
+            floatTop += std::min(heightRemainingLeft, heightRemainingRight);
+            floatLeft = rightOffsetForFloat(floatTop, floatTop, rightOffset, &heightRemainingRight);
+        }
+
+        floatLeft -= child->width() + child->marginWidth();
+    }
+
+    if(fragmentainer) {
+        floatTop = fragmentainer->applyFragmentBreakInside(child, floatTop);
+        if(!isNearlyEqual(offset, floatTop)) {
+            fragmentainer->enterFragment(floatTop);
+            child->layout(fragmentainer);
+            fragmentainer->leaveFragment(floatTop);
+        }
+    }
+
+    child->setX(floatLeft + child->marginLeft());
+    child->setY(floatTop + child->marginTop());
+
+    floatingBox.setX(floatLeft);
+    floatingBox.setY(floatTop);
+    floatingBox.setWidth(child->width() + child->marginWidth());
+    floatingBox.setHeight(child->height() + child->marginHeight());
+    floatingBox.setIsPlaced(true);
+}
+
 void BlockFlowBox::positionNewFloats(FragmentBuilder* fragmentainer)
 {
     if(m_floatingBoxes == nullptr)
@@ -863,66 +892,37 @@ void BlockFlowBox::positionNewFloats(FragmentBuilder* fragmentainer)
         }
 
         auto child = floatingBox.box();
-        auto childStyle = child->style();
-        if(childStyle->isClearLeft())
+        if(child->style()->isClearLeft())
             floatTop = std::max(floatTop, leftFloatBottom());
-        if(childStyle->isClearRight()) {
+        if(child->style()->isClearRight()) {
             floatTop = std::max(floatTop, rightFloatBottom());
         }
 
-        auto estimatedTop = floatTop;
         if(fragmentainer)
-            fragmentainer->enterFragment(estimatedTop);
+            fragmentainer->enterFragment(floatTop);
         child->layout(fragmentainer);
         if(fragmentainer) {
-            fragmentainer->leaveFragment(estimatedTop);
+            fragmentainer->leaveFragment(floatTop);
         }
 
-        auto leftOffset = leftOffsetForContent();
-        auto rightOffset = rightOffsetForContent();
-        auto floatWidth = std::min(rightOffset - leftOffset, child->width() + child->marginWidth());
-
-        float floatLeft = 0;
-        if(childStyle->floating() == Float::Left) {
-            float heightRemainingLeft = 1;
-            float heightRemainingRight = 1;
-            floatLeft = leftOffsetForFloat(floatTop, floatTop, leftOffset, &heightRemainingLeft);
-            while(rightOffsetForFloat(floatTop, floatTop, rightOffset, &heightRemainingRight) - floatLeft < floatWidth) {
-                floatTop += std::min(heightRemainingLeft, heightRemainingRight);
-                floatLeft = leftOffsetForFloat(floatTop, floatTop, leftOffset, &heightRemainingLeft);
-            }
-
-            floatLeft = std::max(0.f, floatLeft);
-        } else {
-            float heightRemainingLeft = 1;
-            float heightRemainingRight = 1;
-            floatLeft = rightOffsetForFloat(floatTop, floatTop, rightOffset, &heightRemainingRight);
-            while(floatLeft - leftOffsetForFloat(floatTop, floatTop, leftOffset, &heightRemainingLeft) < floatWidth) {
-                floatTop += std::min(heightRemainingLeft, heightRemainingRight);
-                floatLeft = rightOffsetForFloat(floatTop, floatTop, rightOffset, &heightRemainingRight);
-            }
-
-            floatLeft -= child->width() + child->marginWidth();
-        }
-
-        if(fragmentainer) {
-            floatTop = fragmentainer->applyFragmentBreakInside(child, floatTop);
-            if(!isNearlyEqual(floatTop, estimatedTop)) {
-                fragmentainer->enterFragment(floatTop);
-                child->layout(fragmentainer);
-                fragmentainer->leaveFragment(floatTop);
-            }
-        }
-
-        child->setX(floatLeft + child->marginLeft());
-        child->setY(floatTop + child->marginTop());
-
-        floatingBox.setX(floatLeft);
-        floatingBox.setY(floatTop);
-        floatingBox.setWidth(child->width() + child->marginWidth());
-        floatingBox.setHeight(child->height() + child->marginHeight());
-        floatingBox.setIsPlaced(true);
+        positionFloatingBox(floatingBox, fragmentainer, floatTop);
     }
+}
+
+FloatingBox& BlockFlowBox::insertFloatingBox(BoxFrame* box)
+{
+    if(m_floatingBoxes) {
+        for(auto& floatingBox : *m_floatingBoxes) {
+            if(box == floatingBox.box()) {
+                return floatingBox;
+            }
+        }
+    }
+
+    if(m_floatingBoxes == nullptr)
+        m_floatingBoxes = std::make_unique<FloatingBoxList>(heap());
+    m_floatingBoxes->emplace_back(box);
+    return m_floatingBoxes->back();
 }
 
 bool BlockFlowBox::containsFloat(Box* box) const
@@ -1613,7 +1613,7 @@ void BlockFlowBox::build()
 
 void BlockFlowBox::paintFloats(const PaintInfo& info, const Point& offset)
 {
-    if(!m_floatingBoxes)
+    if(m_floatingBoxes == nullptr)
         return;
     for(const auto& item : *m_floatingBoxes) {
         auto child = item.box();

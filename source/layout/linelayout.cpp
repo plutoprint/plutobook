@@ -594,7 +594,6 @@ const LineInfo& LineBreaker::nextLine()
     m_line.reset(m_currentStyle);
     m_state = LineBreakState::Continue;
     m_skipLeadingWhitespace = true;
-    m_hasUnpositionedFloats = false;
     m_hasLeaderText = false;
     m_leadingFloatsEndIndex = m_itemIndex;
     m_currentWidth = 0.f;
@@ -607,9 +606,14 @@ const LineInfo& LineBreaker::nextLine()
             break;
         auto box = to<BoxFrame>(item.box());
         m_block->insertFloatingBox(box);
+        m_hasUnpositionedFloats = true;
     }
 
-    m_block->positionNewFloats(m_fragmentainer);
+    if(m_hasUnpositionedFloats) {
+        m_block->positionNewFloats(m_fragmentainer);
+        m_hasUnpositionedFloats = false;
+    }
+
     m_availableWidth = m_block->availableWidthForLine(m_block->height(), m_lineHeight, m_line.isFirstLine());
     while(m_state != LineBreakState::Done) {
         if(m_state == LineBreakState::Continue && m_autoWrap && !canFitOnLine())
@@ -676,7 +680,7 @@ const LineInfo& LineBreaker::nextLine()
         }
     }
 
-    if(!m_line.isEmptyLine() && !m_line.isLastLine()) {
+    if(!m_line.endsWithBreak()) {
         const auto& runs = m_line.runs();
         auto index = runs.size();
         while(index > 0) {
@@ -912,9 +916,35 @@ void LineBreaker::handleFloating(const LineItem& item)
     }
 
     auto box = to<BoxFrame>(item.box());
-    m_block->insertFloatingBox(box);
-    if(!m_hasUnpositionedFloats && canFitOnLine(box->width() + box->marginWidth())) {
-        m_block->positionNewFloats(m_fragmentainer);
+    assert(!m_block->containsFloat(box));
+    if(m_hasUnpositionedFloats) {
+        m_block->insertFloatingBox(box);
+        return;
+    }
+
+    auto floatTop = m_block->height();
+    if(m_block->containsFloats()) {
+        for(const auto& floatingBox : *m_block->floatingBoxes()) {
+            assert(floatingBox.isPlaced());
+            floatTop = std::max(floatTop, floatingBox.y());
+            if(box->style()->isClearLeft() && floatingBox.type() == Float::Left)
+                floatTop = std::max(floatTop, floatingBox.bottom());
+            if(box->style()->isClearRight() && floatingBox.type() == Float::Right) {
+                floatTop = std::max(floatTop, floatingBox.bottom());
+            }
+        }
+    }
+
+    if(m_fragmentainer)
+        m_fragmentainer->enterFragment(floatTop);
+    box->layout(m_fragmentainer);
+    if(m_fragmentainer) {
+        m_fragmentainer->leaveFragment(floatTop);
+    }
+
+    auto& floatingBox = m_block->insertFloatingBox(box);
+    if(canFitOnLine(box->width() + box->marginWidth())) {
+        m_block->positionFloatingBox(floatingBox, m_fragmentainer, floatTop);
         m_availableWidth = m_block->availableWidthForLine(m_block->height(), m_lineHeight, m_line.isFirstLine());
     } else {
         m_hasUnpositionedFloats = true;
@@ -978,6 +1008,7 @@ void LineBreaker::handleHardBreak(const LineItem& item)
         }
     }
 
+    m_line.setEndsWithBreak(true);
     m_line.setIsEmptyLine(false);
     m_line.setIsLastLine(true);
     m_state = LineBreakState::Done;
@@ -1234,7 +1265,11 @@ void LineBreaker::handleOverflow()
     }
 
     if(m_block->containsFloats()) {
-        m_block->positionNewFloats(m_fragmentainer);
+        if(m_hasUnpositionedFloats) {
+            m_block->positionNewFloats(m_fragmentainer);
+            m_hasUnpositionedFloats = false;
+        }
+
         float newLineWidth = m_availableWidth;
         float lastFloatBottom = m_block->height();
         float floatBottom = 0.f;

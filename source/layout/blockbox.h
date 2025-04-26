@@ -144,14 +144,16 @@ public:
     std::optional<float> lastLineBaseline() const override;
     std::optional<float> inlineBlockBaseline() const override;
 
-    void insertFloatingBox(BoxFrame* box);
-    void removeFloatingBox(BoxFrame* box);
-
     void collectIntrudingFloats();
     void collectOverhangingFloats();
     void addIntrudingFloats(BlockFlowBox* prevBlock, float offsetX, float offsetY);
     void addOverhangingFloats(BlockFlowBox* childBlock);
+
+    void positionFloatingBox(FloatingBox& floatingBox, FragmentBuilder* fragmentainer, float offset);
     void positionNewFloats(FragmentBuilder* fragmentainer);
+
+    FloatingBox& insertFloatingBox(BoxFrame* box);
+
     bool containsFloat(Box* box) const;
     bool containsFloats() const { return m_floatingBoxes && !m_floatingBoxes->empty(); }
 

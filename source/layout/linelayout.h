@@ -175,6 +175,9 @@ public:
 
     bool canBreakAfterLastRun() const { return !m_runs.empty() && m_runs.back().canBreakAfter; }
 
+    bool endsWithBreak() const { return m_endsWithBreak; }
+    void setEndsWithBreak(bool value) { m_endsWithBreak = value; }
+
     bool isEmptyLine() const { return m_isEmptyLine; }
     bool isFirstLine() const { return m_isFirstLine; }
     bool isLastLine() const { return m_isLastLine; }
@@ -193,6 +196,7 @@ public:
 
 private:
     LineItemRunList m_runs;
+    bool m_endsWithBreak{false};
     bool m_isEmptyLine{true};
     bool m_isFirstLine{true};
     bool m_isLastLine{false};
@@ -208,6 +212,7 @@ inline void LineInfo::reset(const BoxStyle* style)
         m_isFirstLine = false;
     }
 
+    m_endsWithBreak = false;
     m_isLastLine = false;
     m_lineOffset = 0.f;
     m_lineStyle = style;
