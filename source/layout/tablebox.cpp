@@ -189,24 +189,16 @@ std::optional<float> TableBox::inlineBlockBaseline() const
 
 TableSectionBox* TableBox::topSection() const
 {
-    for(auto section : m_sections) {
-        if(section->rowCount() > 0) {
-            return section;
-        }
-    }
-
-    return nullptr;
+    if(m_sections.empty())
+        return nullptr;
+    return m_sections.front();
 }
 
 TableSectionBox* TableBox::bottomSection() const
 {
-    for(auto section : m_sections | std::views::reverse) {
-        if(section->rowCount() > 0) {
-            return section;
-        }
-    }
-
-    return nullptr;
+    if(m_sections.empty())
+        return nullptr;
+    return m_sections.back();
 }
 
 TableSectionBox* TableBox::sectionAbove(const TableSectionBox* sectionBox) const
@@ -214,7 +206,7 @@ TableSectionBox* TableBox::sectionAbove(const TableSectionBox* sectionBox) const
     auto prevSection = sectionBox->prevSibling();
     while(prevSection) {
         auto section = to<TableSectionBox>(prevSection);
-        if(section && section->rowCount() > 0)
+        if(section && section->firstRow())
             return section;
         prevSection = prevSection->prevSibling();
     }
@@ -227,7 +219,7 @@ TableSectionBox* TableBox::sectionBelow(const TableSectionBox* sectionBox) const
     auto nextSection = sectionBox->nextSibling();
     while(nextSection) {
         auto section = to<TableSectionBox>(nextSection);
-        if(section && section->rowCount() > 0)
+        if(section && section->firstRow())
             return section;
         nextSection = nextSection->nextSibling();
     }
@@ -385,24 +377,26 @@ void TableBox::build()
     TableSectionBox* footerSection = nullptr;
     for(auto child = firstChild(); child; child = child->nextSibling()) {
         if(auto section = to<TableSectionBox>(child)) {
-            switch(section->style()->display()) {
-            case Display::TableHeaderGroup:
-                if(!headerSection)
-                    headerSection = section;
-                else
+            if(section->firstRow()) {
+                switch(section->style()->display()) {
+                case Display::TableHeaderGroup:
+                    if(!headerSection)
+                        headerSection = section;
+                    else
+                        m_sections.push_back(section);
+                    break;
+                case Display::TableFooterGroup:
+                    if(!footerSection)
+                        footerSection = section;
+                    else
+                        m_sections.push_back(section);
+                    break;
+                case Display::TableRowGroup:
                     m_sections.push_back(section);
-                break;
-            case Display::TableFooterGroup:
-                if(!footerSection)
-                    footerSection = section;
-                else
-                    m_sections.push_back(section);
-                break;
-            case Display::TableRowGroup:
-                m_sections.push_back(section);
-                break;
-            default:
-                assert(false);
+                    break;
+                default:
+                    assert(false);
+                }
             }
         } else if(auto column = to<TableColumnBox>(child)) {
             auto addColumn = [this](TableColumnBox* column) {
@@ -1225,7 +1219,7 @@ void TableSectionBox::layout(FragmentBuilder* fragmentainer)
         sectionHeight += verticalSpacing + rowBox->height();
     }
 
-    setHeight(std::max(0.f, sectionHeight));
+    setHeight(sectionHeight);
 }
 
 void TableSectionBox::build()
