@@ -56,6 +56,7 @@ public:
     BorderCollapse borderCollapse() const { return style()->borderCollapse(); }
     float borderHorizontalSpacing() const { return m_borderHorizontalSpacing; }
     float borderVerticalSpacing() const { return m_borderVerticalSpacing; }
+
     float availableHorizontalSpace() const;
 
     void layoutCaption(TableCaptionBox* caption, FragmentBuilder* fragmentainer);

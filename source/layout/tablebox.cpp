@@ -381,13 +381,6 @@ void TableBox::layout(FragmentBuilder* fragmentainer)
 
 void TableBox::build()
 {
-    auto addColumn = [this](TableColumnBox* column) {
-        auto columnSpanCount = column->span();
-        while(columnSpanCount-- > 0) {
-            m_columns.emplace_back(column);
-        }
-    };
-
     TableSectionBox* headerSection = nullptr;
     TableSectionBox* footerSection = nullptr;
     for(auto child = firstChild(); child; child = child->nextSibling()) {
@@ -412,6 +405,13 @@ void TableBox::build()
                 assert(false);
             }
         } else if(auto column = to<TableColumnBox>(child)) {
+            auto addColumn = [this](TableColumnBox* column) {
+                auto columnSpanCount = column->span();
+                while(columnSpanCount-- > 0) {
+                    m_columns.emplace_back(column);
+                }
+            };
+
             if(column->style()->display() == Display::TableColumn) {
                 addColumn(column);
             } else {
@@ -1124,8 +1124,8 @@ void TableSectionBox::layoutRows(FragmentBuilder* fragmentainer)
             if(cell.inColOrRowSpan())
                 continue;
             auto rowHeight = -verticalSpacing;
-            for(size_t i = 0; i < cellBox->rowSpan(); ++i) {
-                auto row = m_rows[i + rowIndex];
+            for(size_t index = 0; index < cellBox->rowSpan(); ++index) {
+                auto row = m_rows[rowIndex + index];
                 rowHeight += verticalSpacing + row->height();
             }
 
