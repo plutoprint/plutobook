@@ -829,7 +829,7 @@ void BlockFlowBox::addOverhangingFloats(BlockFlowBox* childBlock)
     }
 }
 
-void BlockFlowBox::positionFloatingBox(FloatingBox& floatingBox, FragmentBuilder* fragmentainer, float offset)
+void BlockFlowBox::positionFloatingBox(FloatingBox& floatingBox, FragmentBuilder* fragmentainer, float top)
 {
     auto child = floatingBox.box();
     auto leftOffset = leftOffsetForContent();
@@ -837,7 +837,7 @@ void BlockFlowBox::positionFloatingBox(FloatingBox& floatingBox, FragmentBuilder
     auto floatWidth = std::min(rightOffset - leftOffset, child->marginBoxWidth());
 
     float floatLeft = 0;
-    float floatTop = offset;
+    float floatTop = top;
     if(child->style()->floating() == Float::Left) {
         float heightRemainingLeft = 1;
         float heightRemainingRight = 1;
@@ -862,11 +862,11 @@ void BlockFlowBox::positionFloatingBox(FloatingBox& floatingBox, FragmentBuilder
 
     if(fragmentainer) {
         floatTop = fragmentainer->applyFragmentBreakInside(child, floatTop);
-        if(!isNearlyEqual(offset, floatTop)) {
-            auto newOffset = floatTop + child->marginTop();
-            fragmentainer->enterFragment(newOffset);
+        if(!isNearlyEqual(top, floatTop)) {
+            auto newTop = floatTop + child->marginTop();
+            fragmentainer->enterFragment(newTop);
             child->layout(fragmentainer);
-            fragmentainer->leaveFragment(newOffset);
+            fragmentainer->leaveFragment(newTop);
         }
     }
 
@@ -1319,7 +1319,7 @@ float BlockFlowBox::getClearDelta(BoxFrame* child, float y) const
         auto top = y;
         while(true) {
             auto availableWidth = availableWidthForLine(top);
-            if(availableWidth == availableWidthForContent())
+            if(isNearlyEqual(availableWidth, availableWidthForContent()))
                 return top - y;
             auto childX = child->x();
             auto childY = child->y();
@@ -1450,30 +1450,30 @@ void BlockFlowBox::determineHorizontalPosition(BoxFrame* child) const
     }
 }
 
-float BlockFlowBox::adjustBlockChildInFragmentFlow(BoxFrame* child, FragmentBuilder* fragmentainer, float offset)
+float BlockFlowBox::adjustBlockChildInFragmentFlow(BoxFrame* child, FragmentBuilder* fragmentainer, float top)
 {
-    auto newOffset = fragmentainer->applyFragmentBreakBefore(child, offset);
-    auto adjustedOffset = fragmentainer->applyFragmentBreakInside(child, newOffset);
+    auto newTop = fragmentainer->applyFragmentBreakBefore(child, top);
+    auto adjustedTop = fragmentainer->applyFragmentBreakInside(child, newTop);
 
     auto childHeight = child->height();
-    if(adjustedOffset > newOffset) {
-        auto delta = adjustedOffset - newOffset;
-        fragmentainer->setFragmentBreak(newOffset, childHeight - delta);
-        newOffset += delta;
+    if(adjustedTop > newTop) {
+        auto delta = adjustedTop - newTop;
+        fragmentainer->setFragmentBreak(newTop, childHeight - delta);
+        newTop += delta;
     } else {
-        auto fragmentHeight = fragmentainer->fragmentHeightForOffset(newOffset);
+        auto fragmentHeight = fragmentainer->fragmentHeightForOffset(newTop);
         if(fragmentHeight > 0.f) {
-            auto remainingHeight = fragmentainer->fragmentRemainingHeightForOffset(newOffset, AssociateWithLatterFragment);
+            auto remainingHeight = fragmentainer->fragmentRemainingHeightForOffset(newTop, AssociateWithLatterFragment);
             if(remainingHeight < childHeight) {
-                fragmentainer->setFragmentBreak(newOffset, childHeight - remainingHeight);
-            } else if(fragmentHeight == remainingHeight && child->y() + fragmentainer->fragmentOffset()) {
-                fragmentainer->setFragmentBreak(newOffset, childHeight);
+                fragmentainer->setFragmentBreak(newTop, childHeight - remainingHeight);
+            } else if(isNearlyEqual(fragmentHeight, remainingHeight) && !isNearlyZero(top + fragmentainer->fragmentOffset())) {
+                fragmentainer->setFragmentBreak(newTop, childHeight);
             }
         }
     }
 
-    setHeight(height() + (newOffset - offset));
-    return newOffset;
+    setHeight(height() + (newTop - top));
+    return newTop;
 }
 
 void BlockFlowBox::layoutBlockChild(BoxFrame* child, FragmentBuilder* fragmentainer, MarginInfo& marginInfo)
@@ -1489,18 +1489,18 @@ void BlockFlowBox::layoutBlockChild(BoxFrame* child, FragmentBuilder* fragmentai
         fragmentainer->leaveFragment(estimatedTop);
     }
 
-    auto newOffset = determineVerticalPosition(child, fragmentainer, marginInfo);
+    auto newTop = determineVerticalPosition(child, fragmentainer, marginInfo);
     if(fragmentainer) {
-        newOffset = adjustBlockChildInFragmentFlow(child, fragmentainer, newOffset);
+        newTop = adjustBlockChildInFragmentFlow(child, fragmentainer, newTop);
     }
 
-    if(!isNearlyEqual(newOffset, estimatedTop)) {
+    if(!isNearlyEqual(newTop, estimatedTop)) {
         if(fragmentainer)
-            fragmentainer->enterFragment(newOffset);
-        child->setY(newOffset);
+            fragmentainer->enterFragment(newTop);
+        child->setY(newTop);
         child->layout(fragmentainer);
         if(fragmentainer) {
-            fragmentainer->leaveFragment(newOffset);
+            fragmentainer->leaveFragment(newTop);
         }
     }
 

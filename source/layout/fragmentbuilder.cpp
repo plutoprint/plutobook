@@ -56,16 +56,4 @@ float FragmentBuilder::applyFragmentBreakInside(const BoxFrame* child, float off
     return offset;
 }
 
-void FragmentBuilder::addForcedFragmentBreak(float offset)
-{
-}
-
-void FragmentBuilder::setFragmentBreak(float offset, float spaceShortage)
-{
-}
-
-void FragmentBuilder::updateMinimumFragmentHeight(float offset, float minHeight)
-{
-}
-
 } // namespace plutobook

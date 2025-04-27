@@ -1064,7 +1064,7 @@ float Document::fragmentHeightForOffset(float offset) const
 
 float Document::fragmentRemainingHeightForOffset(float offset, FragmentBoundaryRule rule) const
 {
-    offset = std::floor(offset + fragmentOffset());
+    offset += fragmentOffset();
     auto remainingHeight = m_pageContentHeight - std::fmod(offset, m_pageContentHeight);
     if(rule == AssociateWithFormerFragment)
         remainingHeight = std::fmod(remainingHeight, m_pageContentHeight);

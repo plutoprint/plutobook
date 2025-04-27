@@ -147,10 +147,11 @@ public:
 
     void collectIntrudingFloats();
     void collectOverhangingFloats();
+
     void addIntrudingFloats(BlockFlowBox* prevBlock, float offsetX, float offsetY);
     void addOverhangingFloats(BlockFlowBox* childBlock);
 
-    void positionFloatingBox(FloatingBox& floatingBox, FragmentBuilder* fragmentainer, float offset);
+    void positionFloatingBox(FloatingBox& floatingBox, FragmentBuilder* fragmentainer, float top);
     void positionNewFloats(FragmentBuilder* fragmentainer);
 
     FloatingBox& insertFloatingBox(BoxFrame* box);
@@ -203,7 +204,7 @@ public:
     float determineVerticalPosition(BoxFrame* child, FragmentBuilder* fragmentainer, MarginInfo& marginInfo);
     void determineHorizontalPosition(BoxFrame* child) const;
 
-    float adjustBlockChildInFragmentFlow(BoxFrame* child, FragmentBuilder* fragmentainer, float offset);
+    float adjustBlockChildInFragmentFlow(BoxFrame* child, FragmentBuilder* fragmentainer, float top);
 
     void layoutBlockChild(BoxFrame* child, FragmentBuilder* fragmentainer, MarginInfo& marginInfo);
     void layoutBlockChildren(FragmentBuilder* fragmentainer);

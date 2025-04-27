@@ -635,7 +635,7 @@ float RootLineBox::adjustLineBoxInFragmentFlow(FragmentBuilder* fragmentainer, f
         return remainingHeight;
     }
 
-    if(m_lineIndex > 0 && remainingHeight == fragmentHeight)
+    if(m_lineIndex > 0 && isNearlyEqual(remainingHeight, fragmentHeight))
         fragmentainer->setFragmentBreak(offset, lineHeight);
     return 0.f;
 }
