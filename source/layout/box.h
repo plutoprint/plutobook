@@ -245,25 +245,28 @@ public:
     std::optional<float> containingBlockHeightForContent(const BlockBox* container) const;
     std::optional<float> containingBlockHeightForContent() const { return containingBlockHeightForContent(containingBlock()); }
 
+    float resolveMarginOrPaddingLength(const Length& length) const;
+
+    virtual void computeMarginWidths(float& marginTop, float& marginBottom, float& marginLeft, float& marginRight) const;
+    virtual void computePaddingWidths(float& paddingTop, float& paddingBottom, float& paddingLeft, float& paddingRight) const;
+    virtual void computeBorderWidths(float& borderTop, float& borderBottom, float& borderLeft, float& borderRight) const;
+
     void updateMarginWidths();
+    void updatePaddingWidths();
+    void updateBorderWidths();
 
     float marginTop() const { return m_marginTop; }
     float marginBottom() const { return m_marginBottom; }
     float marginLeft() const { return m_marginLeft; }
     float marginRight() const { return m_marginRight; }
 
-    float marginHeight() const { return m_marginTop + m_marginBottom; }
     float marginWidth() const { return m_marginLeft + m_marginRight; }
+    float marginHeight() const { return m_marginTop + m_marginBottom; }
 
     void setMarginTop(float value) { m_marginTop = value; }
     void setMarginBottom(float value) { m_marginBottom = value; }
     void setMarginLeft(float value) { m_marginLeft = value; }
     void setMarginRight(float value) { m_marginRight = value; }
-
-    virtual void updateBorderWidths() const;
-    virtual void updatePaddingWidths() const;
-
-    float resolveMarginOrPaddingLength(const Length& length) const;
 
     float borderTop() const;
     float borderBottom() const;
@@ -280,6 +283,11 @@ public:
 
     float paddingWidth() const { return paddingLeft() + paddingRight(); }
     float paddingHeight() const { return paddingTop() + paddingBottom(); }
+
+    void setPaddingTop(float value) { m_paddingTop = value; }
+    void setPaddingBottom(float value) { m_paddingBottom = value; }
+    void setPaddingLeft(float value) { m_paddingLeft = value; }
+    void setPaddingRight(float value) { m_paddingRight = value; }
 
     float borderAndPaddingTop() const { return borderTop() + paddingTop(); }
     float borderAndPaddingBottom() const { return borderBottom() + paddingBottom(); }
@@ -313,7 +321,7 @@ public:
 
     const char* name() const override { return "BoxModel"; }
 
-protected:
+private:
     std::unique_ptr<BoxLayer> m_layer;
 
     float m_marginTop{0};
@@ -330,6 +338,8 @@ protected:
     mutable float m_paddingBottom{-1};
     mutable float m_paddingLeft{-1};
     mutable float m_paddingRight{-1};
+
+    friend class BoxFrame;
 };
 
 template<>
@@ -388,13 +398,18 @@ public:
     float contentBoxWidth() const { return paddingBoxWidth() - paddingLeft() - paddingRight(); }
     float contentBoxHeight() const { return paddingBoxHeight() - paddingTop() - paddingBottom(); }
 
+    float marginBoxWidth() const { return borderBoxWidth() + marginLeft() + marginRight(); }
+    float marginBoxHeight() const { return borderBoxHeight() + marginTop() + marginBottom(); }
+
     Size borderBoxSize() const { return Size(borderBoxWidth(), borderBoxHeight()); }
     Size paddingBoxSize() const { return Size(paddingBoxWidth(), paddingBoxHeight()); }
     Size contentBoxSize() const { return Size(contentBoxWidth(), contentBoxHeight()); }
+    Size marginBoxSize() const { return Size(marginBoxWidth(), marginBoxHeight()); }
 
     Rect borderBoxRect() const { return Rect(0, 0, borderBoxWidth(), borderBoxHeight()); }
     Rect paddingBoxRect() const { return Rect(borderLeft(), borderTop(), paddingBoxWidth(), paddingBoxHeight()); }
     Rect contentBoxRect() const { return Rect(borderLeft() + paddingLeft(), borderTop() + paddingTop(), contentBoxWidth(), contentBoxHeight()); }
+    Rect marginBoxRect() const { return Rect(-marginLeft(), -marginRight(), marginBoxWidth(), marginBoxHeight()); }
 
     Rect visualOverflowRect() const override;
     Rect borderBoundingBox() const override;

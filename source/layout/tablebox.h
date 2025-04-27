@@ -31,7 +31,7 @@ public:
     void updateOverflowRect() final;
     void computeIntrinsicWidths(float& minWidth, float& maxWidth) const final;
     void computePreferredWidths(float& minPreferredWidth, float& maxPreferredWidth) const final;
-    void updateBorderWidths() const final;
+    void computeBorderWidths(float& borderTop, float& borderBottom, float& borderLeft, float& borderRight) const final;
 
     std::optional<float> firstLineBaseline() const final;
     std::optional<float> lastLineBaseline() const final;
@@ -406,9 +406,9 @@ public:
 
     bool isBaselineAligned() const;
     float cellBaselinePosition() const;
-
     bool updateIntrinsicPaddings(float rowHeight);
-    void updateBorderWidths() const final;
+
+    void computeBorderWidths(float& borderTop, float& borderBottom, float& borderLeft, float& borderRight) const;
 
     const TableCollapsedBorderEdges& collapsedBorderEdges() const;
     EmptyCells emptyCells() const { return style()->emptyCells(); }

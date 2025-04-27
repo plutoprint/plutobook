@@ -834,7 +834,7 @@ void BlockFlowBox::positionFloatingBox(FloatingBox& floatingBox, FragmentBuilder
     auto child = floatingBox.box();
     auto leftOffset = leftOffsetForContent();
     auto rightOffset = rightOffsetForContent();
-    auto floatWidth = std::min(rightOffset - leftOffset, child->width() + child->marginWidth());
+    auto floatWidth = std::min(rightOffset - leftOffset, child->marginBoxWidth());
 
     float floatLeft = 0;
     float floatTop = offset;
@@ -857,7 +857,7 @@ void BlockFlowBox::positionFloatingBox(FloatingBox& floatingBox, FragmentBuilder
             floatLeft = rightOffsetForFloat(floatTop, floatTop, rightOffset, &heightRemainingRight);
         }
 
-        floatLeft -= child->width() + child->marginWidth();
+        floatLeft -= child->marginBoxWidth();
     }
 
     if(fragmentainer) {
@@ -875,8 +875,8 @@ void BlockFlowBox::positionFloatingBox(FloatingBox& floatingBox, FragmentBuilder
 
     floatingBox.setX(floatLeft);
     floatingBox.setY(floatTop);
-    floatingBox.setWidth(child->width() + child->marginWidth());
-    floatingBox.setHeight(child->height() + child->marginHeight());
+    floatingBox.setWidth(child->marginBoxWidth());
+    floatingBox.setHeight(child->marginBoxHeight());
     floatingBox.setIsPlaced(true);
 }
 
@@ -1263,10 +1263,10 @@ void BlockFlowBox::updateMaxMargins()
         return;
     }
 
-    m_maxPositiveMarginTop = std::max(0.f, m_marginTop);
-    m_maxNegativeMarginTop = std::max(0.f, -m_marginTop);
-    m_maxPositiveMarginBottom = std::max(0.f, m_marginBottom);
-    m_maxNegativeMarginBottom = std::max(0.f, -m_marginBottom);
+    m_maxPositiveMarginTop = std::max(0.f, marginTop());
+    m_maxNegativeMarginTop = std::max(0.f, -marginTop());
+    m_maxPositiveMarginBottom = std::max(0.f, marginBottom());
+    m_maxNegativeMarginBottom = std::max(0.f, -marginBottom());
 }
 
 bool BlockFlowBox::isSelfCollapsingBlock() const

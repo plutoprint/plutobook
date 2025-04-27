@@ -125,7 +125,7 @@ void PageBox::layoutEdgePageMargin(PageMarginBox* edgeBox, const Rect& edgeRect,
 
     auto edgeOffset = edgeRect.origin();
     if(isHorizontalEdge(edgeSide)) {
-        auto availableSpace = edgeRect.w - edgeBox->width() - edgeBox->marginWidth();
+        auto availableSpace = edgeRect.w - edgeBox->marginBoxWidth();
         switch(edgeBox->marginType()) {
         case PageMarginType::TopCenter:
         case PageMarginType::BottomCenter:
@@ -139,7 +139,7 @@ void PageBox::layoutEdgePageMargin(PageMarginBox* edgeBox, const Rect& edgeRect,
             break;
         }
     } else {
-        auto availableSpace = edgeRect.h - edgeBox->height() - edgeBox->marginHeight();
+        auto availableSpace = edgeRect.h - edgeBox->marginBoxHeight();
         switch(edgeBox->marginType()) {
         case PageMarginType::RightMiddle:
         case PageMarginType::LeftMiddle:
@@ -419,8 +419,26 @@ bool PageMarginBox::isVerticalFlow() const
     }
 }
 
-void PageMarginBox::updatePaddingWidths() const
+void PageMarginBox::computePaddingWidths(float& paddingTop, float& paddingBottom, float& paddingLeft, float& paddingRight) const
 {
+}
+
+void PageMarginBox::updatePaddings(const Size& availableSize)
+{
+    auto paddingTopLength = style()->paddingTop();
+    auto paddingBottomLength = style()->paddingBottom();
+    auto paddingLeftLength = style()->paddingLeft();
+    auto paddingRightLength = style()->paddingRight();
+
+    auto paddingTop = paddingTopLength.calcMin(availableSize.h);
+    auto paddingBottom = paddingBottomLength.calcMin(availableSize.h);
+    auto paddingLeft = paddingLeftLength.calcMin(availableSize.w);
+    auto paddingRight = paddingRightLength.calcMin(availableSize.w);
+
+    setPaddingTop(paddingTop);
+    setPaddingBottom(paddingBottom);
+    setPaddingLeft(paddingLeft);
+    setPaddingRight(paddingRight);
 }
 
 bool PageMarginBox::updateIntrinsicPaddings(float availableHeight)
@@ -438,51 +456,33 @@ bool PageMarginBox::updateIntrinsicPaddings(float availableHeight)
     }
 
     auto intrinsicPaddingBottom = availableHeight - intrinsicPaddingTop - height();
-    m_paddingTop += intrinsicPaddingTop;
-    m_paddingBottom += intrinsicPaddingBottom;
+    setPaddingTop(intrinsicPaddingTop + paddingTop());
+    setPaddingBottom(intrinsicPaddingBottom + paddingBottom());
     return intrinsicPaddingTop || intrinsicPaddingBottom;
-}
-
-void PageMarginBox::updatePaddings(const Size& availableSize)
-{
-    auto paddingTopLength = style()->paddingTop();
-    auto paddingRightLength = style()->paddingRight();
-    auto paddingBottomLength = style()->paddingBottom();
-    auto paddingLeftLength = style()->paddingLeft();
-
-    auto paddingTop = paddingTopLength.calcMin(availableSize.h);
-    auto paddingRight = paddingRightLength.calcMin(availableSize.w);
-    auto paddingBottom = paddingBottomLength.calcMin(availableSize.h);
-    auto paddingLeft = paddingLeftLength.calcMin(availableSize.w);
-
-    m_paddingTop = paddingTop;
-    m_paddingRight = paddingRight;
-    m_paddingBottom = paddingBottom;
-    m_paddingLeft = paddingLeft;
 }
 
 void PageMarginBox::updateMargins(const Size& availableSize)
 {
     auto marginTopLength = style()->marginTop();
-    auto marginRightLength = style()->marginRight();
     auto marginBottomLength = style()->marginBottom();
     auto marginLeftLength = style()->marginLeft();
+    auto marginRightLength = style()->marginRight();
 
     auto marginTop = marginTopLength.calcMin(availableSize.h);
-    auto marginRight = marginRightLength.calcMin(availableSize.w);
     auto marginBottom = marginBottomLength.calcMin(availableSize.h);
     auto marginLeft = marginLeftLength.calcMin(availableSize.w);
+    auto marginRight = marginRightLength.calcMin(availableSize.w);
 
-    m_marginTop = marginTop;
-    m_marginRight = marginRight;
-    m_marginBottom = marginBottom;
-    m_marginLeft = marginLeft;
+    setMarginTop(marginTop);
+    setMarginBottom(marginBottom);
+    setMarginLeft(marginLeft);
+    setMarginRight(marginRight);
 }
 
 void PageMarginBox::updateAutoMargins(const Size& availableSize)
 {
     if(isHorizontalFlow()) {
-        auto availableSpace = std::max(0.f, availableSize.h - m_marginTop - m_marginBottom - height());
+        auto availableSpace = std::max(0.f, availableSize.h - marginBoxHeight());
 
         auto marginTopLength = style()->marginTop();
         auto marginBottomLength = style()->marginBottom();
@@ -493,28 +493,28 @@ void PageMarginBox::updateAutoMargins(const Size& availableSize)
         else
             autoMarginOffset += availableSpace;
         if(marginTopLength.isAuto())
-            m_marginTop += autoMarginOffset;
+            setMarginTop(autoMarginOffset + marginTop());
         if(marginBottomLength.isAuto()) {
-            m_marginBottom += autoMarginOffset;
+            setMarginBottom(autoMarginOffset + marginBottom());
         }
 
-        auto additionalSpace = availableSize.h - m_marginTop - m_marginBottom - height();
+        auto additionalSpace = availableSize.h - marginBoxHeight();
         switch(m_marginType) {
         case PageMarginType::TopLeftCorner:
         case PageMarginType::TopLeft:
         case PageMarginType::TopCenter:
         case PageMarginType::TopRight:
         case PageMarginType::TopRightCorner:
-            m_marginTop += additionalSpace;
+            setMarginTop(additionalSpace + marginTop());
             break;
         default:
-            m_marginBottom += additionalSpace;
+            setMarginBottom(additionalSpace + marginBottom());
             break;
         }
     }
 
     if(isVerticalFlow()) {
-        auto availableSpace = std::max(0.f, availableSize.w - m_marginLeft - m_marginRight - width());
+        auto availableSpace = std::max(0.f, availableSize.w - marginBoxWidth());
 
         auto marginRightLength = style()->marginRight();
         auto marginLeftLength = style()->marginLeft();
@@ -525,22 +525,22 @@ void PageMarginBox::updateAutoMargins(const Size& availableSize)
         else
             autoMarginOffset += availableSpace;
         if(marginLeftLength.isAuto())
-            m_marginLeft += autoMarginOffset;
+            setMarginLeft(autoMarginOffset + marginLeft());
         if(marginRightLength.isAuto()) {
-            m_marginRight += autoMarginOffset;
+            setMarginRight(autoMarginOffset + marginRight());
         }
 
-        auto additionalSpace = availableSize.w - m_marginLeft - m_marginRight - width();
+        auto additionalSpace = availableSize.w - marginBoxWidth();
         switch(m_marginType) {
         case PageMarginType::TopLeftCorner:
         case PageMarginType::BottomLeftCorner:
         case PageMarginType::LeftBottom:
         case PageMarginType::LeftMiddle:
         case PageMarginType::LeftTop:
-            m_marginLeft += additionalSpace;
+            setMarginLeft(additionalSpace + marginLeft());
             break;
         default:
-            m_marginRight += additionalSpace;
+            setMarginRight(additionalSpace + marginRight());
             break;
         }
     }

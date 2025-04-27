@@ -116,28 +116,28 @@ void TableBox::computePreferredWidths(float& minPreferredWidth, float& maxPrefer
     maxPreferredWidth += borderAndPaddingWidth();
 }
 
-void TableBox::updateBorderWidths() const
+void TableBox::computeBorderWidths(float& borderTop, float& borderBottom, float& borderLeft, float& borderRight) const
 {
     if(style()->borderCollapse() == BorderCollapse::Separate) {
-        BlockBox::updateBorderWidths();
+        BlockBox::computeBorderWidths(borderTop, borderBottom, borderLeft, borderRight);
         return;
     }
 
-    m_borderTop = 0.f;
-    m_borderBottom = 0.f;
-    m_borderLeft = 0.f;
-    m_borderRight = 0.f;
+    borderTop = 0.f;
+    borderBottom = 0.f;
+    borderLeft = 0.f;
+    borderRight = 0.f;
     if(auto section = topSection()) {
         auto row = section->firstRow();
         for(const auto& [col, cell] : row->cells()) {
-            m_borderTop = std::max(m_borderTop, cell->borderTop());
+            borderTop = std::max(borderTop, cell->borderTop());
         }
     }
 
     if(auto section = bottomSection()) {
         auto row = section->lastRow();
         for(const auto& [col, cell] : row->cells()) {
-            m_borderBottom = std::max(m_borderBottom, cell->borderBottom());
+            borderBottom = std::max(borderBottom, cell->borderBottom());
         }
     }
 
@@ -152,9 +152,9 @@ void TableBox::updateBorderWidths() const
     for(auto section : m_sections) {
         for(auto row : section->rows()) {
             if(auto cell = row->cellAt(startColumnIndex))
-                m_borderLeft = std::max(m_borderLeft, cell->borderLeft());
+                borderLeft = std::max(borderLeft, cell->borderLeft());
             if(auto cell = row->cellAt(endColumnIndex)) {
-                m_borderRight = std::max(m_borderRight, cell->borderRight());
+                borderRight = std::max(borderRight, cell->borderRight());
             }
         }
     }
@@ -1745,23 +1745,24 @@ bool TableCellBox::updateIntrinsicPaddings(float rowHeight)
         break;
     }
 
-    auto intrinsicPaddingBottom = rowHeight - height() - intrinsicPaddingTop;
-    m_paddingTop += intrinsicPaddingTop;
-    m_paddingBottom += intrinsicPaddingBottom;
+    auto intrinsicPaddingBottom = rowHeight - intrinsicPaddingTop - height();
+    setPaddingTop(intrinsicPaddingTop + paddingTop());
+    setPaddingBottom(intrinsicPaddingBottom + paddingBottom());
     return intrinsicPaddingTop || intrinsicPaddingBottom;
 }
 
-void TableCellBox::updateBorderWidths() const
+void TableCellBox::computeBorderWidths(float& borderTop, float& borderBottom, float& borderLeft, float& borderRight) const
 {
-    if(table()->borderCollapse() == BorderCollapse::Collapse) {
-        const auto& edges = collapsedBorderEdges();
-        m_borderTop = edges.topEdge().width() / 2.f;
-        m_borderBottom = edges.bottomEdge().width() / 2.f;
-        m_borderLeft = edges.leftEdge().width() / 2.f;
-        m_borderRight = edges.rightEdge().width() / 2.f;
-    } else {
-        BlockFlowBox::updateBorderWidths();
+    if(style()->borderCollapse() == BorderCollapse::Separate) {
+        BlockBox::computeBorderWidths(borderTop, borderBottom, borderLeft, borderRight);
+        return;
     }
+
+    const auto& edges = collapsedBorderEdges();
+    borderTop = edges.topEdge().width() / 2.f;
+    borderBottom = edges.bottomEdge().width() / 2.f;
+    borderLeft = edges.leftEdge().width() / 2.f;
+    borderRight = edges.rightEdge().width() / 2.f;
 }
 
 const TableCollapsedBorderEdges& TableCellBox::collapsedBorderEdges() const

@@ -195,7 +195,7 @@ std::unique_ptr<ReplacedLineBox> ReplacedLineBox::create(BoxFrame* box)
 
 float ReplacedLineBox::lineHeight() const
 {
-    return box()->height() + box()->marginHeight();
+    return box()->marginBoxHeight();
 }
 
 float ReplacedLineBox::baselinePosition() const

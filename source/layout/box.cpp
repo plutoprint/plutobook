@@ -617,36 +617,6 @@ std::optional<float> BoxModel::containingBlockHeightForContent(const BlockBox* c
     return container->availableHeight();
 }
 
-void BoxModel::updateMarginWidths()
-{
-    m_marginTop = resolveMarginOrPaddingLength(style()->marginTop());
-    m_marginBottom = resolveMarginOrPaddingLength(style()->marginBottom());
-    m_marginLeft = resolveMarginOrPaddingLength(style()->marginLeft());
-    m_marginRight = resolveMarginOrPaddingLength(style()->marginRight());
-}
-
-void BoxModel::updateBorderWidths() const
-{
-    auto calc = [](LineStyle style, float width) {
-        if(style > LineStyle::Hidden)
-            return width;
-        return 0.f;
-    };
-
-    m_borderTop = calc(style()->borderTopStyle(), style()->borderTopWidth());
-    m_borderBottom = calc(style()->borderBottomStyle(), style()->borderBottomWidth());
-    m_borderLeft = calc(style()->borderLeftStyle(), style()->borderLeftWidth());
-    m_borderRight = calc(style()->borderRightStyle(), style()->borderRightWidth());
-}
-
-void BoxModel::updatePaddingWidths() const
-{
-    m_paddingTop = resolveMarginOrPaddingLength(style()->paddingTop());
-    m_paddingBottom = resolveMarginOrPaddingLength(style()->paddingBottom());
-    m_paddingLeft = resolveMarginOrPaddingLength(style()->paddingLeft());
-    m_paddingRight = resolveMarginOrPaddingLength(style()->paddingRight());
-}
-
 float BoxModel::resolveMarginOrPaddingLength(const Length& length) const
 {
     float containerWidth = 0;
@@ -655,59 +625,104 @@ float BoxModel::resolveMarginOrPaddingLength(const Length& length) const
     return length.calcMin(containerWidth);
 }
 
+void BoxModel::computeMarginWidths(float& marginTop, float& marginBottom, float& marginLeft, float& marginRight) const
+{
+    marginTop = resolveMarginOrPaddingLength(style()->marginTop());
+    marginBottom = resolveMarginOrPaddingLength(style()->marginBottom());
+    marginLeft = resolveMarginOrPaddingLength(style()->marginLeft());
+    marginRight = resolveMarginOrPaddingLength(style()->marginRight());
+}
+
+void BoxModel::computePaddingWidths(float& paddingTop, float& paddingBottom, float& paddingLeft, float& paddingRight) const
+{
+    paddingTop = resolveMarginOrPaddingLength(style()->paddingTop());
+    paddingBottom = resolveMarginOrPaddingLength(style()->paddingBottom());
+    paddingLeft = resolveMarginOrPaddingLength(style()->paddingLeft());
+    paddingRight = resolveMarginOrPaddingLength(style()->paddingRight());
+}
+
+void BoxModel::computeBorderWidths(float& borderTop, float& borderBottom, float& borderLeft, float& borderRight) const
+{
+    auto calc = [](LineStyle style, float width) {
+        if(style > LineStyle::Hidden)
+            return width;
+        return 0.f;
+    };
+
+    borderTop = calc(style()->borderTopStyle(), style()->borderTopWidth());
+    borderBottom = calc(style()->borderBottomStyle(), style()->borderBottomWidth());
+    borderLeft = calc(style()->borderLeftStyle(), style()->borderLeftWidth());
+    borderRight = calc(style()->borderRightStyle(), style()->borderRightWidth());
+}
+
+void BoxModel::updateMarginWidths()
+{
+    computeMarginWidths(m_marginTop, m_marginBottom, m_marginLeft, m_marginRight);
+}
+
+void BoxModel::updatePaddingWidths()
+{
+    computePaddingWidths(m_paddingTop, m_paddingBottom, m_paddingLeft, m_paddingRight);
+}
+
+void BoxModel::updateBorderWidths()
+{
+    computeBorderWidths(m_borderTop, m_borderBottom, m_borderLeft, m_borderRight);
+}
+
 float BoxModel::borderTop() const
 {
     if(m_borderTop < 0)
-        updateBorderWidths();
+        computeBorderWidths(m_borderTop, m_borderBottom, m_borderLeft, m_borderRight);
     return m_borderTop;
 }
 
 float BoxModel::borderBottom() const
 {
     if(m_borderBottom < 0)
-        updateBorderWidths();
+        computeBorderWidths(m_borderTop, m_borderBottom, m_borderLeft, m_borderRight);
     return m_borderBottom;
 }
 
 float BoxModel::borderLeft() const
 {
     if(m_borderLeft < 0)
-        updateBorderWidths();
+        computeBorderWidths(m_borderTop, m_borderBottom, m_borderLeft, m_borderRight);
     return m_borderLeft;
 }
 
 float BoxModel::borderRight() const
 {
     if(m_borderRight < 0)
-        updateBorderWidths();
+        computeBorderWidths(m_borderTop, m_borderBottom, m_borderLeft, m_borderRight);
     return m_borderRight;
 }
 
 float BoxModel::paddingTop() const
 {
     if(m_paddingTop < 0)
-        updatePaddingWidths();
+        computePaddingWidths(m_paddingTop, m_paddingBottom, m_paddingLeft, m_paddingRight);
     return m_paddingTop;
 }
 
 float BoxModel::paddingBottom() const
 {
     if(m_paddingBottom < 0)
-        updatePaddingWidths();
+        computePaddingWidths(m_paddingTop, m_paddingBottom, m_paddingLeft, m_paddingRight);
     return m_paddingBottom;
 }
 
 float BoxModel::paddingLeft() const
 {
     if(m_paddingLeft < 0)
-        updatePaddingWidths();
+        computePaddingWidths(m_paddingTop, m_paddingBottom, m_paddingLeft, m_paddingRight);
     return m_paddingLeft;
 }
 
 float BoxModel::paddingRight() const
 {
     if(m_paddingRight < 0)
-        updatePaddingWidths();
+        computePaddingWidths(m_paddingTop, m_paddingBottom, m_paddingLeft, m_paddingRight);
     return m_paddingRight;
 }
 

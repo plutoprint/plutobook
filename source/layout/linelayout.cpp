@@ -944,7 +944,7 @@ void LineBreaker::handleFloating(const LineItem& item)
     }
 
     auto& floatingBox = m_block->insertFloatingBox(box);
-    if(canFitOnLine(box->width() + box->marginWidth())) {
+    if(canFitOnLine(box->marginBoxWidth())) {
         m_block->positionFloatingBox(floatingBox, m_fragmentainer, floatTop);
         m_availableWidth = m_block->availableWidthForLine(m_block->height(), m_lineHeight, m_line.isFirstLine());
     } else {
@@ -971,7 +971,7 @@ void LineBreaker::handleReplaced(const LineItem& item)
     box.layout(nullptr);
 
     run.canBreakAfter = canBreakAfter(run);
-    run.width = box.width() + box.marginLeft() + box.marginRight();
+    run.width = box.marginBoxWidth();
     m_line.setIsEmptyLine(false);
     m_currentWidth += run.width;
     m_skipLeadingWhitespace = false;

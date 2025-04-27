@@ -124,15 +124,15 @@ float FlexItem::targetMainBorderBoxSize() const
 float FlexItem::marginBoxMainSize() const
 {
     if(isHorizontalFlow())
-        return m_box->width() + m_box->marginWidth();
-    return m_box->height() + m_box->marginHeight();
+        return m_box->marginBoxWidth();
+    return m_box->marginBoxHeight();
 }
 
 float FlexItem::marginBoxCrossSize() const
 {
     if(isHorizontalFlow())
-        return m_box->height() + m_box->marginHeight();
-    return m_box->width() + m_box->marginWidth();
+        return m_box->marginBoxHeight();
+    return m_box->marginBoxWidth();
 }
 
 float FlexItem::marginBoxCrossBaseline() const
