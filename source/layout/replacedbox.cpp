@@ -34,26 +34,13 @@ float ReplacedBox::computePreferredReplacedWidth() const
     double intrinsicRatio = 0.0;
     computeAspectRatioInformation(intrinsicWidth, intrinsicHeight, intrinsicRatio);
 
-    auto heightLength = style()->height();
-    if(intrinsicWidth && !heightLength.isFixed())
+    auto height = computeReplacedHeightUsing(style()->height());
+    if(intrinsicWidth && !height)
         return intrinsicWidth;
-    if(intrinsicRatio > 0.0) {
-        float height = 0.f;
-        if(heightLength.isFixed())
-            height = adjustContentBoxHeight(heightLength.value());
-        else if(intrinsicHeight && !intrinsicWidth) {
-            height = intrinsicHeight;
-        } else {
-            return intrinsicWidth;
-        }
-
-        auto minHeightLength = style()->minHeight();
-        auto maxHeightLength = style()->maxHeight();
-        if(maxHeightLength.isFixed())
-            height = std::min(height, adjustContentBoxHeight(maxHeightLength.value()));
-        if(minHeightLength.isFixed())
-            height = std::max(height, adjustContentBoxHeight(minHeightLength.value()));
-        return height * intrinsicRatio;
+    if(intrinsicRatio && height)
+        return constrainReplacedHeight(height.value()) * intrinsicRatio;
+    if(intrinsicRatio && !intrinsicWidth && intrinsicHeight) {
+        return constrainReplacedHeight(intrinsicHeight) * intrinsicRatio;
     }
 
     if(intrinsicWidth > 0.f)
