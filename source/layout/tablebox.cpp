@@ -347,8 +347,8 @@ void TableBox::layout(FragmentBuilder* fragmentainer)
             }
 
             section->setY(sectionTop);
-            section->layoutRows(fragmentainer);
             section->setX(borderAndPaddingLeft());
+            section->layoutRows(fragmentainer);
             if(fragmentainer) {
                 fragmentainer->leaveFragment(sectionTop);
             }
@@ -459,10 +459,9 @@ void TableBox::paintDecorations(const PaintInfo& info, const Point& offset)
 {
     Rect borderRect(offset, size());
     for(auto caption : m_captions) {
-        auto captionHeight = caption->height() + caption->marginTop() + caption->marginBottom();
-        borderRect.h -= captionHeight;
+        borderRect.h -= caption->marginBoxHeight();
         if(caption->captionSide() == CaptionSide::Top) {
-            borderRect.y += captionHeight;
+            borderRect.y += caption->marginBoxHeight();
         }
     }
 

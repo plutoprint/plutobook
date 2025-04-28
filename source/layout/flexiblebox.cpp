@@ -556,9 +556,9 @@ void FlexibleBox::layout(FragmentBuilder* fragmentainer)
 
         for(const auto& item : items) {
             auto child = item.box();
-            if(isHorizontalFlow())
+            if(isHorizontalFlow()) {
                 child->setOverrideWidth(item.targetMainBorderBoxSize());
-            else {
+            } else {
                 child->setOverrideHeight(item.targetMainBorderBoxSize());
             }
 

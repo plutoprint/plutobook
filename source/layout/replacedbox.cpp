@@ -1,5 +1,4 @@
 #include "replacedbox.h"
-#include "blockbox.h"
 #include "imageresource.h"
 #include "graphicscontext.h"
 #include "document.h"
@@ -57,9 +56,9 @@ float ReplacedBox::computePreferredReplacedWidth() const
         return height * intrinsicRatio;
     }
 
-    if(!intrinsicWidth)
-        return m_intrinsicSize.w;
-    return intrinsicWidth;
+    if(intrinsicWidth > 0.f)
+        return intrinsicWidth;
+    return m_intrinsicSize.w;
 }
 
 void ReplacedBox::computePreferredWidths(float& minPreferredWidth, float& maxPreferredWidth) const
@@ -302,16 +301,16 @@ float ReplacedBox::computeReplacedWidth() const
     if(intrinsicWidth && !height)
         return constrainReplacedWidth(intrinsicWidth);
     if(intrinsicRatio && height)
-        return constrainReplacedWidth(constrainReplacedHeight(*height) * intrinsicRatio);
+        return constrainReplacedWidth(constrainReplacedHeight(height.value()) * intrinsicRatio);
     if(intrinsicRatio && !intrinsicWidth && intrinsicHeight)
         return constrainReplacedWidth(constrainReplacedHeight(intrinsicHeight) * intrinsicRatio);
     if(intrinsicRatio && !intrinsicWidth && !intrinsicHeight && !height) {
         return availableReplacedWidth();
     }
 
-    if(!intrinsicWidth)
-        return constrainReplacedWidth(m_intrinsicSize.w);
-    return constrainReplacedWidth(intrinsicWidth);
+    if(intrinsicWidth > 0.f)
+        return constrainReplacedWidth(intrinsicWidth);
+    return constrainReplacedWidth(m_intrinsicSize.w);
 }
 
 float ReplacedBox::computeReplacedHeight() const
@@ -331,16 +330,16 @@ float ReplacedBox::computeReplacedHeight() const
     if(intrinsicHeight && !width)
         return constrainReplacedHeight(intrinsicHeight);
     if(intrinsicRatio && width)
-        return constrainReplacedHeight(constrainReplacedWidth(*width) / intrinsicRatio);
+        return constrainReplacedHeight(constrainReplacedWidth(width.value()) / intrinsicRatio);
     if(intrinsicRatio && intrinsicWidth && !intrinsicHeight)
         return constrainReplacedHeight(constrainReplacedWidth(intrinsicWidth) / intrinsicRatio);
     if(intrinsicRatio && !intrinsicWidth && !intrinsicHeight && !width) {
         return constrainReplacedHeight(availableReplacedWidth() / intrinsicRatio);
     }
 
-    if(!intrinsicHeight)
-        return constrainReplacedHeight(m_intrinsicSize.h);
-    return constrainReplacedHeight(intrinsicHeight);
+    if(intrinsicHeight > 0.f)
+        return constrainReplacedHeight(intrinsicHeight);
+    return constrainReplacedHeight(m_intrinsicSize.h);
 }
 
 float ReplacedBox::availableReplacedWidth() const

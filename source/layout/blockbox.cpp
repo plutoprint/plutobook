@@ -760,7 +760,7 @@ void BlockFlowBox::collectIntrudingFloats()
         }
     }
 
-    if(parentHasFloats || (!prevBlock && parentBlock->floatBottom() > y()))
+    if(parentHasFloats || (prevBlock == nullptr && parentBlock->floatBottom() > y()))
         addIntrudingFloats(parentBlock, parentBlock->leftOffsetForContent(), y());
     if(prevBlock) {
         auto offsetY = y() - prevBlock->y();

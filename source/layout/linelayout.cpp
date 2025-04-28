@@ -1,8 +1,8 @@
 #include "linelayout.h"
+#include "linebox.h"
 #include "textbox.h"
 #include "inlinebox.h"
 #include "blockbox.h"
-#include "linebox.h"
 #include "document.h"
 
 #include <ranges>
