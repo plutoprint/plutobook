@@ -39,6 +39,9 @@ public:
     virtual void paintReplaced(const PaintInfo& info, const Point& offset) = 0;
     void paint(const PaintInfo& info, const Point& offset, PaintPhase phase) override;
 
+    float intrinsicReplacedWidth() const { return m_intrinsicSize.w; }
+    float intrinsicReplacedHeight() const { return m_intrinsicSize.h; }
+
     void setIntrinsicSize(const Size& intrinsicSize) { m_intrinsicSize = intrinsicSize; }
     Size intrinsicSize() const { return m_intrinsicSize; }
 

@@ -14,7 +14,7 @@ ReplacedBox::ReplacedBox(Node* node, const RefPtr<BoxStyle>& style)
 void ReplacedBox::computeAspectRatioInformation(float& intrinsicWidth, float& intrinsicHeight, double& intrinsicRatio) const
 {
     computeIntrinsicRatioInformation(intrinsicWidth, intrinsicHeight, intrinsicRatio);
-    if(intrinsicRatio && style()->height().isAuto() && style()->width().isAuto()) {
+    if(intrinsicRatio && intrinsicWidth && intrinsicHeight && style()->height().isAuto() && style()->width().isAuto()) {
         auto constrainedWidth = constrainReplacedWidth(intrinsicWidth);
         auto constrainedHeight = constrainReplacedHeight(intrinsicHeight);
         intrinsicWidth = constrainedHeight * intrinsicRatio;
@@ -45,14 +45,14 @@ float ReplacedBox::computePreferredReplacedWidth() const
 
     if(intrinsicWidth > 0.f)
         return intrinsicWidth;
-    return m_intrinsicSize.w;
+    return intrinsicReplacedWidth();
 }
 
 void ReplacedBox::computePreferredWidths(float& minPreferredWidth, float& maxPreferredWidth) const
 {
     auto widthLength = style()->width();
     if(widthLength.isPercent()) {
-        maxPreferredWidth = minPreferredWidth = m_intrinsicSize.w;
+        maxPreferredWidth = minPreferredWidth = intrinsicReplacedWidth();
     } else {
         maxPreferredWidth = minPreferredWidth = computePreferredReplacedWidth();
     }
@@ -291,13 +291,13 @@ float ReplacedBox::computeReplacedWidth() const
         return constrainReplacedWidth(constrainReplacedHeight(height.value()) * intrinsicRatio);
     if(intrinsicRatio && !intrinsicWidth && intrinsicHeight)
         return constrainReplacedWidth(constrainReplacedHeight(intrinsicHeight) * intrinsicRatio);
-    if(intrinsicRatio && !intrinsicWidth && !intrinsicHeight && !height) {
-        return availableReplacedWidth();
+    if(intrinsicRatio && !intrinsicWidth && !intrinsicHeight) {
+        return constrainReplacedWidth(availableReplacedWidth());
     }
 
     if(intrinsicWidth > 0.f)
         return constrainReplacedWidth(intrinsicWidth);
-    return constrainReplacedWidth(m_intrinsicSize.w);
+    return constrainReplacedWidth(intrinsicReplacedWidth());
 }
 
 float ReplacedBox::computeReplacedHeight() const
@@ -320,13 +320,13 @@ float ReplacedBox::computeReplacedHeight() const
         return constrainReplacedHeight(constrainReplacedWidth(width.value()) / intrinsicRatio);
     if(intrinsicRatio && intrinsicWidth && !intrinsicHeight)
         return constrainReplacedHeight(constrainReplacedWidth(intrinsicWidth) / intrinsicRatio);
-    if(intrinsicRatio && !intrinsicWidth && !intrinsicHeight && !width) {
-        return constrainReplacedHeight(availableReplacedWidth() / intrinsicRatio);
+    if(intrinsicRatio && !intrinsicWidth && !intrinsicHeight) {
+        return constrainReplacedHeight(constrainReplacedWidth(availableReplacedWidth()) / intrinsicRatio);
     }
 
     if(intrinsicHeight > 0.f)
         return constrainReplacedHeight(intrinsicHeight);
-    return constrainReplacedHeight(m_intrinsicSize.h);
+    return constrainReplacedHeight(intrinsicReplacedHeight());
 }
 
 float ReplacedBox::availableReplacedWidth() const
@@ -334,7 +334,7 @@ float ReplacedBox::availableReplacedWidth() const
     auto containerWidth = containingBlockWidthForContent();
     auto marginLeft = style()->marginLeft().calcMin(containerWidth);
     auto marginRight = style()->marginRight().calcMin(containerWidth);
-    return constrainReplacedWidth(containerWidth - marginLeft - marginRight - borderAndPaddingWidth());
+    return containerWidth - marginLeft - marginRight - borderAndPaddingWidth();
 }
 
 static Size computeObjectFitSize(ObjectFit objectFit, const Size& intrinsicSize, const Size& contentSize)
