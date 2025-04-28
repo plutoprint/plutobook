@@ -1,9 +1,8 @@
 #include "imageresource.h"
 #include "textresource.h"
 #include "svgdocument.h"
-#include "stringutils.h"
 #include "graphicscontext.h"
-#include "geometry.h"
+#include "stringutils.h"
 
 #include "plutobook.hpp"
 
@@ -258,8 +257,8 @@ void BitmapImage::drawPattern(GraphicsContext& context, const Rect& destRect, co
 
 void BitmapImage::computeIntrinsicDimensions(float& intrinsicWidth, float& intrinsicHeight, double& intrinsicRatio)
 {
-    intrinsicWidth = cairo_image_surface_get_width(m_surface);
-    intrinsicHeight = cairo_image_surface_get_height(m_surface);
+    intrinsicWidth = m_intrinsicSize.w;
+    intrinsicHeight = m_intrinsicSize.h;
     if(intrinsicHeight > 0) {
         intrinsicRatio = intrinsicWidth / intrinsicHeight;
     } else {
@@ -267,23 +266,14 @@ void BitmapImage::computeIntrinsicDimensions(float& intrinsicWidth, float& intri
     }
 }
 
-void BitmapImage::setContainerSize(const Size& size)
-{
-}
-
-Size BitmapImage::intrinsicSize() const
-{
-    return Size(cairo_image_surface_get_width(m_surface), cairo_image_surface_get_height(m_surface));
-}
-
-Size BitmapImage::size() const
-{
-    return intrinsicSize();
-}
-
 BitmapImage::~BitmapImage()
 {
     cairo_surface_destroy(m_surface);
+}
+
+BitmapImage::BitmapImage(cairo_surface_t* surface)
+    : m_surface(surface), m_intrinsicSize(cairo_image_surface_get_width(m_surface), cairo_image_surface_get_height(m_surface))
+{
 }
 
 RefPtr<SVGImage> SVGImage::create(const std::string_view& content, ResourceFetcher* fetcher, Url baseUrl)
@@ -360,6 +350,7 @@ void SVGImage::computeIntrinsicDimensions(float& intrinsicWidth, float& intrinsi
 
 void SVGImage::setContainerSize(const Size& size)
 {
+    m_containerSize = size;
     if(m_document->setContainerSize(size)) {
         m_document->layout();
     }
@@ -393,7 +384,7 @@ Size SVGImage::intrinsicSize() const
 
 Size SVGImage::size() const
 {
-    return Size(m_document->availableWidth(), m_document->availableHeight());
+    return m_containerSize;
 }
 
 SVGImage::SVGImage(std::unique_ptr<Heap> heap, std::unique_ptr<SVGDocument> document)

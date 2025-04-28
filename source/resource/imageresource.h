@@ -2,6 +2,7 @@
 #define PLUTOBOOK_IMAGERESOURCE_H
 
 #include "resource.h"
+#include "geometry.h"
 
 #include <memory>
 
@@ -30,9 +31,6 @@ struct is_a<ImageResource> {
 };
 
 class GraphicsContext;
-class Point;
-class Size;
-class Rect;
 
 class Image : public RefCounted<Image> {
 public:
@@ -63,15 +61,16 @@ public:
     void drawPattern(GraphicsContext& context, const Rect& destRect, const Size& size, const Size& scale, const Point& phase) final;
     void computeIntrinsicDimensions(float& intrinsicWidth, float& intrinsicHeight, double& intrinsicRatio) final;
 
-    void setContainerSize(const Size& size) final;
-    Size intrinsicSize() const final;
-    Size size() const final;
+    void setContainerSize(const Size& size) final {}
+    Size intrinsicSize() const final { return m_intrinsicSize; }
+    Size size() const final { return m_intrinsicSize; }
 
     ~BitmapImage() final;
 
 private:
-    BitmapImage(cairo_surface_t* surface) : m_surface(surface) {}
+    BitmapImage(cairo_surface_t* surface);
     cairo_surface_t* m_surface;
+    Size m_intrinsicSize;
 };
 
 template<>
@@ -100,6 +99,7 @@ private:
     SVGImage(std::unique_ptr<Heap> heap, std::unique_ptr<SVGDocument> document);
     std::unique_ptr<Heap> m_heap;
     std::unique_ptr<SVGDocument> m_document;
+    Size m_containerSize;
 };
 
 template<>
