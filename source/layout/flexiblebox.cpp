@@ -410,13 +410,17 @@ void FlexibleBox::layout(FragmentBuilder* fragmentainer)
 
     auto mainSize = computeMainSize(hypotheticalMainSize);
     auto availableMainSize = mainSize - borderAndPaddingStart() - borderAndPaddingEnd();
-    for(auto it = m_items.begin(); it != m_items.end();) {
+
+    auto it = m_items.begin();
+    auto end = m_items.end();
+    while(it != end) {
         float totalFlexGrow = 0;
         float totalFlexShrink = 0;
         float totalScaledFlexShrink = 0;
         float totalHypotheticalMainSize = 0;
+
         auto begin = it;
-        for(; it != m_items.end(); ++it) {
+        for(; it != end; ++it) {
             if(isMultiLine() && it != begin && totalHypotheticalMainSize + it->targetMainMarginBoxSize() > availableMainSize)
                 break;
             totalFlexGrow += it->flexGrow();
@@ -620,9 +624,9 @@ void FlexibleBox::layout(FragmentBuilder* fragmentainer)
         float maxCrossDescent = 0;
         for(const auto& item : line.items()) {
             auto child = item.box();
-            if(isHorizontalFlow())
+            if(isHorizontalFlow()) {
                 child->setY(crossOffset + item.marginBefore());
-            else {
+            } else {
                 child->setX(crossOffset + item.marginBefore());
             }
 
@@ -652,8 +656,9 @@ void FlexibleBox::layout(FragmentBuilder* fragmentainer)
         m_lines.front().setCrossSize(availableCrossSize());
     if(isMultiLine() && !m_lines.empty()) {
         auto availableSpace = availableCrossSize();
-        for(const auto& line : m_lines)
+        for(const auto& line : m_lines) {
             availableSpace -= line.crossSize();
+        }
 
         float lineOffset = 0;
         switch(m_alignContent) {
@@ -677,9 +682,9 @@ void FlexibleBox::layout(FragmentBuilder* fragmentainer)
             line.setCrossOffset(lineOffset + line.crossOffset());
             for(const auto& item : line.items()) {
                 auto child = item.box();
-                if(isHorizontalFlow())
+                if(isHorizontalFlow()) {
                     child->setY(lineOffset + child->y());
-                else {
+                } else {
                     child->setX(lineOffset + child->x());
                 }
             }
@@ -715,14 +720,17 @@ void FlexibleBox::layout(FragmentBuilder* fragmentainer)
                 if(marginTopLength.isAuto() || marginBottomLength.isAuto()) {
                     float autoMarginOffset = 0;
                     auto availableSpace = line.crossSize() - item.marginBoxCrossSize();
-                    if(marginTopLength.isAuto() && marginBottomLength.isAuto())
+                    if(marginTopLength.isAuto() && marginBottomLength.isAuto()) {
                         autoMarginOffset += availableSpace / 2.f;
-                    else
+                    } else {
                         autoMarginOffset += availableSpace;
+                    }
+
                     if(marginTopLength.isAuto())
                         child->setMarginTop(autoMarginOffset);
-                    if(marginBottomLength.isAuto())
+                    if(marginBottomLength.isAuto()) {
                         child->setMarginBottom(autoMarginOffset);
+                    }
 
                     if(marginTopLength.isAuto())
                         child->setY(autoMarginOffset + child->y());
@@ -734,14 +742,17 @@ void FlexibleBox::layout(FragmentBuilder* fragmentainer)
                 if(marginLeftLength.isAuto() || marginRightLength.isAuto()) {
                     float autoMarginOffset = 0;
                     auto availableSpace = line.crossSize() - item.marginBoxCrossSize();
-                    if(marginLeftLength.isAuto() && marginRightLength.isAuto())
+                    if(marginLeftLength.isAuto() && marginRightLength.isAuto()) {
                         autoMarginOffset += availableSpace / 2.f;
-                    else
+                    } else {
                         autoMarginOffset += availableSpace;
+                    }
+
                     if(marginLeftLength.isAuto())
                         child->setMarginLeft(autoMarginOffset);
-                    if(marginRightLength.isAuto())
+                    if(marginRightLength.isAuto()) {
                         child->setMarginRight(autoMarginOffset);
+                    }
 
                     auto marginStartLength = style()->isLeftToRightDirection() ? marginLeftLength : marginRightLength;
                     if(marginStartLength.isAuto())
@@ -755,14 +766,14 @@ void FlexibleBox::layout(FragmentBuilder* fragmentainer)
                 if(isHorizontalFlow() && childStyle->height().isAuto()) {
                     auto childHeight = line.crossSize() - child->marginHeight() - child->borderAndPaddingHeight();
                     childHeight = item.constrainHeight(childHeight) + child->borderAndPaddingHeight();
-                    if(childHeight != child->height()) {
+                    if(!isNearlyEqual(childHeight, child->height())) {
                         child->setOverrideHeight(childHeight);
                         child->layout(nullptr);
                     }
                 } else if(isVerticalFlow() && childStyle->width().isAuto()) {
                     auto childWidth = line.crossSize() - child->marginWidth() - child->borderAndPaddingWidth();
                     childWidth = item.constrainWidth(childWidth) + child->borderAndPaddingWidth();
-                    if(childWidth != child->width()) {
+                    if(!isNearlyEqual(childWidth, child->width())) {
                         child->setOverrideWidth(childWidth);
                         child->layout(nullptr);
                     }
@@ -772,9 +783,9 @@ void FlexibleBox::layout(FragmentBuilder* fragmentainer)
             if(align == AlignItem::Stretch || (align == AlignItem::Baseline && !isHorizontalFlow()))
                 align = AlignItem::FlexStart;
             if(m_flexWrap == FlexWrap::WrapReverse) {
-                if(align == AlignItem::FlexStart)
+                if(align == AlignItem::FlexStart) {
                     align = AlignItem::FlexEnd;
-                else if(align == AlignItem::FlexEnd) {
+                } else if(align == AlignItem::FlexEnd) {
                     align = AlignItem::FlexStart;
                 }
             }
@@ -789,9 +800,9 @@ void FlexibleBox::layout(FragmentBuilder* fragmentainer)
                 alignOffset += line.crossBaseline() - item.marginBoxCrossBaseline();
             }
 
-            if(isHorizontalFlow())
+            if(isHorizontalFlow()) {
                 child->setY(alignOffset + child->y());
-            else {
+            } else {
                 child->setX(alignOffset + child->x());
             }
         }
@@ -805,9 +816,9 @@ void FlexibleBox::layout(FragmentBuilder* fragmentainer)
             auto delta = newOffset - originalOffset;
             for(const auto& item : line.items()) {
                 auto child = item.box();
-                if(isHorizontalFlow())
+                if(isHorizontalFlow()) {
                     child->setY(delta + child->y());
-                else {
+                } else {
                     child->setX(delta + child->x());
                 }
             }
