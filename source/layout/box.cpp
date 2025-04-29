@@ -849,9 +849,11 @@ void BoxFrame::computeVerticalStaticDistance(Length& topLength, Length& bottomLe
 
 void BoxFrame::computeHorizontalMargins(float& marginLeft, float& marginRight, float childWidth, const BlockBox* container, float containerWidth) const
 {
+    if(isFlexItem() || isTableCellBox())
+        return;
     auto marginLeftLength = style()->marginLeft();
     auto marginRightLength = style()->marginRight();
-    if(isInline() || isFloating() || container->isFlexibleBox()) {
+    if(isInline() || isFloating()) {
         marginLeft = marginLeftLength.calcMin(containerWidth);
         marginRight = marginRightLength.calcMin(containerWidth);
         return;
@@ -886,8 +888,8 @@ void BoxFrame::computeHorizontalMargins(float& marginLeft, float& marginRight, f
 
 void BoxFrame::computeVerticalMargins(float& marginTop, float& marginBottom) const
 {
-    assert(!isTableCellBox());
-
+    if(isFlexItem() || isTableCellBox())
+        return;
     auto containerWidth = containingBlockWidthForContent();
     marginTop = style()->marginTop().calcMin(containerWidth);
     marginBottom = style()->marginBottom().calcMin(containerWidth);

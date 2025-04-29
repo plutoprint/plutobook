@@ -444,9 +444,9 @@ void BlockBox::computeWidth(float& x, float& width, float& marginLeft, float& ma
         return;
     if(isPositioned()) {
         computePositionedWidth(x, width, marginLeft, marginRight);
-        if(!isTableBox()) {
-            return;
-        }
+        if(isTableBox())
+            width = std::max(width, minPreferredWidth());
+        return;
     }
 
     auto container = containingBlock();
