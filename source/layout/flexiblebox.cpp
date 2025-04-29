@@ -249,26 +249,16 @@ void FlexibleBox::updateOverflowRect()
 void FlexibleBox::computeIntrinsicWidths(float& minWidth, float& maxWidth) const
 {
     for(auto child = firstBoxFrame(); child; child = child->nextBoxFrame()) {
-        if(child->isPositioned())
+        if(child->isPositioned()) {
             continue;
-        auto childStyle = child->style();
-        auto marginLeftLength = childStyle->marginLeft();
-        auto marginRightLength = childStyle->marginRight();
-
-        float marginWidth = 0;
-        if(marginLeftLength.isFixed())
-            marginWidth += marginLeftLength.value();
-        if(marginRightLength.isFixed()) {
-            marginWidth += marginRightLength.value();
         }
 
+        child->updateHorizontalMargins(nullptr);
         child->updateHorizontalPaddings(nullptr);
 
-        auto childMinWidth = child->minPreferredWidth();
-        auto childMaxWidth = child->maxPreferredWidth();
+        auto childMinWidth = child->minPreferredWidth() + child->marginWidth();
+        auto childMaxWidth = child->maxPreferredWidth() + child->marginWidth();
 
-        childMinWidth += marginWidth;
-        childMaxWidth += marginWidth;
         if(isVerticalFlow()) {
             minWidth = std::max(minWidth, childMinWidth);
             maxWidth = std::max(maxWidth, childMaxWidth);

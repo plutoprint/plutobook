@@ -650,21 +650,14 @@ void BlockFlowBox::computeIntrinsicWidths(float& minWidth, float& maxWidth) cons
             }
         }
 
-        auto marginLeftLength = childStyle->marginLeft();
-        auto marginRightLength = childStyle->marginRight();
-
-        float marginLeft = 0;
-        float marginRight = 0;
-        if(marginLeftLength.isFixed())
-            marginLeft = marginLeftLength.value();
-        if(marginRightLength.isFixed()) {
-            marginRight = marginRightLength.value();
-        }
-
+        child->updateHorizontalMargins(nullptr);
         child->updateHorizontalPaddings(nullptr);
 
         auto childMinWidth = child->minPreferredWidth();
         auto childMaxWidth = child->maxPreferredWidth();
+
+        auto marginLeft = child->marginLeft();
+        auto marginRight = child->marginRight();
 
         auto marginWidth = marginLeft + marginRight;
         auto width = childMinWidth + marginWidth;

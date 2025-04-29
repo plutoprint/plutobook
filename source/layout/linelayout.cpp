@@ -1557,8 +1557,8 @@ void LineLayout::computeIntrinsicWidths(float& minWidth, float& maxWidth) const
             }
         } else if(item.type() == LineItem::Type::Floating || item.type() == LineItem::Type::Replaced) {
             auto& child = to<BoxFrame>(*item.box());
-            auto childStyle = child.style();
             if(item.type() == LineItem::Type::Floating) {
+                auto childStyle = child.style();
                 if((floating == Float::Left && childStyle->isClearLeft())
                     || (floating == Float::Right && childStyle->isClearRight())) {
                     minWidth = std::max(minWidth, inlineMinWidth);
@@ -1576,22 +1576,11 @@ void LineLayout::computeIntrinsicWidths(float& minWidth, float& maxWidth) const
                 inlineMinWidth = 0.f;
             }
 
+            child.updateHorizontalMargins(nullptr);
             child.updateHorizontalPaddings(nullptr);
 
-            auto childMinWidth = child.minPreferredWidth();
-            auto childMaxWidth = child.maxPreferredWidth();
-
-            auto marginLeftLength = childStyle->marginLeft();
-            auto marginRightLength = childStyle->marginRight();
-            if(marginLeftLength.isFixed()) {
-                childMinWidth += marginLeftLength.value();
-                childMaxWidth += marginLeftLength.value();
-            }
-
-            if(marginRightLength.isFixed()) {
-                childMinWidth += marginRightLength.value();
-                childMaxWidth += marginRightLength.value();
-            }
+            auto childMinWidth = child.minPreferredWidth() + child.marginWidth();
+            auto childMaxWidth = child.maxPreferredWidth() + child.marginWidth();
 
             if(indentWidth && !child.isFloating()) {
                 childMinWidth += indentWidth;

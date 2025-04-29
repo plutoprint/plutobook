@@ -82,26 +82,15 @@ void SelectBox::updateOverflowRect()
 void SelectBox::computeIntrinsicWidths(float& minWidth, float& maxWidth) const
 {
     for(auto child = firstBoxFrame(); child; child = child->nextBoxFrame()) {
-        if(child->isPositioned())
+        if(child->isPositioned()) {
             continue;
-        auto childStyle = child->style();
-        auto marginLeftLength = childStyle->marginLeft();
-        auto marginRightLength = childStyle->marginRight();
-
-        float marginWidth = 0;
-        if(marginLeftLength.isFixed())
-            marginWidth += marginLeftLength.value();
-        if(marginRightLength.isFixed()) {
-            marginWidth += marginRightLength.value();
         }
 
+        child->updateHorizontalMargins(nullptr);
         child->updateHorizontalPaddings(nullptr);
 
-        auto childMinWidth = child->minPreferredWidth();
-        auto childMaxWidth = child->maxPreferredWidth();
-
-        childMinWidth += marginWidth;
-        childMaxWidth += marginWidth;
+        auto childMinWidth = child->minPreferredWidth() + child->marginWidth();
+        auto childMaxWidth = child->maxPreferredWidth() + child->marginWidth();
 
         minWidth = std::max(minWidth, childMinWidth);
         maxWidth = std::max(maxWidth, childMaxWidth);

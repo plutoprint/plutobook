@@ -12,7 +12,7 @@ enum class FlexSign {
     Negative
 };
 
-enum class FlexViolation {
+enum class FlexViolation : uint8_t {
     None,
     Min,
     Max
