@@ -102,13 +102,15 @@ void SelectBox::computeIntrinsicWidths(float& minWidth, float& maxWidth) const
 
 void SelectBox::computeHeight(float& y, float& height, float& marginTop, float& marginBottom) const
 {
-    unsigned itemIndex = 0;
+    unsigned int index = 0;
+    auto child = firstBoxFrame();
+
     height = borderAndPaddingHeight();
-    for(auto child = firstBoxFrame(); child && itemIndex < m_size; child = child->nextBoxFrame()) {
-        if(!child->isPositioned()) {
-            height += child->height();
-            ++itemIndex;
-        }
+    while(child && index < m_size) {
+        if(!child->isPositioned())
+            height += child->marginBoxHeight();
+        child = child->nextBoxFrame();
+        ++index;
     }
 
     BlockBox::computeHeight(y, height, marginTop, marginBottom);
@@ -116,12 +118,13 @@ void SelectBox::computeHeight(float& y, float& height, float& marginTop, float& 
 
 void SelectBox::paintContents(const PaintInfo& info, const Point& offset, PaintPhase phase)
 {
-    unsigned itemIndex = 0;
-    for(auto child = firstBoxFrame(); child && itemIndex < m_size; child = child->nextBoxFrame()) {
-        if(!child->hasLayer()) {
+    unsigned int index = 0;
+    auto child = firstBoxFrame();
+    while(child && index < m_size) {
+        if(!child->hasLayer())
             child->paint(info, offset, phase);
-            ++itemIndex;
-        }
+        child = child->nextBoxFrame();
+        ++index;
     }
 }
 
@@ -139,9 +142,18 @@ void SelectBox::layout(FragmentBuilder* fragmentainer)
         }
 
         child->updatePaddingWidths(this);
+        child->updateVerticalMargins(this);
+
+        auto optionTop = height() + child->marginTop();
+        if(fragmentainer)
+            fragmentainer->enterFragment(optionTop);
         child->layout(fragmentainer);
-        child->setY(height() + child->marginTop());
-        child->setX(borderStart() + paddingStart() + child->marginLeft());
+        if(fragmentainer) {
+            fragmentainer->leaveFragment(optionTop);
+        }
+
+        child->setY(optionTop);
+        child->setX(borderStart() + paddingStart() + child->marginStart(style()->direction()));
         if(style()->isRightToLeftDirection())
             child->setX(width() - child->x() - child->width());
         setHeight(child->y() + child->height() + child->marginBottom());
