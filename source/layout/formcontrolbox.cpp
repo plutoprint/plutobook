@@ -95,6 +95,8 @@ void SelectBox::computeIntrinsicWidths(float& minWidth, float& maxWidth) const
             marginWidth += marginRightLength.value();
         }
 
+        child->updateHorizontalPaddings(nullptr);
+
         auto childMinWidth = child->minPreferredWidth();
         auto childMaxWidth = child->maxPreferredWidth();
 
@@ -147,6 +149,7 @@ void SelectBox::layout(FragmentBuilder* fragmentainer)
             continue;
         }
 
+        child->updatePaddingWidths(this);
         child->layout(fragmentainer);
         child->setY(height() + child->marginTop());
         child->setX(borderStart() + paddingStart() + child->marginLeft());

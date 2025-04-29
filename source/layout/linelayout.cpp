@@ -846,8 +846,8 @@ void LineBreaker::handleLeaderText(const LineItem& item)
 void LineBreaker::handleInlineStart(const LineItem& item)
 {
     auto& box = to<InlineBox>(*item.box());
-    box.updateMarginWidths();
-    box.updatePaddingWidths();
+    box.updateMarginWidths(m_block);
+    box.updatePaddingWidths(m_block);
 
     auto& run = addItemRun(item);
     run.width += box.marginLeft();
@@ -935,7 +935,10 @@ void LineBreaker::handleFloating(const LineItem& item)
         }
     }
 
-    auto estimatedTop = floatTop + box->computeMarginTop();
+    box->updatePaddingWidths(m_block);
+    box->updateVerticalMargins(m_block);
+
+    auto estimatedTop = floatTop + box->marginTop();
     if(m_fragmentainer)
         m_fragmentainer->enterFragment(estimatedTop);
     box->layout(m_fragmentainer);
@@ -964,6 +967,8 @@ void LineBreaker::handleReplaced(const LineItem& item)
     auto& box = to<BoxFrame>(*item.box());
     auto& run = addItemRun(item);
     moveToNextOf(item);
+
+    box.updatePaddingWidths(m_block);
     if(box.isOutsideListMarkerBox()) {
         return;
     }
@@ -1540,8 +1545,8 @@ void LineLayout::computeIntrinsicWidths(float& minWidth, float& maxWidth) const
         } else if(item.type() == LineItem::Type::InlineStart || item.type() == LineItem::Type::InlineEnd) {
             auto& child = to<InlineBox>(*item.box());
             if(item.type() == LineItem::Type::InlineStart) {
-                child.updateMarginWidths();
-                child.updatePaddingWidths();
+                child.updateHorizontalMargins(nullptr);
+                child.updateHorizontalPaddings(nullptr);
                 inlineMinWidth += child.marginLeft() + child.paddingLeft() + child.borderLeft();
                 inlineMaxWidth += child.marginLeft() + child.paddingLeft() + child.borderLeft();
                 currentStyle = child.style();
@@ -1551,7 +1556,7 @@ void LineLayout::computeIntrinsicWidths(float& minWidth, float& maxWidth) const
                 currentStyle = child.parentBox()->style();
             }
         } else if(item.type() == LineItem::Type::Floating || item.type() == LineItem::Type::Replaced) {
-            const auto& child = to<BoxFrame>(*item.box());
+            auto& child = to<BoxFrame>(*item.box());
             auto childStyle = child.style();
             if(item.type() == LineItem::Type::Floating) {
                 if((floating == Float::Left && childStyle->isClearLeft())
@@ -1570,6 +1575,8 @@ void LineLayout::computeIntrinsicWidths(float& minWidth, float& maxWidth) const
                 minWidth = std::max(minWidth, inlineMinWidth);
                 inlineMinWidth = 0.f;
             }
+
+            child.updateHorizontalPaddings(nullptr);
 
             auto childMinWidth = child.minPreferredWidth();
             auto childMaxWidth = child.maxPreferredWidth();

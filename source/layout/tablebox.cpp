@@ -78,6 +78,8 @@ void TableBox::computeIntrinsicWidths(float& minWidth, float& maxWidth) const
     }
 
     for(auto caption : m_captions) {
+        caption->updateHorizontalPaddings(nullptr);
+
         minWidth = std::max(minWidth, caption->minPreferredWidth());
         maxWidth = std::max(maxWidth, caption->minPreferredWidth());
     }
@@ -280,13 +282,16 @@ float TableBox::availableHorizontalSpace() const
 
 void TableBox::layoutCaption(TableCaptionBox* caption, FragmentBuilder* fragmentainer)
 {
-    auto captionTop = height() + caption->computeMarginTop();
+    caption->updatePaddingWidths(this);
+    caption->updateVerticalMargins(this);
+
+    auto captionTop = height() + caption->marginTop();
     if(fragmentainer) {
         fragmentainer->enterFragment(captionTop);
     }
 
-    caption->setY(captionTop);
     caption->layout(fragmentainer);
+    caption->setY(captionTop);
     caption->setX(caption->marginLeft());
     if(fragmentainer) {
         fragmentainer->leaveFragment(captionTop);
@@ -885,7 +890,10 @@ void AutoTableLayoutAlgorithm::computeIntrinsicWidths(float& minWidth, float& ma
         for(auto row : section->rows()) {
             for(const auto& [col, cell] : row->cells()) {
                 auto cellBox = cell.box();
-                if(cell.inColOrRowSpan() || cellBox->colSpan() > 1)
+                if(cell.inColOrRowSpan())
+                    continue;
+                cellBox->updateHorizontalPaddings(nullptr);
+                if(cellBox->colSpan() > 1)
                     continue;
                 auto& columnWidth = m_columnWidths[col];
                 columnWidth.minWidth = std::max(columnWidth.minWidth, cellBox->minPreferredWidth());
@@ -1174,7 +1182,7 @@ void TableSectionBox::layout(FragmentBuilder* fragmentainer)
 
             cellBox->clearOverrideSize();
             cellBox->setOverrideWidth(width);
-            cellBox->updatePaddingWidths();
+            cellBox->updatePaddingWidths(table());
             cellBox->layout(fragmentainer);
         }
     }
@@ -1852,7 +1860,9 @@ TableCaptionBox::TableCaptionBox(Node* node, const RefPtr<BoxStyle>& style)
 
 float TableCaptionBox::containingBlockWidthForContent(const BlockBox* container) const
 {
-    return container->width();
+    if(container)
+        return container->width();
+    return 0.f;
 }
 
 } // namespace plutobook

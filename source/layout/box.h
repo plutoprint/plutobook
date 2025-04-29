@@ -245,16 +245,6 @@ public:
     std::optional<float> containingBlockHeightForContent(const BlockBox* container) const;
     std::optional<float> containingBlockHeightForContent() const { return containingBlockHeightForContent(containingBlock()); }
 
-    float resolveMarginOrPaddingLength(const Length& length) const;
-
-    virtual void computeMarginWidths(float& marginTop, float& marginBottom, float& marginLeft, float& marginRight) const;
-    virtual void computePaddingWidths(float& paddingTop, float& paddingBottom, float& paddingLeft, float& paddingRight) const;
-    virtual void computeBorderWidths(float& borderTop, float& borderBottom, float& borderLeft, float& borderRight) const;
-
-    void updateMarginWidths();
-    void updatePaddingWidths();
-    void updateBorderWidths();
-
     float marginTop() const { return m_marginTop; }
     float marginBottom() const { return m_marginBottom; }
     float marginLeft() const { return m_marginLeft; }
@@ -268,18 +258,14 @@ public:
     void setMarginLeft(float value) { m_marginLeft = value; }
     void setMarginRight(float value) { m_marginRight = value; }
 
-    float borderTop() const;
-    float borderBottom() const;
-    float borderLeft() const;
-    float borderRight() const;
+    void updateVerticalMargins(const BlockBox* container);
+    void updateHorizontalMargins(const BlockBox* container);
+    void updateMarginWidths(const BlockBox* container);
 
-    float borderWidth() const { return borderLeft() + borderRight(); }
-    float borderHeight() const { return borderTop() + borderBottom(); }
-
-    float paddingTop() const;
-    float paddingBottom() const;
-    float paddingLeft() const;
-    float paddingRight() const;
+    float paddingTop() const { return m_paddingTop; }
+    float paddingBottom() const { return m_paddingBottom; }
+    float paddingLeft() const { return m_paddingLeft; }
+    float paddingRight() const { return m_paddingRight; }
 
     float paddingWidth() const { return paddingLeft() + paddingRight(); }
     float paddingHeight() const { return paddingTop() + paddingBottom(); }
@@ -288,6 +274,20 @@ public:
     void setPaddingBottom(float value) { m_paddingBottom = value; }
     void setPaddingLeft(float value) { m_paddingLeft = value; }
     void setPaddingRight(float value) { m_paddingRight = value; }
+
+    void updateVerticalPaddings(const BlockBox* container);
+    void updateHorizontalPaddings(const BlockBox* container);
+    void updatePaddingWidths(const BlockBox* container);
+
+    virtual void computeBorderWidths(float& borderTop, float& borderBottom, float& borderLeft, float& borderRight) const;
+
+    float borderTop() const;
+    float borderBottom() const;
+    float borderLeft() const;
+    float borderRight() const;
+
+    float borderWidth() const { return borderLeft() + borderRight(); }
+    float borderHeight() const { return borderTop() + borderBottom(); }
 
     float borderAndPaddingTop() const { return borderTop() + paddingTop(); }
     float borderAndPaddingBottom() const { return borderBottom() + paddingBottom(); }
@@ -329,15 +329,15 @@ private:
     float m_marginLeft{0};
     float m_marginRight{0};
 
+    float m_paddingTop{0};
+    float m_paddingBottom{0};
+    float m_paddingLeft{0};
+    float m_paddingRight{0};
+
     mutable float m_borderTop{-1};
     mutable float m_borderBottom{-1};
     mutable float m_borderLeft{-1};
     mutable float m_borderRight{-1};
-
-    mutable float m_paddingTop{-1};
-    mutable float m_paddingBottom{-1};
-    mutable float m_paddingLeft{-1};
-    mutable float m_paddingRight{-1};
 
     friend class BoxFrame;
 };
@@ -442,9 +442,6 @@ public:
     void computeHorizontalMargins(float& marginLeft, float& marginRight, float childWidth, const BlockBox* container, float containerWidth) const;
     void computeVerticalMargins(float& marginTop, float& marginBottom) const;
 
-    float computeMarginTop() const;
-    float computeMarginBottom() const;
-
     float computeIntrinsicWidthUsing(const Length& widthLength, float containerWidth) const;
 
     virtual void computeWidth(float& x, float& width, float& marginLeft, float& marginRight) const;
@@ -452,7 +449,6 @@ public:
 
     void updateWidth();
     void updateHeight();
-    void updateVerticalMargins();
 
     virtual bool isSelfCollapsingBlock() const { return false; }
 

@@ -67,8 +67,6 @@ public:
     PageMarginBox* nextMarginBox() const;
     PageMarginBox* prevMarginBox() const;
 
-    void computePaddingWidths(float& paddingTop, float& paddingBottom, float& paddingLeft, float& paddingRight) const final;
-
     void updatePaddings(const Size& availableSize);
     bool updateIntrinsicPaddings(float availableHeight);
 

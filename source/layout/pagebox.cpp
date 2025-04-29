@@ -419,10 +419,6 @@ bool PageMarginBox::isVerticalFlow() const
     }
 }
 
-void PageMarginBox::computePaddingWidths(float& paddingTop, float& paddingBottom, float& paddingLeft, float& paddingRight) const
-{
-}
-
 void PageMarginBox::updatePaddings(const Size& availableSize)
 {
     auto paddingTopLength = style()->paddingTop();

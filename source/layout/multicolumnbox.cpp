@@ -35,6 +35,8 @@ MultiColumnRowBox::MultiColumnRowBox(MultiColumnFlowBox* columnFlow, const RefPt
 
 void MultiColumnRowBox::computePreferredWidths(float& minPreferredWidth, float& maxPreferredWidth) const
 {
+    m_columnFlowBox->updateHorizontalPaddings(nullptr);
+
     minPreferredWidth = m_columnFlowBox->minPreferredWidth();
     maxPreferredWidth = m_columnFlowBox->maxPreferredWidth();
 }
@@ -314,6 +316,8 @@ void MultiColumnSpanBox::updateOverflowRect()
 
 void MultiColumnSpanBox::computePreferredWidths(float& minPreferredWidth, float& maxPreferredWidth) const
 {
+    m_box->updateHorizontalPaddings(nullptr);
+
     minPreferredWidth = m_box->minPreferredWidth();
     maxPreferredWidth = m_box->maxPreferredWidth();
 }
@@ -334,6 +338,7 @@ void MultiColumnSpanBox::computeHeight(float& y, float& height, float& marginTop
 
 void MultiColumnSpanBox::layout(FragmentBuilder* fragmentainer)
 {
+    m_box->updatePaddingWidths(columnFlowBox());
     m_box->layout(nullptr);
 
     updateWidth();
