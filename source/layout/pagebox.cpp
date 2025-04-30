@@ -659,31 +659,33 @@ void PageLayout::layout()
     auto marginBottom = marginBottomLength.isAuto() ? deviceMargins.bottom() / units::px : marginBottomLength.calcMin(pageHeight);
     auto marginLeft = marginLeftLength.isAuto() ? deviceMargins.left() / units::px : marginLeftLength.calcMin(pageWidth);
 
-    auto width = pageWidth - marginLeft - marginRight;
-    auto heigth = pageHeight - marginTop - marginBottom;
+    auto pageScaleFactor = std::max(kMinPageScaleFactor, pageScale.value_or(1.f));
 
-    auto pageContentScale = std::max(kMinPageScaleFactor, pageScale.value_or(1.f));
-    auto pageContentWidth = std::floor(width / pageContentScale);
-    auto pageContentHeight = std::floor(heigth / pageContentScale);
-    if(pageContentWidth <= 0.f || pageContentHeight <= 0.f) {
-        return;
+    auto pageContentWidth = pageWidth - marginLeft - marginRight;
+    auto pageContentHeight = pageWidth - marginLeft - marginRight;
+
+    pageContentWidth /= pageScaleFactor;
+    pageContentWidth /= pageScaleFactor;
+    if(m_document->setContainerSize(pageContentWidth, pageContentHeight)) {
+        box->layout(m_document);
     }
 
-    if(m_document->setContainerSize(pageContentWidth, pageContentHeight))
-        box->layout(m_document);
-    if(!pageScale.has_value() && pageContentWidth < m_document->width()) {
-        pageContentScale = pageContentWidth / m_document->width();
-        pageContentWidth = std::floor(pageContentWidth / pageContentScale);
-        pageContentHeight = std::floor(pageContentHeight / pageContentScale);
+    if(!pageScale.has_value() && m_document->containerWidth() < m_document->width()) {
+        pageScaleFactor = m_document->containerWidth() / m_document->width();
+
+        pageContentWidth /= pageScaleFactor;
+        pageContentWidth /= pageScaleFactor;
         if(m_document->setContainerSize(pageContentWidth, pageContentHeight)) {
             box->layout(m_document);
         }
     }
 
+    if(!m_document->containerWidth() || !m_document->containerHeight())
+        return;
     Counters counters(m_document, std::ceil(m_document->height() / m_document->containerHeight()));
     for(uint32_t pageIndex = 0; pageIndex < counters.pageCount(); ++pageIndex) {
         auto pageStyle = m_document->styleForPage(emptyGlo, pageIndex, pagePseudoType(pageIndex));
-        auto pageBox = PageBox::create(pageStyle, pageSize, emptyGlo, pageIndex, pageContentScale);
+        auto pageBox = PageBox::create(pageStyle, pageSize, emptyGlo, pageIndex, pageScaleFactor);
 
         pageBox->setWidth(pageWidth);
         pageBox->setHeight(pageHeight);
