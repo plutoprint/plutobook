@@ -147,21 +147,22 @@ void BoxLayer::paintLayerContents(BoxLayer* rootLayer, GraphicsContext& context,
     }
 
     auto compositing = m_opacity < 1.f || m_box->style()->hasBlendMode();
-    if(compositing && !m_box->isSVGRootBox())
+    if(compositing && !m_box->isSVGRootBox()) {
         context.pushGroup();
-    Point adjustedOffset(offset);
-    if(m_box->isBoxFrame() && !m_box->isPageMarginBox()) {
-        const auto& box = to<BoxFrame>(*m_box);
-        adjustedOffset.move(-box.location());
     }
 
     PaintInfo paintInfo(context, rect);
-    if(m_box->isBoxView())
-        m_box->paintRootBackground(paintInfo);
+    m_box->paintRootBackground(paintInfo);
     for(auto child : m_children) {
         if(child->zIndex() < 0) {
             child->paintLayer(rootLayer, context, rect);
         }
+    }
+
+    Point adjustedOffset(offset);
+    if(m_box->isBoxFrame() && !m_box->isPageBox() && !m_box->isPageMarginBox()) {
+        const auto& box = to<BoxFrame>(*m_box);
+        adjustedOffset.move(-box.location());
     }
 
     m_box->paint(paintInfo, adjustedOffset, PaintPhase::Decorations);

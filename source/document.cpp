@@ -560,8 +560,8 @@ float Document::viewportHeight() const
 
 bool Document::setContainerSize(float containerWidth, float containerHeight)
 {
-    auto width = std::round(containerWidth);
-    auto height = std::round(containerHeight);
+    auto width = std::max(0.f, std::round(containerWidth));
+    auto height = std::max(0.f, std::round(containerHeight));
     if(width == m_containerWidth && height == m_containerHeight)
         return false;
     m_containerWidth = width;
@@ -701,16 +701,6 @@ BoxStyle* Document::bodyStyle() const
     if(auto element = bodyElement())
         return element->style();
     return nullptr;
-}
-
-BoxStyle* Document::backgroundStyle() const
-{
-    return box()->backgroundStyle();
-}
-
-Rect Document::backgroundRect() const
-{
-    return box()->backgroundRect();
 }
 
 Element* Document::getElementById(const std::string_view& id) const
@@ -1023,7 +1013,7 @@ float Document::fragmentRemainingHeightForOffset(float offset, FragmentBoundaryR
 
 Rect Document::pageContentRectAt(uint32_t pageIndex) const
 {
-    return Rect(0, pageIndex * m_containerHeight, m_containerHeight, m_containerHeight);
+    return Rect(0, pageIndex * m_containerHeight, m_containerWidth, m_containerHeight);
 }
 
 template<typename ResourceType>

@@ -16,6 +16,11 @@ Rect BoxView::backgroundRect() const
     return Rect(0, 0, document()->width(), document()->height());
 }
 
+void BoxView::paintRootBackground(const PaintInfo& info) const
+{
+    paintBackground(info, backgroundRect(), *m_backgroundStyle);
+}
+
 void BoxView::computeWidth(float& x, float& width, float& marginLeft, float& marginRight) const
 {
 }
@@ -42,6 +47,8 @@ void BoxView::build()
         m_backgroundStyle = bodyStyle;
     }
 
+    if(m_backgroundStyle)
+        m_backgroundStyle->node()->box()->setHasRootBackground(true);
     BlockFlowBox::build();
 }
 

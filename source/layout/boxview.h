@@ -14,8 +14,9 @@ public:
     bool isBoxView() const final { return true; }
     bool requiresLayer() const final { return true; }
     BoxStyle* backgroundStyle() const { return m_backgroundStyle; }
-
     Rect backgroundRect() const;
+
+    void paintRootBackground(const PaintInfo& info) const final;
 
     void setCurrentPage(PageBox* page) { m_currentPage = page; }
     PageBox* currentPage() const { return m_currentPage; }

@@ -333,9 +333,6 @@ public:
     BoxStyle* rootStyle() const;
     BoxStyle* bodyStyle() const;
 
-    BoxStyle* backgroundStyle() const;
-    Rect backgroundRect() const;
-
     Element* getElementById(const std::string_view& id) const;
     void addElementById(const HeapString& id, Element* element);
     void removeElementById(const HeapString& id, Element* element);

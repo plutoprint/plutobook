@@ -525,15 +525,9 @@ void BoxModel::paintBackground(const PaintInfo& info, const Rect& borderRect, co
 
 void BoxModel::paintBackground(const PaintInfo& info, const Rect& borderRect) const
 {
-    const auto* backgroundStyle = style();
-    if(backgroundStyle != document()->backgroundStyle()) {
-        paintBackground(info, borderRect, *backgroundStyle);
+    if(!hasRootBackground()) {
+        paintBackground(info, borderRect, *style());
     }
-}
-
-void BoxModel::paintRootBackground(const PaintInfo& info) const
-{
-    paintBackground(info, document()->backgroundRect(), *document()->backgroundStyle());
 }
 
 void BoxModel::paintBorder(const PaintInfo& info, const Rect& borderRect, bool includeLeftEdge, bool includeRightEdge) const

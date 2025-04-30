@@ -154,6 +154,7 @@ public:
 
     bool hasColumnFlowBox() const { return m_hasColumnFlowBox; }
     bool hasColumnSpanBox() const { return m_hasColumnSpanBox; }
+    bool hasRootBackground() const { return m_hasRootBackground; }
     bool hasTransform() const { return m_hasTransform; }
     bool hasLayer() const { return m_hasLayer; }
 
@@ -167,6 +168,7 @@ public:
 
     void setHasColumnFlowBox(bool value) { m_hasColumnFlowBox = value; }
     void setHasColumnSpanBox(bool value) { m_hasColumnSpanBox = value; }
+    void setHasRootBackground(bool value) { m_hasRootBackground = value; }
     void setHasTransform(bool value) { m_hasTransform = value; }
     void setHasLayer(bool value) { m_hasLayer = value; }
 
@@ -201,6 +203,7 @@ private:
     bool m_overflowHidden : 1 {false};
     bool m_hasColumnFlowBox : 1 {false};
     bool m_hasColumnSpanBox : 1 {false};
+    bool m_hasRootBackground : 1 {false};
     bool m_hasTransform : 1 {false};
     bool m_hasLayer : 1 {false};
 };
@@ -215,7 +218,8 @@ public:
 
     void paintBackground(const PaintInfo& info, const Rect& borderRect, const BoxStyle& backgroundStyle, bool includeLeftEdge = true, bool includeRightEdge = true) const;
     void paintBackground(const PaintInfo& info, const Rect& borderRect) const;
-    void paintRootBackground(const PaintInfo& info) const;
+
+    virtual void paintRootBackground(const PaintInfo& info) const {}
 
     void paintBorder(const PaintInfo& info, const Rect& borderRect, bool includeLeftEdge = true, bool includeRightEdge = true) const;
     void paintOutline(const PaintInfo& info, const Rect& borderRect) const;

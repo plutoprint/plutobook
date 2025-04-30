@@ -4,15 +4,21 @@
 #include "counters.h"
 #include "document.h"
 #include "graphicscontext.h"
+#include "plutobook.hpp"
 #include "cssrule.h"
 
 #include <cmath>
 
 namespace plutobook {
 
-std::unique_ptr<PageBox> PageBox::create(const RefPtr<BoxStyle>& style, const PageSize& pageSize, const GlobalString& pageName, uint32_t pageIndex, float pageScale)
+std::unique_ptr<PageBox> PageBox::create(const RefPtr<BoxStyle>& style, const GlobalString& pageName, uint32_t pageIndex, float pageWidth, float pageHeight, float pageScale)
 {
-    return std::unique_ptr<PageBox>(new (style->heap()) PageBox(style, pageSize, pageName, pageIndex, pageScale));
+    return std::unique_ptr<PageBox>(new (style->heap()) PageBox(style, pageName, pageIndex, pageWidth, pageHeight, pageScale));
+}
+
+PageSize PageBox::pageSize() const
+{
+    return PageSize(m_pageWidth * units::px, m_pageHeight * units::px);
 }
 
 void PageBox::updateOverflowRect()
@@ -58,9 +64,6 @@ void PageBox::layout(FragmentBuilder* fragmentainer)
         margins[child->marginType()] = child;
     }
 
-    auto pageWidth = width();
-    auto pageHeight = height();
-
     auto leftWidth = marginLeft();
     auto rightWidth = marginRight();
 
@@ -68,14 +71,14 @@ void PageBox::layout(FragmentBuilder* fragmentainer)
     auto bottomHeight = marginBottom();
 
     Rect topLeftCornerRect(0, 0, leftWidth, topHeight);
-    Rect topRightCornerRect(pageWidth - rightWidth, 0, rightWidth, topHeight);
-    Rect bottomRightCornerRect(pageWidth - rightWidth, pageHeight - bottomHeight, rightWidth, bottomHeight);
-    Rect bottomLeftCornerRect(0, pageHeight - bottomHeight, leftWidth, bottomHeight);
+    Rect topRightCornerRect(m_pageWidth - rightWidth, 0, rightWidth, topHeight);
+    Rect bottomRightCornerRect(m_pageWidth - rightWidth, m_pageHeight - bottomHeight, rightWidth, bottomHeight);
+    Rect bottomLeftCornerRect(0, m_pageHeight - bottomHeight, leftWidth, bottomHeight);
 
-    Rect topEdgeRect(leftWidth, 0, pageWidth - leftWidth - rightWidth, topHeight);
-    Rect rightEdgeRect(pageWidth - rightWidth, topHeight, rightWidth, pageHeight - topHeight - bottomHeight);
-    Rect bottomEdgeRect(leftWidth, pageHeight - bottomHeight, pageWidth - leftWidth - rightWidth, bottomHeight);
-    Rect leftEdgeRect(0, topHeight, leftWidth, pageHeight - topHeight - bottomHeight);
+    Rect topEdgeRect(leftWidth, 0, m_pageWidth - leftWidth - rightWidth, topHeight);
+    Rect rightEdgeRect(m_pageWidth - rightWidth, topHeight, rightWidth, m_pageHeight - topHeight - bottomHeight);
+    Rect bottomEdgeRect(leftWidth, m_pageHeight - bottomHeight, m_pageWidth - leftWidth - rightWidth, bottomHeight);
+    Rect leftEdgeRect(0, topHeight, leftWidth, m_pageHeight - topHeight - bottomHeight);
 
     layoutCornerPageMargin(margins[PageMarginType::TopLeftCorner], topLeftCornerRect);
     layoutEdgePageMargins(margins[PageMarginType::TopLeft], margins[PageMarginType::TopCenter], margins[PageMarginType::TopRight], topEdgeRect, BoxSideTop);
@@ -354,27 +357,35 @@ void PageBox::layoutEdgePageMargins(PageMarginBox* edgeStartBox, PageMarginBox* 
     layoutEdgePageMargin(edgeEndBox, edgeRect, edgeSide, mainAxisSizes[EndMargin]);
 }
 
+void PageBox::paintRootBackground(const PaintInfo& info) const
+{
+    Rect backgroundRect(0, 0, m_pageWidth, m_pageHeight);
+    paintBackground(info, backgroundRect, *style());
+}
+
 void PageBox::paintContents(const PaintInfo& info, const Point& offset, PaintPhase phase)
 {
-    auto pageContentRect = document()->pageContentRectAt(m_pageIndex);
-    if(phase == PaintPhase::Contents && !pageContentRect.isEmpty()) {
+    auto contentRect = document()->pageContentRectAt(m_pageIndex);
+    if(phase == PaintPhase::Contents && !contentRect.isEmpty()) {
         info->save();
-        info->translate(marginLeft(), marginTop());
+        info->translate(offset.x, offset.y);
         info->scale(m_pageScale, m_pageScale);
-        info->translate(-pageContentRect.x, -pageContentRect.y);
-        info->clipRect(pageContentRect);
-        document()->render(*info, pageContentRect);
+        info->translate(-contentRect.x, -contentRect.y);
+        info->clipRect(contentRect);
+        document()->render(*info, contentRect);
         info->restore();
     }
 }
 
-PageBox::PageBox(const RefPtr<BoxStyle>& style, const PageSize& pageSize, const GlobalString& pageName, uint32_t pageIndex, float pageScale)
+PageBox::PageBox(const RefPtr<BoxStyle>& style, const GlobalString& pageName, uint32_t pageIndex, float pageWidth, float pageHeight, float pageScale)
     : BlockBox(nullptr, style)
-    , m_pageSize(pageSize)
     , m_pageName(pageName)
     , m_pageIndex(pageIndex)
+    , m_pageWidth(pageWidth)
+    , m_pageHeight(pageHeight)
     , m_pageScale(pageScale)
 {
+    setHasRootBackground(true);
 }
 
 PageMarginBox::PageMarginBox(const RefPtr<BoxStyle>& style, PageMarginType marginType)
@@ -645,8 +656,8 @@ void PageLayout::layout()
     auto pageSize = pageStyle->getPageSize(book->pageSize());
     auto pageScale = pageStyle->pageScale();
 
-    auto pageWidth = pageSize.width() / units::px;
-    auto pageHeight = pageSize.height() / units::px;
+    auto pageWidth = pageStyle->width().calc(pageSize.width() / units::px);
+    auto pageHeight = pageStyle->height().calc(pageSize.height() / units::px);
 
     auto marginLeftLength = pageStyle->marginLeft();
     auto marginRightLength = pageStyle->marginRight();
@@ -659,23 +670,17 @@ void PageLayout::layout()
     auto marginBottom = marginBottomLength.isAuto() ? deviceMargins.bottom() / units::px : marginBottomLength.calcMin(pageHeight);
     auto marginLeft = marginLeftLength.isAuto() ? deviceMargins.left() / units::px : marginLeftLength.calcMin(pageWidth);
 
+    auto width = pageWidth - marginLeft - marginRight;
+    auto height = pageHeight - marginTop - marginBottom;
+
     auto pageScaleFactor = std::max(kMinPageScaleFactor, pageScale.value_or(1.f));
-
-    auto pageContentWidth = pageWidth - marginLeft - marginRight;
-    auto pageContentHeight = pageWidth - marginLeft - marginRight;
-
-    pageContentWidth /= pageScaleFactor;
-    pageContentWidth /= pageScaleFactor;
-    if(m_document->setContainerSize(pageContentWidth, pageContentHeight)) {
+    if(m_document->setContainerSize(width / pageScaleFactor, height / pageScaleFactor)) {
         box->layout(m_document);
     }
 
     if(!pageScale.has_value() && m_document->containerWidth() < m_document->width()) {
-        pageScaleFactor = m_document->containerWidth() / m_document->width();
-
-        pageContentWidth /= pageScaleFactor;
-        pageContentWidth /= pageScaleFactor;
-        if(m_document->setContainerSize(pageContentWidth, pageContentHeight)) {
+        pageScaleFactor = std::max(kMinPageScaleFactor, m_document->containerWidth() / m_document->width());
+        if(m_document->setContainerSize(width / pageScaleFactor, height / pageScaleFactor)) {
             box->layout(m_document);
         }
     }
@@ -685,10 +690,13 @@ void PageLayout::layout()
     Counters counters(m_document, std::ceil(m_document->height() / m_document->containerHeight()));
     for(uint32_t pageIndex = 0; pageIndex < counters.pageCount(); ++pageIndex) {
         auto pageStyle = m_document->styleForPage(emptyGlo, pageIndex, pagePseudoType(pageIndex));
-        auto pageBox = PageBox::create(pageStyle, pageSize, emptyGlo, pageIndex, pageScaleFactor);
+        auto pageBox = PageBox::create(pageStyle, emptyGlo, pageIndex, pageWidth, pageHeight, pageScaleFactor);
 
-        pageBox->setWidth(pageWidth);
-        pageBox->setHeight(pageHeight);
+        pageBox->setX(marginLeft);
+        pageBox->setY(marginTop);
+
+        pageBox->setWidth(width);
+        pageBox->setHeight(height);
 
         pageBox->setMarginTop(marginTop);
         pageBox->setMarginRight(marginRight);

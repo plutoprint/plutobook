@@ -4,23 +4,22 @@
 #include "globalstring.h"
 #include "blockbox.h"
 
-#include "plutobook.hpp"
-
 namespace plutobook {
 
 class PageMarginBox;
-
 class PageBox final : public BlockBox {
 public:
-    static std::unique_ptr<PageBox> create(const RefPtr<BoxStyle>& style, const PageSize& pageSize, const GlobalString& pageName, uint32_t pageIndex, float pageScale);
+    static std::unique_ptr<PageBox> create(const RefPtr<BoxStyle>& style, const GlobalString& pageName, uint32_t pageIndex, float pageWidth, float pageHeight, float pageScale);
 
     bool isPageBox() const final { return true; }
     bool requiresLayer() const final { return true; }
 
-    const PageSize& pageSize() const { return m_pageSize; }
     const GlobalString& pageName() const { return m_pageName; }
     uint32_t pageIndex() const { return m_pageIndex; }
+    float pageWidth() const { return m_pageWidth; }
+    float pageHeight() const { return m_pageHeight; }
     float pageScale() const { return m_pageScale; }
+    PageSize pageSize() const;
 
     PageMarginBox* firstMarginBox() const;
     PageMarginBox* lastMarginBox() const;
@@ -35,15 +34,17 @@ public:
     void layoutEdgePageMargin(PageMarginBox* edgeBox, const Rect& edgeRect, BoxSide edgeSide, float mainAxisSize);
     void layoutEdgePageMargins(PageMarginBox* edgeStartBox, PageMarginBox* edgeCenterBox, PageMarginBox* edgeEndBox, const Rect& edgeRect, BoxSide edgeSide);
 
+    void paintRootBackground(const PaintInfo& info) const final;
     void paintContents(const PaintInfo& info, const Point& offset, PaintPhase phase) final;
 
     const char* name() const final { return "PageBox"; }
 
 private:
-    PageBox(const RefPtr<BoxStyle>& style, const PageSize& pageSize, const GlobalString& pageName, uint32_t pageIndex, float pageScale);
-    PageSize m_pageSize;
+    PageBox(const RefPtr<BoxStyle>& style, const GlobalString& pageName, uint32_t pageIndex, float pageWidth, float pageHeight, float pageScale);
     GlobalString m_pageName;
     uint32_t m_pageIndex;
+    float m_pageWidth;
+    float m_pageHeight;
     float m_pageScale;
 };
 
