@@ -319,10 +319,10 @@ public:
     float viewportWidth() const;
     float viewportHeight() const;
 
-    float availableWidth() const;
-    float availableHeight() const;
+    float containerWidth() const { return m_containerWidth; }
+    float containerHeight() const { return m_containerHeight; }
 
-    bool setContainerSize(const Size& containerSize);
+    bool setContainerSize(float containerWidth, float containerHeight);
 
     TextNode* createTextNode(const std::string_view& value);
     Element* createElement(const GlobalString& namespaceURI, const GlobalString& tagName);
@@ -399,10 +399,6 @@ public:
 
     Rect pageContentRectAt(uint32_t pageIndex) const;
 
-    float pageContentWidth() const { return m_pageContentWidth; }
-    float pageContentHeight() const { return m_pageContentHeight; }
-    float pageContentScale() const { return m_pageContentScale; }
-
 private:
     template<typename ResourceType>
     RefPtr<ResourceType> fetchResource(const Url& url);
@@ -418,9 +414,8 @@ private:
     DocumentCounterMap m_counterCache;
     CSSStyleSheet m_styleSheet;
 
-    float m_pageContentWidth = 0.f;
-    float m_pageContentHeight = 0.f;
-    float m_pageContentScale = 1.f;
+    float m_containerWidth{0};
+    float m_containerHeight{0};
 };
 
 inline bool Node::isRootNode() const

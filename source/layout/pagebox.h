@@ -12,7 +12,7 @@ class PageMarginBox;
 
 class PageBox final : public BlockBox {
 public:
-    static std::unique_ptr<PageBox> create(const RefPtr<BoxStyle>& style, const PageSize& pageSize, const GlobalString& pageName, uint32_t pageIndex);
+    static std::unique_ptr<PageBox> create(const RefPtr<BoxStyle>& style, const PageSize& pageSize, const GlobalString& pageName, uint32_t pageIndex, float pageScale);
 
     bool isPageBox() const final { return true; }
     bool requiresLayer() const final { return true; }
@@ -20,6 +20,7 @@ public:
     const PageSize& pageSize() const { return m_pageSize; }
     const GlobalString& pageName() const { return m_pageName; }
     uint32_t pageIndex() const { return m_pageIndex; }
+    float pageScale() const { return m_pageScale; }
 
     PageMarginBox* firstMarginBox() const;
     PageMarginBox* lastMarginBox() const;
@@ -39,10 +40,11 @@ public:
     const char* name() const final { return "PageBox"; }
 
 private:
-    PageBox(const RefPtr<BoxStyle>& style, const PageSize& pageSize, const GlobalString& pageName, uint32_t pageIndex);
+    PageBox(const RefPtr<BoxStyle>& style, const PageSize& pageSize, const GlobalString& pageName, uint32_t pageIndex, float pageScale);
     PageSize m_pageSize;
     GlobalString m_pageName;
     uint32_t m_pageIndex;
+    float m_pageScale;
 };
 
 template<>
@@ -123,24 +125,16 @@ struct is_a<PageMarginBox> {
 
 class Counters;
 
-class PageBoxBuilder {
+class PageLayout {
 public:
-    PageBoxBuilder(Document* document, const PageSize& pageSize, float pageWidth, float pageHeight, float marginTop, float marginRight, float marginBottom, float marginLeft);
+    explicit PageLayout(Document* document);
 
-    void build();
+    void layout();
 
 private:
     void buildPageMargin(const Counters& counters, PageBox* pageBox, PageMarginType marginType);
     void buildPageMargins(const Counters& counters, PageBox* pageBox);
-
     Document* m_document;
-    PageSize m_pageSize;
-    float m_pageWidth;
-    float m_pageHeight;
-    float m_marginTop;
-    float m_marginRight;
-    float m_marginBottom;
-    float m_marginLeft;
 };
 
 } // namespace plutobook

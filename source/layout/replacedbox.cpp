@@ -274,7 +274,7 @@ float ReplacedBox::constrainReplacedHeight(float height) const
 float ReplacedBox::computeReplacedWidth() const
 {
     if(document()->isSVGImageDocument())
-        return document()->availableWidth();
+        return document()->containerWidth();
     if(auto width = computeReplacedWidthUsing(style()->width())) {
         return constrainReplacedWidth(*width);
     }
@@ -303,7 +303,7 @@ float ReplacedBox::computeReplacedWidth() const
 float ReplacedBox::computeReplacedHeight() const
 {
     if(document()->isSVGImageDocument())
-        return document()->availableHeight();
+        return document()->containerHeight();
     if(auto height = computeReplacedHeightUsing(style()->height())) {
         return constrainReplacedHeight(*height);
     }

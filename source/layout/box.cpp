@@ -590,7 +590,7 @@ Point BoxModel::relativePositionOffset() const
 float BoxModel::containingBlockWidthForPositioned(const BoxModel* container) const
 {
     if(container->isBoxView())
-        return document()->availableWidth();
+        return document()->containerWidth();
     auto rect = container->borderBoundingBox();
     if(rect.w > 0.f)
         return rect.w - container->borderLeft() - container->borderRight();
@@ -600,7 +600,7 @@ float BoxModel::containingBlockWidthForPositioned(const BoxModel* container) con
 float BoxModel::containingBlockHeightForPositioned(const BoxModel* container) const
 {
     if(isBoxView())
-        return document()->availableHeight();
+        return document()->containerHeight();
     auto rect = container->borderBoundingBox();
     if(rect.h > 0.f)
         return rect.h - container->borderTop() - container->borderBottom();

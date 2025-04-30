@@ -68,7 +68,7 @@ void BlockBox::layoutPositionedBoxes()
 std::optional<float> BlockBox::availableHeight() const
 {
     if(isBoxView())
-        return document()->availableHeight();
+        return document()->containerHeight();
     if(hasOverrideHeight())
         return overrideHeight() - borderAndPaddingHeight();
     if(isAnonymous())

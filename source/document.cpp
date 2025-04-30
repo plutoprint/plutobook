@@ -558,25 +558,14 @@ float Document::viewportHeight() const
     return 0.f;
 }
 
-float Document::availableWidth() const
+bool Document::setContainerSize(float containerWidth, float containerHeight)
 {
-    return m_pageContentWidth;
-}
-
-float Document::availableHeight() const
-{
-    return m_pageContentHeight;
-}
-
-bool Document::setContainerSize(const Size& containerSize)
-{
-    assert(isSVGImageDocument());
-    auto width = std::round(containerSize.w);
-    auto height = std::round(containerSize.h);
-    if(width == m_pageContentWidth && height == m_pageContentHeight)
+    auto width = std::round(containerWidth);
+    auto height = std::round(containerHeight);
+    if(width == m_containerWidth && height == m_containerHeight)
         return false;
-    m_pageContentWidth = width;
-    m_pageContentHeight = height;
+    m_containerWidth = width;
+    m_containerHeight = height;
     return true;
 }
 
@@ -981,8 +970,6 @@ void Document::build()
     buildBox(counters, nullptr);
 }
 
-constexpr auto kMinPageScaleFactor = 1.f / 100.f;
-
 void Document::layout()
 {
     if(m_book == nullptr) {
@@ -990,44 +977,7 @@ void Document::layout()
         return;
     }
 
-    auto pageStyle = document()->styleForPage(emptyGlo, 0, PseudoType::FirstPage);
-    auto pageSize = pageStyle->getPageSize(m_book->pageSize());
-    auto pageScale = pageStyle->pageScale();
-
-    auto pageWidth = pageSize.width() / units::px;
-    auto pageHeight = pageSize.height() / units::px;
-
-    auto marginLeftLength = pageStyle->marginLeft();
-    auto marginRightLength = pageStyle->marginRight();
-    auto marginTopLength = pageStyle->marginTop();
-    auto marginBottomLength = pageStyle->marginBottom();
-
-    const auto& deviceMargins = m_book->pageMargins();
-    auto marginTop = marginTopLength.isAuto() ? deviceMargins.top() / units::px : marginTopLength.calcMin(pageHeight);
-    auto marginRight = marginRightLength.isAuto() ? deviceMargins.right() / units::px : marginRightLength.calcMin(pageWidth);
-    auto marginBottom = marginBottomLength.isAuto() ? deviceMargins.bottom() / units::px : marginBottomLength.calcMin(pageHeight);
-    auto marginLeft = marginLeftLength.isAuto() ? deviceMargins.left() / units::px : marginLeftLength.calcMin(pageWidth);
-
-    auto pageContentWidth = pageWidth - marginLeft - marginRight;
-    auto pageContentHeight = pageHeight - marginTop - marginBottom;
-
-    m_pageContentScale = std::max(kMinPageScaleFactor, pageScale.value_or(1.f));
-    m_pageContentWidth = std::floor(pageContentWidth / m_pageContentScale);
-    m_pageContentHeight = std::floor(pageContentHeight / m_pageContentScale);
-    if(m_pageContentWidth <= 0.f || m_pageContentHeight <= 0.f) {
-        return;
-    }
-
-    box()->layout(this);
-
-    if(!pageScale.has_value() && m_pageContentWidth < document()->width()) {
-        m_pageContentScale = m_pageContentWidth / document()->width();
-        m_pageContentWidth = std::floor(m_pageContentWidth / m_pageContentScale);
-        m_pageContentHeight = std::floor(m_pageContentHeight / m_pageContentScale);
-        box()->layout(this);
-    }
-
-    PageBoxBuilder(this, pageSize, pageWidth, pageHeight, marginTop, marginRight, marginBottom, marginLeft).build();
+    PageLayout(this).layout();
 }
 
 void Document::render(GraphicsContext& context, const Rect& rect)
@@ -1059,21 +1009,21 @@ uint32_t Document::pageCount() const
 
 float Document::fragmentHeightForOffset(float offset) const
 {
-    return m_pageContentHeight;
+    return m_containerHeight;
 }
 
 float Document::fragmentRemainingHeightForOffset(float offset, FragmentBoundaryRule rule) const
 {
     offset += fragmentOffset();
-    auto remainingHeight = m_pageContentHeight - std::fmod(offset, m_pageContentHeight);
+    auto remainingHeight = m_containerHeight - std::fmod(offset, m_containerHeight);
     if(rule == AssociateWithFormerFragment)
-        remainingHeight = std::fmod(remainingHeight, m_pageContentHeight);
+        remainingHeight = std::fmod(remainingHeight, m_containerHeight);
     return remainingHeight;
 }
 
 Rect Document::pageContentRectAt(uint32_t pageIndex) const
 {
-    return Rect(0, pageIndex * m_pageContentHeight, m_pageContentWidth, m_pageContentHeight);
+    return Rect(0, pageIndex * m_containerHeight, m_containerHeight, m_containerHeight);
 }
 
 template<typename ResourceType>
