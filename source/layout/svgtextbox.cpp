@@ -5,13 +5,13 @@ namespace plutobook {
 SVGInlineTextBox::SVGInlineTextBox(TextNode* node, const RefPtr<BoxStyle>& style)
     : Box(node, style)
 {
-    setInline(true);
+    setIsInline(true);
 }
 
 SVGTSpanBox::SVGTSpanBox(SVGTSpanElement* element, const RefPtr<BoxStyle>& style)
     : Box(element, style)
 {
-    setInline(true);
+    setIsInline(true);
 }
 
 void SVGTSpanBox::build()

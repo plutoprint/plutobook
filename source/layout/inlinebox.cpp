@@ -8,7 +8,7 @@ InlineBox::InlineBox(Node* node, const RefPtr<BoxStyle>& style)
     : BoxModel(node, style)
     , m_lines(style->heap())
 {
-    setInline(true);
+    setIsInline(true);
 }
 
 InlineBox::~InlineBox() = default;
@@ -103,8 +103,8 @@ void InlineBox::addChild(Box* newChild)
         postBlock = createAnonymousBlock(container->style());
 
         container->moveChildrenTo(preBlock);
-        preBlock->setChildrenInline(container->isChildrenInline());
-        container->setChildrenInline(false);
+        preBlock->setIsChildrenInline(container->isChildrenInline());
+        container->setIsChildrenInline(false);
 
         container->appendChild(preBlock);
         container->appendChild(middleBlock);

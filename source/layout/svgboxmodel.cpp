@@ -72,7 +72,7 @@ void SVGPaintServer::applyPaint(const SVGRenderState& state) const
 SVGBoxModel::SVGBoxModel(SVGElement* element, const RefPtr<BoxStyle>& style)
     : Box(element, style)
 {
-    setInline(false);
+    setIsInline(false);
 }
 
 void SVGBoxModel::layout()

@@ -47,8 +47,12 @@ void BoxView::build()
         m_backgroundStyle = bodyStyle;
     }
 
-    if(m_backgroundStyle)
-        m_backgroundStyle->node()->box()->setHasRootBackground(true);
+    if(m_backgroundStyle) {
+        auto node = m_backgroundStyle->node();
+        assert(node && node->box());
+        node->box()->setIsBackgroundStolen(true);
+    }
+
     BlockFlowBox::build();
 }
 

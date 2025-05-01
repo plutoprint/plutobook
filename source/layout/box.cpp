@@ -179,7 +179,7 @@ Box* Box::create(Node* node, const RefPtr<BoxStyle>& style)
 Box* Box::createAnonymous(Display display, const BoxStyle* parentStyle)
 {
     auto newBox = create(nullptr, BoxStyle::create(*parentStyle, display));
-    newBox->setAnonymous(true);
+    newBox->setIsAnonymous(true);
     return newBox;
 }
 
@@ -187,7 +187,7 @@ BlockFlowBox* Box::createAnonymousBlock(const BoxStyle* parentStyle)
 {
     auto newStyle = BoxStyle::create(*parentStyle, Display::Block);
     auto newBlock = new (newStyle->heap()) BlockFlowBox(nullptr, newStyle);
-    newBlock->setAnonymous(true);
+    newBlock->setIsAnonymous(true);
     return newBlock;
 }
 
@@ -320,7 +320,7 @@ void Box::build()
 BoxModel::BoxModel(Node* node, const RefPtr<BoxStyle>& style)
     : Box(node, style)
 {
-    setInline(style->isDisplayInlineType());
+    setIsInline(style->isDisplayInlineType());
 }
 
 BoxModel::~BoxModel() = default;
@@ -525,7 +525,7 @@ void BoxModel::paintBackground(const PaintInfo& info, const Rect& borderRect, co
 
 void BoxModel::paintBackground(const PaintInfo& info, const Rect& borderRect) const
 {
-    if(!hasRootBackground()) {
+    if(!isBackgroundStolen()) {
         paintBackground(info, borderRect, *style());
     }
 }
@@ -718,20 +718,20 @@ BoxFrame::BoxFrame(Node* node, const RefPtr<BoxStyle>& style)
     switch(style->position()) {
     case Position::Static:
     case Position::Relative:
-        setPositioned(false);
+        setIsPositioned(false);
         break;
     default:
-        setPositioned(true);
+        setIsPositioned(true);
         break;
     }
 
-    setOverflowHidden(style->isOverflowHidden());
+    setIsOverflowHidden(style->isOverflowHidden());
     switch(style->floating()) {
     case Float::None:
-        setFloating(false);
+        setIsFloating(false);
         break;
     default:
-        setFloating(true);
+        setIsFloating(true);
         break;
     }
 }

@@ -8,7 +8,7 @@ TextBox::TextBox(Node* node, const RefPtr<BoxStyle>& style)
     : Box(node, style)
     , m_lines(style->heap())
 {
-    setInline(true);
+    setIsInline(true);
 }
 
 void TextBox::appendText(const std::string_view& text)

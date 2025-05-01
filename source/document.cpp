@@ -105,7 +105,7 @@ bool TextNode::isHidden(const Box* parent) const
     if(parent->style()->preserveNewline())
         return false;
     if(auto prevBox = previousSiblingBox())
-        return !prevBox->isInline() || prevBox->isLineBreakBox();;
+        return !prevBox->isInline() || prevBox->isLineBreakBox();
     return !parent->isInlineBox();
 }
 

@@ -8,7 +8,7 @@ namespace plutobook {
 SVGResourceMarkerBox::SVGResourceMarkerBox(SVGMarkerElement* element, const RefPtr<BoxStyle>& style)
     : SVGResourceContainerBox(element, style)
 {
-    setOverflowHidden(style->isOverflowHidden());
+    setIsOverflowHidden(style->isOverflowHidden());
 }
 
 Point SVGResourceMarkerBox::refPoint() const

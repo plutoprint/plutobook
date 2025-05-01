@@ -141,34 +141,34 @@ public:
     virtual bool isSVGResourceLinearGradientBox() const { return false; }
     virtual bool isSVGResourceRadialGradientBox() const { return false; }
 
-    bool isAnonymous() const { return m_anonymous; }
-    bool isAnonymousBlock() const { return m_anonymous && m_style->display() == Display::Block && m_style->pseudoType() == PseudoType::None; }
-    bool isChildrenInline() const { return m_childrenInline; }
-    bool isInline() const { return m_inline; }
-    bool isFloating() const { return m_floating; }
-    bool isPositioned() const { return m_positioned; }
+    bool isAnonymous() const { return m_isAnonymous; }
+    bool isAnonymousBlock() const { return m_isAnonymous && m_style->display() == Display::Block && m_style->pseudoType() == PseudoType::None; }
+    bool isChildrenInline() const { return m_isChildrenInline; }
+    bool isInline() const { return m_isInline; }
+    bool isFloating() const { return m_isFloating; }
+    bool isPositioned() const { return m_isPositioned; }
     bool isRelPositioned() const { return m_style->position() == Position::Relative; }
-    bool isFloatingOrPositioned() const { return m_floating || m_positioned; }
-    bool isReplaced() const { return m_replaced; }
-    bool isOverflowHidden() const { return m_overflowHidden; }
+    bool isFloatingOrPositioned() const { return m_isFloating || m_isPositioned; }
+    bool isReplaced() const { return m_isReplaced; }
+    bool isOverflowHidden() const { return m_isOverflowHidden; }
+    bool isBackgroundStolen() const { return m_isBackgroundStolen; }
+
+    void setIsAnonymous(bool value) { m_isAnonymous = value; }
+    void setIsChildrenInline(bool value) { m_isChildrenInline = value; }
+    void setIsInline(bool value) { m_isInline = value; }
+    void setIsFloating(bool value) { m_isFloating = value; }
+    void setIsPositioned(bool value) { m_isPositioned = value; }
+    void setIsReplaced(bool value) { m_isReplaced = value; }
+    void setIsOverflowHidden(bool value) { m_isOverflowHidden = value; }
+    void setIsBackgroundStolen(bool value) { m_isBackgroundStolen = value; }
 
     bool hasColumnFlowBox() const { return m_hasColumnFlowBox; }
     bool hasColumnSpanBox() const { return m_hasColumnSpanBox; }
-    bool hasRootBackground() const { return m_hasRootBackground; }
     bool hasTransform() const { return m_hasTransform; }
     bool hasLayer() const { return m_hasLayer; }
 
-    void setAnonymous(bool value) { m_anonymous = value; }
-    void setChildrenInline(bool value) { m_childrenInline = value; }
-    void setInline(bool value) { m_inline = value; }
-    void setFloating(bool value) { m_floating = value; }
-    void setPositioned(bool value) { m_positioned = value; }
-    void setReplaced(bool value) { m_replaced = value; }
-    void setOverflowHidden(bool value) { m_overflowHidden = value; }
-
     void setHasColumnFlowBox(bool value) { m_hasColumnFlowBox = value; }
     void setHasColumnSpanBox(bool value) { m_hasColumnSpanBox = value; }
-    void setHasRootBackground(bool value) { m_hasRootBackground = value; }
     void setHasTransform(bool value) { m_hasTransform = value; }
     void setHasLayer(bool value) { m_hasLayer = value; }
 
@@ -194,16 +194,16 @@ private:
     Box* m_prevSibling{nullptr};
     Box* m_firstChild{nullptr};
     Box* m_lastChild{nullptr};
-    bool m_anonymous : 1 {false};
-    bool m_childrenInline : 1 {false};
-    bool m_inline : 1 {false};
-    bool m_floating : 1 {false};
-    bool m_positioned : 1 {false};
-    bool m_replaced : 1 {false};
-    bool m_overflowHidden : 1 {false};
+    bool m_isAnonymous : 1 {false};
+    bool m_isChildrenInline : 1 {false};
+    bool m_isInline : 1 {false};
+    bool m_isFloating : 1 {false};
+    bool m_isPositioned : 1 {false};
+    bool m_isReplaced : 1 {false};
+    bool m_isOverflowHidden : 1 {false};
+    bool m_isBackgroundStolen : 1 {false};
     bool m_hasColumnFlowBox : 1 {false};
     bool m_hasColumnSpanBox : 1 {false};
-    bool m_hasRootBackground : 1 {false};
     bool m_hasTransform : 1 {false};
     bool m_hasLayer : 1 {false};
 };

@@ -108,7 +108,7 @@ void SVGTransformableContainerBox::layout()
 SVGViewportContainerBox::SVGViewportContainerBox(SVGSVGElement* element, const RefPtr<BoxStyle>& style)
     : SVGContainerBox(element, style)
 {
-    setOverflowHidden(style->isOverflowHidden());
+    setIsOverflowHidden(style->isOverflowHidden());
 }
 
 void SVGViewportContainerBox::render(const SVGRenderState& state) const

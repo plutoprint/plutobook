@@ -380,7 +380,7 @@ PageBox::PageBox(const RefPtr<BoxStyle>& style, const GlobalString& pageName, ui
     , m_pageHeight(pageHeight)
     , m_pageScale(pageScale)
 {
-    setHasRootBackground(true);
+    setIsBackgroundStolen(true);
 }
 
 PageMarginBox::PageMarginBox(const RefPtr<BoxStyle>& style, PageMarginType marginType)

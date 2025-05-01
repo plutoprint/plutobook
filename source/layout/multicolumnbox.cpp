@@ -14,7 +14,7 @@ MultiColumnRowBox* MultiColumnRowBox::create(MultiColumnFlowBox* columnFlow, con
 {
     auto newStyle = BoxStyle::create(*parentStyle, Display::Block);
     auto newRow = new (newStyle->heap()) MultiColumnRowBox(columnFlow, newStyle);
-    newRow->setAnonymous(true);
+    newRow->setIsAnonymous(true);
     return newRow;
 }
 
@@ -304,7 +304,7 @@ MultiColumnSpanBox* MultiColumnSpanBox::create(BoxFrame* box, const BoxStyle* pa
 {
     auto newStyle = BoxStyle::create(*parentStyle, Display::Block);
     auto newSpanner = new (newStyle->heap()) MultiColumnSpanBox(box, newStyle);
-    newSpanner->setAnonymous(true);
+    newSpanner->setIsAnonymous(true);
     return newSpanner;
 }
 
@@ -363,7 +363,7 @@ MultiColumnFlowBox* MultiColumnFlowBox::create(const BoxStyle* parentStyle)
 {
     auto newStyle = BoxStyle::create(*parentStyle, Display::Block);
     auto newColumn = new (newStyle->heap()) MultiColumnFlowBox(newStyle);
-    newColumn->setAnonymous(true);
+    newColumn->setIsAnonymous(true);
     return newColumn;
 }
 

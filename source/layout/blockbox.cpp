@@ -10,7 +10,7 @@ namespace plutobook {
 BlockBox::BlockBox(Node* node, const RefPtr<BoxStyle>& style)
     : BoxFrame(node, style)
 {
-    setReplaced(style->isDisplayInlineType());
+    setIsReplaced(style->isDisplayInlineType());
 }
 
 void BlockBox::computePreferredWidths(float& minPreferredWidth, float& maxPreferredWidth) const
@@ -548,7 +548,7 @@ void BlockBox::paint(const PaintInfo& info, const Point& offset, PaintPhase phas
 BlockFlowBox::BlockFlowBox(Node* node, const RefPtr<BoxStyle>& style)
     : BlockBox(node, style)
 {
-    setChildrenInline(true);
+    setIsChildrenInline(true);
 }
 
 BlockFlowBox::~BlockFlowBox() = default;
@@ -571,7 +571,7 @@ void BlockFlowBox::addChild(Box* newChild)
             break;
         }
 
-        setChildrenInline(false);
+        setIsChildrenInline(false);
     } else if(!isChildrenInline() && (newChild->isInline() || newChild->isFloatingOrPositioned())) {
         auto lastBlock = lastChild();
         if(lastBlock && lastBlock->isAnonymousBlock()) {
@@ -1594,15 +1594,15 @@ void BlockFlowBox::build()
     while(child && child->isFloatingOrPositioned())
         child = child->nextSibling();
     if(child == nullptr)
-        setChildrenInline(false);
+        setIsChildrenInline(false);
     if(child == nullptr)
-        setChildrenInline(false);
+        setIsChildrenInline(false);
     if(child && style()->hasColumns()) {
         auto columnFlowBox = MultiColumnFlowBox::create(style());
         moveChildrenTo(columnFlowBox);
         appendChild(columnFlowBox);
-        columnFlowBox->setChildrenInline(isChildrenInline());
-        setChildrenInline(false);
+        columnFlowBox->setIsChildrenInline(isChildrenInline());
+        setIsChildrenInline(false);
         setHasColumnFlowBox(true);
         m_columnFlowBox = columnFlowBox;
     }

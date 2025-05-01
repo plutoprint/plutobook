@@ -8,7 +8,7 @@ namespace plutobook {
 ReplacedBox::ReplacedBox(Node* node, const RefPtr<BoxStyle>& style)
     : BoxFrame(node, style)
 {
-    setReplaced(true);
+    setIsReplaced(true);
 }
 
 void ReplacedBox::computeAspectRatioInformation(float& intrinsicWidth, float& intrinsicHeight, double& intrinsicRatio) const
