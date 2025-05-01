@@ -21,11 +21,6 @@ PageSize PageBox::pageSize() const
     return PageSize(m_pageWidth * units::px, m_pageHeight * units::px);
 }
 
-void PageBox::updateOverflowRect()
-{
-    BlockBox::updateOverflowRect();
-}
-
 void PageBox::computeIntrinsicWidths(float& minWidth, float& maxWidth) const
 {
     assert(false);
@@ -502,9 +497,9 @@ void PageMarginBox::updateAutoMargins(const Size& availableSize)
         else
             autoMarginOffset += availableSpace;
         if(marginTopLength.isAuto())
-            setMarginTop(autoMarginOffset + marginTop());
+            setMarginTop(autoMarginOffset);
         if(marginBottomLength.isAuto()) {
-            setMarginBottom(autoMarginOffset + marginBottom());
+            setMarginBottom(autoMarginOffset);
         }
 
         auto additionalSpace = availableSize.h - marginBoxHeight();
@@ -534,9 +529,9 @@ void PageMarginBox::updateAutoMargins(const Size& availableSize)
         else
             autoMarginOffset += availableSpace;
         if(marginLeftLength.isAuto())
-            setMarginLeft(autoMarginOffset + marginLeft());
+            setMarginLeft(autoMarginOffset);
         if(marginRightLength.isAuto()) {
-            setMarginRight(autoMarginOffset + marginRight());
+            setMarginRight(autoMarginOffset);
         }
 
         auto additionalSpace = availableSize.w - marginBoxWidth();
@@ -670,8 +665,8 @@ void PageLayout::layout()
     auto marginBottom = marginBottomLength.isAuto() ? deviceMargins.bottom() / units::px : marginBottomLength.calcMin(pageHeight);
     auto marginLeft = marginLeftLength.isAuto() ? deviceMargins.left() / units::px : marginLeftLength.calcMin(pageWidth);
 
-    auto width = pageWidth - marginLeft - marginRight;
-    auto height = pageHeight - marginTop - marginBottom;
+    auto width = std::max(0.f, pageWidth - marginLeft - marginRight);
+    auto height = std::max(0.f, pageHeight - marginTop - marginBottom);
 
     auto pageScaleFactor = std::max(kMinPageScaleFactor, pageScale.value_or(1.f));
     if(m_document->setContainerSize(width / pageScaleFactor, height / pageScaleFactor)) {

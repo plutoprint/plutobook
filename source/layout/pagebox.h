@@ -24,7 +24,6 @@ public:
     PageMarginBox* firstMarginBox() const;
     PageMarginBox* lastMarginBox() const;
 
-    void updateOverflowRect() final;
     void computeIntrinsicWidths(float& minWidth, float& maxWidth) const final;
     void computeWidth(float& x, float& width, float& marginLeft, float& marginRight) const final;
     void computeHeight(float& y, float& height, float& marginTop, float& marginBottom) const final;
