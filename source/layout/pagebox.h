@@ -7,6 +7,7 @@
 namespace plutobook {
 
 class PageMarginBox;
+
 class PageBox final : public BlockBox {
 public:
     static std::unique_ptr<PageBox> create(const RefPtr<BoxStyle>& style, const GlobalString& pageName, uint32_t pageIndex, float pageWidth, float pageHeight, float pageScale);
@@ -14,12 +15,16 @@ public:
     bool isPageBox() const final { return true; }
     bool requiresLayer() const final { return true; }
 
+    Rect borderBoundingBox() const final;
+
     const GlobalString& pageName() const { return m_pageName; }
     uint32_t pageIndex() const { return m_pageIndex; }
     float pageWidth() const { return m_pageWidth; }
     float pageHeight() const { return m_pageHeight; }
     float pageScale() const { return m_pageScale; }
+
     PageSize pageSize() const;
+    Rect pageRect() const;
 
     PageMarginBox* firstMarginBox() const;
     PageMarginBox* lastMarginBox() const;
@@ -46,6 +51,16 @@ private:
     float m_pageHeight;
     float m_pageScale;
 };
+
+inline Rect PageBox::borderBoundingBox() const
+{
+    return pageRect();
+}
+
+inline Rect PageBox::pageRect() const
+{
+    return Rect(0, 0, m_pageWidth, m_pageHeight);
+}
 
 template<>
 struct is_a<PageBox> {

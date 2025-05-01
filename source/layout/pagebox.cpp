@@ -88,7 +88,7 @@ void PageBox::layout(FragmentBuilder* fragmentainer)
     layoutEdgePageMargins(margins[PageMarginType::LeftTop], margins[PageMarginType::LeftMiddle], margins[PageMarginType::LeftBottom], leftEdgeRect, BoxSideLeft);
 
     updateOverflowRect();
-    updateLayerPositions();
+    updateLayerPosition();
 }
 
 void PageBox::layoutCornerPageMargin(PageMarginBox* cornerBox, const Rect& cornerRect)
@@ -302,6 +302,8 @@ static void resolveTwoEdgePageMarginLengths(const std::array<PreferredSizeInfo, 
 
 void PageBox::layoutEdgePageMargins(PageMarginBox* edgeStartBox, PageMarginBox* edgeCenterBox, PageMarginBox* edgeEndBox, const Rect& edgeRect, BoxSide edgeSide)
 {
+    if(edgeStartBox == nullptr && edgeCenterBox == nullptr && edgeEndBox == nullptr)
+        return;
     auto availableMainAxisSize = isHorizontalEdge(edgeSide) ? edgeRect.w : edgeRect.h;
     std::array<PreferredSizeInfo, 3> preferredMainAxisSizes = {
         computeEdgePreferredSize(edgeStartBox, edgeRect, edgeSide),
@@ -354,8 +356,7 @@ void PageBox::layoutEdgePageMargins(PageMarginBox* edgeStartBox, PageMarginBox* 
 
 void PageBox::paintRootBackground(const PaintInfo& info) const
 {
-    Rect backgroundRect(0, 0, m_pageWidth, m_pageHeight);
-    paintBackground(info, backgroundRect, *style());
+    paintBackground(info, pageRect(), *style());
 }
 
 void PageBox::paintContents(const PaintInfo& info, const Point& offset, PaintPhase phase)

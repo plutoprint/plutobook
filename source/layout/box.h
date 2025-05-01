@@ -233,7 +233,7 @@ public:
     BoxLayer* layer() const { return m_layer.get(); }
 
     void paintLayer(GraphicsContext& context, const Rect& rect);
-    void updateLayerPositions();
+    void updateLayerPosition();
 
     Point relativePositionOffset() const;
 
@@ -557,7 +557,7 @@ inline Rect BoxFrame::visualOverflowRect() const
 
 inline Rect BoxFrame::borderBoundingBox() const
 {
-    return borderBoxRect();
+    return Rect(m_x, m_y, m_width, m_height);
 }
 
 } // namespace plutobook

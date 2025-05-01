@@ -33,7 +33,7 @@ void BoxView::layout(FragmentBuilder* fragmentainer)
 {
     setWidth(document()->containerWidth());
     BlockFlowBox::layout(fragmentainer);
-    updateLayerPositions();
+    updateLayerPosition();
 }
 
 void BoxView::build()

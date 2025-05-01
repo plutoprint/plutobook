@@ -13,15 +13,13 @@ BoxLayer* BoxLayer::containingLayer() const
 {
     auto parentLayer = parent();
     if(m_box->style()->position() == Position::Fixed) {
-        while(parentLayer && !parentLayer->box()->isBoxView()) {
-            if(parentLayer->box()->hasTransform())
-                break;
+        while(parentLayer && !parentLayer->box()->isBoxView()
+            && !parentLayer->box()->hasTransform()) {
             parentLayer = parentLayer->parent();
         }
     } else if(m_box->style()->position() == Position::Absolute) {
-        while(parentLayer && parentLayer->box()->style()->position() == Position::Static) {
-            if(parentLayer->box()->hasTransform())
-                break;
+        while(parentLayer && parentLayer->box()->style()->position() == Position::Static
+            && !parentLayer->box()->hasTransform()) {
             parentLayer = parentLayer->parent();
         }
     }
@@ -29,14 +27,9 @@ BoxLayer* BoxLayer::containingLayer() const
     return parentLayer;
 }
 
-void BoxLayer::layout()
+void BoxLayer::updatePosition()
 {
     m_borderRect = m_box->borderBoundingBox();
-    if(m_box->isBoxFrame() && !m_box->isPageMarginBox()) {
-        const auto& box = to<BoxFrame>(*m_box);
-        m_borderRect.move(box.location());
-    }
-
     if(!m_box->isPositioned() && !m_box->hasColumnSpanBox()) {
         auto parent = m_box->parentBox();
         while(parent && !parent->hasLayer()) {
@@ -59,7 +52,7 @@ void BoxLayer::layout()
     std::stable_sort(m_children.begin(), m_children.end(), compare_func);
     m_overflowRect = m_box->visualOverflowRect();
     for(auto child : m_children) {
-        child->layout();
+        child->updatePosition();
         if(!m_box->isOverflowHidden() && !child->box()->isMultiColumnFlowBox()) {
             auto overflowRect = child->transform().mapRect(child->overflowRect());
             overflowRect.move(child->location());
@@ -160,7 +153,7 @@ void BoxLayer::paintLayerContents(BoxLayer* rootLayer, GraphicsContext& context,
     }
 
     Point adjustedOffset(offset);
-    if(m_box->isBoxFrame() && !m_box->isPageBox() && !m_box->isPageMarginBox()) {
+    if(m_box->isBoxFrame() && !m_box->isPageBox()) {
         const auto& box = to<BoxFrame>(*m_box);
         adjustedOffset.move(-box.location());
     }
