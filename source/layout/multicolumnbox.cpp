@@ -537,10 +537,11 @@ void MultiColumnFlowBox::build()
     auto child = firstChild();
     while(child) {
         if(auto box = to<BoxFrame>(child); isValidColumnSpanBox(box)) {
-            auto& container = to<BlockFlowBox>(*child->parentBox());
-            auto newSpanner = MultiColumnSpanBox::create(box, container.style());
-            container.insertChild(newSpanner, child->nextSibling());
-            container.removeChild(child);
+            auto container = to<BlockFlowBox>(child->parentBox());
+            assert(container && !container->isChildrenInline());
+            auto newSpanner = MultiColumnSpanBox::create(box, container->style());
+            container->insertChild(newSpanner, child->nextSibling());
+            container->removeChild(child);
             columnBlock->addChild(child);
             if(currentColumnRow)
                 currentColumnRow->setIsFillBalance(true);
