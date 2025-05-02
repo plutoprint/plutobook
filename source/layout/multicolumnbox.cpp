@@ -308,49 +308,20 @@ MultiColumnSpanBox* MultiColumnSpanBox::create(BoxFrame* box, const BoxStyle* pa
     return newSpanner;
 }
 
-void MultiColumnSpanBox::updateOverflowRect()
-{
-    BoxFrame::updateOverflowRect();
-    addOverflowRect(m_box->visualOverflowRect());
-}
-
-void MultiColumnSpanBox::computePreferredWidths(float& minPreferredWidth, float& maxPreferredWidth) const
-{
-    m_box->updateHorizontalPaddings(nullptr);
-
-    minPreferredWidth = m_box->minPreferredWidth();
-    maxPreferredWidth = m_box->maxPreferredWidth();
-}
-
 void MultiColumnSpanBox::computeWidth(float& x, float& width, float& marginLeft, float& marginRight) const
 {
-    width = m_box->width();
-    marginLeft = m_box->marginLeft();
-    marginRight = m_box->marginRight();
 }
 
 void MultiColumnSpanBox::computeHeight(float& y, float& height, float& marginTop, float& marginBottom) const
 {
-    height = m_box->height();
-    marginTop = m_box->marginTop();
-    marginBottom = m_box->marginBottom();
 }
 
 void MultiColumnSpanBox::layout(FragmentBuilder* fragmentainer)
 {
-    m_box->updatePaddingWidths(columnFlowBox());
-    m_box->layout(fragmentainer);
-
-    updateWidth();
-    updateHeight();
-    updateOverflowRect();
 }
 
 void MultiColumnSpanBox::paint(const PaintInfo& info, const Point& offset, PaintPhase phase)
 {
-    if(!m_box->hasLayer()) {
-        m_box->paint(info, offset, phase);
-    }
 }
 
 MultiColumnSpanBox::MultiColumnSpanBox(BoxFrame* box, const RefPtr<BoxStyle>& style)
@@ -436,22 +407,16 @@ void MultiColumnFlowBox::updateMinimumFragmentHeight(float offset, float minHeig
     }
 }
 
-void MultiColumnFlowBox::skipColumnSpanBox(BoxFrame* box, float offset)
+void MultiColumnFlowBox::skipColumnSpanBox(MultiColumnSpanBox* spanner, float offset)
 {
     offset += fragmentOffset();
-    auto columnSpanBox = box->columnSpanBox();
-    assert(columnSpanBox && box->hasColumnSpanBox());
-    auto prevColumnBox = columnSpanBox->prevMultiColumnBox();
-    if(prevColumnBox && prevColumnBox->isMultiColumnRowBox()) {
-        auto columnRow = to<MultiColumnRowBox>(prevColumnBox);
+    if(auto columnRow = spanner->prevColumnRowBox()) {
         if(offset < columnRow->rowTop())
             offset = columnRow->rowTop();
         columnRow->setRowBottom(offset);
     }
 
-    auto nextColumnBox = columnSpanBox->nextMultiColumnBox();
-    if(nextColumnBox && nextColumnBox->isMultiColumnRowBox()) {
-        auto columnRow = to<MultiColumnRowBox>(nextColumnBox);
+    if(auto columnRow = spanner->nextColumnRowBox()) {
         columnRow->setRowTop(offset);
         m_currentRow = columnRow;
     }
@@ -565,15 +530,16 @@ void MultiColumnFlowBox::build()
 
     auto child = firstChild();
     while(child) {
-        auto box = to<BoxFrame>(child);
-        if(isValidColumnSpanBox(box)) {
-            auto newSpanner = MultiColumnSpanBox::create(box, columnStyle);
-            columnBlock->addChild(newSpanner);
-            box->setColumnSpanBox(newSpanner);
-            box->setHasColumnSpanBox(true);
+        if(auto box = to<BoxFrame>(child); isValidColumnSpanBox(box)) {
+            auto& container = to<BlockFlowBox>(*child->parentBox());
+            auto newSpanner = MultiColumnSpanBox::create(box, container.style());
+            container.insertChild(newSpanner, child->nextSibling());
+            container.removeChild(child);
+            columnBlock->addChild(child);
             if(currentColumnRow)
                 currentColumnRow->setIsFillBalance(true);
             currentColumnRow = nullptr;
+            child = newSpanner;
         } else if(!child->isFloatingOrPositioned()) {
             if(currentColumnRow == nullptr) {
                 auto newRow = MultiColumnRowBox::create(this, columnStyle);
@@ -582,8 +548,8 @@ void MultiColumnFlowBox::build()
                 currentColumnRow = newRow;
             }
 
-            if(child->firstChild() && !child->isInline() && !child->isFlexibleBox()
-                && !child->isTableBox() && !child->style()->hasColumns()) {
+            if(child->firstChild() && child->isBlockFlowBox() && !child->isChildrenInline()
+                && !child->style()->hasColumns()) {
                 child = child->firstChild();
                 continue;
             }

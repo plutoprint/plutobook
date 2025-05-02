@@ -163,12 +163,10 @@ public:
     void setIsBackgroundStolen(bool value) { m_isBackgroundStolen = value; }
 
     bool hasColumnFlowBox() const { return m_hasColumnFlowBox; }
-    bool hasColumnSpanBox() const { return m_hasColumnSpanBox; }
     bool hasTransform() const { return m_hasTransform; }
     bool hasLayer() const { return m_hasLayer; }
 
     void setHasColumnFlowBox(bool value) { m_hasColumnFlowBox = value; }
-    void setHasColumnSpanBox(bool value) { m_hasColumnSpanBox = value; }
     void setHasTransform(bool value) { m_hasTransform = value; }
     void setHasLayer(bool value) { m_hasLayer = value; }
 
@@ -203,7 +201,6 @@ private:
     bool m_isOverflowHidden : 1 {false};
     bool m_isBackgroundStolen : 1 {false};
     bool m_hasColumnFlowBox : 1 {false};
-    bool m_hasColumnSpanBox : 1 {false};
     bool m_hasTransform : 1 {false};
     bool m_hasLayer : 1 {false};
 };
@@ -368,14 +365,8 @@ public:
     BoxFrame* firstBoxFrame() const;
     BoxFrame* lastBoxFrame() const;
 
-    BoxFrame* nextMultiColumnBox() const;
-    BoxFrame* prevMultiColumnBox() const;
-
     ReplacedLineBox* line() const { return m_line.get(); }
     void setLine(std::unique_ptr<ReplacedLineBox> line);
-
-    MultiColumnSpanBox* columnSpanBox() const { return m_columnSpanBox; }
-    void setColumnSpanBox(MultiColumnSpanBox* box) { m_columnSpanBox = box; }
 
     float x() const { return m_x; }
     float y() const { return m_y; }
@@ -484,7 +475,6 @@ public:
 
 private:
     std::unique_ptr<ReplacedLineBox> m_line;
-    MultiColumnSpanBox* m_columnSpanBox{nullptr};
 
     float m_x{0};
     float m_y{0};
@@ -531,21 +521,6 @@ inline BoxFrame* BoxFrame::firstBoxFrame() const
 inline BoxFrame* BoxFrame::lastBoxFrame() const
 {
     return static_cast<BoxFrame*>(lastChild());
-}
-
-inline BoxFrame* BoxFrame::nextMultiColumnBox() const
-{
-    assert(isMultiColumnRowBox() || isMultiColumnSpanBox());
-    return nextBoxFrame();
-}
-
-inline BoxFrame* BoxFrame::prevMultiColumnBox() const
-{
-    assert(isMultiColumnRowBox() || isMultiColumnSpanBox());
-    auto box = prevBoxFrame();
-    if(box && !box->isMultiColumnFlowBox())
-        return box;
-    return nullptr;
 }
 
 inline Rect BoxFrame::visualOverflowRect() const

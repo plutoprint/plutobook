@@ -522,7 +522,7 @@ std::optional<float> BlockBox::inlineBlockBaseline() const
 void BlockBox::paintContents(const PaintInfo& info, const Point& offset, PaintPhase phase)
 {
     for(auto child = firstBoxFrame(); child; child = child->nextBoxFrame()) {
-        if(!child->isFloating() && !child->hasLayer() && !child->hasColumnSpanBox()) {
+        if(!child->isFloating() && !child->hasLayer()) {
             child->paint(info, offset, phase);
         }
     }
@@ -556,7 +556,7 @@ BlockFlowBox::~BlockFlowBox() = default;
 bool BlockFlowBox::avoidsFloats() const
 {
     return isInline() || isFloating() || isPositioned() || isOverflowHidden()
-        || hasColumnFlowBox() || hasColumnSpanBox() || isRootBox() || isFlexItem();
+        || hasColumnFlowBox() || isRootBox() || isFlexItem();
 }
 
 void BlockFlowBox::addChild(Box* newChild)
@@ -617,7 +617,7 @@ void BlockFlowBox::updateOverflowRect()
     }
 
     for(auto child = firstBoxFrame(); child; child = child->nextBoxFrame()) {
-        if(!child->isFloatingOrPositioned() && !child->hasColumnSpanBox()) {
+        if(!child->isFloatingOrPositioned()) {
             addOverflowRect(child, child->x(), child->y());
         }
     }
@@ -634,7 +634,7 @@ void BlockFlowBox::computeIntrinsicWidths(float& minWidth, float& maxWidth) cons
     float floatRightWidth = 0;
     const auto nowrap = style()->whiteSpace() == WhiteSpace::Nowrap;
     for(auto child = firstBoxFrame(); child; child = child->nextBoxFrame()) {
-        if(child->isPositioned() || child->hasColumnSpanBox())
+        if(child->isPositioned())
             continue;
         auto childStyle = child->style();
         if(child->isFloating() || child->avoidsFloats()) {
@@ -1357,7 +1357,7 @@ void BlockFlowBox::estimateMarginTop(BoxFrame* child, float& positiveMarginTop, 
 
     auto grandChild = childBlock->firstBoxFrame();
     for(; grandChild; grandChild = grandChild->nextBoxFrame()) {
-        if(!grandChild->isFloatingOrPositioned() && !grandChild->hasColumnSpanBox()) {
+        if(!grandChild->isFloatingOrPositioned()) {
             break;
         }
     }
@@ -1508,14 +1508,9 @@ void BlockFlowBox::layoutBlockChild(BoxFrame* child, FragmentBuilder* fragmentai
         }
     }
 
+    determineHorizontalPosition(child);
     if(marginInfo.atTopOfBlock() && !child->isSelfCollapsingBlock()) {
         marginInfo.setAtTopOfBlock(false);
-    }
-
-    determineHorizontalPosition(child);
-    if(auto spanner = to<MultiColumnSpanBox>(child)) {
-        spanner->box()->setX(child->x());
-        spanner->box()->setY(child->y());
     }
 
     setHeight(height() + child->height());
@@ -1544,9 +1539,10 @@ void BlockFlowBox::layoutBlockChildren(FragmentBuilder* fragmentainer)
         } else if(child->isFloating()) {
             insertFloatingBox(child);
             adjustFloatingBox(fragmentainer, marginInfo);
-        } else if(child->hasColumnSpanBox()) {
+        } else if(child->isMultiColumnSpanBox()) {
+            auto spanner = to<MultiColumnSpanBox>(child);
             setHeight(height() + marginInfo.margin());
-            child->columnSpanBox()->columnFlowBox()->skipColumnSpanBox(child, height());
+            spanner->columnFlowBox()->skipColumnSpanBox(spanner, height());
             marginInfo.clearMargin();
         } else if(child->isMultiColumnFlowBox()) {
             assert(child == m_columnFlowBox);
@@ -1593,8 +1589,6 @@ void BlockFlowBox::build()
     auto child = firstChild();
     while(child && child->isFloatingOrPositioned())
         child = child->nextSibling();
-    if(child == nullptr)
-        setIsChildrenInline(false);
     if(child == nullptr)
         setIsChildrenInline(false);
     if(child && style()->hasColumns()) {

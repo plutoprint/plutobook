@@ -30,7 +30,7 @@ BoxLayer* BoxLayer::containingLayer() const
 void BoxLayer::updatePosition()
 {
     m_borderRect = m_box->borderBoundingBox();
-    if(!m_box->isPositioned() && !m_box->hasColumnSpanBox()) {
+    if(!m_box->isPositioned()) {
         auto parent = m_box->parentBox();
         while(parent && !parent->hasLayer()) {
             if(auto box = to<BoxFrame>(parent))

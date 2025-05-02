@@ -3,7 +3,6 @@
 #include "flexiblebox.h"
 #include "listitembox.h"
 #include "tablebox.h"
-#include "multicolumnbox.h"
 #include "linebox.h"
 #include "borderpainter.h"
 #include "graphicscontext.h"
@@ -193,8 +192,6 @@ BlockFlowBox* Box::createAnonymousBlock(const BoxStyle* parentStyle)
 
 BlockBox* Box::containingBlock() const
 {
-    if(hasColumnSpanBox())
-        return to<BoxFrame>(*this).columnSpanBox()->containingBlock();
     auto parent = parentBox();
     if(style()->position() == Position::Static || style()->position() == Position::Relative || isTextBox()) {
         while(parent && !parent->isBlockBox())
@@ -227,8 +224,6 @@ BlockBox* Box::containingBlock() const
 
 BoxModel* Box::containingBox() const
 {
-    if(hasColumnSpanBox())
-        return to<BoxFrame>(*this).columnSpanBox()->containingBox();
     auto parent = parentBox();
     if(!isTextBox()) {
         if(style()->position() == Position::Fixed) {
@@ -251,12 +246,6 @@ BoxModel* Box::containingBox() const
 
 BoxLayer* Box::enclosingLayer() const
 {
-    if(hasColumnSpanBox()) {
-        auto container = containingBlock();
-        assert(container->hasLayer());
-        return container->layer();
-    }
-
     for(auto current = this; current; current = current->parentBox()) {
         if(current->hasLayer()) {
             return to<BoxModel>(*current).layer();
@@ -738,8 +727,7 @@ BoxFrame::BoxFrame(Node* node, const RefPtr<BoxStyle>& style)
 
 bool BoxFrame::requiresLayer() const
 {
-    return isPositioned() || isRelPositioned() || isOverflowHidden()
-        || hasTransform() || hasColumnFlowBox() || hasColumnSpanBox()
+    return isPositioned() || isRelPositioned() || isOverflowHidden() || hasTransform() || hasColumnFlowBox()
         || style()->hasOpacity() || style()->hasBlendMode() || style()->zIndex();
 }
 

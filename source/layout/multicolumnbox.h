@@ -113,12 +113,10 @@ public:
     bool isMultiColumnSpanBox() const final { return true; }
     bool requiresLayer() const final { return false; }
 
-    BoxFrame* box() const { return m_box; }
     MultiColumnFlowBox* columnFlowBox() const;
+    MultiColumnRowBox* nextColumnRowBox() const;
+    MultiColumnRowBox* prevColumnRowBox() const;
 
-    void updateOverflowRect() final;
-
-    void computePreferredWidths(float& minPreferredWidth, float& maxPreferredWidth) const final;
     void computeWidth(float& x, float& width, float& marginLeft, float& marginRight) const final;
     void computeHeight(float& y, float& height, float& marginTop, float& marginBottom) const final;
     void layout(FragmentBuilder* fragmentainer) final;
@@ -132,7 +130,19 @@ private:
 
 inline MultiColumnFlowBox* MultiColumnSpanBox::columnFlowBox() const
 {
-    return to<BlockFlowBox>(parentBox())->columnFlowBox();
+    auto parent = to<BlockFlowBox>(m_box->parentBox());
+    assert(parent && parent->hasColumnFlowBox());
+    return parent->columnFlowBox();
+}
+
+inline MultiColumnRowBox* MultiColumnSpanBox::nextColumnRowBox() const
+{
+    return to<MultiColumnRowBox>(m_box->nextSibling());
+}
+
+inline MultiColumnRowBox* MultiColumnSpanBox::prevColumnRowBox() const
+{
+    return to<MultiColumnRowBox>(m_box->prevSibling());
 }
 
 template<>
@@ -163,7 +173,7 @@ public:
     void setFragmentBreak(float offset, float spaceShortage) final;
     void updateMinimumFragmentHeight(float offset, float minHeight) final;
 
-    void skipColumnSpanBox(BoxFrame* box, float offset);
+    void skipColumnSpanBox(MultiColumnSpanBox* spanner, float offset);
 
     MultiColumnRowBox* columnRowAtOffset(float offset) const;
     BlockFlowBox* columnBlockFlowBox() const;
