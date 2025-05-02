@@ -339,7 +339,7 @@ void MultiColumnSpanBox::computeHeight(float& y, float& height, float& marginTop
 void MultiColumnSpanBox::layout(FragmentBuilder* fragmentainer)
 {
     m_box->updatePaddingWidths(columnFlowBox());
-    m_box->layout(nullptr);
+    m_box->layout(fragmentainer);
 
     updateWidth();
     updateHeight();
