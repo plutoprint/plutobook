@@ -35,9 +35,9 @@ public:
     const Rect& overflowRect() const { return m_overflowRect; }
 
     float overflowTop() const { return m_overflowRect.y; }
-    float overflowBottom() const { return m_overflowRect.y + m_overflowRect.h; }
+    float overflowBottom() const { return m_overflowRect.bottom(); }
     float overflowLeft() const { return m_overflowRect.x; }
-    float overflowRight() const { return m_overflowRect.x + m_overflowRect.w; }
+    float overflowRight() const { return m_overflowRect.right(); }
 
     Point location() const { return m_borderRect.origin(); }
     Size size() const { return m_borderRect.size(); }

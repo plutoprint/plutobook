@@ -1467,7 +1467,7 @@ float BlockFlowBox::adjustBlockChildInFragmentFlow(BoxFrame* child, FragmentBuil
         auto fragmentHeight = fragmentainer->fragmentHeightForOffset(newTop);
         if(fragmentHeight > 0.f) {
             auto remainingHeight = fragmentainer->fragmentRemainingHeightForOffset(newTop, AssociateWithLatterFragment);
-            if(remainingHeight < childHeight) {
+            if(childHeight > remainingHeight) {
                 fragmentainer->setFragmentBreak(newTop, childHeight - remainingHeight);
             } else if(isNearlyEqual(fragmentHeight, remainingHeight) && !isNearlyZero(top + fragmentainer->fragmentOffset())) {
                 fragmentainer->setFragmentBreak(newTop, childHeight);

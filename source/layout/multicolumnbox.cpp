@@ -35,8 +35,6 @@ MultiColumnRowBox::MultiColumnRowBox(MultiColumnFlowBox* columnFlow, const RefPt
 
 void MultiColumnRowBox::computePreferredWidths(float& minPreferredWidth, float& maxPreferredWidth) const
 {
-    m_columnFlowBox->updateHorizontalPaddings(nullptr);
-
     minPreferredWidth = m_columnFlowBox->minPreferredWidth();
     maxPreferredWidth = m_columnFlowBox->maxPreferredWidth();
 }
@@ -161,17 +159,18 @@ float MultiColumnRowBox::columnTopForOffset(float offset) const
 
 void MultiColumnRowBox::recordSpaceShortage(float spaceShortage)
 {
-    if(m_minSpaceShortage > 0.f && spaceShortage >= m_minSpaceShortage)
+    if(spaceShortage <= 0.f)
         return;
-    assert(spaceShortage > 0.f);
-    m_minSpaceShortage = spaceShortage;
+    if(m_minSpaceShortage > 0.f) {
+        m_minSpaceShortage = std::min(spaceShortage, m_minSpaceShortage);
+    } else {
+        m_minSpaceShortage = spaceShortage;
+    }
 }
 
 void MultiColumnRowBox::updateMinimumColumnHeight(float height)
 {
-    if(height > m_minimumColumnHeight) {
-        m_minimumColumnHeight = height;
-    }
+    m_minimumColumnHeight = std::max(height, m_minimumColumnHeight);
 }
 
 void MultiColumnRowBox::addContentRun(float endOffset)
@@ -183,13 +182,13 @@ void MultiColumnRowBox::addContentRun(float endOffset)
     }
 }
 
-void MultiColumnRowBox::resetColumnHeight(float columnHeight)
+void MultiColumnRowBox::resetColumnHeight(float availableColumnHeight)
 {
     m_runs.clear();
     m_minimumColumnHeight = 0.f;
-    m_maxColumnHeight = columnHeight;
-    if(!m_isFillBalance && columnHeight > 0.f) {
-        m_columnHeight = columnHeight;
+    m_maxColumnHeight = availableColumnHeight;
+    if(!m_isFillBalance && availableColumnHeight > 0.f) {
+        m_columnHeight = availableColumnHeight;
         m_requiresBalancing = false;
     } else {
         m_columnHeight = 0.f;
@@ -207,7 +206,7 @@ bool MultiColumnRowBox::recalculateColumnHeight(bool balancing)
     }
 
     m_columnHeight = constrainColumnHeight(m_columnHeight);
-    if(prevColumnHeight == m_columnHeight)
+    if(isNearlyEqual(prevColumnHeight, m_columnHeight))
         return false;
     m_minSpaceShortage = 0.f;
     m_runs.clear();
@@ -306,6 +305,12 @@ MultiColumnSpanBox* MultiColumnSpanBox::create(BoxFrame* box, const BoxStyle* pa
     auto newSpanner = new (newStyle->heap()) MultiColumnSpanBox(box, newStyle);
     newSpanner->setIsAnonymous(true);
     return newSpanner;
+}
+
+void MultiColumnSpanBox::computePreferredWidths(float& minPreferredWidth, float& maxPreferredWidth) const
+{
+    minPreferredWidth = 0;
+    maxPreferredWidth = 0;
 }
 
 void MultiColumnSpanBox::computeWidth(float& x, float& width, float& marginLeft, float& marginRight) const
@@ -502,11 +507,12 @@ void MultiColumnFlowBox::layout(FragmentBuilder* fragmentainer)
 
     float columnHeight = 0.f;
     if(auto height = columnBlock->computeHeightUsing(columnStyle->height()))
-        columnHeight = columnBlock->adjustContentBoxHeight(height.value());
-    columnHeight = columnBlock->constrainContentBoxHeight(columnHeight);
+        columnHeight = columnBlock->adjustBorderBoxHeight(height.value());
+    columnHeight = columnBlock->constrainBorderBoxHeight(columnHeight);
 
+    auto availableColumnHeight = std::max(0.f, columnHeight - columnBlock->borderAndPaddingHeight());
     for(auto row = firstRow(); row; row = row->nextRow()) {
-        row->resetColumnHeight(columnHeight);
+        row->resetColumnHeight(availableColumnHeight);
     }
 
     auto changed = layoutColumns(false);
@@ -570,11 +576,6 @@ void MultiColumnFlowBox::build()
     }
 
     BlockFlowBox::build();
-}
-
-void MultiColumnFlowBox::paint(const PaintInfo& info, const Point& offset, PaintPhase phase)
-{
-    BlockFlowBox::paint(info, offset, phase);
 }
 
 MultiColumnFlowBox::MultiColumnFlowBox(const RefPtr<BoxStyle>& style)

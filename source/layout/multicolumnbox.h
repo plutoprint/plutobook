@@ -72,7 +72,7 @@ public:
     void updateMinimumColumnHeight(float height);
     void addContentRun(float endOffset);
 
-    void resetColumnHeight(float columnHeight);
+    void resetColumnHeight(float availableHeight);
     bool recalculateColumnHeight(bool balancing);
 
 private:
@@ -97,8 +97,8 @@ private:
     float m_rowBottom{0};
     float m_columnHeight{0};
     float m_maxColumnHeight{0};
-    float m_minSpaceShortage{0};
     float m_minimumColumnHeight{0};
+    float m_minSpaceShortage{0};
 };
 
 template<>
@@ -117,6 +117,7 @@ public:
     MultiColumnRowBox* nextColumnRowBox() const;
     MultiColumnRowBox* prevColumnRowBox() const;
 
+    void computePreferredWidths(float& minPreferredWidth, float& maxPreferredWidth) const final;
     void computeWidth(float& x, float& width, float& marginLeft, float& marginRight) const final;
     void computeHeight(float& y, float& height, float& marginTop, float& marginBottom) const final;
     void layout(FragmentBuilder* fragmentainer) final;
@@ -161,9 +162,6 @@ public:
     MultiColumnRowBox* firstRow() const;
     MultiColumnRowBox* lastRow() const;
 
-    BoxFrame* firstMultiColumnBox() const;
-    BoxFrame* lastMultiColumnBox() const;
-
     FragmentType fragmentType() const final { return FragmentType::Column; }
 
     float fragmentHeightForOffset(float offset) const final;
@@ -188,8 +186,6 @@ public:
     void layout(FragmentBuilder* fragmentainer) final;
     void build() final;
 
-    void paint(const PaintInfo& info, const Point& offset, PaintPhase phase) final;
-
     const char* name() const final { return "MultiColumnFlowBox"; }
 
 private:
@@ -198,19 +194,6 @@ private:
     mutable uint32_t m_columnCount{0};
     float m_columnGap{0};
 };
-
-inline BoxFrame* MultiColumnFlowBox::firstMultiColumnBox() const
-{
-    return nextBoxFrame();
-}
-
-inline BoxFrame* MultiColumnFlowBox::lastMultiColumnBox() const
-{
-    auto box = parentBoxFrame()->lastBoxFrame();
-    if(box && !box->isMultiColumnFlowBox())
-        return box;
-    return nullptr;
-}
 
 inline BlockFlowBox* MultiColumnFlowBox::columnBlockFlowBox() const
 {

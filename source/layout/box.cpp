@@ -740,8 +740,7 @@ void BoxFrame::setLine(std::unique_ptr<ReplacedLineBox> line)
 
 void BoxFrame::computePreferredWidths(float& minPreferredWidth, float& maxPreferredWidth) const
 {
-    minPreferredWidth = 0;
-    maxPreferredWidth = 0;
+    assert(false);
 }
 
 float BoxFrame::minPreferredWidth() const
