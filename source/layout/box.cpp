@@ -378,14 +378,14 @@ static Size computeBackgroundImageIntrinsicSize(const RefPtr<Image>& backgroundI
     return positioningAreaSize;
 }
 
-void BoxModel::paintBackground(const PaintInfo& info, const Rect& borderRect, const BoxStyle& backgroundStyle, bool includeLeftEdge, bool includeRightEdge) const
+void BoxModel::paintBackgroundStyle(const PaintInfo& info, const Rect& borderRect, const BoxStyle* backgroundStyle, bool includeLeftEdge, bool includeRightEdge) const
 {
-    auto backgroundColor = backgroundStyle.backgroundColor();
-    auto backgroundImage = backgroundStyle.backgroundImage();
+    auto backgroundColor = backgroundStyle->backgroundColor();
+    auto backgroundImage = backgroundStyle->backgroundImage();
     if(backgroundImage == nullptr && !backgroundColor.alpha())
         return;
     auto clipRect = style()->getBorderRoundedRect(borderRect, includeLeftEdge, includeRightEdge);
-    auto backgroundClip = backgroundStyle.backgroundClip();
+    auto backgroundClip = backgroundStyle->backgroundClip();
     if(backgroundClip == BackgroundBox::PaddingBox || backgroundClip == BackgroundBox::ContentBox) {
         auto topWidth = borderTop();
         auto rightWidth = borderRight();
@@ -417,7 +417,7 @@ void BoxModel::paintBackground(const PaintInfo& info, const Rect& borderRect, co
     info->fillRect(borderRect);
     if(backgroundImage) {
         Rect positioningArea(0, 0, borderRect.w, borderRect.h);
-        auto backgroundOrigin = backgroundStyle.backgroundOrigin();
+        auto backgroundOrigin = backgroundStyle->backgroundOrigin();
         if(backgroundOrigin == BackgroundBox::PaddingBox || backgroundOrigin == BackgroundBox::ContentBox) {
             auto topWidth = borderTop();
             auto rightWidth = borderRight();
@@ -435,7 +435,7 @@ void BoxModel::paintBackground(const PaintInfo& info, const Rect& borderRect, co
 
         Rect tileRect;
         auto intrinsicSize = computeBackgroundImageIntrinsicSize(backgroundImage, positioningArea.size());
-        auto backgroundSize = backgroundStyle.backgroundSize();
+        auto backgroundSize = backgroundStyle->backgroundSize();
         switch(backgroundSize.type()) {
         case BackgroundSize::Type::Contain:
         case BackgroundSize::Type::Cover: {
@@ -476,14 +476,14 @@ void BoxModel::paintBackground(const PaintInfo& info, const Rect& borderRect, co
             }
         }
 
-        auto backgroundPosition = backgroundStyle.backgroundPosition();
+        auto backgroundPosition = backgroundStyle->backgroundPosition();
         const Point positionOffset = {
             backgroundPosition.x().calcMin(positioningArea.w - tileRect.w),
             backgroundPosition.y().calcMin(positioningArea.h - tileRect.h)
         };
 
         Rect destRect(borderRect);
-        auto backgroundRepeat = backgroundStyle.backgroundRepeat();
+        auto backgroundRepeat = backgroundStyle->backgroundRepeat();
         if(backgroundRepeat == BackgroundRepeat::Repeat || backgroundRepeat == BackgroundRepeat::RepeatX) {
             tileRect.x = tileRect.w - std::fmod(positionOffset.x + positioningArea.x, tileRect.w);
         } else {
@@ -512,21 +512,21 @@ void BoxModel::paintBackground(const PaintInfo& info, const Rect& borderRect, co
     }
 }
 
-void BoxModel::paintBackground(const PaintInfo& info, const Rect& borderRect) const
+void BoxModel::paintBackground(const PaintInfo& info, const Rect& borderRect, bool includeLeftEdge, bool includeRightEdge) const
 {
     if(!isBackgroundStolen()) {
-        paintBackground(info, borderRect, *style());
+        paintBackgroundStyle(info, borderRect, style(), includeLeftEdge, includeRightEdge);
     }
 }
 
 void BoxModel::paintBorder(const PaintInfo& info, const Rect& borderRect, bool includeLeftEdge, bool includeRightEdge) const
 {
-    BorderPainter::paintBorder(info, borderRect, *style(), includeLeftEdge, includeRightEdge);
+    BorderPainter::paintBorder(info, borderRect, style(), includeLeftEdge, includeRightEdge);
 }
 
 void BoxModel::paintOutline(const PaintInfo& info, const Rect& borderRect) const
 {
-    BorderPainter::paintOutline(info, borderRect, *style());
+    BorderPainter::paintOutline(info, borderRect, style());
     paintAnnotation(*info, borderRect);
 }
 

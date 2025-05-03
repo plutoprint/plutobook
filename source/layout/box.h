@@ -213,8 +213,8 @@ public:
     bool isBoxModel() const final { return true; }
     void addChild(Box* newChild) override;
 
-    void paintBackground(const PaintInfo& info, const Rect& borderRect, const BoxStyle& backgroundStyle, bool includeLeftEdge = true, bool includeRightEdge = true) const;
-    void paintBackground(const PaintInfo& info, const Rect& borderRect) const;
+    void paintBackgroundStyle(const PaintInfo& info, const Rect& borderRect, const BoxStyle* backgroundStyle, bool includeLeftEdge = true, bool includeRightEdge = true) const;
+    void paintBackground(const PaintInfo& info, const Rect& borderRect, bool includeLeftEdge = true, bool includeRightEdge = true) const;
 
     virtual void paintRootBackground(const PaintInfo& info) const {}
 

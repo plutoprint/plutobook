@@ -550,7 +550,7 @@ void FlowLineBox::paintDecorations(const PaintInfo& info, const Point& offset) c
         return;
     Rect borderRect(m_x, m_y, m_width, height());
     borderRect.move(offset);
-    box()->paintBackground(info, borderRect, *style(), m_hasLeftEdge, m_hasRightEdge);
+    box()->paintBackground(info, borderRect, m_hasLeftEdge, m_hasRightEdge);
     box()->paintBorder(info, borderRect, m_hasLeftEdge, m_hasRightEdge);
 }
 

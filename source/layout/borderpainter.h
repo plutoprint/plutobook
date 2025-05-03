@@ -18,13 +18,13 @@ using BorderEdgeFlags = unsigned int;
 
 class BorderPainter {
 public:
-    static void paintBorder(const PaintInfo& info, const Rect& borderRect, const BoxStyle& style, bool includeLeftEdge, bool includeRightEdge);
-    static void paintOutline(const PaintInfo& info, const Rect& borderRect, const BoxStyle& style);
+    static void paintBorder(const PaintInfo& info, const Rect& borderRect, const BoxStyle* style, bool includeLeftEdge, bool includeRightEdge);
+    static void paintOutline(const PaintInfo& info, const Rect& borderRect, const BoxStyle* style);
 
     static void paintBoxSide(GraphicsContext& context, BoxSide side, LineStyle style, const Color& color, const Rect& rect);
 
 private:
-    BorderPainter(BorderPainterType type, const Rect& borderRect, const BoxStyle& style, bool includeLeftEdge, bool includeRightEdge);
+    BorderPainter(BorderPainterType type, const Rect& borderRect, const BoxStyle* style, bool includeLeftEdge, bool includeRightEdge);
 
     void paint(const PaintInfo& info) const;
 
@@ -51,12 +51,12 @@ private:
     RoundedRect m_outer;
 };
 
-inline void BorderPainter::paintBorder(const PaintInfo& info, const Rect& borderRect, const BoxStyle& style, bool includeLeftEdge, bool includeRightEdge)
+inline void BorderPainter::paintBorder(const PaintInfo& info, const Rect& borderRect, const BoxStyle* style, bool includeLeftEdge, bool includeRightEdge)
 {
     BorderPainter(BorderPainterType::Border, borderRect, style, includeLeftEdge, includeRightEdge).paint(info);
 }
 
-inline void BorderPainter::paintOutline(const PaintInfo& info, const Rect& borderRect, const BoxStyle& style)
+inline void BorderPainter::paintOutline(const PaintInfo& info, const Rect& borderRect, const BoxStyle* style)
 {
     BorderPainter(BorderPainterType::Outline, borderRect, style, true, true).paint(info);
 }

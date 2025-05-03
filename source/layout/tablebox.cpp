@@ -1314,12 +1314,12 @@ void TableSectionBox::paint(const PaintInfo& info, const Point& offset, PaintPha
             Point adjustedOffset(offset + location() + rowBox->location());
             if(phase == PaintPhase::Decorations) {
                 if(auto columnBox = table()->columnAt(col)) {
-                    cellBox->paintBackgroundBehindCell(info, adjustedOffset, *columnBox->style());
+                    cellBox->paintBackgroundBehindCell(info, adjustedOffset, columnBox->style());
                 }
 
-                cellBox->paintBackgroundBehindCell(info, adjustedOffset, *style());
+                cellBox->paintBackgroundBehindCell(info, adjustedOffset, style());
                 if(!rowBox->hasLayer()) {
-                    cellBox->paintBackgroundBehindCell(info, adjustedOffset, *rowBox->style());
+                    cellBox->paintBackgroundBehindCell(info, adjustedOffset, rowBox->style());
                 }
             }
 
@@ -1370,7 +1370,7 @@ void TableRowBox::paint(const PaintInfo& info, const Point& offset, PaintPhase p
             continue;
         Point adjustedOffset(offset + location());
         if(phase == PaintPhase::Decorations)
-            cellBox->paintBackgroundBehindCell(info, adjustedOffset, *style());
+            cellBox->paintBackgroundBehindCell(info, adjustedOffset, style());
         if(!cellBox->hasLayer()) {
             cellBox->paint(info, adjustedOffset, phase);
         }
@@ -1750,12 +1750,12 @@ const TableCollapsedBorderEdges& TableCellBox::collapsedBorderEdges() const
     return *m_collapsedBorderEdges;
 }
 
-void TableCellBox::paintBackgroundBehindCell(const PaintInfo& info, const Point& offset, const BoxStyle& backgroundStyle) const
+void TableCellBox::paintBackgroundBehindCell(const PaintInfo& info, const Point& offset, const BoxStyle* backgroundStyle) const
 {
     if(style()->visibility() == Visibility::Visible) {
         Point adjustedOffset(offset + location());
         Rect borderRect(adjustedOffset, size());
-        paintBackground(info, borderRect, backgroundStyle);
+        paintBackgroundStyle(info, borderRect, backgroundStyle);
     }
 }
 

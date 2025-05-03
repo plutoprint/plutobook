@@ -356,7 +356,7 @@ void PageBox::layoutEdgePageMargins(PageMarginBox* edgeStartBox, PageMarginBox* 
 
 void PageBox::paintRootBackground(const PaintInfo& info) const
 {
-    paintBackground(info, pageRect(), *style());
+    paintBackgroundStyle(info, pageRect(), style());
 }
 
 void PageBox::paintContents(const PaintInfo& info, const Point& offset, PaintPhase phase)

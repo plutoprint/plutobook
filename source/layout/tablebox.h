@@ -430,7 +430,7 @@ public:
     TableSectionBox* section() const { return row()->section(); }
     TableBox* table() const { return section()->table(); }
 
-    void paintBackgroundBehindCell(const PaintInfo& info, const Point& offset, const BoxStyle& backgroundStyle) const;
+    void paintBackgroundBehindCell(const PaintInfo& info, const Point& offset, const BoxStyle* backgroundStyle) const;
     void paintCollapsedBorders(const PaintInfo& info, const Point& offset, const TableCollapsedBorderEdge& currentEdge) const;
     void paintDecorations(const PaintInfo& info, const Point& offset) final;
 

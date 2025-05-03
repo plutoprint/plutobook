@@ -18,7 +18,9 @@ Rect BoxView::backgroundRect() const
 
 void BoxView::paintRootBackground(const PaintInfo& info) const
 {
-    paintBackground(info, backgroundRect(), *m_backgroundStyle);
+    if(m_backgroundStyle) {
+        paintBackgroundStyle(info, backgroundRect(), m_backgroundStyle);
+    }
 }
 
 void BoxView::computeWidth(float& x, float& width, float& marginLeft, float& marginRight) const
