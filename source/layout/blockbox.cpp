@@ -531,7 +531,7 @@ void BlockBox::paintContents(const PaintInfo& info, const Point& offset, PaintPh
 void BlockBox::paint(const PaintInfo& info, const Point& offset, PaintPhase phase)
 {
     auto overflowRect = visualOverflowRect();
-    overflowRect.move(offset + location());
+    overflowRect.translate(offset + location());
     if(!overflowRect.intersects(info.rect())) {
         return;
     }

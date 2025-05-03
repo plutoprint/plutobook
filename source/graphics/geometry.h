@@ -26,12 +26,9 @@ public:
     constexpr Point() = default;
     constexpr Point(float x, float y) : x(x), y(y) {}
 
-    constexpr void move(float dx, float dy) { x += dx; y += dy; }
-    constexpr void move(float d) { move(d, d); }
-    constexpr void move(const Point& p) { move(p.x, p.y); }
-
-    constexpr void scale(float sx, float sy) { x *= sx; y *= sy; }
-    constexpr void scale(float s) { scale(s, s); }
+    constexpr void translate(float dx, float dy) { x += dx; y += dy; }
+    constexpr void translate(float d) { translate(d, d); }
+    constexpr void translate(const Point& p) { translate(p.x, p.y); }
 
     constexpr float dot(const Point& p) const { return x * p.x + y * p.y; }
 
@@ -57,13 +54,13 @@ constexpr Point operator-(const Point& a)
 
 constexpr Point& operator+=(Point& a, const Point& b)
 {
-    a.move(b);
+    a.translate(b);
     return a;
 }
 
 constexpr Point& operator-=(Point& a, const Point& b)
 {
-    a.move(-b);
+    a.translate(-b);
     return a;
 }
 
@@ -113,6 +110,7 @@ public:
 
     constexpr void scale(float sw, float sh) { w *= sw; h *= sh; }
     constexpr void scale(float s) { scale(s, s); }
+    constexpr void scale(const Size& s) { scale(s.w, s.h); }
 
     constexpr bool isEmpty() const { return w <= 0.f || h <= 0.f; }
     constexpr bool isZero() const { return w <= 0.f && h <= 0.f; }
@@ -203,10 +201,6 @@ public:
     constexpr Rect(const Point& origin, const Size& size) : Rect(origin.x, origin.y, size.w, size.h) {}
     constexpr Rect(float x, float y, float w, float h) : x(x), y(y), w(w), h(h) {}
 
-    constexpr void move(float dx, float dy) { x += dx; y += dy; }
-    constexpr void move(float d) { move(d, d); }
-    constexpr void move(const Point& p) { move(p.x, p.y); }
-
     constexpr void expand(float t, float r, float b, float l) { x -= l; y -= t; w += l + r; h += t + b; }
     constexpr void shrink(float t, float r, float b, float l) { expand(-t, -r, -b, -l); }
 
@@ -221,12 +215,18 @@ public:
 
     constexpr void scale(float sx, float sy) { x *= sx; y *= sy; w *= sx; h *= sy; }
     constexpr void scale(float s) { scale(s, s); }
+    constexpr void scale(const Size& s) { scale(s.w, s.h); }
 
     constexpr void inflate(float dx, float dy) { x -= dx; y -= dy; w += dx * 2.f; h += dy * 2.f; }
     constexpr void inflate(float d) { inflate(d, d); }
 
-    constexpr Rect moved(float dx, float dy) const { return Rect(x + dx, y + dy, w, h); }
-    constexpr Rect moved(const Point& point) const { return moved(point.x, point.y); }
+    constexpr void translate(float dx, float dy) { x += dx; y += dy; }
+    constexpr void translate(float d) { translate(d, d); }
+    constexpr void translate(const Point& p) { translate(p.x, p.y); }
+
+    constexpr Rect translated(float dx, float dy) const { return Rect(x + dx, y + dy, w, h); }
+    constexpr Rect translated(float d) const { return translated(d, d); }
+    constexpr Rect translated(const Point& p) const { return translated(p.x, p.y); }
 
     constexpr Rect intersected(const Rect& rect) const;
     constexpr Rect united(const Rect& rect) const;

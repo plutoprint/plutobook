@@ -34,13 +34,13 @@ void BoxLayer::updatePosition()
         auto parent = m_box->parentBox();
         while(parent && !parent->hasLayer()) {
             if(auto box = to<BoxFrame>(parent))
-                m_borderRect.move(box->location());
+                m_borderRect.translate(box->location());
             parent = parent->parentBox();
         }
     }
 
     if(m_box->isRelPositioned()) {
-        m_borderRect.move(m_box->relativePositionOffset());
+        m_borderRect.translate(m_box->relativePositionOffset());
     }
 
     m_transform = Transform::Identity;
@@ -55,7 +55,7 @@ void BoxLayer::updatePosition()
         child->updatePosition();
         if(!m_box->isOverflowHidden() && !child->box()->isMultiColumnFlowBox()) {
             auto overflowRect = child->transform().mapRect(child->overflowRect());
-            overflowRect.move(child->location());
+            overflowRect.translate(child->location());
             m_overflowRect.unite(overflowRect);
         }
     }
@@ -155,7 +155,7 @@ void BoxLayer::paintLayerContents(BoxLayer* rootLayer, GraphicsContext& context,
     Point adjustedOffset(offset);
     if(m_box->isBoxFrame() && !m_box->isPageBox()) {
         const auto& box = to<BoxFrame>(*m_box);
-        adjustedOffset.move(-box.location());
+        adjustedOffset.translate(-box.location());
     }
 
     m_box->paint(paintInfo, adjustedOffset, PaintPhase::Decorations);
@@ -180,7 +180,7 @@ void BoxLayer::paintLayerColumnContents(BoxLayer* rootLayer, GraphicsContext& co
     const auto& column = to<MultiColumnFlowBox>(*m_box);
     for(auto row = column.firstRow(); row; row = row->nextRow()) {
         auto clipRect = row->visualOverflowRect();
-        clipRect.move(row->location() + offset - column.location());
+        clipRect.translate(row->location() + offset - column.location());
         if(clipRect.isEmpty())
             continue;
         context.save();
@@ -191,7 +191,7 @@ void BoxLayer::paintLayerColumnContents(BoxLayer* rootLayer, GraphicsContext& co
             auto rowRect = row->rowRectAt(columnIndex);
             auto columnRect = row->columnRectAt(columnIndex);
             auto translation = (columnRect.origin() - rowRect.origin()) + row->location() - column.location();
-            auto rectangle = rect.moved(-translation);
+            auto rectangle = rect.translated(-translation);
 
             context.save();
             context.translate(translation.x, translation.y);

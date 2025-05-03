@@ -370,7 +370,7 @@ Rect ReplacedBox::computeObjectFitRect(const Rect& contentRect) const
         objectPosition.y().calcMin(contentRect.h - objectRect.h)
     };
 
-    return objectRect.moved(positionOffset);
+    return objectRect.translated(positionOffset);
 }
 
 void ReplacedBox::computeWidth(float& x, float& width, float& marginLeft, float& marginRight) const
@@ -423,7 +423,7 @@ void ReplacedBox::paint(const PaintInfo& info, const Point& offset, PaintPhase p
     if(style()->visibility() != Visibility::Visible)
         return;
     auto overflowRect = visualOverflowRect();
-    overflowRect.move(offset + location());
+    overflowRect.translate(offset + location());
     if(!overflowRect.intersects(info.rect())) {
         return;
     }

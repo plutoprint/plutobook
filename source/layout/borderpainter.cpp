@@ -63,12 +63,12 @@ static void paintDashedOrDottedBoxSide(GraphicsContext& context, BoxSide side, L
     Point p2(x2, y2);
     if(side == BoxSideLeft || side == BoxSideRight) {
         auto centerOffset = (p2.x - p1.x) / 2.f;
-        p1.move(centerOffset, cornerWidth);
-        p2.move(-centerOffset, -cornerWidth);
+        p1.translate(centerOffset, cornerWidth);
+        p2.translate(-centerOffset, -cornerWidth);
     } else {
         auto centerOffset = (p2.y - p1.y) / 2.f;
-        p1.move(cornerWidth, centerOffset);
-        p2.move(-cornerWidth, -centerOffset);
+        p1.translate(cornerWidth, centerOffset);
+        p2.translate(-cornerWidth, -centerOffset);
     }
 
     Path path;

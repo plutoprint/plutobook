@@ -22,7 +22,7 @@ void MultiColumnRowBox::updateOverflowRect()
 {
     BoxFrame::updateOverflowRect();
     auto columnRect = columnRectAt(numberOfColumns() - 1);
-    auto overflowRect = m_columnFlowBox->visualOverflowRect().moved(columnRect.origin());
+    auto overflowRect = m_columnFlowBox->visualOverflowRect().translated(columnRect.origin());
     addOverflowRect(columnRect.y, columnRect.bottom(), overflowRect.x, overflowRect.right());
 }
 

@@ -951,7 +951,7 @@ void BoxFrame::addOverflowRect(const BoxFrame* child, float dx, float dy)
     if(child->hasLayer())
         return;
     auto overflowRect = child->visualOverflowRect();
-    overflowRect.move(dx, dy);
+    overflowRect.translate(dx, dy);
     addOverflowRect(overflowRect);
 }
 

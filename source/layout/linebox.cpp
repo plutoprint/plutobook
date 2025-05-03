@@ -498,7 +498,7 @@ void FlowLineBox::addOverflowRect(const BoxFrame* box, float dx, float dy)
     if(box->hasLayer())
         return;
     auto overflowRect = box->visualOverflowRect();
-    overflowRect.move(dx, dy);
+    overflowRect.translate(dx, dy);
     addOverflowRect(overflowRect);
 }
 
@@ -555,7 +555,7 @@ void FlowLineBox::paintOutlines(const PaintInfo& info, const Point& offset) cons
     if(style()->visibility() != Visibility::Visible || isRootLineBox())
         return;
     Rect borderRect(lineRect());
-    borderRect.move(offset);
+    borderRect.translate(offset);
     box()->paintOutline(info, borderRect);
 }
 
@@ -564,7 +564,7 @@ void FlowLineBox::paintDecorations(const PaintInfo& info, const Point& offset) c
     if(style()->visibility() != Visibility::Visible || isRootLineBox())
         return;
     Rect borderRect(lineRect());
-    borderRect.move(offset);
+    borderRect.translate(offset);
     box()->paintBackground(info, borderRect, m_hasLeftEdge, m_hasRightEdge);
     box()->paintBorder(info, borderRect, m_hasLeftEdge, m_hasRightEdge);
 }
@@ -572,7 +572,7 @@ void FlowLineBox::paintDecorations(const PaintInfo& info, const Point& offset) c
 void FlowLineBox::paint(const PaintInfo& info, const Point& offset, PaintPhase phase)
 {
     Rect overflowRect(visualOverflowRect());
-    overflowRect.move(offset);
+    overflowRect.translate(offset);
     if(!overflowRect.intersects(info.rect())) {
         return;
     }
