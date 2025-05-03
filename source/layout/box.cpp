@@ -177,14 +177,14 @@ Box* Box::create(Node* node, const RefPtr<BoxStyle>& style)
 
 Box* Box::createAnonymous(Display display, const BoxStyle* parentStyle)
 {
-    auto newBox = create(nullptr, BoxStyle::create(*parentStyle, display));
+    auto newBox = create(nullptr, BoxStyle::create(parentStyle, display));
     newBox->setIsAnonymous(true);
     return newBox;
 }
 
 BlockFlowBox* Box::createAnonymousBlock(const BoxStyle* parentStyle)
 {
-    auto newStyle = BoxStyle::create(*parentStyle, Display::Block);
+    auto newStyle = BoxStyle::create(parentStyle, Display::Block);
     auto newBlock = new (newStyle->heap()) BlockFlowBox(nullptr, newStyle);
     newBlock->setIsAnonymous(true);
     return newBlock;

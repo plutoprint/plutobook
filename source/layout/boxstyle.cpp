@@ -22,19 +22,19 @@ RefPtr<BoxStyle> BoxStyle::create(Node* node, PseudoType pseudoType, Display dis
     return adoptPtr(new (node->heap()) BoxStyle(node, pseudoType, display));
 }
 
-RefPtr<BoxStyle> BoxStyle::create(Node* node, const BoxStyle& parentStyle, PseudoType pseudoType, Display display)
+RefPtr<BoxStyle> BoxStyle::create(Node* node, const BoxStyle* parentStyle, PseudoType pseudoType, Display display)
 {
     auto newStyle = create(node, pseudoType, display);
     newStyle->inheritFrom(parentStyle);
     return newStyle;
 }
 
-RefPtr<BoxStyle> BoxStyle::create(const BoxStyle& parentStyle, PseudoType pseudoType, Display display)
+RefPtr<BoxStyle> BoxStyle::create(const BoxStyle* parentStyle, PseudoType pseudoType, Display display)
 {
-    return create(parentStyle.node(), parentStyle, pseudoType, display);
+    return create(parentStyle->node(), parentStyle, pseudoType, display);
 }
 
-RefPtr<BoxStyle> BoxStyle::create(const BoxStyle& parentStyle, Display display)
+RefPtr<BoxStyle> BoxStyle::create(const BoxStyle* parentStyle, Display display)
 {
     return create(parentStyle, PseudoType::None, display);
 }
@@ -1780,21 +1780,21 @@ void BoxStyle::reset(CSSPropertyID id)
     m_properties.erase(id);
 }
 
-void BoxStyle::inheritFrom(const BoxStyle& parentStyle)
+void BoxStyle::inheritFrom(const BoxStyle* parentStyle)
 {
-    m_font = parentStyle.font();
-    m_direction = parentStyle.direction();
-    m_visibility = parentStyle.visibility();
-    m_textAlign = parentStyle.textAlign();
-    m_whiteSpace = parentStyle.whiteSpace();
-    m_wordBreak = parentStyle.wordBreak();
-    m_fillRule = parentStyle.fillRule();
-    m_clipRule = parentStyle.clipRule();
-    m_captionSide = parentStyle.captionSide();
-    m_emptyCells = parentStyle.emptyCells();
-    m_borderCollapse = parentStyle.borderCollapse();
-    m_color = parentStyle.color();
-    for(const auto& [id, value] : parentStyle.properties()) {
+    m_font = parentStyle->font();
+    m_direction = parentStyle->direction();
+    m_visibility = parentStyle->visibility();
+    m_textAlign = parentStyle->textAlign();
+    m_whiteSpace = parentStyle->whiteSpace();
+    m_wordBreak = parentStyle->wordBreak();
+    m_fillRule = parentStyle->fillRule();
+    m_clipRule = parentStyle->clipRule();
+    m_captionSide = parentStyle->captionSide();
+    m_emptyCells = parentStyle->emptyCells();
+    m_borderCollapse = parentStyle->borderCollapse();
+    m_color = parentStyle->color();
+    for(const auto& [id, value] : parentStyle->properties()) {
         switch(id) {
         case CSSPropertyID::Color:
         case CSSPropertyID::Direction:

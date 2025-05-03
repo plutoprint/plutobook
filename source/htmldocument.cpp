@@ -69,7 +69,7 @@ void HTMLElement::buildFirstLetterPseudoBox(Box* parent)
 {
     if(!parent->isBlockFlowBox())
         return;
-    auto style = document()->pseudoStyleForElement(this, PseudoType::FirstLetter, *parent->style());
+    auto style = document()->pseudoStyleForElement(this, PseudoType::FirstLetter, parent->style());
     if(style == nullptr || style->display() == Display::None)
         return;
     auto child = parent->firstChild();
@@ -119,7 +119,7 @@ void HTMLElement::buildPseudoBox(Counters& counters, Box* parent, PseudoType pse
 {
     if(pseudoType == PseudoType::Marker && !parent->isListItemBox())
         return;
-    auto style = document()->pseudoStyleForElement(this, pseudoType, *parent->style());
+    auto style = document()->pseudoStyleForElement(this, pseudoType, parent->style());
     if(style == nullptr || style->display() == Display::None)
         return;
     auto box = Box::create(nullptr, style);
@@ -134,7 +134,7 @@ void HTMLElement::buildPseudoBox(Counters& counters, Box* parent, PseudoType pse
 
 void HTMLElement::buildBox(Counters& counters, Box* parent)
 {
-    auto style = document()->styleForElement(this, *parent->style());
+    auto style = document()->styleForElement(this, parent->style());
     if(style == nullptr || style->display() == Display::None)
         return;
     auto box = createBox(style);

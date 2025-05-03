@@ -664,9 +664,9 @@ struct FontDescription;
 class BoxStyle : public HeapMember, public RefCounted<BoxStyle> {
 public:
     static RefPtr<BoxStyle> create(Node* node, PseudoType pseudoType, Display display);
-    static RefPtr<BoxStyle> create(Node* node, const BoxStyle& parentStyle, PseudoType pseudoType, Display display);
-    static RefPtr<BoxStyle> create(const BoxStyle& parentStyle, PseudoType pseudoType, Display display);
-    static RefPtr<BoxStyle> create(const BoxStyle& parentStyle, Display display);
+    static RefPtr<BoxStyle> create(Node* node, const BoxStyle* parentStyle, PseudoType pseudoType, Display display);
+    static RefPtr<BoxStyle> create(const BoxStyle* parentStyle, PseudoType pseudoType, Display display);
+    static RefPtr<BoxStyle> create(const BoxStyle* parentStyle, Display display);
 
     Document* document() const;
     Heap* heap() const;
@@ -925,7 +925,7 @@ public:
     void reset(CSSPropertyID id);
     bool has(CSSPropertyID id) const { return m_properties.contains(id); }
 
-    void inheritFrom(const BoxStyle& parentStyle);
+    void inheritFrom(const BoxStyle* parentStyle);
 
     float exFontSize() const;
     float chFontSize() const;

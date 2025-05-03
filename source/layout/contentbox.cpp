@@ -144,7 +144,7 @@ void ContentBoxBuilder::addTargetCounter(const CSSFunctionValue& function)
         return;
     }
 
-    auto style = BoxStyle::create(*m_parentStyle, Display::Inline);
+    auto style = BoxStyle::create(m_parentStyle, Display::Inline);
     auto box = new (m_parentStyle->heap()) TargetCounterBox(style, fragment, identifier, seperator, listStyle);
     m_parentBox->addChild(box);
     m_lastTextBox = nullptr;
@@ -169,7 +169,7 @@ void ContentBoxBuilder::addImage(RefPtr<Image> image)
 {
     if(image == nullptr)
         return;
-    auto style = BoxStyle::create(*m_parentStyle, Display::Inline);
+    auto style = BoxStyle::create(m_parentStyle, Display::Inline);
     auto box = new (m_parentStyle->heap()) ImageBox(nullptr, style);
     box->setImage(std::move(image));
     m_parentBox->addChild(box);

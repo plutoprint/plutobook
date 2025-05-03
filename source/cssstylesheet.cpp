@@ -83,7 +83,7 @@ using CSSPropertyDataList = std::vector<CSSPropertyData>;
 
 class FontDescriptionBuilder {
 public:
-    FontDescriptionBuilder(const BoxStyle& parentStyle, const CSSPropertyDataList& properties);
+    FontDescriptionBuilder(const BoxStyle* parentStyle, const CSSPropertyDataList& properties);
 
     FontFamilyList family() const;
     FontSelectionValue size() const;
@@ -95,7 +95,7 @@ public:
     FontDescription build() const;
 
 private:
-    const BoxStyle& m_parentStyle;
+    const BoxStyle* m_parentStyle;
     RefPtr<CSSValue> m_family;
     RefPtr<CSSValue> m_size;
     RefPtr<CSSValue> m_weight;
@@ -104,7 +104,7 @@ private:
     RefPtr<CSSValue> m_variationSettings;
 };
 
-FontDescriptionBuilder::FontDescriptionBuilder(const BoxStyle& parentStyle, const CSSPropertyDataList& properties)
+FontDescriptionBuilder::FontDescriptionBuilder(const BoxStyle* parentStyle, const CSSPropertyDataList& properties)
     : m_parentStyle(parentStyle)
 {
     for(const auto& property : properties) {
@@ -138,7 +138,7 @@ FontDescriptionBuilder::FontDescriptionBuilder(const BoxStyle& parentStyle, cons
 FontFamilyList FontDescriptionBuilder::family() const
 {
     if(m_family == nullptr)
-        return m_parentStyle.fontFamily();
+        return m_parentStyle->fontFamily();
     if(is<CSSInitialValue>(*m_family))
         return FontFamilyList();
     FontFamilyList families;
@@ -154,7 +154,7 @@ FontFamilyList FontDescriptionBuilder::family() const
 FontSelectionValue FontDescriptionBuilder::size() const
 {
     if(m_size == nullptr)
-        return m_parentStyle.fontSize();
+        return m_parentStyle->fontSize();
     if(is<CSSInitialValue>(*m_size))
         return kMediumFontSize;
     if(auto ident = to<CSSIdentValue>(m_size)) {
@@ -176,17 +176,17 @@ FontSelectionValue FontDescriptionBuilder::size() const
         case CSSValueID::XxxLarge:
             return kMediumFontSize * 3.0;
         case CSSValueID::Smaller:
-            return m_parentStyle.fontSize() / 1.2;
+            return m_parentStyle->fontSize() / 1.2;
         case CSSValueID::Larger:
-            return m_parentStyle.fontSize() * 1.2;
+            return m_parentStyle->fontSize() * 1.2;
         default:
             assert(false);
         }
     }
 
     if(auto percent = to<CSSPercentValue>(m_size))
-        return percent->value() * m_parentStyle.fontSize() / 100.0;
-    return m_parentStyle.convertLengthValue(*m_size);
+        return percent->value() * m_parentStyle->fontSize() / 100.0;
+    return m_parentStyle->convertLengthValue(*m_size);
 }
 
 constexpr FontSelectionValue lighterFontWeight(FontSelectionValue weight)
@@ -221,7 +221,7 @@ static FontSelectionValue convertFontWeightNumber(const CSSValue& value)
 FontSelectionValue FontDescriptionBuilder::weight() const
 {
     if(m_weight == nullptr)
-        return m_parentStyle.fontWeight();
+        return m_parentStyle->fontWeight();
     if(is<CSSInitialValue>(*m_weight))
         return kNormalFontWeight;
     if(auto ident = to<CSSIdentValue>(m_weight)) {
@@ -231,9 +231,9 @@ FontSelectionValue FontDescriptionBuilder::weight() const
         case CSSValueID::Bold:
             return kBoldFontWeight;
         case CSSValueID::Lighter:
-            return lighterFontWeight(m_parentStyle.fontWeight());
+            return lighterFontWeight(m_parentStyle->fontWeight());
         case CSSValueID::Bolder:
-            return bolderFontWeight(m_parentStyle.fontWeight());
+            return bolderFontWeight(m_parentStyle->fontWeight());
         default:
             assert(false);
         }
@@ -274,7 +274,7 @@ static FontSelectionValue convertFontStretchIdent(const CSSValue& value)
 FontSelectionValue FontDescriptionBuilder::stretch() const
 {
     if(m_stretch == nullptr)
-        return m_parentStyle.fontStretch();
+        return m_parentStyle->fontStretch();
     if(is<CSSInitialValue>(*m_stretch))
         return kNormalFontWidth;
     if(auto percent = to<CSSPercentValue>(m_stretch))
@@ -307,7 +307,7 @@ static FontSelectionValue convertFontStyleAngle(const CSSValue& value)
 FontSelectionValue FontDescriptionBuilder::style() const
 {
     if(m_style == nullptr)
-        return m_parentStyle.fontStyle();
+        return m_parentStyle->fontStyle();
     if(is<CSSInitialValue>(*m_style))
         return kNormalFontSlope;
     if(auto ident = to<CSSIdentValue>(m_style))
@@ -321,7 +321,7 @@ FontSelectionValue FontDescriptionBuilder::style() const
 FontVariationList FontDescriptionBuilder::variationSettings() const
 {
     if(m_variationSettings == nullptr)
-        return m_parentStyle.fontVariationSettings();
+        return m_parentStyle->fontVariationSettings();
     if(is<CSSInitialValue>(*m_variationSettings))
         return FontVariationList();
     FontVariationList variationSettings;
@@ -361,8 +361,8 @@ public:
     FontDescription fontDescription() const;
 
 protected:
-    StyleBuilder(const BoxStyle& parentStyle) : m_parentStyle(parentStyle) {}
-    const BoxStyle& m_parentStyle;
+    StyleBuilder(const BoxStyle* parentStyle) : m_parentStyle(parentStyle) {}
+    const BoxStyle* m_parentStyle;
     CSSPropertyDataList m_properties;
 };
 
@@ -387,7 +387,7 @@ FontDescription StyleBuilder::fontDescription() const
 
 class ElementStyleBuilder final : public StyleBuilder {
 public:
-    ElementStyleBuilder(Element* element, PseudoType pseudoType, const BoxStyle& parentStyle);
+    ElementStyleBuilder(Element* element, PseudoType pseudoType, const BoxStyle* parentStyle);
 
     RefPtr<BoxStyle> build() final;
 
@@ -398,7 +398,7 @@ private:
     friend class CSSStyleSheet;
 };
 
-ElementStyleBuilder::ElementStyleBuilder(Element* element, PseudoType pseudoType, const BoxStyle& parentStyle)
+ElementStyleBuilder::ElementStyleBuilder(Element* element, PseudoType pseudoType, const BoxStyle* parentStyle)
     : StyleBuilder(parentStyle)
     , m_element(element)
     , m_pseudoType(pseudoType)
@@ -425,7 +425,7 @@ RefPtr<BoxStyle> ElementStyleBuilder::build()
 
     if(m_properties.empty()) {
         if(m_pseudoType == PseudoType::None) {
-            if(m_element->isRootNode() || m_parentStyle.isDisplayFlex())
+            if(m_element->isRootNode() || m_parentStyle->isDisplayFlex())
                 return BoxStyle::create(m_element, m_parentStyle, m_pseudoType, Display::Block);
             return BoxStyle::create(m_element, m_parentStyle, m_pseudoType, Display::Inline);
         }
@@ -444,14 +444,14 @@ RefPtr<BoxStyle> ElementStyleBuilder::build()
             continue;
         }
 
-        if(is<CSSInheritValue>(*value) && !(value = m_parentStyle.get(id)))
+        if(is<CSSInheritValue>(*value) && !(value = m_parentStyle->get(id)))
             continue;
         newStyle->set(id, std::move(value));
     }
 
     if(newStyle->display() == Display::None)
         return newStyle;
-    if(newStyle->position() == Position::Static && !m_parentStyle.isDisplayFlex())
+    if(newStyle->position() == Position::Static && !m_parentStyle->isDisplayFlex())
         newStyle->reset(CSSPropertyID::ZIndex);
     if(m_pseudoType == PseudoType::FirstLetter) {
         newStyle->setPosition(Position::Static);
@@ -462,7 +462,7 @@ RefPtr<BoxStyle> ElementStyleBuilder::build()
         }
     }
 
-    if(newStyle->isFloating() || newStyle->isPositioned() || m_element->isRootNode() || m_parentStyle.isDisplayFlex()) {
+    if(newStyle->isFloating() || newStyle->isPositioned() || m_element->isRootNode() || m_parentStyle->isDisplayFlex()) {
         switch(newStyle->display()) {
         case Display::Inline:
         case Display::InlineBlock:
@@ -489,7 +489,7 @@ RefPtr<BoxStyle> ElementStyleBuilder::build()
         }
     }
 
-    if(newStyle->isPositioned() || m_parentStyle.isDisplayFlex())
+    if(newStyle->isPositioned() || m_parentStyle->isDisplayFlex())
         newStyle->setFloating(Float::None);
     newStyle->setFontDescription(fontDescription());
     return newStyle;
@@ -497,7 +497,7 @@ RefPtr<BoxStyle> ElementStyleBuilder::build()
 
 class PageStyleBuilder final : public StyleBuilder {
 public:
-    PageStyleBuilder(const GlobalString& pageName, uint32_t pageIndex, PageMarginType marginType, PseudoType pseudoType, const BoxStyle& parentStyle);
+    PageStyleBuilder(const GlobalString& pageName, uint32_t pageIndex, PageMarginType marginType, PseudoType pseudoType, const BoxStyle* parentStyle);
 
     RefPtr<BoxStyle> build() final;
 
@@ -510,7 +510,7 @@ private:
     friend class CSSStyleSheet;
 };
 
-PageStyleBuilder::PageStyleBuilder(const GlobalString& pageName, uint32_t pageIndex, PageMarginType marginType, PseudoType pseudoType, const BoxStyle& parentStyle)
+PageStyleBuilder::PageStyleBuilder(const GlobalString& pageName, uint32_t pageIndex, PageMarginType marginType, PseudoType pseudoType, const BoxStyle* parentStyle)
     : StyleBuilder(parentStyle)
     , m_pageName(pageName)
     , m_pageIndex(pageIndex)
@@ -622,7 +622,7 @@ RefPtr<BoxStyle> PageStyleBuilder::build()
             continue;
         }
 
-        if(is<CSSInheritValue>(*value) && !(value = m_parentStyle.get(id)))
+        if(is<CSSInheritValue>(*value) && !(value = m_parentStyle->get(id)))
             continue;
         newStyle->set(id, std::move(value));
     }
@@ -661,7 +661,7 @@ CSSStyleSheet::CSSStyleSheet(Document* document)
     }
 }
 
-RefPtr<BoxStyle> CSSStyleSheet::styleForElement(Element* element, const BoxStyle& parentStyle) const
+RefPtr<BoxStyle> CSSStyleSheet::styleForElement(Element* element, const BoxStyle* parentStyle) const
 {
     ElementStyleBuilder builder(element, PseudoType::None, parentStyle);
     for(const auto& className : element->classNames())
@@ -674,7 +674,7 @@ RefPtr<BoxStyle> CSSStyleSheet::styleForElement(Element* element, const BoxStyle
     return builder.build();
 }
 
-RefPtr<BoxStyle> CSSStyleSheet::pseudoStyleForElement(Element* element, PseudoType pseudoType, const BoxStyle& parentStyle) const
+RefPtr<BoxStyle> CSSStyleSheet::pseudoStyleForElement(Element* element, PseudoType pseudoType, const BoxStyle* parentStyle) const
 {
     ElementStyleBuilder builder(element, pseudoType, parentStyle);
     builder.add(m_pseudoRules.get(pseudoType));
@@ -683,14 +683,14 @@ RefPtr<BoxStyle> CSSStyleSheet::pseudoStyleForElement(Element* element, PseudoTy
 
 RefPtr<BoxStyle> CSSStyleSheet::styleForPage(const GlobalString& pageName, uint32_t pageIndex, PseudoType pseudoType) const
 {
-    PageStyleBuilder builder(pageName, pageIndex, PageMarginType::None, pseudoType, *m_document->rootStyle());
+    PageStyleBuilder builder(pageName, pageIndex, PageMarginType::None, pseudoType, m_document->rootStyle());
     builder.add(m_pageRules);
     return builder.build();
 }
 
-RefPtr<BoxStyle> CSSStyleSheet::styleForPageMargin(const GlobalString& pageName, uint32_t pageIndex, PageMarginType marginType, const BoxStyle& pageStyle) const
+RefPtr<BoxStyle> CSSStyleSheet::styleForPageMargin(const GlobalString& pageName, uint32_t pageIndex, PageMarginType marginType, const BoxStyle* pageStyle) const
 {
-    PageStyleBuilder builder(pageName, pageIndex, marginType, pageStyle.pseudoType(), pageStyle);
+    PageStyleBuilder builder(pageName, pageIndex, marginType, pageStyle->pseudoType(), pageStyle);
     builder.add(m_pageRules);
     return builder.build();
 }

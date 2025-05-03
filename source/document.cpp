@@ -454,7 +454,7 @@ Box* Element::createBox(const RefPtr<BoxStyle>& style)
 
 void Element::buildBox(Counters& counters, Box* parent)
 {
-    auto style = document()->styleForElement(this, *parent->style());
+    auto style = document()->styleForElement(this, parent->style());
     if(style == nullptr || style->display() == Display::None)
         return;
     auto box = createBox(style);
@@ -861,12 +861,12 @@ bool Document::supportsMedia(const std::string_view& type, const std::string_vie
     return false;
 }
 
-RefPtr<BoxStyle> Document::styleForElement(Element* element, const BoxStyle& parentStyle) const
+RefPtr<BoxStyle> Document::styleForElement(Element* element, const BoxStyle* parentStyle) const
 {
     return m_styleSheet.styleForElement(element, parentStyle);
 }
 
-RefPtr<BoxStyle> Document::pseudoStyleForElement(Element* element, PseudoType pseudoType, const BoxStyle& parentStyle) const
+RefPtr<BoxStyle> Document::pseudoStyleForElement(Element* element, PseudoType pseudoType, const BoxStyle* parentStyle) const
 {
     return m_styleSheet.pseudoStyleForElement(element, pseudoType, parentStyle);
 }
@@ -876,7 +876,7 @@ RefPtr<BoxStyle> Document::styleForPage(const GlobalString& pageName, uint32_t p
     return m_styleSheet.styleForPage(pageName, pageIndex, pseudoType);
 }
 
-RefPtr<BoxStyle> Document::styleForPageMargin(const GlobalString& pageName, uint32_t pageIndex, PageMarginType marginType, const BoxStyle& pageStyle) const
+RefPtr<BoxStyle> Document::styleForPageMargin(const GlobalString& pageName, uint32_t pageIndex, PageMarginType marginType, const BoxStyle* pageStyle) const
 {
     return m_styleSheet.styleForPageMargin(pageName, pageIndex, marginType, pageStyle);
 }

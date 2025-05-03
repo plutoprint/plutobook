@@ -711,7 +711,7 @@ void PageLayout::layout()
 
 void PageLayout::buildPageMargin(const Counters& counters, PageBox* pageBox, PageMarginType marginType)
 {
-    auto marginStyle = m_document->styleForPageMargin(pageBox->pageName(), pageBox->pageIndex(), marginType, *pageBox->style());
+    auto marginStyle = m_document->styleForPageMargin(pageBox->pageName(), pageBox->pageIndex(), marginType, pageBox->style());
     if(marginStyle == nullptr) {
         return;
     }

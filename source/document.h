@@ -354,11 +354,11 @@ public:
     bool supportsMediaQueries(const CSSMediaQueryList& queries) const;
     bool supportsMedia(const std::string_view& type, const std::string_view& media) const;
 
-    RefPtr<BoxStyle> styleForElement(Element* element, const BoxStyle& parentStyle) const;
-    RefPtr<BoxStyle> pseudoStyleForElement(Element* element, PseudoType pseudoType, const BoxStyle& parentStyle) const;
+    RefPtr<BoxStyle> styleForElement(Element* element, const BoxStyle* parentStyle) const;
+    RefPtr<BoxStyle> pseudoStyleForElement(Element* element, PseudoType pseudoType, const BoxStyle* parentStyle) const;
 
     RefPtr<BoxStyle> styleForPage(const GlobalString& pageName, uint32_t pageIndex, PseudoType pseudoType) const;
-    RefPtr<BoxStyle> styleForPageMargin(const GlobalString& pageName, uint32_t pageIndex, PageMarginType marginType, const BoxStyle& pageStyle) const;
+    RefPtr<BoxStyle> styleForPageMargin(const GlobalString& pageName, uint32_t pageIndex, PageMarginType marginType, const BoxStyle* pageStyle) const;
 
     std::string getCounterText(int value, const GlobalString& listType);
     std::string getMarkerText(int value, const GlobalString& listType);
