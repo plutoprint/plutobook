@@ -3271,7 +3271,7 @@ RefPtr<CSSValue> CSSParser::consumeLonghand(CSSTokenStream& input, CSSPropertyID
     case CSSPropertyID::ColumnRuleWidth:
         return consumeLineWidth(input);
     case CSSPropertyID::ColumnGap:
-        return consumeLengthOrPercentOrNormal(input, false, false);
+        return consumeLengthOrNormal(input, false, false);
     case CSSPropertyID::ColumnWidth:
         return consumeLengthOrAuto(input, false, false);
     case CSSPropertyID::Quotes:
