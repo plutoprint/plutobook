@@ -91,7 +91,7 @@ void MultiColumnRowBox::paintColumnRules(GraphicsContext& context, const Point& 
         }
 
         if(columnIndex < columnCount - 1) {
-            Rect ruleRect(adjustedOffset.x + ruleOffset - columnRuleWidth / 2.f, adjustedOffset.y, columnRuleWidth, m_columnHeight);
+            Rect ruleRect(adjustedOffset.x + ruleOffset - columnRuleWidth / 2.f, adjustedOffset.y, columnRuleWidth, height());
             BorderPainter::paintBoxSide(context, boxSide, columnRuleStyle, columnRuleColor, ruleRect);
         }
 
@@ -464,11 +464,11 @@ void MultiColumnFlowBox::computePreferredWidths(float& minPreferredWidth, float&
 {
     BlockFlowBox::computePreferredWidths(minPreferredWidth, maxPreferredWidth);
 
-    auto columnBlock = columnBlockFlowBox();
-    auto columnStyle = columnBlock->style();
+    auto columnStyle = columnBlockFlowBox()->style();
+    auto columnGap = columnStyle->columnGap().value_or(columnStyle->fontSize());
     auto columnCount = columnStyle->columnCount().value_or(1);
 
-    auto totalColumnGap = m_columnGap * (columnCount - 1);
+    auto totalColumnGap = columnGap * (columnCount - 1);
     if(auto columnWidth = columnStyle->columnWidth()) {
         minPreferredWidth = std::min(minPreferredWidth, columnWidth.value());
         maxPreferredWidth = std::max(maxPreferredWidth, columnWidth.value());
@@ -483,10 +483,12 @@ void MultiColumnFlowBox::computeWidth(float& x, float& width, float& marginLeft,
 {
     auto columnBlock = columnBlockFlowBox();
     auto columnStyle = columnBlock->style();
+    auto columnGap = columnStyle->columnGap();
     auto columnCount = columnStyle->columnCount();
     auto columnWidth = columnStyle->columnWidth();
     auto availableWidth = columnBlock->contentBoxWidth();
 
+    m_columnGap = columnGap.value_or(columnStyle->fontSize());
     if(!columnWidth.has_value() && columnCount.has_value()) {
         m_columnCount = columnCount.value();
         width = std::max(0.f, (availableWidth - ((columnCount.value() - 1) * m_columnGap)) / columnCount.value());
@@ -529,6 +531,7 @@ static bool isValidColumnSpanBox(BoxFrame* box)
 void MultiColumnFlowBox::build()
 {
     MultiColumnRowBox* currentRow = nullptr;
+
     auto columnBlock = columnBlockFlowBox();
     auto columnStyle = columnBlock->style();
     auto columnFill = columnStyle->columnFill();
@@ -541,7 +544,7 @@ void MultiColumnFlowBox::build()
             auto newSpanner = MultiColumnSpanBox::create(box, container->style());
             container->insertChild(newSpanner, child->nextSibling());
             container->removeChild(child);
-            columnBlock->addChild(child);
+            columnBlock->appendChild(child);
             if(currentRow)
                currentRow->setColumnFill(ColumnFill::Balance);
             currentRow = nullptr;
@@ -549,7 +552,7 @@ void MultiColumnFlowBox::build()
         } else if(!child->isFloatingOrPositioned()) {
             if(currentRow == nullptr) {
                 auto newRow = MultiColumnRowBox::create(this, columnStyle);
-                columnBlock->addChild(newRow);
+                columnBlock->appendChild(newRow);
                 newRow->setColumnFill(columnFill);
                 currentRow = newRow;
             }
@@ -573,12 +576,6 @@ void MultiColumnFlowBox::build()
                 break;
             }
         }
-    }
-
-    if(auto columnGap = columnStyle->columnGap()) {
-        m_columnGap = columnGap.value();
-    } else {
-        m_columnGap = columnStyle->fontSize();
     }
 
     BlockFlowBox::build();

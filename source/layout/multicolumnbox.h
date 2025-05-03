@@ -193,7 +193,7 @@ private:
     MultiColumnFlowBox(const RefPtr<BoxStyle>& style);
     MultiColumnRowBox* m_currentRow{nullptr};
     mutable uint32_t m_columnCount{0};
-    float m_columnGap{0};
+    mutable float m_columnGap{0};
 };
 
 inline BlockFlowBox* MultiColumnFlowBox::columnBlockFlowBox() const

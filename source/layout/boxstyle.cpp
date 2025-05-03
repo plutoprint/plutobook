@@ -1118,20 +1118,20 @@ ColumnFill BoxStyle::columnFill() const
     return ColumnFill::Balance;
 }
 
-std::optional<float> BoxStyle::columnWidth() const
-{
-    auto value = get(CSSPropertyID::ColumnWidth);
-    if(value == nullptr)
-        return std::nullopt;
-    return convertLengthOrAuto(*value);
-}
-
 std::optional<float> BoxStyle::columnGap() const
 {
     auto value = get(CSSPropertyID::ColumnGap);
     if(value == nullptr)
         return std::nullopt;
     return convertLengthOrNormal(*value);
+}
+
+std::optional<float> BoxStyle::columnWidth() const
+{
+    auto value = get(CSSPropertyID::ColumnWidth);
+    if(value == nullptr)
+        return std::nullopt;
+    return convertLengthOrAuto(*value);
 }
 
 std::optional<int> BoxStyle::columnCount() const
