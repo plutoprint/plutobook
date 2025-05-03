@@ -41,12 +41,14 @@ public:
     float x() const { return m_x; }
     float y() const { return m_y; }
     float width() const { return m_width; }
+    float height() const;
 
     void setX(float x) { m_x = x; }
     void setY(float y) { m_y = y; }
     void setWidth(float width) { m_width = width; }
 
-    float height() const;
+    Rect lineRect() const;
+
     float verticalAlignPosition() const;
     VerticalAlignType verticalAlignType() const;
 
@@ -163,9 +165,13 @@ public:
     float overflowLeft() const { return m_overflowLeft; }
     float overflowRight() const { return m_overflowRight; }
 
-    void updateOverflowRect(float lineTop, float lineBottom);
-    void addOverflowRect(const BoxFrame* box, float dx, float dy);
+    Rect visualOverflowRect() const;
+
+    void addOverflowRect(const BoxFrame* child, float dx, float dy);
     void addOverflowRect(float top, float bottom, float left, float right);
+    void addOverflowRect(const Rect& overflowRect);
+
+    void updateOverflowRect(float lineTop, float lineBottom);
 
     void paintOutlines(const PaintInfo& info, const Point& offset) const;
     void paintDecorations(const PaintInfo& info, const Point& offset) const;

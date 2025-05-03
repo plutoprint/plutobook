@@ -27,6 +27,11 @@ float LineBox::height() const
     return style()->fontHeight() + box.borderAndPaddingHeight();
 }
 
+Rect LineBox::lineRect() const
+{
+    return Rect(m_x, m_y, m_width, height());
+}
+
 float LineBox::verticalAlignPosition() const
 {
     if(isTextLineBox())
@@ -483,9 +488,36 @@ void FlowLineBox::placeInVerticalDirection(float y, float maxHeight, float maxAs
     }
 }
 
+Rect FlowLineBox::visualOverflowRect() const
+{
+    return Rect(m_overflowLeft, m_overflowTop, m_overflowRight - m_overflowLeft, m_overflowBottom - m_overflowTop);
+}
+
+void FlowLineBox::addOverflowRect(const BoxFrame* box, float dx, float dy)
+{
+    if(box->hasLayer())
+        return;
+    auto overflowRect = box->visualOverflowRect();
+    overflowRect.move(dx, dy);
+    addOverflowRect(overflowRect);
+}
+
+void FlowLineBox::addOverflowRect(float top, float bottom, float left, float right)
+{
+    m_overflowTop = std::min(top, m_overflowTop);
+    m_overflowBottom = std::max(bottom, m_overflowBottom);
+    m_overflowLeft = std::min(left, m_overflowLeft);
+    m_overflowRight = std::max(right, m_overflowRight);
+}
+
+void FlowLineBox::addOverflowRect(const Rect& overflowRect)
+{
+    addOverflowRect(overflowRect.y, overflowRect.bottom(), overflowRect.x, overflowRect.right());
+}
+
 void FlowLineBox::updateOverflowRect(float lineTop, float lineBottom)
 {
-    Rect borderRect(m_x, m_y, m_width, height());
+    Rect borderRect(lineRect());
     if(!isRootLineBox()) {
         auto outlineEdge = style()->getOutlineEdge();
         if(outlineEdge.isRenderable()) {
@@ -501,7 +533,7 @@ void FlowLineBox::updateOverflowRect(float lineTop, float lineBottom)
         if(child->box()->isPositioned())
             continue;
         if(auto line = to<TextLineBox>(child)) {
-            addOverflowRect(line->y(), line->y() + line->height(), line->x(), line->x() + line->width());
+            addOverflowRect(line->lineRect());
             continue;
         }
 
@@ -513,33 +545,16 @@ void FlowLineBox::updateOverflowRect(float lineTop, float lineBottom)
         auto& line = to<FlowLineBox>(*child);
         line.updateOverflowRect(lineTop, lineBottom);
         if(!line.box()->hasLayer()) {
-            addOverflowRect(line.overflowTop(), line.overflowBottom(), line.overflowLeft(), line.overflowRight());
+            addOverflowRect(line.visualOverflowRect());
         }
     }
-}
-
-void FlowLineBox::addOverflowRect(const BoxFrame* box, float dx, float dy)
-{
-    if(box->hasLayer())
-        return;
-    auto overflowRect = box->visualOverflowRect();
-    overflowRect.move(dx, dy);
-    addOverflowRect(overflowRect.y, overflowRect.bottom(), overflowRect.x, overflowRect.right());
-}
-
-void FlowLineBox::addOverflowRect(float top, float bottom, float left, float right)
-{
-    m_overflowTop = std::min(top, m_overflowTop);
-    m_overflowBottom = std::max(bottom, m_overflowBottom);
-    m_overflowLeft = std::min(left, m_overflowLeft);
-    m_overflowRight = std::max(right, m_overflowRight);
 }
 
 void FlowLineBox::paintOutlines(const PaintInfo& info, const Point& offset) const
 {
     if(style()->visibility() != Visibility::Visible || isRootLineBox())
         return;
-    Rect borderRect(m_x, m_y, m_width, height());
+    Rect borderRect(lineRect());
     borderRect.move(offset);
     box()->paintOutline(info, borderRect);
 }
@@ -548,7 +563,7 @@ void FlowLineBox::paintDecorations(const PaintInfo& info, const Point& offset) c
 {
     if(style()->visibility() != Visibility::Visible || isRootLineBox())
         return;
-    Rect borderRect(m_x, m_y, m_width, height());
+    Rect borderRect(lineRect());
     borderRect.move(offset);
     box()->paintBackground(info, borderRect, m_hasLeftEdge, m_hasRightEdge);
     box()->paintBorder(info, borderRect, m_hasLeftEdge, m_hasRightEdge);
@@ -556,7 +571,7 @@ void FlowLineBox::paintDecorations(const PaintInfo& info, const Point& offset) c
 
 void FlowLineBox::paint(const PaintInfo& info, const Point& offset, PaintPhase phase)
 {
-    Rect overflowRect(m_overflowLeft, m_overflowTop, m_overflowRight - m_overflowLeft, m_overflowBottom - m_overflowTop);
+    Rect overflowRect(visualOverflowRect());
     overflowRect.move(offset);
     if(!overflowRect.intersects(info.rect())) {
         return;

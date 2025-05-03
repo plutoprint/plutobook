@@ -1492,7 +1492,7 @@ void LineLayout::updateOverflowRect()
 {
     for(const auto& line : m_lines) {
         line->updateOverflowRect(line->lineTop(), line->lineBottom());
-        m_block->addOverflowRect(line->overflowTop(), line->overflowBottom(), line->overflowLeft(), line->overflowRight());
+        m_block->addOverflowRect(line->visualOverflowRect());
     }
 }
 
