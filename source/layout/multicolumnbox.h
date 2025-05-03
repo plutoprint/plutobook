@@ -50,12 +50,13 @@ public:
     MultiColumnRowBox* prevRow() const;
     MultiColumnRowBox* nextRow() const;
 
-    bool isFillBalance() const { return m_isFillBalance; }
-    void setIsFillBalance(bool value) { m_isFillBalance = value; }
+    MultiColumnFlowBox* columnFlowBox() const { return m_columnFlowBox; }
+
+    ColumnFill columnFill() const { return m_columnFill; }
+    void setColumnFill(ColumnFill columnFill) { m_columnFill = columnFill; }
 
     bool requiresBalancing() const { return m_requiresBalancing; }
 
-    MultiColumnFlowBox* columnFlowBox() const { return m_columnFlowBox; }
     float rowTop() const { return m_rowTop; }
     float rowBottom() const { return m_rowBottom; }
 
@@ -91,7 +92,7 @@ private:
 
     MultiColumnFlowBox* m_columnFlowBox;
     MultiColumnContentRunList m_runs;
-    bool m_isFillBalance{true};
+    ColumnFill m_columnFill{ColumnFill::Balance};
     bool m_requiresBalancing{true};
     float m_rowTop{0};
     float m_rowBottom{0};

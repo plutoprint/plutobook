@@ -140,7 +140,7 @@ MultiColumnRowBox* MultiColumnRowBox::nextRow() const
 
 uint32_t MultiColumnRowBox::numberOfColumns() const
 {
-    if(m_columnHeight == 0.f)
+    if(m_columnHeight <= 0.f)
         return 1;
     auto height = rowHeight();
     if(height == 0.f)
@@ -187,7 +187,7 @@ void MultiColumnRowBox::resetColumnHeight(float availableColumnHeight)
     m_runs.clear();
     m_minimumColumnHeight = 0.f;
     m_maxColumnHeight = availableColumnHeight;
-    if(!m_isFillBalance && availableColumnHeight > 0.f) {
+    if(m_columnFill == ColumnFill::Auto && availableColumnHeight > 0.f) {
         m_columnHeight = availableColumnHeight;
         m_requiresBalancing = false;
     } else {
@@ -528,11 +528,10 @@ static bool isValidColumnSpanBox(BoxFrame* box)
 
 void MultiColumnFlowBox::build()
 {
-    MultiColumnRowBox* currentColumnRow = nullptr;
+    MultiColumnRowBox* currentRow = nullptr;
     auto columnBlock = columnBlockFlowBox();
     auto columnStyle = columnBlock->style();
-    auto fillBalance = columnStyle->columnFill() == ColumnFill::Balance;
-    m_columnGap = columnStyle->columnGap().value_or(columnStyle->fontSize());
+    auto columnFill = columnStyle->columnFill();
 
     auto child = firstChild();
     while(child) {
@@ -543,16 +542,16 @@ void MultiColumnFlowBox::build()
             container->insertChild(newSpanner, child->nextSibling());
             container->removeChild(child);
             columnBlock->addChild(child);
-            if(currentColumnRow)
-                currentColumnRow->setIsFillBalance(true);
-            currentColumnRow = nullptr;
+            if(currentRow)
+               currentRow->setColumnFill(ColumnFill::Balance);
+            currentRow = nullptr;
             child = newSpanner;
         } else if(!child->isFloatingOrPositioned()) {
-            if(currentColumnRow == nullptr) {
+            if(currentRow == nullptr) {
                 auto newRow = MultiColumnRowBox::create(this, columnStyle);
                 columnBlock->addChild(newRow);
-                newRow->setIsFillBalance(fillBalance);
-                currentColumnRow = newRow;
+                newRow->setColumnFill(columnFill);
+                currentRow = newRow;
             }
 
             if(child->firstChild() && child->isBlockFlowBox() && !child->isChildrenInline()
@@ -574,6 +573,12 @@ void MultiColumnFlowBox::build()
                 break;
             }
         }
+    }
+
+    if(auto columnGap = columnStyle->columnGap()) {
+        m_columnGap = columnGap.value();
+    } else {
+        m_columnGap = columnStyle->fontSize();
     }
 
     BlockFlowBox::build();
