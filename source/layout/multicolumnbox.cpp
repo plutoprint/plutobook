@@ -21,9 +21,17 @@ MultiColumnRowBox* MultiColumnRowBox::create(MultiColumnFlowBox* columnFlow, con
 void MultiColumnRowBox::updateOverflowRect()
 {
     BoxFrame::updateOverflowRect();
-    auto columnRect = columnRectAt(numberOfColumns() - 1);
-    auto overflowRect = m_columnFlowBox->visualOverflowRect().translated(columnRect.origin());
-    addOverflowRect(columnRect.y, columnRect.bottom(), overflowRect.x, overflowRect.right());
+
+    auto overflowRect = m_columnFlowBox->visualOverflowRect();
+
+    auto startColumnRect = columnRectAt(0);
+    auto endColumnRect = columnRectAt(numberOfColumns() - 1);
+
+    auto startColumnOverflowRect = overflowRect.translated(startColumnRect.origin());
+    auto endColumnOverflowRect = overflowRect.translated(endColumnRect.origin());
+
+    addOverflowRect(startColumnRect.y, startColumnRect.bottom(), startColumnOverflowRect.x, startColumnOverflowRect.right());
+    addOverflowRect(endColumnRect.y, endColumnRect.bottom(), endColumnOverflowRect.x, endColumnOverflowRect.right());
 }
 
 MultiColumnRowBox::MultiColumnRowBox(MultiColumnFlowBox* columnFlow, const RefPtr<BoxStyle>& style)

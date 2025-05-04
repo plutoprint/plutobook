@@ -349,7 +349,6 @@ struct is_a<BoxModel> {
 };
 
 class ReplacedLineBox;
-class MultiColumnSpanBox;
 
 class BoxFrame : public BoxModel {
 public:

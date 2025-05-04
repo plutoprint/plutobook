@@ -190,12 +190,12 @@ void BoxLayer::paintLayerColumnContents(BoxLayer* rootLayer, GraphicsContext& co
         for(uint32_t columnIndex = 0; columnIndex < columnCount; ++columnIndex) {
             auto rowRect = row->rowRectAt(columnIndex);
             auto columnRect = row->columnRectAt(columnIndex);
-            auto translation = (columnRect.origin() - rowRect.origin()) + row->location() - column.location();
+            auto translation = (columnRect.origin() - rowRect.origin()) + row->location() + offset - column.location();
             auto rectangle = rect.translated(-translation);
 
             context.save();
             context.translate(translation.x, translation.y);
-            paintLayerContents(rootLayer, context, rectangle, offset);
+            paintLayerContents(this, context, rectangle, Point());
             context.restore();
         }
 
