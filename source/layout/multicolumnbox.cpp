@@ -22,7 +22,7 @@ void MultiColumnRowBox::updateOverflowRect()
 {
     BoxFrame::updateOverflowRect();
 
-    auto overflowRect = m_columnFlowBox->visualOverflowRect();
+    auto overflowRect = m_columnFlow->visualOverflowRect();
 
     auto startColumnRect = columnRectAt(0);
     auto endColumnRect = columnRectAt(numberOfColumns() - 1);
@@ -36,20 +36,20 @@ void MultiColumnRowBox::updateOverflowRect()
 
 MultiColumnRowBox::MultiColumnRowBox(MultiColumnFlowBox* columnFlow, const RefPtr<BoxStyle>& style)
     : BoxFrame(nullptr, style)
-    , m_columnFlowBox(columnFlow)
+    , m_columnFlow(columnFlow)
     , m_runs(style->heap())
 {
 }
 
 void MultiColumnRowBox::computePreferredWidths(float& minPreferredWidth, float& maxPreferredWidth) const
 {
-    minPreferredWidth = m_columnFlowBox->minPreferredWidth();
-    maxPreferredWidth = m_columnFlowBox->maxPreferredWidth();
+    minPreferredWidth = m_columnFlow->minPreferredWidth();
+    maxPreferredWidth = m_columnFlow->maxPreferredWidth();
 }
 
 void MultiColumnRowBox::computeWidth(float& x, float& width, float& marginLeft, float& marginRight) const
 {
-    width = m_columnFlowBox->columnBlockFlowBox()->contentBoxWidth();
+    width = m_columnFlow->columnBlockFlow()->contentBoxWidth();
 }
 
 void MultiColumnRowBox::computeHeight(float& y, float& height, float& marginTop, float& marginBottom) const
@@ -72,17 +72,15 @@ void MultiColumnRowBox::paintColumnRules(GraphicsContext& context, const Point& 
 {
     if(style()->visibility() != Visibility::Visible)
         return;
-    auto columnBlock = m_columnFlowBox->columnBlockFlowBox();
-    auto columnStyle = columnBlock->style();
-    auto columnDirection = columnStyle->direction();
-
-    auto columnRuleWidth = columnStyle->columnRuleWidth();
-    auto columnRuleStyle = columnStyle->columnRuleStyle();
-    auto columnRuleColor = columnStyle->columnRuleColor();
+    auto containerStyle = m_columnFlow->columnBlockFlow()->style();
+    auto columnRuleWidth = containerStyle->columnRuleWidth();
+    auto columnRuleStyle = containerStyle->columnRuleStyle();
+    auto columnRuleColor = containerStyle->columnRuleColor();
     if(columnRuleWidth <= 0.f || columnRuleStyle <= LineStyle::Hidden || !columnRuleColor.isVisible())
         return;
-    auto columnGap = m_columnFlowBox->columnGap();
-    auto columnWidth = m_columnFlowBox->width();
+    auto columnDirection = m_columnFlow->style()->direction();
+    auto columnGap = m_columnFlow->columnGap();
+    auto columnWidth = m_columnFlow->width();
     auto columnCount = numberOfColumns();
 
     Point adjustedOffset(offset + location());
@@ -109,11 +107,11 @@ void MultiColumnRowBox::paintColumnRules(GraphicsContext& context, const Point& 
 
 Rect MultiColumnRowBox::columnRectAt(uint32_t columnIndex) const
 {
-    Rect columnRect(0, 0, m_columnFlowBox->width(), rowHeightAt(columnIndex));
-    if(m_columnFlowBox->style()->direction() == Direction::Ltr) {
-        columnRect.x += columnIndex * (columnRect.w + m_columnFlowBox->columnGap());
+    Rect columnRect(0, 0, m_columnFlow->width(), rowHeightAt(columnIndex));
+    if(m_columnFlow->style()->direction() == Direction::Ltr) {
+        columnRect.x += columnIndex * (columnRect.w + m_columnFlow->columnGap());
     } else {
-        columnRect.x += width() - columnRect.w - columnIndex * (columnRect.w + m_columnFlowBox->columnGap());
+        columnRect.x += width() - columnRect.w - columnIndex * (columnRect.w + m_columnFlow->columnGap());
     }
 
     return columnRect;
@@ -121,7 +119,7 @@ Rect MultiColumnRowBox::columnRectAt(uint32_t columnIndex) const
 
 Rect MultiColumnRowBox::rowRectAt(uint32_t columnIndex) const
 {
-    return Rect(0, rowTopAt(columnIndex), m_columnFlowBox->width(), rowHeightAt(columnIndex));
+    return Rect(0, rowTopAt(columnIndex), m_columnFlow->width(), rowHeightAt(columnIndex));
 }
 
 MultiColumnRowBox* MultiColumnRowBox::prevRow() const
@@ -185,7 +183,7 @@ void MultiColumnRowBox::addContentRun(float endOffset)
 {
     if(!m_runs.empty() && endOffset <= m_runs.back().breakOffset())
         return;
-    if(m_requiresBalancing && m_runs.size() < m_columnFlowBox->columnCount()) {
+    if(m_requiresBalancing && m_runs.size() < m_columnFlow->columnCount()) {
         m_runs.emplace_back(endOffset);
     }
 }
@@ -237,9 +235,9 @@ float MultiColumnRowBox::calculateColumnHeight(bool balancing) const
     }
 
     auto columnCount = numberOfColumns();
-    if(columnCount <= m_columnFlowBox->columnCount())
+    if(columnCount <= m_columnFlow->columnCount())
         return m_columnHeight;
-    if(m_runs.size() >= m_columnFlowBox->columnCount())
+    if(m_runs.size() >= m_columnFlow->columnCount())
         return m_columnHeight;
     if(m_maxColumnHeight > 0.f && m_columnHeight >= m_maxColumnHeight)
         return m_columnHeight;
@@ -300,7 +298,7 @@ void MultiColumnRowBox::distributeImplicitBreaks()
     addContentRun(m_rowBottom);
     auto columnCount = m_runs.size();
 
-    while(columnCount < m_columnFlowBox->columnCount()) {
+    while(columnCount < m_columnFlow->columnCount()) {
         auto index = findRunWithTallestColumns();
         m_runs[index].assumeAnotherImplicitBreak();
         columnCount++;
@@ -420,16 +418,16 @@ void MultiColumnFlowBox::updateMinimumFragmentHeight(float offset, float minHeig
     }
 }
 
-void MultiColumnFlowBox::skipColumnSpanBox(MultiColumnSpanBox* spanner, float offset)
+void MultiColumnFlowBox::skipColumnSpanner(MultiColumnSpanBox* spanner, float offset)
 {
     offset += fragmentOffset();
-    if(auto columnRow = spanner->prevColumnRowBox()) {
+    if(auto columnRow = spanner->prevRow()) {
         if(offset < columnRow->rowTop())
             offset = columnRow->rowTop();
         columnRow->setRowBottom(offset);
     }
 
-    if(auto columnRow = spanner->nextColumnRowBox()) {
+    if(auto columnRow = spanner->nextRow()) {
         columnRow->setRowTop(offset);
         m_currentRow = columnRow;
     }
@@ -472,12 +470,12 @@ void MultiColumnFlowBox::computePreferredWidths(float& minPreferredWidth, float&
 {
     BlockFlowBox::computePreferredWidths(minPreferredWidth, maxPreferredWidth);
 
-    auto columnStyle = columnBlockFlowBox()->style();
-    auto columnGap = columnStyle->columnGap().value_or(columnStyle->fontSize());
-    auto columnCount = columnStyle->columnCount().value_or(1);
+    auto containerStyle = columnBlockFlow()->style();
+    auto columnGap = containerStyle->columnGap().value_or(containerStyle->fontSize());
+    auto columnCount = containerStyle->columnCount().value_or(1);
 
     auto totalColumnGap = columnGap * (columnCount - 1);
-    if(auto columnWidth = columnStyle->columnWidth()) {
+    if(auto columnWidth = containerStyle->columnWidth()) {
         minPreferredWidth = std::min(minPreferredWidth, columnWidth.value());
         maxPreferredWidth = std::max(maxPreferredWidth, columnWidth.value());
     } else {
@@ -489,38 +487,39 @@ void MultiColumnFlowBox::computePreferredWidths(float& minPreferredWidth, float&
 
 void MultiColumnFlowBox::computeWidth(float& x, float& width, float& marginLeft, float& marginRight) const
 {
-    auto columnBlock = columnBlockFlowBox();
-    auto columnStyle = columnBlock->style();
-    auto columnGap = columnStyle->columnGap();
-    auto columnCount = columnStyle->columnCount();
-    auto columnWidth = columnStyle->columnWidth();
-    auto availableWidth = columnBlock->contentBoxWidth();
+    auto container = columnBlockFlow();
+    auto containerStyle = container->style();
+    auto containerWidth = container->contentBoxWidth();
 
-    m_columnGap = columnGap.value_or(columnStyle->fontSize());
+    auto columnGap = containerStyle->columnGap();
+    auto columnCount = containerStyle->columnCount();
+    auto columnWidth = containerStyle->columnWidth();
+
+    m_columnGap = columnGap.value_or(containerStyle->fontSize());
     if(!columnWidth.has_value() && columnCount.has_value()) {
         m_columnCount = columnCount.value();
-        width = std::max(0.f, (availableWidth - ((columnCount.value() - 1) * m_columnGap)) / columnCount.value());
+        width = std::max(0.f, (containerWidth - ((columnCount.value() - 1) * m_columnGap)) / columnCount.value());
     } else if(columnWidth.has_value() && !columnCount.has_value()) {
-        m_columnCount = std::max(1.f, std::floor((availableWidth + m_columnGap) / (columnWidth.value() + m_columnGap)));
-        width = ((availableWidth + m_columnGap) / m_columnCount) - m_columnGap;
+        m_columnCount = std::max(1.f, std::floor((containerWidth + m_columnGap) / (columnWidth.value() + m_columnGap)));
+        width = ((containerWidth + m_columnGap) / m_columnCount) - m_columnGap;
     } else {
-        int count = std::floor((availableWidth + m_columnGap) / (columnWidth.value() + m_columnGap));
+        int count = std::floor((containerWidth + m_columnGap) / (columnWidth.value() + m_columnGap));
         m_columnCount = std::max(1, std::min(count, columnCount.value()));
-        width = ((availableWidth + m_columnGap) / m_columnCount) - m_columnGap;
+        width = ((containerWidth + m_columnGap) / m_columnCount) - m_columnGap;
     }
 }
 
 void MultiColumnFlowBox::layout(FragmentBuilder* fragmentainer)
 {
-    auto columnBlock = columnBlockFlowBox();
-    auto columnStyle = columnBlock->style();
+    auto container = columnBlockFlow();
+    auto containerStyle = container->style();
 
     float columnHeight = 0.f;
-    if(auto height = columnBlock->computeHeightUsing(columnStyle->height()))
-        columnHeight = columnBlock->adjustBorderBoxHeight(height.value());
-    columnHeight = columnBlock->constrainBorderBoxHeight(columnHeight);
+    if(auto height = container->computeHeightUsing(containerStyle->height()))
+        columnHeight = container->adjustBorderBoxHeight(height.value());
+    columnHeight = container->constrainBorderBoxHeight(columnHeight);
 
-    auto availableColumnHeight = std::max(0.f, columnHeight - columnBlock->borderAndPaddingHeight());
+    auto availableColumnHeight = std::max(0.f, columnHeight - container->borderAndPaddingHeight());
     for(auto row = firstRow(); row; row = row->nextRow()) {
         row->resetColumnHeight(availableColumnHeight);
     }
@@ -531,36 +530,37 @@ void MultiColumnFlowBox::layout(FragmentBuilder* fragmentainer)
     }
 }
 
-static bool isValidColumnSpanBox(BoxFrame* box)
+static bool isValidColumnSpanner(BoxFrame* box)
 {
-    return box && !box->isInline() && !box->isFloatingOrPositioned() && box->style()->columnSpan() == ColumnSpan::All;
+    return !box->isInline() && !box->isFloatingOrPositioned() && box->style()->columnSpan() == ColumnSpan::All;
 }
 
 void MultiColumnFlowBox::build()
 {
     MultiColumnRowBox* currentRow = nullptr;
 
-    auto columnBlock = columnBlockFlowBox();
-    auto columnStyle = columnBlock->style();
-    auto columnFill = columnStyle->columnFill();
+    auto container = columnBlockFlow();
+    auto containerStyle = container->style();
+    auto columnFill = containerStyle->columnFill();
 
     auto child = firstChild();
     while(child) {
-        if(auto box = to<BoxFrame>(child); isValidColumnSpanBox(box)) {
-            auto container = to<BlockFlowBox>(child->parentBox());
-            assert(container && !container->isChildrenInline());
-            auto newSpanner = MultiColumnSpanBox::create(box, container->style());
-            container->insertChild(newSpanner, child->nextSibling());
-            container->removeChild(child);
-            columnBlock->appendChild(child);
+        auto spanner = to<BoxFrame>(child);
+        if(spanner && isValidColumnSpanner(spanner)) {
+            auto parent = to<BlockFlowBox>(spanner->parentBox());
+            assert(parent && !parent->isChildrenInline());
+            auto newSpanner = MultiColumnSpanBox::create(spanner, parent->style());
+            parent->insertChild(newSpanner, spanner->nextSibling());
+            parent->removeChild(spanner);
+            container->appendChild(spanner);
             if(currentRow)
                currentRow->setColumnFill(ColumnFill::Balance);
             currentRow = nullptr;
             child = newSpanner;
         } else if(!child->isFloatingOrPositioned()) {
             if(currentRow == nullptr) {
-                auto newRow = MultiColumnRowBox::create(this, columnStyle);
-                columnBlock->appendChild(newRow);
+                auto newRow = MultiColumnRowBox::create(this, containerStyle);
+                container->appendChild(newRow);
                 newRow->setColumnFill(columnFill);
                 currentRow = newRow;
             }

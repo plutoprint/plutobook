@@ -1542,7 +1542,7 @@ void BlockFlowBox::layoutBlockChildren(FragmentBuilder* fragmentainer)
         } else if(child->isMultiColumnSpanBox()) {
             auto spanner = to<MultiColumnSpanBox>(child);
             setHeight(height() + marginInfo.margin());
-            spanner->columnFlowBox()->skipColumnSpanBox(spanner, height());
+            spanner->columnFlow()->skipColumnSpanner(spanner, height());
             marginInfo.clearMargin();
         } else if(child->isMultiColumnFlowBox()) {
             assert(child == m_columnFlowBox);

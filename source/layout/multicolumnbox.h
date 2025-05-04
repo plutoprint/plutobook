@@ -47,10 +47,9 @@ public:
     Rect columnRectAt(uint32_t columnIndex) const;
     Rect rowRectAt(uint32_t columnIndex) const;
 
+    MultiColumnFlowBox* columnFlow() const { return m_columnFlow; }
     MultiColumnRowBox* prevRow() const;
     MultiColumnRowBox* nextRow() const;
-
-    MultiColumnFlowBox* columnFlowBox() const { return m_columnFlowBox; }
 
     ColumnFill columnFill() const { return m_columnFill; }
     void setColumnFill(ColumnFill columnFill) { m_columnFill = columnFill; }
@@ -90,7 +89,7 @@ private:
 
     void distributeImplicitBreaks();
 
-    MultiColumnFlowBox* m_columnFlowBox;
+    MultiColumnFlowBox* m_columnFlow;
     MultiColumnContentRunList m_runs;
     ColumnFill m_columnFill{ColumnFill::Balance};
     bool m_requiresBalancing{true};
@@ -114,9 +113,9 @@ public:
     bool isMultiColumnSpanBox() const final { return true; }
     bool requiresLayer() const final { return false; }
 
-    MultiColumnFlowBox* columnFlowBox() const;
-    MultiColumnRowBox* nextColumnRowBox() const;
-    MultiColumnRowBox* prevColumnRowBox() const;
+    MultiColumnFlowBox* columnFlow() const;
+    MultiColumnRowBox* nextRow() const;
+    MultiColumnRowBox* prevRow() const;
 
     void computePreferredWidths(float& minPreferredWidth, float& maxPreferredWidth) const final;
     void computeWidth(float& x, float& width, float& marginLeft, float& marginRight) const final;
@@ -130,19 +129,19 @@ private:
     BoxFrame* m_box;
 };
 
-inline MultiColumnFlowBox* MultiColumnSpanBox::columnFlowBox() const
+inline MultiColumnFlowBox* MultiColumnSpanBox::columnFlow() const
 {
     auto parent = to<BlockFlowBox>(m_box->parentBox());
     assert(parent && parent->hasColumnFlowBox());
     return parent->columnFlowBox();
 }
 
-inline MultiColumnRowBox* MultiColumnSpanBox::nextColumnRowBox() const
+inline MultiColumnRowBox* MultiColumnSpanBox::nextRow() const
 {
     return to<MultiColumnRowBox>(m_box->nextSibling());
 }
 
-inline MultiColumnRowBox* MultiColumnSpanBox::prevColumnRowBox() const
+inline MultiColumnRowBox* MultiColumnSpanBox::prevRow() const
 {
     return to<MultiColumnRowBox>(m_box->prevSibling());
 }
@@ -172,11 +171,11 @@ public:
     void setFragmentBreak(float offset, float spaceShortage) final;
     void updateMinimumFragmentHeight(float offset, float minHeight) final;
 
-    void skipColumnSpanBox(MultiColumnSpanBox* spanner, float offset);
+    void skipColumnSpanner(MultiColumnSpanBox* spanner, float offset);
 
     MultiColumnRowBox* columnRowAtOffset(float offset) const;
-    BlockFlowBox* columnBlockFlowBox() const;
 
+    BlockFlowBox* columnBlockFlow() const;
     uint32_t columnCount() const { return m_columnCount; }
     float columnGap() const { return m_columnGap; }
 
@@ -196,7 +195,7 @@ private:
     mutable float m_columnGap{0};
 };
 
-inline BlockFlowBox* MultiColumnFlowBox::columnBlockFlowBox() const
+inline BlockFlowBox* MultiColumnFlowBox::columnBlockFlow() const
 {
     return static_cast<BlockFlowBox*>(parentBox());
 }
