@@ -321,10 +321,12 @@ void MultiColumnSpanBox::computePreferredWidths(float& minPreferredWidth, float&
 
 void MultiColumnSpanBox::computeWidth(float& x, float& width, float& marginLeft, float& marginRight) const
 {
+    assert(false);
 }
 
 void MultiColumnSpanBox::computeHeight(float& y, float& height, float& marginTop, float& marginBottom) const
 {
+    assert(false);
 }
 
 void MultiColumnSpanBox::layout(FragmentBuilder* fragmentainer)
@@ -530,7 +532,7 @@ void MultiColumnFlowBox::layout(FragmentBuilder* fragmentainer)
     }
 }
 
-static bool isValidColumnSpanner(BoxFrame* box)
+static bool isValidColumnSpanner(const BoxFrame* box)
 {
     return !box->isInline() && !box->isFloatingOrPositioned() && box->style()->columnSpan() == ColumnSpan::All;
 }

@@ -304,7 +304,6 @@ void PageBox::layoutEdgePageMargins(PageMarginBox* edgeStartBox, PageMarginBox* 
 {
     if(edgeStartBox == nullptr && edgeCenterBox == nullptr && edgeEndBox == nullptr)
         return;
-    auto availableMainAxisSize = isHorizontalEdge(edgeSide) ? edgeRect.w : edgeRect.h;
     std::array<PreferredSizeInfo, 3> preferredMainAxisSizes = {
         computeEdgePreferredSize(edgeStartBox, edgeRect, edgeSide),
         computeEdgePreferredSize(edgeCenterBox, edgeRect, edgeSide),
@@ -319,6 +318,7 @@ void PageBox::layoutEdgePageMargins(PageMarginBox* edgeStartBox, PageMarginBox* 
         preferredMainAxisSizes[EndMargin].maxLength()
     };
 
+    auto availableMainAxisSize = isHorizontalEdge(edgeSide) ? edgeRect.w : edgeRect.h;
     if(edgeCenterBox == nullptr) {
         resolveTwoEdgePageMarginLengths(preferredMainAxisSizes, availableMainAxisSize, mainAxisSizes[StartMargin], &mainAxisSizes[EndMargin]);
     } else {
@@ -553,16 +553,16 @@ void PageMarginBox::updateAutoMargins(const Size& availableSize)
 
 void PageMarginBox::layoutFixedWidth(float width)
 {
-    setWidth(width);
+    setOverrideWidth(width);
     layout(nullptr);
 }
 
 void PageMarginBox::layoutFixedHeight(float height)
 {
     setOverrideHeight(height);
-    if(updateIntrinsicPaddings(height))
+    if(updateIntrinsicPaddings(height)) {
         layout(nullptr);
-    setHeight(height);
+    }
 }
 
 void PageMarginBox::layoutWidth(float availableWidth, bool fixedWidth)
@@ -615,14 +615,6 @@ void PageMarginBox::layoutContent(float availableWidth, float availableHeight, b
 {
     layoutWidth(availableWidth, fixedWidth);
     layoutHeight(availableHeight, fixedHeight);
-}
-
-void PageMarginBox::computeWidth(float& x, float& width, float& marginLeft, float& marginRight) const
-{
-}
-
-void PageMarginBox::computeHeight(float& y, float& height, float& marginTop, float& marginBottom) const
-{
 }
 
 PageLayout::PageLayout(Document* document)

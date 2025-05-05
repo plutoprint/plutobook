@@ -548,6 +548,7 @@ void BoxModel::updateLayerPosition()
 Point BoxModel::relativePositionOffset() const
 {
     auto container = containingBlock();
+
     auto leftLength = style()->left();
     auto rightLength = style()->right();
     auto topLength = style()->top();

@@ -99,9 +99,6 @@ public:
     void layoutContent(float availableWidth, float availableHeight, bool fixedWidth, bool fixedHeight);
     void layoutContent(const Size& availableSize) { layoutContent(availableSize.w, availableSize.h, false, false); }
 
-    void computeWidth(float& x, float& width, float& marginLeft, float& marginRight) const final;
-    void computeHeight(float& y, float& height, float& marginTop, float& marginBottom) const final;
-
     const char* name() const final { return "PageMarginBox"; }
 
 private:
