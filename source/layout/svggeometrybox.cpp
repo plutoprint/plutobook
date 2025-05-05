@@ -89,6 +89,7 @@ void SVGGeometryBox::render(const SVGRenderState& state) const
 
 void SVGGeometryBox::layout()
 {
+    m_strokeBoundingBox = Rect::Invalid;
     SVGBoxModel::layout();
     updateMarkerPositions();
 }
