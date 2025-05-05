@@ -35,11 +35,11 @@ public:
     virtual const Path& path() const = 0;
 
     SVGGeometryElement* element() const;
-    const Transform& localTransform() const final { return element()->transform(); }
-    const Rect& fillBoundingBox() const final;
-    const Rect& strokeBoundingBox() const final;
+    const Transform& localTransform() const override { return element()->transform(); }
+    const Rect& fillBoundingBox() const override;
+    const Rect& strokeBoundingBox() const override;
 
-    void render(const SVGRenderState& state) const final;
+    void render(const SVGRenderState& state) const override;
     void layout() override;
     void build() override;
 
@@ -104,7 +104,7 @@ public:
 
     const char* name() const final { return "SVGShapeBox"; }
 
-protected:
+private:
     Path m_path;
 };
 
