@@ -27,9 +27,14 @@ float LineBox::height() const
     return style()->fontHeight() + box.borderAndPaddingHeight();
 }
 
-Rect LineBox::lineRect() const
+Point LineBox::location() const
 {
-    return Rect(m_x, m_y, m_width, height());
+    return Point(m_x, m_y);
+}
+
+Size LineBox::size() const
+{
+    return Size(m_width, height());
 }
 
 float LineBox::verticalAlignPosition() const
@@ -168,7 +173,7 @@ void TextLineBox::paint(const PaintInfo& info, const Point& offset, PaintPhase p
 {
     if(m_shapeWidth == 0.f || phase != PaintPhase::Contents || style()->visibility() != Visibility::Visible)
         return;
-    Point adjustedOffset(offset.x + x(), offset.y + y());
+    Point adjustedOffset(offset + location());
     Point origin(adjustedOffset.x, adjustedOffset.y + style()->fontAscent());
     int repeatCount = std::max(1.f, std::floor(m_width / m_shapeWidth));
     if(style()->direction() == Direction::Ltr) {
@@ -517,7 +522,7 @@ void FlowLineBox::addOverflowRect(const Rect& overflowRect)
 
 void FlowLineBox::updateOverflowRect(float lineTop, float lineBottom)
 {
-    Rect borderRect(lineRect());
+    Rect borderRect(m_x, m_y, m_width, height());
     if(!isRootLineBox()) {
         auto outlineEdge = style()->getOutlineEdge();
         if(outlineEdge.isRenderable()) {
@@ -533,7 +538,7 @@ void FlowLineBox::updateOverflowRect(float lineTop, float lineBottom)
         if(child->box()->isPositioned())
             continue;
         if(auto line = to<TextLineBox>(child)) {
-            addOverflowRect(line->lineRect());
+            addOverflowRect(line->y(), line->bottom(), line->x(), line->right());
             continue;
         }
 
@@ -554,8 +559,8 @@ void FlowLineBox::paintOutlines(const PaintInfo& info, const Point& offset) cons
 {
     if(style()->visibility() != Visibility::Visible || isRootLineBox())
         return;
-    Rect borderRect(lineRect());
-    borderRect.translate(offset);
+    Point adjustedOffset(offset + location());
+    Rect borderRect(adjustedOffset, size());
     box()->paintOutline(info, borderRect);
 }
 
@@ -563,8 +568,8 @@ void FlowLineBox::paintDecorations(const PaintInfo& info, const Point& offset) c
 {
     if(style()->visibility() != Visibility::Visible || isRootLineBox())
         return;
-    Rect borderRect(lineRect());
-    borderRect.translate(offset);
+    Point adjustedOffset(offset + location());
+    Rect borderRect(adjustedOffset, size());
     box()->paintBackground(info, borderRect, m_hasLeftEdge, m_hasRightEdge);
     box()->paintBorder(info, borderRect, m_hasLeftEdge, m_hasRightEdge);
 }
@@ -650,7 +655,7 @@ float RootLineBox::adjustLineBoxInFragmentFlow(FragmentBuilder* fragmentainer, f
         return remainingHeight;
     }
 
-    if(m_lineIndex > 0 && isNearlyEqual(remainingHeight, fragmentHeight))
+    if(!isFirstLine() && isNearlyEqual(remainingHeight, fragmentHeight))
         fragmentainer->setFragmentBreak(offset, lineHeight);
     return 0.f;
 }

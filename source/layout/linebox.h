@@ -12,7 +12,7 @@ class RootLineBox;
 
 class PaintInfo;
 class Point;
-class Rect;
+class Size;
 
 enum class PaintPhase;
 enum class VerticalAlignType : uint8_t;
@@ -47,7 +47,11 @@ public:
     void setY(float y) { m_y = y; }
     void setWidth(float width) { m_width = width; }
 
-    Rect lineRect() const;
+    float right() const { return m_x + m_width; }
+    float bottom() const { return m_y + height(); }
+
+    Point location() const;
+    Size size() const;
 
     float verticalAlignPosition() const;
     VerticalAlignType verticalAlignType() const;
@@ -119,6 +123,7 @@ struct is_a<ReplacedLineBox> {
 };
 
 class BoxModel;
+class Rect;
 
 using LineBoxList = std::pmr::vector<LineBox*>;
 
