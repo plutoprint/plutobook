@@ -711,14 +711,16 @@ const LineInfo& LineBreaker::nextLine()
             }
         }
 
-        for(auto& run : m_line.runs()) {
-            if(run.hasOnlyTrailingSpaces || leaderCount == 0)
-                break;
-            if(run->type() == LineItem::Type::LeaderText) {
-                auto leaderWidth = remainingWidth / leaderCount;
-                run.width += leaderWidth;
-                remainingWidth -= leaderWidth;
-                leaderCount -= 1;
+        if(leaderCount > 0) {
+            for(auto& run : m_line.runs()) {
+                if(run.hasOnlyTrailingSpaces)
+                    break;
+                if(run->type() == LineItem::Type::LeaderText) {
+                    auto leaderWidth = remainingWidth / leaderCount;
+                    run.width += leaderWidth;
+                    remainingWidth -= leaderWidth;
+                    leaderCount -= 1;
+                }
             }
         }
     }
@@ -737,17 +739,19 @@ const LineInfo& LineBreaker::nextLine()
             }
         }
 
-        uint32_t expansionOpportunityIndex = 0;
-        for(auto& run : m_line.runs()) {
-            if(run.hasOnlyTrailingSpaces || expansionOpportunityCount == 0)
-                break;
-            if(run->type() == LineItem::Type::NormalText || run->type() == LineItem::Type::TabulationText) {
-                if(auto expansionOpportunity = expansionOpportunities.at(expansionOpportunityIndex++)) {
-                    auto expansionOpportunityWidth = remainingWidth * expansionOpportunity / expansionOpportunityCount;
-                    run.expansion = expansionOpportunityWidth / expansionOpportunity;
-                    run.width += expansionOpportunityWidth;
-                    expansionOpportunityCount -= expansionOpportunity;
-                    remainingWidth -= expansionOpportunityWidth;
+        if(expansionOpportunityCount > 0) {
+            uint32_t expansionOpportunityIndex = 0;
+            for(auto& run : m_line.runs()) {
+                if(run.hasOnlyTrailingSpaces)
+                    break;
+                if(run->type() == LineItem::Type::NormalText || run->type() == LineItem::Type::TabulationText) {
+                    if(auto expansionOpportunity = expansionOpportunities.at(expansionOpportunityIndex++)) {
+                        auto expansionOpportunityWidth = remainingWidth * expansionOpportunity / expansionOpportunityCount;
+                        run.expansion = expansionOpportunityWidth / expansionOpportunity;
+                        run.width += expansionOpportunityWidth;
+                        remainingWidth -= expansionOpportunityWidth;
+                        expansionOpportunityCount -= expansionOpportunity;
+                    }
                 }
             }
         }
@@ -1623,7 +1627,6 @@ void LineLayout::layout(FragmentBuilder* fragmentainer)
 {
     if(!m_lines.empty()) {
         for(const auto& line : m_lines) {
-            line->setY(0.f);
             auto blockHeight = line->alignInVerticalDirection(fragmentainer, m_block->height());
             if(!line->isEmptyLine()) {
                 m_block->setHeight(blockHeight);

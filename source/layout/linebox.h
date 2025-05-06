@@ -30,7 +30,6 @@ public:
 
     Box* box() const { return m_box; }
     BoxStyle* style() const;
-    RootLineBox* rootLine() const;
 
     FlowLineBox* parentLine() const { return m_parentLine; }
     void setParentLine(FlowLineBox* parentLine) { m_parentLine = parentLine; }

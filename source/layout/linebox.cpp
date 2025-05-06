@@ -3,7 +3,6 @@
 #include "blockbox.h"
 #include "fragmentbuilder.h"
 #include "graphicscontext.h"
-#include "textshape.h"
 #include "boxlayer.h"
 
 #include <cmath>
@@ -39,18 +38,26 @@ Size LineBox::size() const
 
 float LineBox::verticalAlignPosition() const
 {
-    if(isTextLineBox())
+    if(isTextLineBox()) {
+        if(m_parentLine->isRootLineBox())
+            return 0.f;
         return m_parentLine->y();
+    }
+
     auto verticalAlign = style()->verticalAlign();
     if(verticalAlign.type() == VerticalAlignType::Top || verticalAlign.type() == VerticalAlignType::Bottom) {
         return 0.f;
     }
 
-    float verticalPosition = 0.f;
     auto parentBox = m_box->parentBox();
     auto parentStyle = parentBox->style();
-    if(parentBox->isInlineBox() && parentStyle->verticalAlignType() != VerticalAlignType::Top && parentStyle->verticalAlignType() != VerticalAlignType::Bottom)
+
+    float verticalPosition = 0.f;
+    if(parentBox->isInlineBox() && parentStyle->verticalAlignType() != VerticalAlignType::Top
+        && parentStyle->verticalAlignType() != VerticalAlignType::Bottom) {
         verticalPosition += m_parentLine->y();
+    }
+
     if(verticalAlign.type() == VerticalAlignType::Baseline)
         return verticalPosition;
     if(verticalAlign.type() == VerticalAlignType::Sub) {
@@ -615,7 +622,7 @@ BlockFlowBox* RootLineBox::box() const
 void RootLineBox::updateLineTopAndBottom(const LineBox* line)
 {
     m_lineTop = std::min(m_lineTop, line->y());
-    m_lineBottom = std::max(m_lineBottom, line->y() + line->height());
+    m_lineBottom = std::max(m_lineBottom, line->bottom());
 }
 
 float RootLineBox::alignInHorizontalDirection(float startOffset)
