@@ -78,12 +78,12 @@ void MultiColumnRowBox::paintColumnRules(GraphicsContext& context, const Point& 
     auto columnRuleColor = containerStyle->columnRuleColor();
     if(columnRuleWidth <= 0.f || columnRuleStyle <= LineStyle::Hidden || !columnRuleColor.isVisible())
         return;
-    auto columnDirection = m_columnFlow->style()->direction();
     auto columnGap = m_columnFlow->columnGap();
     auto columnWidth = m_columnFlow->width();
     auto columnCount = numberOfColumns();
 
     Point adjustedOffset(offset + location());
+    auto columnDirection = style()->direction();
     auto columnOffset = columnDirection == Direction::Ltr ? 0.f : width();
     auto ruleOffset = columnDirection == Direction::Ltr ? 0.f : width();
     auto boxSide = columnDirection == Direction::Ltr ? BoxSideLeft : BoxSideRight;
@@ -108,7 +108,7 @@ void MultiColumnRowBox::paintColumnRules(GraphicsContext& context, const Point& 
 Rect MultiColumnRowBox::columnRectAt(uint32_t columnIndex) const
 {
     Rect columnRect(0, 0, m_columnFlow->width(), rowHeightAt(columnIndex));
-    if(m_columnFlow->style()->direction() == Direction::Ltr) {
+    if(style()->isLeftToRightDirection()) {
         columnRect.x += columnIndex * (columnRect.w + m_columnFlow->columnGap());
     } else {
         columnRect.x += width() - columnRect.w - columnIndex * (columnRect.w + m_columnFlow->columnGap());
