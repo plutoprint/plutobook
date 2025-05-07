@@ -40,7 +40,6 @@ class BoxView;
 class BoxModel;
 class BlockBox;
 class BlockFlowBox;
-class FragmentBuilder;
 
 class Box : public HeapMember {
 public:
@@ -316,8 +315,6 @@ public:
     float paddingStart() const { return paddingStart(style()->direction()); }
     float paddingEnd() const { return paddingEnd(style()->direction()); }
 
-    virtual void layout(FragmentBuilder* fragmentainer);
-
     void build() override;
 
     const char* name() const override { return "BoxModel"; }
@@ -349,6 +346,7 @@ struct is_a<BoxModel> {
 };
 
 class ReplacedLineBox;
+class FragmentBuilder;
 
 class BoxFrame : public BoxModel {
 public:
@@ -469,6 +467,7 @@ public:
 
     virtual void paintOutlines(const PaintInfo& info, const Point& offset);
     virtual void paintDecorations(const PaintInfo& info, const Point& offset);
+    virtual void layout(FragmentBuilder* fragmentainer);
 
     const char* name() const override { return "BoxFrame"; }
 

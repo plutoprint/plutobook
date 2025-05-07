@@ -685,11 +685,6 @@ float BoxModel::borderRight() const
     return m_borderRight;
 }
 
-void BoxModel::layout(FragmentBuilder* fragmentainer)
-{
-    assert(false);
-}
-
 void BoxModel::build()
 {
     if(requiresLayer()) {
@@ -980,6 +975,11 @@ void BoxFrame::paintDecorations(const PaintInfo& info, const Point& offset)
     Rect borderRect(offset, size());
     paintBackground(info, borderRect);
     paintBorder(info, borderRect);
+}
+
+void BoxFrame::layout(FragmentBuilder* fragmentainer)
+{
+    assert(false);
 }
 
 } // namespace plutobook
