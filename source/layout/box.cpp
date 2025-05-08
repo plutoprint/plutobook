@@ -576,20 +576,26 @@ float BoxModel::containingBlockWidthForPositioned(const BoxModel* container) con
 {
     if(container->isBoxView())
         return document()->containerWidth();
-    auto rect = container->borderBoundingBox();
-    if(rect.w > 0.f)
-        return rect.w - container->borderLeft() - container->borderRight();
-    return 0.f;
+    if(auto box = to<BoxFrame>(container))
+        return box->paddingBoxWidth();
+    const auto& lines = to<InlineBox>(*container).lines();
+    const auto& firstLine = lines.front();
+    const auto& lastLine = lines.back();
+    if(container->style()->isLeftToRightDirection())
+        return lastLine->right() - firstLine->x() - container->borderLeft() - container->borderRight();
+    return firstLine->right() - lastLine->x() - container->borderLeft() - container->borderRight();
 }
 
 float BoxModel::containingBlockHeightForPositioned(const BoxModel* container) const
 {
-    if(isBoxView())
+    if(container->isBoxView())
         return document()->containerHeight();
-    auto rect = container->borderBoundingBox();
-    if(rect.h > 0.f)
-        return rect.h - container->borderTop() - container->borderBottom();
-    return 0.f;
+    if(auto box = to<BoxFrame>(container))
+        return box->paddingBoxHeight();
+    const auto& lines = to<InlineBox>(*container).lines();
+    const auto& firstLine = lines.front();
+    const auto& lastLine = lines.back();
+    return lastLine->bottom() - firstLine->y() - container->borderTop() - container->borderBottom();
 }
 
 float BoxModel::containingBlockWidthForContent(const BlockBox* container) const
