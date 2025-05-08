@@ -61,13 +61,13 @@ Rect InlineBox::linesBoundingBox() const
     for(const auto& line : m_lines) {
         if(line == firstLine || leftSide > line->x())
             leftSide = line->x();
-        if(line == firstLine || rightSide < line->x() + line->width()) {
-            rightSide = line->x() + line->width();
+        if(line == firstLine || rightSide < line->right()) {
+            rightSide = line->right();
         }
     }
 
     auto width = rightSide - leftSide;
-    auto height = lastLine->y() + lastLine->height() - firstLine->y();
+    auto height = lastLine->bottom() - firstLine->y();
     return Rect(leftSide, firstLine->y(), width, height);
 }
 
@@ -117,13 +117,14 @@ void InlineBox::addChild(Box* newChild)
     auto currentParent = parentBox();
     auto currentClone = clone;
     while(currentParent != preBlock) {
-        auto& parent = to<InlineBox>(*currentParent);
-        assert(parent.continuation() == nullptr);
-        auto parentClone = new (heap()) InlineBox(nullptr, parent.style());
+        auto parentClone = new (heap()) InlineBox(nullptr, currentParent->style());
         parentClone->appendChild(currentClone);
-        parent.setContinuation(parentClone);
-
         currentClone = parentClone;
+
+        auto parent = to<InlineBox>(currentParent);
+        assert(parent && !parent->continuation());
+        parent->setContinuation(parentClone);
+
         currentParent = currentParent->parentBox();
     }
 
