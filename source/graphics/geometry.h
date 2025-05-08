@@ -2,7 +2,6 @@
 #define PLUTOBOOK_GEOMETRY_H
 
 #include <array>
-#include <tuple>
 #include <algorithm>
 #include <vector>
 #include <cstdint>
@@ -30,7 +29,7 @@ public:
     constexpr void translate(float d) { translate(d, d); }
     constexpr void translate(const Point& p) { translate(p.x, p.y); }
 
-    constexpr float dot(const Point& p) const { return x * p.x + y * p.y; }
+    constexpr Point operator-() const { return Point(-x, -y); }
 
 public:
     float x{0};
@@ -47,11 +46,6 @@ constexpr Point operator-(const Point& a, const Point& b)
     return Point(a.x - b.x, a.y - b.y);
 }
 
-constexpr Point operator-(const Point& a)
-{
-    return Point(-a.x, -a.y);
-}
-
 constexpr Point& operator+=(Point& a, const Point& b)
 {
     a.translate(b);
@@ -64,41 +58,6 @@ constexpr Point& operator-=(Point& a, const Point& b)
     return a;
 }
 
-constexpr float operator*(const Point& a, const Point& b)
-{
-    return a.dot(b);
-}
-
-constexpr bool operator==(const Point& a, const Point& b)
-{
-    return std::tie(a.x, a.y) == std::tie(b.x, b.y);
-}
-
-constexpr bool operator!=(const Point& a, const Point& b)
-{
-    return std::tie(a.x, a.y) != std::tie(b.x, b.y);
-}
-
-constexpr bool operator<(const Point& a, const Point& b)
-{
-    return std::tie(a.x, a.y) < std::tie(b.x, b.y);
-}
-
-constexpr bool operator>(const Point& a, const Point& b)
-{
-    return std::tie(a.x, a.y) > std::tie(b.x, b.y);
-}
-
-constexpr bool operator<=(const Point& a, const Point& b)
-{
-    return std::tie(a.x, a.y) <= std::tie(b.x, b.y);
-}
-
-constexpr bool operator>=(const Point& a, const Point& b)
-{
-    return std::tie(a.x, a.y) >= std::tie(b.x, b.y);
-}
-
 class Size {
 public:
     constexpr Size() = default;
@@ -107,6 +66,10 @@ public:
     constexpr void expand(float dw, float dh) { w += dw; h += dh; }
     constexpr void expand(float d) { expand(d, d); }
     constexpr void expand(const Size& s) { expand(s.w, s.h); }
+
+    constexpr void shrink(float dw, float dh) { expand(-dw, -dh); }
+    constexpr void shrink(float d) { shrink(d, d); }
+    constexpr void shrink(const Size& s) { shrink(s.w, s.h); }
 
     constexpr void scale(float sw, float sh) { w *= sw; h *= sh; }
     constexpr void scale(float s) { scale(s, s); }
@@ -131,11 +94,6 @@ constexpr Size operator-(const Size& a, const Size& b)
     return Size(a.w - b.w, a.h - b.h);
 }
 
-constexpr Size operator-(const Size& a)
-{
-    return Size(-a.w, -a.h);
-}
-
 constexpr Size& operator+=(Size& a, const Size& b)
 {
     a.expand(b);
@@ -144,38 +102,8 @@ constexpr Size& operator+=(Size& a, const Size& b)
 
 constexpr Size& operator-=(Size& a, const Size& b)
 {
-    a.expand(-b);
+    a.shrink(b);
     return a;
-}
-
-constexpr bool operator==(const Size& a, const Size& b)
-{
-    return std::tie(a.w, a.h) == std::tie(b.w, b.h);
-}
-
-constexpr bool operator!=(const Size& a, const Size& b)
-{
-    return std::tie(a.w, a.h) != std::tie(b.w, b.h);
-}
-
-constexpr bool operator<(const Size& a, const Size& b)
-{
-    return std::tie(a.w, a.h) < std::tie(b.w, b.h);
-}
-
-constexpr bool operator>(const Size& a, const Size& b)
-{
-    return std::tie(a.w, a.h) > std::tie(b.w, b.h);
-}
-
-constexpr bool operator<=(const Size& a, const Size& b)
-{
-    return std::tie(a.w, a.h) <= std::tie(b.w, b.h);
-}
-
-constexpr bool operator>=(const Size& a, const Size& b)
-{
-    return std::tie(a.w, a.h) >= std::tie(b.w, b.h);
 }
 
 class RectOutsets {
@@ -185,6 +113,8 @@ public:
     constexpr RectOutsets(float top, float right, float bottom, float left)
         : t(top), r(right), b(bottom), l(left)
     {}
+
+    constexpr RectOutsets operator-() const { return RectOutsets(-t, -r, -b, -l); }
 
 public:
     float t{0};
@@ -205,13 +135,7 @@ public:
     constexpr void shrink(float t, float r, float b, float l) { expand(-t, -r, -b, -l); }
 
     constexpr void expand(const RectOutsets& outsets) { expand(outsets.t, outsets.r, outsets.b, outsets.l); }
-    constexpr void shrink(const RectOutsets& outsets) { shrink(outsets.t, outsets.r, outsets.b, outsets.l); }
-
-    constexpr Rect operator+(const RectOutsets& outsets) const;
-    constexpr Rect operator-(const RectOutsets& outsets) const;
-
-    constexpr Rect& operator+=(const RectOutsets& outsets);
-    constexpr Rect& operator-=(const RectOutsets& outsets);
+    constexpr void shrink(const RectOutsets& outsets) { expand(-outsets); }
 
     constexpr void scale(float sx, float sy) { x *= sx; y *= sy; w *= sx; h *= sy; }
     constexpr void scale(float s) { scale(s, s); }
@@ -219,6 +143,7 @@ public:
 
     constexpr void inflate(float dx, float dy) { x -= dx; y -= dy; w += dx * 2.f; h += dy * 2.f; }
     constexpr void inflate(float d) { inflate(d, d); }
+    constexpr void inflate(const Point& p) { inflate(p.x, p.y); }
 
     constexpr void translate(float dx, float dy) { x += dx; y += dy; }
     constexpr void translate(float d) { translate(d, d); }
@@ -231,8 +156,8 @@ public:
     constexpr Rect intersected(const Rect& rect) const;
     constexpr Rect united(const Rect& rect) const;
 
-    constexpr Rect& intersect(const Rect& o);
-    constexpr Rect& unite(const Rect& o);
+    constexpr Rect& intersect(const Rect& rect);
+    constexpr Rect& unite(const Rect& rect);
 
     constexpr bool contains(const Point& p) const { return p.x >= x && p.x < right() && p.y >= y && p.y < bottom(); }
     constexpr bool contains(const Rect& r) const { return x <= r.x && y <= r.y && right() >= r.right() && bottom() >= r.bottom(); }
@@ -264,32 +189,6 @@ public:
     float h{0};
 };
 
-constexpr Rect Rect::operator+(const RectOutsets& outsets) const
-{
-    Rect rect(*this);
-    rect.expand(outsets);
-    return rect;
-}
-
-constexpr Rect Rect::operator-(const RectOutsets& outsets) const
-{
-    Rect rect(*this);
-    rect.shrink(outsets);
-    return rect;
-}
-
-constexpr Rect& Rect::operator+=(const RectOutsets& outsets)
-{
-    expand(outsets);
-    return *this;
-}
-
-constexpr Rect& Rect::operator-=(const RectOutsets& outsets)
-{
-    shrink(outsets);
-    return *this;
-}
-
 constexpr Rect Rect::intersected(const Rect& rect) const
 {
     if(!rect.isValid())
@@ -318,46 +217,40 @@ constexpr Rect Rect::united(const Rect& rect) const
     return Rect(l, t, r - l, b - t);
 }
 
-constexpr Rect& Rect::intersect(const Rect& o)
+constexpr Rect& Rect::intersect(const Rect& rect)
 {
-    *this = intersected(o);
-    return *this;
+    return (*this = intersected(rect));
 }
 
-constexpr Rect& Rect::unite(const Rect& o)
+constexpr Rect& Rect::unite(const Rect& rect)
 {
-    *this = united(o);
-    return *this;
+    return (*this = united(rect));
 }
 
-constexpr bool operator==(const Rect& a, const Rect& b)
+constexpr Rect operator+(const Rect& rect, const RectOutsets& outsets)
 {
-    return std::tie(a.x, a.y, a.w, a.h) == std::tie(b.x, b.y, b.w, b.h);
+    Rect r(rect);
+    r.expand(outsets);
+    return r;
 }
 
-constexpr bool operator!=(const Rect& a, const Rect& b)
+constexpr Rect operator-(const Rect& rect, const RectOutsets& outsets)
 {
-    return std::tie(a.x, a.y, a.w, a.h) != std::tie(b.x, b.y, b.w, b.h);
+    Rect r(rect);
+    r.shrink(outsets);
+    return r;
 }
 
-constexpr bool operator<(const Rect& a, const Rect& b)
+constexpr Rect& operator+=(Rect& rect, const RectOutsets& outsets)
 {
-    return std::tie(a.x, a.y, a.w, a.h) < std::tie(b.x, b.y, b.w, b.h);
+    rect.expand(outsets);
+    return rect;
 }
 
-constexpr bool operator>(const Rect& a, const Rect& b)
+constexpr Rect& operator-=(Rect& rect, const RectOutsets& outsets)
 {
-    return std::tie(a.x, a.y, a.w, a.h) > std::tie(b.x, b.y, b.w, b.h);
-}
-
-constexpr bool operator<=(const Rect& a, const Rect& b)
-{
-    return std::tie(a.x, a.y, a.w, a.h) <= std::tie(b.x, b.y, b.w, b.h);
-}
-
-constexpr bool operator>=(const Rect& a, const Rect& b)
-{
-    return std::tie(a.x, a.y, a.w, a.h) >= std::tie(b.x, b.y, b.w, b.h);
+    rect.shrink(outsets);
+    return rect;
 }
 
 class RectRadii {
@@ -379,13 +272,7 @@ public:
     constexpr void shrink(float t, float r, float b, float l) { expand(-t, -r, -b, -l); }
 
     constexpr void expand(const RectOutsets& outsets) { expand(outsets.t, outsets.r, outsets.b, outsets.l); }
-    constexpr void shrink(const RectOutsets& outsets) { shrink(outsets.t, outsets.r, outsets.b, outsets.l); }
-
-    constexpr RectRadii operator+(const RectOutsets& outsets) const;
-    constexpr RectRadii operator-(const RectOutsets& outsets) const;
-
-    constexpr RectRadii& operator+=(const RectOutsets& outsets);
-    constexpr RectRadii& operator-=(const RectOutsets& outsets);
+    constexpr void shrink(const RectOutsets& outsets) { expand(-outsets); }
 
     constexpr bool isZero() const { return tl.isZero() && tr.isZero() && bl.isZero() && br.isZero(); };
 
@@ -433,30 +320,30 @@ constexpr void RectRadii::expand(float t, float r, float b, float l)
     if(br.isEmpty()) br = Size();
 }
 
-constexpr RectRadii RectRadii::operator+(const RectOutsets& outsets) const
+constexpr RectRadii operator+(const RectRadii& radii, const RectOutsets& outsets)
 {
-    RectRadii radii(*this);
+    RectRadii r(radii);
+    r.expand(outsets);
+    return r;
+}
+
+constexpr RectRadii operator-(const RectRadii& radii, const RectOutsets& outsets)
+{
+    RectRadii r(radii);
+    r.shrink(outsets);
+    return r;
+}
+
+constexpr RectRadii& operator+=(RectRadii& radii, const RectOutsets& outsets)
+{
     radii.expand(outsets);
     return radii;
 }
 
-constexpr RectRadii RectRadii::operator-(const RectOutsets& outsets) const
+constexpr RectRadii& operator-=(RectRadii& radii, const RectOutsets& outsets)
 {
-    RectRadii radii(*this);
     radii.shrink(outsets);
     return radii;
-}
-
-constexpr RectRadii& RectRadii::operator+=(const RectOutsets& outsets)
-{
-    expand(outsets);
-    return *this;
-}
-
-constexpr RectRadii& RectRadii::operator-=(const RectOutsets& outsets)
-{
-    shrink(outsets);
-    return *this;
 }
 
 class RoundedRect {
@@ -472,13 +359,7 @@ public:
     constexpr void shrink(float t, float r, float b, float l) { expand(-t, -r, -b, -l); }
 
     constexpr void expand(const RectOutsets& outsets) { expand(outsets.t, outsets.r, outsets.b, outsets.l); }
-    constexpr void shrink(const RectOutsets& outsets) { shrink(outsets.t, outsets.r, outsets.b, outsets.l); }
-
-    constexpr RoundedRect operator+(const RectOutsets& outsets) const;
-    constexpr RoundedRect operator-(const RectOutsets& outsets) const;
-
-    constexpr RoundedRect& operator+=(const RectOutsets& outsets);
-    constexpr RoundedRect& operator-=(const RectOutsets& outsets);
+    constexpr void shrink(const RectOutsets& outsets) { expand(-outsets); }
 
     constexpr const Rect& rect() const { return m_rect; }
     constexpr const RectRadii& radii() const { return m_radii; }
@@ -494,30 +375,30 @@ constexpr void RoundedRect::expand(float t, float r, float b, float l)
     m_radii.expand(t, r, b, l);
 }
 
-constexpr RoundedRect RoundedRect::operator+(const RectOutsets& outsets) const
+constexpr RoundedRect operator+(const RoundedRect& rect, const RectOutsets& outsets)
 {
-    RoundedRect rect(*this);
+    RoundedRect r(rect);
+    r.expand(outsets);
+    return r;
+}
+
+constexpr RoundedRect operator-(const RoundedRect& rect, const RectOutsets& outsets)
+{
+    RoundedRect r(rect);
+    r.shrink(outsets);
+    return r;
+}
+
+constexpr RoundedRect& operator+=(RoundedRect& rect, const RectOutsets& outsets)
+{
     rect.expand(outsets);
     return rect;
 }
 
-constexpr RoundedRect RoundedRect::operator-(const RectOutsets& outsets) const
+constexpr RoundedRect& operator-=(RoundedRect& rect, const RectOutsets& outsets)
 {
-    RoundedRect rect(*this);
     rect.shrink(outsets);
     return rect;
-}
-
-constexpr RoundedRect& RoundedRect::operator+=(const RectOutsets& outsets)
-{
-    expand(outsets);
-    return *this;
-}
-
-constexpr RoundedRect& RoundedRect::operator-=(const RectOutsets& outsets)
-{
-    shrink(outsets);
-    return *this;
 }
 
 class Transform {
