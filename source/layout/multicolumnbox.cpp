@@ -373,6 +373,20 @@ MultiColumnRowBox* MultiColumnFlowBox::lastRow() const
     return nullptr;
 }
 
+MultiColumnRowBox* MultiColumnFlowBox::columnRowAtOffset(float offset) const
+{
+    assert(m_currentRow && offset >= fragmentOffset());
+    auto row = m_currentRow;
+    while(row->rowTop() > offset) {
+        auto prevRow = row->prevRow();
+        if(prevRow == nullptr)
+            break;
+        row = prevRow;
+    }
+
+    return row;
+}
+
 float MultiColumnFlowBox::fragmentHeightForOffset(float offset) const
 {
     offset += fragmentOffset();
@@ -433,20 +447,6 @@ void MultiColumnFlowBox::skipColumnSpanner(MultiColumnSpanBox* spanner, float of
         columnRow->setRowTop(offset);
         m_currentRow = columnRow;
     }
-}
-
-MultiColumnRowBox* MultiColumnFlowBox::columnRowAtOffset(float offset) const
-{
-    assert(m_currentRow && offset >= fragmentOffset());
-    auto row = m_currentRow;
-    while(row->rowTop() > offset) {
-        auto prevRow = row->prevRow();
-        if(prevRow == nullptr)
-            break;
-        row = prevRow;
-    }
-
-    return row;
 }
 
 bool MultiColumnFlowBox::layoutColumns(bool balancing)

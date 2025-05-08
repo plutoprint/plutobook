@@ -159,8 +159,10 @@ public:
     bool requiresLayer() const final { return true; }
     bool avoidsFloats() const final { return true; }
 
+    BlockFlowBox* columnBlockFlow() const;
     MultiColumnRowBox* firstRow() const;
     MultiColumnRowBox* lastRow() const;
+    MultiColumnRowBox* columnRowAtOffset(float offset) const;
 
     FragmentType fragmentType() const final { return FragmentType::Column; }
 
@@ -173,9 +175,6 @@ public:
 
     void skipColumnSpanner(MultiColumnSpanBox* spanner, float offset);
 
-    MultiColumnRowBox* columnRowAtOffset(float offset) const;
-
-    BlockFlowBox* columnBlockFlow() const;
     uint32_t columnCount() const { return m_columnCount; }
     float columnGap() const { return m_columnGap; }
 
