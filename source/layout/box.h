@@ -141,7 +141,7 @@ public:
     virtual bool isSVGResourceRadialGradientBox() const { return false; }
 
     bool isAnonymous() const { return m_isAnonymous; }
-    bool isAnonymousBlock() const { return m_isAnonymous && m_style->display() == Display::Block && m_style->pseudoType() == PseudoType::None; }
+    bool isAnonymousBlock() const { return m_isAnonymousBlock; }
     bool isChildrenInline() const { return m_isChildrenInline; }
     bool isInline() const { return m_isInline; }
     bool isFloating() const { return m_isFloating; }
@@ -153,6 +153,7 @@ public:
     bool isBackgroundStolen() const { return m_isBackgroundStolen; }
 
     void setIsAnonymous(bool value) { m_isAnonymous = value; }
+    void setIsAnonymousBlock(bool value) { m_isAnonymousBlock = value; }
     void setIsChildrenInline(bool value) { m_isChildrenInline = value; }
     void setIsInline(bool value) { m_isInline = value; }
     void setIsFloating(bool value) { m_isFloating = value; }
@@ -192,6 +193,7 @@ private:
     Box* m_firstChild{nullptr};
     Box* m_lastChild{nullptr};
     bool m_isAnonymous : 1 {false};
+    bool m_isAnonymousBlock : 1 {false};
     bool m_isChildrenInline : 1 {false};
     bool m_isInline : 1 {false};
     bool m_isFloating : 1 {false};

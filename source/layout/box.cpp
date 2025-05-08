@@ -186,6 +186,7 @@ BlockFlowBox* Box::createAnonymousBlock(const BoxStyle* parentStyle)
 {
     auto newStyle = BoxStyle::create(parentStyle, Display::Block);
     auto newBlock = new (newStyle->heap()) BlockFlowBox(nullptr, newStyle);
+    newBlock->setIsAnonymousBlock(true);
     newBlock->setIsAnonymous(true);
     return newBlock;
 }
