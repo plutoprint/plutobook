@@ -65,9 +65,7 @@ public:
     void appendChild(Box* newChild);
     void removeChild(Box* child);
 
-    void moveChildrenTo(Box* to, Box* begin, Box* end);
-    void moveChildrenTo(Box* to, Box* begin);
-    void moveChildrenTo(Box* to);
+    void moveChildrenTo(Box* newParent);
 
     static Box* create(Node* node, const RefPtr<BoxStyle>& style);
     static Box* createAnonymous(Display display, const BoxStyle* parentStyle);

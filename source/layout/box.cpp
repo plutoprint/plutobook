@@ -112,25 +112,15 @@ void Box::removeChild(Box* child)
     child->setNextSibling(nullptr);
 }
 
-void Box::moveChildrenTo(Box* to, Box* begin, Box* end)
+void Box::moveChildrenTo(Box* newParent)
 {
-    auto child = begin;
-    while(child && child != end) {
+    auto child = m_firstChild;
+    while(child) {
         auto nextChild = child->nextSibling();
         removeChild(child);
-        to->appendChild(child);
+        newParent->appendChild(child);
         child = nextChild;
     }
-}
-
-void Box::moveChildrenTo(Box* to, Box* begin)
-{
-    moveChildrenTo(to, begin, nullptr);
-}
-
-void Box::moveChildrenTo(Box* to)
-{
-    moveChildrenTo(to, m_firstChild, nullptr);
 }
 
 Box* Box::create(Node* node, const RefPtr<BoxStyle>& style)
