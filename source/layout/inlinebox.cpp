@@ -71,6 +71,30 @@ Rect InlineBox::linesBoundingBox() const
     return Rect(leftSide, firstLine->y(), width, height);
 }
 
+float InlineBox::innerPaddingBoxWidth() const
+{
+    if(m_lines.empty()) {
+        return 0.f;
+    }
+
+    const auto& firstLine = m_lines.front();
+    const auto& lastLine = m_lines.back();
+    if(style()->isLeftToRightDirection())
+        return lastLine->right() - firstLine->x() - borderLeft() - borderRight();
+    return firstLine->right() - lastLine->x() - borderLeft() - borderRight();
+}
+
+float InlineBox::innerPaddingBoxHeight() const
+{
+    if(m_lines.empty()) {
+        return 0.f;
+    }
+
+    const auto& firstLine = m_lines.front();
+    const auto& lastLine = m_lines.back();
+    return lastLine->bottom() - firstLine->y() - borderTop() - borderBottom();
+}
+
 void InlineBox::addChild(Box* newChild)
 {
     if(m_continuation) {

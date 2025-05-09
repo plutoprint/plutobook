@@ -568,12 +568,7 @@ float BoxModel::containingBlockWidthForPositioned(const BoxModel* container) con
         return document()->containerWidth();
     if(auto box = to<BoxFrame>(container))
         return box->paddingBoxWidth();
-    const auto& lines = to<InlineBox>(*container).lines();
-    const auto& firstLine = lines.front();
-    const auto& lastLine = lines.back();
-    if(container->style()->isLeftToRightDirection())
-        return lastLine->right() - firstLine->x() - container->borderLeft() - container->borderRight();
-    return firstLine->right() - lastLine->x() - container->borderLeft() - container->borderRight();
+    return to<InlineBox>(*container).innerPaddingBoxWidth();
 }
 
 float BoxModel::containingBlockHeightForPositioned(const BoxModel* container) const
@@ -582,10 +577,7 @@ float BoxModel::containingBlockHeightForPositioned(const BoxModel* container) co
         return document()->containerHeight();
     if(auto box = to<BoxFrame>(container))
         return box->paddingBoxHeight();
-    const auto& lines = to<InlineBox>(*container).lines();
-    const auto& firstLine = lines.front();
-    const auto& lastLine = lines.back();
-    return lastLine->bottom() - firstLine->y() - container->borderTop() - container->borderBottom();
+    return to<InlineBox>(*container).innerPaddingBoxHeight();
 }
 
 float BoxModel::containingBlockWidthForContent(const BlockBox* container) const

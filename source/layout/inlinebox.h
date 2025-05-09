@@ -21,6 +21,9 @@ public:
     Rect borderBoundingBox() const override;
     Rect linesBoundingBox() const;
 
+    float innerPaddingBoxWidth() const;
+    float innerPaddingBoxHeight() const;
+
     void addChild(Box* newChild) override;
 
     const FlowLineBoxList& lines() const { return m_lines; }
