@@ -71,6 +71,25 @@ Rect InlineBox::linesBoundingBox() const
     return Rect(leftSide, firstLine->y(), width, height);
 }
 
+Point InlineBox::relativePositionedInlineOffset(const BoxModel* child) const
+{
+    if(m_lines.empty()) {
+        return Point(0, 0);
+    }
+
+    const auto& firstLine = m_lines.front();
+    const auto* childStyle = child->style();
+
+    Point offset;
+    if(!childStyle->left().isAuto() || !childStyle->right().isAuto())
+        offset.x = firstLine->x();
+    if(!childStyle->top().isAuto() || !childStyle->bottom().isAuto()) {
+        offset.y = firstLine->y();
+    }
+
+    return offset;
+}
+
 float InlineBox::innerPaddingBoxWidth() const
 {
     if(m_lines.empty()) {

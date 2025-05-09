@@ -21,6 +21,8 @@ public:
     Rect borderBoundingBox() const override;
     Rect linesBoundingBox() const;
 
+    Point relativePositionedInlineOffset(const BoxModel* child) const;
+
     float innerPaddingBoxWidth() const;
     float innerPaddingBoxHeight() const;
 

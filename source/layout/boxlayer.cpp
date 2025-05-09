@@ -1,6 +1,7 @@
 #include "boxlayer.h"
-#include "graphicscontext.h"
+#include "inlinebox.h"
 #include "multicolumnbox.h"
+#include "graphicscontext.h"
 
 namespace plutobook {
 
@@ -30,7 +31,14 @@ BoxLayer* BoxLayer::containingLayer() const
 void BoxLayer::updatePosition()
 {
     m_borderRect = m_box->borderBoundingBox();
-    if(!m_box->isPositioned()) {
+    if(m_box->isPositioned()) {
+        auto container = containingLayer();
+        if(container && container->box()->isRelPositioned()) {
+            if(auto box = to<InlineBox>(container->box())) {
+                m_borderRect.translate(box->relativePositionedInlineOffset(m_box));
+            }
+        }
+    } else {
         auto parent = m_box->parentBox();
         while(parent && !parent->hasLayer()) {
             if(auto box = to<BoxFrame>(parent))
