@@ -234,19 +234,19 @@ void Path::addEllipse(float cx, float cy, float rx, float ry)
 {
     constexpr auto kappa = 0.552285f;
 
-    auto left = cx - rx;
-    auto top = cy - ry;
-    auto right = cx + rx;
-    auto bottom = cy + ry;
+    auto x1 = cx - rx;
+    auto y1 = cy - ry;
+    auto x2 = cx + rx;
+    auto y2 = cy + ry;
 
     auto cpx = rx * kappa;
     auto cpy = ry * kappa;
 
-    moveTo(cx, top);
-    cubicTo(cx+cpx, top, right, cy-cpy, right, cy);
-    cubicTo(right, cy+cpy, cx+cpx, bottom, cx, bottom);
-    cubicTo(cx-cpx, bottom, left, cy+cpy, left, cy);
-    cubicTo(left, cy-cpy, cx-cpx, top, cx, top);
+    moveTo(cx, y1);
+    cubicTo(cx + cpx, y1, x2, cy - cpy, x2, cy);
+    cubicTo(x2, cy + cpy, cx + cpx, y2, cx, y2);
+    cubicTo(cx - cpx, y2, x1, cy + cpy, x1, cy);
+    cubicTo(x1, cy - cpy, cx - cpx, y1, cx, y1);
     close();
 }
 
