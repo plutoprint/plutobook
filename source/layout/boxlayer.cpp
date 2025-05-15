@@ -51,7 +51,6 @@ void BoxLayer::updatePosition()
         m_borderRect.translate(m_box->relativePositionOffset());
     }
 
-    m_transform = Transform::Identity;
     if(m_box->hasTransform()) {
         m_transform = m_box->style()->getTransform(m_borderRect.w, m_borderRect.h);
     }
