@@ -2,7 +2,6 @@
 #include "svgdocument.h"
 #include "boxstyle.h"
 
-#include <numbers>
 #include <cmath>
 
 namespace plutobook {
@@ -204,11 +203,11 @@ bool SVGAngle::parse(std::string_view input)
         return false;
     if(!input.empty()) {
         if(input == "rad")
-            value *= 180.0 / std::numbers::pi;
+            value *= 180.f / kPi;
         else if(input == "grad")
-            value *= 360.0 / 400.0;
+            value *= 360.f / 400.f;
         else if(input == "turn")
-            value *= 360.0;
+            value *= 360.f;
         else if(input != "deg") {
             return false;
         }
@@ -340,7 +339,7 @@ float SVGLengthContext::viewportDimension(SVGLengthDirection direction) const
     case SVGLengthDirection::Vertical:
         return viewportSize.h;
     default:
-        return std::sqrt(viewportSize.w * viewportSize.w + viewportSize.h * viewportSize.h) / std::numbers::sqrt2;
+        return std::sqrt(viewportSize.w * viewportSize.w + viewportSize.h * viewportSize.h) / kSqrt2;
     }
 }
 
@@ -458,8 +457,8 @@ static void decomposeArcToCubic(Path& path, const Point& currentPoint, float rx,
     if(rx < 0.f) rx = -rx;
     if(ry < 0.f) ry = -ry;
 
-    auto sin_th = std::sin(xAxisRotation * std::numbers::pi / 180.f);
-    auto cos_th = std::cos(xAxisRotation * std::numbers::pi / 180.f);
+    auto sin_th = std::sin(deg2rad(xAxisRotation));
+    auto cos_th = std::cos(deg2rad(xAxisRotation));
 
     auto dx = (currentPoint.x - x) / 2.f;
     auto dy = (currentPoint.y - y) / 2.f;
@@ -506,12 +505,12 @@ static void decomposeArcToCubic(Path& path, const Point& currentPoint, float rx,
 
     auto th_arc = th1 - th0;
     if(th_arc < 0.f && sweepFlag) {
-        th_arc += 2.f * std::numbers::pi;
+        th_arc += kTwoPi;
     } else if(th_arc > 0.f && !sweepFlag) {
-        th_arc -= 2.f * std::numbers::pi;
+        th_arc -= kTwoPi;
     }
 
-    int segments = std::ceil(std::fabs(th_arc / (std::numbers::pi * 0.5f + 0.001f)));
+    int segments = std::ceil(std::fabs(th_arc / (kHalfPi + 0.001f)));
     for(int i = 0; i < segments; i++) {
         decomposeArcSegmentToCubic(path, xc, yc, th0 + i * th_arc / segments, th0 + (i + 1) * th_arc / segments, rx, ry, sin_th, cos_th);
     }

@@ -20,6 +20,14 @@ constexpr bool isNearlyEqual(float a, float b)
     return isNearlyZero(a - b);
 }
 
+constexpr auto kPi = 3.14159265358979323846f;
+constexpr auto kTwoPi = 6.28318530717958647693f;
+constexpr auto kHalfPi = 1.57079632679489661923f;
+constexpr auto kSqrt2 = 1.41421356237309504880f;
+
+constexpr float deg2rad(float deg) { return deg * kPi / 180.f; }
+constexpr float rad2deg(float rad) { return rad * 180.f / kPi; }
+
 class Point {
 public:
     constexpr Point() = default;

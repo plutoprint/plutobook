@@ -4,7 +4,6 @@
 #include <cairo.h>
 
 #include <cmath>
-#include <numbers>
 #include <sstream>
 
 namespace plutobook {
@@ -201,7 +200,7 @@ void GraphicsContext::scale(float sx, float sy)
 
 void GraphicsContext::rotate(float angle)
 {
-    cairo_rotate(m_canvas, angle * std::numbers::pi / 180.f);
+    cairo_rotate(m_canvas, deg2rad(angle));
 }
 
 Transform GraphicsContext::getTransform() const

@@ -2,7 +2,6 @@
 
 #include <cfloat>
 #include <cmath>
-#include <numbers>
 
 namespace plutobook {
 
@@ -168,16 +167,16 @@ float Transform::yScale() const
 
 Transform Transform::makeRotate(float angle)
 {
-    auto c = std::cos(angle * std::numbers::pi / 180.f);
-    auto s = std::sin(angle * std::numbers::pi / 180.f);
+    auto c = std::cos(deg2rad(angle));
+    auto s = std::sin(deg2rad(angle));
 
     return Transform(c, s, -s, c, 0, 0);
 }
 
 Transform Transform::makeRotate(float angle, float cx, float cy)
 {
-    auto c = std::cos(angle * std::numbers::pi / 180.f);
-    auto s = std::sin(angle * std::numbers::pi / 180.f);
+    auto c = std::cos(deg2rad(angle));
+    auto s = std::sin(deg2rad(angle));
 
     auto x = cx * (1 - c) + cy * s;
     auto y = cy * (1 - c) - cx * s;
@@ -192,8 +191,8 @@ Transform Transform::makeScale(float sx, float sy)
 
 Transform Transform::makeShear(float shx, float shy)
 {
-    auto x = std::tan(shx * std::numbers::pi / 180.f);
-    auto y = std::tan(shy * std::numbers::pi / 180.f);
+    auto x = std::tan(deg2rad(shx));
+    auto y = std::tan(deg2rad(shy));
 
     return Transform(1, y, x, 1, 0, 0);
 }

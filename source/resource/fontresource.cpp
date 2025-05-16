@@ -243,7 +243,7 @@ static std::string buildVariationSettings(const FontDataDescription& description
 
 RefPtr<FontData> RemoteFontFace::getFontData(const FontDataDescription& description)
 {
-    const float slopeAngle = -tanf(description.request.slope * std::numbers::pi / 180.f);
+    const auto slopeAngle = -std::tan(description.request.slope * std::numbers::pi / 180.0);
 
     cairo_matrix_t ctm;
     cairo_matrix_init_identity(&ctm);

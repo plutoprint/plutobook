@@ -2,7 +2,6 @@
 #include "svgresourcebox.h"
 
 #include <cmath>
-#include <numbers>
 
 namespace plutobook {
 
@@ -37,7 +36,7 @@ const Rect& SVGGeometryBox::strokeBoundingBox() const
         auto strokeData = element()->getStrokeData(style());
         auto caplimit = strokeData.lineWidth() / 2.f;
         if(strokeData.lineCap() == LineCap::Square)
-            caplimit *= std::numbers::sqrt2;
+            caplimit *= kSqrt2;
         auto joinlimit = strokeData.lineWidth() / 2.f;
         if(strokeData.lineJoin() == LineJoin::Miter) {
             joinlimit *= strokeData.miterLimit();
@@ -154,28 +153,28 @@ void SVGGeometryBox::updateMarkerPositions()
             outslopePoints[1] = points[0];
             if(index == 0 && m_markerStart) {
                 auto slope = outslopePoints[1] - outslopePoints[0];
-                auto angle = 180.0 * std::atan2(slope.y, slope.x) / std::numbers::pi;
+                auto angle = rad2deg(std::atan2(slope.y, slope.x));
                 const auto& orient = m_markerStart->element()->orient();
                 if(orient.orientType() == SVGAngle::OrientType::AutoStartReverse)
-                    angle -= 180.0;
+                    angle -= 180.f;
                 m_markerPositions.emplace_back(m_markerStart, origin, angle);
             }
 
             if(index > 0 && m_markerMid) {
                 auto inslope = inslopePoints[1] - inslopePoints[0];
                 auto outslope = outslopePoints[1] - outslopePoints[0];
-                auto inangle = 180.0 * std::atan2(inslope.y, inslope.x) / std::numbers::pi;
-                auto outangle = 180.0 * std::atan2(outslope.y, outslope.x) / std::numbers::pi;
-                if(std::abs(inangle - outangle) > 180.0)
-                    inangle += 360.0;
-                auto angle = (inangle + outangle) * 0.5;
+                auto inangle = rad2deg(std::atan2(inslope.y, inslope.x));
+                auto outangle = rad2deg(std::atan2(outslope.y, outslope.x));
+                if(std::abs(inangle - outangle) > 180.f)
+                    inangle += 360.f;
+                auto angle = (inangle + outangle) * 0.5f;
                 m_markerPositions.emplace_back(m_markerMid, origin, angle);
             }
         }
 
         if(m_markerEnd && it.isDone()) {
             auto slope = inslopePoints[1] - inslopePoints[0];
-            auto angle = 180.0 * std::atan2(slope.y, slope.x) / std::numbers::pi;
+            auto angle = rad2deg(std::atan2(slope.y, slope.x));
             m_markerPositions.emplace_back(m_markerEnd, origin, angle);
         }
 
