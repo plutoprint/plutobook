@@ -44,7 +44,7 @@ bool TextResource::isXMLMIMEType(const std::string_view& mimeType)
         auto cc = mimeType[i];
         if(isAlnum(cc))
             continue;
-        switch (cc) {
+        switch(cc) {
         case '_':
         case '-':
         case '+':

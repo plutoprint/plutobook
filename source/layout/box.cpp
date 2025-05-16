@@ -459,7 +459,7 @@ void BoxModel::paintBackgroundStyle(const PaintInfo& info, const Rect& borderRec
 
             if(widthLength.isAuto() && !heightLength.isAuto()) {
                 tileRect.w = intrinsicSize.w * tileRect.h / intrinsicSize.h;
-            } else if (!widthLength.isAuto() && heightLength.isAuto()) {
+            } else if(!widthLength.isAuto() && heightLength.isAuto()) {
                 tileRect.h = intrinsicSize.h * tileRect.w / intrinsicSize.w;
             } else if(widthLength.isAuto() && heightLength.isAuto()) {
                 tileRect.w = intrinsicSize.w;

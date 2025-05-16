@@ -260,7 +260,7 @@ void BlockBox::computePositionedWidthUsing(const Length& widthLength, const BoxM
         } else if(!leftLenghtIsAuto && widthLenghtIsAuto && !rightLenghtIsAuto) {
             leftLengthValue = leftLength.calc(containerWidth);
             width = availableSpace - (leftLengthValue + rightLength.calc(containerWidth));
-        } else if (!leftLenghtIsAuto && !widthLenghtIsAuto && rightLenghtIsAuto) {
+        } else if(!leftLenghtIsAuto && !widthLenghtIsAuto && rightLenghtIsAuto) {
             width = widthLengthValue;
             leftLengthValue = leftLength.calc(containerWidth);
         }

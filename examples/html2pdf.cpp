@@ -4,7 +4,7 @@
 
 int main(int argc, char* argv[])
 {
-    if (argc != 3 && argc != 4) {
+    if(argc != 3 && argc != 4) {
         std::cerr << "Usage:\n"
                   << "  html2pdf <input> <output> [<style>]\n\n"
                   << "Arguments:\n"

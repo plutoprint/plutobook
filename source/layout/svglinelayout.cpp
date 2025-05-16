@@ -54,7 +54,7 @@ static bool needsTextAnchorAdjustment(const BoxStyle* style)
     if(style == nullptr)
         return false;
     auto direction = style->direction();
-    switch (style->textAnchor()) {
+    switch(style->textAnchor()) {
     case TextAnchor::Start:
         return direction == Direction::Rtl;
     case TextAnchor::Middle:
@@ -71,7 +71,7 @@ static bool needsTextAnchorAdjustment(const BoxStyle* style)
 static float calculateTextAnchorOffset(const BoxStyle* style, float width)
 {
     auto direction = style->direction();
-    switch (style->textAnchor()) {
+    switch(style->textAnchor()) {
     case TextAnchor::Start:
         if(direction == Direction::Ltr)
             return 0.f;
