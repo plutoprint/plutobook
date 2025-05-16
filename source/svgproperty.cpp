@@ -767,106 +767,81 @@ bool SVGRect::parse(std::string_view input)
     return true;
 }
 
-enum class TransformType {
-    Matrix,
-    Rotate,
-    Scale,
-    SkewX,
-    SkewY,
-    Translate
-};
-
-inline bool parseTransform(std::string_view& input, TransformType& type, float values[6], int& count)
+static int parseTransform(std::string_view& input, float values[6], int required, int optional)
 {
-    int required = 0;
-    int optional = 0;
-    if(skipString(input, "matrix")) {
-        type = TransformType::Matrix;
-        required = 6;
-        optional = 0;
-    } else if(skipString(input, "rotate")) {
-        type = TransformType::Rotate;
-        required = 1;
-        optional = 2;
-    } else if(skipString(input, "scale")) {
-        type = TransformType::Scale;
-        required = 1;
-        optional = 1;
-    } else if(skipString(input, "skewX")) {
-        type = TransformType::SkewX;
-        required = 1;
-        optional = 0;
-    } else if(skipString(input, "skewY")) {
-        type = TransformType::SkewY;
-        required = 1;
-        optional = 0;
-    } else if(skipString(input, "translate")) {
-        type = TransformType::Translate;
-        required = 1;
-        optional = 1;
-    } else {
-        return false;
-    }
-
     skipOptionalSpaces(input);
     if(input.empty() || input.front() != '(')
-        return false;
+        return 0;
     input.remove_prefix(1);
-
     skipOptionalSpaces(input);
+
+    int count = 0;
     int maxCount = required + optional;
-    for(count = 0; count < maxCount; ++count) {
+    for(; count < maxCount; ++count) {
         if(!parseNumber(input, values[count]))
             break;
         skipOptionalSpacesOrComma(input);
     }
 
     if(input.empty() || input.front() != ')' || !(count == required || count == maxCount))
-        return false;
+        return 0;
     input.remove_prefix(1);
-    return true;
+    return count;
 }
 
 bool SVGTransform::parse(std::string_view input)
 {
     m_value = Transform::Identity;
-    skipLeadingSpaces(input);
-    TransformType type;
     float values[6];
-    int count;
+    skipLeadingSpaces(input);
     while(!input.empty()) {
-        if(!parseTransform(input, type, values, count))
-            return false;
-        skipOptionalSpacesOrComma(input);
-        switch(type) {
-        case TransformType::Matrix:
+        if(skipString(input, "matrix")) {
+            auto count = parseTransform(input, values, 6, 0);
+            if(count == 0)
+                return false;
             m_value.multiply(Transform(values[0], values[1], values[2], values[3], values[4], values[5]));
-            break;
-        case TransformType::Rotate:
-            if(count == 1)
+        } else if(skipString(input, "rotate")) {
+            auto count = parseTransform(input, values, 1, 2);
+            if(count == 0)
+                return false;
+            if(count == 1) {
                 m_value.rotate(values[0], 0, 0);
-            else
+            } else {
                 m_value.rotate(values[0], values[1], values[2]);
-            break;
-        case TransformType::Scale:
-            if(count == 1)
+            }
+        } else if(skipString(input, "scale")) {
+            auto count = parseTransform(input, values, 1, 1);
+            if(count == 0)
+                return false;
+            if(count == 1) {
                 m_value.scale(values[0], values[0]);
-            else
+            } else {
                 m_value.scale(values[0], values[1]);
-            break;
-        case TransformType::SkewX:
+            }
+        } else if(skipString(input, "skewX")) {
+            auto count = parseTransform(input, values, 1, 0);
+            if(count == 0)
+                return false;
             m_value.shear(values[0], 0);
-            break;
-        case TransformType::SkewY:
+        } else if(skipString(input, "skewY")) {
+            auto count = parseTransform(input, values, 1, 0);
+            if(count == 0)
+                return false;
             m_value.shear(0, values[0]);
-            break;
-        case TransformType::Translate:
-            if(count == 1)
+        } else if(skipString(input, "translate")) {
+            auto count = parseTransform(input, values, 1, 1);
+            if(count == 0)
+                return false;
+            if(count == 1) {
                 m_value.translate(values[0], 0);
-            else
+            } else {
                 m_value.translate(values[0], values[1]);
-            break;
+            }
+        } else {
+            return false;
         }
+
+        skipOptionalSpacesOrComma(input);
     }
 
     return true;
