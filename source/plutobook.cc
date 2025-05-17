@@ -15,6 +15,52 @@ const char* plutobook_version_string()
     return PLUTOBOOK_VERSION_STRING;
 }
 
+#if defined(_WIN32)
+#define SYSTEM_NAME "Windows"
+#elif defined(__APPLE__) && defined(__MACH__)
+#define SYSTEM_NAME "macOS"
+#elif defined(__linux__)
+#define SYSTEM_NAME "Linux"
+#elif defined(__unix__)
+#define SYSTEM_NAME "Unix"
+#else
+#define SYSTEM_NAME "Unknown"
+#endif
+
+#if defined(__clang__)
+#define COMPILER_NAME "Clang " __clang_version__
+#elif defined(__GNUC__)
+#define COMPILER_NAME "GCC " __VERSION__
+#elif defined(_MSC_VER)
+#define STRINGIZE(x) #x
+#define STRINGIFY(x) STRINGIZE(x)
+#define COMPILER_NAME "MSVC " STRINGIFY(_MSC_VER)
+#else
+#define COMPILER_NAME "Unknown"
+#endif
+
+#if defined(__x86_64__) || defined(_M_X64)
+#define MACHINE_NAME "x86_64"
+#elif defined(__aarch64__) || defined(_M_ARM64)
+#define MACHINE_NAME "ARM64"
+#elif defined(__i386__) || defined(_M_IX86)
+#define MACHINE_NAME "x86"
+#elif defined(__arm__) || defined(_M_ARM)
+#define MACHINE_NAME "ARM"
+#else
+#define MACHINE_NAME "Unknown"
+#endif
+
+const char* plutobook_build_info()
+{
+    return "System: " SYSTEM_NAME "\n"
+           "Machine: " MACHINE_NAME "\n"
+           "Compiler: " COMPILER_NAME "\n"
+           "Built: " __DATE__ " " __TIME__ "\n\n"
+           "PlutoBook version: " PLUTOBOOK_VERSION_STRING "\n"
+           "Cairo version: " CAIRO_VERSION_STRING "\n";
+}
+
 struct _plutobook_canvas {
     cairo_surface_t* surface;
     cairo_t* context;

@@ -77,6 +77,12 @@ PLUTOBOOK_API int plutobook_version(void);
 PLUTOBOOK_API const char* plutobook_version_string(void);
 
 /**
+ * @brief Returns a string containing the build metadata of the plutobook library.
+ * @return A pointer to a string containing the build metadata of the plutobook library.
+ */
+PLUTOBOOK_API const char* plutobook_build_info(void);
+
+/**
  * This macro defines an index that is guaranteed to exceed the valid page count.
  * It is typically utilized as a sentinel value to represent an unbounded or maximum value, indicating
  * that there is no limit or that the maximum possible value is intended.
