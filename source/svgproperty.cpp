@@ -246,7 +246,7 @@ bool SVGLength::parse(std::string_view input)
         {"pt", SVGLengthType::Points},
         {"pc", SVGLengthType::Picas},
         {"rem", SVGLengthType::Rems},
-        {"ch", SVGLengthType::Ch}
+        {"ch", SVGLengthType::Chs}
     };
 
     for(const auto& entry : entries) {
@@ -307,7 +307,7 @@ float SVGLengthContext::valueForLength(const SVGLength& length) const
             return length.value() * style->exFontSize();
         case SVGLengthType::Rems:
             return length.value() * style->remFontSize();
-        case SVGLengthType::Ch:
+        case SVGLengthType::Chs:
             return length.value() * style->chFontSize();
         default:
             assert(false);

@@ -103,7 +103,6 @@ private:
     OrientType m_orientType = OrientType::Angle;
 };
 
-
 enum class SVGLengthType : uint8_t {
     Number,
     Percentage,
@@ -116,7 +115,7 @@ enum class SVGLengthType : uint8_t {
     Points,
     Picas,
     Rems,
-    Ch
+    Chs
 };
 
 enum class SVGLengthDirection : uint8_t {
