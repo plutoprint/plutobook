@@ -27,18 +27,6 @@ const char* plutobook_version_string()
 #define SYSTEM_NAME "Unknown"
 #endif
 
-#if defined(__clang__)
-#define COMPILER_NAME "Clang " __clang_version__
-#elif defined(__GNUC__)
-#define COMPILER_NAME "GCC " __VERSION__
-#elif defined(_MSC_VER)
-#define STRINGIZE(x) #x
-#define STRINGIFY(x) STRINGIZE(x)
-#define COMPILER_NAME "MSVC " STRINGIFY(_MSC_VER)
-#else
-#define COMPILER_NAME "Unknown"
-#endif
-
 #if defined(__x86_64__) || defined(_M_X64)
 #define MACHINE_NAME "x86_64"
 #elif defined(__aarch64__) || defined(_M_ARM64)
@@ -49,6 +37,18 @@ const char* plutobook_version_string()
 #define MACHINE_NAME "ARM"
 #else
 #define MACHINE_NAME "Unknown"
+#endif
+
+#if defined(__clang__)
+#define COMPILER_NAME "Clang " __clang_version__
+#elif defined(__GNUC__)
+#define COMPILER_NAME "GCC " __VERSION__
+#elif defined(_MSC_VER)
+#define STRINGIZE(x) #x
+#define STRINGIFY(x) STRINGIZE(x)
+#define COMPILER_NAME "MSVC " STRINGIFY(_MSC_VER)
+#else
+#define COMPILER_NAME "Unknown"
 #endif
 
 const char* plutobook_build_info()
@@ -328,8 +328,6 @@ struct _plutobook_resource_data {
 
 static plutobook_resource_data_t* plutobook_resource_data_create(unsigned int content_length, const char* mime_type, const char* text_encoding)
 {
-    if(mime_type == nullptr) mime_type = "";
-    if(text_encoding == nullptr) text_encoding = "";
     auto mime_type_length = std::strlen(mime_type) + 1ul;
     auto text_encoding_length = std::strlen(text_encoding) + 1ul;
     auto resource = (plutobook_resource_data_t*)(std::malloc(mime_type_length + text_encoding_length + content_length + sizeof(plutobook_resource_data_t)));
