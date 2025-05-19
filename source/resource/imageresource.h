@@ -11,11 +11,12 @@ typedef struct _cairo_surface cairo_surface_t;
 namespace plutobook {
 
 class Image;
+class Document;
 
 class ImageResource final : public Resource {
 public:
-    static RefPtr<ImageResource> create(ResourceFetcher* fetcher, const Url& url);
-    static RefPtr<Image> decode(const char* data, size_t size, const std::string_view& mimeType, const std::string_view& textEncoding, ResourceFetcher* fetcher, const std::string_view& baseUrl);
+    static RefPtr<ImageResource> create(Document* document, const Url& url);
+    static RefPtr<Image> decode(const char* data, size_t size, const std::string_view& mimeType, const std::string_view& textEncoding, const std::string_view& baseUrl, ResourceFetcher* fetcher);
     static bool supportsMimeType(const std::string_view& mimeType);
     const RefPtr<Image>& image() const { return m_image; }
     Type type() const final { return Type::Image; }
@@ -83,7 +84,7 @@ class Heap;
 
 class SVGImage final : public Image {
 public:
-    static RefPtr<SVGImage> create(const std::string_view& content, ResourceFetcher* fetcher, Url baseUrl);
+    static RefPtr<SVGImage> create(const std::string_view& content, const std::string_view& baseUrl, ResourceFetcher* fetcher);
 
     bool isSVGImage() const final { return true; }
 

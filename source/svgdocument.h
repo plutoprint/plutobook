@@ -659,12 +659,12 @@ public:
 
 class SVGDocument final : public XMLDocument {
 public:
-    static std::unique_ptr<SVGDocument> create(Book* book, Heap* heap, ResourceFetcher* fetcher, Url url);
+    static std::unique_ptr<SVGDocument> create(Book* book, Heap* heap, ResourceFetcher* fetcher, Url baseUrl);
 
     bool isSVGDocument() const final { return true; }
 
 private:
-    SVGDocument(Book* book, Heap* heap, ResourceFetcher* fetcher, Url url);
+    SVGDocument(Book* book, Heap* heap, ResourceFetcher* fetcher, Url baseUrl);
 };
 
 template<>

@@ -966,13 +966,13 @@ void SVGStyleElement::finishParsingDocument()
     SVGElement::finishParsingDocument();
 }
 
-std::unique_ptr<SVGDocument> SVGDocument::create(Book* book, Heap* heap, ResourceFetcher* fetcher, Url url)
+std::unique_ptr<SVGDocument> SVGDocument::create(Book* book, Heap* heap, ResourceFetcher* fetcher, Url baseUrl)
 {
-    return std::unique_ptr<SVGDocument>(new (heap) SVGDocument(book, heap, fetcher, std::move(url)));
+    return std::unique_ptr<SVGDocument>(new (heap) SVGDocument(book, heap, fetcher, std::move(baseUrl)));
 }
 
-SVGDocument::SVGDocument(Book* book, Heap* heap, ResourceFetcher* fetcher, Url url)
-    : XMLDocument(book, heap, fetcher, std::move(url))
+SVGDocument::SVGDocument(Book* book, Heap* heap, ResourceFetcher* fetcher, Url baseUrl)
+    : XMLDocument(book, heap, fetcher, std::move(baseUrl))
 {
 }
 

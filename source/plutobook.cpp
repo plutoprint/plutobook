@@ -366,7 +366,7 @@ bool Book::loadData(const char* data, size_t length, const std::string_view& mim
 
 bool Book::loadImage(const char* data, size_t length, const std::string_view& mimeType, const std::string_view& textEncoding, const std::string_view& userStyle, const std::string_view& userScript, const std::string_view& baseUrl)
 {
-    auto image = ImageResource::decode(data, length, mimeType, textEncoding, m_customResourceFetcher, baseUrl);
+    auto image = ImageResource::decode(data, length, mimeType, textEncoding, baseUrl, m_customResourceFetcher);
     if(image == nullptr) {
         return false;
     }
@@ -395,7 +395,7 @@ bool Book::loadImage(const char* data, size_t length, const std::string_view& mi
 bool Book::loadXml(const std::string_view& content, const std::string_view& userStyle, const std::string_view& userScript, const std::string_view& baseUrl)
 {
     clearContent();
-    m_document = XMLDocument::create(this, heap(), m_customResourceFetcher, ResourceLoader::completeUrl(baseUrl));
+    m_document = XMLDocument::create(this, m_heap.get(), m_customResourceFetcher, ResourceLoader::completeUrl(baseUrl));
     m_document->addUserStyleSheet(userStyle);
     m_document->addUserJavaScript(userScript);
     if(!m_document->load(content)) {
@@ -409,7 +409,7 @@ bool Book::loadXml(const std::string_view& content, const std::string_view& user
 bool Book::loadHtml(const std::string_view& content, const std::string_view& userStyle, const std::string_view& userScript, const std::string_view& baseUrl)
 {
     clearContent();
-    m_document = HTMLDocument::create(this, heap(), m_customResourceFetcher, ResourceLoader::completeUrl(baseUrl));
+    m_document = HTMLDocument::create(this, m_heap.get(), m_customResourceFetcher, ResourceLoader::completeUrl(baseUrl));
     m_document->addUserStyleSheet(userStyle);
     m_document->addUserJavaScript(userScript);
     m_document->load(content);

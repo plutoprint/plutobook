@@ -2,12 +2,13 @@
 #define PLUTOBOOK_RESOURCE_H
 
 #include "pointer.h"
+#include "heapstring.h"
 
 #include <string_view>
 
 namespace plutobook {
 
-class Resource : public RefCounted<Resource> {
+class Resource : public HeapMember, public RefCounted<Resource> {
 public:
     enum class Type {
         Text,

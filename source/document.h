@@ -268,6 +268,7 @@ using CSSMediaQueryList = std::pmr::forward_list<CSSMediaQuery>;
 using CSSMediaFeatureList = std::pmr::forward_list<CSSMediaFeature>;
 
 class Resource;
+class ResourceData;
 class TextResource;
 class ImageResource;
 class FontResource;
@@ -298,7 +299,7 @@ using PageBoxList = std::pmr::vector<std::unique_ptr<PageBox>>;
 
 class Document : public ContainerNode, public FragmentBuilder {
 public:
-    Document(Book* book, Heap* heap, ResourceFetcher* fetcher, Url url);
+    Document(Book* book, Heap* heap, ResourceFetcher* fetcher, Url baseUrl);
     ~Document() override;
 
     bool isDocumentNode() const final { return true; }
@@ -365,6 +366,8 @@ public:
 
     RefPtr<FontData> getFontData(const GlobalString& family, const FontDataDescription& description);
     RefPtr<Font> createFont(const FontDescription& description);
+
+    ResourceData fetchUrl(const Url& url);
 
     RefPtr<TextResource> fetchTextResource(const Url& url);
     RefPtr<ImageResource> fetchImageResource(const Url& url);

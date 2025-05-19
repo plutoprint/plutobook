@@ -3,9 +3,9 @@
 
 namespace plutobook {
 
-std::unique_ptr<XMLDocument> XMLDocument::create(Book* book, Heap* heap, ResourceFetcher* fetcher, Url url)
+std::unique_ptr<XMLDocument> XMLDocument::create(Book* book, Heap* heap, ResourceFetcher* fetcher, Url baseUrl)
 {
-    return std::unique_ptr<XMLDocument>(new (heap) XMLDocument(book, heap, fetcher, std::move(url)));
+    return std::unique_ptr<XMLDocument>(new (heap) XMLDocument(book, heap, fetcher, std::move(baseUrl)));
 }
 
 bool XMLDocument::load(const std::string_view& content)
@@ -13,8 +13,8 @@ bool XMLDocument::load(const std::string_view& content)
     return XMLParser(this).parse(content);
 }
 
-XMLDocument::XMLDocument(Book* book, Heap* heap, ResourceFetcher* fetcher, Url url)
-    : Document(book, heap, fetcher, std::move(url))
+XMLDocument::XMLDocument(Book* book, Heap* heap, ResourceFetcher* fetcher, Url baseUrl)
+    : Document(book, heap, fetcher, std::move(baseUrl))
 {
 }
 

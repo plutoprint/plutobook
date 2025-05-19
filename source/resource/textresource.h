@@ -7,9 +7,11 @@
 
 namespace plutobook {
 
+class Document;
+
 class TextResource final : public Resource {
 public:
-    static RefPtr<TextResource> create(ResourceFetcher* fetcher, const Url& url);
+    static RefPtr<TextResource> create(Document* document, const Url& url);
     static std::string decode(const char* data, size_t length, const std::string_view& mimeType, const std::string_view& textEncoding);
     static bool isXMLMIMEType(const std::string_view& mimeType);
     const std::string& text() const { return m_text; }

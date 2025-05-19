@@ -512,12 +512,12 @@ void Element::finishParsingDocument()
     ContainerNode::finishParsingDocument();
 }
 
-Document::Document(Book* book, Heap* heap, ResourceFetcher* fetcher, Url url)
+Document::Document(Book* book, Heap* heap, ResourceFetcher* fetcher, Url baseUrl)
     : ContainerNode(this)
     , m_book(book)
     , m_heap(heap)
     , m_customResourceFetcher(fetcher)
-    , m_baseUrl(std::move(url))
+    , m_baseUrl(std::move(baseUrl))
     , m_pages(heap)
     , m_idCache(heap)
     , m_resourceCache(heap)
@@ -904,6 +904,11 @@ RefPtr<Font> Document::createFont(const FontDescription& description)
     return font;
 }
 
+ResourceData Document::fetchUrl(const Url& url)
+{
+    return ResourceLoader::loadUrl(url, m_customResourceFetcher);
+}
+
 RefPtr<TextResource> Document::fetchTextResource(const Url& url)
 {
     return fetchResource<TextResource>(url);
@@ -1023,7 +1028,7 @@ RefPtr<ResourceType> Document::fetchResource(const Url& url)
     auto it = m_resourceCache.find(url);
     if(it != m_resourceCache.end())
         return to<ResourceType>(it->second);
-    auto resource = ResourceType::create(m_customResourceFetcher, url);
+    auto resource = ResourceType::create(this, url);
     if(!url.protocolIs("data"))
         m_resourceCache.emplace(url, resource);
     return resource;

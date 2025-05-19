@@ -46,9 +46,9 @@ static void FTFontDataDestroy(void* data)
     delete (FTFontData*)(data);
 }
 
-RefPtr<FontResource> FontResource::create(ResourceFetcher* fetcher, const Url& url)
+RefPtr<FontResource> FontResource::create(Document* document, const Url& url)
 {
-    auto resource = ResourceLoader::loadUrl(url, fetcher);
+    auto resource = document->fetchUrl(url);
     if(resource.isNull())
         return nullptr;
     auto fontData = FTFontData::create(std::move(resource));
@@ -64,7 +64,7 @@ RefPtr<FontResource> FontResource::create(ResourceFetcher* fetcher, const Url& u
         return nullptr;
     }
 
-    return adoptPtr(new FontResource(face));
+    return adoptPtr(new (document->heap()) FontResource(face));
 }
 
 bool FontResource::supportsFormat(const std::string_view& format)

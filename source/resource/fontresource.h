@@ -17,9 +17,11 @@ typedef struct _FcConfig FcConfig;
 
 namespace plutobook {
 
+class Document;
+
 class FontResource final : public Resource {
 public:
-    static RefPtr<FontResource> create(ResourceFetcher* fetcher, const Url& url);
+    static RefPtr<FontResource> create(Document* document, const Url& url);
     static bool supportsFormat(const std::string_view& format);
     cairo_font_face_t* face() const { return m_face; }
     Type type() const final { return Type::Font; }
