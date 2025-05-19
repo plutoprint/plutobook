@@ -420,7 +420,7 @@ const char* plutobook_resource_data_get_text_encoding(const plutobook_resource_d
     return resource->text_encoding;
 }
 
-plutobook_resource_data_t* plutobook_default_resource_fetcher_fetch_url(const char* url)
+plutobook_resource_data_t* plutobook_fetch_url(const char* url)
 {
     return plutobook::defaultResourceFetcher()->fetchUrl(url).release();
 }

@@ -618,7 +618,7 @@ typedef plutobook_resource_data_t* (*plutobook_resource_fetch_callback_t)(void* 
  * @param url The URL of the resource to fetch.
  * @return A pointer to a `plutobook_resource_data_t` object containing the fetched content, or `NULL` if the fetch operation fails.
  */
-PLUTOBOOK_API plutobook_resource_data_t* plutobook_default_resource_fetcher_fetch_url(const char* url);
+PLUTOBOOK_API plutobook_resource_data_t* plutobook_fetch_url(const char* url);
 
 /**
  * @brief Defines the different media types used for CSS @media queries.
