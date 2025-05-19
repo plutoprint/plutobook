@@ -217,7 +217,7 @@ public:
     DefaultResourceFetcher();
     ~DefaultResourceFetcher() final;
 
-    ResourceData loadUrl(const std::string& url) final;
+    ResourceData fetchUrl(const std::string& url) final;
 };
 
 #ifdef PLUTOBOOK_HAS_CURL
@@ -239,7 +239,7 @@ static size_t writeCallback(char* contents, size_t blockSize, size_t numberOfBlo
     return totalSize;
 }
 
-ResourceData DefaultResourceFetcher::loadUrl(const std::string& url)
+ResourceData DefaultResourceFetcher::fetchUrl(const std::string& url)
 {
     if(startswith(url, "data:", false))
         return loadDataUrl(percentDecode(url));
@@ -279,7 +279,7 @@ ResourceData DefaultResourceFetcher::loadUrl(const std::string& url)
 DefaultResourceFetcher::DefaultResourceFetcher() = default;
 DefaultResourceFetcher::~DefaultResourceFetcher() = default;
 
-ResourceData DefaultResourceFetcher::loadUrl(const std::string& url)
+ResourceData DefaultResourceFetcher::fetchUrl(const std::string& url)
 {
     if(startswith(url, "data:", false))
         return loadDataUrl(percentDecode(url));
@@ -313,7 +313,7 @@ ResourceData ResourceLoader::loadUrl(const Url& url, ResourceFetcher* customFetc
         return loadDataUrl(percentDecode(url.value()));
     if(customFetcher == nullptr)
         customFetcher = defaultResourceFetcher();
-    return customFetcher->loadUrl(url.value());
+    return customFetcher->fetchUrl(url.value());
 }
 
 Url ResourceLoader::baseUrl()

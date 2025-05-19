@@ -521,11 +521,11 @@ public:
     virtual ~ResourceFetcher() = default;
 
     /**
-     * @brief Loads a resource from the specified URL.
-     * @param url The URL of the resource to load.
+     * @brief Fetches a resource from the specified URL.
+     * @param url The URL of the resource to fetch.
      * @return A `ResourceData` object containing the fetched resource, or a null `ResourceData` if an error occurs.
      */
-    virtual ResourceData loadUrl(const std::string& url) = 0;
+    virtual ResourceData fetchUrl(const std::string& url) = 0;
 };
 
 /**
@@ -1216,7 +1216,7 @@ public:
     bool writeToPng(plutobook_stream_write_callback_t callback, void* closure, ImageFormat format = ImageFormat::ARGB32) const;
 
     /**
-     * @brief Sets a custom resource fetcher to be used for loading external resources.
+     * @brief Sets a custom resource fetcher to be used for fetching external resources.
      *
      * @param fetcher A pointer to a `ResourceFetcher` object. Pass `nullptr` to clear the custom fetcher.
      */

@@ -600,25 +600,25 @@ PLUTOBOOK_API const char* plutobook_resource_data_get_mime_type(const plutobook_
 PLUTOBOOK_API const char* plutobook_resource_data_get_text_encoding(const plutobook_resource_data_t* resource);
 
 /**
- * @brief Defines a callback type for loading resource data from a URL.
+ * @brief Defines a callback type for fetching resource data from a URL.
  *
  * The callback should return a pointer to a `plutobook_resource_data_t` object, which contains the content fetched from the given URL.
  *
  * @param closure A user-defined pointer that will be passed to the callback (can be used for custom state or data).
- * @param url The URL of the resource to load.
+ * @param url The URL of the resource to fetch.
  * @return A pointer to a `plutobook_resource_data_t` object containing the fetched resource, or `NULL` if an error occurs.
  */
-typedef plutobook_resource_data_t* (*plutobook_resource_load_callback_t)(void* closure, const char* url);
+typedef plutobook_resource_data_t* (*plutobook_resource_fetch_callback_t)(void* closure, const char* url);
 
 /**
- * @brief Loads resource data from a given URL using the default resource fetcher.
+ * @brief Fetches resource data from a given URL using the default resource fetcher.
  *
  * This function uses a predefined mechanism to fetch resource data from the specified URL and return it as a `plutobook_resource_data_t` object.
  *
- * @param url The URL of the resource to load.
- * @return A pointer to a `plutobook_resource_data_t` object containing the fetched content, or `NULL` if the loading fails.
+ * @param url The URL of the resource to fetch.
+ * @return A pointer to a `plutobook_resource_data_t` object containing the fetched content, or `NULL` if the fetch operation fails.
  */
-PLUTOBOOK_API plutobook_resource_data_t* plutobook_default_resource_fetcher_load_url(const char* url);
+PLUTOBOOK_API plutobook_resource_data_t* plutobook_default_resource_fetcher_fetch_url(const char* url);
 
 /**
  * @brief Defines the different media types used for CSS @media queries.
@@ -945,18 +945,18 @@ PLUTOBOOK_API plutobook_status_t plutobook_write_to_png_stream(const plutobook_t
  * @brief Sets a custom resource fetcher callback for the document.
  *
  * @param book A pointer to a `plutobook_t` object.
- * @param callback A function pointer to the custom resource load callback.
+ * @param callback A function pointer to the custom resource fetch callback.
  * @param closure A pointer to user-defined data to pass to the callback function.
  */
-PLUTOBOOK_API void plutobook_set_custom_resource_fetcher(plutobook_t* book, plutobook_resource_load_callback_t callback, void* closure);
+PLUTOBOOK_API void plutobook_set_custom_resource_fetcher(plutobook_t* book, plutobook_resource_fetch_callback_t callback, void* closure);
 
 /**
  * @brief Gets the custom resource fetcher callback set for the document.
  *
  * @param book A pointer to a `plutobook_t` object.
- * @return A function pointer to the custom resource load callback, or `NULL` if no callback is set.
+ * @return A function pointer to the custom resource fetch callback, or `NULL` if no callback is set.
  */
-PLUTOBOOK_API plutobook_resource_load_callback_t plutobook_get_custom_resource_fetcher_callback(const plutobook_t* book);
+PLUTOBOOK_API plutobook_resource_fetch_callback_t plutobook_get_custom_resource_fetcher_callback(const plutobook_t* book);
 
 /**
  * @brief Gets the user-defined closure data passed to the custom resource fetcher callback.

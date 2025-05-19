@@ -420,15 +420,15 @@ const char* plutobook_resource_data_get_text_encoding(const plutobook_resource_d
     return resource->text_encoding;
 }
 
-plutobook_resource_data_t* plutobook_default_resource_fetcher_load_url(const char* url)
+plutobook_resource_data_t* plutobook_default_resource_fetcher_fetch_url(const char* url)
 {
-    return plutobook::defaultResourceFetcher()->loadUrl(url).release();
+    return plutobook::defaultResourceFetcher()->fetchUrl(url).release();
 }
 
 struct _plutobook final : public plutobook::Book, public plutobook::ResourceFetcher {
     _plutobook(plutobook_page_size_t size, plutobook_page_margins_t margins, plutobook_media_type_t media);
-    plutobook::ResourceData loadUrl(const std::string& url) final;
-    plutobook_resource_load_callback_t custom_resource_fetcher_callback{nullptr};
+    plutobook::ResourceData fetchUrl(const std::string& url) final;
+    plutobook_resource_fetch_callback_t custom_resource_fetcher_callback{nullptr};
     void* custom_resource_fetcher_closure{nullptr};
 };
 
@@ -437,10 +437,10 @@ _plutobook::_plutobook(plutobook_page_size_t size, plutobook_page_margins_t marg
 {
 }
 
-plutobook::ResourceData _plutobook::loadUrl(const std::string& url)
+plutobook::ResourceData _plutobook::fetchUrl(const std::string& url)
 {
     if(custom_resource_fetcher_callback == nullptr)
-        return plutobook::defaultResourceFetcher()->loadUrl(url);
+        return plutobook::defaultResourceFetcher()->fetchUrl(url);
     return plutobook::ResourceData(custom_resource_fetcher_callback(custom_resource_fetcher_closure, url.data()));
 }
 
@@ -456,32 +456,32 @@ void plutobook_destroy(plutobook_t* book)
 
 void plutobook_clear_content(plutobook_t* book)
 {
-    book->Book::clearContent();
+    book->clearContent();
 }
 
 void plutobook_set_metadata(plutobook_t* book, plutobook_pdf_metadata_t metadata, const char* value)
 {
     switch(metadata) {
     case PLUTOBOOK_PDF_METADATA_TITLE:
-        book->Book::setTitle(value);
+        book->setTitle(value);
         break;
     case PLUTOBOOK_PDF_METADATA_AUTHOR:
-        book->Book::setAuthor(value);
+        book->setAuthor(value);
         break;
     case PLUTOBOOK_PDF_METADATA_SUBJECT:
-        book->Book::setSubject(value);
+        book->setSubject(value);
         break;
     case PLUTOBOOK_PDF_METADATA_KEYWORDS:
-        book->Book::setKeywords(value);
+        book->setKeywords(value);
         break;
     case PLUTOBOOK_PDF_METADATA_CREATOR:
-        book->Book::setCreator(value);
+        book->setCreator(value);
         break;
     case PLUTOBOOK_PDF_METADATA_CREATION_DATE:
-        book->Book::setCreationDate(value);
+        book->setCreationDate(value);
         break;
     case PLUTOBOOK_PDF_METADATA_MODIFICATION_DATE:
-        book->Book::setModificationDate(value);
+        book->setModificationDate(value);
         break;
     }
 }
@@ -490,19 +490,19 @@ const char* plutobook_get_metadata(const plutobook_t* book, plutobook_pdf_metada
 {
     switch(metadata) {
     case PLUTOBOOK_PDF_METADATA_TITLE:
-        return book->Book::title().data();
+        return book->title().data();
     case PLUTOBOOK_PDF_METADATA_AUTHOR:
-        return book->Book::author().data();
+        return book->author().data();
     case PLUTOBOOK_PDF_METADATA_SUBJECT:
-        return book->Book::subject().data();
+        return book->subject().data();
     case PLUTOBOOK_PDF_METADATA_KEYWORDS:
-        return book->Book::keywords().data();
+        return book->keywords().data();
     case PLUTOBOOK_PDF_METADATA_CREATOR:
-        return book->Book::creator().data();
+        return book->creator().data();
     case PLUTOBOOK_PDF_METADATA_CREATION_DATE:
-        return book->Book::creationDate().data();
+        return book->creationDate().data();
     case PLUTOBOOK_PDF_METADATA_MODIFICATION_DATE:
-        return book->Book::modificationDate().data();
+        return book->modificationDate().data();
     }
 
     return nullptr;
@@ -510,66 +510,66 @@ const char* plutobook_get_metadata(const plutobook_t* book, plutobook_pdf_metada
 
 float plutobook_get_viewport_width(const plutobook_t* book)
 {
-    return book->Book::viewportWidth();
+    return book->viewportWidth();
 }
 
 float plutobook_get_viewport_height(const plutobook_t* book)
 {
-    return book->Book::viewportHeight();
+    return book->viewportHeight();
 }
 
 float plutobook_get_document_width(const plutobook_t* book)
 {
-    return book->Book::documentWidth();
+    return book->documentWidth();
 }
 
 float plutobook_get_document_height(const plutobook_t* book)
 {
-    return book->Book::documentHeight();
+    return book->documentHeight();
 }
 
 plutobook_page_size_t plutobook_get_page_size(const plutobook_t* book)
 {
-    return book->Book::pageSize();
+    return book->pageSize();
 }
 
 plutobook_page_margins_t plutobook_get_page_margins(const plutobook_t* book)
 {
-    return book->Book::pageMargins();
+    return book->pageMargins();
 }
 
 plutobook_media_type_t plutobook_get_media_type(const plutobook_t* book)
 {
-    return (plutobook_media_type_t)(book->Book::mediaType());
+    return (plutobook_media_type_t)(book->mediaType());
 }
 
 unsigned int plutobook_get_page_count(const plutobook_t* book)
 {
-    return book->Book::pageCount();
+    return book->pageCount();
 }
 
 plutobook_page_size_t plutobook_get_page_size_at(const plutobook_t* book, unsigned int index)
 {
-    return book->Book::pageSizeAt(index);
+    return book->pageSizeAt(index);
 }
 
 plutobook_status_t plutobook_load_url(plutobook_t* book, const char* url, const char* user_style, const char* user_script)
 {
-    if(book->Book::loadUrl(url, user_style, user_script))
+    if(book->loadUrl(url, user_style, user_script))
         return PLUTOBOOK_STATUS_SUCCESS;
     return PLUTOBOOK_STATUS_LOAD_ERROR;
 }
 
 plutobook_status_t plutobook_load_data(plutobook_t* book, const char* data, unsigned int size, const char* mime_type, const char* text_encoding, const char* user_style, const char* user_script, const char* base_url)
 {
-    if(book->Book::loadData(data, size, mime_type, text_encoding, user_style, user_script, base_url))
+    if(book->loadData(data, size, mime_type, text_encoding, user_style, user_script, base_url))
         return PLUTOBOOK_STATUS_SUCCESS;
     return PLUTOBOOK_STATUS_LOAD_ERROR;
 }
 
 plutobook_status_t plutobook_load_image(plutobook_t* book, const char* data, unsigned int size, const char* mime_type, const char* text_encoding, const char* user_style, const char* user_script, const char* base_url)
 {
-    if(book->Book::loadImage(data, size, mime_type, text_encoding, user_style, user_script, base_url))
+    if(book->loadImage(data, size, mime_type, text_encoding, user_style, user_script, base_url))
         return PLUTOBOOK_STATUS_SUCCESS;
     return PLUTOBOOK_STATUS_LOAD_ERROR;
 }
@@ -579,7 +579,7 @@ plutobook_status_t plutobook_load_xml(plutobook_t* book, const char* data, int l
     if(length == -1)
         length = std::strlen(data);
     std::string_view content(data, length);
-    if(book->Book::loadXml(content, user_style, user_script, base_url))
+    if(book->loadXml(content, user_style, user_script, base_url))
         return PLUTOBOOK_STATUS_SUCCESS;
     return PLUTOBOOK_STATUS_LOAD_ERROR;
 }
@@ -589,7 +589,7 @@ plutobook_status_t plutobook_load_html(plutobook_t* book, const char* data, int 
     if(length == -1)
         length = std::strlen(data);
     std::string_view content(data, length);
-    if(book->Book::loadHtml(content, user_style, user_script, base_url))
+    if(book->loadHtml(content, user_style, user_script, base_url))
         return PLUTOBOOK_STATUS_SUCCESS;
     return PLUTOBOOK_STATUS_LOAD_ERROR;
 }
@@ -601,7 +601,7 @@ void plutobook_render_page(const plutobook_t* book, plutobook_canvas_t* canvas, 
 
 void plutobook_render_page_cairo(const plutobook_t* book, cairo_t* context, unsigned int page_index)
 {
-    book->Book::renderPage(context, page_index);
+    book->renderPage(context, page_index);
 }
 
 void plutobook_render_document(const plutobook_t* book, plutobook_canvas_t* canvas)
@@ -611,7 +611,7 @@ void plutobook_render_document(const plutobook_t* book, plutobook_canvas_t* canv
 
 void plutobook_render_document_cairo(const plutobook_t* book, cairo_t* context)
 {
-    book->Book::renderDocument(context);
+    book->renderDocument(context);
 }
 
 void plutobook_render_document_rect(const plutobook_t* book, plutobook_canvas_t* canvas, float x, float y, float width, float height)
@@ -621,7 +621,7 @@ void plutobook_render_document_rect(const plutobook_t* book, plutobook_canvas_t*
 
 void plutobook_render_document_rect_cairo(const plutobook_t* book, cairo_t* context, float x, float y, float width, float height)
 {
-    book->Book::renderDocument(context, x, y, width, height);
+    book->renderDocument(context, x, y, width, height);
 }
 
 plutobook_status_t plutobook_write_to_pdf(const plutobook_t* book, const char* filename)
@@ -631,7 +631,7 @@ plutobook_status_t plutobook_write_to_pdf(const plutobook_t* book, const char* f
 
 plutobook_status_t plutobook_write_to_pdf_range(const plutobook_t* book, const char* filename, unsigned int from_page, unsigned int to_page, int page_step)
 {
-    if(book->Book::writeToPdf(filename, from_page, to_page, page_step))
+    if(book->writeToPdf(filename, from_page, to_page, page_step))
         return PLUTOBOOK_STATUS_SUCCESS;
     return PLUTOBOOK_STATUS_WRITE_ERROR;
 }
@@ -643,33 +643,33 @@ plutobook_status_t plutobook_write_to_pdf_stream(const plutobook_t* book, plutob
 
 plutobook_status_t plutobook_write_to_pdf_stream_range(const plutobook_t* book, plutobook_stream_write_callback_t callback, void* closure, unsigned int from_page, unsigned int to_page, int page_step)
 {
-    if(book->Book::writeToPdf(callback, closure, from_page, to_page, page_step))
+    if(book->writeToPdf(callback, closure, from_page, to_page, page_step))
         return PLUTOBOOK_STATUS_SUCCESS;
     return PLUTOBOOK_STATUS_WRITE_ERROR;
 }
 
 plutobook_status_t plutobook_write_to_png(const plutobook_t* book, const char* filename, plutobook_image_format_t format)
 {
-    if(book->Book::writeToPng(filename, (plutobook::ImageFormat)(format)))
+    if(book->writeToPng(filename, (plutobook::ImageFormat)(format)))
         return PLUTOBOOK_STATUS_SUCCESS;
     return PLUTOBOOK_STATUS_WRITE_ERROR;
 }
 
 plutobook_status_t plutobook_write_to_png_stream(const plutobook_t* book, plutobook_stream_write_callback_t callback, void* closure, plutobook_image_format_t format)
 {
-    if(book->Book::writeToPng(callback, closure, (plutobook::ImageFormat)(format)))
+    if(book->writeToPng(callback, closure, (plutobook::ImageFormat)(format)))
         return PLUTOBOOK_STATUS_SUCCESS;
     return PLUTOBOOK_STATUS_WRITE_ERROR;
 }
 
-void plutobook_set_custom_resource_fetcher(plutobook_t* book, plutobook_resource_load_callback_t callback, void* closure)
+void plutobook_set_custom_resource_fetcher(plutobook_t* book, plutobook_resource_fetch_callback_t callback, void* closure)
 {
-    book->Book::setCustomResourceFetcher(book);
+    book->setCustomResourceFetcher(book);
     book->custom_resource_fetcher_callback = callback;
     book->custom_resource_fetcher_closure = closure;
 }
 
-plutobook_resource_load_callback_t plutobook_get_custom_resource_fetcher_callback(const plutobook_t* book)
+plutobook_resource_fetch_callback_t plutobook_get_custom_resource_fetcher_callback(const plutobook_t* book)
 {
     return book->custom_resource_fetcher_callback;
 }
