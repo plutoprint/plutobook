@@ -904,11 +904,6 @@ RefPtr<Font> Document::createFont(const FontDescription& description)
     return font;
 }
 
-ResourceData Document::fetchUrl(const Url& url)
-{
-    return ResourceLoader::loadUrl(url, m_customResourceFetcher);
-}
-
 RefPtr<TextResource> Document::fetchTextResource(const Url& url)
 {
     return fetchResource<TextResource>(url);

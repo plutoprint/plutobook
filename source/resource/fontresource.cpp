@@ -48,7 +48,7 @@ static void FTFontDataDestroy(void* data)
 
 RefPtr<FontResource> FontResource::create(Document* document, const Url& url)
 {
-    auto resource = document->fetchUrl(url);
+    auto resource = ResourceLoader::loadUrl(url, document->customResourceFetcher());
     if(resource.isNull())
         return nullptr;
     auto fontData = FTFontData::create(std::move(resource));

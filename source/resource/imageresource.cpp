@@ -30,7 +30,7 @@ namespace plutobook {
 
 RefPtr<ImageResource> ImageResource::create(Document* document, const Url& url)
 {
-    auto resource = document->fetchUrl(url);
+    auto resource = ResourceLoader::loadUrl(url, document->customResourceFetcher());
     if(resource.isNull())
         return nullptr;
     auto image = decode(resource.content(), resource.contentLength(), resource.mimeType(), resource.textEncoding(), url.base(), document->customResourceFetcher());

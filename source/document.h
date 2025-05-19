@@ -367,8 +367,6 @@ public:
     RefPtr<FontData> getFontData(const GlobalString& family, const FontDataDescription& description);
     RefPtr<Font> createFont(const FontDescription& description);
 
-    ResourceData fetchUrl(const Url& url);
-
     RefPtr<TextResource> fetchTextResource(const Url& url);
     RefPtr<ImageResource> fetchImageResource(const Url& url);
     RefPtr<FontResource> fetchFontResource(const Url& url);
