@@ -537,7 +537,7 @@ PLUTOBOOK_API plutobook_resource_data_t* plutobook_resource_data_create(const ch
  * @param closure A user-defined pointer that will be passed to the `destroy_callback` when called.
  * @return A pointer to a newly created `plutobook_resource_data_t` object, or `NULL` on failure.
  */
-PLUTOBOOK_API plutobook_resource_data_t* plutobook_resource_data_create_with_callback(const char* content, unsigned int content_length, const char* mime_type, const char* text_encoding, plutobook_resource_destroy_callback_t destroy_callback, void* closure);
+PLUTOBOOK_API plutobook_resource_data_t* plutobook_resource_data_create_without_copy(const char* content, unsigned int content_length, const char* mime_type, const char* text_encoding, plutobook_resource_destroy_callback_t destroy_callback, void* closure);
 
 /**
  * @brief Increases the reference count of a resource data object.

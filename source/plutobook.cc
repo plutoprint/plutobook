@@ -326,7 +326,7 @@ struct _plutobook_resource_data {
     void* closure;
 };
 
-static plutobook_resource_data_t* plutobook_resource_data_create(unsigned int content_length, const char* mime_type, const char* text_encoding)
+static plutobook_resource_data_t* plutobook_resource_data_create_uninitialized(unsigned int content_length, const char* mime_type, const char* text_encoding)
 {
     auto mime_type_length = std::strlen(mime_type) + 1ul;
     auto text_encoding_length = std::strlen(text_encoding) + 1ul;
@@ -344,7 +344,7 @@ static plutobook_resource_data_t* plutobook_resource_data_create(unsigned int co
 
 plutobook_resource_data_t* plutobook_resource_data_create(const char* content, unsigned int content_length, const char* mime_type, const char* text_encoding)
 {
-    auto resource = plutobook_resource_data_create(content_length, mime_type, text_encoding);
+    auto resource = plutobook_resource_data_create_uninitialized(content_length, mime_type, text_encoding);
     if(resource == nullptr)
         return nullptr;
     std::memcpy(resource->content, content, content_length);
@@ -354,9 +354,9 @@ plutobook_resource_data_t* plutobook_resource_data_create(const char* content, u
     return resource;
 }
 
-plutobook_resource_data_t* plutobook_resource_data_create_with_callback(const char* content, unsigned int content_length, const char* mime_type, const char* text_encoding, plutobook_resource_destroy_callback_t destroy_callback, void* closure)
+plutobook_resource_data_t* plutobook_resource_data_create_without_copy(const char* content, unsigned int content_length, const char* mime_type, const char* text_encoding, plutobook_resource_destroy_callback_t destroy_callback, void* closure)
 {
-    auto resource = plutobook_resource_data_create(0, mime_type, text_encoding);
+    auto resource = plutobook_resource_data_create_uninitialized(0, mime_type, text_encoding);
     if(resource == nullptr)
         return nullptr;
     resource->content = (char*)(content);

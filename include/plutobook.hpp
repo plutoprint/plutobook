@@ -388,7 +388,7 @@ public:
      * @param closure A pointer to user-defined data that is passed to the destroy callback.
      * @return A `ResourceData` object that manages the content using the destroy callback.
      */
-    static ResourceData createWithCallback(const char* content, size_t contentLength, const std::string& mimeType, const std::string& textEncoding, plutobook_resource_destroy_callback_t destroyCallback, void* closure);
+    static ResourceData createWithoutCopy(const char* content, size_t contentLength, const std::string& mimeType, const std::string& textEncoding, plutobook_resource_destroy_callback_t destroyCallback, void* closure);
 
     /**
      * @brief Constructs a ResourceData object by initializing the underlying resource with a null pointer.
