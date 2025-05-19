@@ -301,6 +301,7 @@ ResourceData DefaultResourceFetcher::loadUrl(const std::string& url)
     in.seekg(0, std::ios::beg);
     in.read(content->data(), content->size());
     in.close();
+
     return ResourceData::createWithoutCopy(content->data(), content->size(), mimeType, textEncoding, ByteArrayDestroy, content);
 }
 
@@ -317,15 +318,7 @@ ResourceData ResourceLoader::loadUrl(const Url& url, ResourceFetcher* customFetc
 
 Url ResourceLoader::baseUrl()
 {
-    std::string path("file://");
-    for(const auto& component : std::filesystem::current_path()) {
-        if(component.empty())
-            continue;
-        path += component.string();
-        path += '/';
-    }
-
-    return Url(path);
+    return Url("file://" + std::filesystem::current_path().generic_string() + "/");
 }
 
 Url ResourceLoader::completeUrl(const std::string_view& value)
