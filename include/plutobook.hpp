@@ -672,12 +672,6 @@ public:
      */
     bool isNull() const { return m_canvas == nullptr; }
 
-    /**
-     * @brief Checks whether an error has previously occurred on the canvas.
-     * @return `true` if there are no errors, `false` otherwise.
-     */
-    bool isGood() const;
-
 protected:
     Canvas(const Canvas&) = delete;
     Canvas& operator=(const Canvas&) = delete;

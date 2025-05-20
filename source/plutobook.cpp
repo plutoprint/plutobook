@@ -34,16 +34,15 @@ FileOutputStream::FileOutputStream(const std::string& filename)
 
 bool FileOutputStream::write(const char* data, size_t length)
 {
-    m_stream.write(data, length);
-    return m_stream.good();
+    return m_stream.write(data, length).good();
 }
 
-static plutobook_status_t stream_write_func(void* closure, const char* data, unsigned int length)
+static plutobook_stream_status_t stream_write_func(void* closure, const char* data, unsigned int length)
 {
     auto output = static_cast<OutputStream*>(closure);
     if(output->write(data, length))
-        return PLUTOBOOK_STATUS_SUCCESS;
-    return PLUTOBOOK_STATUS_WRITE_ERROR;
+        return PLUTOBOOK_STREAM_STATUS_SUCCESS;
+    return PLUTOBOOK_STREAM_STATUS_WRITE_ERROR;
 }
 
 Canvas::~Canvas()
@@ -121,11 +120,6 @@ cairo_t* Canvas::context() const
     return plutobook_canvas_get_context(m_canvas);
 }
 
-bool Canvas::isGood() const
-{
-    return plutobook_canvas_get_status(m_canvas) == PLUTOBOOK_STATUS_SUCCESS;
-}
-
 ImageCanvas::ImageCanvas(int width, int height, ImageFormat format)
     : Canvas(plutobook_image_canvas_create(width, height, (plutobook_image_format_t)(format)))
 {
@@ -176,7 +170,7 @@ bool ImageCanvas::writeToPng(OutputStream& output) const
 
 bool ImageCanvas::writeToPng(plutobook_stream_write_callback_t callback, void* closure) const
 {
-    return plutobook_image_canvas_write_to_png_stream(m_canvas, callback, closure) == PLUTOBOOK_STATUS_SUCCESS;
+    return plutobook_image_canvas_write_to_png_stream(m_canvas, callback, closure);
 }
 
 PDFCanvas::PDFCanvas(const std::string& filename, const PageSize& pageSize)
@@ -552,15 +546,14 @@ bool Book::writeToPdf(plutobook_stream_write_callback_t callback, void* closure,
     canvas.setKeywords(m_keywords);
     canvas.setCreationDate(m_creationDate);
     canvas.setModificationDate(m_modificationDate);
-    for(auto pageIndex = fromPage; canvas.isGood() && (pageStep > 0 ? pageIndex <= toPage : pageIndex >= toPage); pageIndex += pageStep) {
+    for(auto pageIndex = fromPage; pageStep > 0 ? pageIndex <= toPage : pageIndex >= toPage; pageIndex += pageStep) {
         canvas.setPageSize(pageSizeAt(pageIndex - 1));
         renderPage(canvas, pageIndex - 1);
         canvas.showPage();
     }
 
-    if(canvas.isGood())
-        canvas.finish();
-    return canvas.isGood();
+    canvas.finish();
+    return true;
 }
 
 bool Book::writeToPng(const std::string& filename, ImageFormat format) const

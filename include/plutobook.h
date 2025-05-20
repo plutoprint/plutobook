@@ -23,6 +23,8 @@
 #ifndef PLUTOBOOK_H
 #define PLUTOBOOK_H
 
+#include <stdbool.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -180,15 +182,13 @@ typedef struct _plutobook_page_margins {
 #define PLUTOBOOK_PAGE_MARGINS_WIDE ((plutobook_page_margins_t){72, 144, 72, 144})
 
 /**
- * @brief Defines status codes that indicate the result of operations.
+ * @brief Defines status codes that indicate the result of a stream operation.
  */
-typedef enum _plutobook_status {
-    PLUTOBOOK_STATUS_SUCCESS = 0,
-    PLUTOBOOK_STATUS_MEMORY_ERROR = 1,
-    PLUTOBOOK_STATUS_LOAD_ERROR = 10,
-    PLUTOBOOK_STATUS_WRITE_ERROR = 11,
-    PLUTOBOOK_STATUS_CANVAS_ERROR = 12
-} plutobook_status_t;
+typedef enum _plutobook_stream_status {
+    PLUTOBOOK_STREAM_STATUS_SUCCESS = 0,
+    PLUTOBOOK_STREAM_STATUS_READ_ERROR = 10,
+    PLUTOBOOK_STREAM_STATUS_WRITE_ERROR = 11,
+} plutobook_stream_status_t;
 
 /**
  * @brief This type represents a function called when writing data to an output stream.
@@ -196,9 +196,9 @@ typedef enum _plutobook_status {
  * @param closure user-defined closure for the callback.
  * @param data buffer containing the data to write.
  * @param length the number of bytes to write.
- * @return `PLUTOBOOK_STATUS_SUCCESS` on success, or `PLUTOBOOK_STATUS_WRITE_ERROR` on failure.
+ * @return `PLUTOBOOK_STREAM_STATUS_SUCCESS` on success, or `PLUTOBOOK_STREAM_STATUS_WRITE_ERROR` on failure.
  */
-typedef plutobook_status_t (*plutobook_stream_write_callback_t)(void* closure, const char* data, unsigned int length);
+typedef plutobook_stream_status_t (*plutobook_stream_write_callback_t)(void* closure, const char* data, unsigned int length);
 
 typedef struct _cairo_surface cairo_surface_t;
 typedef struct _cairo cairo_t;
@@ -341,14 +341,6 @@ PLUTOBOOK_API cairo_surface_t* plutobook_canvas_get_surface(const plutobook_canv
 PLUTOBOOK_API cairo_t* plutobook_canvas_get_context(const plutobook_canvas_t* canvas);
 
 /**
- * @brief Checks whether an error has previously occurred on the canvas.
- *
- * @param canvas A pointer to a `plutobook_canvas_t` object.
- * @return The status code, which can be `PLUTOBOOK_STATUS_SUCCESS` or `PLUTOBOOK_STATUS_CANVAS_ERROR`.
- */
-PLUTOBOOK_API plutobook_status_t plutobook_canvas_get_status(const plutobook_canvas_t* canvas);
-
-/**
  * @brief Defines different memory formats for image data.
  */
 typedef enum _plutobook_image_format {
@@ -426,9 +418,9 @@ PLUTOBOOK_API int plutobook_image_canvas_get_stride(const plutobook_canvas_t* ca
  *
  * @param canvas A pointer to a `plutobook_canvas_t` object.
  * @param filename The path to the file where the PNG image will be saved.
- * @return A status code indicating success (`PLUTOBOOK_STATUS_SUCCESS`) or an error (`PLUTOBOOK_STATUS_WRITE_ERROR`).
+ * @return `true` on success, or `false` on failure.
  */
-PLUTOBOOK_API plutobook_status_t plutobook_image_canvas_write_to_png(const plutobook_canvas_t* canvas, const char* filename);
+PLUTOBOOK_API bool plutobook_image_canvas_write_to_png(const plutobook_canvas_t* canvas, const char* filename);
 
 /**
  * @brief Writes the image data from the canvas to a PNG stream using a custom write callback.
@@ -436,9 +428,9 @@ PLUTOBOOK_API plutobook_status_t plutobook_image_canvas_write_to_png(const pluto
  * @param canvas A pointer to a `plutobook_canvas_t` object.
  * @param callback The callback function for writing the image data to a stream.
  * @param closure A user-defined closure passed to the callback.
- * @return A status code indicating success (`PLUTOBOOK_STATUS_SUCCESS`) or an error (`PLUTOBOOK_STATUS_WRITE_ERROR`).
+ * @return `true` on success, or `false` on failure.
  */
-PLUTOBOOK_API plutobook_status_t plutobook_image_canvas_write_to_png_stream(const plutobook_canvas_t* canvas, plutobook_stream_write_callback_t callback, void* closure);
+PLUTOBOOK_API bool plutobook_image_canvas_write_to_png_stream(const plutobook_canvas_t* canvas, plutobook_stream_write_callback_t callback, void* closure);
 
 /**
  * @brief Defines different metadata fields for a PDF document.
@@ -758,9 +750,9 @@ PLUTOBOOK_API plutobook_page_size_t plutobook_get_page_size_at(const plutobook_t
  * @param url The URL to load the document from.
  * @param user_style An optional user-defined style to apply.
  * @param user_script An optional user-defined script to run after the document has loaded.
- * @return `PLUTOBOOK_STATUS_SUCCESS` on success, or `PLUTOBOOK_STATUS_LOAD_ERROR` on failure.
+ * @return `true` on success, or `false` on failure.
  */
-PLUTOBOOK_API plutobook_status_t plutobook_load_url(plutobook_t* book, const char* url, const char* user_style, const char* user_script);
+PLUTOBOOK_API bool plutobook_load_url(plutobook_t* book, const char* url, const char* user_style, const char* user_script);
 
 /**
  * @brief Loads the document from the specified data.
@@ -773,9 +765,9 @@ PLUTOBOOK_API plutobook_status_t plutobook_load_url(plutobook_t* book, const cha
  * @param user_style An optional user-defined style to apply.
  * @param user_script An optional user-defined script to run after the document has loaded.
  * @param base_url The base URL for resolving relative URLs.
- * @return `PLUTOBOOK_STATUS_SUCCESS` on success, or `PLUTOBOOK_STATUS_LOAD_ERROR` on failure.
+ * @return `true` on success, or `false` on failure.
  */
-PLUTOBOOK_API plutobook_status_t plutobook_load_data(plutobook_t* book, const char* data, unsigned int length, const char* mime_type, const char* text_encoding, const char* user_style, const char* user_script, const char* base_url);
+PLUTOBOOK_API bool plutobook_load_data(plutobook_t* book, const char* data, unsigned int length, const char* mime_type, const char* text_encoding, const char* user_style, const char* user_script, const char* base_url);
 
 /**
  * @brief Loads the document from the specified image data.
@@ -788,9 +780,9 @@ PLUTOBOOK_API plutobook_status_t plutobook_load_data(plutobook_t* book, const ch
  * @param user_style An optional user-defined style to apply.
  * @param user_script An optional user-defined script to run after the document has loaded.
  * @param base_url The base URL for resolving relative URLs.
- * @return `PLUTOBOOK_STATUS_SUCCESS` on success, or `PLUTOBOOK_STATUS_LOAD_ERROR` on failure.
+ * @return `true` on success, or `false` on failure.
  */
-PLUTOBOOK_API plutobook_status_t plutobook_load_image(plutobook_t* book, const char* data, unsigned int length, const char* mime_type, const char* text_encoding, const char* user_style, const char* user_script, const char* base_url);
+PLUTOBOOK_API bool plutobook_load_image(plutobook_t* book, const char* data, unsigned int length, const char* mime_type, const char* text_encoding, const char* user_style, const char* user_script, const char* base_url);
 
 /**
  * @brief Loads the document from the specified XML data.
@@ -801,9 +793,9 @@ PLUTOBOOK_API plutobook_status_t plutobook_load_image(plutobook_t* book, const c
  * @param user_style An optional user-defined style to apply.
  * @param user_script An optional user-defined script to run after the document has loaded.
  * @param base_url The base URL for resolving relative URLs.
- * @return `PLUTOBOOK_STATUS_SUCCESS` on success, or `PLUTOBOOK_STATUS_LOAD_ERROR` on failure.
+ * @return `true` on success, or `false` on failure.
  */
-PLUTOBOOK_API plutobook_status_t plutobook_load_xml(plutobook_t* book, const char* data, int length, const char* user_style, const char* user_script, const char* base_url);
+PLUTOBOOK_API bool plutobook_load_xml(plutobook_t* book, const char* data, int length, const char* user_style, const char* user_script, const char* base_url);
 
 /**
  * @brief Loads the document from the specified HTML data.
@@ -814,9 +806,9 @@ PLUTOBOOK_API plutobook_status_t plutobook_load_xml(plutobook_t* book, const cha
  * @param user_style An optional user-defined style to apply.
  * @param user_script An optional user-defined script to run after the document has loaded.
  * @param base_url The base URL for resolving relative URLs.
- * @return `PLUTOBOOK_STATUS_SUCCESS` on success, or `PLUTOBOOK_STATUS_LOAD_ERROR` on failure.
+ * @return `true` on success, or `false` on failure.
  */
-PLUTOBOOK_API plutobook_status_t plutobook_load_html(plutobook_t* book, const char* data, int length, const char* user_style, const char* user_script, const char* base_url);
+PLUTOBOOK_API bool plutobook_load_html(plutobook_t* book, const char* data, int length, const char* user_style, const char* user_script, const char* base_url);
 
 /**
  * @brief Renders the specified page to the given canvas.
@@ -881,9 +873,9 @@ PLUTOBOOK_API void plutobook_render_document_rect_cairo(const plutobook_t* book,
  *
  * @param book A pointer to a `plutobook_t` object.
  * @param filename The name of the PDF file to write the document to.
- * @return `PLUTOBOOK_STATUS_SUCCESS` on success, or `PLUTOBOOK_STATUS_WRITE_ERROR` on failure.
+ * @return `true` on success, or `false` on failure.
  */
-PLUTOBOOK_API plutobook_status_t plutobook_write_to_pdf(const plutobook_t* book, const char* filename);
+PLUTOBOOK_API bool plutobook_write_to_pdf(const plutobook_t* book, const char* filename);
 
 /**
  * @brief Writes a range of pages from the document to a PDF file.
@@ -893,9 +885,9 @@ PLUTOBOOK_API plutobook_status_t plutobook_write_to_pdf(const plutobook_t* book,
  * @param from_page The starting page number for the range to be written.
  * @param to_page The ending page number for the range to be written.
  * @param page_step The step value for iterating through the pages in the range.
- * @return `PLUTOBOOK_STATUS_SUCCESS` on success, or `PLUTOBOOK_STATUS_WRITE_ERROR` on failure.
+ * @return `true` on success, or `false` on failure.
  */
-PLUTOBOOK_API plutobook_status_t plutobook_write_to_pdf_range(const plutobook_t* book, const char* filename, unsigned int from_page, unsigned int to_page, int page_step);
+PLUTOBOOK_API bool plutobook_write_to_pdf_range(const plutobook_t* book, const char* filename, unsigned int from_page, unsigned int to_page, int page_step);
 
 /**
  * @brief Writes the entire document to a PDF stream using a callback function.
@@ -903,9 +895,9 @@ PLUTOBOOK_API plutobook_status_t plutobook_write_to_pdf_range(const plutobook_t*
  * @param book A pointer to a `plutobook_t` object.
  * @param callback A callback function used for writing the PDF stream.
  * @param closure A user-defined pointer passed to the callback function for additional data.
- * @return `PLUTOBOOK_STATUS_SUCCESS` on success, or `PLUTOBOOK_STATUS_WRITE_ERROR` on failure.
+ * @return `true` on success, or `false` on failure.
  */
-PLUTOBOOK_API plutobook_status_t plutobook_write_to_pdf_stream(const plutobook_t* book, plutobook_stream_write_callback_t callback, void* closure);
+PLUTOBOOK_API bool plutobook_write_to_pdf_stream(const plutobook_t* book, plutobook_stream_write_callback_t callback, void* closure);
 
 /**
  * @brief Writes a specified range of pages from the document to a PDF stream using a callback function.
@@ -916,9 +908,9 @@ PLUTOBOOK_API plutobook_status_t plutobook_write_to_pdf_stream(const plutobook_t
  * @param from_page The starting page number for the range to be written.
  * @param to_page The ending page number for the range to be written.
  * @param page_step The step value for iterating through the pages in the range.
- * @return `PLUTOBOOK_STATUS_SUCCESS` on success, or `PLUTOBOOK_STATUS_WRITE_ERROR` on failure.
+ * @return `true` on success, or `false` on failure.
  */
-PLUTOBOOK_API plutobook_status_t plutobook_write_to_pdf_stream_range(const plutobook_t* book, plutobook_stream_write_callback_t callback, void* closure, unsigned int from_page, unsigned int to_page, int page_step);
+PLUTOBOOK_API bool plutobook_write_to_pdf_stream_range(const plutobook_t* book, plutobook_stream_write_callback_t callback, void* closure, unsigned int from_page, unsigned int to_page, int page_step);
 
 /**
  * @brief Writes the entire document to a PNG image file.
@@ -926,9 +918,9 @@ PLUTOBOOK_API plutobook_status_t plutobook_write_to_pdf_stream_range(const pluto
  * @param book A pointer to a `plutobook_t` object.
  * @param filename The file path where the PNG image will be written.
  * @param format The image format to use for the image data.
- * @return `PLUTOBOOK_STATUS_SUCCESS` on success, or `PLUTOBOOK_STATUS_WRITE_ERROR` on failure.
+ * @return `true` on success, or `false` on failure.
  */
-PLUTOBOOK_API plutobook_status_t plutobook_write_to_png(const plutobook_t* book, const char* filename, plutobook_image_format_t format);
+PLUTOBOOK_API bool plutobook_write_to_png(const plutobook_t* book, const char* filename, plutobook_image_format_t format);
 
 /**
  * @brief Writes the entire document to a PNG image stream using a callback function.
@@ -937,9 +929,9 @@ PLUTOBOOK_API plutobook_status_t plutobook_write_to_png(const plutobook_t* book,
  * @param callback A callback function to handle the image data stream.
  * @param closure A pointer to user-defined data to pass to the callback function.
  * @param format The image format to use for the image data.
- * @return `PLUTOBOOK_STATUS_SUCCESS` on success, or `PLUTOBOOK_STATUS_WRITE_ERROR` on failure.
+ * @return `true` on success, or `false` on failure.
  */
-PLUTOBOOK_API plutobook_status_t plutobook_write_to_png_stream(const plutobook_t* book, plutobook_stream_write_callback_t callback, void* closure, plutobook_image_format_t format);
+PLUTOBOOK_API bool plutobook_write_to_png_stream(const plutobook_t* book, plutobook_stream_write_callback_t callback, void* closure, plutobook_image_format_t format);
 
 /**
  * @brief Sets a custom resource fetcher callback for the document.
