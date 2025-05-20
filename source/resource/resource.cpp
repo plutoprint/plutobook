@@ -145,9 +145,13 @@ static ResourceData loadDataUrl(std::string_view input)
 {
     assert(startswith(input, "data:", false));
     input.remove_prefix(5);
+
     auto headerEnd = input.find(',');
-    if(headerEnd == std::string_view::npos)
+    if(headerEnd == std::string_view::npos) {
+        plutobook_set_error_message("invalid data URL: missing comma separator");
         return ResourceData();
+    }
+
     auto header = input.substr(0, headerEnd);
     auto mediaTypeEnd = header.rfind(';');
     if(mediaTypeEnd == std::string_view::npos) {
@@ -176,6 +180,7 @@ static ResourceData loadDataUrl(std::string_view input)
         content->assign(input.begin(), input.end());
     } else {
         if(!base64Decode(input, *content)) {
+            plutobook_set_error_message("invalid data URL: base64 decoding failed");
             ByteArrayDestroy(content);
             return ResourceData();
         }
@@ -270,6 +275,7 @@ ResourceData DefaultResourceFetcher::fetchUrl(const std::string& url)
     curl_easy_cleanup(curl);
     if(response == CURLE_OK)
         return ResourceData::createWithoutCopy(content->data(), content->size(), mimeType, textEncoding, ByteArrayDestroy, content);
+    plutobook_set_error_message("Unable to fetch URL '%s': %s", url.data(), curl_easy_strerror(response));
     ByteArrayDestroy(content);
     return ResourceData();
 }
@@ -284,12 +290,16 @@ ResourceData DefaultResourceFetcher::fetchUrl(const std::string& url)
     if(startswith(url, "data:", false))
         return loadDataUrl(percentDecode(url));
     std::string_view input(url);
-    if(!startswith(input, "file://", false))
+    if(!startswith(input, "file://", false)) {
+        plutobook_set_error_message("Unable to fetch URL '%s': Unsupported protocol", url.data());
         return ResourceData();
+    }
+
     input.remove_prefix(7);
     auto filename = percentDecode(input.substr(0, input.rfind('?')));
     std::ifstream in(filename, std::ios::ate | std::ios::binary);
-    if(!in.is_open() || !in.good()) {
+    if(!in.is_open()) {
+        plutobook_set_error_message("Unable to fetch URL '%s': %s", url.data(), std::strerror(errno));
         return ResourceData();
     }
 

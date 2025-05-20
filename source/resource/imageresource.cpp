@@ -96,6 +96,7 @@ static cairo_surface_t* decodeBitmapImage(const char* data, size_t size)
         int width, height;
         auto tj = tjInitDecompress();
         if(!tj || tjDecompressHeader(tj, (uint8_t*)(data), size, &width, &height) == -1) {
+            plutobook_set_error_message("image decode error: %s", tjGetErrorStr2(tj));
             tjDestroy(tj);
             return nullptr;
         }
@@ -115,11 +116,15 @@ static cairo_surface_t* decodeBitmapImage(const char* data, size_t size)
     if(size > 14 && std::memcmp(data, "RIFF", 4) == 0 && std::memcmp(data + 8, "WEBPVP", 6) == 0) {
         WebPDecoderConfig config;
         if(!WebPInitDecoderConfig(&config)) {
+            plutobook_set_error_message("image decode error: WebPInitDecoderConfig failed");
             return nullptr;
         }
 
-        if(WebPGetFeatures((const uint8_t*)(data), size, &config.input) != VP8_STATUS_OK)
+        if(WebPGetFeatures((const uint8_t*)(data), size, &config.input) != VP8_STATUS_OK) {
+            plutobook_set_error_message("image decode error: WebPGetFeatures failed");
             return nullptr;
+        }
+
         auto surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, config.input.width, config.input.height);
         auto surfaceData = cairo_image_surface_get_data(surface);
         auto surfaceWidth = cairo_image_surface_get_width(surface);
@@ -134,6 +139,7 @@ static cairo_surface_t* decodeBitmapImage(const char* data, size_t size)
         config.output.height = surfaceHeight;
         config.output.is_external_memory = 1;
         if(WebPDecode((const uint8_t*)(data), size, &config) != VP8_STATUS_OK) {
+            plutobook_set_error_message("image decode error: WebPDecode failed");
             return nullptr;
         }
 
@@ -144,8 +150,11 @@ static cairo_surface_t* decodeBitmapImage(const char* data, size_t size)
 
     int width, height, channels;
     auto imageData = stbi_load_from_memory((const stbi_uc*)(data), size, &width, &height, &channels, STBI_rgb_alpha);
-    if(imageData == nullptr)
+    if(imageData == nullptr) {
+        plutobook_set_error_message("image decode error: %s", stbi_failure_reason());
         return nullptr;
+    }
+
     auto surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, width, height);
     auto surfaceData = cairo_image_surface_get_data(surface);
     auto surfaceWidth = cairo_image_surface_get_width(surface);
@@ -177,6 +186,11 @@ RefPtr<BitmapImage> BitmapImage::create(const char* data, size_t size)
     auto surface = decodeBitmapImage(data, size);
     if(surface == nullptr)
         return nullptr;
+    if(auto status = cairo_surface_status(surface)) {
+        plutobook_set_error_message("image decode error: %s", cairo_status_to_string(status));
+        return nullptr;
+    }
+
     return adoptPtr(new BitmapImage(surface));
 }
 
@@ -280,8 +294,13 @@ RefPtr<SVGImage> SVGImage::create(const std::string_view& content, const std::st
 {
     std::unique_ptr<Heap> heap(new Heap(1024 * 24));
     auto document = SVGDocument::create(nullptr, heap.get(), fetcher, ResourceLoader::completeUrl(baseUrl));
-    if(!document->load(content) || !document->rootElement()->isOfType(svgNs, svgTag))
+    if(!document->load(content))
         return nullptr;
+    if(!document->rootElement()->isOfType(svgNs, svgTag)) {
+        plutobook_set_error_message("SVG image root element must be <svg>");
+        return nullptr;
+    }
+
     return adoptPtr(new SVGImage(std::move(heap), std::move(document)));
 }
 

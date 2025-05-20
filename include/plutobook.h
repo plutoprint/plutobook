@@ -966,6 +966,9 @@ PLUTOBOOK_API plutobook_resource_fetch_callback_t plutobook_get_custom_resource_
  */
 PLUTOBOOK_API void* plutobook_get_custom_resource_fetcher_closure(const plutobook_t* book);
 
+PLUTOBOOK_API void plutobook_set_error_message(const char* format, ...);
+PLUTOBOOK_API const char* plutobook_get_error_message(void);
+
 #ifdef __cplusplus
 }
 #endif

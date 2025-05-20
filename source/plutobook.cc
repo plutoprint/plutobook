@@ -2,6 +2,7 @@
 
 #include <cairo-pdf.h>
 
+#include <cstdarg>
 #include <cstring>
 #include <cstdlib>
 
@@ -69,14 +70,18 @@ struct _plutobook_canvas {
 static plutobook_canvas_t* plutobook_canvas_create(cairo_surface_t* surface)
 {
     auto context = cairo_create(surface);
-    if(cairo_status(context)) {
+    if(auto status = cairo_status(context)) {
+        plutobook_set_error_message("canvas error: %s", cairo_status_to_string(status));
         cairo_surface_destroy(surface);
         return nullptr;
     }
 
     auto canvas = (plutobook_canvas_t*)(std::malloc(sizeof(plutobook_canvas_t)));
-    if(canvas == nullptr)
+    if(canvas == nullptr) {
+        plutobook_set_error_message("canvas allocation failed");
         return nullptr;
+    }
+
     canvas->surface = surface;
     canvas->context = context;
     return canvas;
@@ -261,19 +266,31 @@ int plutobook_image_canvas_get_stride(const plutobook_canvas_t* canvas)
 
 plutobook_status_t plutobook_image_canvas_write_to_png(const plutobook_canvas_t* canvas, const char* filename)
 {
-    if(canvas == nullptr)
+    if(canvas == nullptr) {
+        plutobook_set_error_message("image encode error '%s': canvas is null", filename);
         return PLUTOBOOK_STATUS_WRITE_ERROR;
-    if(cairo_surface_write_to_png(canvas->surface, filename))
+    }
+
+    if(auto status = cairo_surface_write_to_png(canvas->surface, filename)) {
+        plutobook_set_error_message("image encode error '%s': %s", filename, cairo_status_to_string(status));
         return PLUTOBOOK_STATUS_WRITE_ERROR;
+    }
+
     return PLUTOBOOK_STATUS_SUCCESS;
 }
 
 plutobook_status_t plutobook_image_canvas_write_to_png_stream(const plutobook_canvas_t* canvas, plutobook_stream_write_callback_t callback, void* closure)
 {
-    if(canvas == nullptr)
+    if(canvas == nullptr) {
+        plutobook_set_error_message("image encode error: canvas is null");
         return PLUTOBOOK_STATUS_WRITE_ERROR;
-    if(cairo_surface_write_to_png_stream(canvas->surface, (cairo_write_func_t)(callback), closure))
+    }
+
+    if(auto status = cairo_surface_write_to_png_stream(canvas->surface, (cairo_write_func_t)(callback), closure)) {
+        plutobook_set_error_message("image encode error: %s", cairo_status_to_string(status));
         return PLUTOBOOK_STATUS_WRITE_ERROR;
+    }
+
     return PLUTOBOOK_STATUS_SUCCESS;
 }
 
@@ -331,8 +348,11 @@ static plutobook_resource_data_t* plutobook_resource_data_create_uninitialized(u
     auto mime_type_length = std::strlen(mime_type) + 1ul;
     auto text_encoding_length = std::strlen(text_encoding) + 1ul;
     auto resource = (plutobook_resource_data_t*)(std::malloc(mime_type_length + text_encoding_length + content_length + sizeof(plutobook_resource_data_t)));
-    if(resource == nullptr)
+    if(resource == nullptr) {
+        plutobook_set_error_message("resource data allocation failed");
         return nullptr;
+    }
+
     resource->ref_count = 1u;
     resource->mime_type = (char*)(resource + 1);
     resource->text_encoding = resource->mime_type + mime_type_length;
@@ -677,4 +697,19 @@ plutobook_resource_fetch_callback_t plutobook_get_custom_resource_fetcher_callba
 void* plutobook_get_custom_resource_fetcher_closure(const plutobook_t* book)
 {
     return book->custom_resource_fetcher_closure;
+}
+
+thread_local char plutobook_error_message[512];
+
+void plutobook_set_error_message(const char* format, ...)
+{
+    va_list args;
+    va_start(args, format);
+    vsnprintf(plutobook_error_message, sizeof(plutobook_error_message), format, args);
+    va_end(args);
+}
+
+const char* plutobook_get_error_message(void)
+{
+    return plutobook_error_message;
 }

@@ -23,12 +23,12 @@ int main(int argc, char* argv[])
 
     plutobook::Book book(plutobook::PageSize::A4);
     if(!book.loadUrl(input, style)) {
-        std::cerr << "Error: Failed to load input HTML: \"" << input << "\"" << std::endl;
+        std::cerr << "Error: " << plutobook_get_error_message() << std::endl;
         return 2;
     }
 
     if(!book.writeToPdf(output)) {
-        std::cerr << "Error: Failed to write PDF to output file: \"" << output << "\"" << std::endl;
+        std::cerr << "Error: " << plutobook_get_error_message() << std::endl;
         return 3;
     }
 

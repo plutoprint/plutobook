@@ -1,4 +1,5 @@
 #include "xmlparser.h"
+#include "plutobook.h"
 #include "xmldocument.h"
 
 #include <expat.h>
@@ -35,15 +36,21 @@ constexpr XML_Char kXmlNamespaceSep = 1;
 
 bool XMLParser::parse(const std::string_view& content)
 {
-    auto parser = XML_ParserCreateNS(nullptr, kXmlNamespaceSep);
+    auto parser = XML_ParserCreateNS(NULL, kXmlNamespaceSep);
     XML_SetUserData(parser, this);
     XML_SetElementHandler(parser, startElementCallback, endElementCallback);
     XML_SetCharacterDataHandler(parser, characterDataCallback);
     auto status = XML_Parse(parser, content.data(), content.length(), XML_TRUE);
-    if(status == XML_STATUS_OK)
+    auto error = XML_GetErrorCode(parser);
+    if(status == XML_STATUS_OK && error == XML_ERROR_NONE) {
         m_document->finishParsingDocument();
+        XML_ParserFree(parser);
+        return true;
+    }
+
+    plutobook_set_error_message("xml parse error: %s on line %d column %d", XML_ErrorString(error), XML_GetCurrentLineNumber(parser), XML_GetCurrentColumnNumber(parser));
     XML_ParserFree(parser);
-    return status == XML_STATUS_OK;
+    return false;
 }
 
 class QualifiedName {

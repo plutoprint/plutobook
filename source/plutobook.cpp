@@ -27,6 +27,9 @@ private:
 FileOutputStream::FileOutputStream(const std::string& filename)
     : m_stream(filename, std::ios::binary)
 {
+    if(!m_stream.is_open()) {
+        plutobook_set_error_message("Unable to open file '%s': %s", filename.data(), std::strerror(errno));
+    }
 }
 
 bool FileOutputStream::write(const char* data, size_t length)
@@ -352,7 +355,16 @@ bool Book::loadUrl(const std::string_view& url, const std::string_view& userStyl
     auto resource = ResourceLoader::loadUrl(completeUrl, m_customResourceFetcher);
     if(resource.isNull())
         return false;
-    return loadData(resource.content(), resource.contentLength(), resource.mimeType(), resource.textEncoding(), userStyle, userScript, completeUrl.base());
+    if(loadData(resource.content(), resource.contentLength(), resource.mimeType(), resource.textEncoding(), userStyle, userScript, completeUrl.base())) {
+        return true;
+    }
+
+    std::string errorMessage("Unable to load URL \'");
+    errorMessage += completeUrl.value();
+    errorMessage += "\': ";
+    errorMessage += plutobook_get_error_message();
+    plutobook_set_error_message(errorMessage.data());
+    return false;
 }
 
 bool Book::loadData(const char* data, size_t length, const std::string_view& mimeType, const std::string_view& textEncoding, const std::string_view& userStyle, const std::string_view& userScript, const std::string_view& baseUrl)
@@ -385,8 +397,11 @@ bool Book::loadImage(const char* data, size_t length, const std::string_view& mi
     assert(imageElement && imageElement->tagName() == imgTag);
 
     auto box = imageElement->box();
-    if(box == nullptr)
+    if(box == nullptr) {
+        plutobook_set_error_message("image element has no associated layout box");
         return false;
+    }
+
     auto& imageBox = to<ImageBox>(*box);
     imageBox.setImage(std::move(image));
     return true;
@@ -495,7 +510,16 @@ bool Book::writeToPdf(const std::string& filename, uint32_t fromPage, uint32_t t
     FileOutputStream output(filename);
     if(!output.isOpen())
         return false;
-    return writeToPdf(output, fromPage, toPage, pageStep);
+    if(writeToPdf(output, fromPage, toPage, pageStep)) {
+        return true;
+    }
+
+    std::string errorMessage("Unable to write PDF \'");
+    errorMessage += filename;
+    errorMessage += "\': ";
+    errorMessage += plutobook_get_error_message();
+    plutobook_set_error_message(errorMessage.data());
+    return false;
 }
 
 bool Book::writeToPdf(OutputStream& output, uint32_t fromPage, uint32_t toPage, int pageStep) const
@@ -505,13 +529,21 @@ bool Book::writeToPdf(OutputStream& output, uint32_t fromPage, uint32_t toPage, 
 
 bool Book::writeToPdf(plutobook_stream_write_callback_t callback, void* closure, uint32_t fromPage, uint32_t toPage, int pageStep) const
 {
+    if(pageStep == 0) {
+        plutobook_set_error_message("invalid page range: step cannot be zero");
+        return false;
+    }
+
     fromPage = std::max(1u, std::min(fromPage, pageCount()));
     toPage = std::max(1u, std::min(toPage, pageCount()));
-    if(pageStep == 0 || (pageStep > 0 && fromPage > toPage) || (pageStep < 0 && fromPage < toPage)) {
+    if((pageStep > 0 && fromPage > toPage) || (pageStep < 0 && fromPage < toPage)) {
+        plutobook_set_error_message("invalid page range: step direction does not match range (from=%u to=%u step=%d)", fromPage, toPage, pageStep);
         return false;
     }
 
     PDFCanvas canvas(callback, closure, pageSizeAt(fromPage - 1));
+    if(canvas.isNull())
+        return false;
     canvas.scale(PLUTOBOOK_UNITS_PX, PLUTOBOOK_UNITS_PX);
     canvas.setTitle(m_title);
     canvas.setSubject(m_subject);
@@ -536,7 +568,16 @@ bool Book::writeToPng(const std::string& filename, ImageFormat format) const
     FileOutputStream output(filename);
     if(!output.isOpen())
         return false;
-    return writeToPng(output, format);
+    if(writeToPng(output, format)) {
+        return true;
+    }
+
+    std::string errorMessage("Unable to write PNG \'");
+    errorMessage += filename;
+    errorMessage += "\': ";
+    errorMessage += plutobook_get_error_message();
+    plutobook_set_error_message(errorMessage.data());
+    return false;
 }
 
 bool Book::writeToPng(OutputStream& output, ImageFormat format) const
@@ -548,9 +589,14 @@ bool Book::writeToPng(plutobook_stream_write_callback_t callback, void* closure,
 {
     int width = std::ceil(documentWidth());
     int height = std::ceil(documentHeight());
-    if(width <= 0 || height <= 0)
+    if(width <= 0 || height <= 0) {
+        plutobook_set_error_message("invalid document size: width=%d height=%d", width, height);
         return false;
+    }
+
     ImageCanvas canvas(width, height, format);
+    if(canvas.isNull())
+        return false;
     renderDocument(canvas, 0, 0, width, height);
     return canvas.writeToPng(callback, closure);
 }
