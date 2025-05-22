@@ -297,7 +297,7 @@ RefPtr<SVGImage> SVGImage::create(const std::string_view& content, const std::st
     if(!document->load(content))
         return nullptr;
     if(!document->rootElement()->isOfType(svgNs, svgTag)) {
-        plutobook_set_error_message("SVG image root element must be <svg>");
+        plutobook_set_error_message("invalid SVG image: root element must be <svg> in the \"http://www.w3.org/2000/svg\" namespace");
         return nullptr;
     }
 
