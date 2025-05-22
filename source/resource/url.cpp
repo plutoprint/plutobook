@@ -545,7 +545,7 @@ Url::Url(const std::string_view& input)
 Url Url::complete(std::string_view input) const
 {
     stripLeadingAndTrailingSpaces(input);
-    if(input.empty() || m_value.empty())
+    if(m_value.empty())
         return Url(input);
     assert(m_value[m_schemeEnd] == ':');
     if(!input.empty() && isSchemeFirstChar(input.front())) {
