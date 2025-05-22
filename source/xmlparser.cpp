@@ -41,14 +41,16 @@ bool XMLParser::parse(const std::string_view& content)
     XML_SetElementHandler(parser, startElementCallback, endElementCallback);
     XML_SetCharacterDataHandler(parser, characterDataCallback);
     auto status = XML_Parse(parser, content.data(), content.length(), XML_TRUE);
-    auto error = XML_GetErrorCode(parser);
-    if(status == XML_STATUS_OK && error == XML_ERROR_NONE) {
+    if(status == XML_STATUS_OK) {
         m_document->finishParsingDocument();
         XML_ParserFree(parser);
         return true;
     }
 
-    plutobook_set_error_message("xml parse error: %s on line %d column %d", XML_ErrorString(error), XML_GetCurrentLineNumber(parser), XML_GetCurrentColumnNumber(parser));
+    auto errorString = XML_ErrorString(XML_GetErrorCode(parser));
+    auto lineNumber = XML_GetCurrentLineNumber(parser);
+    auto columnNumber = XML_GetCurrentColumnNumber(parser);
+    plutobook_set_error_message("xml parse error: %s on line %d column %d", errorString, lineNumber, columnNumber);
     XML_ParserFree(parser);
     return false;
 }
