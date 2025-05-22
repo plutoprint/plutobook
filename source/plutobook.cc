@@ -421,14 +421,14 @@ unsigned int plutobook_resource_data_get_content_length(const plutobook_resource
 const char* plutobook_resource_data_get_mime_type(const plutobook_resource_data_t* resource)
 {
     if(resource == nullptr)
-        return nullptr;
+        return "";
     return resource->mime_type;
 }
 
 const char* plutobook_resource_data_get_text_encoding(const plutobook_resource_data_t* resource)
 {
     if(resource == nullptr)
-        return nullptr;
+        return "";
     return resource->text_encoding;
 }
 
