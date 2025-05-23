@@ -764,11 +764,7 @@ HeapString Document::getCountersText(const CounterMap& counters, const GlobalStr
     return m_heap->createString(text);
 }
 
-void Document::addAuthorJavaScript(const std::string_view& content)
-{
-}
-
-void Document::addUserJavaScript(const std::string_view& content)
+void Document::runJavaScript(const std::string_view& script)
 {
 }
 

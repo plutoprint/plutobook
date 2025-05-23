@@ -343,8 +343,7 @@ public:
     HeapString getTargetCounterText(const HeapString& fragment, const GlobalString& name, const GlobalString& listStyle, const HeapString& separator);
     HeapString getCountersText(const CounterMap& counters, const GlobalString& name, const GlobalString& listStyle, const HeapString& separator);
 
-    void addAuthorJavaScript(const std::string_view& content);
-    void addUserJavaScript(const std::string_view& content);
+    void runJavaScript(const std::string_view& script);
 
     void addAuthorStyleSheet(const std::string_view& content, Url baseUrl);
     void addUserStyleSheet(const std::string_view& content);
