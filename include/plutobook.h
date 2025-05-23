@@ -960,6 +960,7 @@ PLUTOBOOK_API void* plutobook_get_custom_resource_fetcher_closure(const plutoboo
 
 PLUTOBOOK_API void plutobook_set_error_message(const char* format, ...);
 PLUTOBOOK_API const char* plutobook_get_error_message(void);
+PLUTOBOOK_API void plutobook_clear_error_message(void);
 
 #ifdef __cplusplus
 }
