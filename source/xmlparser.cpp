@@ -47,9 +47,9 @@ bool XMLParser::parse(const std::string_view& content)
         return true;
     }
 
-    auto errorString = XML_ErrorString(XML_GetErrorCode(parser));
-    auto lineNumber = XML_GetCurrentLineNumber(parser);
-    auto columnNumber = XML_GetCurrentColumnNumber(parser);
+    auto errorString = (const char*)(XML_ErrorString(XML_GetErrorCode(parser)));
+    auto lineNumber = (int)(XML_GetCurrentLineNumber(parser));
+    auto columnNumber = (int)(XML_GetCurrentColumnNumber(parser));
     plutobook_set_error_message("xml parse error: %s on line %d column %d", errorString, lineNumber, columnNumber);
     XML_ParserFree(parser);
     return false;
