@@ -10,7 +10,7 @@ public:
     static std::unique_ptr<XMLDocument> create(Book* book, Heap* heap, ResourceFetcher* fetcher, Url baseUrl);
 
     bool isXMLDocument() const final { return true; }
-    bool load(const std::string_view& content) override;
+    bool parse(const std::string_view& content) override;
 
 protected:
     XMLDocument(Book* book, Heap* heap, ResourceFetcher* fetcher, Url baseUrl);

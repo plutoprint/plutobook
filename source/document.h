@@ -370,7 +370,7 @@ public:
     RefPtr<ImageResource> fetchImageResource(const Url& url);
     RefPtr<FontResource> fetchFontResource(const Url& url);
 
-    virtual bool load(const std::string_view& content) = 0;
+    virtual bool parse(const std::string_view& content) = 0;
 
     Node* cloneNode(bool deep) override;
     Box* createBox(const RefPtr<BoxStyle>& style) override;

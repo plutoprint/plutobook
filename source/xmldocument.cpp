@@ -8,7 +8,7 @@ std::unique_ptr<XMLDocument> XMLDocument::create(Book* book, Heap* heap, Resourc
     return std::unique_ptr<XMLDocument>(new (heap) XMLDocument(book, heap, fetcher, std::move(baseUrl)));
 }
 
-bool XMLDocument::load(const std::string_view& content)
+bool XMLDocument::parse(const std::string_view& content)
 {
     return XMLParser(this).parse(content);
 }

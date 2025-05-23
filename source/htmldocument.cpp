@@ -708,7 +708,7 @@ std::unique_ptr<HTMLDocument> HTMLDocument::create(Book* book, Heap* heap, Resou
     return std::unique_ptr<HTMLDocument>(new (heap) HTMLDocument(book, heap, fetcher, std::move(baseUrl)));
 }
 
-bool HTMLDocument::load(const std::string_view& content)
+bool HTMLDocument::parse(const std::string_view& content)
 {
     HTMLParser parser(this, content);
     parser.parse();

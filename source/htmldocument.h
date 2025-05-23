@@ -186,7 +186,7 @@ public:
     static std::unique_ptr<HTMLDocument> create(Book* book, Heap* heap, ResourceFetcher* fetcher, Url baseUrl);
 
     bool isHTMLDocument() const final { return true; }
-    bool load(const std::string_view& content) final;
+    bool parse(const std::string_view& content) final;
 
 private:
     HTMLDocument(Book* book, Heap* heap, ResourceFetcher* fetcher, Url baseUrl);

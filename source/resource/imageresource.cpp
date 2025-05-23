@@ -294,7 +294,7 @@ RefPtr<SVGImage> SVGImage::create(const std::string_view& content, const std::st
 {
     std::unique_ptr<Heap> heap(new Heap(1024 * 24));
     auto document = SVGDocument::create(nullptr, heap.get(), fetcher, ResourceLoader::completeUrl(baseUrl));
-    if(!document->load(content))
+    if(!document->parse(content))
         return nullptr;
     if(!document->rootElement()->isOfType(svgNs, svgTag)) {
         plutobook_set_error_message("invalid SVG image: root element must be <svg> in the \"http://www.w3.org/2000/svg\" namespace");
