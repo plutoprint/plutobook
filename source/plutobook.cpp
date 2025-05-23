@@ -404,12 +404,12 @@ bool Book::loadXml(const std::string_view& content, const std::string_view& user
 {
     clearContent();
     m_document = XMLDocument::create(this, m_heap.get(), m_customResourceFetcher, ResourceLoader::completeUrl(baseUrl));
-    m_document->addUserStyleSheet(userStyle);
     if(!m_document->parse(content)) {
         clearContent();
         return false;
     }
 
+    m_document->addUserStyleSheet(userStyle);
     m_document->runJavaScript(userScript);
     return true;
 }
@@ -418,8 +418,8 @@ bool Book::loadHtml(const std::string_view& content, const std::string_view& use
 {
     clearContent();
     m_document = HTMLDocument::create(this, m_heap.get(), m_customResourceFetcher, ResourceLoader::completeUrl(baseUrl));
-    m_document->addUserStyleSheet(userStyle);
     m_document->parse(content);
+    m_document->addUserStyleSheet(userStyle);
     m_document->runJavaScript(userScript);
     return true;
 }
