@@ -958,8 +958,40 @@ PLUTOBOOK_API plutobook_resource_fetch_callback_t plutobook_get_custom_resource_
  */
 PLUTOBOOK_API void* plutobook_get_custom_resource_fetcher_closure(const plutobook_t* book);
 
+/**
+ * @brief Sets the error message for the current thread.
+ *
+ * It replaces any previously set error message for the current thread.
+ *
+ * @param format A `printf`-style format string specifying the error message.
+ * @param ... Arguments corresponding to the format string.
+ */
 PLUTOBOOK_API void plutobook_set_error_message(const char* format, ...);
+
+/**
+ * @brief Retrieves the last error message that occurred on the current thread.
+ *
+ * This function returns a message describing the most recent error that occurred
+ * in the current thread as set by `plutobook_set_error_message()`. If multiple errors
+ * occur before this function is called, only the most recent message is returned.
+ *
+ * @note This function does not indicate whether an error has occurred.
+ * You must check the return values of PlutoBook API functions to determine if an
+ * operation failed. Do not rely solely on `plutobook_get_error_message()` to detect errors.
+ *
+ * @note PlutoBook does not clear the error message on successful API calls. It is your
+ * responsibility to check return values and determine when to clear or ignore the message.
+ *
+ * @note Error messages are stored in thread-local storage. An error message set in one thread
+ * will not interfere with messages or behavior in another thread.
+ *
+ * @return A pointer to the current error message string.
+ */
 PLUTOBOOK_API const char* plutobook_get_error_message(void);
+
+/**
+ * @brief @brief Clears any previously set error message for the current thread.
+ */
 PLUTOBOOK_API void plutobook_clear_error_message(void);
 
 #ifdef __cplusplus
