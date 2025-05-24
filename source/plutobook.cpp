@@ -233,18 +233,18 @@ void PDFCanvas::showPage()
     plutobook_pdf_canvas_show_page(m_canvas);
 }
 
-ResourceData ResourceData::create(const char* content, size_t contentLength, const std::string& mimeType, const std::string& textEncoding)
+ResourceData::ResourceData(const char* content, size_t contentLength, const std::string& mimeType, const std::string& textEncoding)
+    : m_data(plutobook_resource_data_create(content, contentLength, mimeType.data(), textEncoding.data()))
 {
-    return ResourceData(plutobook_resource_data_create(content, contentLength, mimeType.data(), textEncoding.data()));
 }
 
-ResourceData ResourceData::createWithoutCopy(const char* content, size_t contentLength, const std::string& mimeType, const std::string& textEncoding, plutobook_resource_destroy_callback_t destroyCallback, void* closure)
+ResourceData::ResourceData(const char* content, size_t contentLength, const std::string& mimeType, const std::string& textEncoding, plutobook_resource_destroy_callback_t destroyCallback, void* closure)
+    : m_data(plutobook_resource_data_create_without_copy(content, contentLength, mimeType.data(), textEncoding.data(), destroyCallback, closure))
 {
-    return ResourceData(plutobook_resource_data_create_without_copy(content, contentLength, mimeType.data(), textEncoding.data(), destroyCallback, closure));
 }
 
 ResourceData::ResourceData(const ResourceData& resource)
-    : m_data(plutobook_resource_data_reference(resource.data()))
+    : m_data(plutobook_resource_data_reference(resource.get()))
 {
 }
 

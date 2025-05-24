@@ -186,7 +186,7 @@ static ResourceData loadDataUrl(std::string_view input)
         }
     }
 
-    return ResourceData::createWithoutCopy(content->data(), content->size(), mimeType, textEncoding, ByteArrayDestroy, content);
+    return ResourceData(content->data(), content->size(), mimeType, textEncoding, ByteArrayDestroy, content);
 }
 
 static bool mimeTypeFromPath(std::string& mimeType, const std::string_view& path)
@@ -274,7 +274,7 @@ ResourceData DefaultResourceFetcher::fetchUrl(const std::string& url)
 
     curl_easy_cleanup(curl);
     if(response == CURLE_OK)
-        return ResourceData::createWithoutCopy(content->data(), content->size(), mimeType, textEncoding, ByteArrayDestroy, content);
+        return ResourceData(content->data(), content->size(), mimeType, textEncoding, ByteArrayDestroy, content);
     plutobook_set_error_message("Unable to fetch URL '%s': %s", url.data(), curl_easy_strerror(response));
     ByteArrayDestroy(content);
     return ResourceData();
@@ -312,7 +312,7 @@ ResourceData DefaultResourceFetcher::fetchUrl(const std::string& url)
     in.read(content->data(), content->size());
     in.close();
 
-    return ResourceData::createWithoutCopy(content->data(), content->size(), mimeType, textEncoding, ByteArrayDestroy, content);
+    return ResourceData(content->data(), content->size(), mimeType, textEncoding, ByteArrayDestroy, content);
 }
 
 #endif // PLUTOBOOK_HAS_CURL

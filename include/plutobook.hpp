@@ -365,32 +365,6 @@ constexpr float px = PLUTOBOOK_UNITS_PX;
 class PLUTOBOOK_API ResourceData {
 public:
     /**
-     * @brief Creates a ResourceData object by copying the provided content.
-     *
-     * @param content The content of the resource.
-     * @param contentLength The length of the content in bytes.
-     * @param mimeType The MIME type of the content.
-     * @param textEncoding The text encoding used for the content.
-     * @return A `ResourceData` object that owns a copy of the provided content.
-     */
-    static ResourceData create(const char* content, size_t contentLength, const std::string& mimeType, const std::string& textEncoding);
-
-    /**
-     * @brief Creates a ResourceData object using the provided content "as is", and uses the provided callback to clean up the resource when it is no longer needed.
-     *
-     * This method does not copy the content. It takes ownership and ensures cleanup via the specified callback.
-     *
-     * @param content The content of the resource.
-     * @param contentLength The length of the content in bytes.
-     * @param mimeType The MIME type of the content.
-     * @param textEncoding The text encoding used for the content.
-     * @param destroyCallback A callback function that is called when the resource is destroyed.
-     * @param closure A pointer to user-defined data that is passed to the destroy callback.
-     * @return A `ResourceData` object that manages the content using the destroy callback.
-     */
-    static ResourceData createWithoutCopy(const char* content, size_t contentLength, const std::string& mimeType, const std::string& textEncoding, plutobook_resource_destroy_callback_t destroyCallback, void* closure);
-
-    /**
      * @brief Constructs a ResourceData object by initializing the underlying resource with a null pointer.
      */
     ResourceData() : m_data(nullptr) {}
@@ -401,6 +375,30 @@ public:
      * @param data A bare pointer to a `plutobook_resource_data_t` object.
      */
     explicit ResourceData(plutobook_resource_data_t* data) : m_data(data) {}
+
+    /**
+     * @brief Constructs a ResourceData object by copying the provided content.
+     *
+     * @param content The content of the resource.
+     * @param contentLength The length of the content in bytes.
+     * @param mimeType The MIME type of the content.
+     * @param textEncoding The text encoding used for the content.
+     */
+    ResourceData(const char* content, size_t contentLength, const std::string& mimeType, const std::string& textEncoding);
+
+    /**
+     * @brief Constructs a ResourceData object using the provided content "as is", and uses the provided callback to clean up the resource when it is no longer needed.
+     *
+     * This method does not copy the content. It takes ownership and ensures cleanup via the specified callback.
+     *
+     * @param content The content of the resource.
+     * @param contentLength The length of the content in bytes.
+     * @param mimeType The MIME type of the content.
+     * @param textEncoding The text encoding used for the content.
+     * @param destroyCallback A callback function that is called when the resource is destroyed.
+     * @param closure A pointer to user-defined data that is passed to the destroy callback.
+     */
+    ResourceData(const char* content, size_t contentLength, const std::string& mimeType, const std::string& textEncoding, plutobook_resource_destroy_callback_t destroyCallback, void* closure);
 
     /**
      * @brief Constructs a ResourceData object by transferring ownership from another `ResourceData` object.
@@ -495,7 +493,7 @@ public:
      * @brief Retrieves the underlying resource.
      * @return A pointer to the underlying `plutobook_resource_data_t` resource.
      */
-    plutobook_resource_data_t* data() const { return m_data; }
+    plutobook_resource_data_t* get() const { return m_data; }
 
     /**
      * @brief Checks if the resource is null.
