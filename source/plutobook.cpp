@@ -418,7 +418,10 @@ bool Book::loadHtml(const std::string_view& content, const std::string_view& use
 {
     clearContent();
     m_document = HTMLDocument::create(this, m_heap.get(), m_customResourceFetcher, ResourceLoader::completeUrl(baseUrl));
-    m_document->parse(content);
+    if(!m_document->parse(content)) {
+        assert(false);
+    }
+
     m_document->addUserStyleSheet(userStyle);
     m_document->runJavaScript(userScript);
     return true;
