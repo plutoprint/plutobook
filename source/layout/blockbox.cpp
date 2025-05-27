@@ -1601,12 +1601,11 @@ void BlockFlowBox::build()
         m_columnFlowBox = columnFlowBox;
     }
 
+    BlockBox::build();
     if(isChildrenInline()) {
         m_lineLayout = LineLayout::create(this);
         m_lineLayout->build();
     }
-
-    BlockBox::build();
 }
 
 void BlockFlowBox::paintFloats(const PaintInfo& info, const Point& offset)

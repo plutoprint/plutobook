@@ -291,8 +291,7 @@ void Box::build()
 {
     auto child = m_firstChild;
     while(child) {
-        if(!child->isTargetCounterBox())
-            child->build();
+        child->build();
         child = child->nextSibling();
     }
 }

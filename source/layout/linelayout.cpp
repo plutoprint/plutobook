@@ -1681,8 +1681,6 @@ void LineLayout::build()
     auto child = m_block->firstChild();
     while(child) {
         if(auto box = to<TextBox>(child)) {
-            if(box->isTargetCounterBox())
-                box->build();
             builder.appendText(box, box->text());
         } else if(auto box = to<InlineBox>(child)) {
             builder.enterInline(box);
