@@ -380,6 +380,20 @@ void GraphicsContext::applyMask(const ImageBuffer& maskImage)
     cairo_set_matrix(m_canvas, &matrix);
 }
 
+static void append_attribute(std::ostream& output, const std::string_view& name, const std::string_view& value)
+{
+    output << ' ' << name << "='";
+    for(auto cc : value) {
+        switch(cc) {
+        case '\'': output << "\\'"; break;
+        case '\\': output << "\\\\"; break;
+        default: output << cc; break;
+        }
+    }
+
+    output << '\'';
+}
+
 void GraphicsContext::addLinkAnnotation(const std::string_view& dest, const std::string_view& uri, const Rect& rect)
 {
     if(dest.empty() && uri.empty())
@@ -392,9 +406,9 @@ void GraphicsContext::addLinkAnnotation(const std::string_view& dest, const std:
     std::ostringstream ss;
     ss << "rect=[" << x << ' '  << y << ' '  << w << ' '  << h << ']';
     if(!dest.empty()) {
-        ss << " dest=\'" << dest << '\'';
+        append_attribute(ss, "dest", dest);
     } else if(!uri.empty()) {
-        ss << " uri=\'" << uri << '\'';
+        append_attribute(ss, "uri", uri);
     }
 
     cairo_tag_begin(m_canvas, CAIRO_TAG_LINK, ss.str().data());
@@ -410,7 +424,7 @@ void GraphicsContext::addLinkDestination(const std::string_view& name, const Poi
     cairo_user_to_device(m_canvas, &x, &y);
 
     std::ostringstream ss;
-    ss << "name=\'" << name << '\'';
+    append_attribute(ss, "name", name);
     ss << " x=" << x << " y=" << y;
 
     cairo_tag_begin(m_canvas, CAIRO_TAG_DEST, ss.str().data());
