@@ -6,12 +6,12 @@
 #include <cstring>
 #include <cstdlib>
 
-int plutobook_version()
+int plutobook_version(void)
 {
     return PLUTOBOOK_VERSION;
 }
 
-const char* plutobook_version_string()
+const char* plutobook_version_string(void)
 {
     return PLUTOBOOK_VERSION_STRING;
 }
@@ -688,7 +688,7 @@ const char* plutobook_get_error_message(void)
     return plutobook_error_message;
 }
 
-void plutobook_clear_error_message()
+void plutobook_clear_error_message(void)
 {
     std::memset(plutobook_error_message, 0, sizeof(plutobook_error_message));
 }

@@ -473,7 +473,6 @@ public:
     void lineTo(float x1, float y1);
     void cubicTo(float x1, float y1, float x2, float y2, float x3, float y3);
     void close();
-    void clear();
 
     void addEllipse(float cx, float cy, float rx, float ry);
     void addRoundedRect(const RoundedRect& rrect);
@@ -489,6 +488,8 @@ public:
 
     const std::vector<PathCommand>& commands() const { return m_commands; }
     const std::vector<Point>& points() const { return m_points; }
+
+    void clear();
 
 private:
     std::vector<PathCommand> m_commands;

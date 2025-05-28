@@ -673,31 +673,31 @@ void PageLayout::layout()
         }
     }
 
-    if(!m_document->containerWidth() || !m_document->containerHeight())
-        return;
-    Counters counters(m_document, std::ceil(m_document->height() / m_document->containerHeight()));
-    for(uint32_t pageIndex = 0; pageIndex < counters.pageCount(); ++pageIndex) {
-        auto pageStyle = m_document->styleForPage(emptyGlo, pageIndex, pagePseudoType(pageIndex));
-        auto pageBox = PageBox::create(pageStyle, emptyGlo, pageIndex, pageWidth, pageHeight, pageScaleFactor);
+    if(m_document->containerHeight() > 0.f) {
+        Counters counters(m_document, std::ceil(m_document->height() / m_document->containerHeight()));
+        for(uint32_t pageIndex = 0; pageIndex < counters.pageCount(); ++pageIndex) {
+            auto pageStyle = m_document->styleForPage(emptyGlo, pageIndex, pagePseudoType(pageIndex));
+            auto pageBox = PageBox::create(pageStyle, emptyGlo, pageIndex, pageWidth, pageHeight, pageScaleFactor);
 
-        pageBox->setX(marginLeft);
-        pageBox->setY(marginTop);
+            pageBox->setX(marginLeft);
+            pageBox->setY(marginTop);
 
-        pageBox->setWidth(width);
-        pageBox->setHeight(height);
+            pageBox->setWidth(width);
+            pageBox->setHeight(height);
 
-        pageBox->setMarginTop(marginTop);
-        pageBox->setMarginRight(marginRight);
-        pageBox->setMarginBottom(marginBottom);
-        pageBox->setMarginLeft(marginLeft);
+            pageBox->setMarginTop(marginTop);
+            pageBox->setMarginRight(marginRight);
+            pageBox->setMarginBottom(marginBottom);
+            pageBox->setMarginLeft(marginLeft);
 
-        counters.update(pageBox.get());
-        buildPageMargins(counters, pageBox.get());
+            counters.update(pageBox.get());
+            buildPageMargins(counters, pageBox.get());
 
-        pageBox->build();
-        pageBox->layout(nullptr);
+            pageBox->build();
+            pageBox->layout(nullptr);
 
-        pages.push_back(std::move(pageBox));
+            pages.push_back(std::move(pageBox));
+        }
     }
 }
 

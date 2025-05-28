@@ -33,16 +33,16 @@
 namespace plutobook {
 
 /**
- * Defines an index that is guaranteed to exceed the valid page count.
- * It is typically utilized as a sentinel value to represent an unbounded or maximum value, indicating
- * that there is no limit or that the maximum possible value is intended.
+ * This constant defines an index that is guaranteed to be greater than any valid page count.
+ * It is typically used as a sentinel value to represent an unbounded upper limit or the maximum possible value,
+ * indicating that no specific upper bound is set.
  */
 constexpr uint32_t kMaxPageCount = PLUTOBOOK_MAX_PAGE_COUNT;
 
 /**
- * This macro defines an index that is guaranteed to be below the valid page count.
- * It is typically utilized as a sentinel value to represent an unbounded or minimum value, indicating
- * that there is no lower limit or that the minimum possible value is intended.
+ * This constant defines an index that is guaranteed to be less than any valid page count.
+ * It is typically used as a sentinel value to represent an unbounded lower limit or the minimum possible value,
+ * indicating that no specific lower bound is set.
  */
 constexpr uint32_t kMinPageCount = PLUTOBOOK_MIN_PAGE_COUNT;
 

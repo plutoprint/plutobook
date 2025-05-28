@@ -146,6 +146,7 @@ public:
 private:
     void buildPageMargin(const Counters& counters, PageBox* pageBox, PageMarginType marginType);
     void buildPageMargins(const Counters& counters, PageBox* pageBox);
+
     Document* m_document;
 };
 

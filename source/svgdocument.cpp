@@ -119,7 +119,7 @@ Size SVGElement::currentViewportSize() const
         if(auto rootBox = to<SVGRootBox>(element->box()))
             return rootBox->contentBoxSize();
         SVGLengthContext lengthContext(element);
-        const  Size viewportSize = {
+        const Size viewportSize = {
             lengthContext.valueForLength(element->width()),
             lengthContext.valueForLength(element->height())
         };
