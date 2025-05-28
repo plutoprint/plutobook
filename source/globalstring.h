@@ -23,19 +23,25 @@ public:
     const char& back() const { return value().back(); }
 
     bool isEmpty() const { return value().empty(); }
-    bool isNull() const { return !d; }
+    bool isNull() const { return !m_entry; }
 
     operator const std::string_view&() const { return value(); }
     operator const HeapString&() const { return value(); }
 
-    bool operator==(const GlobalString& o) const { return d == o.d; }
-    bool operator!=(const GlobalString& o) const { return d != o.d; }
+    bool operator==(const GlobalString& o) const { return m_entry == o.m_entry; }
+    bool operator!=(const GlobalString& o) const { return m_entry != o.m_entry; }
 
     const HeapString& value() const;
 
 private:
-    const HeapString* d = nullptr;
+    static const HeapString nullString;
+    const HeapString* m_entry{nullptr};
 };
+
+inline const HeapString& GlobalString::value() const
+{
+    return m_entry ? *m_entry : nullString;
+}
 
 inline std::ostream& operator<<(std::ostream& o, const GlobalString& in) { return o << in.value(); }
 

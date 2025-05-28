@@ -40,14 +40,11 @@ GlobalStringTable* globalStringTable()
 }
 
 GlobalString::GlobalString(const std::string_view& value)
-    : d(globalStringTable()->add(value))
+    : m_entry(globalStringTable()->add(value))
 {
 }
 
-const HeapString& GlobalString::value() const
-{
-    return d ? *d : emptyGlo.value();
-}
+const HeapString GlobalString::nullString;
 
 const GlobalString nullGlo;
 const GlobalString emptyGlo("");
