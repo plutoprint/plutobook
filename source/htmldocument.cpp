@@ -570,7 +570,7 @@ unsigned HTMLInputElement::size() const
 Box* HTMLInputElement::createBox(const RefPtr<BoxStyle>& style)
 {
     const auto& type = getAttribute(typeAttr);
-    if(!equals(type, "text", false)
+    if(!type.empty() && !equals(type, "text", false)
         && !equals(type, "search", false)
         && !equals(type, "url", false)
         && !equals(type, "tel", false)
