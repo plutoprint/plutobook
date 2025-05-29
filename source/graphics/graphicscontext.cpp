@@ -382,13 +382,11 @@ void GraphicsContext::applyMask(const ImageBuffer& maskImage)
 
 static void append_attribute(std::ostream& output, const std::string_view& name, const std::string_view& value)
 {
-    output << ' ' << name << "='";
+    output << name << "='";
     for(auto cc : value) {
-        switch(cc) {
-        case '\'': output << "\\'"; break;
-        case '\\': output << "\\\\"; break;
-        default: output << cc; break;
-        }
+        if(cc == '\\' || cc == '\'')
+            output << '\\';
+        output << cc;
     }
 
     output << '\'';
