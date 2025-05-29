@@ -336,13 +336,16 @@ hb_font_t* SimpleFontData::hbFont() const
     std::vector<hb_variation_t> settings;
     std::string_view variations(cairo_font_options_get_variations(font_options));
     while(!variations.empty()) {
+        auto delim_index = variations.find(',');
+        auto variation = variations.substr(0, delim_index);
+
         hb_variation_t setting;
-        auto variation = variations.substr(0, variations.find(','));
-        if(hb_variation_from_string(variation.data(), variation.size(), &setting))
+        if(hb_variation_from_string(variation.data(), variation.size(), &setting)) {
             settings.push_back(setting);
+        }
+
         variations.remove_prefix(variation.size());
-        if(!variations.empty()) {
-            assert(variations.front() == ',');
+        if(delim_index != std::string_view::npos) {
             variations.remove_prefix(1);
         }
     }

@@ -237,7 +237,7 @@ DefaultResourceFetcher::~DefaultResourceFetcher()
     curl_global_cleanup();
 }
 
-static size_t writeCallback(char* contents, size_t blockSize, size_t numberOfBlocks, ByteArray* response)
+static size_t writeCallback(const char* contents, size_t blockSize, size_t numberOfBlocks, ByteArray* response)
 {
     size_t totalSize = blockSize * numberOfBlocks;
     response->insert(response->end(), contents, contents + totalSize);

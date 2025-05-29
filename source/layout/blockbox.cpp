@@ -1242,7 +1242,7 @@ float BlockFlowBox::collapseMargins(BoxFrame* child, FragmentBuilder* fragmentai
         marginInfo.setNegativeMargin(child->maxMarginBottom(false));
     }
 
-    if(fragmentainer &&  top > beforeCollapseTop) {
+    if(fragmentainer && top > beforeCollapseTop) {
         auto fragmentHeight = fragmentainer->fragmentHeightForOffset(beforeCollapseTop);
         if(fragmentHeight > 0.f) {
             auto newTop = std::min(top, beforeCollapseTop + fragmentainer->fragmentRemainingHeightForOffset(beforeCollapseTop, AssociateWithLatterFragment));
