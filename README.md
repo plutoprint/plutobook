@@ -1,6 +1,10 @@
 # PlutoBook
 
-PlutoBook is a robust HTML rendering library specifically designed for paged media.
+PlutoBook is a robust HTML rendering library tailored for paged media. It takes HTML or XML as input, applies CSS stylesheets, and lays out elements across one or more pages, which can then be rendered as Bitmap images or PDF documents.
+
+> [!NOTE]
+> PlutoBook implements its own rendering engine and does **not** depend on rendering engines like Chromium, WebKit, or Gecko.  
+> The engine is designed to be robust, lightweight, and memory-efficient, leveraging modern C++17 features such as [`std::pmr::monotonic_buffer_resource`](https://en.cppreference.com/w/cpp/memory/monotonic_buffer_resource) to minimize memory fragmentation and optimize allocation performance.
 
 ## Example Usage:
 
@@ -8,7 +12,7 @@ PlutoBook offers APIs for both C and C++. Here are basic examples to get you sta
 
 ### C++ Example:
 
-```c++
+```cpp
 #include <plutobook.hpp>
 
 int main() {
@@ -44,7 +48,8 @@ PlutoBook depends on the following external libraries:
 - **Required:** `cairo`, `freetype`, `harfbuzz`, `fontconfig`, `expat`, `icu`
 - **Optional:** `curl`, `turbojpeg`, `webp` (enable additional features)
 
-> **Note:** For faster builds, it is recommended to install precompiled versions of these libraries through your system's package manager. Otherwise, Meson will build them from source, which may significantly increase build time.
+> [!NOTE]
+> For faster builds, it is recommended to install precompiled versions of these libraries through your system's package manager. Otherwise, Meson will build them from source, which may significantly increase build time.
 
 For **Ubuntu/Debian** users, use the following command to install both required and optional dependencies:
 
