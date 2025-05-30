@@ -267,7 +267,7 @@ bool plutobook_image_canvas_write_to_png(const plutobook_canvas_t* canvas, const
     return true;
 }
 
-static_assert(PLUTOBOOK_STREAM_STATUS_SUCCESS  == static_cast<plutobook_stream_status_t>(CAIRO_STATUS_SUCCESS), "unexpected plutobook_stream_status_t value");
+static_assert(PLUTOBOOK_STREAM_STATUS_SUCCESS == static_cast<plutobook_stream_status_t>(CAIRO_STATUS_SUCCESS), "unexpected plutobook_stream_status_t value");
 static_assert(PLUTOBOOK_STREAM_STATUS_READ_ERROR == static_cast<plutobook_stream_status_t>(CAIRO_STATUS_READ_ERROR), "unexpected plutobook_stream_status_t value");
 static_assert(PLUTOBOOK_STREAM_STATUS_WRITE_ERROR == static_cast<plutobook_stream_status_t>(CAIRO_STATUS_WRITE_ERROR), "unexpected plutobook_stream_status_t value");
 

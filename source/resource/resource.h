@@ -4,8 +4,6 @@
 #include "pointer.h"
 #include "heapstring.h"
 
-#include <string_view>
-
 namespace plutobook {
 
 class Resource : public HeapMember, public RefCounted<Resource> {
