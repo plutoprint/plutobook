@@ -25,6 +25,8 @@ public:
     bool isEmpty() const { return value().empty(); }
     bool isNull() const { return !m_entry; }
 
+    GlobalString foldCase() const;
+
     operator const std::string_view&() const { return value(); }
     operator const HeapString&() const { return value(); }
 

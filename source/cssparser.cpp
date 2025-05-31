@@ -10,16 +10,20 @@
 namespace plutobook {
 
 CSSParser::CSSParser(CSSStyleOrigin origin, Node* node, Url baseUrl)
-    : m_node(node), m_heap(node->heap())
+    : m_origin(origin)
+    , m_inHTMLDocument(node->isHTMLDocument())
+    , m_inSVGElement(node->isSVGElement())
+    , m_node(node), m_heap(node->heap())
     , m_baseUrl(std::move(baseUrl))
-    , m_origin(origin)
 {
 }
 
 CSSParser::CSSParser(CSSStyleOrigin origin, Heap* heap, Url baseUrl)
-    : m_node(nullptr), m_heap(heap)
+    : m_origin(origin)
+    , m_inHTMLDocument(false)
+    , m_inSVGElement(false)
+    , m_node(nullptr), m_heap(heap)
     , m_baseUrl(std::move(baseUrl))
-    , m_origin(origin)
 {
 }
 
@@ -573,6 +577,8 @@ bool CSSParser::consumeTagSelector(CSSTokenStream& input, CSSCompoundSelector& s
     CSSTokenStreamGuard guard(input);
     if(input->type() == CSSToken::Type::Ident) {
         name = GlobalString(input->data());
+        if(m_inHTMLDocument)
+            name = name.foldCase();
         input.consume();
     } else if(input->type() == CSSToken::Type::Delim && input->delim() == '*') {
         name = starGlo;
@@ -640,6 +646,8 @@ bool CSSParser::consumeAttributeSelector(CSSTokenStream& input, CSSCompoundSelec
     if(block->type() != CSSToken::Type::Ident)
         return false;
     GlobalString name(block->data());
+    if(m_inHTMLDocument)
+        name = name.foldCase();
     block.consumeIncludingWhitespace();
     if(block.empty()) {
         selector.emplace_front(CSSSimpleSelector::MatchType::AttributeHas, name);
@@ -1953,7 +1961,7 @@ RefPtr<CSSValue> CSSParser::consumeLength(CSSTokenStream& input, bool negative, 
     if(value < 0.0 && !negative)
         return nullptr;
     if(input->type() == CSSToken::Type::Number) {
-        if(value && !unitless && !(m_node && m_node->isSVGElement()))
+        if(value && !unitless && !m_inSVGElement)
             return nullptr;
         input.consumeIncludingWhitespace();
         return CSSLengthValue::create(m_heap, value, CSSLengthValue::Units::None);

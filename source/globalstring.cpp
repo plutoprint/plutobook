@@ -1,4 +1,5 @@
 #include "globalstring.h"
+#include "stringutils.h"
 
 #include <mutex>
 #include <set>
@@ -42,6 +43,42 @@ GlobalStringTable* globalStringTable()
 GlobalString::GlobalString(const std::string_view& value)
     : m_entry(globalStringTable()->add(value))
 {
+}
+
+GlobalString GlobalString::foldCase() const
+{
+    if(m_entry == nullptr)
+        return nullGlo;
+    if(m_entry->empty())
+        return emptyGlo;
+    auto size = m_entry->size();
+    auto data = m_entry->data();
+
+    size_t index = 0;
+    while(index < size && !isUpper(data[index]))
+        ++index;
+    if(index == size) {
+        return *this;
+    }
+
+    constexpr auto kBufferSize = 128;
+    if(size <= kBufferSize) {
+        char buffer[kBufferSize];
+        for(size_t i = 0; i < index; i++)
+            buffer[i] = data[i];
+        for(size_t i = index; i < size; i++) {
+            buffer[i] = toLower(data[i]);
+        }
+
+        return GlobalString({buffer, size});
+    }
+
+    std::string value(data, size);
+    for(size_t i = index; i < size; i++) {
+        value[i] = toLower(data[i]);
+    }
+
+    return GlobalString(value);
 }
 
 const HeapString GlobalString::nullString;

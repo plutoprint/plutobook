@@ -204,11 +204,14 @@ private:
     const GlobalString& defaultNamespace() const { return m_defaultNamespace; }
     const GlobalString& determineNamespace(const GlobalString& prefix) const;
 
+    CSSStyleOrigin m_origin;
+    bool m_inHTMLDocument;
+    bool m_inSVGElement;
+
     Node* m_node;
     Heap* m_heap;
     Url m_baseUrl;
 
-    CSSStyleOrigin m_origin;
     RefPtr<CSSInitialValue> m_initialValue;
     RefPtr<CSSInheritValue> m_inheritValue;
     std::map<CSSValueID, RefPtr<CSSIdentValue>> m_identValueCache;

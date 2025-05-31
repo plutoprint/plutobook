@@ -393,7 +393,7 @@ CSSPropertyList Element::inlineStyle()
     auto value = getAttribute(styleAttr);
     if(value.empty())
         return CSSPropertyList();
-    CSSParser parser(CSSStyleOrigin::Inline, document(), document()->baseUrl());
+    CSSParser parser(CSSStyleOrigin::Inline, this, document()->baseUrl());
     return parser.parseStyle(value);
 }
 
@@ -492,6 +492,7 @@ void Element::serialize(std::ostream& o) const
 
 void Element::finishParsingDocument()
 {
+    m_isCaseSensitive = isHTMLElement() || inXMLDocument();
     if(m_tagName == aTag) {
         const auto& href = getAttribute(hrefAttr);
         const auto& baseUrl = document()->baseUrl();

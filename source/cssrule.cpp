@@ -352,7 +352,9 @@ bool CSSRuleData::matchNamespaceSelector(const Element* element, const CSSSimple
 
 bool CSSRuleData::matchTagSelector(const Element* element, const CSSSimpleSelector& selector)
 {
-    return element->tagName() == selector.name();
+    if(element->isCaseSensitive())
+        return element->tagName() == selector.name();
+    return equals(element->tagName(), selector.name(), false);
 }
 
 bool CSSRuleData::matchIdSelector(const Element* element, const CSSSimpleSelector& selector)
@@ -371,14 +373,27 @@ bool CSSRuleData::matchClassSelector(const Element* element, const CSSSimpleSele
     return false;
 }
 
+static const Attribute* findAttributePossiblyIgnoringCase(const Element* element, const GlobalString& name)
+{
+    if(element->isCaseSensitive())
+        return element->findAttribute(name);
+    for(const auto& attribute : element->attributes()) {
+        if(equals(name, attribute.name(), false)) {
+            return &attribute;
+        }
+    }
+
+    return nullptr;
+}
+
 bool CSSRuleData::matchAttributeHasSelector(const Element* element, const CSSSimpleSelector& selector)
 {
-    return element->hasAttribute(selector.name());
+    return findAttributePossiblyIgnoringCase(element, selector.name());
 }
 
 bool CSSRuleData::matchAttributeEqualsSelector(const Element* element, const CSSSimpleSelector& selector)
 {
-    auto attribute = element->findAttribute(selector.name());
+    auto attribute = findAttributePossiblyIgnoringCase(element, selector.name());
     if(attribute == nullptr)
         return false;
     return equals(attribute->value(), selector.value(), selector.isCaseSensitive());
@@ -386,7 +401,7 @@ bool CSSRuleData::matchAttributeEqualsSelector(const Element* element, const CSS
 
 bool CSSRuleData::matchAttributeIncludesSelector(const Element* element, const CSSSimpleSelector& selector)
 {
-    auto attribute = element->findAttribute(selector.name());
+    auto attribute = findAttributePossiblyIgnoringCase(element, selector.name());
     if(attribute == nullptr)
         return false;
     return includes(attribute->value(), selector.value(), selector.isCaseSensitive());
@@ -394,7 +409,7 @@ bool CSSRuleData::matchAttributeIncludesSelector(const Element* element, const C
 
 bool CSSRuleData::matchAttributeContainsSelector(const Element* element, const CSSSimpleSelector& selector)
 {
-    auto attribute = element->findAttribute(selector.name());
+    auto attribute = findAttributePossiblyIgnoringCase(element, selector.name());
     if(attribute == nullptr)
         return false;
     return contains(attribute->value(), selector.value(), selector.isCaseSensitive());
@@ -402,7 +417,7 @@ bool CSSRuleData::matchAttributeContainsSelector(const Element* element, const C
 
 bool CSSRuleData::matchAttributeDashEqualsSelector(const Element* element, const CSSSimpleSelector& selector)
 {
-    auto attribute = element->findAttribute(selector.name());
+    auto attribute = findAttributePossiblyIgnoringCase(element, selector.name());
     if(attribute == nullptr)
         return false;
     return dashequals(attribute->value(), selector.value(), selector.isCaseSensitive());
@@ -410,7 +425,7 @@ bool CSSRuleData::matchAttributeDashEqualsSelector(const Element* element, const
 
 bool CSSRuleData::matchAttributeStartsWithSelector(const Element* element, const CSSSimpleSelector& selector)
 {
-    auto attribute = element->findAttribute(selector.name());
+    auto attribute = findAttributePossiblyIgnoringCase(element, selector.name());
     if(attribute == nullptr)
         return false;
     return startswith(attribute->value(), selector.value(), selector.isCaseSensitive());
@@ -418,7 +433,7 @@ bool CSSRuleData::matchAttributeStartsWithSelector(const Element* element, const
 
 bool CSSRuleData::matchAttributeEndsWithSelector(const Element* element, const CSSSimpleSelector& selector)
 {
-    auto attribute = element->findAttribute(selector.name());
+    auto attribute = findAttributePossiblyIgnoringCase(element, selector.name());
     if(attribute == nullptr)
         return false;
     return endswith(attribute->value(), selector.value(), selector.isCaseSensitive());

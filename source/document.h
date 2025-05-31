@@ -185,6 +185,15 @@ public:
     bool isElementNode() const final { return true; }
     bool isOfType(const GlobalString& namespaceURI, const GlobalString& tagName) const { return m_namespaceURI == namespaceURI && m_tagName == tagName; }
 
+    bool inHTMLDocument() const;
+    bool inSVGDocument() const;
+    bool inXMLDocument() const;
+
+    bool isCaseSensitive() const { return m_isCaseSensitive; }
+
+    GlobalString foldCase(const GlobalString& name) const;
+    GlobalString foldTagNameCase() const { return foldCase(m_tagName); }
+
     const GlobalString& namespaceURI() const { return m_namespaceURI; }
     const GlobalString& tagName() const { return m_tagName; }
     const AttributeList& attributes() const { return m_attributes; }
@@ -230,6 +239,7 @@ private:
     ClassNameList m_classNames;
     AttributeList m_attributes;
 
+    bool m_isCaseSensitive{false};
     bool m_isLinkDestination{false};
     bool m_isLinkSource{false};
 };
@@ -238,6 +248,11 @@ template<>
 struct is_a<Element> {
     static bool check(const Node& value) { return value.isElementNode(); }
 };
+
+inline GlobalString Element::foldCase(const GlobalString& name) const
+{
+    return m_isCaseSensitive ? name : name.foldCase();
+}
 
 inline bool Node::isOfType(const GlobalString& namespaceURI, const GlobalString& tagName) const
 {
@@ -424,6 +439,10 @@ inline Heap* Node::heap() const
 {
     return m_document->heap();
 }
+
+inline bool Element::inHTMLDocument() const { return document()->isHTMLDocument(); }
+inline bool Element::inSVGDocument() const  { return document()->isSVGDocument(); }
+inline bool Element::inXMLDocument() const  { return document()->isXMLDocument(); }
 
 template<>
 struct is_a<Document> {

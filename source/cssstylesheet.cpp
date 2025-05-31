@@ -667,9 +667,9 @@ RefPtr<BoxStyle> CSSStyleSheet::styleForElement(Element* element, const BoxStyle
     for(const auto& className : element->classNames())
         builder.add(m_classRules.get(className));
     for(const auto& attribute : element->attributes())
-        builder.add(m_attributeRules.get(attribute.name()));
+        builder.add(m_attributeRules.get(element->foldCase(attribute.name())));
     builder.add(m_idRules.get(element->id()));
-    builder.add(m_tagRules.get(element->tagName()));
+    builder.add(m_tagRules.get(element->foldTagNameCase()));
     builder.add(&m_universalRules);
     return builder.build();
 }
