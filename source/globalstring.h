@@ -45,6 +45,11 @@ inline const HeapString& GlobalString::value() const
     return m_entry ? *m_entry : nullString;
 }
 
+inline GlobalString operator""_glo(const char* data, size_t length)
+{
+    return GlobalString({data, length});
+}
+
 inline std::ostream& operator<<(std::ostream& o, const GlobalString& in) { return o << in.value(); }
 
 inline bool operator<(const GlobalString& a, const GlobalString& b) { return a.value() < b.value(); }

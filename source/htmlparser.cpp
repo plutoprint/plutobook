@@ -795,43 +795,42 @@ void HTMLParser::closeCell()
 
 void HTMLParser::adjustSVGTagNames(HTMLTokenView& token)
 {
-    static std::map<GlobalString, GlobalString> table;
-    if(table.empty()) {
-        table.emplace("altglyph", altGlyphTag);
-        table.emplace("altglyphdef", altGlyphDefTag);
-        table.emplace("altglyphitem", altGlyphItemTag);
-        table.emplace("animatecolor", animateColorTag);
-        table.emplace("animatemotion", animateMotionTag);
-        table.emplace("animatetransform", animateTransformTag);
-        table.emplace("clippath", clipPathTag);
-        table.emplace("feblend", feBlendTag);
-        table.emplace("fecolormatrix", feColorMatrixTag);
-        table.emplace("fecomponenttransfer", feComponentTransferTag);
-        table.emplace("fecomposite", feCompositeTag);
-        table.emplace("feconvolvematrix", feConvolveMatrixTag);
-        table.emplace("fediffuselighting", feDiffuseLightingTag);
-        table.emplace("fedisplacementmap", feDisplacementMapTag);
-        table.emplace("fedistantlight", feDistantLightTag);
-        table.emplace("fedropshadow", feDropShadowTag);
-        table.emplace("feflood", feFloodTag);
-        table.emplace("fefunca", feFuncATag);
-        table.emplace("fefuncb", feFuncBTag);
-        table.emplace("fefuncg", feFuncGTag);
-        table.emplace("fefuncr", feFuncRTag);
-        table.emplace("fegaussianblur", feGaussianBlurTag);
-        table.emplace("feimage", feImageTag);
-        table.emplace("femerge", feMergeTag);
-        table.emplace("femergenode", feMergeNodeTag);
-        table.emplace("femorphology", feMorphologyTag);
-        table.emplace("feoffset", feOffsetTag);
-        table.emplace("fepointlight", fePointLightTag);
-        table.emplace("fespecularlighting", feSpecularLightingTag);
-        table.emplace("fespotlight", feSpotLightTag);
-        table.emplace("glyphref", glyphRefTag);
-        table.emplace("lineargradient", linearGradientTag);
-        table.emplace("radialgradient", radialGradientTag);
-        table.emplace("textpath", textPathTag);
-    }
+    static const std::map<GlobalString, GlobalString> table = {
+        {"altglyph"_glo, altGlyphTag},
+        {"altglyphdef"_glo, altGlyphDefTag},
+        {"altglyphitem"_glo, altGlyphItemTag},
+        {"animatecolor"_glo, animateColorTag},
+        {"animatemotion"_glo, animateMotionTag},
+        {"animatetransform"_glo, animateTransformTag},
+        {"clippath"_glo, clipPathTag},
+        {"feblend"_glo, feBlendTag},
+        {"fecolormatrix"_glo, feColorMatrixTag},
+        {"fecomponenttransfer"_glo, feComponentTransferTag},
+        {"fecomposite"_glo, feCompositeTag},
+        {"feconvolvematrix"_glo, feConvolveMatrixTag},
+        {"fediffuselighting"_glo, feDiffuseLightingTag},
+        {"fedisplacementmap"_glo, feDisplacementMapTag},
+        {"fedistantlight"_glo, feDistantLightTag},
+        {"fedropshadow"_glo, feDropShadowTag},
+        {"feflood"_glo, feFloodTag},
+        {"fefunca"_glo, feFuncATag},
+        {"fefuncb"_glo, feFuncBTag},
+        {"fefuncg"_glo, feFuncGTag},
+        {"fefuncr"_glo, feFuncRTag},
+        {"fegaussianblur"_glo, feGaussianBlurTag},
+        {"feimage"_glo, feImageTag},
+        {"femerge"_glo, feMergeTag},
+        {"femergenode"_glo, feMergeNodeTag},
+        {"femorphology"_glo, feMorphologyTag},
+        {"feoffset"_glo, feOffsetTag},
+        {"fepointlight"_glo, fePointLightTag},
+        {"fespecularlighting"_glo, feSpecularLightingTag},
+        {"fespotlight"_glo, feSpotLightTag},
+        {"glyphref"_glo, glyphRefTag},
+        {"lineargradient"_glo, linearGradientTag},
+        {"radialgradient"_glo, radialGradientTag},
+        {"textpath"_glo, textPathTag}
+    };
 
     auto it = table.find(token.tagName());
     if(it != table.end()) {
@@ -841,67 +840,66 @@ void HTMLParser::adjustSVGTagNames(HTMLTokenView& token)
 
 void HTMLParser::adjustSVGAttributes(HTMLTokenView& token)
 {
-    static std::map<GlobalString, GlobalString> table;
-    if(table.empty()) {
-        table.emplace("attributename", attributeNameAttr);
-        table.emplace("attributetype", attributeTypeAttr);
-        table.emplace("basefrequency", baseFrequencyAttr);
-        table.emplace("baseprofile", baseProfileAttr);
-        table.emplace("calcmode", calcModeAttr);
-        table.emplace("clippathunits", clipPathUnitsAttr);
-        table.emplace("diffuseconstant", diffuseConstantAttr);
-        table.emplace("edgemode", edgeModeAttr);
-        table.emplace("filterunits", filterUnitsAttr);
-        table.emplace("glyphref", glyphRefAttr);
-        table.emplace("gradienttransform", gradientTransformAttr);
-        table.emplace("gradientunits", gradientUnitsAttr);
-        table.emplace("kernelmatrix", kernelMatrixAttr);
-        table.emplace("kernelunitlength", kernelUnitLengthAttr);
-        table.emplace("keypoints", keyPointsAttr);
-        table.emplace("keysplines", keySplinesAttr);
-        table.emplace("keytimes", keyTimesAttr);
-        table.emplace("lengthadjust", lengthAdjustAttr);
-        table.emplace("limitingconeangle", limitingConeAngleAttr);
-        table.emplace("markerheight", markerHeightAttr);
-        table.emplace("markerunits", markerUnitsAttr);
-        table.emplace("markerwidth", markerWidthAttr);
-        table.emplace("maskcontentunits", maskContentUnitsAttr);
-        table.emplace("maskunits", maskUnitsAttr);
-        table.emplace("numoctaves", numOctavesAttr);
-        table.emplace("pathlength", pathLengthAttr);
-        table.emplace("patterncontentunits", patternContentUnitsAttr);
-        table.emplace("patterntransform", patternTransformAttr);
-        table.emplace("patternunits", patternUnitsAttr);
-        table.emplace("pointsatx", pointsAtXAttr);
-        table.emplace("pointsaty", pointsAtYAttr);
-        table.emplace("pointsatz", pointsAtZAttr);
-        table.emplace("preservealpha", preserveAlphaAttr);
-        table.emplace("preserveaspectratio", preserveAspectRatioAttr);
-        table.emplace("primitiveunits", primitiveUnitsAttr);
-        table.emplace("refx", refXAttr);
-        table.emplace("refy", refYAttr);
-        table.emplace("repeatcount", repeatCountAttr);
-        table.emplace("repeatdur", repeatDurAttr);
-        table.emplace("requiredextensions", requiredExtensionsAttr);
-        table.emplace("requiredfeatures", requiredFeaturesAttr);
-        table.emplace("specularconstant", specularConstantAttr);
-        table.emplace("specularexponent", specularExponentAttr);
-        table.emplace("spreadmethod", spreadMethodAttr);
-        table.emplace("startoffset", startOffsetAttr);
-        table.emplace("stddeviation", stdDeviationAttr);
-        table.emplace("stitchtiles", stitchTilesAttr);
-        table.emplace("surfacescale", surfaceScaleAttr);
-        table.emplace("systemlanguage", systemLanguageAttr);
-        table.emplace("tablevalues", tableValuesAttr);
-        table.emplace("targetx", targetXAttr);
-        table.emplace("targety", targetYAttr);
-        table.emplace("textlength", textLengthAttr);
-        table.emplace("viewbox", viewBoxAttr);
-        table.emplace("viewtarget", viewTargetAttr);
-        table.emplace("xchannelselector", xChannelSelectorAttr);
-        table.emplace("ychannelselector", yChannelSelectorAttr);
-        table.emplace("zoomandpan", zoomAndPanAttr);
-    }
+    static const std::map<GlobalString, GlobalString> table = {
+        {"attributename"_glo, attributeNameAttr},
+        {"attributetype"_glo, attributeTypeAttr},
+        {"basefrequency"_glo, baseFrequencyAttr},
+        {"baseprofile"_glo, baseProfileAttr},
+        {"calcmode"_glo, calcModeAttr},
+        {"clippathunits"_glo, clipPathUnitsAttr},
+        {"diffuseconstant"_glo, diffuseConstantAttr},
+        {"edgemode"_glo, edgeModeAttr},
+        {"filterunits"_glo, filterUnitsAttr},
+        {"glyphref"_glo, glyphRefAttr},
+        {"gradienttransform"_glo, gradientTransformAttr},
+        {"gradientunits"_glo, gradientUnitsAttr},
+        {"kernelmatrix"_glo, kernelMatrixAttr},
+        {"kernelunitlength"_glo, kernelUnitLengthAttr},
+        {"keypoints"_glo, keyPointsAttr},
+        {"keysplines"_glo, keySplinesAttr},
+        {"keytimes"_glo, keyTimesAttr},
+        {"lengthadjust"_glo, lengthAdjustAttr},
+        {"limitingconeangle"_glo, limitingConeAngleAttr},
+        {"markerheight"_glo, markerHeightAttr},
+        {"markerunits"_glo, markerUnitsAttr},
+        {"markerwidth"_glo, markerWidthAttr},
+        {"maskcontentunits"_glo, maskContentUnitsAttr},
+        {"maskunits"_glo, maskUnitsAttr},
+        {"numoctaves"_glo, numOctavesAttr},
+        {"pathlength"_glo, pathLengthAttr},
+        {"patterncontentunits"_glo, patternContentUnitsAttr},
+        {"patterntransform"_glo, patternTransformAttr},
+        {"patternunits"_glo, patternUnitsAttr},
+        {"pointsatx"_glo, pointsAtXAttr},
+        {"pointsaty"_glo, pointsAtYAttr},
+        {"pointsatz"_glo, pointsAtZAttr},
+        {"preservealpha"_glo, preserveAlphaAttr},
+        {"preserveaspectratio"_glo, preserveAspectRatioAttr},
+        {"primitiveunits"_glo, primitiveUnitsAttr},
+        {"refx"_glo, refXAttr},
+        {"refy"_glo, refYAttr},
+        {"repeatcount"_glo, repeatCountAttr},
+        {"repeatdur"_glo, repeatDurAttr},
+        {"requiredextensions"_glo, requiredExtensionsAttr},
+        {"requiredfeatures"_glo, requiredFeaturesAttr},
+        {"specularconstant"_glo, specularConstantAttr},
+        {"specularexponent"_glo, specularExponentAttr},
+        {"spreadmethod"_glo, spreadMethodAttr},
+        {"startoffset"_glo, startOffsetAttr},
+        {"stddeviation"_glo, stdDeviationAttr},
+        {"stitchtiles"_glo, stitchTilesAttr},
+        {"surfacescale"_glo, surfaceScaleAttr},
+        {"systemlanguage"_glo, systemLanguageAttr},
+        {"tablevalues"_glo, tableValuesAttr},
+        {"targetx"_glo, targetXAttr},
+        {"targety"_glo, targetYAttr},
+        {"textlength"_glo, textLengthAttr},
+        {"viewbox"_glo, viewBoxAttr},
+        {"viewtarget"_glo, viewTargetAttr},
+        {"xchannelselector"_glo, xChannelSelectorAttr},
+        {"ychannelselector"_glo, yChannelSelectorAttr},
+        {"zoomandpan"_glo, zoomAndPanAttr}
+    };
 
     for(auto& attribute : token.attributes()) {
         auto it = table.find(attribute.name());
