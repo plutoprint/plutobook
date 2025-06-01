@@ -353,9 +353,7 @@ bool Book::loadUrl(const std::string_view& url, const std::string_view& userStyl
         return true;
     }
 
-    std::string errorMessage("Unable to load URL \'");
-    errorMessage += completeUrl.value() + "\': ";
-    errorMessage += plutobook_get_error_message();
+    auto errorMessage = ("Unable to load URL \'") + completeUrl.value() + ("\': ") + plutobook_get_error_message();
     plutobook_set_error_message("%s", errorMessage.data());
     return false;
 }
@@ -510,9 +508,7 @@ bool Book::writeToPdf(const std::string& filename, uint32_t fromPage, uint32_t t
         return true;
     }
 
-    std::string errorMessage("Unable to write PDF \'");
-    errorMessage += filename + "\': ";
-    errorMessage += plutobook_get_error_message();
+    auto errorMessage = ("Unable to write PDF \'") + filename + ("\': ") + plutobook_get_error_message();
     plutobook_set_error_message("%s", errorMessage.data());
     return false;
 }
@@ -566,9 +562,7 @@ bool Book::writeToPng(const std::string& filename, ImageFormat format) const
         return true;
     }
 
-    std::string errorMessage("Unable to write PNG \'");
-    errorMessage += filename + "\': ";
-    errorMessage += plutobook_get_error_message();
+    auto errorMessage = ("Unable to write PNG \'") + filename + ("\': ") + plutobook_get_error_message();
     plutobook_set_error_message("%s", errorMessage.data());
     return false;
 }
