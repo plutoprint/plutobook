@@ -49,8 +49,6 @@ GlobalString GlobalString::foldCase() const
 {
     if(m_entry == nullptr)
         return nullGlo;
-    if(m_entry->empty())
-        return emptyGlo;
     auto size = m_entry->size();
     auto data = m_entry->data();
 
