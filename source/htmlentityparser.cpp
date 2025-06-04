@@ -2441,13 +2441,19 @@ bool HTMLEntityParser::handleNamed(char cc)
             break;
         cc = nextInputCharacter();
     } while(true);
-    auto lastMatch = entitySearch.lastMatch();
-    if(lastMatch && (lastMatch->lastCharacter() == ';' || !m_inAttributeValue || !(cc == '=' || isAlpha(cc) || isDigit(cc)))) {
-        append(lastMatch->firstValue);
-        if(lastMatch->secondValue)
-            append(lastMatch->secondValue);
-        m_offset -= entitySearch.offset() - lastMatch->length;
-        return true;
+    if(auto lastMatch = entitySearch.lastMatch()) {
+        if(lastMatch->length != entitySearch.offset()) {
+            assert(lastMatch->length < entitySearch.offset());
+            m_offset -= entitySearch.offset() - lastMatch->length;
+            cc = currentInputCharacter();
+        }
+
+        if(lastMatch->lastCharacter() == ';' || !m_inAttributeValue || !(cc == '=' || isAlnum(cc))) {
+            append(lastMatch->firstValue);
+            if(lastMatch->secondValue)
+                append(lastMatch->secondValue);
+            return true;
+        }
     }
 
     return false;

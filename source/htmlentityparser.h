@@ -12,10 +12,11 @@ public:
         : m_input(input), m_output(output), m_inAttributeValue(inAttributeValue)
     {}
 
+    size_t offset() const { return m_offset; }
+
     bool parse();
 
 private:
-    size_t offset() const { return m_offset; }
     bool handleNamed(char cc);
     bool handleNumber(char cc);
     bool handleDecimal(char cc);
@@ -30,7 +31,6 @@ private:
     std::string& m_output;
     bool m_inAttributeValue;
     size_t m_offset{0};
-    friend class HTMLTokenizer;
 };
 
 inline char HTMLEntityParser::currentInputCharacter() const
