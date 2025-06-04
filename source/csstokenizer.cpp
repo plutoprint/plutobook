@@ -10,6 +10,8 @@ constexpr bool isNameChar(char cc) { return isNameStart(cc) || isDigit(cc) || cc
 constexpr bool isNewLine(char cc) { return (cc == '\n' || cc == '\r' || cc == '\f'); }
 constexpr bool isNonPrintable(char cc) { return (cc >= 0 && cc <= 0x8) || cc == 0xb || (cc >= 0xf && cc <= 0x1f) || cc == 0x7f; }
 
+const CSSToken CSSTokenStream::eofToken(CSSToken::Type::EndOfFile);
+
 CSSTokenStream CSSTokenizer::tokenize()
 {
     while(true) {
@@ -87,11 +89,6 @@ bool CSSTokenizer::isExponentSequence() const
     return false;
 }
 
-std::string_view CSSTokenizer::substring(size_t offset, size_t count)
-{
-    return m_input.data().substr(offset, count);
-}
-
 std::string_view CSSTokenizer::addstring(std::string&& value)
 {
     m_stringList.push_back(std::move(value));
@@ -108,7 +105,7 @@ std::string_view CSSTokenizer::consumeName()
         if(!isNameChar(cc)) {
             auto offset = m_input.offset();
             m_input.advance(count);
-            return substring(offset, count);
+            return m_input.substring(offset, count);
         }
 
         count += 1;
@@ -172,9 +169,8 @@ CSSToken CSSTokenizer::consumeStringToken()
             break;
         if(cc == endingCodePoint) {
             auto offset = m_input.offset();
-            m_input.advance(count);
-            m_input.advance();
-            return CSSToken(CSSToken::Type::String, substring(offset, count));
+            m_input.advance(count + 1);
+            return CSSToken(CSSToken::Type::String, m_input.substring(offset, count));
         }
 
         if(isNewLine(cc)) {
@@ -292,12 +288,10 @@ CSSToken CSSTokenizer::consumeIdentLikeToken()
     auto name = consumeName();
     if(equals(name, "url", false) && m_input.peek() == '(') {
         auto cc = m_input.advance();
-        while(isSpace(cc) && isSpace(m_input.peek(1))) {
+        while(isSpace(cc)) {
             cc = m_input.advance();
         }
 
-        if(isSpace(cc))
-            cc = m_input.peek(1);
         if(cc == '"' || cc == '\'')
             return CSSToken(CSSToken::Type::Function, name);
         return consumeUrlToken();
@@ -325,9 +319,8 @@ CSSToken CSSTokenizer::consumeUrlToken()
             break;
         if(cc == ')') {
             auto offset = m_input.offset();
-            m_input.advance(count);
-            m_input.advance();
-            return CSSToken(CSSToken::Type::Url, substring(offset, count));
+            m_input.advance(count + 1);
+            return CSSToken(CSSToken::Type::Url, m_input.substring(offset, count));
         }
 
         if(cc == '"' || cc == '\'' || cc == '(' || isNonPrintable(cc)) {

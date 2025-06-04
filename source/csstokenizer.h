@@ -1,8 +1,8 @@
 #ifndef PLUTOBOOK_CSSTOKENIZER_H
 #define PLUTOBOOK_CSSTOKENIZER_H
 
-#include <vector>
 #include <list>
+#include <vector>
 #include <string>
 #include <cassert>
 #include <cstdint>
@@ -118,15 +118,6 @@ public:
         : m_begin(begin), m_end(end)
     {}
 
-    const CSSToken& get() const {
-        if(m_begin == m_end) {
-            static CSSToken eofToken(CSSToken::Type::EndOfFile);
-            return eofToken;
-        }
-
-        return *m_begin;
-    }
-
     void consume() {
         assert(m_begin < m_end);
         m_begin += 1;
@@ -189,6 +180,8 @@ public:
         return CSSTokenStream(blockBegin, blockEnd);
     }
 
+    const CSSToken& get() const { return m_begin < m_end ? *m_begin : eofToken; }
+
     const CSSToken& operator*() const { return get(); }
     const CSSToken* operator->() const { return &get(); }
 
@@ -198,6 +191,7 @@ public:
     bool empty() const { return m_begin == m_end; }
 
 private:
+    static const CSSToken eofToken;
     const CSSToken* m_begin;
     const CSSToken* m_end;
 };
@@ -220,32 +214,44 @@ private:
 class CSSTokenizerInputStream {
 public:
     explicit CSSTokenizerInputStream(const std::string_view& input)
-        : m_data(input)
+        : m_data(input.data()), m_length(input.length())
     {}
 
     char peek(size_t count = 0) const {
-        auto index = count + m_offset;
-        assert(index <= m_data.size());
-        if(index == m_data.size())
-            return 0;
-        return m_data[index];
+        auto index = m_offset + count;
+        if(index < m_length)
+            return m_data[index];
+        assert(index == m_length);
+        return char(0);
     }
 
     char advance(size_t count = 1) {
         m_offset += count;
-        assert(m_offset <= m_data.size());
-        if(m_offset == m_data.size())
-            return 0;
+        if(m_offset < m_length)
+            return m_data[m_offset];
+        assert(m_offset == m_length);
+        return char(0);
+    }
+
+    std::string_view substring(size_t offset, size_t count) const {
+        assert(offset + count <= m_length);
+        return std::string_view(m_data + offset, count);
+    }
+
+    const char& operator*() const {
+        assert(m_offset < m_length);
         return m_data[m_offset];
     }
 
-    bool empty() const { return m_offset >= m_data.length(); }
-    const char& operator*() const { return m_data.at(m_offset); }
-    const std::string_view& data() const { return m_data; }
+    const char* data() const { return m_data; }
+    size_t length() const { return m_length; }
     size_t offset() const { return m_offset; }
 
+    bool empty() const { return m_offset == m_length; }
+
 private:
-    std::string_view m_data;
+    const char* m_data;
+    size_t m_length;
     size_t m_offset{0};
 };
 
@@ -267,7 +273,6 @@ private:
     bool isNumberSequence() const;
     bool isExponentSequence() const;
 
-    std::string_view substring(size_t offset, size_t count);
     std::string_view addstring(std::string&& value);
 
     std::string_view consumeName();
