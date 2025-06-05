@@ -35,6 +35,10 @@ public:
     bool isSVGRootNode() const;
     bool isOfType(const GlobalString& namespaceURI, const GlobalString& tagName) const;
 
+    bool inHTMLDocument() const;
+    bool inSVGDocument() const;
+    bool inXMLDocument() const;
+
     const GlobalString& namespaceURI() const;
     const GlobalString& tagName() const;
 
@@ -184,10 +188,6 @@ public:
 
     bool isElementNode() const final { return true; }
     bool isOfType(const GlobalString& namespaceURI, const GlobalString& tagName) const { return m_namespaceURI == namespaceURI && m_tagName == tagName; }
-
-    bool inHTMLDocument() const;
-    bool inSVGDocument() const;
-    bool inXMLDocument() const;
 
     bool isCaseSensitive() const { return m_isCaseSensitive; }
 
@@ -435,14 +435,14 @@ inline bool Node::isRootNode() const
     return this == m_document->rootElement();
 }
 
+inline bool Node::inHTMLDocument() const { return m_document->isHTMLDocument(); }
+inline bool Node::inSVGDocument() const  { return m_document->isSVGDocument(); }
+inline bool Node::inXMLDocument() const  { return m_document->isXMLDocument(); }
+
 inline Heap* Node::heap() const
 {
     return m_document->heap();
 }
-
-inline bool Element::inHTMLDocument() const { return document()->isHTMLDocument(); }
-inline bool Element::inSVGDocument() const  { return document()->isSVGDocument(); }
-inline bool Element::inXMLDocument() const  { return document()->isXMLDocument(); }
 
 template<>
 struct is_a<Document> {
