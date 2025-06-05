@@ -225,12 +225,11 @@ public:
         return char(0);
     }
 
-    char advance(size_t count = 1) {
-        m_offset += count;
-        if(m_offset < m_length)
-            return m_data[m_offset];
-        assert(m_offset == m_length);
-        return char(0);
+    void advance(size_t count = 1) { m_offset += count; }
+
+    char consume() {
+        m_offset++;
+        return peek();
     }
 
     std::string_view substring(size_t offset, size_t count) const {

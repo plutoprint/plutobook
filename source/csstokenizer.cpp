@@ -130,13 +130,13 @@ std::string_view CSSTokenizer::consumeName()
 uint32_t CSSTokenizer::consumeEscape()
 {
     assert(isEscapeSequence());
-    auto cc = m_input.advance();
+    auto cc = m_input.consume();
     if(isHexDigit(cc)) {
         int count = 0;
         uint32_t cp = 0;
         do {
             cp = cp * 16 + toHexDigit(cc);
-            cc = m_input.advance();
+            cc = m_input.consume();
             count += 1;
         } while(count < 6 && isHexDigit(cc));
         if(isSpace(cc)) {
@@ -237,18 +237,18 @@ CSSToken CSSTokenizer::consumeNumericToken()
         auto cc = m_input.peek();
         do {
             integer = 10.0 * integer + (cc - '0');
-            cc = m_input.advance();
+            cc = m_input.consume();
         } while(isDigit(cc));
     }
 
     if(m_input.peek() == '.' && isDigit(m_input.peek(1))) {
         numberType = CSSToken::NumberType::Number;
-        auto cc = m_input.advance();
+        auto cc = m_input.consume();
         int count = 0;
         do {
             fraction = 10.0 * fraction + (cc - '0');
             count += 1;
-            cc = m_input.advance();
+            cc = m_input.consume();
         } while(isDigit(cc));
         fraction *= std::pow(10.0, -count);
     }
@@ -266,7 +266,7 @@ CSSToken CSSTokenizer::consumeNumericToken()
         auto cc = m_input.peek();
         do {
             exponent = 10 * exponent + (cc - '0');
-            cc = m_input.advance();
+            cc = m_input.consume();
         } while(isDigit(cc));
     }
 
@@ -287,9 +287,9 @@ CSSToken CSSTokenizer::consumeIdentLikeToken()
 {
     auto name = consumeName();
     if(equals(name, "url", false) && m_input.peek() == '(') {
-        auto cc = m_input.advance();
+        auto cc = m_input.consume();
         while(isSpace(cc)) {
-            cc = m_input.advance();
+            cc = m_input.consume();
         }
 
         if(cc == '"' || cc == '\'')
@@ -309,7 +309,7 @@ CSSToken CSSTokenizer::consumeUrlToken()
 {
     auto cc = m_input.peek();
     while(isSpace(cc)) {
-        cc = m_input.advance();
+        cc = m_input.consume();
     }
 
     size_t count = 0;
@@ -352,7 +352,7 @@ CSSToken CSSTokenizer::consumeUrlToken()
 
         if(isSpace(cc)) {
             do {
-                cc = m_input.advance();
+                cc = m_input.consume();
             } while(isSpace(cc));
             if(cc == 0)
                 break;
@@ -399,7 +399,7 @@ CSSToken CSSTokenizer::consumeWhitespaceToken()
     auto cc = m_input.peek();
     assert(isSpace(cc));
     do {
-        cc = m_input.advance();
+        cc = m_input.consume();
     } while(isSpace(cc));
     return CSSToken(CSSToken::Type::Whitespace);
 }
@@ -423,7 +423,7 @@ CSSToken CSSTokenizer::consumeCommentToken()
 
 CSSToken CSSTokenizer::consumeSolidusToken()
 {
-    auto cc = m_input.advance();
+    auto cc = m_input.consume();
     if(cc == '*') {
         m_input.advance();
         return consumeCommentToken();
@@ -434,7 +434,7 @@ CSSToken CSSTokenizer::consumeSolidusToken()
 
 CSSToken CSSTokenizer::consumeHashToken()
 {
-    auto cc = m_input.advance();
+    auto cc = m_input.consume();
     if(isNameChar(cc) || isEscapeSequence()) {
         if(isIdentSequence())
             return CSSToken(CSSToken::Type::Hash, CSSToken::HashType::Identifier, consumeName());
@@ -477,7 +477,7 @@ CSSToken CSSTokenizer::consumeFullStopToken()
 
 CSSToken CSSTokenizer::consumeLessThanSignToken()
 {
-    auto cc = m_input.advance();
+    auto cc = m_input.consume();
     if(cc == '!' && m_input.peek(1) == '-' && m_input.peek(2) == '-') {
         m_input.advance(3);
         return CSSToken(CSSToken::Type::CDO);
