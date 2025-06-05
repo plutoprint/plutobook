@@ -2307,7 +2307,7 @@ static const HTMLEntity* lowercasetable[] = {
     &htmlentitytable[2231]
 };
 
-inline const HTMLEntity* firstentry(char cc)
+inline const HTMLEntity* firstEntryStartingWith(char cc)
 {
     if(cc >= 'A' && cc <= 'Z')
         return uppercasetable[cc - 'A'];
@@ -2316,7 +2316,7 @@ inline const HTMLEntity* firstentry(char cc)
     return nullptr;
 }
 
-inline const HTMLEntity* lastentry(char cc)
+inline const HTMLEntity* lastEntryStartingWith(char cc)
 {
     if(cc >= 'A' && cc <= 'Z')
         return uppercasetable[cc - 'A' + 1] - 1;
@@ -2340,7 +2340,7 @@ inline int compare(const HTMLEntity* entry, size_t offset, char cc)
     return nextCharacter < cc ? -1 : 1;
 }
 
-static const HTMLEntity* lowerentry(const HTMLEntity* left, const HTMLEntity* right, size_t offset, char cc)
+static const HTMLEntity* findFirstEntry(const HTMLEntity* left, const HTMLEntity* right, size_t offset, char cc)
 {
     if(left == right)
         return left;
@@ -2363,7 +2363,7 @@ static const HTMLEntity* lowerentry(const HTMLEntity* left, const HTMLEntity* ri
     return right;
 }
 
-static const HTMLEntity* upperentry(const HTMLEntity* left, const HTMLEntity* right, size_t offset, char cc)
+static const HTMLEntity* findLastEntry(const HTMLEntity* left, const HTMLEntity* right, size_t offset, char cc)
 {
     if(left == right)
         return right;
@@ -2404,14 +2404,14 @@ private:
 bool HTMLEntitySearch::advance(char cc)
 {
     if(m_offset == 0) {
-        m_first = firstentry(cc);
-        m_last = lastentry(cc);
+        m_first = firstEntryStartingWith(cc);
+        m_last = lastEntryStartingWith(cc);
         if(m_first == nullptr || m_last == nullptr) {
             return false;
         }
     } else {
-        m_first = lowerentry(m_first, m_last, m_offset, cc);
-        m_last = upperentry(m_first, m_last, m_offset, cc);
+        m_first = findFirstEntry(m_first, m_last, m_offset, cc);
+        m_last = findLastEntry(m_first, m_last, m_offset, cc);
         if(m_first == m_last && compare(m_first, m_offset, cc) != 0) {
             return false;
         }
