@@ -35,13 +35,24 @@ int main() {
 
 ### Loading Input Documents
 
-The `Book` class provides flexible methods to load document content from various sources such as HTML and XML strings, local files, or remote URLs. These loading capabilities make it easy to incorporate PlutoBook into diverse workflows, whether you’re working with raw markup, existing files, or online content.
+The `Book` class offers flexible methods to load document content from various sources, including HTML and XML strings, local files, or remote URLs. These loading options make it easy to integrate PlutoBook into a wide range of workflows, whether you are working with raw markup, existing files, or online content.
 
-By selecting the appropriate `load` method, you can efficiently import your content into a `Book` instance and get it ready for rendering, exporting, or further processing. This flexibility ensures PlutoBook seamlessly adapts to dynamic document generation or file-based workflows.
+By choosing the appropriate `load` method, you can efficiently import content into a `Book` instance, preparing it for rendering, exporting, or further processing. This flexibility ensures that PlutoBook seamlessly adapts to both dynamic document generation and file-based workflows.
+
+> [!TIP]
+> The fastest way to load content into PlutoBook is by using the `loadHtml` or `loadXml` methods.
+> These functions accept raw UTF-8 encoded markup directly, without requiring any preprocessing or file access.
+> This makes them ideal for scenarios where you generate content on-the-fly or embed static strings in code.
 
 #### Loading From a URL
 
-The following example demonstrates how to load a webpage directly from a URL and export it as a PDF:
+PlutoBook supports loading web content directly from remote or local URLs using the `loadUrl` method. This is useful when rendering existing online documents, integrating live web content, or referencing local assets. Simply provide the URL to the desired resource, and PlutoBook will fetch and parse the content for layout and rendering.
+
+> [!NOTE]
+> Resource loading is single-threaded and occurs inline with the layout process, which may be slower than in web browsers. JavaScript execution is **not supported**, so some websites may not render correctly.
+> Loading resources over protocols other than `file:` and `data:` (for example, HTTP, HTTPS, or FTP) requires `libcurl`.
+
+Example of loading a webpage from a remote URL:
 
 ```cpp
 #include <plutobook.hpp>
@@ -64,6 +75,71 @@ int main()
 Example output:
 
 ![Screenshot](https://github.com/user-attachments/assets/1f563034-9575-4345-8a64-c781267b06b6)
+
+#### Loading From a Data URL
+
+In addition to loading content from traditional URLs, PlutoBook supports loading directly from **data URLs**. This allows you to embed small documents or images inline without needing an external resource, which can be useful for quick tests, embedded content, or dynamically generated markup.
+
+Data URLs follow the format `data:[<mediatype>][;base64],<data>`, where you can provide HTML, SVG, images, or other supported content directly as a string.
+
+Examples:
+
+```cpp
+// Load simple HTML content from a data URL
+book.loadUrl("data:text/html,<h1>Hello%20World</h1>");
+```
+
+```cpp
+// Load a PNG image from a base64-encoded data URL (content omitted here for brevity)
+book.loadUrl("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA...");
+```
+
+```cpp
+// Load inline SVG content
+book.loadUrl("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100'><circle cx='50' cy='50' r='40' fill='red'/></svg>");
+```
+
+#### Loading From a File
+
+You can load local HTML, SVG, images, or other supported file formats directly by specifying their file paths. This is useful when working with existing documents stored on your filesystem or when generating content offline.
+
+The path can be relative to the current working directory or an absolute path.
+
+Examples:
+
+```cpp
+// Load a file in the current directory
+book.loadUrl("hello.html");
+```
+
+```cpp
+// Load a file using a relative path
+book.loadUrl("../hello.html");
+```
+
+```cpp
+// Load a file using an absolute path
+book.loadUrl("/home/sammycage/Projects/hello.html");
+```
+
+#### Loading From Raw Data
+
+PlutoBook also lets you load content directly from in-memory buffers by using the `loadData` method. This is useful when you have generated HTML, SVG, image data, or any other supported format at runtime and want to render it without writing it to a file first. For non-HTML data, you must explicitly specify the MIME type so PlutoBook knows how to interpret the bytes.
+
+The following example demonstrates how to render an inline SVG image loaded from a raw C-string buffer:
+
+```cpp
+static const char kSVGData[] = R"SVG(
+  <svg xmlns="http://www.w3.org/2000/svg" width="200" height="200">
+    <circle cx="100" cy="100" r="80" fill="teal" stroke="black" stroke-width="5"/>
+    <text x="100" y="110" font-size="20" text-anchor="middle" fill="white">Hello</text>
+  </svg>
+)SVG";
+
+book.loadData(kSVGData, std::strlen(kSVGData), "image/svg+xml");
+```
+
+You can similarly load other formats such as PNG images or HTML documents by providing the raw data buffer and specifying the correct MIME type.
 
 ---
 
