@@ -33,6 +33,40 @@ int main() {
 
 ---
 
+### Loading Input Documents
+
+The `Book` class provides flexible methods to load document content from various sources such as HTML and XML strings, local files, or remote URLs. These loading capabilities make it easy to incorporate PlutoBook into diverse workflows, whether you’re working with raw markup, existing files, or online content.
+
+By selecting the appropriate `load` method, you can efficiently import your content into a `Book` instance and get it ready for rendering, exporting, or further processing. This flexibility ensures PlutoBook seamlessly adapts to dynamic document generation or file-based workflows.
+
+#### Loading From a URL
+
+The following example demonstrates how to load a webpage directly from a URL and export it as a PDF:
+
+```cpp
+#include <plutobook.hpp>
+
+int main()
+{
+    // Create a Book with A4 page size and no margins
+    plutobook::Book book(plutobook::PageSize::A4, plutobook::PageMargins::None);
+
+    // Load content from a remote URL
+    book.loadUrl("https://en.wikipedia.org/wiki/Bjarne_Stroustrup");
+
+    // Export the rendered content to a PDF file
+    book.writeToPdf("Bjarne_Stroustrup.pdf");
+
+    return 0;
+}
+```
+
+Example output:
+
+![Screenshot](https://github.com/user-attachments/assets/1f563034-9575-4345-8a64-c781267b06b6)
+
+---
+
 ### Working with Viewport Size
 
 In PlutoBook, the **viewport** refers to the area of the page available for laying out content after accounting for margins. It functions similarly to the browser viewport in web development, where layout calculations are made relative to a visible content area.
