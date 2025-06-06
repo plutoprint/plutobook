@@ -16,7 +16,7 @@ To create and render a document, you typically start by instantiating a `Book`, 
 
 ---
 
-### Simple Example
+### Quick Start
 
 This example demonstrates the simplest way to use PlutoBook: creating a `Book` instance with a standard page size (A4), loading a small HTML snippet, and exporting the result as a PDF file named `hello.pdf`. It showcases the core workflow of loading content and generating a document in just a few lines of code.
 
@@ -33,7 +33,7 @@ int main() {
 
 ---
 
-### Setting Viewport Size
+### Working with Viewport Size
 
 In PlutoBook, the **viewport** refers to the area of the page available for laying out content after accounting for margins. It functions similarly to the browser viewport in web development, where layout calculations are made relative to a visible content area.
 
@@ -64,7 +64,7 @@ This creates a `<div>` that spans the full width and half the height of the avai
 
 These units help create responsive layouts that adapt smoothly to different page sizes and margin settings, ensuring your content looks great regardless of the document’s physical dimensions.
 
-#### Getting the Viewport Size
+#### Setting and Retrieving Viewport Size
 
 ```cpp
 #include <plutobook.hpp>
@@ -74,13 +74,13 @@ These units help create responsive layouts that adapt smoothly to different page
 int main()
 {
     // Define page size (A4: 210 x 297 mm)
-    plutobook::PageSize pageSize = plutobook::PageSize::A4;
+    plutobook::PageSize size = plutobook::PageSize::A4;
 
     // Define page margins (Narrow: 1 inch on all sides)
-    plutobook::PageMargins pageMargins = plutobook::PageMargins::Narrow;
+    plutobook::PageMargins margins = plutobook::PageMargins::Narrow;
 
     // Create a Book instance with specified page size and margins
-    plutobook::Book book(pageSize, pageMargins);
+    plutobook::Book book(size, margins);
 
     // Output the viewport size in pixels (content area after margins)
     std::cout << "Viewport Width: " << book.viewportWidth() << " px\n";
