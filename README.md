@@ -6,33 +6,25 @@ PlutoBook is a robust HTML rendering library tailored for paged media. It takes 
 > PlutoBook implements its own rendering engine and does **not** depend on rendering engines like Chromium, WebKit, or Gecko.  
 > The engine is designed to be robust, lightweight, and memory-efficient, leveraging modern C++17 features such as [`std::pmr::monotonic_buffer_resource`](https://en.cppreference.com/w/cpp/memory/monotonic_buffer_resource) to minimize memory fragmentation and optimize allocation performance.
 
-## Example Usage:
+## Basic Usage
 
-PlutoBook offers APIs for both C and C++. Here are basic examples to get you started:
+PlutoBook is designed to be easy to get started with. To understand where to begin, it's helpful to first look at how PlutoBook works.
 
-### C++ Example:
+The `Book` class is the core API class of the PlutoBook library. It serves as the main entry point for working with documents. A `Book` instance can load content in HTML or XML format, and provides a high-level interface for rendering, exporting to PDF or PNG, and interacting with page structure and metadata.
+
+To create and render a document, you typically start by instantiating a `Book`, specifying parameters such as the page size (e.g., A4, Letter), page margins, and the media type (`MediaType::Print` or `MediaType::Screen`) to control how styles and layouts are interpreted. These parameters define the physical layout and styling context of the document. After that, you load your content using one of the `load` methods (such as `loadHtml()` or `loadXml()`), and then render it to a canvas or export it as needed.
+
+### Simple Example
+
+This example demonstrates the simplest way to use PlutoBook: creating a `Book` instance with common settings (A4 page size, normal margins, and print media type), loading a small HTML snippet, and exporting the result as a PDF file named `hello.pdf`. It showcases the core workflow of loading content and generating a document in just a few lines of code.
 
 ```cpp
 #include <plutobook.hpp>
 
 int main() {
-    plutobook::Book book(plutobook::PageSize::A4);
+    plutobook::Book book(plutobook::PageSize::A4, plutobook::PageMargins::Normal, plutobook::MediaType::Print);
     book.loadHtml("<b> Hello World </b>");
     book.writeToPdf("hello.pdf");
-    return 0;
-}
-```
-
-### C Example:
-
-```c
-#include <plutobook.h>
-
-int main() {
-    plutobook_t* book = plutobook_create(PLUTOBOOK_PAGE_SIZE_A4, PLUTOBOOK_PAGE_MARGINS_NORMAL, PLUTOBOOK_MEDIA_TYPE_PRINT);
-    plutobook_load_html(book, "<b> Hello World </b>", -1, "", "", "");
-    plutobook_write_to_pdf(book, "hello.pdf");
-    plutobook_destroy(book);
     return 0;
 }
 ```
