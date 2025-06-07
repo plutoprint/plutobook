@@ -72,7 +72,7 @@ static std::optional<T> matchIdent(const CSSIdentEntry<T>(&table)[N], const std:
     return std::nullopt;
 }
 
-static bool consumeIdentToken(CSSTokenStream& input, const char* name, int length)
+static bool consumeIdentIncludingWhitespace(CSSTokenStream& input, const char* name, int length)
 {
     if(input->type() == CSSToken::Type::Ident && identMatches(name, length, input->data())) {
         input.consumeIncludingWhitespace();
@@ -93,20 +93,20 @@ CSSMediaQueryList CSSParser::parseMediaQueries(const std::string_view& content)
 
 static CSSMediaQuery::Type consumeMediaType(CSSTokenStream& input)
 {
-    if(consumeIdentToken(input, "all", 3))
+    if(consumeIdentIncludingWhitespace(input, "all", 3))
         return CSSMediaQuery::Type::All;
-    if(consumeIdentToken(input, "print", 5))
+    if(consumeIdentIncludingWhitespace(input, "print", 5))
         return CSSMediaQuery::Type::Print;
-    if(consumeIdentToken(input, "screen", 6))
+    if(consumeIdentIncludingWhitespace(input, "screen", 6))
         return CSSMediaQuery::Type::Screen;
     return CSSMediaQuery::Type::None;
 }
 
 static CSSMediaQuery::Restrictor consumeMediaRestrictor(CSSTokenStream& input)
 {
-    if(consumeIdentToken(input, "only", 4))
+    if(consumeIdentIncludingWhitespace(input, "only", 4))
         return CSSMediaQuery::Restrictor::Only;
-    if(consumeIdentToken(input, "not", 3))
+    if(consumeIdentIncludingWhitespace(input, "not", 3))
         return CSSMediaQuery::Restrictor::Not;
     return CSSMediaQuery::Restrictor::None;
 }
@@ -168,7 +168,7 @@ bool CSSParser::consumeMediaFeatures(CSSTokenStream& input, CSSMediaFeatureList&
     do {
         if(!consumeMediaFeature(input, features))
             return false;
-    } while(consumeIdentToken(input, "and", 3));
+    } while(consumeIdentIncludingWhitespace(input, "and", 3));
     return true;
 }
 
@@ -179,7 +179,7 @@ bool CSSParser::consumeMediaQuery(CSSTokenStream& input, CSSMediaQueryList& quer
     if(restrictor != CSSMediaQuery::Restrictor::None && type == CSSMediaQuery::Type::None)
         return false;
     CSSMediaFeatureList features(m_heap);
-    if(type != CSSMediaQuery::Type::None && consumeIdentToken(input, "and", 3) && !consumeMediaFeatures(input, features))
+    if(type != CSSMediaQuery::Type::None && consumeIdentIncludingWhitespace(input, "and", 3) && !consumeMediaFeatures(input, features))
         return false;
     if(type == CSSMediaQuery::Type::None && !consumeMediaFeatures(input, features)) {
         return false;
