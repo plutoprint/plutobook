@@ -577,8 +577,6 @@ bool CSSParser::consumeTagSelector(CSSTokenStream& input, CSSCompoundSelector& s
     CSSTokenStreamGuard guard(input);
     if(input->type() == CSSToken::Type::Ident) {
         name = GlobalString(input->data());
-        if(m_inHTMLDocument)
-            name = name.foldCase();
         input.consume();
     } else if(input->type() == CSSToken::Type::Delim && input->delim() == '*') {
         name = starGlo;
@@ -606,6 +604,8 @@ bool CSSParser::consumeTagSelector(CSSTokenStream& input, CSSCompoundSelector& s
     if(name == starGlo) {
         selector.emplace_front(CSSSimpleSelector::MatchType::Universal);
     } else {
+        if(m_inHTMLDocument)
+            name = name.foldCase();
         selector.emplace_front(CSSSimpleSelector::MatchType::Tag, name);
     }
 
