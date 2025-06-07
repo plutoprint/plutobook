@@ -457,7 +457,7 @@ bool PageMarginBox::updateIntrinsicPaddings(float availableHeight)
         intrinsicPaddingTop = availableHeight - height();
         break;
     default:
-        return false;
+        break;
     }
 
     auto intrinsicPaddingBottom = availableHeight - intrinsicPaddingTop - height();
