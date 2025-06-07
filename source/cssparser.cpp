@@ -1387,7 +1387,7 @@ bool CSSParser::consumeDescription(CSSTokenStream& input, CSSPropertyList& prope
     auto value = consumeLonghand(input, id);
     input.consumeWhitespace();
     if(value && input.empty()) {
-        addProperty(properties, id, important, value);
+        addProperty(properties, id, important, std::move(value));
         return true;
     }
 
@@ -1847,31 +1847,22 @@ RefPtr<CSSIdentValue> CSSParser::consumeFontVariantNumericIdent(CSSTokenStream& 
 
 RefPtr<CSSValue> CSSParser::consumeNone(CSSTokenStream& input)
 {
-    if(input->type() == CSSToken::Type::Ident && identMatches("none", 4, input->data())) {
-        input.consumeIncludingWhitespace();
+    if(consumeIdentIncludingWhitespace(input, "none", 4))
         return createIdentValue(CSSValueID::None);
-    }
-
     return nullptr;
 }
 
 RefPtr<CSSValue> CSSParser::consumeAuto(CSSTokenStream& input)
 {
-    if(input->type() == CSSToken::Type::Ident && identMatches("auto", 4, input->data())) {
-        input.consumeIncludingWhitespace();
+    if(consumeIdentIncludingWhitespace(input, "auto", 4))
         return createIdentValue(CSSValueID::Auto);
-    }
-
     return nullptr;
 }
 
 RefPtr<CSSValue> CSSParser::consumeNormal(CSSTokenStream& input)
 {
-    if(input->type() == CSSToken::Type::Ident && identMatches("normal", 6, input->data())) {
-        input.consumeIncludingWhitespace();
+    if(consumeIdentIncludingWhitespace(input, "normal", 6))
         return createIdentValue(CSSValueID::Normal);
-    }
-
     return nullptr;
 }
 
@@ -3950,8 +3941,7 @@ RefPtr<CSSValue> CSSParser::consumeLonghand(CSSTokenStream& input, CSSPropertyID
 
 bool CSSParser::consumeFlex(CSSTokenStream& input, CSSPropertyList& properties, bool important)
 {
-    if(input->type() == CSSToken::Type::Ident && identMatches("none", 4, input->data())) {
-        input.consumeIncludingWhitespace();
+    if(consumeIdentIncludingWhitespace(input, "none", 4)) {
         if(!input.empty())
             return false;
         addProperty(properties, CSSPropertyID::FlexGrow, important, CSSNumberValue::create(m_heap, 0.0));
@@ -4051,13 +4041,8 @@ bool CSSParser::consumeColumns(CSSTokenStream& input, CSSPropertyList& propertie
     RefPtr<CSSValue> width;
     RefPtr<CSSValue> count;
     for(int index = 0; index < 2; ++index) {
-        if(input->type() == CSSToken::Type::Ident) {
-            if(!identMatches("auto", 4, input->data()))
-                return false;
-            input.consumeIncludingWhitespace();
+        if(consumeIdentIncludingWhitespace(input, "auto", 4))
             continue;
-        }
-
         if(width == nullptr && (width = consumeLength(input, false, false)))
             continue;
         if(count == nullptr && (count = consumePositiveInteger(input)))
@@ -4113,11 +4098,8 @@ bool CSSParser::consumeFont(CSSTokenStream& input, CSSPropertyList& properties, 
     RefPtr<CSSValue> variant;
     RefPtr<CSSValue> stretch;
     for(int index = 0; index < 4; ++index) {
-        if(input->type() == CSSToken::Type::Ident && identMatches("normal", 6, input->data())) {
-            input.consumeIncludingWhitespace();
+        if(consumeIdentIncludingWhitespace(input, "normal", 6))
             continue;
-        }
-
         if(style == nullptr && (style = consumeFontStyle(input)))
             continue;
         if(weight == nullptr && (weight = consumeFontWeight(input)))
@@ -4524,11 +4506,8 @@ RefPtr<CSSValue> CSSParser::consumeCounterStyleSymbol(CSSTokenStream& input)
 
 RefPtr<CSSValue> CSSParser::consumeCounterStyleRangeBound(CSSTokenStream& input)
 {
-    if(input->type() == CSSToken::Type::Ident && identMatches("infinite", 8, input->data())) {
-        input.consumeIncludingWhitespace();
+    if(consumeIdentIncludingWhitespace(input, "infinite", 8))
         return createIdentValue(CSSValueID::Infinite);
-    }
-
     return consumeInteger(input, true);
 }
 
