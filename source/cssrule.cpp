@@ -354,7 +354,7 @@ bool CSSRuleData::matchTagSelector(const Element* element, const CSSSimpleSelect
 {
     if(element->isCaseSensitive())
         return element->tagName() == selector.name();
-    return equals(element->tagName(), selector.name(), false);
+    return equalsIgnoringCase(element->tagName(), selector.name());
 }
 
 bool CSSRuleData::matchIdSelector(const Element* element, const CSSSimpleSelector& selector)
@@ -378,7 +378,7 @@ static const Attribute* findAttributePossiblyIgnoringCase(const Element* element
     if(element->isCaseSensitive())
         return element->findAttribute(name);
     for(const auto& attribute : element->attributes()) {
-        if(equals(name, attribute.name(), false)) {
+        if(equalsIgnoringCase(name, attribute.name())) {
             return &attribute;
         }
     }

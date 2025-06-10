@@ -76,6 +76,11 @@ constexpr bool equals(const std::string_view& a, const std::string_view& b, bool
     return equals(a.data(), a.length(), b.data(), b.length(), caseSensitive);
 }
 
+constexpr bool equalsIgnoringCase(const std::string_view& a, const std::string_view& b)
+{
+    return equals(a, b, false);
+}
+
 constexpr bool contains(const std::string_view& value, const std::string_view& subvalue, bool caseSensitive)
 {
     if(subvalue.empty() || subvalue.length() > value.length())
