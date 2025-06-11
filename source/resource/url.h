@@ -22,6 +22,7 @@ public:
     std::string_view path() const { return componentString(m_portEnd, m_pathEnd); }
     std::string_view query() const { return componentString(m_pathEnd, m_queryEnd); }
     std::string_view fragment() const { return componentString(m_queryEnd, m_fragmentEnd); }
+
     std::string_view base() const;
 
 private:
@@ -37,6 +38,18 @@ private:
     unsigned m_queryEnd{0};
     unsigned m_fragmentEnd{0};
 };
+
+inline std::string_view Url::base() const
+{
+    if(isHierarchical())
+        return componentString(0, m_queryEnd);
+    return componentString(0, 0);
+}
+
+inline std::string_view Url::componentString(size_t begin, size_t end) const
+{
+    return std::string_view(m_value).substr(begin, end - begin);
+}
 
 inline std::ostream& operator<<(std::ostream& o, const Url& in) { return o << in.value(); }
 

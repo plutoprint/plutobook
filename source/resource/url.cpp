@@ -286,10 +286,12 @@ Url::Url(const std::string_view& input)
 {
     if(input.empty() || !isSchemeFirstChar(input.front()))
         return;
+    auto inputData = input.data();
+    auto inputLength = input.length();
     auto peek = [&](int index) {
-        if(index >= input.length())
-            return char(0);
-        return input[index];
+        if(index < inputLength)
+            return inputData[index];
+        return char(0);
     };
 
     int schemeEnd = 1;
@@ -302,7 +304,6 @@ Url::Url(const std::string_view& input)
     bool isHttp = false;
     bool isHttps = false;
     bool isFile = false;
-    auto inputData = input.data();
     if(equals(inputData, schemeEnd, "http", 4, false))
         isHttp = true;
     else if(equals(inputData, schemeEnd, "https", 5, false))
@@ -404,14 +405,14 @@ Url::Url(const std::string_view& input)
 
     int pathBegin = portEnd;
     int pathEnd = pathBegin;
-    while(pathEnd < input.length() && input[pathEnd] != '?' && input[pathEnd] != '#')
+    while(pathEnd < inputLength && inputData[pathEnd] != '?' && inputData[pathEnd] != '#')
         ++pathEnd;
     int queryBegin = pathEnd;
     int queryEnd = queryBegin;
     if(peek(queryBegin) == '?') {
         do {
             ++queryEnd;
-        } while(queryEnd < input.length() && input[queryEnd] != '#');
+        } while(queryEnd < inputLength && inputData[queryEnd] != '#');
     }
 
     int fragmentBegin = queryEnd;
@@ -419,18 +420,18 @@ Url::Url(const std::string_view& input)
     if(peek(fragmentBegin) == '#') {
         ++fragmentBegin;
         fragmentEnd = fragmentBegin;
-        while(fragmentEnd < input.length()) {
+        while(fragmentEnd < inputLength) {
             ++fragmentEnd;
         }
     }
 
     m_value.reserve(fragmentEnd);
     for(int i = 0; i < schemeEnd; ++i)
-        m_value += toLower(input[i]);
+        m_value += toLower(inputData[i]);
     m_schemeEnd = m_value.length();
     m_value += ':';
-    if(userBegin != userEnd || passwordBegin != passwordEnd || hostBegin != hostEnd
-        || portBegin != portEnd || (isFile && pathBegin != pathEnd)) {
+    if(isFile ? (pathBegin != pathEnd || hostBegin != hostEnd)
+        : (userBegin != userEnd || passwordBegin != passwordEnd || hostEnd != portEnd || hostBegin != hostEnd)) {
         m_value += '/';
         m_value += '/';
 
@@ -446,7 +447,7 @@ Url::Url(const std::string_view& input)
         if(m_userBegin != m_passwordEnd)
             m_value += '@';
         for(int i = hostBegin; i < hostEnd; ++i)
-            m_value += toLower(input[i]);
+            m_value += toLower(inputData[i]);
         m_hostEnd = m_value.length();
         if(hostEnd != portBegin) {
             m_value += ':';
@@ -467,12 +468,10 @@ Url::Url(const std::string_view& input)
     auto append = [&](int begin, int end) {
         constexpr char hexdigits[] = "0123456789ABCDEF";
         for(int i = begin; i < end; ++i) {
-            const uint8_t cc = input[i];
+            const uint8_t cc = inputData[i];
             if(cc == '%' || cc == '?' || !isBadChar(cc)) {
                 m_value.push_back(cc);
             } else {
-                if(cc == 0x09 || cc == 0x0a || cc == 0x0d)
-                    continue;
                 m_value += '%';
                 m_value += hexdigits[cc >> 4];
                 m_value += hexdigits[cc & 0xF];
@@ -490,9 +489,9 @@ Url::Url(const std::string_view& input)
         auto in = begin;
         auto peek = [&](int index) {
             index += in;
-            if(index >= end)
-                return char(0);
-            return m_value[index];
+            if(index < end)
+                return m_value[index];
+            return char(0);
         };
 
         auto out = begin;
@@ -593,18 +592,6 @@ Url Url::complete(std::string_view input) const
 bool Url::protocolIs(const std::string_view& protocol) const
 {
     return equals(m_value.data(), m_schemeEnd, protocol.data(), protocol.length(), false);
-}
-
-std::string_view Url::base() const
-{
-    if(isHierarchical())
-        return componentString(0, m_queryEnd);
-    return componentString(0, 0);
-}
-
-std::string_view Url::componentString(size_t begin, size_t end) const
-{
-    return std::string_view(m_value).substr(begin, end - begin);
 }
 
 } // namespace plutobook
