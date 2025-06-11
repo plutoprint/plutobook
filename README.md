@@ -86,6 +86,60 @@ book.loadUrl("../hello.html");
 book.loadUrl("/home/sammycage/Projects/hello.html");
 ```
 
+### Rendering to a Canvas
+
+PlutoBook uses an abstract drawing interface called `Canvas`, which supports rendering document content to multiple output targets. Two built-in implementations are provided: `ImageCanvas` and `PDFCanvas`.
+
+`ImageCanvas` renders to an in-memory bitmap. It is well-suited for generating PNG images, creating visual previews, or integrating with other graphics systems. The output can be exported to PNG files, or the raw pixel buffer can be accessed for further processing.
+
+`PDFCanvas`, on the other hand, renders directly to a vector-based PDF stream. It preserves exact layout fidelity, supports selectable text and vector graphics, and is ideal for producing high-quality documents for print, digital publication, or long-term archiving.
+
+Below is a simple example that renders the first few pages of a web article into a single PNG image. It lays the pages side-by-side on one canvas, then saves the result as an image file:
+
+```cpp
+#include <plutobook.hpp>
+
+#include <cmath>
+#include <algorithm>
+
+int main()
+{
+    // Create a document with A4 pages and no margins
+    plutobook::Book book(plutobook::PageSize::A4, plutobook::PageMargins::None);
+
+    // Load content from Wikipedia
+    book.loadUrl("https://en.wikipedia.org/wiki/Bjarne_Stroustrup");
+
+    // Convert page size to pixel dimensions
+    const plutobook::PageSize& pageSize = book.pageSize();
+    int pageWidth = std::ceil(pageSize.width() / plutobook::units::px);
+    int pageHeight = std::ceil(pageSize.height() / plutobook::units::px);
+
+    // Only render up to 3 pages
+    uint32_t pageCount = std::min(3u, book.pageCount());
+
+    // Create a canvas wide enough to hold all pages side by side
+    plutobook::ImageCanvas canvas(pageCount * pageWidth, pageHeight);
+    canvas.clearSurface(1, 1, 1, 1); // white background
+
+    // Loop through pages and render each onto the canvas
+    for(uint32_t pageIndex = 0; pageIndex < pageCount; ++pageIndex) {
+        canvas.saveState();
+        canvas.translate(pageIndex * pageWidth, 0); // shift canvas to next page slot
+        book.renderPage(canvas, pageIndex);
+        canvas.restoreState();
+    }
+
+    // Save the final image
+    canvas.writeToPng("Bjarne_Stroustrup_Pages.png");
+    return 0;
+}
+```
+
+Example output:
+
+![Bjarne_Stroustrup_Pages](https://github.com/user-attachments/assets/c06a42c2-113a-45d0-a123-45ac5d97c5c8)
+
 ---
 
 ### Working with Viewport Size
