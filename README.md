@@ -4,7 +4,23 @@ PlutoBook is a robust HTML rendering library tailored for paged media. It takes 
 
 > [!NOTE]
 > PlutoBook implements its own rendering engine and does **not** depend on rendering engines like Chromium, WebKit, or Gecko.  
-> The engine is designed to be robust, lightweight, and memory-efficient, leveraging modern C++17 features such as [`std::pmr::monotonic_buffer_resource`](https://en.cppreference.com/w/cpp/memory/monotonic_buffer_resource) to minimize memory fragmentation and optimize allocation performance.
+> The engine is designed to be robust, lightweight, and memory-efficient, leveraging modern C++ features such as [`std::pmr::monotonic_buffer_resource`](https://en.cppreference.com/w/cpp/memory/monotonic_buffer_resource) to minimize memory fragmentation and optimize allocation performance.
+
+---
+
+## Motivation
+
+Programmatically generating PDFs can be surprisingly difficult. Many libraries aim to simplify the task, but they often require learning specialized APIs or handling low-level layout details. In contrast, HTML and CSS are tools that most developers already know. They are expressive, easy to write, and well-suited for describing visual layouts.
+
+You might ask, "Wait, aren't tools like Playwright or Puppeteer already solving this?" They are powerful and feature-rich, but also come with significant overhead. Browser-based renderers are resource-heavy, often requiring gigabytes of memory and complex configurations. They're designed to handle the unpredictable nature of the modern web, including dynamic, JavaScript-heavy content. That makes them ideal for browsing and automation, but excessive for static document rendering.
+
+No one uses a bulldozer to mow a lawn. Not because it can’t, but because it’s overkill. Likewise, PlutoBook isn’t trying to replace your browser. It’s a focused tool designed specifically for high-quality rendering of paginated documents from static HTML or XML sources.
+
+PlutoBook is lightweight, robust, and easy to install. It supports a broad set of modern HTML and CSS features for intuitive layout, while maintaining efficiency and precision. Installation is straightforward and dependency-light. It uses well-established libraries like Cairo, FreeType, HarfBuzz, Fontconfig, Expat, and ICU. Optional support for Curl, TurboJPEG, and WebP extends its capabilities, without the need for a full browser engine.
+
+If your goal is to generate beautiful, paginated documents with precision and control, PlutoBook might be the right tool for the job.
+
+---
 
 ## Quick Start
 
