@@ -57,7 +57,18 @@ const char* plutobook_build_info()
     return "System: " SYSTEM_NAME "\n"
            "Machine: " MACHINE_NAME "\n"
            "Compiler: " COMPILER_NAME "\n"
-           "Built: " __DATE__ " " __TIME__ "\n\n"
+           "Built: " __DATE__ " " __TIME__ "\n"
+           "Features:"
+#ifdef PLUTOBOOK_HAS_CURL
+           " Curl"
+#endif
+#ifdef PLUTOBOOK_HAS_TURBOJPEG
+           " TurboJPEG"
+#endif
+#ifdef PLUTOBOOK_HAS_WEBP
+           " WebP"
+#endif
+           "\n\n"
            "PlutoBook version: " PLUTOBOOK_VERSION_STRING "\n"
            "Cairo version: " CAIRO_VERSION_STRING "\n";
 }
