@@ -19,6 +19,7 @@ PlutoBook is a robust HTML rendering library tailored for paged media. It takes 
   - [Loading From a File](#loading-from-a-file)
   - [Rendering to a Canvas](#rendering-to-a-canvas)
   - [Working with Viewport Size](#working-with-viewport-size)
+- [Practical Uses](#practical-uses)
 - [Installation Guide](#installation-guide)
   - [Prerequisites](#prerequisites)
   - [Build and Installation](#build-and-installation)
@@ -242,6 +243,9 @@ Viewport Height: 1026.52 px
 ```
 
 ---
+
+## Practical Uses
+PlutoBook can be used in a variety of real-world scenarios, such as generating PDFs on demand, building custom document viewers, creating interactive help files, or integrating dynamic content into websites and applications. These examples show how PlutoBook makes complex document workflows simpler and more flexible.
 
 ## Installation Guide
 
