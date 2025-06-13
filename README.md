@@ -10,21 +10,21 @@ PlutoBook is a robust HTML rendering library tailored for paged media. It takes 
 
 ## Table of Contents
 
-1. [Introduction](#plutobook)
-2. [Motivation](#motivation)
-3. [Features](FEATURES.md)
-2. [Quick Start](#quick-start)
-   - [Basic Usage](#basic-usage)
-   - [Loading From a URL](#loading-from-a-url)
-   - [Loading From a File](#loading-from-a-file)
-   - [Rendering to a Canvas](#rendering-to-a-canvas)
-   - [Working with Viewport Size](#working-with-viewport-size)
-4. [Installation Guide](#installation-guide)
-   - [Prerequisites](#prerequisites)
-   - [Build and Installation](#build-and-installation)
-5. [API Documentation](#api-documentation)
-6. [Contributions](#contributions)
-7. [License](#license)
+- [Introduction](#plutobook)
+- [Motivation](#motivation)
+- [Features](FEATURES.md)
+- [Quick Start](#quick-start)
+  - [Basic Usage](#basic-usage)
+  - [Loading From a URL](#loading-from-a-url)
+  - [Loading From a File](#loading-from-a-file)
+  - [Rendering to a Canvas](#rendering-to-a-canvas)
+  - [Working with Viewport Size](#working-with-viewport-size)
+- [Installation Guide](#installation-guide)
+  - [Prerequisites](#prerequisites)
+  - [Build and Installation](#build-and-installation)
+- [API Documentation](#api-documentation)
+- [Contributions](#contributions)
+- [License](#license)
 
 ---
 
