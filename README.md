@@ -20,6 +20,10 @@ PlutoBook is a robust HTML rendering library tailored for paged media. It takes 
   - [Rendering to a Canvas](#rendering-to-a-canvas)
   - [Working with Viewport Size](#working-with-viewport-size)
 - [Practical Uses](#practical-uses)
+  - [Email Client HTML Renderer](#email-client-html-renderer)
+  - [Automated Report Generation](#automated-report-generation)
+  - [Custom E-Book or Document Viewer](#custom-e-book-or-document-viewer)
+  - [Offline Help and Documentation](#offline-help-and-documentation)
 - [Installation Guide](#installation-guide)
   - [Prerequisites](#prerequisites)
   - [Build and Installation](#build-and-installation)
@@ -98,7 +102,9 @@ int main()
 
 Example output:
 
-![Screenshot](https://github.com/user-attachments/assets/1f563034-9575-4345-8a64-c781267b06b6)
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/1f563034-9575-4345-8a64-c781267b06b6" alt="Bjarne_Stroustrup_Page" width="500">
+</p>
 
 ### Loading From a File
 
@@ -175,7 +181,9 @@ int main()
 
 Example output:
 
-![Bjarne_Stroustrup_Pages](https://github.com/user-attachments/assets/c06a42c2-113a-45d0-a123-45ac5d97c5c8)
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/c06a42c2-113a-45d0-a123-45ac5d97c5c8" alt="Bjarne_Stroustrup_Pages" width="800">
+</p>
 
 ---
 
@@ -245,7 +253,32 @@ Viewport Height: 1026.52 px
 ---
 
 ## Practical Uses
-PlutoBook can be used in a variety of real-world scenarios, such as generating PDFs on demand, building custom document viewers, creating interactive help files, or integrating dynamic content into websites and applications. These examples show how PlutoBook makes complex document workflows simpler and more flexible.
+PlutoBook provides a robust HTML and CSS rendering engine that can be integrated into a wide range of workflows. The examples below illustrate how PlutoBook can be used in real-world scenarios.
+
+### Email Client HTML Renderer
+
+PlutoBook can render HTML content safely and consistently within an email client. With PlutoBook, developers can implement a custom rendering layer that displays email layouts and styles accurately, without needing a full web browser engine.
+
+
+For example, the screenshot below shows PlutoBook rendering the first page of a **New York Times** newsletter:
+
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/72c644d6-0b95-4326-8ad4-ea7dd9afed51" alt="New_York_Times_Newsletter" width="500">
+</p>
+
+### Automated Report Generation
+
+PlutoBook can be integrated into backend services to automatically generate high-quality PDFs or static HTML reports from dynamic data. This is useful for creating invoices, statements, or compliance documents on demand. Designers can style reports using familiar HTML and CSS, making templates easy to maintain.
+
+### Custom E-Book or Document Viewer
+
+PlutoBook enables developers to build lightweight e-book readers or document viewers that display paginated, static HTML content with consistent styling, images, and fonts. This is ideal for publishing tools, educational apps, or offline manuals where predictable layout is important.
+
+### Offline Help and Documentation
+
+PlutoBook can power built-in help systems or static documentation viewers within applications. It renders static HTML and CSS quickly and securely, making it a practical choice for embedding user guides or offline documentation without the overhead of a full web browser.
+
+---
 
 ## Installation Guide
 
