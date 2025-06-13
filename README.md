@@ -8,6 +8,26 @@ PlutoBook is a robust HTML rendering library tailored for paged media. It takes 
 
 ---
 
+## Table of Contents
+
+1. [Introduction](#plutobook)
+2. [Motivation](#motivation)
+3. [Features](FEATURES.md)
+2. [Quick Start](#quick-start)
+   - [Basic Usage](#basic-usage)
+   - [Loading From a URL](#loading-from-a-url)
+   - [Loading From a File](#loading-from-a-file)
+   - [Rendering to a Canvas](#rendering-to-a-canvas)
+   - [Working with Viewport Size](#working-with-viewport-size)
+4. [Installation Guide](#installation-guide)
+   - [Prerequisites](#prerequisites)
+   - [Build and Installation](#build-and-installation)
+5. [API Documentation](#api-documentation)
+6. [Contributions](#contributions)
+7. [License](#license)
+
+---
+
 ## Motivation
 
 Programmatically generating PDFs can be surprisingly difficult. Many libraries aim to simplify the task, but they often require learning specialized APIs or handling low-level layout details. In contrast, HTML and CSS are tools that most developers already know. They are expressive, easy to write, and well-suited for describing visual layouts.
