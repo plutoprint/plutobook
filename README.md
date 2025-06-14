@@ -21,10 +21,10 @@ PlutoBook is a robust HTML rendering library tailored for paged media. It takes 
   - [Working with Viewport Size](#working-with-viewport-size)
 - [Practical Uses](#practical-uses)
   - [Email Client HTML Renderer](#email-client-html-renderer)
+  - [Text Editor Print Renderer](#text-editor-print-renderer)
   - [Automated Report Generation](#automated-report-generation)
   - [Custom E-Book or Document Viewer](#custom-e-book-or-document-viewer)
   - [Offline Help and Documentation](#offline-help-and-documentation)
-  - [Text Editor Print Renderer](#text-editor-print-renderer)
 - [Installation Guide](#installation-guide)
   - [Prerequisites](#prerequisites)
   - [Build and Installation](#build-and-installation)
@@ -103,9 +103,7 @@ int main()
 
 Example output:
 
-<p align="center">
-  <img src="https://github.com/user-attachments/assets/1f563034-9575-4345-8a64-c781267b06b6" alt="Bjarne_Stroustrup_Page" width="500">
-</p>
+<p align="center"><img src="https://github.com/user-attachments/assets/1f563034-9575-4345-8a64-c781267b06b6" alt="Bjarne_Stroustrup_Page" width="500"></p>
 
 ### Loading From a File
 
@@ -182,9 +180,7 @@ int main()
 
 Example output:
 
-<p align="center">
-  <img src="https://github.com/user-attachments/assets/c06a42c2-113a-45d0-a123-45ac5d97c5c8" alt="Bjarne_Stroustrup_Pages" width="800">
-</p>
+<p align="center"><img src="https://github.com/user-attachments/assets/c06a42c2-113a-45d0-a123-45ac5d97c5c8" alt="Bjarne_Stroustrup_Pages" width="800"></p>
 
 ---
 
@@ -260,16 +256,23 @@ PlutoBook provides a robust HTML and CSS rendering engine that can be integrated
 
 PlutoBook can render HTML content safely and consistently within an email client. With PlutoBook, developers can implement a custom rendering layer that displays email layouts and styles accurately, without needing a full web browser engine.
 
-
 For example, the screenshot below shows PlutoBook rendering the first page of a **New York Times** newsletter:
 
-<p align="center">
-  <img src="https://github.com/user-attachments/assets/72c644d6-0b95-4326-8ad4-ea7dd9afed51" alt="New_York_Times_Newsletter" width="500">
-</p>
+<p align="center"><img src="https://github.com/user-attachments/assets/72c644d6-0b95-4326-8ad4-ea7dd9afed51" alt="New_York_Times_Newsletter" width="500"></p>
+
+### Text Editor Print Renderer
+
+PlutoBook can be embedded in text editors such as **Sublime Text** to render HTML output for printing or print preview. This allows developers to generate clean, styled print layouts for their code, Markdown, or other text documents directly within the editor, without needing a separate browser or external PDF tool.
+
+For example, the screenshot below shows PlutoBook rendering a **Sublime Text** document prepared for printing:
+
+<p align="center"><img src="https://github.com/user-attachments/assets/0340eca9-43ed-4fb6-8eb7-1d8b51c40d15" alt="Sublime_Text_Print_Preview" width="500"></p>
 
 ### Automated Report Generation
 
 PlutoBook can be integrated into backend services to automatically generate high-quality PDFs or static HTML reports from dynamic data. This is useful for creating invoices, statements, or compliance documents on demand. Designers can style reports using familiar HTML and CSS, making templates easy to maintain.
+
+<p align="center"><img src="https://github.com/user-attachments/assets/49b0d5bf-ecd0-4c3e-b48a-7beefa09bd43" alt="Invoice" width="700"></p>
 
 ### Custom E-Book or Document Viewer
 
@@ -278,14 +281,6 @@ PlutoBook enables developers to build lightweight e-book readers or document vie
 ### Offline Help and Documentation
 
 PlutoBook can power built-in help systems or static documentation viewers within applications. It renders static HTML and CSS quickly and securely, making it a practical choice for embedding user guides or offline documentation without the overhead of a full web browser.
-
-### Text Editor Print Renderer
-
-PlutoBook can be embedded in text editors such as **Sublime Text** to render HTML output for printing or print preview. This allows developers to generate clean, styled print layouts for their code, Markdown, or other text documents directly within the editor, without needing a separate browser or external PDF tool.
-
-For example, the screenshot below shows PlutoBook rendering a **Sublime Text** document prepared for printing:
-
-<p align="center"><img src="https://github.com/user-attachments/assets/0340eca9-43ed-4fb6-8eb7-1d8b51c40d15" alt="Sublime_Text_Print_Preview" width="700"></p>
 
 ---
 
