@@ -24,6 +24,7 @@ PlutoBook is a robust HTML rendering library tailored for paged media. It takes 
   - [Automated Report Generation](#automated-report-generation)
   - [Custom E-Book or Document Viewer](#custom-e-book-or-document-viewer)
   - [Offline Help and Documentation](#offline-help-and-documentation)
+  - [Text Editor Print Renderer](#text-editor-print-renderer)
 - [Installation Guide](#installation-guide)
   - [Prerequisites](#prerequisites)
   - [Build and Installation](#build-and-installation)
@@ -277,6 +278,14 @@ PlutoBook enables developers to build lightweight e-book readers or document vie
 ### Offline Help and Documentation
 
 PlutoBook can power built-in help systems or static documentation viewers within applications. It renders static HTML and CSS quickly and securely, making it a practical choice for embedding user guides or offline documentation without the overhead of a full web browser.
+
+### Text Editor Print Renderer
+
+PlutoBook can be embedded in text editors such as **Sublime Text** to render HTML output for printing or print preview. This allows developers to generate clean, styled print layouts for their code, Markdown, or other text documents directly within the editor, without needing a separate browser or external PDF tool.
+
+For example, the screenshot below shows PlutoBook rendering a **Sublime Text** document prepared for printing:
+
+<p align="center"><img src="https://github.com/user-attachments/assets/0340eca9-43ed-4fb6-8eb7-1d8b51c40d15" alt="Sublime_Text_Print_Preview" width="700"></p>
 
 ---
 
