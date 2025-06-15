@@ -110,8 +110,8 @@ public:
     void parse();
 
 private:
-    Element* createHTMLElement(HTMLTokenView& token) const;
-    Element* createElement(HTMLTokenView& token, const GlobalString& namespaceURI) const;
+    Element* createHTMLElement(const HTMLTokenView& token) const;
+    Element* createElement(const HTMLTokenView& token, const GlobalString& namespaceURI) const;
     Element* cloneElement(const Element* element) const;
     Element* currentElement() const { return m_openElements.top(); }
 
@@ -130,23 +130,23 @@ private:
 
     void reconstructActiveFormattingElements();
     void flushPendingTableCharacters();
-    void closeCell();
+    void closeTheCell();
 
     static void adjustSVGTagNames(HTMLTokenView& token);
     static void adjustSVGAttributes(HTMLTokenView& token);
     static void adjustMathMLAttributes(HTMLTokenView& token);
     static void adjustForeignAttributes(HTMLTokenView& token);
 
-    void insertDoctype(HTMLTokenView& token);
-    void insertComment(HTMLTokenView& token, ContainerNode* parent);
-    void insertHTMLHtmlElement(HTMLTokenView& token);
-    void insertHeadElement(HTMLTokenView& token);
-    void insertHTMLBodyElement(HTMLTokenView& token);
-    void insertHTMLFormElement(HTMLTokenView& token);
-    void insertSelfClosingHTMLElement(HTMLTokenView& token);
-    void insertHTMLElement(HTMLTokenView& token);
-    void insertHTMLFormattingElement(HTMLTokenView& token);
-    void insertForeignElement(HTMLTokenView& token, const GlobalString& namespaceURI);
+    void insertDoctype(const HTMLTokenView& token);
+    void insertComment(const HTMLTokenView& token, ContainerNode* parent);
+    void insertHTMLHtmlElement(const HTMLTokenView& token);
+    void insertHeadElement(const HTMLTokenView& token);
+    void insertHTMLBodyElement(const HTMLTokenView& token);
+    void insertHTMLFormElement(const HTMLTokenView& token);
+    void insertSelfClosingHTMLElement(const HTMLTokenView& token);
+    void insertHTMLElement(const HTMLTokenView& token);
+    void insertHTMLFormattingElement(const HTMLTokenView& token);
+    void insertForeignElement(const HTMLTokenView& token, const GlobalString& namespaceURI);
     void insertTextNode(const std::string_view& data);
 
     enum class InsertionMode {
@@ -175,8 +175,8 @@ private:
         InForeignContent
     };
 
-    void resetInsertionMode();
-    InsertionMode currentInsertionMode(HTMLTokenView& token) const;
+    void resetInsertionModeAppropriately();
+    InsertionMode currentInsertionMode(const HTMLTokenView& token) const;
 
     void handleInitialMode(HTMLTokenView& token);
     void handleBeforeHTMLMode(HTMLTokenView& token);

@@ -678,12 +678,45 @@ Element* HTMLFormattingElementList::closestElementInScope(const GlobalString& ta
     return nullptr;
 }
 
-Element* HTMLParser::createHTMLElement(HTMLTokenView& token) const
+HTMLParser::HTMLParser(HTMLDocument* document, const std::string_view& content)
+    : m_document(document), m_tokenizer(content, document->heap())
+{
+}
+
+void HTMLParser::parse()
+{
+    while(!m_tokenizer.atEOF()) {
+        auto token = m_tokenizer.nextToken();
+        if(token.type() == HTMLToken::Type::DOCTYPE) {
+            handleDoctypeToken(token);
+            continue;
+        }
+
+        if(token.type() == HTMLToken::Type::Comment) {
+            handleCommentToken(token);
+            continue;
+        }
+
+        if(m_skipLeadingNewline
+            && token.type() == HTMLToken::Type::SpaceCharacter) {
+            token.skipLeadingNewLine();
+        }
+
+        m_skipLeadingNewline = false;
+        handleToken(token, currentInsertionMode(token));
+    }
+
+    assert(!m_openElements.empty());
+    m_openElements.popAll();
+    m_document->finishParsingDocument();
+}
+
+Element* HTMLParser::createHTMLElement(const HTMLTokenView& token) const
 {
     return createElement(token, xhtmlNs);
 }
 
-Element* HTMLParser::createElement(HTMLTokenView& token, const GlobalString& namespaceURI) const
+Element* HTMLParser::createElement(const HTMLTokenView& token, const GlobalString& namespaceURI) const
 {
     auto element = m_document->createElement(namespaceURI, token.tagName());
     element->setIsCaseSensitive(!token.hasCamelCase());
@@ -783,7 +816,7 @@ void HTMLParser::flushPendingTableCharacters()
     m_insertionMode = m_originalInsertionMode;
 }
 
-void HTMLParser::closeCell()
+void HTMLParser::closeTheCell()
 {
     if(m_openElements.inTableScope(tdTag)) {
         assert(!m_openElements.inTableScope(thTag));
@@ -934,22 +967,22 @@ void HTMLParser::adjustForeignAttributes(HTMLTokenView& token)
     }
 }
 
-void HTMLParser::insertDoctype(HTMLTokenView& token)
+void HTMLParser::insertDoctype(const HTMLTokenView& token)
 {
 }
 
-void HTMLParser::insertComment(HTMLTokenView& token, ContainerNode* parent)
+void HTMLParser::insertComment(const HTMLTokenView& token, ContainerNode* parent)
 {
 }
 
-void HTMLParser::insertHTMLHtmlElement(HTMLTokenView& token)
+void HTMLParser::insertHTMLHtmlElement(const HTMLTokenView& token)
 {
     auto element = createHTMLElement(token);
     insertElement(element, m_document);
     m_openElements.pushHTMLHtmlElement(element);
 }
 
-void HTMLParser::insertHeadElement(HTMLTokenView& token)
+void HTMLParser::insertHeadElement(const HTMLTokenView& token)
 {
     auto element = createHTMLElement(token);
     insertElement(element);
@@ -957,14 +990,14 @@ void HTMLParser::insertHeadElement(HTMLTokenView& token)
     m_head = element;
 }
 
-void HTMLParser::insertHTMLBodyElement(HTMLTokenView& token)
+void HTMLParser::insertHTMLBodyElement(const HTMLTokenView& token)
 {
     auto element = createHTMLElement(token);
     insertElement(element);
     m_openElements.pushHTMLBodyElement(element);
 }
 
-void HTMLParser::insertHTMLFormElement(HTMLTokenView& token)
+void HTMLParser::insertHTMLFormElement(const HTMLTokenView& token)
 {
     auto element = createHTMLElement(token);
     insertElement(element);
@@ -972,19 +1005,19 @@ void HTMLParser::insertHTMLFormElement(HTMLTokenView& token)
     m_form = element;
 }
 
-void HTMLParser::insertSelfClosingHTMLElement(HTMLTokenView& token)
+void HTMLParser::insertSelfClosingHTMLElement(const HTMLTokenView& token)
 {
     insertElement(createHTMLElement(token));
 }
 
-void HTMLParser::insertHTMLElement(HTMLTokenView& token)
+void HTMLParser::insertHTMLElement(const HTMLTokenView& token)
 {
     auto element = createHTMLElement(token);
     insertElement(element);
     m_openElements.push(element);
 }
 
-void HTMLParser::insertHTMLFormattingElement(HTMLTokenView& token)
+void HTMLParser::insertHTMLFormattingElement(const HTMLTokenView& token)
 {
     auto element = createHTMLElement(token);
     insertElement(element);
@@ -992,7 +1025,7 @@ void HTMLParser::insertHTMLFormattingElement(HTMLTokenView& token)
     m_activeFormattingElements.append(element);
 }
 
-void HTMLParser::insertForeignElement(HTMLTokenView& token, const GlobalString& namespaceURI)
+void HTMLParser::insertForeignElement(const HTMLTokenView& token, const GlobalString& namespaceURI)
 {
     auto element = createElement(token, namespaceURI);
     insertElement(element);
@@ -1020,7 +1053,7 @@ void HTMLParser::insertTextNode(const std::string_view& data)
     insertNode(location, m_document->createTextNode(data));
 }
 
-void HTMLParser::resetInsertionMode()
+void HTMLParser::resetInsertionModeAppropriately()
 {
     for(int i = m_openElements.size() - 1; i >= 0; --i) {
         auto element = m_openElements.at(i);
@@ -1089,7 +1122,7 @@ void HTMLParser::resetInsertionMode()
     }
 }
 
-HTMLParser::InsertionMode HTMLParser::currentInsertionMode(HTMLTokenView& token) const
+HTMLParser::InsertionMode HTMLParser::currentInsertionMode(const HTMLTokenView& token) const
 {
     if(m_openElements.empty())
         return m_insertionMode;
@@ -2076,7 +2109,7 @@ void HTMLParser::handleInTableMode(HTMLTokenView& token)
         if(token.tagName() == tableTag) {
             assert(m_openElements.inTableScope(tableTag));
             m_openElements.popUntilPopped(tableTag);
-            resetInsertionMode();
+            resetInsertionModeAppropriately();
             return;
         }
 
@@ -2363,7 +2396,7 @@ void HTMLParser::handleInCellMode(HTMLTokenView& token)
             || token.tagName() == theadTag
             || token.tagName() == trTag) {
             assert(m_openElements.inTableScope(tdTag) || m_openElements.inTableScope(thTag));
-            closeCell();
+            closeTheCell();
             handleToken(token);
             return;
         }
@@ -2403,7 +2436,7 @@ void HTMLParser::handleInCellMode(HTMLTokenView& token)
                 return;
             }
 
-            closeCell();
+            closeTheCell();
             handleToken(token);
             return;
         }
@@ -2487,7 +2520,7 @@ void HTMLParser::handleInSelectMode(HTMLTokenView& token)
         if(token.tagName() == selectTag) {
             assert(m_openElements.inSelectScope(token.tagName()));
             m_openElements.popUntilPopped(selectTag);
-            resetInsertionMode();
+            resetInsertionModeAppropriately();
             return;
         }
     } else if(token.type() == HTMLToken::Type::Character
@@ -2997,38 +3030,6 @@ void HTMLParser::handleToken(HTMLTokenView& token, InsertionMode mode)
     case InsertionMode::InForeignContent:
         return handleInForeignContentMode(token);
     }
-}
-
-HTMLParser::HTMLParser(HTMLDocument* document, const std::string_view& content)
-    : m_document(document), m_tokenizer(content, document->heap())
-{
-}
-
-void HTMLParser::parse()
-{
-    while(!m_tokenizer.atEOF()) {
-        auto token = m_tokenizer.nextToken();
-        if(token.type() == HTMLToken::Type::DOCTYPE) {
-            handleDoctypeToken(token);
-            continue;
-        }
-
-        if(token.type() == HTMLToken::Type::Comment) {
-            handleCommentToken(token);
-            continue;
-        }
-
-        if(m_skipLeadingNewline && token.type() == HTMLToken::Type::SpaceCharacter) {
-            token.skipLeadingNewLine();
-        }
-
-        m_skipLeadingNewline = false;
-        handleToken(token, currentInsertionMode(token));
-    }
-
-    assert(!m_openElements.empty());
-    m_openElements.popAll();
-    m_document->finishParsingDocument();
 }
 
 } // namespace plutobook
