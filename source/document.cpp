@@ -442,6 +442,7 @@ Element* Element::nextElement() const
 Node* Element::cloneNode(bool deep)
 {
     auto newElement = document()->createElement(m_namespaceURI, m_tagName);
+    newElement->setIsCaseSensitive(m_isCaseSensitive);
     newElement->setAttributes(m_attributes);
     if(deep) { cloneChildren(newElement); }
     return newElement;
