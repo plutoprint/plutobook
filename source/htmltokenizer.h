@@ -9,7 +9,7 @@ namespace plutobook {
 
 class HTMLToken {
 public:
-    enum class Type {
+    enum class Type : uint8_t {
         Unknown,
         DOCTYPE,
         StartTag,
@@ -240,6 +240,9 @@ public:
     const std::span<Attribute>& attributes() const { return m_attributes; }
     const std::string_view& data() const { return m_data; }
 
+    bool hasCamelCase() const { return m_hasCamelCase; }
+    void setHasCamelCase(bool value) { m_hasCamelCase = value; }
+
     const Attribute* findAttribute(const GlobalString& name) const {
         assert(m_type == HTMLToken::Type::StartTag || m_type == HTMLToken::Type::EndTag);
         for(const auto& attribute : m_attributes) {
@@ -280,6 +283,7 @@ private:
     bool m_forceQuirks{false};
     bool m_hasPublicIdentifier{false};
     bool m_hasSystemIdentifier{false};
+    bool m_hasCamelCase{false};
     std::string_view m_publicIdentifier;
     std::string_view m_systemIdentifier;
     GlobalString m_tagName;

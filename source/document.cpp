@@ -492,7 +492,6 @@ void Element::serialize(std::ostream& o) const
 
 void Element::finishParsingDocument()
 {
-    m_isCaseSensitive = isHTMLElement() || inXMLDocument();
     if(m_tagName == aTag) {
         const auto& href = getAttribute(hrefAttr);
         const auto& baseUrl = document()->baseUrl();

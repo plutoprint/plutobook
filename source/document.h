@@ -189,8 +189,6 @@ public:
     bool isElementNode() const final { return true; }
     bool isOfType(const GlobalString& namespaceURI, const GlobalString& tagName) const { return m_namespaceURI == namespaceURI && m_tagName == tagName; }
 
-    bool isCaseSensitive() const { return m_isCaseSensitive; }
-
     GlobalString foldCase(const GlobalString& name) const;
     GlobalString foldTagNameCase() const { return foldCase(m_tagName); }
 
@@ -219,6 +217,9 @@ public:
     Element* parentElement() const;
     Element* previousElement() const;
     Element* nextElement() const;
+
+    void setIsCaseSensitive(bool value) { m_isCaseSensitive = value; }
+    bool isCaseSensitive() const { return m_isCaseSensitive; }
 
     void setIsLinkDestination(bool value) { m_isLinkDestination = value; }
     bool isLinkDestination() const { return m_isLinkDestination; }

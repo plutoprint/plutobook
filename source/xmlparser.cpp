@@ -92,6 +92,7 @@ void XMLParser::handleStartElement(const char* name, const char** attrs)
         attrs += 2;
     }
 
+    element->setIsCaseSensitive(true);
     m_currentNode->appendChild(element);
     m_currentNode = element;
 }

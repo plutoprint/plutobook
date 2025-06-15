@@ -686,6 +686,7 @@ Element* HTMLParser::createHTMLElement(HTMLTokenView& token) const
 Element* HTMLParser::createElement(HTMLTokenView& token, const GlobalString& namespaceURI) const
 {
     auto element = m_document->createElement(namespaceURI, token.tagName());
+    element->setIsCaseSensitive(!token.hasCamelCase());
     for(const auto& attribute : token.attributes())
         element->setAttribute(attribute);
     return element;
@@ -694,6 +695,7 @@ Element* HTMLParser::createElement(HTMLTokenView& token, const GlobalString& nam
 Element* HTMLParser::cloneElement(const Element* element) const
 {
     auto newElement = m_document->createElement(element->namespaceURI(), element->tagName());
+    newElement->setIsCaseSensitive(element->isCaseSensitive());
     newElement->setAttributes(element->attributes());
     return newElement;
 }
@@ -835,6 +837,7 @@ void HTMLParser::adjustSVGTagNames(HTMLTokenView& token)
     auto it = table.find(token.tagName());
     if(it != table.end()) {
         token.adjustTagName(it->second);
+        token.setHasCamelCase(true);
     }
 }
 
@@ -905,6 +908,7 @@ void HTMLParser::adjustSVGAttributes(HTMLTokenView& token)
         auto it = table.find(attribute.name());
         if(it != table.end()) {
             attribute.setName(it->second);
+            token.setHasCamelCase(true);
         }
     }
 }
@@ -915,6 +919,7 @@ void HTMLParser::adjustMathMLAttributes(HTMLTokenView& token)
     for(auto& attribute : token.attributes()) {
         if(definitionurl == attribute.name()) {
             attribute.setName(definitionUrlAttr);
+            token.setHasCamelCase(true);
         }
     }
 }
