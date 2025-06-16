@@ -240,6 +240,58 @@ inline bool isSelectScopeMarker(const Element* element)
         && element->tagName() != optionTag;
 }
 
+void HTMLElementList::remove(const Element* element)
+{
+    remove(index(element));
+}
+
+void HTMLElementList::remove(size_t index)
+{
+    assert(index < m_elements.size());
+    m_elements.erase(m_elements.begin() + index);
+}
+
+void HTMLElementList::replace(const Element* element, Element* item)
+{
+    replace(index(element), item);
+}
+
+void HTMLElementList::replace(size_t index, Element* element)
+{
+    m_elements.at(index) = element;
+}
+
+void HTMLElementList::insert(size_t index, Element* element)
+{
+    assert(index <= m_elements.size());
+    m_elements.insert(m_elements.begin() + index, element);
+}
+
+size_t HTMLElementList::index(const Element* element) const
+{
+    for(int i = m_elements.size() - 1; i >= 0; --i) {
+        if(element == m_elements.at(i)) {
+            return i;
+        }
+    }
+
+    assert(false);
+    return 0;
+}
+
+bool HTMLElementList::contains(const Element* element) const
+{
+    auto it = m_elements.rbegin();
+    auto end = m_elements.rend();
+    for(; it != end; ++it) {
+        if(element == *it) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 void HTMLElementStack::push(Element* element)
 {
     assert(element->tagName() != htmlTag);
@@ -408,6 +460,11 @@ void HTMLElementStack::removeHTMLBodyElement()
     delete element;
 }
 
+void HTMLElementStack::insertAfter(const Element* element, Element* item)
+{
+    insert(index(element) + 1, item);
+}
+
 Element* HTMLElementStack::furthestBlockForFormattingElement(const Element* formattingElement) const
 {
     Element* furthestBlock = nullptr;
@@ -519,68 +576,6 @@ bool HTMLElementStack::isNumberedHeaderElementInScope() const
     return false;
 }
 
-void HTMLElementStack::remove(const Element* element)
-{
-    if(element == top())
-        return pop();
-    assert(element->tagName() != htmlTag);
-    assert(element->tagName() != headTag);
-    assert(element->tagName() != bodyTag);
-    remove(index(element));
-}
-
-void HTMLElementStack::remove(size_t index)
-{
-    assert(index < m_elements.size());
-    m_elements.erase(m_elements.begin() + index);
-}
-
-void HTMLElementStack::replace(const Element* element, Element* item)
-{
-    replace(index(element), item);
-}
-
-void HTMLElementStack::replace(size_t index, Element* element)
-{
-    m_elements.at(index) = element;
-}
-
-void HTMLElementStack::insertAfter(const Element* element, Element* item)
-{
-    insert(index(element) + 1, item);
-}
-
-void HTMLElementStack::insert(size_t index, Element* element)
-{
-    assert(index <= m_elements.size());
-    m_elements.insert(m_elements.begin() + index, element);
-}
-
-size_t HTMLElementStack::index(const Element* element) const
-{
-    for(int i = m_elements.size() - 1; i >= 0; --i) {
-        if(element == m_elements.at(i)) {
-            return i;
-        }
-    }
-
-    assert(false);
-    return 0;
-}
-
-bool HTMLElementStack::contains(const Element* element) const
-{
-    auto it = m_elements.rbegin();
-    auto end = m_elements.rend();
-    for(; it != end; ++it) {
-        if(element == *it) {
-            return true;
-        }
-    }
-
-    return false;
-}
-
 void HTMLFormattingElementList::append(Element* element)
 {
     assert(element != nullptr);
@@ -620,58 +615,6 @@ void HTMLFormattingElementList::clearToLastMarker()
             break;
         }
     }
-}
-
-void HTMLFormattingElementList::remove(const Element* element)
-{
-    remove(index(element));
-}
-
-void HTMLFormattingElementList::remove(size_t index)
-{
-    assert(index < m_elements.size());
-    m_elements.erase(m_elements.begin() + index);
-}
-
-void HTMLFormattingElementList::replace(const Element* element, Element* item)
-{
-    replace(index(element), item);
-}
-
-void HTMLFormattingElementList::replace(size_t index, Element* element)
-{
-    m_elements.at(index) = element;
-}
-
-void HTMLFormattingElementList::insert(size_t index, Element* element)
-{
-    assert(index <= m_elements.size());
-    m_elements.insert(m_elements.begin() + index, element);
-}
-
-size_t HTMLFormattingElementList::index(const Element* element) const
-{
-    for(int i = m_elements.size() - 1; i >= 0; --i) {
-        if(element == m_elements.at(i)) {
-            return i;
-        }
-    }
-
-    assert(false);
-    return 0;
-}
-
-bool HTMLFormattingElementList::contains(const Element* element) const
-{
-    auto it = m_elements.rbegin();
-    auto end = m_elements.rend();
-    for(; it != end; ++it) {
-        if(element == *it) {
-            return true;
-        }
-    }
-
-    return false;
 }
 
 Element* HTMLFormattingElementList::closestElementInScope(const GlobalString& tagName)

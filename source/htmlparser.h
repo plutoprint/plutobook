@@ -5,7 +5,28 @@
 
 namespace plutobook {
 
-class HTMLElementStack {
+class HTMLElementList {
+public:
+    HTMLElementList() = default;
+
+    void remove(const Element* element);
+    void remove(size_t index);
+    void replace(const Element* element, Element* item);
+    void replace(size_t index, Element* element);
+    void insert(size_t index, Element* element);
+
+    size_t index(const Element* element) const;
+    bool contains(const Element* element) const;
+    Element* at(size_t index) const { return m_elements.at(index); }
+
+    bool empty() const { return m_elements.empty(); }
+    size_t size() const { return m_elements.size(); }
+
+protected:
+    std::vector<Element*> m_elements;
+};
+
+class HTMLElementStack : public HTMLElementList {
 public:
     HTMLElementStack() = default;
 
@@ -35,9 +56,12 @@ public:
     void removeHTMLHeadElement(const Element* element);
     void removeHTMLBodyElement();
 
+    void insertAfter(const Element* element, Element* item);
+
     Element* furthestBlockForFormattingElement(const Element* formattingElement) const;
     Element* topmost(const GlobalString& tagName) const;
     Element* previous(const Element* element) const;
+    Element* top() const { return m_elements.back(); }
 
     Element* htmlElement() const { return m_htmlElement; }
     Element* headElement() const { return m_headElement; }
@@ -53,29 +77,13 @@ public:
     bool inSelectScope(const GlobalString& tagName) const;
     bool isNumberedHeaderElementInScope() const;
 
-    void remove(const Element* element);
-    void remove(size_t index);
-    void replace(const Element* element, Element* item);
-    void replace(size_t index, Element* element);
-    void insertAfter(const Element* element, Element* item);
-    void insert(size_t index, Element* element);
-
-    size_t index(const Element* element) const;
-    bool contains(const Element* element) const;
-    Element* at(size_t index) const { return m_elements.at(index); }
-    Element* top() const { return m_elements.back(); }
-
-    bool empty() const { return m_elements.empty(); }
-    size_t size() const { return m_elements.size(); }
-
 private:
-    std::vector<Element*> m_elements;
     Element* m_htmlElement{nullptr};
     Element* m_headElement{nullptr};
     Element* m_bodyElement{nullptr};
 };
 
-class HTMLFormattingElementList {
+class HTMLFormattingElementList : public HTMLElementList {
 public:
     HTMLFormattingElementList() = default;
 
@@ -83,22 +91,7 @@ public:
     void appendMarker();
     void clearToLastMarker();
 
-    void remove(const Element* element);
-    void remove(size_t index);
-    void replace(const Element* element, Element* item);
-    void replace(size_t index, Element* element);
-    void insert(size_t index, Element* element);
-
-    size_t index(const Element* element) const;
-    bool contains(const Element* element) const;
-    Element* at(size_t index) const { return m_elements.at(index); }
     Element* closestElementInScope(const GlobalString& tagName);
-
-    bool empty() const { return m_elements.empty(); }
-    size_t size() const { return m_elements.size(); }
-
-private:
-    std::vector<Element*> m_elements;
 };
 
 class HTMLDocument;
