@@ -2865,15 +2865,14 @@ void HTMLParser::handleFormattingEndTagToken(HTMLTokenView& token)
             furthestBlockIndex -= 1;
             auto node = m_openElements.at(furthestBlockIndex);
             if(!m_activeFormattingElements.contains(node)) {
-                m_openElements.remove(node);
+                m_openElements.remove(furthestBlockIndex);
                 continue;
             }
 
             if(node == formattingElement)
                 break;
             if(lastNode == furthestBlock) {
-                bookmark = m_activeFormattingElements.index(node);
-                bookmark += 1;
+                bookmark = m_activeFormattingElements.index(node) + 1;
             }
 
             auto newNode = cloneElement(node);
