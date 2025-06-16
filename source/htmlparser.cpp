@@ -441,9 +441,7 @@ Element* HTMLElementStack::topmost(const GlobalString& tagName) const
 
 Element* HTMLElementStack::previous(const Element* element) const
 {
-    auto i = index(element);
-    assert(i >= 1);
-    return m_elements.at(i - 1);
+    return m_elements.at(index(element) - 1);
 }
 
 template<bool isMarker(const Element*)>
@@ -544,15 +542,12 @@ void HTMLElementStack::replace(const Element* element, Element* item)
 
 void HTMLElementStack::replace(int index, Element* element)
 {
-    assert(index >= 0 && index <= m_elements.size());
     m_elements.at(index) = element;
 }
 
 void HTMLElementStack::insertAfter(const Element* element, Element* item)
 {
-    auto i = index(element);
-    assert(i >= 0);
-    insert(i + 1, item);
+    insert(index(element) + 1, item);
 }
 
 void HTMLElementStack::insert(int index, Element* element)
@@ -569,12 +564,21 @@ int HTMLElementStack::index(const Element* element) const
         }
     }
 
+    assert(false);
     return -1;
 }
 
 bool HTMLElementStack::contains(const Element* element) const
 {
-    return index(element) >= 0;
+    auto it = m_elements.rbegin();
+    auto end = m_elements.rend();
+    for(; it != end; ++it) {
+        if(element == *it) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 void HTMLFormattingElementList::append(Element* element)
@@ -636,7 +640,6 @@ void HTMLFormattingElementList::replace(const Element* element, Element* item)
 
 void HTMLFormattingElementList::replace(int index, Element* element)
 {
-    assert(index >= 0 && index <= m_elements.size());
     m_elements.at(index) = element;
 }
 
@@ -654,12 +657,21 @@ int HTMLFormattingElementList::index(const Element* element) const
         }
     }
 
+    assert(false);
     return -1;
 }
 
 bool HTMLFormattingElementList::contains(const Element* element) const
 {
-    return index(element) >= 0;
+    auto it = m_elements.rbegin();
+    auto end = m_elements.rend();
+    for(; it != end; ++it) {
+        if(element == *it) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 Element* HTMLFormattingElementList::closestElementInScope(const GlobalString& tagName)
