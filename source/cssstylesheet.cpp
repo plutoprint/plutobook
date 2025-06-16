@@ -389,13 +389,12 @@ class ElementStyleBuilder final : public StyleBuilder {
 public:
     ElementStyleBuilder(Element* element, PseudoType pseudoType, const BoxStyle* parentStyle);
 
+    void add(const CSSRuleDataList* rules);
     RefPtr<BoxStyle> build() final;
 
 private:
-    void add(const CSSRuleDataList* rules);
     Element* m_element;
     PseudoType m_pseudoType;
-    friend class CSSStyleSheet;
 };
 
 ElementStyleBuilder::ElementStyleBuilder(Element* element, PseudoType pseudoType, const BoxStyle* parentStyle)
@@ -499,15 +498,14 @@ class PageStyleBuilder final : public StyleBuilder {
 public:
     PageStyleBuilder(const GlobalString& pageName, uint32_t pageIndex, PageMarginType marginType, PseudoType pseudoType, const BoxStyle* parentStyle);
 
+    void add(const CSSPageRuleDataList& rules);
     RefPtr<BoxStyle> build() final;
 
 private:
-    void add(const CSSPageRuleDataList& rules);
     GlobalString m_pageName;
     uint32_t m_pageIndex;
     PageMarginType m_marginType;
     PseudoType m_pseudoType;
-    friend class CSSStyleSheet;
 };
 
 PageStyleBuilder::PageStyleBuilder(const GlobalString& pageName, uint32_t pageIndex, PageMarginType marginType, PseudoType pseudoType, const BoxStyle* parentStyle)
