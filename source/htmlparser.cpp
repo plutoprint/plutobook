@@ -529,9 +529,9 @@ void HTMLElementStack::remove(const Element* element)
     remove(index(element));
 }
 
-void HTMLElementStack::remove(int index)
+void HTMLElementStack::remove(size_t index)
 {
-    assert(index >= 0 && index <= m_elements.size());
+    assert(index < m_elements.size());
     m_elements.erase(m_elements.begin() + index);
 }
 
@@ -540,7 +540,7 @@ void HTMLElementStack::replace(const Element* element, Element* item)
     replace(index(element), item);
 }
 
-void HTMLElementStack::replace(int index, Element* element)
+void HTMLElementStack::replace(size_t index, Element* element)
 {
     m_elements.at(index) = element;
 }
@@ -550,13 +550,13 @@ void HTMLElementStack::insertAfter(const Element* element, Element* item)
     insert(index(element) + 1, item);
 }
 
-void HTMLElementStack::insert(int index, Element* element)
+void HTMLElementStack::insert(size_t index, Element* element)
 {
-    assert(index >= 0 && index <= m_elements.size());
+    assert(index <= m_elements.size());
     m_elements.insert(m_elements.begin() + index, element);
 }
 
-int HTMLElementStack::index(const Element* element) const
+size_t HTMLElementStack::index(const Element* element) const
 {
     for(int i = m_elements.size() - 1; i >= 0; --i) {
         if(element == m_elements.at(i)) {
@@ -565,7 +565,7 @@ int HTMLElementStack::index(const Element* element) const
     }
 
     assert(false);
-    return -1;
+    return 0;
 }
 
 bool HTMLElementStack::contains(const Element* element) const
@@ -627,9 +627,9 @@ void HTMLFormattingElementList::remove(const Element* element)
     remove(index(element));
 }
 
-void HTMLFormattingElementList::remove(int index)
+void HTMLFormattingElementList::remove(size_t index)
 {
-    assert(index >= 0 && index <= m_elements.size());
+    assert(index < m_elements.size());
     m_elements.erase(m_elements.begin() + index);
 }
 
@@ -638,18 +638,18 @@ void HTMLFormattingElementList::replace(const Element* element, Element* item)
     replace(index(element), item);
 }
 
-void HTMLFormattingElementList::replace(int index, Element* element)
+void HTMLFormattingElementList::replace(size_t index, Element* element)
 {
     m_elements.at(index) = element;
 }
 
-void HTMLFormattingElementList::insert(int index, Element* element)
+void HTMLFormattingElementList::insert(size_t index, Element* element)
 {
-    assert(index >= 0 && index <= m_elements.size());
+    assert(index <= m_elements.size());
     m_elements.insert(m_elements.begin() + index, element);
 }
 
-int HTMLFormattingElementList::index(const Element* element) const
+size_t HTMLFormattingElementList::index(const Element* element) const
 {
     for(int i = m_elements.size() - 1; i >= 0; --i) {
         if(element == m_elements.at(i)) {
@@ -658,7 +658,7 @@ int HTMLFormattingElementList::index(const Element* element) const
     }
 
     assert(false);
-    return -1;
+    return 0;
 }
 
 bool HTMLFormattingElementList::contains(const Element* element) const

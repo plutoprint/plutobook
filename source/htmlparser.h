@@ -54,19 +54,19 @@ public:
     bool isNumberedHeaderElementInScope() const;
 
     void remove(const Element* element);
-    void remove(int index);
+    void remove(size_t index);
     void replace(const Element* element, Element* item);
-    void replace(int index, Element* element);
+    void replace(size_t index, Element* element);
     void insertAfter(const Element* element, Element* item);
-    void insert(int index, Element* element);
+    void insert(size_t index, Element* element);
 
-    int index(const Element* element) const;
+    size_t index(const Element* element) const;
     bool contains(const Element* element) const;
-    Element* at(int index) const { return m_elements.at(index); }
+    Element* at(size_t index) const { return m_elements.at(index); }
     Element* top() const { return m_elements.back(); }
 
     bool empty() const { return m_elements.empty(); }
-    int size() const { return m_elements.size(); }
+    size_t size() const { return m_elements.size(); }
 
 private:
     std::vector<Element*> m_elements;
@@ -84,18 +84,18 @@ public:
     void clearToLastMarker();
 
     void remove(const Element* element);
-    void remove(int index);
+    void remove(size_t index);
     void replace(const Element* element, Element* item);
-    void replace(int index, Element* element);
-    void insert(int index, Element* element);
+    void replace(size_t index, Element* element);
+    void insert(size_t index, Element* element);
 
-    int index(const Element* element) const;
+    size_t index(const Element* element) const;
     bool contains(const Element* element) const;
-    Element* at(int index) const { return m_elements.at(index); }
+    Element* at(size_t index) const { return m_elements.at(index); }
     Element* closestElementInScope(const GlobalString& tagName);
 
     bool empty() const { return m_elements.empty(); }
-    int size() const { return m_elements.size(); }
+    size_t size() const { return m_elements.size(); }
 
 private:
     std::vector<Element*> m_elements;
