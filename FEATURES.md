@@ -6,7 +6,15 @@
 - [Outlines](#outlines)
 - [Box Model](#box-model)
 - [Box Sizing](#box-sizing)
+- [Display](#display)
 - [Positioning](#positioning)
+- [Floats](#floats)
+- [Lists and Counters](#lists-and-counters)
+- [Counter Styles](#counter-styles)
+- [Tables](#tables)
+- [Multiple Columns](#multiple-columns)
+- [Flexible Box](#flexible-box)
+- [Media Queries](#media-queries)
 - [Scalable Vector Graphics](#scalable-vector-graphics)
 
 ## Fonts
@@ -46,6 +54,76 @@ For the `visibility` property, PlutoBook supports the standard values `visible` 
 ## Positioning
 
 PlutoBook supports positioning properties as defined in the [CSS Positioned Layout Module Level 3](https://www.w3.org/TR/css-position-3). The `position` property accepts the values `static`, `relative`, `absolute`, and `fixed`, allowing elements to be positioned accordingly within their containing block. In addition, CSS supports a more advanced value, `running(name)`, which enables elements to be captured and reused as running headers or footers. However, this feature is currently not supported in PlutoBook. Offsets can be controlled using `top`, `right`, `bottom`, and `left` to precisely move elements based on their positioning. The `z-index` property manages stacking order for overlapping elements. Together, these properties provide flexible control over element layout and layering.
+
+## Floats
+
+PlutoBook supports floating elements as defined in the [CSS 2 Visual Formatting Model](https://www.w3.org/TR/CSS2/visuren.html#floats). The `float` property allows elements to be taken out of the normal flow and positioned to the left or right of their containing block, enabling text and inline content to wrap around them. Supported values for `float` are `left`, `right`, and `none`.
+
+To manage how content behaves around floated elements, PlutoBook supports the `clear` property. This property controls the placement of block-level elements by preventing them from flowing next to floated elements on the specified side(s). Supported values for `clear` are `left`, `right`, `both`, and `none`.
+
+## Lists and Counters
+
+PlutoBook supports list rendering and counters as described in the [CSS Lists and Counters Module Level 3](https://www.w3.org/TR/css-lists-3). The `list-style-type` property sets the marker (such as a disc, character, or custom counter style) for a list item element, allowing for a wide variety of list appearances like bullets, numbers, or custom symbols. The `list-style-position` property controls whether the marker is placed inside or outside the list item’s content box, while `list-style-image` lets you specify an image to be used as the marker.
+
+These properties can be conveniently combined using the `list-style` shorthand, which sets the marker type, position, and image in a single declaration.
+
+PlutoBook also implements the `::marker` pseudo-element, enabling fine-grained styling of list item markers with properties such as `color`, `font`, and other text-related features, without affecting the list item’s main content.
+
+In addition to basic list styling, PlutoBook provides robust support for CSS counters, making it possible to create complex numbered structures such as multi-level outlines or custom numbering schemes. The `counter-reset` property initializes one or more named counters, while `counter-increment` controls how counters are advanced when an element is rendered. The `counter-set` property directly sets a counter to a specific value.
+
+To display counter values, PlutoBook supports the `counter()` and `counters()` functions within the `content` property, allowing you to output counter values with optional custom formatting or separators.
+
+## Counter Styles
+
+PlutoBook implements custom counter styles as defined in the [CSS Counter Styles Module Level 3](https://www.w3.org/TR/css-counter-styles-3). This module extends how lists and counters display by allowing authors to define their own numbering systems or reuse predefined ones, in addition to the common types like `decimal`, `lower-roman`, `upper-roman`, `lower-alpha`, and `upper-alpha`.
+
+Using the `@counter-style` at-rule, you can give a custom counter style a name, specify a sequence of symbols (including emojis or other Unicode characters), choose a fallback system, and define optional rules for prefixes, suffixes, or negative values. This makes it possible to design culturally appropriate, decorative, or playful counters that match the tone of your content.
+
+Once defined, custom counter styles can be applied with `list-style-type` or used in counter functions such as `counter()` and `counters()`. PlutoBook renders these user-defined styles just like built-in ones, giving you full flexibility over numbering and marker design, including the creative use of emoji markers.
+
+## Tables
+
+PlutoBook implements table layout and styling as defined in the [CSS Tables Module Level 3](https://www.w3.org/TR/css-tables-3). This includes support for semantic table elements and the key properties needed to create well-structured, flexible tables.
+
+The `display` property recognizes table-specific values such as `table`, `inline-table`, `table-row`, `table-row-group`, `table-header-group`, `table-footer-group`, `table-column`, `table-column-group`, `table-cell`, and `table-caption`. These allow authors to build tables using standard HTML `<table>` markup or to arrange elements in a tabular format entirely with CSS.
+
+PlutoBook supports `border-collapse` and `border-spacing` for controlling how cell borders are rendered and how much space appears between them. The `caption-side` property determines where the table’s caption is placed relative to the table box. The `table-layout` property is supported with both `auto` and `fixed` values, allowing you to choose whether column widths depend on cell content or a fixed layout.
+
+Cells can span multiple rows and columns using `row-span` and `column-span` attributes or equivalent CSS properties. The special value `row-span: 0` indicates that a cell should automatically span all remaining rows in its row group, which is useful for creating flexible, dynamically sized tables.
+
+Row and column sizing can be managed using `width` on columns or cells, along with box model and border properties for precise control of cell padding, borders, and backgrounds. These features ensure that tables remain clear, readable, and well-integrated with surrounding content.
+
+## Multiple Columns
+
+PlutoBook supports multi-column layout features as defined in the [CSS Multi-column Layout Module Level 1](https://www.w3.org/TR/css-multicol-1/). These properties make it easy to flow content into multiple columns, similar to a newspaper or magazine, for more compact and visually engaging text presentation.
+
+You can specify the number of columns using `column-count` or set the desired column width with `column-width`. PlutoBook calculates how many columns can fit based on these constraints and the available space. For more precise control, both can be used together, balancing between a fixed width and a specific number of columns.
+
+The `columns` shorthand provides a convenient way to set both `column-width` and `column-count` in a single declaration. Gaps between columns can be adjusted using `column-gap` to ensure comfortable reading flow.
+
+Decorative dividers between columns can be created with `column-rule-color`, `column-rule-style`, and `column-rule-width`, or all at once with the `column-rule` shorthand.
+
+The `column-span` property lets an element span across all columns, which is especially useful for headings, banners, or figures that should break the column flow.
+
+Finally, PlutoBook supports `column-fill`, which controls how content is distributed when there is extra vertical space. It accepts values like `balance` to balance content evenly across columns, or `auto` to fill columns sequentially.
+
+## Flexible Box
+
+PlutoBook supports flexible box layout as described in the [CSS Flexible Box Layout Module Level 1](https://www.w3.org/TR/css-flexbox-1/). Flexbox provides an efficient way to arrange and distribute space among items within a container, even when their size is unknown or dynamic.
+
+The `display` property accepts `flex` and `inline-flex` to define a flex container. Flex containers establish a flex formatting context for their direct children, known as flex items. Within a flex container, you can control the direction of item placement with `flex-direction`, manage wrapping behavior with `flex-wrap`, and combine these settings conveniently using the `flex-flow` shorthand.
+
+Alignment and spacing are handled using `justify-content` (for main-axis alignment), `align-items` (for cross-axis alignment of items), and `align-content` (for alignment of multiple lines when wrapping). Individual flex items can override alignment with `align-self`.
+
+Flex items can grow, shrink, and maintain base sizes using the `flex` shorthand or its longhand properties: `flex-grow`, `flex-shrink`, and `flex-basis`. The `order` property lets you control the visual order of items independent of their source order, providing powerful layout flexibility.
+
+## Media Queries
+
+PlutoBook supports media queries as described in [CSS Media Queries Level 3](https://www.w3.org/TR/css3-mediaqueries), allowing styles to adapt based on the characteristics of the output environment. This makes it possible to adjust layouts and presentation to match different devices and contexts. PlutoBook understands the standard media types: `all` for any device, `print` for paged output like PDFs, and `screen` for typical on-screen displays.
+
+Authors can refine conditions using media features that test the dimensions of the viewport or page, such as `width`, `min-width`, `max-width`, `height`, `min-height`, and `max-height`. It also supports checking the `orientation` to distinguish between portrait and landscape layouts. Multiple conditions can be combined using the `and` keyword, creating precise rules that apply only when every condition is true.
+
+To further control when styles apply, PlutoBook recognizes the `only` and `not` restrictors. The `only` keyword ensures that a media query is used only if the entire query is fully understood, while `not` reverses the condition so styles apply in all other cases. This flexible system helps authors craft responsive designs that look good across different screens and when printed.
 
 ## Scalable Vector Graphics
 
