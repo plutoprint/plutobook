@@ -1706,9 +1706,6 @@ public:
     const HeapString& prefix() const;
     const HeapString& suffix() const;
 
-    const HeapString& negetivePrefix() const;
-    const HeapString& negativeSuffix() const;
-
     void setFallbackStyle(CSSCounterStyle& fallbackStyle) { m_fallbackStyle = fallbackStyle; }
     const RefPtr<CSSCounterStyle>& fallbackStyle() const { return m_fallbackStyle; }
     void extend(const CSSCounterStyle& extended);
