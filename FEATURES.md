@@ -15,6 +15,7 @@
 - [Multiple Columns](#multiple-columns)
 - [Flexible Box](#flexible-box)
 - [Media Queries](#media-queries)
+- [Paged Media](#paged-media)
 - [Scalable Vector Graphics](#scalable-vector-graphics)
 
 ## Fonts
@@ -124,6 +125,18 @@ PlutoBook supports media queries as described in [CSS Media Queries Level 3](htt
 Authors can refine conditions using media features that test the dimensions of the viewport or page, such as `width`, `min-width`, `max-width`, `height`, `min-height`, and `max-height`. It also supports checking the `orientation` to distinguish between portrait and landscape layouts. Multiple conditions can be combined using the `and` keyword, creating precise rules that apply only when every condition is true.
 
 To further control when styles apply, PlutoBook recognizes the `only` and `not` restrictors. The `only` keyword ensures that a media query is used only if the entire query is fully understood, while `not` reverses the condition so styles apply in all other cases. This flexible system helps authors craft responsive designs that look good across different screens and when printed.
+
+## Paged Media
+
+PlutoBook provides support for paged media as defined in the [CSS Paged Media Module Level 3](https://www.w3.org/TR/css-page-3/). This allows precise control over how content is laid out when divided across multiple pages. PlutoBook fully supports margin boxes, so authors can define running headers and footers using properties like `@top-left` and `@bottom-center` inside `@page` rules. These margin boxes can be styled and positioned separately for each page edge, offering fine control over page design in printed or paginated output.
+
+PlutoBook also supports page counters, which let authors output the current page number using the `counter(page)` function. These counters work within the page context and update automatically as pages progress. General-purpose counters are available too through the `counter()` and `counters()` functions, so you can generate dynamic numbering in both content and page areas.
+
+Leaders, such as repeating dots or lines often used in tables of contents, are supported through the `leader()` function in generated content. This provides an easy way to fill space between elements with consistent patterns.
+
+Cross-referencing is possible with the `target-counter()` and `target-counters()` functions, which allow you to show counter values from linked elements, such as displaying the page number where a section starts.
+
+Some limits currently exist. PlutoBook uses only the page size and margin defined for the first page, and `@page :first` is the only pseudo-page selector that works reliably for now. Named pages created with the `@page name` syntax are not fully implemented yet, so custom page styles may not apply as expected. Running elements, which extract content from the flow to reuse in headers or footers, are also not yet available.
 
 ## Scalable Vector Graphics
 
