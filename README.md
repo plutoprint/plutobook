@@ -1,8 +1,10 @@
-[![Build Status](https://github.com/plutoprint/plutobook/actions/workflows/main.yml/badge.svg)](https://github.com/plutoprint/plutobook/actions)
+[![Actions](https://github.com/plutoprint/plutobook/actions/workflows/main.yml/badge.svg)](https://github.com/plutoprint/plutobook/actions)
 [![Releases](https://img.shields.io/badge/Version-0.0.1-orange.svg)](https://github.com/plutoprint/plutobook/releases)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/plutoprint/plutobook/blob/master/LICENSE)
 [![Sponsor](https://img.shields.io/badge/Sponsor-Github-orange.svg)](https://github.com/sponsors/plutoprint)
 [![Donate](https://img.shields.io/badge/Donate-PayPal-blue.svg)](https://www.paypal.me/sammycage)
+
+> Prefer Python? Try [PlutoPrint](https://github.com/plutoprint/plutoprint) — a Python library built on PlutoBook for easy paged HTML rendering.
 
 # PlutoBook
 
