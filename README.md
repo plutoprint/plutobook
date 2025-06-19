@@ -1,3 +1,9 @@
+[![Build Status](https://github.com/plutoprint/plutobook/actions/workflows/main.yml/badge.svg)](https://github.com/plutoprint/plutobook/actions)
+[![Releases](https://img.shields.io/badge/Version-3.3.0-orange.svg)](https://github.com/plutoprint/plutobook/releases)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/plutoprint/plutobook/blob/master/LICENSE)
+[![Sponsor](https://img.shields.io/badge/Sponsor-Github-orange.svg)](https://github.com/sponsors/plutoprint)
+[![Donate](https://img.shields.io/badge/Donate-PayPal-blue.svg)](https://www.paypal.me/sammycage)
+
 # PlutoBook
 
 PlutoBook is a robust HTML rendering library tailored for paged media. It takes HTML or XML as input, applies CSS stylesheets, and lays out elements across one or more pages, which can then be rendered as Bitmap images or PDF documents.
