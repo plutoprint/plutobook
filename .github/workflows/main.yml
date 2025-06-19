@@ -1,4 +1,4 @@
-name: Build PlutoBook
+name: Build
 
 on:
   push:
