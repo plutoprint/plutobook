@@ -324,8 +324,8 @@ Clone the repository, then build and install the project using the following com
 git clone https://github.com/plutoprint/plutobook.git
 cd plutobook
 meson setup build
-ninja -C build
-sudo ninja -C build install
+meson compile -C build
+meson install -C build
 ```
 
 ## API Documentation
