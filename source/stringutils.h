@@ -55,7 +55,7 @@ constexpr char toLower(uint8_t cc)
 
 constexpr bool equals(uint8_t a, uint8_t b, bool caseSensitive)
 {
-    return caseSensitive ? a == b : toLower(a) == toLower(b);
+    return caseSensitive ? (a == b) : toLower(a) == toLower(b);
 }
 
 constexpr bool equals(const char* aData, size_t aLength, const char* bData, size_t bLength, bool caseSensitive)
@@ -71,80 +71,69 @@ constexpr bool equals(const char* aData, size_t aLength, const char* bData, size
     return true;
 }
 
-constexpr bool equals(const std::string_view& a, const std::string_view& b, bool caseSensitive)
+constexpr bool equals(std::string_view a, std::string_view b, bool caseSensitive)
 {
     return equals(a.data(), a.length(), b.data(), b.length(), caseSensitive);
 }
 
-constexpr bool equalsIgnoringCase(const std::string_view& a, const std::string_view& b)
+constexpr bool equalsIgnoringCase(std::string_view a, std::string_view b)
 {
     return equals(a, b, false);
 }
 
-constexpr bool contains(const std::string_view& value, const std::string_view& subvalue, bool caseSensitive)
+constexpr bool contains(std::string_view haystack, std::string_view needle, bool caseSensitive)
 {
-    if(subvalue.empty() || subvalue.length() > value.length())
+    if(needle.empty() || needle.length() > haystack.length())
         return false;
-    auto it = value.data();
-    auto end = it + value.length();
-    do {
-        auto begin = it;
-        auto count = 0ul;
-        do {
-            if(!equals(*begin, subvalue[count], caseSensitive))
-                break;
+    const auto limit = haystack.length() - needle.length();
+    for(size_t i = 0; i <= limit; ++i) {
+        if(equals(haystack.substr(i, needle.length()), needle, caseSensitive)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+constexpr bool includes(std::string_view haystack, std::string_view needle, bool caseSensitive)
+{
+    if(needle.empty() || needle.length() > haystack.length())
+        return false;
+    size_t begin = 0;
+    while(true) {
+        while(begin < haystack.length() && isSpace(haystack[begin]))
             ++begin;
-            ++count;
-        } while(begin < end && count < subvalue.length());
-        if(count == subvalue.length())
+        if(begin >= haystack.length())
+            break;
+        size_t end = begin + 1;
+        while(end < haystack.length() && !isSpace(haystack[end]))
+            ++end;
+        if(equals(haystack.substr(begin, end - begin), needle, caseSensitive))
             return true;
-        ++it;
-    } while(it < end);
+        begin = end + 1;
+    }
+
     return false;
 }
 
-constexpr bool includes(const std::string_view& value, const std::string_view& subvalue, bool caseSensitive)
+constexpr bool startswith(std::string_view input, std::string_view prefix, bool caseSensitive)
 {
-    if(subvalue.empty() || subvalue.length() > value.length())
+    if(prefix.empty() || prefix.length() > input.length())
         return false;
-    auto it = value.data();
-    auto end = it + value.length();
-    do {
-        while(it < end && isSpace(*it))
-            ++it;
-        if(it == end)
-            return false;
-        auto begin = it;
-        auto count = 0ul;
-        do {
-            ++count;
-            ++it;
-        } while(it < end && !isSpace(*it));
-        if(equals(begin, count, subvalue.data(), subvalue.length(), caseSensitive))
-            return true;
-        ++it;
-    } while(it < end);
-    return false;
+    return equals(input.substr(0, prefix.length()), prefix, caseSensitive);
 }
 
-constexpr bool startswith(const std::string_view& value, const std::string_view& subvalue, bool caseSensitive)
+constexpr bool endswith(std::string_view input, std::string_view suffix, bool caseSensitive)
 {
-    if(subvalue.empty() || subvalue.length() > value.length())
+    if(suffix.empty() || suffix.length() > input.length())
         return false;
-    return equals(value.substr(0, subvalue.size()), subvalue, caseSensitive);
+    return equals(input.substr(input.length() - suffix.length(), suffix.length()), suffix, caseSensitive);
 }
 
-constexpr bool endswith(const std::string_view& value, const std::string_view& subvalue, bool caseSensitive)
+constexpr bool dashequals(std::string_view input, std::string_view prefix, bool caseSensitive)
 {
-    if(subvalue.empty() || subvalue.length() > value.length())
-        return false;
-    return equals(value.substr(value.size() - subvalue.size(), subvalue.size()), subvalue, caseSensitive);
-}
-
-constexpr bool dashequals(const std::string_view& value, const std::string_view& subvalue, bool caseSensitive)
-{
-    if(startswith(value, subvalue, caseSensitive))
-        return (value.length() == subvalue.length() || value.at(subvalue.length()) == '-');
+    if(startswith(input, prefix, caseSensitive))
+        return (input.length() == prefix.length() || input.at(prefix.length()) == '-');
     return false;
 }
 
