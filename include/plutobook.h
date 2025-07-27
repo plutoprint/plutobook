@@ -121,10 +121,16 @@ typedef struct _plutobook_page_size {
     float height; /**< Page height in points */
 } plutobook_page_size_t;
 
+#ifdef __cplusplus
+#define PLUTOBOOK_MAKE_STRUCT(type, ...) type{__VA_ARGS__}
+#else
+#define PLUTOBOOK_MAKE_STRUCT(type, ...) (type){__VA_ARGS__}
+#endif
+
 /**
  * @brief Predefined macros for common paper sizes.
  */
-#define PLUTOBOOK_PAGE_SIZE_NAMED(name) ((plutobook_page_size_t){PLUTOBOOK_PAGE_WIDTH_##name, PLUTOBOOK_PAGE_HEIGHT_##name})
+#define PLUTOBOOK_PAGE_SIZE_NAMED(name) PLUTOBOOK_MAKE_STRUCT(plutobook_page_size_t, PLUTOBOOK_PAGE_WIDTH_##name, PLUTOBOOK_PAGE_HEIGHT_##name)
 
 #define PLUTOBOOK_PAGE_WIDTH_NONE 0.f
 #define PLUTOBOOK_PAGE_HEIGHT_NONE 0.f
@@ -175,11 +181,11 @@ typedef struct _plutobook_page_margins {
 /**
  * @brief Predefined macros for common margin settings.
  */
-#define PLUTOBOOK_PAGE_MARGINS_NONE ((plutobook_page_margins_t){0, 0, 0, 0})
-#define PLUTOBOOK_PAGE_MARGINS_NORMAL ((plutobook_page_margins_t){72, 72, 72, 72})
-#define PLUTOBOOK_PAGE_MARGINS_NARROW ((plutobook_page_margins_t){36, 36, 36, 36})
-#define PLUTOBOOK_PAGE_MARGINS_MODERATE ((plutobook_page_margins_t){72, 54, 72, 54})
-#define PLUTOBOOK_PAGE_MARGINS_WIDE ((plutobook_page_margins_t){72, 144, 72, 144})
+#define PLUTOBOOK_PAGE_MARGINS_NONE PLUTOBOOK_MAKE_STRUCT(plutobook_page_margins_t, 0, 0, 0, 0)
+#define PLUTOBOOK_PAGE_MARGINS_NORMAL PLUTOBOOK_MAKE_STRUCT(plutobook_page_margins_t, 72, 72, 72, 72)
+#define PLUTOBOOK_PAGE_MARGINS_NARROW PLUTOBOOK_MAKE_STRUCT(plutobook_page_margins_t, 36, 36, 36, 36)
+#define PLUTOBOOK_PAGE_MARGINS_MODERATE PLUTOBOOK_MAKE_STRUCT(plutobook_page_margins_t, 72, 54, 72, 54)
+#define PLUTOBOOK_PAGE_MARGINS_WIDE PLUTOBOOK_MAKE_STRUCT(plutobook_page_margins_t, 72, 144, 72, 144)
 
 /**
  * @brief Defines status codes that indicate the result of a stream operation.
