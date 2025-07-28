@@ -36,9 +36,9 @@ jobs:
             
       - name: Setup and Build
         run: |
-          meson setup build --wrap-mode=nodownload
+          meson setup build
           meson compile -C build
-          
+
   windows:
     runs-on: windows-latest
     defaults:
@@ -69,6 +69,5 @@ jobs:
             
       - name: Setup and Build
         run: |
-          meson setup build --wrap-mode=nodownload
+          meson setup build
           meson compile -C build
-          
