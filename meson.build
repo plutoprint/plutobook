@@ -7,7 +7,7 @@ project('plutobook', 'cpp',
 
 expat_dep = dependency('expat',
     required: true,
-    version: '>=2.6.0'
+    version: '>=2.1.0'
 )
 
 icu_dep = dependency('icu-uc',
