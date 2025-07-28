@@ -64,9 +64,11 @@ curl_dep = dependency('libcurl',
     version: '>=7.71.0'
 )
 
+plutobook_cpp_args = ['-DPLUTOBOOK_BUILD']
+
 if curl_dep.found()
-    add_project_arguments('-DPLUTOBOOK_HAS_CURL', language: 'cpp')
     plutobook_deps += [curl_dep]
+    plutobook_cpp_args += ['-DPLUTOBOOK_HAS_CURL']
 endif
 
 jpeg_dep = dependency('libturbojpeg',
@@ -74,8 +76,8 @@ jpeg_dep = dependency('libturbojpeg',
 )
 
 if jpeg_dep.found()
-    add_project_arguments('-DPLUTOBOOK_HAS_TURBOJPEG', language: 'cpp')
     plutobook_deps += [jpeg_dep]
+    plutobook_cpp_args += ['-DPLUTOBOOK_HAS_TURBOJPEG']
 endif
 
 webp_dep = dependency('libwebp',
@@ -83,8 +85,8 @@ webp_dep = dependency('libwebp',
 )
 
 if webp_dep.found()
-    add_project_arguments('-DPLUTOBOOK_HAS_WEBP', language: 'cpp')
     plutobook_deps += [webp_dep]
+    plutobook_cpp_args += ['-DPLUTOBOOK_HAS_WEBP']
 endif
 
 plutobook_sources = [
@@ -161,16 +163,16 @@ plutobook_include_dirs = include_directories(
 
 cpp = meson.get_compiler('cpp')
 
-plutobook_cpp_args = ['-DPLUTOBOOK_BUILD']
 plutobook_cpp_args += cpp.get_supported_arguments(
     '-Wno-sign-compare',
     '-Wno-unused-function'
 )
 
 plutobook_compile_args = []
+
 if get_option('default_library') == 'static'
     plutobook_compile_args += ['-DPLUTOBOOK_BUILD_STATIC']
-    add_project_arguments('-DPLUTOBOOK_BUILD_STATIC', language: 'cpp')
+    plutobook_cpp_args += ['-DPLUTOBOOK_BUILD_STATIC']
 endif
 
 plutobook_lib = library('plutobook', plutobook_sources,
