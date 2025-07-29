@@ -18,7 +18,7 @@ PlutoBook is a robust HTML rendering library tailored for paged media. It takes 
 
 ## Quick Start
 
-```c
+```cpp
 static const char kHTMLContent[] = R"HTML(
 <!DOCTYPE html>
 <html lang="la">
@@ -43,6 +43,20 @@ static const char kHTMLContent[] = R"HTML(
 )HTML";
 ```
 
+### C++
+
+```cpp
+#include <plutobook.hpp>
+
+int main()
+{
+    plutobook::Book book(plutobook::PageSize::A4, plutobook::PageMargins::Narrow);
+    book.loadHtml(kHTMLContent);
+    book.writeToPdf("hello.pdf");
+    return 0;
+}
+```
+
 ### C
 
 ```c
@@ -59,20 +73,6 @@ int main()
     plutobook_load_html(book, kHTMLContent, -1, "", "", "");
     plutobook_write_to_pdf(book, "hello.pdf");
     plutobook_destroy(book);
-    return 0;
-}
-```
-
-### C++
-
-```cpp
-#include <plutobook.hpp>
-
-int main()
-{
-    plutobook::Book book(plutobook::PageSize::A4, plutobook::PageMargins::Narrow);
-    book.loadHtml(kHTMLContent);
-    book.writeToPdf("hello.pdf");
     return 0;
 }
 ```
