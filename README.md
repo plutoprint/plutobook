@@ -16,69 +16,71 @@ PlutoBook is a robust HTML rendering library tailored for paged media. It takes 
 
 ---
 
-## Table of Contents
-
-- [Introduction](#plutobook)
-- [Motivation](#motivation)
-- [Features](FEATURES.md)
-- [Quick Start](#quick-start)
-  - [Basic Usage](#basic-usage)
-  - [Loading From a URL](#loading-from-a-url)
-  - [Loading From a File](#loading-from-a-file)
-  - [Rendering to a Canvas](#rendering-to-a-canvas)
-  - [Working with Viewport Size](#working-with-viewport-size)
-- [Practical Uses](#practical-uses)
-  - [Email Client HTML Renderer](#email-client-html-renderer)
-  - [Text Editor Print Renderer](#text-editor-print-renderer)
-  - [Automated Report Generation](#automated-report-generation)
-  - [Custom E-Book or Document Viewer](#custom-e-book-or-document-viewer)
-- [Installation Guide](#installation-guide)
-  - [Prerequisites](#prerequisites)
-  - [Build and Installation](#build-and-installation)
-- [API Documentation](#api-documentation)
-- [Contributions](#contributions)
-- [License](#license)
-
----
-
-## Motivation
-
-Programmatically generating PDFs can be surprisingly difficult. Many libraries aim to simplify the task, but they often require learning specialized APIs or handling low-level layout details. In contrast, HTML and CSS are tools that most developers already know. They are expressive, easy to write, and well-suited for describing visual layouts.
-
-You might ask, "Wait, aren't tools like Playwright or Puppeteer already solving this?" They are powerful and feature-rich, but also come with significant overhead. Browser-based renderers are resource-heavy, often requiring gigabytes of memory and complex configurations. They're designed to handle the unpredictable nature of the modern web, including dynamic, JavaScript-heavy content. That makes them ideal for browsing and automation, but excessive for static document rendering.
-
-No one uses a bulldozer to mow a lawn. Not because it can’t, but because it’s overkill. Likewise, PlutoBook isn’t trying to replace your browser. It’s a focused tool designed specifically for high-quality rendering of paginated documents from static HTML or XML sources.
-
-PlutoBook is lightweight, robust, and easy to install. It supports a broad set of modern HTML and CSS features for intuitive layout, while maintaining efficiency and precision. Installation is straightforward and dependency-light. It uses well-established libraries like Cairo, FreeType, HarfBuzz, Fontconfig, Expat, and ICU. Optional support for Curl, TurboJPEG, and WebP extends its capabilities, without the need for a full browser engine.
-
-If your goal is to generate beautiful, paginated documents with precision and control, PlutoBook might be the right tool for the job.
-
----
-
 ## Quick Start
 
-PlutoBook is designed to be easy to get started with. To understand where to begin, it's helpful to first look at how PlutoBook works.
+```c
+static const char kHTMLContent[] = R"HTML(
+<!DOCTYPE html>
+<html lang="la">
+<head>
+  <meta charset="UTF-8">
+  <title>Magnum Scopulum Corallinum</title>
+  <style>
+    body { font-family: "Segoe UI", sans-serif; line-height: 1.6; margin: 40px auto; max-width: 800px; color: #222; }
+    h1 { font-size: 2.5em; margin-bottom: 20px; }
+    img { width: 100%; border-radius: 6px; margin-bottom: 20px; }
+    p { font-size: 1.05em; text-align: justify; }
+  </style>
+</head>
+<body>
+  <h1>Magnum Scopulum Corallinum</h1>
+  <img src="https://picsum.photos/800/400?random=2" alt="Magnum Scopulum Corallinum">
+  <p>Magnum Scopulum Corallinum est maximum systema scopulorum corallinorum in mundo, quod per plus quam 2,300 chiliometra oram septentrionalem-orientalem Australiae extenditur. Ex milibus scopulorum individualium et centenis insularum constat, e spatio videri potest et inter mirabilia naturalia mundi numeratur.</p>
+  <p>Domus est incredibili diversitati vitae marinae, cum plus quam 1,500 speciebus piscium, 400 generibus corallii, et innumerabilibus aliis organismis. Partem vitalem agit in salute oecosystematis marini conservanda et sustentat victum communitatum litoralium per otium et piscationem.</p>
+  <p>Quamquam pulchritudinem ac significationem oecologicam praebet, Magnum Scopulum Corallinum minas continenter patitur ex mutatione climatis, pollutione, et nimia piscatione. Eventus albi corallii ex temperaturis marinis crescentibus magnam partem scopuli nuper laeserunt. Conatus conservatorii toto orbe suscipiuntur ad hunc magnificum oecosystema subaquaneum tuendum et restaurandum.</p>
+</body>
+</html>
+)HTML";
+```
 
-The `Book` class is the core API class of the PlutoBook library. It serves as the main entry point for working with documents. A `Book` instance can load content in HTML or XML format, and provides a high-level interface for rendering, exporting to PDF or PNG, and interacting with page structure and metadata.
-
-To create and render a document, you typically start by instantiating a `Book`, specifying parameters such as the page size (e.g., A4, Letter), page margins, and the media type (`MediaType::Print` or `MediaType::Screen`) to control how styles and layouts are interpreted. These parameters define the physical layout and styling context of the document. After that, you load your content using one of the `load` methods (such as `loadHtml` or `loadXml`), and then render it to a canvas or export it as needed.
-
----
-
-### Basic Usage
-
-This example demonstrates the simplest way to use PlutoBook: creating a `Book` instance with a standard page size (A4), loading a small HTML snippet, and exporting the result as a PDF file named `hello.pdf`. It showcases the core workflow of loading content and generating a document in just a few lines of code.
+### C++
 
 ```cpp
 #include <plutobook.hpp>
 
-int main() {
-    plutobook::Book book(plutobook::PageSize::A4);
-    book.loadHtml("<b> Hello World </b>");
+int main()
+{
+    plutobook::Book book(plutobook::PageSize::A4, plutobook::PageMargins::Narrow);
+    book.loadHtml(kHTMLContent);
     book.writeToPdf("hello.pdf");
     return 0;
 }
 ```
+
+### C
+
+```c
+#include <plutobook.h>
+
+int main()
+{
+    plutobook_t* book = plutobook_create(
+        PLUTOBOOK_PAGE_SIZE_A4,
+        PLUTOBOOK_PAGE_MARGINS_NARROW,
+        PLUTOBOOK_MEDIA_TYPE_PRINT
+    );
+
+    plutobook_load_html(book, kHTMLContent, -1, "", "", "");
+    plutobook_write_to_pdf(book, "hello.pdf");
+    return 0;
+}
+```
+
+Example output:
+
+<p align="center"><img src="https://github.com/user-attachments/assets/dc069903-2dad-47a2-ac5a-9854a617f7ae" alt="hello.pdf" width="650"></p>
+
+---
 
 ### Loading From a URL
 
