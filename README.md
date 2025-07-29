@@ -104,7 +104,7 @@ Example output:
 
 ---
 
-## Simple E‑Book Viewer
+## Simple E‑Book Renderer
 
 This example loads **Alice’s Adventures in Wonderland** (from Project Gutenberg) and shows how to render the first three pages as PNGs, then bundle them into a PDF.
 
