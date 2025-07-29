@@ -83,179 +83,71 @@ Example output:
 
 ---
 
-### Loading From a URL
+## Simple E‑Book Viewer
 
-PlutoBook supports loading web content directly from remote or local URLs using the `loadUrl` method. This is useful when rendering existing online documents, integrating live web content, or referencing local assets. Simply provide the URL to the desired resource, and PlutoBook will fetch and parse the content for layout and rendering.
+This example loads **Alice’s Adventures in Wonderland** (from Project Gutenberg) and shows how to render the first three pages as PNGs, then bundle them into a PDF.
 
-> [!NOTE]
-> Resource loading is single-threaded and occurs inline with the layout process, which may be slower than in web browsers. JavaScript execution is **currently not supported**, so some websites may not render correctly.
-> Loading resources over protocols other than `file:` and `data:` (for example, HTTP, HTTPS, or FTP) requires `libcurl`.
+_Source: Project Gutenberg – [Alice’s Adventures in Wonderland](https://www.gutenberg.org/ebooks/11)_
 
-Example of loading a webpage from a remote URL:
-
-```cpp
-#include <plutobook.hpp>
+```c
+#include <plutobook.h>
+#include <stdio.h>
+#include <math.h>
 
 int main()
 {
-    // Create a Book with A4 page size and no margins
-    plutobook::Book book(plutobook::PageSize::A4, plutobook::PageMargins::None);
+    // Create a plutobook instance with A4 page size, narrow margins, and print media type
+    plutobook_t* book = plutobook_create(
+        PLUTOBOOK_PAGE_SIZE_A4,
+        PLUTOBOOK_PAGE_MARGINS_NARROW,
+        PLUTOBOOK_MEDIA_TYPE_SCREEN
+    );
 
-    // Load content from a remote URL
-    book.loadUrl("https://en.wikipedia.org/wiki/Bjarne_Stroustrup");
+    // Load the HTML content from file
+    plutobook_load_url(book, "Alice’s Adventures in Wonderland.html", "", "");
 
-    // Export the rendered content to a PDF file
-    book.writeToPdf("Bjarne_Stroustrup.pdf");
+    // Get page size in points and convert to pixel dimensions
+    plutobook_page_size_t page_size = plutobook_get_page_size(book);
+    int page_width = (int)ceilf(page_size.width / PLUTOBOOK_UNITS_PX);
+    int page_height = (int)ceilf(page_size.height / PLUTOBOOK_UNITS_PX);
 
-    return 0;
-}
-```
+    // Create a canvas to render pages as images
+    plutobook_canvas_t* canvas = plutobook_image_canvas_create(
+        page_width,
+        page_height,
+        PLUTOBOOK_IMAGE_FORMAT_ARGB32
+    );
 
-Example output:
+    // Render the first 3 pages to PNG files
+    for(int page_index = 0; page_index < 3; ++page_index) {
+        char filename[64];
+        sprintf(filename, "page-%d.png", page_index + 1);
 
-<p align="center"><img src="https://github.com/user-attachments/assets/1f563034-9575-4345-8a64-c781267b06b6" alt="Bjarne_Stroustrup_Page" width="500"></p>
+        // Clear the canvas to white before rendering each page
+        plutobook_canvas_clear_surface(canvas, 1, 1, 1, 1);
 
-### Loading From a File
+        // Render the page onto the canvas
+        plutobook_render_page(book, canvas, page_index);
 
-You can load local HTML, SVG, images, or other supported file formats directly by specifying their file paths. This is useful when working with existing documents stored on your filesystem or when generating content offline.
-
-The path can be relative to the current working directory or an absolute path.
-
-Examples:
-
-```cpp
-// Load a file in the current directory
-book.loadUrl("hello.html");
-```
-
-```cpp
-// Load a file using a relative path
-book.loadUrl("../hello.html");
-```
-
-```cpp
-// Load a file using an absolute path
-book.loadUrl("/home/sammycage/Projects/hello.html");
-```
-
-### Rendering to a Canvas
-
-PlutoBook uses an abstract drawing interface called `Canvas`, which supports rendering document content to multiple output targets. Two built-in implementations are provided: `ImageCanvas` and `PDFCanvas`.
-
-`ImageCanvas` renders to an in-memory bitmap. It is well-suited for generating PNG images, creating visual previews, or integrating with other graphics systems. The output can be exported to PNG files, or the raw pixel buffer can be accessed for further processing.
-
-`PDFCanvas`, on the other hand, renders directly to a vector-based PDF stream. It preserves exact layout fidelity, supports selectable text and vector graphics, and is ideal for producing high-quality documents for print, digital publication, or long-term archiving.
-
-Below is a simple example that renders the first few pages of a web article into a single PNG image. It lays the pages side-by-side on one canvas, then saves the result as an image file:
-
-```cpp
-#include <plutobook.hpp>
-
-#include <cmath>
-#include <algorithm>
-
-int main()
-{
-    // Create a document with A4 pages and no margins
-    plutobook::Book book(plutobook::PageSize::A4, plutobook::PageMargins::None);
-
-    // Load content from Wikipedia
-    book.loadUrl("https://en.wikipedia.org/wiki/Bjarne_Stroustrup");
-
-    // Convert page size to pixel dimensions
-    const plutobook::PageSize& pageSize = book.pageSize();
-    int pageWidth = std::ceil(pageSize.width() / plutobook::units::px);
-    int pageHeight = std::ceil(pageSize.height() / plutobook::units::px);
-
-    // Only render up to 3 pages
-    uint32_t pageCount = std::min(3u, book.pageCount());
-
-    // Create a canvas wide enough to hold all pages side by side
-    plutobook::ImageCanvas canvas(pageCount * pageWidth, pageHeight);
-    canvas.clearSurface(1, 1, 1, 1); // white background
-
-    // Loop through pages and render each onto the canvas
-    for(uint32_t pageIndex = 0; pageIndex < pageCount; ++pageIndex) {
-        canvas.saveState();
-        canvas.translate(pageIndex * pageWidth, 0); // shift canvas to next page slot
-        book.renderPage(canvas, pageIndex);
-        canvas.restoreState();
+        // Save the canvas to a PNG file
+        plutobook_image_canvas_write_to_png(canvas, filename);
     }
 
-    // Save the final image
-    canvas.writeToPng("Bjarne_Stroustrup_Pages.png");
+    // Export pages 1 to 3 (inclusive) to PDF with step=1 (every page in order)
+    plutobook_write_to_pdf_range(book, "Alice’s Adventures in Wonderland.pdf", 1, 3, 1);
+
+    // Clean up resources
+    plutobook_canvas_destroy(canvas);
+    plutobook_destroy(book);
     return 0;
 }
 ```
 
 Example output:
 
-<p align="center"><img src="https://github.com/user-attachments/assets/c06a42c2-113a-45d0-a123-45ac5d97c5c8" alt="Bjarne_Stroustrup_Pages" width="800"></p>
-
----
-
-### Working with Viewport Size
-
-In PlutoBook, the **viewport** refers to the area of the page available for laying out content after accounting for margins. It functions similarly to the browser viewport in web development, where layout calculations are made relative to a visible content area.
-
-The viewport size is automatically determined using:
-
-* **Viewport Width** = Page Width − Left Margin − Right Margin
-* **Viewport Height** = Page Height − Top Margin − Bottom Margin
-
-You can access the computed dimensions using the methods `Book::viewportWidth()` and `Book::viewportHeight()`, which return values in CSS pixels (`px`).
-
-#### Viewport Units: `vw` and `vh`
-
-PlutoBook supports CSS viewport-relative units:
-
-* `1vw` is equal to 1% of the viewport width
-* `1vh` is equal to 1% of the viewport height
-
-For example:
-
-```css
-div {
-  width: 100vw;
-  height: 50vh;
-}
-```
-
-This creates a `<div>` that spans the full width and half the height of the available viewport space.
-
-These units help create responsive layouts that adapt smoothly to different page sizes and margin settings, ensuring your content looks great regardless of the document’s physical dimensions.
-
-#### Setting and Retrieving Viewport Size
-
-```cpp
-#include <plutobook.hpp>
-
-#include <iostream>
-
-int main()
-{
-    // Define page size (A4: 210 x 297 mm)
-    plutobook::PageSize size = plutobook::PageSize::A4;
-
-    // Define page margins (Narrow: 1 inch on all sides)
-    plutobook::PageMargins margins = plutobook::PageMargins::Narrow;
-
-    // Create a Book instance with specified page size and margins
-    plutobook::Book book(size, margins);
-
-    // Output the viewport size in pixels (content area after margins)
-    std::cout << "Viewport Width: " << book.viewportWidth() << " px\n";
-    std::cout << "Viewport Height: " << book.viewportHeight() << " px\n";
-
-    return 0;
-}
-```
-
-Expected output:
-```log
-Viewport Width: 697.701 px
-Viewport Height: 1026.52 px
-```
+| `page-1` | `page-2` | `page-3` |
+| --- | --- | --- |
+| ![page-1](https://github.com/user-attachments/assets/c9c26c07-e283-487e-a2e8-ab77c79bdbb5) | ![page-2](https://github.com/user-attachments/assets/43bdf6dc-21fc-427f-a9c6-e54510b88fbd) | ![page-3](https://github.com/user-attachments/assets/6bff4046-7877-4a89-9723-920bdb5799c0) |
 
 ---
 
@@ -288,11 +180,7 @@ PlutoBook can be integrated into backend services to automatically generate high
 
 PlutoBook enables developers to build lightweight e-book readers or document viewers that display paginated, static HTML content with consistent styling, images, and fonts. This is ideal for publishing tools, educational apps, or offline manuals where predictable layout is important.
 
-<p align="center">
-  <img src="https://github.com/user-attachments/assets/f2f1be09-8d7b-4317-801e-0d27787c8a58" alt="Alice’s Adventures in Wonderland" width="800">
-  <br>
-  <em>Rendered page preview of <a href="https://www.gutenberg.org/ebooks/11">Alice’s Adventures in Wonderland</a> generated by PlutoBook</em>
-</p>
+<p align="center"><img src="https://github.com/user-attachments/assets/3e6b0768-43fd-4047-a3bc-903deed9c5ea" alt="Alice’s Adventures in Wonderland" width="800"></p>
 
 ---
 
