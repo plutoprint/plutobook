@@ -211,7 +211,7 @@ int main()
 
 Example output:
 
-| `page-1` | `page-2` | `page-3` |
+| `page-1.png` | `page-2.png` | `page-3.png` |
 | --- | --- | --- |
 | ![page-1](https://github.com/user-attachments/assets/c9c26c07-e283-487e-a2e8-ab77c79bdbb5) | ![page-2](https://github.com/user-attachments/assets/43bdf6dc-21fc-427f-a9c6-e54510b88fbd) | ![page-3](https://github.com/user-attachments/assets/6bff4046-7877-4a89-9723-920bdb5799c0) |
 
