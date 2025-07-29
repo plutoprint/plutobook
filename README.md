@@ -110,6 +110,49 @@ This example loads **Alice’s Adventures in Wonderland** (from Project Gutenber
 
 _Source: Project Gutenberg – [Alice’s Adventures in Wonderland](https://www.gutenberg.org/ebooks/11)_
 
+```cpp
+#include <plutobook.hpp>
+#include <cmath>
+
+int main()
+{
+    // Create a plutobook instance with A4 page size, narrow margins, and print media type
+    plutobook::Book book(plutobook::PageSize::A4, plutobook::PageMargins::Narrow, plutobook::MediaType::Print);
+
+    // Load the HTML content from file
+    book.loadUrl("Alice’s Adventures in Wonderland.html");
+
+    // Get page size in points and convert to pixel dimensions
+    const plutobook::PageSize& pageSize = book.pageSize();
+    int pageWidth = std::ceil(pageSize.width() / plutobook::units::px);
+    int pageHeight = std::ceil(pageSize.height() / plutobook::units::px);
+
+    // Create a canvas to render pages as images
+    plutobook::ImageCanvas canvas(pageWidth, pageHeight);
+
+    // Render the first 3 pages to PNG files
+    for(int pageIndex = 0; pageIndex < 3; ++pageIndex) {
+        auto filename = "page-" + std::to_string(pageIndex + 1) + ".png";
+
+        // Clear the canvas to white before rendering each page
+        canvas.clearSurface(1, 1, 1, 1);
+
+        // Render the page onto the canvas
+        book.renderPage(canvas, pageIndex);
+
+        // Save the canvas to a PNG file
+        canvas.writeToPng(filename);
+    }
+
+    // Export pages 1 to 3 (inclusive) to PDF with step=1 (every page in order)
+    book.writeToPdf("Alice’s Adventures in Wonderland.pdf", 1, 3, 1);
+    return 0;
+}
+```
+
+<details>
+<summary><b>Equivalent in C</b></summary>
+
 ```c
 #include <plutobook.h>
 #include <stdio.h>
@@ -163,6 +206,8 @@ int main()
     return 0;
 }
 ```
+
+</details>
 
 Example output:
 
