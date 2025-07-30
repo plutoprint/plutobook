@@ -158,7 +158,7 @@ void LineItemsBuilder::exitBlock(Box* box)
 void LineItemsBuilder::enterBidi(Box* box, UChar enter, UChar exit)
 {
     appendOpaqueItem(LineItem::Type::BidiControl, nullptr, enter);
-    m_bidiControls.emplace_back(box, enter, exit);
+    m_bidiControls.push_back({box, enter, exit});
 }
 
 void LineItemsBuilder::enterBidi(Box* box, Direction direction, UChar enterLtr, UChar enterRtl, UChar exit)

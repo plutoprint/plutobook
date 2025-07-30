@@ -22,6 +22,10 @@ class SVGTextBox;
 class SVGTextPositioningElement;
 
 struct SVGTextPosition {
+    SVGTextPosition(SVGTextPositioningElement* element, uint32_t startOffset, uint32_t endOffset)
+        : element(element), startOffset(startOffset), endOffset(endOffset)
+    {}
+
     SVGTextPositioningElement* element = nullptr;
     uint32_t startOffset = 0;
     uint32_t endOffset = 0;
