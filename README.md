@@ -223,6 +223,135 @@ Example output:
 
 PlutoBook supports full-document rendering, drawing the entire content flow as a single continuous layout. This is ideal for generating scrollable previews, long-form visual exports, or cases where the overall structure needs to be viewed or processed at once. It also supports rendering specific rectangular regions of the document, which is useful for partial redraws or focused exports. Both full and partial rendering are available across all supported canvas types, including bitmap outputs, PDF surfaces, and Cairo contexts.
 
+The example below demonstrates how to perform a full-document render of an HTML file into a bitmap image. The document's actual rendered dimensions are measured first, and then a canvas of that size is created to ensure the entire layout is captured without clipping. Finally, the rendered result is saved as a PNG image.
+
+<details>
+<summary><code>Explore Life Through Moments.html</code></summary>
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Explore Life Through Moments</title>
+  <style>
+    body {
+      display: flex;
+      background: #f7f7f7;
+      font-family: Arial, sans-serif;
+      margin: 0;
+    }
+
+    .section {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 32px;
+    }
+
+    .section h2 {
+      margin: 0 0 12px;
+      font-size: 2rem;
+      color: #333;
+    }
+
+    .section p {
+      margin: 0 0 24px;
+      font-size: 1.1rem;
+      color: #555;
+      text-align: center;
+      max-width: 400px;
+    }
+
+    .section img {
+      max-width: 100%;
+      max-height: 350px;
+      border-radius: 10px;
+      object-fit: cover;
+    }
+  </style>
+</head>
+<body>
+  <section class="section">
+    <h2>Nature</h2>
+    <p>Relax in the beauty of untouched landscapes and flourishing greenery. Nature inspires and calms the mind.</p>
+    <img src="https://picsum.photos/seed/xf7p38it/500/350" alt="Nature">
+  </section>
+  <section class="section">
+    <h2>City Life</h2>
+    <p>Discover the energy and excitement of urban environments. Cities pulse with opportunity and culture.</p>
+    <img src="https://picsum.photos/seed/vvjz7ray/500/350" alt="City">
+  </section>
+  <section class="section">
+    <h2>Adventure</h2>
+    <p>Seek new horizons with every journey. Adventure is about embracing the unknown and living boldly.</p>
+    <img src="https://picsum.photos/seed/kg4jgein/500/350" alt="Adventure">
+  </section>
+</body>
+</html>
+```
+
+</details>
+
+```cpp
+#include <plutobook.hpp>
+#include <cmath>
+
+int main()
+{
+    const plutobook::PageSize pageSize(1800 * plutobook::units::px, 600 * plutobook::units::px);
+
+    plutobook::Book book(pageSize, plutobook::PageMargins::None, plutobook::MediaType::Screen);
+
+    book.loadUrl("Explore Life Through Moments.html", /*userStyle=*/"body { border: 1px solid gray }");
+
+    int width = std::ceil(book.documentWidth());
+    int height = std::ceil(book.documentHeight());
+
+    plutobook::ImageCanvas canvas(width, height);
+
+    book.renderDocument(canvas);
+
+    canvas.writeToPng("Explore Life Through Moments.png");
+    return 0;
+}
+```
+
+<details>
+<summary><b>Equivalent in C</b></summary>
+
+```c
+#include <plutobook.h>
+#include <math.h>
+
+int main()
+{
+    const plutobook_page_size_t page_size{1800 * PLUTOBOOK_UNITS_PX, 600 * PLUTOBOOK_UNITS_PX};
+
+    plutobook_t* book = plutobook_create(page_size, PLUTOBOOK_PAGE_MARGINS_NONE, PLUTOBOOK_MEDIA_TYPE_SCREEN);
+
+    plutobook_load_url(book, "Explore Life Through Moments.html", /*user_style=*/"body { border: 1px solid gray }", "");
+
+    int width = (int)ceilf(plutobook_get_document_width(book));
+    int height = (int)ceilf(plutobook_get_document_height(book));
+
+    plutobook_canvas_t* canvas = plutobook_image_canvas_create(width, height, PLUTOBOOK_IMAGE_FORMAT_ARGB32);
+
+    plutobook_render_document(book, canvas);
+
+    plutobook_image_canvas_write_to_png(canvas, "Explore Life Through Moments.png");
+    return 0;
+}
+```
+
+</details>
+
+Example output:
+
+<img width="1800" height="550" alt="Explore Life Through Moments.png" src="https://github.com/user-attachments/assets/10c956c4-aa3b-4504-b9f2-b6e5f3cce25f" />
+
 ---
 
 ## Practical Uses
