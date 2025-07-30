@@ -106,11 +106,11 @@ Example output:
 
 ---
 
-## Simple E‑Book Renderer
+## Page Rendering
 
-This example loads **Alice’s Adventures in Wonderland** (from Project Gutenberg), renders the first three pages as PNG images, and also exports them as a PDF.
+PlutoBook supports precise page-level rendering, allowing individual pages to be drawn onto different canvas types, including bitmap canvases and PDF outputs. For custom rendering workflows, it integrates directly with Cairo, enabling advanced use cases like drawing onto custom surfaces or embedding within existing rendering pipelines. This page-specific approach improves efficiency by avoiding full document processing and is well-suited for previews, selective exports, and on-demand rendering.
 
-_Source: Project Gutenberg – [Alice’s Adventures in Wonderland](https://www.gutenberg.org/ebooks/11)_
+This example loads [**Alice’s Adventures in Wonderland**](https://www.gutenberg.org/ebooks/11) from Project Gutenberg, renders the first three pages as PNG images, and also exports them as a PDF.
 
 ```cpp
 #include <plutobook.hpp>
@@ -216,6 +216,12 @@ Example output:
 | `page-1.png` | `page-2.png` | `page-3.png` |
 | --- | --- | --- |
 | ![page-1](https://github.com/user-attachments/assets/c9c26c07-e283-487e-a2e8-ab77c79bdbb5) | ![page-2](https://github.com/user-attachments/assets/43bdf6dc-21fc-427f-a9c6-e54510b88fbd) | ![page-3](https://github.com/user-attachments/assets/6bff4046-7877-4a89-9723-920bdb5799c0) |
+
+---
+
+## Document Rendering
+
+PlutoBook supports full-document rendering, drawing the entire content flow as a single continuous layout. This is ideal for generating scrollable previews, long-form visual exports, or cases where the overall structure needs to be viewed or processed at once. It also supports rendering specific rectangular regions of the document, which is useful for partial redraws or focused exports. Both full and partial rendering are available across all supported canvas types, including bitmap outputs, PDF surfaces, and Cairo contexts.
 
 ---
 
