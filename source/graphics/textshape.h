@@ -6,6 +6,7 @@
 #include "ustring.h"
 
 #include <memory>
+#include <vector>
 
 namespace plutobook {
 

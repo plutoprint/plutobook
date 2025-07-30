@@ -1,8 +1,8 @@
 #ifndef PLUTOBOOK_BOX_H
 #define PLUTOBOOK_BOX_H
 
-#include "geometry.h"
 #include "boxstyle.h"
+#include "geometry.h"
 
 #include <memory>
 
