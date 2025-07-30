@@ -1352,7 +1352,7 @@ private:
 
 using CSSMediaFeatureList = std::pmr::forward_list<CSSMediaFeature>;
 
-class CSSMediaQuery : public HeapMember {
+class CSSMediaQuery {
 public:
     enum class Type {
         None,
