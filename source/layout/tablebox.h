@@ -39,8 +39,9 @@ public:
 
     TableColumnList& columns() { return m_columns; }
     const TableColumnList& columns() const { return m_columns; }
-    size_t columnCount() const { return m_columns.size(); }
+
     TableColumnBox* columnAt(size_t index) const;
+    size_t columnCount() const;
 
     const TableSectionBoxList& sections() const { return m_sections; }
     TableSectionBox* topSection() const;
@@ -303,6 +304,11 @@ private:
 inline TableColumnBox* TableBox::columnAt(size_t index) const
 {
     return m_columns[index].box();
+}
+
+inline size_t TableBox::columnCount() const
+{
+    return m_columns.size();
 }
 
 class TableColumnBox final : public Box {
