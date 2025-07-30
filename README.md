@@ -301,19 +301,26 @@ The example below demonstrates how to perform a full-document render of an HTML 
 
 int main()
 {
+    // Define a custom page size in pixel units used as the viewport for layout
     const plutobook::PageSize pageSize(1800 * plutobook::units::px, 600 * plutobook::units::px);
 
+    // Create a plutobook instance with the custom page size, no page margins, and screen media type
     plutobook::Book book(pageSize, plutobook::PageMargins::None, plutobook::MediaType::Screen);
 
+    // Load the HTML content from file with a custom user style
     book.loadUrl("Explore Life Through Moments.html", /*userStyle=*/"body { border: 1px solid gray }");
 
+    // Compute the full document dimensions after layout
     int width = std::ceil(book.documentWidth());
     int height = std::ceil(book.documentHeight());
 
+    // Create a canvas large enough to render the entire document at once
     plutobook::ImageCanvas canvas(width, height);
 
+    // Render the full document content to the canvas
     book.renderDocument(canvas);
 
+    // Export the rendered canvas to a PNG file
     canvas.writeToPng("Explore Life Through Moments.png");
     return 0;
 }
@@ -328,20 +335,31 @@ int main()
 
 int main()
 {
-    const plutobook_page_size_t page_size{1800 * PLUTOBOOK_UNITS_PX, 600 * PLUTOBOOK_UNITS_PX};
+    // Define a custom page size in pixel units used as the viewport for layout
+    const plutobook_page_size_t page_size = {1800 * PLUTOBOOK_UNITS_PX, 600 * PLUTOBOOK_UNITS_PX};
 
+    // Create a plutobook instance with the custom page size, no page margins, and screen media type
     plutobook_t* book = plutobook_create(page_size, PLUTOBOOK_PAGE_MARGINS_NONE, PLUTOBOOK_MEDIA_TYPE_SCREEN);
 
+    // Load the HTML content from file with a custom user style
     plutobook_load_url(book, "Explore Life Through Moments.html", /*user_style=*/"body { border: 1px solid gray }", "");
 
+    // Compute the full document dimensions after layout
     int width = (int)ceilf(plutobook_get_document_width(book));
     int height = (int)ceilf(plutobook_get_document_height(book));
 
+    // Create a canvas large enough to render the entire document at once
     plutobook_canvas_t* canvas = plutobook_image_canvas_create(width, height, PLUTOBOOK_IMAGE_FORMAT_ARGB32);
 
+    // Render the full document content to the canvas
     plutobook_render_document(book, canvas);
 
+    // Export the rendered canvas to a PNG file
     plutobook_image_canvas_write_to_png(canvas, "Explore Life Through Moments.png");
+
+    // Clean up resources
+    plutobook_canvas_destroy(canvas);
+    plutobook_destroy(book);
     return 0;
 }
 ```
