@@ -16,7 +16,9 @@ PlutoBook is a robust HTML rendering library tailored for paged media. It takes 
 
 ---
 
-## Quick Start
+## Basic Usage
+
+This example creates a PDF from inline HTML using **plutobook**. It sets up a book with A4 page size and **narrow margins** (36 points or 0.5 inches on all sides), then writes the output to `hello.pdf`.
 
 ```cpp
 #include <plutobook.hpp>
