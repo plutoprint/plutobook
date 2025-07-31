@@ -397,6 +397,26 @@ For a full breakdown of supported features, see [`FEATURES.md`](FEATURES.md):
 
 ---
 
+## Roadmap
+
+PlutoBook is designed to grow into a powerful, flexible tool for static HTML rendering and high-quality print output. The following features are not yet available, but they are part of our long-term vision:
+
+* **JavaScript Support:** We plan to embed a lightweight JavaScript engine (like Duktape or QuickJS) so authors can use `<script>` blocks to generate dynamic content such as charts, diagrams, or custom visuals with libraries like `Chart.js`.
+
+* **Accessibility Improvements:** We aim to support full PDF/UA compliance, allowing PlutoBook to automatically tag structure like headings, lists, and figures for screen readers and assistive technologies.
+
+* **CSS Custom Properties:** Planned support for CSS variables using `var()` and the `@property` rule will make it easier to build maintainable, themeable documents with clean and reusable styling logic.
+
+* **CSS Grid Layout:** We plan to support full CSS Grid features including auto-placement, named lines, and implicit tracks. This will give authors greater control over page layout without extra markup or layout workarounds.
+
+* **CSS Logical Properties:** We intend to support logical CSS properties such as `margin-inline-start` and `padding-block-end`. These allow layouts to adapt more naturally to different writing modes, languages, and directions.
+
+Your support keeps PlutoBook moving forward as a fast, modern tool for static HTML rendering. If you’d like to help, consider becoming a sponsor: [https://github.com/sponsors/plutoprint](https://github.com/sponsors/plutoprint)
+
+Every contribution, no matter the size, helps move the project forward.
+
+---
+
 ## Practical Uses
 PlutoBook provides a robust HTML and CSS rendering engine that can be integrated into a wide range of workflows. The examples below illustrate how PlutoBook can be used in real-world scenarios.
 
