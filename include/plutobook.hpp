@@ -125,7 +125,7 @@ public:
      *
      * @return A `plutobook_page_size_t` object with the same width and height values.
      */
-    constexpr operator plutobook_page_size_t() const { return {m_width, m_height}; }
+    constexpr operator plutobook_page_size_t() const { return PLUTOBOOK_MAKE_PAGE_SIZE(m_width, m_height); }
 
     static const PageSize A3;     ///< Represents the A3 page size (297 x 420 mm).
     static const PageSize A4;     ///< Represents the A4 page size (210 x 297 mm).
@@ -286,7 +286,7 @@ public:
      *
      * @return A `plutobook_page_margins_t` object with the same margin values.
      */
-    constexpr operator plutobook_page_margins_t() const { return {m_top, m_right, m_bottom, m_left}; }
+    constexpr operator plutobook_page_margins_t() const { return PLUTOBOOK_MAKE_PAGE_MARGINS(m_top, m_right, m_bottom, m_left); }
 
     /**
      * @brief Represents page margins with zero dimensions on all sides.
