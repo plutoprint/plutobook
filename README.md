@@ -166,7 +166,7 @@ int main()
     plutobook_t* book = plutobook_create(
         PLUTOBOOK_PAGE_SIZE_A4,
         PLUTOBOOK_PAGE_MARGINS_NARROW,
-        PLUTOBOOK_MEDIA_TYPE_SCREEN
+        PLUTOBOOK_MEDIA_TYPE_PRINT
     );
 
     // Load the HTML content from file
