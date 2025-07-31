@@ -372,6 +372,32 @@ Example output:
 
 ---
 
+## Features
+
+**PlutoBook** is a high-performance document renderer designed for static layout and print-ready output. It supports a broad set of modern web standards, including most of `CSS 3` and parts of `CSS 4`, with input from `HTML5`, `XHTML`, `SVG`, and common image formats like `JPG`, `PNG`, `WEBP`, `GIF`, `BMP`, and `TGA`. Output can be saved directly to `PDF`, image files, or any format supported by `Cairo` (e.g. `SVG`, `PostScript`). It includes robust support for international text layout via `ICU` and `HarfBuzz`, including Arabic, Hebrew, Hindi, and more. Emoji rendering (bitmap and vector) is fully supported. Font handling is powered by `Fontconfig` and `FreeType`, enabling access to all installed system fonts and major font formats. PlutoBook supports `file:` and `data:` URLs out of the box. Remote resources over `http`, `https`, and `ftp` are supported via `libcurl`, and you can plug in a custom fetcher for full control over resource loading.
+
+For a full breakdown of supported features, see [`FEATURES.md`](FEATURES.md):
+
+* [Fonts](FEATURES.md#fonts)
+* [Color](FEATURES.md#color)
+* [Backgrounds and Borders](FEATURES.md#backgrounds-and-borders)
+* [Outlines](FEATURES.md#outlines)
+* [Box Model](FEATURES.md#box-model)
+* [Box Sizing](FEATURES.md#box-sizing)
+* [Display](FEATURES.md#display)
+* [Positioning](FEATURES.md#positioning)
+* [Floats](FEATURES.md#floats)
+* [Lists and Counters](FEATURES.md#lists-and-counters)
+* [Counter Styles](FEATURES.md#counter-styles)
+* [Tables](FEATURES.md#tables)
+* [Multiple Columns](FEATURES.md#multiple-columns)
+* [Flexible Box](FEATURES.md#flexible-box)
+* [Media Queries](FEATURES.md#media-queries)
+* [Paged Media](FEATURES.md#paged-media)
+* [Scalable Vector Graphics](FEATURES.md#scalable-vector-graphics)
+
+---
+
 ## Practical Uses
 PlutoBook provides a robust HTML and CSS rendering engine that can be integrated into a wide range of workflows. The examples below illustrate how PlutoBook can be used in real-world scenarios.
 
