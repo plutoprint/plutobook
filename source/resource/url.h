@@ -19,11 +19,10 @@ public:
 
     const std::string& value() const { return m_value; }
 
+    std::string_view base() const { return componentString(0, m_baseEnd); }
     std::string_view path() const { return componentString(m_portEnd, m_pathEnd); }
     std::string_view query() const { return componentString(m_pathEnd, m_queryEnd); }
     std::string_view fragment() const { return componentString(m_queryEnd, m_fragmentEnd); }
-
-    std::string_view base() const;
 
 private:
     std::string_view componentString(size_t begin, size_t end) const;
@@ -34,17 +33,11 @@ private:
     unsigned m_passwordEnd{0};
     unsigned m_hostEnd{0};
     unsigned m_portEnd{0};
+    unsigned m_baseEnd{0};
     unsigned m_pathEnd{0};
     unsigned m_queryEnd{0};
     unsigned m_fragmentEnd{0};
 };
-
-inline std::string_view Url::base() const
-{
-    if(isHierarchical())
-        return componentString(0, m_queryEnd);
-    return componentString(0, 0);
-}
 
 inline std::string_view Url::componentString(size_t begin, size_t end) const
 {

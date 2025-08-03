@@ -530,6 +530,15 @@ Url::Url(const std::string_view& input)
         m_value.erase(out, end - out);
     }
 
+    if(!hierarchical) {
+        m_baseEnd = m_portEnd;
+    } else {
+        m_baseEnd = m_value.length();
+        while(m_baseEnd > m_portEnd && m_value[m_baseEnd - 1] != '/') {
+            --m_baseEnd;
+        }
+    }
+
     m_pathEnd = m_value.length();
     append(queryBegin, queryEnd);
     m_queryEnd = m_value.length();
@@ -581,9 +590,7 @@ Url Url::complete(std::string_view input) const
         return Url(m_value.substr(0, m_portEnd) + relative);
     }
 
-    auto value = m_value.substr(0, m_pathEnd);
-    while(m_portEnd < value.length() && value.back() != '/')
-        value.pop_back();
+    auto value = m_value.substr(0, m_baseEnd);
     if(m_portEnd == value.length())
         value += '/';
     return Url(value + relative);
