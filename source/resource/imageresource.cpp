@@ -108,7 +108,12 @@ static cairo_surface_t* decodeBitmapImage(const char* data, size_t size)
         auto surfaceHeight = cairo_image_surface_get_height(surface);
         tjDecompress2(tj, (uint8_t*)(data), size, surfaceData, surfaceWidth, surfaceStride, surfaceHeight, TJPF_BGRX, 0);
         tjDestroy(tj);
+
+        auto mimeData = (uint8_t*)std::malloc(size);
+        std::memcpy(mimeData, data, size);
+
         cairo_surface_mark_dirty(surface);
+        cairo_surface_set_mime_data(surface, CAIRO_MIME_TYPE_JPEG, mimeData, size, std::free, mimeData);
         return surface;
     }
 #endif // PLUTOBOOK_HAS_TURBOJPEG
@@ -234,7 +239,7 @@ void BitmapImage::draw(GraphicsContext& context, const Rect& dstRect, const Rect
 
     auto pattern = cairo_pattern_create_for_surface(m_surface);
     cairo_pattern_set_matrix(pattern, &matrix);
-    cairo_pattern_set_extend(pattern, CAIRO_EXTEND_PAD);
+    cairo_pattern_set_extend(pattern, CAIRO_EXTEND_NONE);
 
     auto canvas = context.canvas();
     cairo_save(canvas);
