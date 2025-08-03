@@ -307,10 +307,10 @@ void BorderPainter::paint(const PaintInfo& info) const
         info->clipOutRoundedRect(m_inner);
     }
 
-    if(!m_isOpaque) {
-        paintTranslucentSides(*info);
-    } else {
+    if(m_isOpaque) {
         paintSides(*info, m_visibleEdgeSet);
+    } else {
+        paintTranslucentSides(*info, m_visibleEdgeSet);
     }
 
     if(m_isRounded) {
@@ -318,9 +318,8 @@ void BorderPainter::paint(const PaintInfo& info) const
     }
 }
 
-void BorderPainter::paintTranslucentSides(GraphicsContext& context) const
+void BorderPainter::paintTranslucentSides(GraphicsContext& context, BorderEdgeFlags visibleEdgeSet) const
 {
-    auto visibleEdgeSet = m_visibleEdgeSet;
     while(visibleEdgeSet) {
         Color commonColor;
         BorderEdgeFlags commonColorEdgeSet = 0;

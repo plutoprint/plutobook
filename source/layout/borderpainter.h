@@ -28,7 +28,7 @@ private:
 
     void paint(const PaintInfo& info) const;
 
-    void paintTranslucentSides(GraphicsContext& context) const;
+    void paintTranslucentSides(GraphicsContext& context, BorderEdgeFlags visibleEdgeSet) const;
     void paintSides(GraphicsContext& context, BorderEdgeFlags visibleEdgeSet, const Color* commonColor = nullptr) const;
     void paintSide(GraphicsContext& context, BoxSide side, BoxSide adjacentSide1, BoxSide adjacentSide2, const Color& color, const Rect& rect) const;
     void paintSide(GraphicsContext& context, BoxSide side, BoxSide adjacentSide1, BoxSide adjacentSide2, const Color& color, const Path& path) const;
