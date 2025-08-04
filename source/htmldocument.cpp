@@ -546,43 +546,43 @@ void HTMLTableElement::collectAdditionalAttributeStyle(std::string& output) cons
     }
 
     if(m_frame > Frame::Unset) {
-        bool borderTop = false;
-        bool borderRight = false;
-        bool borderBottom = false;
-        bool borderLeft = false;
+        auto topStyle = "hidden";
+        auto bottomStyle = "hidden";
+        auto leftStyle = "hidden";
+        auto rightStyle = "hidden";
         switch(m_frame) {
         case Frame::Above:
-            borderTop = true;
+            topStyle = "solid";
             break;
         case Frame::Below:
-            borderBottom = true;
+            bottomStyle = "solid";
             break;
         case Frame::Hsides:
-            borderTop = borderBottom = true;
+            topStyle = bottomStyle = "solid";
             break;
         case Frame::Lhs:
-            borderLeft = true;
+            leftStyle = "solid";
             break;
         case Frame::Rhs:
-            borderRight = true;
+            rightStyle = "solid";
             break;
         case Frame::Vsides:
-            borderLeft = borderRight = true;
+            leftStyle = rightStyle = "solid";
             break;
         case Frame::Box:
         case Frame::Border:
-            borderTop = borderBottom = true;
-            borderLeft = borderRight = true;
+            topStyle = bottomStyle = "solid";
+            leftStyle = rightStyle = "solid";
             break;
         default:
             break;
         }
 
         addHTMLAttributeStyle(output, "border-width", "thin");
-        addHTMLAttributeStyle(output, "border-top-style", borderTop ? "solid" : "hidden");
-        addHTMLAttributeStyle(output, "border-bottom-style", borderBottom ? "solid" : "hidden");
-        addHTMLAttributeStyle(output, "border-left-style", borderLeft ? "solid" : "hidden");
-        addHTMLAttributeStyle(output, "border-right-style", borderRight ? "solid" : "hidden");
+        addHTMLAttributeStyle(output, "border-top-style", topStyle);
+        addHTMLAttributeStyle(output, "border-bottom-style", bottomStyle);
+        addHTMLAttributeStyle(output, "border-left-style", leftStyle);
+        addHTMLAttributeStyle(output, "border-right-style", rightStyle);
     } else {
         if(m_border > 0) {
             addHTMLLengthAttributeStyle(output, "border-width", m_border);
