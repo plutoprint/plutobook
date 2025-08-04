@@ -210,6 +210,7 @@ public:
 
     virtual void parseAttribute(const GlobalString& name, const HeapString& value);
     virtual void collectAttributeStyle(std::string& output, const GlobalString& name, const HeapString& value) const {}
+    virtual void collectAdditionalAttributeStyle(std::string& output) const {}
 
     CSSPropertyList inlineStyle();
     CSSPropertyList presentationAttributeStyle();

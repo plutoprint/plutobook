@@ -151,8 +151,8 @@ void HTMLElement::buildBox(Counters& counters, Box* parent)
     counters.pop();
 }
 
-template<typename T>
-static bool parseHTMLInteger(T& output, std::string_view input)
+template<typename T = int>
+static std::optional<T> parseHTMLInteger(std::string_view input)
 {
     constexpr auto isSigned = std::numeric_limits<T>::is_signed;
     stripLeadingAndTrailingSpaces(input);
@@ -165,19 +165,36 @@ static bool parseHTMLInteger(T& output, std::string_view input)
     }
 
     if(input.empty() || !isDigit(input.front()))
-        return false;
-    T integer = 0;
+        return std::nullopt;
+    T output = 0;
     do {
-        integer = integer * 10 + input.front() - '0';
+        output = output * 10 + input.front() - '0';
         input.remove_prefix(1);
     } while(!input.empty() && isDigit(input.front()));
 
     using SignedType = typename std::make_signed<T>::type;
     if(isNegative)
-        output = -static_cast<SignedType>(integer);
-    else
-        output = integer;
-    return true;
+        output = -static_cast<SignedType>(output);
+    return output;
+}
+
+static std::optional<unsigned> parseHTMLNonNegativeInteger(std::string_view input)
+{
+    return parseHTMLInteger<unsigned>(input);
+}
+
+template<typename T>
+std::optional<T> HTMLElement::parseHTMLIntegerAttribute(const GlobalString& name) const
+{
+    const auto& value = getAttribute(name);
+    if(!value.empty())
+        return parseHTMLInteger<T>(value);
+    return std::nullopt;
+}
+
+std::optional<unsigned> HTMLElement::parseHTMLNonNegativeIntegerAttribute(const GlobalString& name) const
+{
+    return parseHTMLIntegerAttribute<unsigned>(name);
 }
 
 static void addHTMLAttributeStyle(std::string& output, const std::string_view& name, const std::string_view& value)
@@ -218,6 +235,18 @@ static void addHTMLLengthAttributeStyle(std::string& output, const std::string_v
         output += "%;";
     } else {
         output += "px;";
+    }
+}
+
+static void addHTMLLengthAttributeStyle(std::string& output, const std::string_view& name, int value)
+{
+    output += name;
+    output += ':';
+    output += std::to_string(value);
+    if(value) {
+        output += "px;";
+    } else {
+        output += ';';
     }
 }
 
@@ -420,10 +449,7 @@ HTMLLIElement::HTMLLIElement(Document* document)
 
 std::optional<int> HTMLLIElement::value() const
 {
-    int value;
-    if(!parseHTMLInteger(value, getAttribute(valueAttr)))
-        return std::nullopt;
-    return value;
+    return parseHTMLIntegerAttribute(valueAttr);
 }
 
 HTMLOLElement::HTMLOLElement(Document* document)
@@ -433,15 +459,138 @@ HTMLOLElement::HTMLOLElement(Document* document)
 
 int HTMLOLElement::start() const
 {
-    int value;
-    if(!parseHTMLInteger(value, getAttribute(startAttr)))
-        return 1;
-    return value;
+    return parseHTMLIntegerAttribute(startAttr).value_or(1);
 }
 
 HTMLTableElement::HTMLTableElement(Document* document)
     : HTMLElement(document, tableTag)
 {
+}
+
+void HTMLTableElement::parseAttribute(const GlobalString& name, const HeapString& value)
+{
+    if(name == cellpaddingAttr) {
+        m_padding = parseHTMLNonNegativeInteger(value).value_or(0);
+    } else if(name == borderAttr) {
+        m_border = parseHTMLNonNegativeInteger(value).value_or(0);
+    } else if(name == rulesAttr) {
+        m_rules = parseRulesAttribute(value);
+    } else if(name == frameAttr) {
+        m_frame = parseFrameAttribute(value);
+    } else {
+        HTMLElement::parseAttribute(name, value);
+    }
+}
+
+void HTMLTableElement::collectAdditionalCellAttributeStyle(std::string& output) const
+{
+    if(m_padding > 0) {
+        addHTMLLengthAttributeStyle(output, "padding", m_padding);
+    }
+
+    if(m_border > 0 && m_rules == Rules::Unset) {
+        addHTMLAttributeStyle(output, "border-width", "inset");
+        addHTMLAttributeStyle(output, "border-style", "solid");
+        addHTMLAttributeStyle(output, "border-color", "inherit");
+    } else {
+        switch(m_rules) {
+        case Rules::Rows:
+            addHTMLAttributeStyle(output, "border-top-width", "thin");
+            addHTMLAttributeStyle(output, "border-bottom-width", "thin");
+            addHTMLAttributeStyle(output, "border-top-style", "solid");
+            addHTMLAttributeStyle(output, "border-bottom-style", "solid");
+            addHTMLAttributeStyle(output, "border-color", "inherit");
+        case Rules::Cols:
+            addHTMLAttributeStyle(output, "border-left-width", "thin");
+            addHTMLAttributeStyle(output, "border-right-width", "thin");
+            addHTMLAttributeStyle(output, "border-left-style", "solid");
+            addHTMLAttributeStyle(output, "border-right-style", "solid");
+            addHTMLAttributeStyle(output, "border-color", "inherit");
+            break;
+        case Rules::All:
+            addHTMLAttributeStyle(output, "border-width", "thin");
+            addHTMLAttributeStyle(output, "border-style", "solid");
+            addHTMLAttributeStyle(output, "border-color", "inherit");
+            break;
+        default:
+            break;
+        }
+    }
+}
+
+void HTMLTableElement::collectAdditionalRowGroupAttributeStyle(std::string& output) const
+{
+    if(m_rules == Rules::Groups) {
+        addHTMLAttributeStyle(output, "border-top-width", "thin");
+        addHTMLAttributeStyle(output, "border-bottom-width", "thin");
+        addHTMLAttributeStyle(output, "border-top-style", "solid");
+        addHTMLAttributeStyle(output, "border-bottom-style", "solid");
+    }
+}
+
+void HTMLTableElement::collectAdditionalColGroupAttributeStyle(std::string& output) const
+{
+    if(m_rules == Rules::Groups) {
+        addHTMLAttributeStyle(output, "border-left-width", "thin");
+        addHTMLAttributeStyle(output, "border-right-width", "thin");
+        addHTMLAttributeStyle(output, "border-left-style", "solid");
+        addHTMLAttributeStyle(output, "border-right-style", "solid");
+    }
+}
+
+void HTMLTableElement::collectAdditionalAttributeStyle(std::string& output) const
+{
+    HTMLElement::collectAdditionalAttributeStyle(output);
+    if(m_rules > Rules::Unset) {
+        addHTMLAttributeStyle(output, "border-collapse", "collapse");
+    }
+
+    if(m_frame > Frame::Unset) {
+        bool borderTop = false;
+        bool borderRight = false;
+        bool borderBottom = false;
+        bool borderLeft = false;
+        switch(m_frame) {
+        case Frame::Above:
+            borderTop = true;
+            break;
+        case Frame::Below:
+            borderBottom = true;
+            break;
+        case Frame::Hsides:
+            borderTop = borderBottom = true;
+            break;
+        case Frame::Lhs:
+            borderLeft = true;
+            break;
+        case Frame::Rhs:
+            borderRight = true;
+            break;
+        case Frame::Vsides:
+            borderLeft = borderRight = true;
+            break;
+        case Frame::Box:
+        case Frame::Border:
+            borderTop = borderBottom = true;
+            borderLeft = borderRight = true;
+            break;
+        default:
+            break;
+        }
+
+        addHTMLAttributeStyle(output, "border-width", "thin");
+        addHTMLAttributeStyle(output, "border-top-style", borderTop ? "solid" : "hidden");
+        addHTMLAttributeStyle(output, "border-bottom-style", borderBottom ? "solid" : "hidden");
+        addHTMLAttributeStyle(output, "border-left-style", borderLeft ? "solid" : "hidden");
+        addHTMLAttributeStyle(output, "border-right-style", borderRight ? "solid" : "hidden");
+    } else {
+        if(m_border > 0) {
+            addHTMLLengthAttributeStyle(output, "border-width", m_border);
+            addHTMLAttributeStyle(output, "border-style", "outset");
+        } else if(m_rules > Rules::Unset) {
+            addHTMLAttributeStyle(output, "border-style", "hidden");
+        }
+    }
 }
 
 void HTMLTableElement::collectAttributeStyle(std::string& output, const GlobalString& name, const HeapString& value) const
@@ -456,8 +605,6 @@ void HTMLTableElement::collectAttributeStyle(std::string& output, const GlobalSt
         addHTMLAttributeStyle(output, "text-align", value);
     } else if(name == cellspacingAttr) {
         addHTMLLengthAttributeStyle(output, "border-spacing", value);
-    } else if(name == borderAttr) {
-        addHTMLLengthAttributeStyle(output, "border-width", value);
     } else if(name == bordercolorAttr) {
         addHTMLAttributeStyle(output, "border-color", value);
     } else if(name == bgcolorAttr) {
@@ -469,9 +616,55 @@ void HTMLTableElement::collectAttributeStyle(std::string& output, const GlobalSt
     }
 }
 
+HTMLTableElement::Rules HTMLTableElement::parseRulesAttribute(std::string_view value)
+{
+    if(equalsIgnoringCase(value, "none"))
+        return Rules::None;
+    if(equalsIgnoringCase(value, "groups"))
+        return Rules::Groups;
+    if(equalsIgnoringCase(value, "rows"))
+        return Rules::Rows;
+    if(equalsIgnoringCase(value, "cols"))
+        return Rules::Cols;
+    if(equalsIgnoringCase(value, "all"))
+        return Rules::All;
+    return Rules::Unset;
+}
+
+HTMLTableElement::Frame HTMLTableElement::parseFrameAttribute(std::string_view value)
+{
+    if(equalsIgnoringCase(value, "void"))
+        return Frame::Void;
+    if(equalsIgnoringCase(value, "above"))
+        return Frame::Above;
+    if(equalsIgnoringCase(value, "below"))
+        return Frame::Below;
+    if(equalsIgnoringCase(value, "hsides"))
+        return Frame::Hsides;
+    if(equalsIgnoringCase(value, "lhs"))
+        return Frame::Lhs;
+    if(equalsIgnoringCase(value, "rhs"))
+        return Frame::Rhs;
+    if(equalsIgnoringCase(value, "vsides"))
+        return Frame::Vsides;
+    if(equalsIgnoringCase(value, "box"))
+        return Frame::Box;
+    if(equalsIgnoringCase(value, "border"))
+        return Frame::Border;
+    return Frame::Unset;
+}
+
 HTMLTablePartElement::HTMLTablePartElement(Document* document, const GlobalString& tagName)
     : HTMLElement(document, tagName)
 {
+}
+
+HTMLTableElement* HTMLTablePartElement::findParentTable() const
+{
+    auto parent = parentElement();
+    while(parent && !parent->isOfType(xhtmlNs, tableTag))
+        parent = parent->parentElement();
+    return static_cast<HTMLTableElement*>(parent);
 }
 
 void HTMLTablePartElement::collectAttributeStyle(std::string& output, const GlobalString& name, const HeapString& value) const
@@ -496,6 +689,14 @@ HTMLTableSectionElement::HTMLTableSectionElement(Document* document, const Globa
 {
 }
 
+void HTMLTableSectionElement::collectAdditionalAttributeStyle(std::string& output) const
+{
+    HTMLTablePartElement::collectAdditionalAttributeStyle(output);
+    if(auto table = findParentTable()) {
+        table->collectAdditionalRowGroupAttributeStyle(output);
+    }
+}
+
 HTMLTableRowElement::HTMLTableRowElement(Document* document)
     : HTMLTablePartElement(document, trTag)
 {
@@ -508,10 +709,17 @@ HTMLTableColElement::HTMLTableColElement(Document* document, const GlobalString&
 
 unsigned HTMLTableColElement::span() const
 {
-    unsigned value;
-    if(!parseHTMLInteger(value, getAttribute(spanAttr)))
-        return 1;
-    return std::max(1u, value);
+    return parseHTMLNonNegativeIntegerAttribute(spanAttr).value_or(1);
+}
+
+void HTMLTableColElement::collectAdditionalAttributeStyle(std::string& output) const
+{
+    HTMLTablePartElement::collectAdditionalAttributeStyle(output);
+    if(tagName() == colgroupTag) {
+        if(auto table = findParentTable()) {
+            table->collectAdditionalColGroupAttributeStyle(output);
+        }
+    }
 }
 
 Box* HTMLTableColElement::createBox(const RefPtr<BoxStyle>& style)
@@ -529,18 +737,20 @@ HTMLTableCellElement::HTMLTableCellElement(Document* document, const GlobalStrin
 
 unsigned HTMLTableCellElement::colSpan() const
 {
-    unsigned value;
-    if(!parseHTMLInteger(value, getAttribute(colspanAttr)))
-        return 1;
-    return std::max(1u, value);
+    return std::max(1u, parseHTMLNonNegativeIntegerAttribute(colspanAttr).value_or(1));
 }
 
 unsigned HTMLTableCellElement::rowSpan() const
 {
-    unsigned value;
-    if(!parseHTMLInteger(value, getAttribute(rowspanAttr)))
-        return 1;
-    return value;
+    return parseHTMLNonNegativeIntegerAttribute(rowspanAttr).value_or(1);
+}
+
+void HTMLTableCellElement::collectAdditionalAttributeStyle(std::string& output) const
+{
+    HTMLTablePartElement::collectAdditionalAttributeStyle(output);
+    if(auto table = findParentTable()) {
+        table->collectAdditionalCellAttributeStyle(output);
+    }
 }
 
 Box* HTMLTableCellElement::createBox(const RefPtr<BoxStyle>& style)
@@ -561,10 +771,7 @@ HTMLInputElement::HTMLInputElement(Document* document)
 
 unsigned HTMLInputElement::size() const
 {
-    unsigned value;
-    if(!parseHTMLInteger(value, getAttribute(sizeAttr)))
-        return 20;
-    return std::max(1u, value);
+    return std::max(1u, parseHTMLNonNegativeIntegerAttribute(sizeAttr).value_or(20));
 }
 
 Box* HTMLInputElement::createBox(const RefPtr<BoxStyle>& style)
@@ -591,18 +798,12 @@ HTMLTextAreaElement::HTMLTextAreaElement(Document* document)
 
 unsigned HTMLTextAreaElement::rows() const
 {
-    unsigned value;
-    if(!parseHTMLInteger(value, getAttribute(rowsAttr)))
-        return 2;
-    return std::max(1u, value);
+    return std::max(1u, parseHTMLNonNegativeIntegerAttribute(rowsAttr).value_or(2));
 }
 
 unsigned HTMLTextAreaElement::cols() const
 {
-    unsigned value;
-    if(!parseHTMLInteger(value, getAttribute(colsAttr)))
-        return 20;
-    return std::max(1u, value);
+    return std::max(1u, parseHTMLNonNegativeIntegerAttribute(colsAttr).value_or(20));
 }
 
 Box* HTMLTextAreaElement::createBox(const RefPtr<BoxStyle>& style)
@@ -620,10 +821,9 @@ HTMLSelectElement::HTMLSelectElement(Document* document)
 
 unsigned HTMLSelectElement::size() const
 {
-    unsigned value;
-    if(!parseHTMLInteger(value, getAttribute(sizeAttr)))
-        return hasAttribute(multipleAttr) ? 4 : 1;
-    return std::max(1u, value);
+    if(auto size = parseHTMLNonNegativeIntegerAttribute(sizeAttr))
+        return std::max(1u, size.value());
+    return hasAttribute(multipleAttr) ? 4 : 1;
 }
 
 Box* HTMLSelectElement::createBox(const RefPtr<BoxStyle>& style)

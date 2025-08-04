@@ -400,9 +400,9 @@ CSSPropertyList Element::inlineStyle()
 CSSPropertyList Element::presentationAttributeStyle()
 {
     std::string output;
-    for(const auto& attribute : attributes()) {
+    for(const auto& attribute : attributes())
         collectAttributeStyle(output, attribute.name(), attribute.value());
-    }
+    collectAdditionalAttributeStyle(output);
 
     if(output.empty())
         return CSSPropertyList();

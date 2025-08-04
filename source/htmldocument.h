@@ -18,6 +18,11 @@ public:
     void buildFirstLetterPseudoBox(Box* parent);
     void buildPseudoBox(Counters& counters, Box* parent, PseudoType pseudoType);
     void buildBox(Counters& counters, Box* parent) override;
+
+protected:
+    template<typename T = int>
+    std::optional<T> parseHTMLIntegerAttribute(const GlobalString& name) const;
+    std::optional<unsigned> parseHTMLNonNegativeIntegerAttribute(const GlobalString& name) const;
 };
 
 template<>
@@ -85,12 +90,53 @@ class HTMLTableElement final : public HTMLElement {
 public:
     HTMLTableElement(Document* document);
 
+    void parseAttribute(const GlobalString& name, const HeapString& value) final;
+
+    void collectAdditionalCellAttributeStyle(std::string& output) const;
+    void collectAdditionalRowGroupAttributeStyle(std::string& output) const;
+    void collectAdditionalColGroupAttributeStyle(std::string& output) const;
+    void collectAdditionalAttributeStyle(std::string& output) const final;
+
     void collectAttributeStyle(std::string& output, const GlobalString& name, const HeapString& value) const final;
+
+private:
+    enum class Rules : uint16_t {
+        Unset,
+        None,
+        Groups,
+        Rows,
+        Cols,
+        All
+    };
+
+    static Rules parseRulesAttribute(std::string_view  value);
+
+    enum class Frame : uint16_t {
+        Unset,
+        Void,
+        Above,
+        Below,
+        Hsides,
+        Lhs,
+        Rhs,
+        Vsides,
+        Box,
+        Border
+    };
+
+    static Frame parseFrameAttribute(std::string_view  value);
+
+    uint16_t m_padding;
+    uint16_t m_border;
+    Rules m_rules;
+    Frame m_frame;
 };
 
 class HTMLTablePartElement : public HTMLElement {
 public:
     HTMLTablePartElement(Document* document, const GlobalString& tagName);
+
+    HTMLTableElement* findParentTable() const;
 
     void collectAttributeStyle(std::string& output, const GlobalString& name, const HeapString& value) const override;
 };
@@ -98,6 +144,8 @@ public:
 class HTMLTableSectionElement final : public HTMLTablePartElement {
 public:
     HTMLTableSectionElement(Document* document, const GlobalString& tagName);
+
+    void collectAdditionalAttributeStyle(std::string& output) const final;
 };
 
 class HTMLTableRowElement final : public HTMLTablePartElement {
@@ -111,6 +159,7 @@ public:
 
     unsigned span() const;
 
+    void collectAdditionalAttributeStyle(std::string& output) const final;
     Box* createBox(const RefPtr<BoxStyle>& style) final;
 };
 
@@ -121,6 +170,7 @@ public:
     unsigned colSpan() const;
     unsigned rowSpan() const;
 
+    void collectAdditionalAttributeStyle(std::string& output) const final;
     Box* createBox(const RefPtr<BoxStyle>& style) final;
 };
 
