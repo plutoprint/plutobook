@@ -58,6 +58,13 @@ public:
     Box* createBox(const RefPtr<BoxStyle>& style) final;
 };
 
+class HTMLHRElement final : public HTMLElement {
+public:
+    HTMLHRElement(Document* document);
+
+    void collectAttributeStyle(std::string& output, const GlobalString& name, const HeapString& value) const final;
+};
+
 class HTMLBRElement final : public HTMLElement {
 public:
     HTMLBRElement(Document* document);

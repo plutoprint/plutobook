@@ -371,6 +371,7 @@ const GlobalString mask_typeAttr("mask-type");
 const GlobalString mediaAttr("media");
 const GlobalString multipleAttr("multiple");
 const GlobalString nameAttr("name");
+const GlobalString noshadeAttr("noshade");
 const GlobalString numOctavesAttr("numOctaves");
 const GlobalString offsetAttr("offset");
 const GlobalString opacityAttr("opacity");

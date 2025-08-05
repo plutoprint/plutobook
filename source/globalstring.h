@@ -360,6 +360,7 @@ extern const GlobalString mask_typeAttr;
 extern const GlobalString mediaAttr;
 extern const GlobalString multipleAttr;
 extern const GlobalString nameAttr;
+extern const GlobalString noshadeAttr;
 extern const GlobalString numOctavesAttr;
 extern const GlobalString offsetAttr;
 extern const GlobalString opacityAttr;

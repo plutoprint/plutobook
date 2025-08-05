@@ -584,6 +584,8 @@ Element* Document::createElement(const GlobalString& namespaceURI, const GlobalS
             return new (m_heap) HTMLFontElement(this);
         if(tagName == imgTag)
             return new (m_heap) HTMLImageElement(this);
+        if(tagName == hrTag)
+            return new (m_heap) HTMLHRElement(this);
         if(tagName == brTag)
             return new (m_heap) HTMLBRElement(this);
         if(tagName == wbrTag)

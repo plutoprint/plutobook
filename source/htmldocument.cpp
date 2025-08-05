@@ -422,6 +422,46 @@ Box* HTMLImageElement::createBox(const RefPtr<BoxStyle>& style)
     return box;
 }
 
+HTMLHRElement::HTMLHRElement(Document* document)
+    : HTMLElement(document, hrTag)
+{
+}
+
+void HTMLHRElement::collectAttributeStyle(std::string& output, const GlobalString& name, const HeapString& value) const
+{
+    if(name == widthAttr) {
+        addHTMLLengthAttributeStyle(output, "width", value);
+    } else if(name == sizeAttr) {
+        auto size = parseHTMLInteger(value);
+        if(size && size.value() > 1) {
+            addHTMLLengthAttributeStyle(output, "height", size.value() - 2);
+        } else {
+            addHTMLLengthAttributeStyle(output, "border-bottom-width", 0);
+        }
+    } else if(name == alignAttr) {
+        if(equalsIgnoringCase(value, "left")) {
+            addHTMLLengthAttributeStyle(output, "margin-left", 0);
+            addHTMLAttributeStyle(output, "margin-right", "auto");
+        } else if(equalsIgnoringCase(value, "right")) {
+            addHTMLAttributeStyle(output, "margin-left", "auto");
+            addHTMLLengthAttributeStyle(output, "margin-right", 0);
+        } else {
+            addHTMLAttributeStyle(output, "margin-left", "auto");
+            addHTMLAttributeStyle(output, "margin-right", "auto");
+        }
+    } else if(name == colorAttr) {
+        addHTMLAttributeStyle(output, "border-style", "solid");
+        addHTMLAttributeStyle(output, "border-color", value);
+        addHTMLAttributeStyle(output, "background-color", value);
+    } else if(name == noshadeAttr) {
+        addHTMLAttributeStyle(output, "border-style", "solid");
+        addHTMLAttributeStyle(output, "border-color", "darkgray");
+        addHTMLAttributeStyle(output, "background-color", "darkgray");
+    } else {
+        HTMLElement::collectAttributeStyle(output, name, value);
+    }
+}
+
 HTMLBRElement::HTMLBRElement(Document* document)
     : HTMLElement(document, brTag)
 {
