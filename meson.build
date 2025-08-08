@@ -61,7 +61,7 @@ endforeach
 
 curl_dep = dependency('libcurl',
     required: get_option('curl'),
-    version: '>=7.71.0'
+    version: '>=7.61.1'
 )
 
 plutobook_cpp_args = ['-DPLUTOBOOK_BUILD']
