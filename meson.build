@@ -27,7 +27,7 @@ fontconfig_dep = dependency('fontconfig',
 
 harfbuzz_dep = dependency('harfbuzz',
     required: true,
-    version: '>=2.0.0'
+    version: '>=1.7.5'
 )
 
 cairo_required_version = '>=1.14.0'
