@@ -2,6 +2,7 @@
 #include "stringutils.h"
 
 #include <cassert>
+#include <memory>
 
 namespace plutobook {
 
