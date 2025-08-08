@@ -37,7 +37,7 @@ void LineItemsBuilder::appendText(Box* box, const HeapString& data)
         return;
     }
 
-    auto text = UString::fromUTF8(data);
+    auto text = UString::fromUTF8(icu::StringPiece(data.data(), data.size()));
     switch(box->style()->textTransform()) {
     case TextTransform::None:
         appendText(box, text);
