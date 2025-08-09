@@ -96,7 +96,7 @@ static cairo_surface_t* decodeBitmapImage(const char* data, size_t size)
         int width, height;
         auto tj = tjInitDecompress();
         if(!tj || tjDecompressHeader(tj, (uint8_t*)(data), size, &width, &height) == -1) {
-            plutobook_set_error_message("image decode error: %s", tjGetErrorStr2(tj));
+            plutobook_set_error_message("image decode error: %s", tjGetErrorStr());
             tjDestroy(tj);
             return nullptr;
         }
