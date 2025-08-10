@@ -36,7 +36,7 @@ jobs:
             
       - name: Setup and Build
         run: |
-          meson setup build
+          meson setup build --wrap-mode=nodownload
           meson compile -C build
 
   macos:
@@ -51,7 +51,7 @@ jobs:
       - name: Setup and Build
         run: |
           export PKG_CONFIG_PATH="/opt/homebrew/opt/icu4c/lib/pkgconfig:$PKG_CONFIG_PATH"
-          meson setup build
+          meson setup build --wrap-mode=nodownload
           meson compile -C build
 
   windows:
@@ -84,5 +84,5 @@ jobs:
             
       - name: Setup and Build
         run: |
-          meson setup build
+          meson setup build --wrap-mode=nodownload
           meson compile -C build

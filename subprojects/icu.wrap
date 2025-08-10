@@ -1,0 +1,16 @@
+[wrap-file]
+directory = icu
+source_url = https://github.com/unicode-org/icu/releases/download/release-77-1/icu4c-77_1-src.tgz
+source_filename = icu4c-77_1-src.tgz
+source_hash = 588e431f77327c39031ffbb8843c0e3bc122c211374485fa87dc5f3faff24061
+patch_filename = icu_77.1-2_patch.zip
+patch_url = https://wrapdb.mesonbuild.com/v2/icu_77.1-2/get_patch
+patch_hash = 7a1a23408c8dae2c8c78bdb3e02adf093832cfd9c04292692bb62ffc6f45b2a6
+source_fallback_url = https://github.com/mesonbuild/wrapdb/releases/download/icu_77.1-2/icu4c-77_1-src.tgz
+wrapdb_version = 77.1-2
+
+[provide]
+icu-uc = icuuc_dep
+icu-io = icuio_dep
+icu-i18n = icui18n_dep
+program_names = genbrk, genccode, gencmn

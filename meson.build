@@ -7,33 +7,64 @@ project('plutobook', 'cpp',
 
 expat_dep = dependency('expat',
     required: true,
-    version: '>=2.1.0'
+    version: '>=2.1.0',
+    fallback: ['expat', 'expat_dep']
 )
 
 icu_dep = dependency('icu-uc',
     required: true,
-    version: '>=49.0'
+    version: '>=49.0',
+    fallback: ['icu', 'icuuc_dep']
 )
 
 freetype_dep = dependency('freetype2',
     required: true,
-    version: '>=9.7.3'
+    version: '>=9.7.3',
+    default_options: ['harfbuzz=disabled'],
+    fallback: ['freetype2', 'freetype_dep']
 )
+
+fontconfig_default_options = [
+    'doc=disabled',
+    'tests=disabled',
+    'tools=disabled',
+    'xml-backend=expat'
+]
 
 fontconfig_dep = dependency('fontconfig',
     required: true,
-    version: '>=2.12.5'
+    version: '>=2.12.5',
+    default_options: fontconfig_default_options,
+    fallback: ['fontconfig', 'fontconfig_dep']
 )
+
+harfbuzz_default_options = [
+    'glib=disabled',
+    'icu=enabled',
+    'freetype=enabled',
+    'tests=disabled',
+    'docs=disabled'
+]
 
 harfbuzz_dep = dependency('harfbuzz',
     required: true,
-    version: '>=1.7.5'
+    version: '>=1.7.5',
+    default_options: harfbuzz_default_options,
+    fallback: ['harfbuzz', 'libharfbuzz_dep']
 )
 
 cairo_required_version = '>=1.14.0'
+cairo_default_options = [
+    'freetype=enabled',
+    'fontconfig=enabled',
+    'glib=disabled'
+]
+
 cairo_dep = dependency('cairo',
     required: true,
-    version: cairo_required_version
+    version: cairo_required_version,
+    default_options: cairo_default_options,
+    fallback: ['cairo', 'libcairo_dep']
 )
 
 plutobook_deps = [
@@ -61,7 +92,8 @@ endforeach
 
 curl_dep = dependency('libcurl',
     required: get_option('curl'),
-    version: '>=7.61.1'
+    version: '>=7.61.1',
+    fallback: ['curl', 'curl_dep']
 )
 
 plutobook_cpp_args = ['-DPLUTOBOOK_BUILD']
@@ -72,7 +104,8 @@ if curl_dep.found()
 endif
 
 jpeg_dep = dependency('libturbojpeg',
-    required: get_option('turbojpeg')
+    required: get_option('turbojpeg'),
+    fallback: ['libjpeg-turbo', 'turbojpeg_dep']
 )
 
 if jpeg_dep.found()
@@ -81,7 +114,8 @@ if jpeg_dep.found()
 endif
 
 webp_dep = dependency('libwebp',
-    required: get_option('webp')
+    required: get_option('webp'),
+    fallback: ['libwebp', 'webp_dep']
 )
 
 if webp_dep.found()
