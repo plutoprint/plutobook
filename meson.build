@@ -58,7 +58,13 @@ cairo_required_version = '>=1.14.0'
 cairo_default_options = [
     'freetype=enabled',
     'fontconfig=enabled',
-    'glib=disabled'
+    'png=enabled',
+    'zlib=enabled',
+    'glib=disabled',
+    'xcb=disabled',
+    'tests=disabled',
+    'pixman:tests=disabled',
+    'pixman:demos=disabled',
 ]
 
 cairo_dep = dependency('cairo',
