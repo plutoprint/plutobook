@@ -39,7 +39,6 @@ fontconfig_dep = dependency('fontconfig',
 )
 
 harfbuzz_default_options = [
-    'glib=disabled',
     'cairo=disabled',
     'icu=enabled',
     'freetype=enabled',
@@ -60,7 +59,6 @@ cairo_default_options = [
     'fontconfig=enabled',
     'png=enabled',
     'zlib=enabled',
-    'glib=disabled',
     'xcb=disabled',
     'tests=disabled',
     'pixman:tests=disabled',
