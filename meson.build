@@ -40,6 +40,7 @@ fontconfig_dep = dependency('fontconfig',
 
 harfbuzz_default_options = [
     'glib=disabled',
+    'cairo=disabled',
     'icu=enabled',
     'freetype=enabled',
     'tests=disabled',
