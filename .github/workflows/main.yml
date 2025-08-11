@@ -44,7 +44,7 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          platform: linux/amd64
+          platforms: linux/amd64
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
