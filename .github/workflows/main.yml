@@ -11,33 +11,35 @@ on:
 jobs:
   linux:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      - name: Setup Ccache
-        uses: hendrikmuhs/ccache-action@v1.2
+      - name: Login to GHCR
+        uses: docker/login-action@v3
         with:
-          key: ${{ github.job }}
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            libcairo2-dev \
-            libexpat1-dev \
-            libicu-dev \
-            libfreetype6-dev \
-            libfontconfig1-dev \
-            libharfbuzz-dev \
-            libcurl4-openssl-dev \
-            libturbojpeg0-dev \
-            libwebp-dev \
-            ninja-build \
-            meson
-            
-      - name: Setup and Build
-        run: |
-          meson setup build --wrap-mode=nodownload
-          meson compile -C build
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract Docker meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/plutobook-manylinux_2_28_x86_64
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/manylinux_2_28_x86_64.Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
 
   macos:
     runs-on: macos-latest
@@ -90,6 +92,7 @@ jobs:
             --wrap-mode=nodownload \
             --prefer-static \
             -Dcpp_args='-DCAIRO_WIN32_STATIC_BUILD -DCURL_STATICLIB -DU_STATIC_IMPLEMENTATION'
+          meson compile -C build
           meson install -C build --strip
 
       - name: Copy dependencies
