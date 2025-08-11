@@ -108,4 +108,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: plutobook-win64-${{ github.ref_name }}
-          path: plutobook-win64-${{ github.ref_name }}/
+          path: plutobook-win64/
