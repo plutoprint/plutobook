@@ -33,7 +33,7 @@ jobs:
         with:
           images: ghcr.io/${{ github.repository_owner }}/plutobook-manylinux_2_28_x86_64
 
-      - name: Build and push Docker image
+      - name: Build and Push Docker image
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -107,5 +107,5 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: plutobook-win64
-          path: plutobook-win64/
+          name: plutobook-win64-${{ github.ref_name }}
+          path: plutobook-win64-${{ github.ref_name }}/
