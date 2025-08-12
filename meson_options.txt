@@ -4,3 +4,4 @@ option('webp', type : 'feature', value : 'auto')
 
 option('examples', type : 'feature', value : 'auto')
 option('tests', type : 'feature', value : 'auto')
+option('tools', type : 'feature', value : 'auto')

@@ -238,8 +238,8 @@ plutobook_dep = declare_dependency(
 meson.override_dependency('plutobook', plutobook_dep)
 install_headers(plutobook_public_headers, subdir: 'plutobook')
 
-if not get_option('examples').disabled()
-    subdir('examples')
+if not get_option('tools').disabled()
+    subdir('tools')
 endif
 
 pkgmod = import('pkgconfig')
