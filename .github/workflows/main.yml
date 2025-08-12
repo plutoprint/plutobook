@@ -74,7 +74,7 @@ jobs:
         uses: msys2/setup-msys2@v2
         with:
           msystem: MINGW64
-          update: true
+          update: ${{ github.ref_type == 'tag' }}
           install: >-
             mingw-w64-x86_64-expat
             mingw-w64-x86_64-icu
