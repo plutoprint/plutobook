@@ -151,6 +151,9 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/v')
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
@@ -162,8 +165,17 @@ jobs:
           for file in plutobook-*.zip; do
             mv -v "$file" "${file%.zip}-${GITHUB_REF_NAME#v}.zip"
           done
+      - name: Generate Release Note
+        run: |
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          sed -n "/^## PlutoBook $TAG_VERSION/,/^## PlutoBook /{
+            /^## PlutoBook $TAG_VERSION/b
+            /^## PlutoBook /b
+            p
+          }" CHANGELOG.md > RELEASENOTE.md
       - name: Upload to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          body_path: RELEASENOTE.md
           files: plutobook-*.zip
