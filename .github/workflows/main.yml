@@ -1,12 +1,6 @@
 name: Build
 
-on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
+on: [push, pull_request]
 
 jobs:
   linux:
@@ -90,6 +84,7 @@ jobs:
             mingw-w64-x86_64-ninja
             mingw-w64-x86_64-pkgconf
             mingw-w64-x86_64-gcc
+            zip
 
       - name: Setup and Build
         run: |
@@ -102,19 +97,20 @@ jobs:
           meson compile -C build
           meson install -C build --strip
 
-      - name: Copy dependencies
+      - name: Create artifact
         run: |
           cp -v /mingw64/bin/pkgconf.exe plutobook-win64/bin
           cp -v /mingw64/bin/libpkgconf*.dll plutobook-win64/bin
           cp -v /mingw64/bin/libgcc*.dll plutobook-win64/bin
           cp -v /mingw64/bin/libstdc++*.dll plutobook-win64/bin
           cp -v /mingw64/bin/libwinpthread*.dll plutobook-win64/bin
-
-      - name: Upload artifacts
+          zip -r plutobook-win64.zip plutobook-win64/
+          
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: plutobook-win64-${{ github.ref_name }}
-          path: plutobook-win64/
+          name: plutobook-win64
+          path: plutobook-win64.zip
 
   docker:
     runs-on: ubuntu-latest
@@ -149,3 +145,25 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+
+  release:
+    needs: [linux, macos, windows]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/v')
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: plutobook-*
+          merge-multiple: true
+
+      - name: Rename artifacts
+        run: |
+          for file in plutobook-*.zip; do
+            mv -v "$file" "${file%.zip}-${GITHUB_REF_NAME#v}.zip"
+          done
+      - name: Upload to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          files: plutobook-*.zip
