@@ -64,6 +64,7 @@ jobs:
 
   windows:
     runs-on: windows-latest
+    if: github.ref_type == 'tag' || contains(github.event.head_commit.message, '[build:windows]')
     defaults:
       run:
         shell: msys2 {0}
@@ -74,7 +75,7 @@ jobs:
         uses: msys2/setup-msys2@v2
         with:
           msystem: MINGW64
-          update: ${{ github.ref_type == 'tag' }}
+          update: true
           install: >-
             mingw-w64-x86_64-expat
             mingw-w64-x86_64-icu
@@ -117,7 +118,7 @@ jobs:
 
   docker:
     runs-on: ubuntu-latest
-    if: github.ref_type == 'tag' || contains(github.event.head_commit.message, '[ci docker]')
+    if: github.ref_type == 'tag' || contains(github.event.head_commit.message, '[build:docker]')
     permissions:
       contents: read
       packages: write
