@@ -11,37 +11,29 @@ on:
 jobs:
   linux:
     runs-on: ubuntu-latest
-    if: github.ref_type == 'tag' || contains(github.event.head_commit.message, 'docker')
-    permissions:
-      contents: read
-      packages: write
-      id-token: write
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libcairo2-dev \
+            libexpat1-dev \
+            libicu-dev \
+            libfreetype6-dev \
+            libfontconfig1-dev \
+            libharfbuzz-dev \
+            libcurl4-openssl-dev \
+            libturbojpeg0-dev \
+            libwebp-dev \
+            ninja-build \
+            meson
 
-      - name: Login to GHCR
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Extract Docker meta
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ghcr.io/${{ github.repository_owner }}/plutobook-manylinux_2_28_x86_64
-
-      - name: Build and Push Docker image
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: docker/manylinux_2_28_x86_64.Dockerfile
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+      - name: Setup and Build
+        run: |
+          meson setup build --wrap-mode=nodownload
+          meson compile -C build
 
   macos:
     runs-on: macos-latest
@@ -110,3 +102,37 @@ jobs:
         with:
           name: plutobook-win64-${{ github.ref_name }}
           path: plutobook-win64/
+
+  docker:
+    runs-on: ubuntu-latest
+    if: github.ref_type == 'tag' || contains(github.event.head_commit.message, 'docker')
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract Docker meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/plutobook-manylinux_2_28_x86_64
+
+      - name: Build and Push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/manylinux_2_28_x86_64.Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
