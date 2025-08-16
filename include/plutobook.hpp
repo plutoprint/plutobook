@@ -526,20 +526,85 @@ public:
     virtual ResourceData fetchUrl(const std::string& url) = 0;
 };
 
+/**
+ * @brief The DefaultResourceFetcher class provides a default implementation of ResourceFetcher.
+ */
 class DefaultResourceFetcher final : public ResourceFetcher {
 public:
+    /**
+     * @brief Destroys the DefaultResourceFetcher instance.
+     */
     ~DefaultResourceFetcher() final;
 
+    /**
+     * @brief Sets the path to a file containing trusted CA certificates.
+     *
+     * If not set, no custom CA file is used.
+     *
+     * @param path Path to the CA certificate bundle file.
+     */
     void setCAInfo(std::string path) { m_caInfo = std::move(path); }
+
+    /**
+     * @brief Sets the path to a directory containing trusted CA certificates.
+     *
+     * If not set, no custom CA path is used.
+     *
+     * @param path Path to the directory with CA certificates.
+     */
     void setCAPath(std::string path) { m_caPath = std::move(path); }
 
+    /**
+     * @brief Enables or disables SSL peer certificate verification.
+     *
+     * If not set, verification is enabled by default.
+     *
+     * @param verify Set to true to verify the peer, false to disable verification.
+     */
     void setVerifyPeer(bool verify) { m_verifyPeer = verify; }
+
+    /**
+     * @brief Enables or disables SSL host name verification.
+     *
+     * If not set, verification is enabled by default.
+     *
+     * @param verify Set to true to verify the host, false to disable verification.
+     */
     void setVerifyHost(bool verify) { m_verifyHost = verify; }
 
+    /**
+     * @brief Enables or disables automatic following of HTTP redirects.
+     *
+     * If not set, following redirects is enabled by default.
+     *
+     * @param follow Set to true to follow redirects, false to disable.
+     */
     void setFollowRedirects(bool follow) { m_followRedirects = follow; }
-    void setMaxRedirects(int amount) { m_maxRedirects = amount; }
-    void setTimeout(int seconds) { m_timeout = seconds; }
 
+    /**
+     * @brief Sets the maximum number of redirects to follow.
+     *
+     * If not set, the default maximum is 30.
+     *
+     * @param amount The maximum number of redirects.
+     */
+    void setMaxRedirects(int amount) { m_maxRedirects = amount; }
+
+    /**
+     * @brief Sets the maximum time allowed for a request.
+     *
+     * If not set, the default timeout is 300 seconds.
+     *
+     * @param timeout Timeout duration in seconds.
+     */
+    void setTimeout(int timeout) { m_timeout = timeout; }
+
+    /**
+     * @brief Fetches the resource at the specified URL.
+     *
+     * @param url The resource URL to fetch.
+     * @return The fetched resource data.
+     */
     ResourceData fetchUrl(const std::string& url) final;
 
 private:
@@ -559,8 +624,8 @@ private:
 };
 
 /**
- * @brief Returns the default resource fetcher.
- * @return A pointer to a `ResourceFetcher` instance providing the default implementation.
+ * @brief Returns a singleton instance of DefaultResourceFetcher.
+ * @return A pointer to the singleton DefaultResourceFetcher instance.
  */
 DefaultResourceFetcher* defaultResourceFetcher();
 

@@ -478,9 +478,9 @@ void plutobook_set_http_max_redirects(int amount)
     plutobook::defaultResourceFetcher()->setMaxRedirects(amount);
 }
 
-void plutobook_set_http_timeout(int seconds)
+void plutobook_set_http_timeout(int timeout)
 {
-    plutobook::defaultResourceFetcher()->setTimeout(seconds);
+    plutobook::defaultResourceFetcher()->setTimeout(timeout);
 }
 
 struct _plutobook final : public plutobook::Book, public plutobook::ResourceFetcher {

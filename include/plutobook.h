@@ -622,14 +622,68 @@ typedef plutobook_resource_data_t* (*plutobook_resource_fetch_callback_t)(void* 
  */
 PLUTOBOOK_API plutobook_resource_data_t* plutobook_fetch_url(const char* url);
 
+/**
+ * @brief Sets the path to a file containing trusted CA certificates.
+ *
+ * If not set, no custom CA file is used.
+ *
+ * @param path Path to the CA certificate bundle file.
+ */
 void plutobook_set_ssl_cainfo(const char* path);
+
+/**
+ * @brief Sets the path to a directory containing trusted CA certificates.
+ *
+ * If not set, no custom CA path is used.
+ *
+ * @param path Path to the directory with CA certificates.
+ */
 void plutobook_set_ssl_capath(const char* path);
+
+/**
+ * @brief Enables or disables SSL peer certificate verification.
+ *
+ * If not set, verification is enabled by default.
+ *
+ * @param verify Set to true to verify the peer, false to disable verification.
+ */
 void plutobook_set_ssl_verify_peer(bool verify);
+
+/**
+ * @brief Enables or disables SSL host name verification.
+ *
+ * If not set, verification is enabled by default.
+ *
+ * @param verify Set to true to verify the host, false to disable verification.
+ */
 void plutobook_set_ssl_verify_host(bool verify);
 
+/**
+ * @brief Enables or disables automatic following of HTTP redirects.
+ *
+ * If not set, following redirects is enabled by default.
+ *
+ * @param follow Set to true to follow redirects, false to disable.
+ */
 void plutobook_set_http_follow_redirects(bool follow);
+
+/**
+ * @brief Sets the maximum number of redirects to follow.
+ *
+ * If not set, the default maximum is 30.
+ *
+ * @param amount The maximum number of redirects.
+ */
 void plutobook_set_http_max_redirects(int amount);
-void plutobook_set_http_timeout(int seconds);
+
+/**
+ * @brief Sets the maximum time allowed for an HTTP request.
+ *
+ * If not set, the default timeout is 300 seconds.
+ *
+ * @param timeout Timeout duration in seconds.
+ */
+void plutobook_set_http_timeout(int timeout);
 
 /**
  * @brief Defines the different media types used for CSS @media queries.
