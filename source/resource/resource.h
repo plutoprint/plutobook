@@ -32,8 +32,6 @@ public:
     static Url baseUrl();
 };
 
-ResourceFetcher* defaultResourceFetcher();
-
 } // namespace plutobook
 
 #endif // PLUTOBOOK_RESOURCE_H

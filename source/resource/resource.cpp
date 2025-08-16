@@ -217,14 +217,6 @@ static bool mimeTypeFromPath(std::string& mimeType, const std::string_view& path
     return true;
 }
 
-class DefaultResourceFetcher final : public ResourceFetcher {
-public:
-    DefaultResourceFetcher();
-    ~DefaultResourceFetcher() final;
-
-    ResourceData fetchUrl(const std::string& url) final;
-};
-
 #ifdef PLUTOBOOK_HAS_CURL
 
 DefaultResourceFetcher::DefaultResourceFetcher()
@@ -257,10 +249,23 @@ ResourceData DefaultResourceFetcher::fetchUrl(const std::string& url)
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, writeCallback);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, content);
     curl_easy_setopt(curl, CURLOPT_USERAGENT, "PlutoBook/" PLUTOBOOK_VERSION_STRING);
-    curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+
+    if(!m_caInfo.empty())
+        curl_easy_setopt(curl, CURLOPT_CAINFO, m_caInfo.data());
+    if(!m_caPath.empty()) {
+        curl_easy_setopt(curl, CURLOPT_CAPATH, m_caPath.data());
+    }
+
+    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, m_verifyPeer);
+    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, m_verifyHost);
 #ifdef CURLSSLOPT_NATIVE_CA
     curl_easy_setopt(curl, CURLOPT_SSL_OPTIONS, CURLSSLOPT_NATIVE_CA);
 #endif
+
+    curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, m_followRedirects);
+    curl_easy_setopt(curl, CURLOPT_MAXREDIRS, m_maxRedirects);
+    curl_easy_setopt(curl, CURLOPT_TIMEOUT, m_timeout);
+
     auto response = curl_easy_perform(curl);
     if(response == CURLE_OK) {
         const char* contentType = nullptr;
@@ -338,7 +343,7 @@ Url ResourceLoader::completeUrl(const std::string_view& value)
     return baseUrl().complete(value);
 }
 
-ResourceFetcher* defaultResourceFetcher()
+DefaultResourceFetcher* defaultResourceFetcher()
 {
     static DefaultResourceFetcher defaultFetcher;
     return &defaultFetcher;

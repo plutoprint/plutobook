@@ -448,6 +448,41 @@ plutobook_resource_data_t* plutobook_fetch_url(const char* url)
     return plutobook::defaultResourceFetcher()->fetchUrl(url).release();
 }
 
+void plutobook_set_ssl_cainfo(const char* path)
+{
+    plutobook::defaultResourceFetcher()->setCAInfo(path);
+}
+
+void plutobook_set_ssl_capath(const char* path)
+{
+    plutobook::defaultResourceFetcher()->setCAPath(path);
+}
+
+void plutobook_set_ssl_verify_peer(bool verify)
+{
+    plutobook::defaultResourceFetcher()->setVerifyPeer(verify);
+}
+
+void plutobook_set_ssl_verify_host(bool verify)
+{
+    plutobook::defaultResourceFetcher()->setVerifyHost(verify);
+}
+
+void plutobook_set_http_follow_redirects(bool follow)
+{
+    plutobook::defaultResourceFetcher()->setFollowRedirects(follow);
+}
+
+void plutobook_set_http_max_redirects(int amount)
+{
+    plutobook::defaultResourceFetcher()->setMaxRedirects(amount);
+}
+
+void plutobook_set_http_timeout(int seconds)
+{
+    plutobook::defaultResourceFetcher()->setTimeout(seconds);
+}
+
 struct _plutobook final : public plutobook::Book, public plutobook::ResourceFetcher {
     _plutobook(plutobook_page_size_t size, plutobook_page_margins_t margins, plutobook_media_type_t media);
     plutobook::ResourceData fetchUrl(const std::string& url) final;

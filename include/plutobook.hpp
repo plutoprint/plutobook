@@ -526,11 +526,43 @@ public:
     virtual ResourceData fetchUrl(const std::string& url) = 0;
 };
 
+class DefaultResourceFetcher final : public ResourceFetcher {
+public:
+    ~DefaultResourceFetcher() final;
+
+    void setCAInfo(std::string path) { m_caInfo = std::move(path); }
+    void setCAPath(std::string path) { m_caPath = std::move(path); }
+
+    void setVerifyPeer(bool verify) { m_verifyPeer = verify; }
+    void setVerifyHost(bool verify) { m_verifyHost = verify; }
+
+    void setFollowRedirects(bool follow) { m_followRedirects = follow; }
+    void setMaxRedirects(int amount) { m_maxRedirects = amount; }
+    void setTimeout(int seconds) { m_timeout = seconds; }
+
+    ResourceData fetchUrl(const std::string& url) final;
+
+private:
+    DefaultResourceFetcher();
+
+    std::string m_caInfo;
+    std::string m_caPath;
+
+    bool m_verifyPeer = true;
+    bool m_verifyHost = true;
+
+    bool m_followRedirects = true;
+    int m_maxRedirects = 30;
+    int m_timeout = 300;
+
+    friend DefaultResourceFetcher* defaultResourceFetcher();
+};
+
 /**
  * @brief Returns the default resource fetcher.
  * @return A pointer to a `ResourceFetcher` instance providing the default implementation.
  */
-ResourceFetcher* defaultResourceFetcher();
+DefaultResourceFetcher* defaultResourceFetcher();
 
 /**
  * @brief The OutputStream is an abstract base class for writing data to an output stream.

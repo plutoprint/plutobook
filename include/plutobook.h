@@ -622,6 +622,15 @@ typedef plutobook_resource_data_t* (*plutobook_resource_fetch_callback_t)(void* 
  */
 PLUTOBOOK_API plutobook_resource_data_t* plutobook_fetch_url(const char* url);
 
+void plutobook_set_ssl_cainfo(const char* path);
+void plutobook_set_ssl_capath(const char* path);
+void plutobook_set_ssl_verify_peer(bool verify);
+void plutobook_set_ssl_verify_host(bool verify);
+
+void plutobook_set_http_follow_redirects(bool follow);
+void plutobook_set_http_max_redirects(int amount);
+void plutobook_set_http_timeout(int seconds);
+
 /**
  * @brief Defines the different media types used for CSS @media queries.
  */
