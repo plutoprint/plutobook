@@ -629,7 +629,7 @@ PLUTOBOOK_API plutobook_resource_data_t* plutobook_fetch_url(const char* url);
  *
  * @param path Path to the CA certificate bundle file.
  */
-void plutobook_set_ssl_cainfo(const char* path);
+PLUTOBOOK_API void plutobook_set_ssl_cainfo(const char* path);
 
 /**
  * @brief Sets the path to a directory containing trusted CA certificates.
@@ -638,7 +638,7 @@ void plutobook_set_ssl_cainfo(const char* path);
  *
  * @param path Path to the directory with CA certificates.
  */
-void plutobook_set_ssl_capath(const char* path);
+PLUTOBOOK_API void plutobook_set_ssl_capath(const char* path);
 
 /**
  * @brief Enables or disables SSL peer certificate verification.
@@ -647,7 +647,7 @@ void plutobook_set_ssl_capath(const char* path);
  *
  * @param verify Set to true to verify the peer, false to disable verification.
  */
-void plutobook_set_ssl_verify_peer(bool verify);
+PLUTOBOOK_API void plutobook_set_ssl_verify_peer(bool verify);
 
 /**
  * @brief Enables or disables SSL host name verification.
@@ -656,7 +656,7 @@ void plutobook_set_ssl_verify_peer(bool verify);
  *
  * @param verify Set to true to verify the host, false to disable verification.
  */
-void plutobook_set_ssl_verify_host(bool verify);
+PLUTOBOOK_API void plutobook_set_ssl_verify_host(bool verify);
 
 /**
  * @brief Enables or disables automatic following of HTTP redirects.
@@ -665,7 +665,7 @@ void plutobook_set_ssl_verify_host(bool verify);
  *
  * @param follow Set to true to follow redirects, false to disable.
  */
-void plutobook_set_http_follow_redirects(bool follow);
+PLUTOBOOK_API void plutobook_set_http_follow_redirects(bool follow);
 
 /**
  * @brief Sets the maximum number of redirects to follow.
@@ -674,7 +674,7 @@ void plutobook_set_http_follow_redirects(bool follow);
  *
  * @param amount The maximum number of redirects.
  */
-void plutobook_set_http_max_redirects(int amount);
+PLUTOBOOK_API void plutobook_set_http_max_redirects(int amount);
 
 /**
  * @brief Sets the maximum time allowed for an HTTP request.
@@ -683,7 +683,7 @@ void plutobook_set_http_max_redirects(int amount);
  *
  * @param timeout Timeout duration in seconds.
  */
-void plutobook_set_http_timeout(int timeout);
+PLUTOBOOK_API void plutobook_set_http_timeout(int timeout);
 
 /**
  * @brief Defines the different media types used for CSS @media queries.

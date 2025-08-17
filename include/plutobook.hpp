@@ -529,7 +529,7 @@ public:
 /**
  * @brief The DefaultResourceFetcher class provides a default implementation of ResourceFetcher.
  */
-class DefaultResourceFetcher final : public ResourceFetcher {
+class PLUTOBOOK_API DefaultResourceFetcher final : public ResourceFetcher {
 public:
     /**
      * @brief Destroys the DefaultResourceFetcher instance.
