@@ -110,6 +110,9 @@ plutobook_cpp_args = ['-DPLUTOBOOK_BUILD']
 if curl_dep.found()
     plutobook_deps += [curl_dep]
     plutobook_cpp_args += ['-DPLUTOBOOK_HAS_CURL']
+    if not get_option('autodetect-ca').disabled()
+        plutobook_cpp_args += ['-DPLUTOBOOK_AUTODETECT_CA']
+    endif
 endif
 
 jpeg_dep = dependency('libturbojpeg',

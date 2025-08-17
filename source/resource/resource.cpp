@@ -222,6 +222,35 @@ static bool mimeTypeFromPath(std::string& mimeType, const std::string_view& path
 DefaultResourceFetcher::DefaultResourceFetcher()
 {
     curl_global_init(CURL_GLOBAL_ALL);
+#ifdef PLUTOBOOK_AUTODETECT_CA
+    static const char* cainfos[] = {
+        "/etc/ssl/certs/ca-certificates.crt",
+        "/etc/pki/tls/certs/ca-bundle.crt",
+        "/usr/share/ssl/certs/ca-bundle.crt",
+        "/usr/local/share/certs/ca-root-nss.crt",
+        "/etc/ssl/cert.pem"
+    };
+
+    static const char* capaths[] = {
+        "/etc/ssl/certs"
+    };
+
+    for(auto path : cainfos) {
+        if(std::filesystem::exists(path)
+            && std::filesystem::is_regular_file(path)) {
+            m_caInfo.assign(path);
+            break;
+        }
+    }
+
+    for(auto path : capaths) {
+        if(std::filesystem::exists(path)
+            && std::filesystem::is_directory(path)) {
+            m_caPath.assign(path);
+            break;
+        }
+    }
+#endif
 }
 
 DefaultResourceFetcher::~DefaultResourceFetcher()

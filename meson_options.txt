@@ -2,6 +2,9 @@ option('curl', type : 'feature', value : 'auto')
 option('turbojpeg', type : 'feature', value : 'auto')
 option('webp', type : 'feature', value : 'auto')
 
+option('autodetect-ca', type : 'feature', value : 'auto',
+    description : 'Enable automatic CA bundle detection at runtime')
+
 option('examples', type : 'feature', value : 'auto')
 option('tests', type : 'feature', value : 'auto')
 option('tools', type : 'feature', value : 'auto')
