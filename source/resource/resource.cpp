@@ -250,7 +250,7 @@ DefaultResourceFetcher::DefaultResourceFetcher()
             break;
         }
     }
-#endif
+#endif // PLUTOBOOK_AUTODETECT_CA
 }
 
 DefaultResourceFetcher::~DefaultResourceFetcher()
