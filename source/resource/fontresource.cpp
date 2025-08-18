@@ -31,13 +31,19 @@ private:
 FTFontData* FTFontData::create(ResourceData resource)
 {
     thread_local FT_Library ftLibrary;
-    if(ftLibrary == nullptr && FT_Init_FreeType(&ftLibrary)) {
-        return nullptr;
+    if(ftLibrary == nullptr) {
+        if(auto error = FT_Init_FreeType(&ftLibrary)) {
+            plutobook_set_error_message("font decode error: %s", FT_Error_String(error));
+            return nullptr;
+        }
     }
 
     FT_Face ftFace = nullptr;
-    if(FT_New_Memory_Face(ftLibrary, (FT_Byte*)(resource.content()), resource.contentLength(), 0, &ftFace))
+    if(auto error = FT_New_Memory_Face(ftLibrary, (FT_Byte*)(resource.content()), resource.contentLength(), 0, &ftFace)) {
+        plutobook_set_error_message("font decode error: %s", FT_Error_String(error));
         return nullptr;
+    }
+
     return new FTFontData(ftFace, std::move(resource));
 }
 
@@ -53,13 +59,15 @@ RefPtr<FontResource> FontResource::create(Document* document, const Url& url)
         return nullptr;
     auto fontData = FTFontData::create(std::move(resource));
     if(fontData == nullptr) {
+        plutobook_set_error_message("Unable to load font '%s': %s", url.value().data(), plutobook_get_error_message());
         return nullptr;
     }
 
     static cairo_user_data_key_t key;
     auto face = cairo_ft_font_face_create_for_ft_face(fontData->face(), FT_LOAD_DEFAULT);
     cairo_font_face_set_user_data(face, &key, fontData, FTFontDataDestroy);
-    if(cairo_font_face_status(face)) {
+    if(auto status = cairo_font_face_status(face)) {
+        plutobook_set_error_message("Unable to load font '%s': %s", url.value().data(), cairo_status_to_string(status));
         FTFontDataDestroy(fontData);
         return nullptr;
     }

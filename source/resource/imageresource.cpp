@@ -34,8 +34,11 @@ RefPtr<ImageResource> ImageResource::create(Document* document, const Url& url)
     if(resource.isNull())
         return nullptr;
     auto image = decode(resource.content(), resource.contentLength(), resource.mimeType(), resource.textEncoding(), url.base(), document->customResourceFetcher());
-    if(image == nullptr)
+    if(image == nullptr) {
+        plutobook_set_error_message("Unable to load image '%s': %s", url.value().data(), plutobook_get_error_message());
         return nullptr;
+    }
+
     return adoptPtr(new (document->heap()) ImageResource(std::move(image)));
 }
 

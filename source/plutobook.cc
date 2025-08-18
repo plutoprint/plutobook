@@ -719,13 +719,17 @@ void* plutobook_get_custom_resource_fetcher_closure(const plutobook_t* book)
     return book->custom_resource_fetcher_closure;
 }
 
-thread_local char plutobook_error_message[512];
+constexpr int kErrorBufferSize = 512;
+
+thread_local char plutobook_error_message[kErrorBufferSize];
 
 void plutobook_set_error_message(const char* format, ...)
 {
     va_list args;
     va_start(args, format);
-    vsnprintf(plutobook_error_message, sizeof(plutobook_error_message), format, args);
+    char error_message[kErrorBufferSize];
+    auto error_size = vsnprintf(error_message, kErrorBufferSize, format, args);
+    strncpy(plutobook_error_message, error_message, error_size);
     va_end(args);
 }
 
