@@ -1,5 +1,21 @@
 # Changelog
 
+## PlutoBook 0.3.0 (2025-08-19)
+
+- Replace the `format` parameter with `width` and `height` parameters in `Book::writeToPng` and related functions.
+- Add `html2png` command-line tool.
+- Extend `html2pdf` command-line tool with new options:
+  - `--size`
+  - `--margin`
+  - `--media`
+  - `--orientation`
+  - `--width`
+  - `--height`
+  - `--margin-top`
+  - `--margin-right`
+  - `--margin-bottom`
+  - `--margin-left`
+
 ## PlutoBook 0.2.0 (2025-08-17)
 
 - Add runtime autodetection of CA bundles and directories for curl.
