@@ -2,8 +2,8 @@
 
 ## PlutoBook 0.2.0 (2025-08-17)
 
-- Added runtime autodetection of CA bundles and directories for curl.
-- Enhanced `DefaultResourceFetcher` with configurable network settings:
+- Add runtime autodetection of CA bundles and directories for curl.
+- Enhance `DefaultResourceFetcher` with configurable network settings:
   - New setter methods:
     - `setCAInfo`
     - `setCAPath`
