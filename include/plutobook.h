@@ -990,10 +990,11 @@ PLUTOBOOK_API bool plutobook_write_to_pdf_stream_range(const plutobook_t* book, 
  *
  * @param book A pointer to a `plutobook_t` object.
  * @param filename The file path where the PNG image will be written.
- * @param format The image format to use for the image data.
+ * @param width The desired width in pixels, or -1 to auto-scale based on the document size.
+ * @param height The desired height in pixels, or -1 to auto-scale based on the document size.
  * @return `true` on success, or `false` on failure.
  */
-PLUTOBOOK_API bool plutobook_write_to_png(const plutobook_t* book, const char* filename, plutobook_image_format_t format);
+PLUTOBOOK_API bool plutobook_write_to_png(const plutobook_t* book, const char* filename, int width, int height);
 
 /**
  * @brief Writes the entire document to a PNG image stream using a callback function.
@@ -1001,10 +1002,11 @@ PLUTOBOOK_API bool plutobook_write_to_png(const plutobook_t* book, const char* f
  * @param book A pointer to a `plutobook_t` object.
  * @param callback A callback function to handle the image data stream.
  * @param closure A pointer to user-defined data to pass to the callback function.
- * @param format The image format to use for the image data.
+ * @param width The desired width in pixels, or -1 to auto-scale based on the document size.
+ * @param height The desired height in pixels, or -1 to auto-scale based on the document size.
  * @return `true` on success, or `false` on failure.
  */
-PLUTOBOOK_API bool plutobook_write_to_png_stream(const plutobook_t* book, plutobook_stream_write_callback_t callback, void* closure, plutobook_image_format_t format);
+PLUTOBOOK_API bool plutobook_write_to_png_stream(const plutobook_t* book, plutobook_stream_write_callback_t callback, void* closure, int width, int height);
 
 /**
  * @brief Sets a custom resource fetcher callback for the document.

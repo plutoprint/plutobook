@@ -551,12 +551,12 @@ bool Book::writeToPdf(plutobook_stream_write_callback_t callback, void* closure,
     return true;
 }
 
-bool Book::writeToPng(const std::string& filename, ImageFormat format) const
+bool Book::writeToPng(const std::string& filename, int width, int height) const
 {
     FileOutputStream output(filename);
     if(!output.isOpen())
         return false;
-    if(writeToPng(output, format)) {
+    if(writeToPng(output, width, height)) {
         return true;
     }
 
@@ -564,24 +564,37 @@ bool Book::writeToPng(const std::string& filename, ImageFormat format) const
     return false;
 }
 
-bool Book::writeToPng(OutputStream& output, ImageFormat format) const
+bool Book::writeToPng(OutputStream& output, int width, int height) const
 {
-    return writeToPng(stream_write_func, &output, format);
+    return writeToPng(stream_write_func, &output, width, height);
 }
 
-bool Book::writeToPng(plutobook_stream_write_callback_t callback, void* closure, ImageFormat format) const
+bool Book::writeToPng(plutobook_stream_write_callback_t callback, void* closure, int width, int height) const
 {
-    int width = std::ceil(documentWidth());
-    int height = std::ceil(documentHeight());
-    if(width <= 0 || height <= 0) {
-        plutobook_set_error_message("invalid document size: width=%d height=%d", width, height);
+    const auto docWidth = documentWidth();
+    const auto docHeight = documentHeight();
+    if(docWidth <= 0 || docHeight <= 0) {
+        plutobook_set_error_message("invalid document size: width=%d height=%d", docWidth, docHeight);
         return false;
     }
 
-    ImageCanvas canvas(width, height, format);
+    if(width <= 0 && height <= 0) {
+        width = static_cast<int>(std::ceil(docWidth));
+        height = static_cast<int>(std::ceil(docHeight));
+    } else if(width > 0 && height <= 0) {
+        height = static_cast<int>(std::ceil(width * docHeight / docWidth));
+    } else if(height > 0 && width <= 0) {
+        width = static_cast<int>(std::ceil(height * docWidth / docHeight));
+    }
+
+    const auto xScale = width / docWidth;
+    const auto yScale = height / docHeight;
+
+    ImageCanvas canvas(width, height, ImageFormat::ARGB32);
     if(canvas.isNull())
         return false;
-    renderDocument(canvas, 0, 0, width, height);
+    canvas.scale(xScale, yScale);
+    renderDocument(canvas, 0, 0, docWidth, docHeight);
     return canvas.writeToPng(callback, closure);
 }
 

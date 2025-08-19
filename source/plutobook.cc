@@ -692,14 +692,14 @@ bool plutobook_write_to_pdf_stream_range(const plutobook_t* book, plutobook_stre
     return book->writeToPdf(callback, closure, from_page, to_page, page_step);
 }
 
-bool plutobook_write_to_png(const plutobook_t* book, const char* filename, plutobook_image_format_t format)
+bool plutobook_write_to_png(const plutobook_t* book, const char* filename, int width, int height)
 {
-    return book->writeToPng(filename, (plutobook::ImageFormat)(format));
+    return book->writeToPng(filename, width, height);
 }
 
-bool plutobook_write_to_png_stream(const plutobook_t* book, plutobook_stream_write_callback_t callback, void* closure, plutobook_image_format_t format)
+bool plutobook_write_to_png_stream(const plutobook_t* book, plutobook_stream_write_callback_t callback, void* closure, int width, int height)
 {
-    return book->writeToPng(callback, closure, (plutobook::ImageFormat)(format));
+    return book->writeToPng(callback, closure, width, height);
 }
 
 void plutobook_set_custom_resource_fetcher(plutobook_t* book, plutobook_resource_fetch_callback_t callback, void* closure)

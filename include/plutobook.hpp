@@ -1282,27 +1282,30 @@ public:
     /**
      * @brief Writes the entire document to a PNG image file.
      * @param filename The file path where the PNG image will be written.
-     * @param format The image format to use for the image data.
+     * @param width The desired width in pixels, or -1 to auto-scale based on the document size.
+     * @param height The desired height in pixels, or -1 to auto-scale based on the document size.
      * @return `true` on success, or `false` on failure.
      */
-    bool writeToPng(const std::string& filename, ImageFormat format = ImageFormat::ARGB32) const;
+    bool writeToPng(const std::string& filename, int width = -1, int height = -1) const;
 
     /**
      * @brief Writes the entire document to a PNG image stream.
      * @param output The output stream where the PNG image will be written.
-     * @param format The image format to use for the image data.
+     * @param width The desired width in pixels, or -1 to auto-scale based on the document size.
+     * @param height The desired height in pixels, or -1 to auto-scale based on the document size.
      * @return `true` on success, or `false` on failure.
      */
-    bool writeToPng(OutputStream& output, ImageFormat format = ImageFormat::ARGB32) const;
+    bool writeToPng(OutputStream& output, int width = -1, int height = -1) const;
 
     /**
      * @brief Writes the entire document to a PNG image stream using a callback function.
      * @param callback A callback function to handle the image data stream.
      * @param closure A pointer to user-defined data to pass to the callback function.
-     * @param format The image format to use for the image data.
+     * @param width The desired width in pixels, or -1 to auto-scale based on the document size.
+     * @param height The desired height in pixels, or -1 to auto-scale based on the document size.
      * @return `true` on success, or `false` on failure.
      */
-    bool writeToPng(plutobook_stream_write_callback_t callback, void* closure, ImageFormat format = ImageFormat::ARGB32) const;
+    bool writeToPng(plutobook_stream_write_callback_t callback, void* closure, int width = -1, int height = -1) const;
 
     /**
      * @brief Sets a custom resource fetcher to be used for fetching external resources.
