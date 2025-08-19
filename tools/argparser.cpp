@@ -160,41 +160,29 @@ static bool length_func(void* closure, const char* value)
     return false;
 }
 
-static bool is_option(const char* name) { return (name[0] == '-' && name[1]); }
+static bool is_option(const char* value) { return (value[0] == '-' && value[1]); }
 
-static ArgDesc* findArg(ArgDesc* args, const char* name)
+void parseArgs(const char* program, const char* description, ArgDesc* args, int argc, char* argv[])
 {
-    for(int i = 0; args[i].name; ++i) {
-        if((args[i].positional && args[i].required && !is_option(name))
-            || strcmp(args[i].name, name) == 0) {
-            args[i].required = false;
-            return args + i;
-        }
-    }
-
-    return nullptr;
-}
-
-void parseArgs(const char* program, const char* description, ArgDesc* args, int argc, char *argv[])
-{
-    for(int i = 0; args[i].name; ++i) {
-        args[i].positional = args[i].required = !is_option(args[i].name);
-        if(args[i].func == nullptr) {
-            switch(args[i].type) {
+    ArgDesc* arg = args;
+    for(; arg->name; ++arg) {
+        arg->positional = arg->required = !is_option(arg->name);
+        if(arg->func == nullptr) {
+            switch(arg->type) {
             case ArgType::Flag:
-                args[i].func = flag_func;
+                arg->func = flag_func;
                 break;
             case ArgType::String:
-                args[i].func = string_func;
+                arg->func = string_func;
                 break;
             case ArgType::Int:
-                args[i].func = int_func;
+                arg->func = int_func;
                 break;
             case ArgType::Float:
-                args[i].func = float_func;
+                arg->func = float_func;
                 break;
             case ArgType::Length:
-                args[i].func = length_func;
+                arg->func = length_func;
                 break;
             default:
                 assert(false);
@@ -203,21 +191,27 @@ void parseArgs(const char* program, const char* description, ArgDesc* args, int 
     }
 
     for(int i = 1; i < argc; ++i) {
-        auto arg = findArg(args, argv[i]);
-        if(arg == nullptr) {
-            const char* name = argv[i];
-            if(strcmp(name, "-h") == 0 || strcmp(name, "--help") == 0)
+        const char* value = argv[i];
+        for(arg = args; arg->name; ++arg) {
+            if((arg->positional && arg->required && !is_option(value))
+                || strcmp(arg->name, value) == 0) {
+                arg->required = false;
+                break;
+            }
+        }
+
+        if(arg->name == nullptr) {
+            if(strcmp(value, "-h") == 0 || strcmp(value, "--help") == 0)
                 printUsage(program, description, args, EXIT_SUCCESS);
-            if(strcmp(name, "-v") == 0 || strcmp(name, "--version") == 0) {
+            if(strcmp(value, "-v") == 0 || strcmp(value, "--version") == 0) {
                 fprintf(stderr, "%s version %s\n", program, PLUTOBOOK_VERSION_STRING);
                 exit(EXIT_SUCCESS);
             }
 
-            plutobook_set_error_message("unrecognized argument: %s", name);
+            plutobook_set_error_message("unrecognized argument: %s", value);
             printUsage(program, description, args, EXIT_FAILURE);
         }
 
-        const char* value = argv[i];
         if(!arg->positional && arg->type != ArgType::Flag) {
             if(i == argc - 1 || is_option(argv[i + 1])) {
                 plutobook_set_error_message("argument %s: expected one argument", arg->name);
@@ -234,18 +228,18 @@ void parseArgs(const char* program, const char* description, ArgDesc* args, int 
     }
 
     int required = 0;
-    for(int i = 0; args[i].name; ++i) {
-        if(args[i].required) {
+    for(arg = args; arg->name; ++arg) {
+        if(arg->required) {
             required++;
         }
     }
 
     if(required > 0) {
         plutobook_set_error_message("the following arguments are required: ");
-        for(int i = 0; args[i].name; ++i) {
-            if(args[i].required) {
+        for(arg = args; arg->name; ++arg) {
+            if(arg->required) {
                 const char* last_message = plutobook_get_error_message();
-                plutobook_set_error_message("%s%s", last_message, args[i].name);
+                plutobook_set_error_message("%s%s", last_message, arg->name);
                 if(--required) {
                     plutobook_set_error_message("%s%s", last_message, ", ");
                 }
