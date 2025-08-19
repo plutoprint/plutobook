@@ -728,8 +728,8 @@ void plutobook_set_error_message(const char* format, ...)
     va_list args;
     va_start(args, format);
     char error_message[kErrorBufferSize];
-    auto error_size = vsnprintf(error_message, kErrorBufferSize, format, args);
-    strncpy(plutobook_error_message, error_message, error_size);
+    vsnprintf(error_message, kErrorBufferSize, format, args);
+    strcpy(plutobook_error_message, error_message);
     va_end(args);
 }
 

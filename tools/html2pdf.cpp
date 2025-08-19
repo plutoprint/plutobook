@@ -15,7 +15,7 @@ static bool media_func(void* closure, const char* value)
     return parseArgChoices(closure, value, choices, std::size(choices));
 }
 
-enum Orientation {
+enum class Orientation {
     None,
     Portrait,
     Landscape
@@ -49,20 +49,20 @@ int main(int argc, char* argv[])
     float margin_left = -1;
 
     ArgDesc args[] = {
-        {"input", ArgType::String, &input, "Specify the input HTML filename or URL"},
-        {"output", ArgType::String, &output, "Specify the output PDF filename"},
+        {"input", ArgType::String, &input, nullptr, "Specify the input HTML filename or URL"},
+        {"output", ArgType::String, &output, nullptr, "Specify the output PDF filename"},
 
-        {"--margin", ArgType::Length, &margin, "Specify the page margin (eg. 72pt)"},
-        {"--media", ArgType::Choice, &media, "Specify the media type (eg. print, screen)", media_func},
-        {"--orientation", ArgType::Choice, &orientation, "Specify the page orientation (eg. portrait, landscape)", orientation_func},
+        {"--margin", ArgType::Length, &margin, nullptr, "Specify the page margin (eg. 72pt)"},
+        {"--media", ArgType::Choice, &media, media_func, "Specify the media type (eg. print, screen)"},
+        {"--orientation", ArgType::Choice, &orientation, orientation_func, "Specify the page orientation (eg. portrait, landscape)"},
 
-        {"--margin-top", ArgType::Length, &margin_top, "Specify the page margin top (eg. 72pt)"},
-        {"--margin-right", ArgType::Length, &margin_right, "Specify the page margin right (eg. 72pt)"},
-        {"--margin-bottom", ArgType::Length, &margin_bottom, "Specify the page margin bottom (eg. 72pt)"},
-        {"--margin-left", ArgType::Length, &margin_left, "Specify the page margin left (eg. 72pt)"},
+        {"--margin-top", ArgType::Length, &margin_top, nullptr, "Specify the page margin top (eg. 72pt)"},
+        {"--margin-right", ArgType::Length, &margin_right, nullptr, "Specify the page margin right (eg. 72pt)"},
+        {"--margin-bottom", ArgType::Length, &margin_bottom, nullptr, "Specify the page margin bottom (eg. 72pt)"},
+        {"--margin-left", ArgType::Length, &margin_left, nullptr, "Specify the page margin left (eg. 72pt)"},
 
-        {"--user-style", ArgType::String, &user_style, "Specify the user-defined CSS style"},
-        {"--user-script", ArgType::String, &user_script, "Specify the user-defined JavaScript"},
+        {"--user-style", ArgType::String, &user_style, nullptr, "Specify the user-defined CSS style"},
+        {"--user-script", ArgType::String, &user_script, nullptr, "Specify the user-defined JavaScript"},
         {nullptr}
     };
 

@@ -18,8 +18,8 @@ struct ArgDesc {
     const char* name;
     ArgType type;
     void* value;
-    const char* help;
     ArgFunc func = nullptr;
+    const char* help = nullptr;
     bool required = false;
     bool positional = false;
 };

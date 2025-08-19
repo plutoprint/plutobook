@@ -79,7 +79,7 @@ static void printUsage(const char* program, const char* description, const ArgDe
     }
 
     if(status == EXIT_FAILURE)
-        fprintf(stderr, "%s\n", plutobook_get_error_message());
+        fprintf(stderr, "%s: error: %s\n", program, plutobook_get_error_message());
     exit(status);
 }
 
@@ -97,17 +97,14 @@ static bool string_func(void* closure, const char* value)
 
 static bool int_func(void* closure, const char* value)
 {
-    const char* it = value;
-    if(*it == '-' || *it == '+')
-        ++it;
-    while(isdigit(*it))
-        ++it;
-    if(*it) {
+    char* end;
+    long num = strtol(value, &end, 10);
+    if(*end) {
         plutobook_set_error_message("invalid int value: '%s'", value);
         return false;
     }
 
-    *(int*)(closure) = atoi(value);
+    *(int*)(closure) = num;
     return true;
 }
 
@@ -204,14 +201,14 @@ void parseArgs(const char* program, const char* description, ArgDesc* args, int 
                 exit(EXIT_SUCCESS);
             }
 
-            plutobook_set_error_message("%s: error: unrecognized argument: %s", program, name);
+            plutobook_set_error_message("unrecognized argument: %s", name);
             printUsage(program, description, args, EXIT_FAILURE);
         }
 
         const char* value = argv[i];
         if(!arg->positional && arg->type != ArgType::Flag) {
             if(i == argc - 1 || is_option(argv[i + 1])) {
-                plutobook_set_error_message("%s: error: argument %s: expected one argument", program, arg->name);
+                plutobook_set_error_message("argument %s: expected one argument", arg->name);
                 printUsage(program, description, args, EXIT_FAILURE);
             }
 
@@ -219,7 +216,7 @@ void parseArgs(const char* program, const char* description, ArgDesc* args, int 
         }
 
         if(!arg->func(arg->value, value)) {
-            plutobook_set_error_message("%s: error: argument %s: %s", program, arg->name, plutobook_get_error_message());
+            plutobook_set_error_message("argument %s: %s", arg->name, plutobook_get_error_message());
             printUsage(program, description, args, EXIT_FAILURE);
         }
     }
@@ -232,7 +229,7 @@ void parseArgs(const char* program, const char* description, ArgDesc* args, int 
     }
 
     if(required > 0) {
-        plutobook_set_error_message("%s: error: the following arguments are required: ", program);
+        plutobook_set_error_message("the following arguments are required: ");
         for(int i = 0; args[i].name; ++i) {
             if(args[i].required) {
                 const char* last_message = plutobook_get_error_message();
