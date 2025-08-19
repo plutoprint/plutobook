@@ -4,3 +4,4 @@ tools_dep = declare_dependency(
 )
 
 executable('html2pdf', 'html2pdf.cpp', dependencies: tools_dep, install: true)
+executable('html2png', 'html2png.cpp', dependencies: tools_dep, install: true)
