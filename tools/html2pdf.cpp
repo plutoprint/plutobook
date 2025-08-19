@@ -5,6 +5,57 @@
 
 using namespace plutobook;
 
+enum class PageSizeType {
+    A3,
+    A4,
+    A5,
+    B4,
+    B5,
+    Letter,
+    Legal,
+    Ledger
+};
+
+static PageSize getPageSize(PageSizeType type)
+{
+    switch(type) {
+    case PageSizeType::A3:
+        return PageSize::A3;
+    case PageSizeType::A4:
+        return PageSize::A4;
+    case PageSizeType::A5:
+        return PageSize::A5;
+    case PageSizeType::B4:
+        return PageSize::B4;
+    case PageSizeType::B5:
+        return PageSize::B5;
+    case PageSizeType::Letter:
+        return PageSize::Letter;
+    case PageSizeType::Legal:
+        return PageSize::Legal;
+    case PageSizeType::Ledger:
+        return PageSize::Ledger;
+    }
+
+    return PageSize::A4;
+}
+
+static bool size_func(void* closure, const char* value)
+{
+    static const ArgEnum<PageSizeType> choices[] = {
+        {"a3", PageSizeType::A3},
+        {"a4", PageSizeType::A4},
+        {"a5", PageSizeType::A5},
+        {"b4", PageSizeType::B4},
+        {"b5", PageSizeType::B5},
+        {"letter", PageSizeType::Letter},
+        {"legal", PageSizeType::Legal},
+        {"ledger", PageSizeType::Ledger},
+    };
+
+    return parseArgChoices(closure, value, choices, std::size(choices));
+}
+
 static bool media_func(void* closure, const char* value)
 {
     static const ArgEnum<MediaType> choices[] = {
@@ -39,10 +90,14 @@ int main(int argc, char* argv[])
     const char* user_style = "";
     const char* user_script = "";
 
+    PageSizeType size = PageSizeType::A4;
     MediaType media = MediaType::Print;
     Orientation orientation = Orientation::None;
 
-    float margin = 72.f;
+    float width = -1;
+    float height = -1;
+
+    float margin = 72;
     float margin_top = -1;
     float margin_right = -1;
     float margin_bottom = -1;
@@ -52,9 +107,13 @@ int main(int argc, char* argv[])
         {"input", ArgType::String, &input, nullptr, "Specify the input HTML filename or URL"},
         {"output", ArgType::String, &output, nullptr, "Specify the output PDF filename"},
 
+        {"--size", ArgType::Choice, &size, size_func, "Specify the page size (eg. A4)"},
         {"--margin", ArgType::Length, &margin, nullptr, "Specify the page margin (eg. 72pt)"},
         {"--media", ArgType::Choice, &media, media_func, "Specify the media type (eg. print, screen)"},
         {"--orientation", ArgType::Choice, &orientation, orientation_func, "Specify the page orientation (eg. portrait, landscape)"},
+
+        {"--width", ArgType::Length, &width, nullptr, "Specify the page width (eg. 210mm)"},
+        {"--height", ArgType::Length, &height, nullptr, "Specify the page height (eg. 297mm)"},
 
         {"--margin-top", ArgType::Length, &margin_top, nullptr, "Specify the page margin top (eg. 72pt)"},
         {"--margin-right", ArgType::Length, &margin_right, nullptr, "Specify the page margin right (eg. 72pt)"},
@@ -68,6 +127,19 @@ int main(int argc, char* argv[])
 
     parseArgs("html2pdf", "Convert HTML to PDF", args, argc, argv);
 
+    PageSize pageSize(getPageSize(size));
+    if(width >= 0)
+        pageSize.setWidth(width);
+    if(height >= 0) {
+        pageSize.setHeight(height);
+    }
+
+    if(orientation == Orientation::Portrait) {
+        pageSize = pageSize.portrait();
+    } else if(orientation == Orientation::Landscape) {
+        pageSize = pageSize.landscape();
+    }
+
     PageMargins margins(margin, margin, margin, margin);
     if(margin_top >= 0)
         margins.setTop(margin_top);
@@ -79,7 +151,7 @@ int main(int argc, char* argv[])
         margins.setLeft(margin_left);
     }
 
-    Book book(PageSize::A4, margins, media);
+    Book book(pageSize, margins, media);
     if(!book.loadUrl(input, user_style, user_script)) {
         std::cerr << "Error: " << plutobook_get_error_message() << std::endl;
         return 2;
