@@ -121,6 +121,18 @@ static bool float_func(void* closure, const char* value)
     return true;
 }
 
+static bool striequals(const char* a, const char* b)
+{
+    while(*a && *b) {
+        if(tolower(*a) != tolower(*b))
+            return false;
+        ++a;
+        ++b;
+    }
+
+    return (*a == '\0' && *b == '\0');
+}
+
 static bool length_func(void* closure, const char* value)
 {
     char* end;
@@ -138,7 +150,7 @@ static bool length_func(void* closure, const char* value)
     };
 
     for(auto item : table) {
-        if(strcmp(item.unit, end) == 0) {
+        if(striequals(item.unit, end)) {
             *(float*)(closure) = length * item.factor;
             return true;
         }
@@ -247,7 +259,7 @@ void parseArgs(const char* program, const char* description, ArgDesc* args, int 
 bool parseArgChoices(void* closure, const char* name, const ArgChoice* choices, int nchoices)
 {
     for(int i = 0; i < nchoices; ++i) {
-        if(strcmp(choices[i].name, name) == 0) {
+        if(striequals(choices[i].name, name)) {
             *(int*)(closure) = choices[i].value;
             return true;
         }
