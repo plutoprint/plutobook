@@ -38,12 +38,12 @@ int main(int argc, char* argv[]) {
     PageSize size(viewport_width, viewport_height);
     Book book(size, PageMargins::None, MediaType::Screen);
     if(!book.loadUrl(input, user_style, user_script)) {
-        std::cerr << "Error: " << plutobook_get_error_message() << std::endl;
+        std::cerr << "ERROR: " << plutobook_get_error_message() << std::endl;
         return 2;
     }
 
     if(!book.writeToPng(output, width / units::px, height / units::px)) {
-        std::cerr << "Error: " << plutobook_get_error_message() << std::endl;
+        std::cerr << "ERROR: " << plutobook_get_error_message() << std::endl;
         return 3;
     }
 
