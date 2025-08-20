@@ -153,12 +153,12 @@ int main(int argc, char* argv[])
 
     Book book(pageSize, margins, media);
     if(!book.loadUrl(input, user_style, user_script)) {
-        std::cerr << "Error: " << plutobook_get_error_message() << std::endl;
+        std::cerr << "ERROR: " << plutobook_get_error_message() << std::endl;
         return 2;
     }
 
     if(!book.writeToPdf(output)) {
-        std::cerr << "Error: " << plutobook_get_error_message() << std::endl;
+        std::cerr << "ERROR: " << plutobook_get_error_message() << std::endl;
         return 3;
     }
 

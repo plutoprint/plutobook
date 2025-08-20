@@ -15,6 +15,7 @@
 #include "plutobook.hpp"
 
 #include <cmath>
+#include <iostream>
 
 namespace plutobook {
 
@@ -1025,6 +1026,8 @@ RefPtr<ResourceType> Document::fetchResource(const Url& url)
     auto resource = ResourceType::create(this, url);
     if(!url.protocolIs("data"))
         m_resourceCache.emplace(url, resource);
+    if(resource == nullptr)
+        std::cerr << "WARNING: " << plutobook_get_error_message() << std::endl;
     return resource;
 }
 
