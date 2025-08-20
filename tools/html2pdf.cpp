@@ -103,6 +103,16 @@ int main(int argc, char* argv[])
     float margin_bottom = -1;
     float margin_left = -1;
 
+    int page_start = kMinPageCount;
+    int page_end = kMaxPageCount;
+    int page_step = 1;
+
+    const char* title = "";
+    const char* subject = "";
+    const char* author = "";
+    const char* keywords = "";
+    const char* creator = "";
+
     ArgDesc args[] = {
         {"input", ArgType::String, &input, nullptr, "Specify the input HTML filename or URL"},
         {"output", ArgType::String, &output, nullptr, "Specify the output PDF filename"},
@@ -120,8 +130,18 @@ int main(int argc, char* argv[])
         {"--margin-bottom", ArgType::Length, &margin_bottom, nullptr, "Specify the page margin bottom (eg. 72pt)"},
         {"--margin-left", ArgType::Length, &margin_left, nullptr, "Specify the page margin left (eg. 72pt)"},
 
+        {"--page-start", ArgType::Int, &page_start, nullptr, "Specify the first page number to print"},
+        {"--page-end", ArgType::Int, &page_end, nullptr, "Specify the last page number to print"},
+        {"--page-step", ArgType::Int, &page_step, nullptr, "Specify the page step value"},
+
         {"--user-style", ArgType::String, &user_style, nullptr, "Specify the user-defined CSS style"},
         {"--user-script", ArgType::String, &user_script, nullptr, "Specify the user-defined JavaScript"},
+
+        {"--title", ArgType::String, &title, nullptr, "Set PDF document title"},
+        {"--subject", ArgType::String, &subject, nullptr, "Set PDF document subject"},
+        {"--author", ArgType::String, &author, nullptr, "Set PDF document author"},
+        {"--keywords", ArgType::String, &keywords, nullptr, "Set PDF document keywords"},
+        {"--creator", ArgType::String, &creator, nullptr, "Set PDF document creator"},
         {nullptr}
     };
 
@@ -152,12 +172,19 @@ int main(int argc, char* argv[])
     }
 
     Book book(pageSize, margins, media);
+
+    book.setTitle(title);
+    book.setSubject(subject);
+    book.setAuthor(author);
+    book.setKeywords(keywords);
+    book.setCreator(creator);
+
     if(!book.loadUrl(input, user_style, user_script)) {
         std::cerr << "ERROR: " << plutobook_get_error_message() << std::endl;
         return 2;
     }
 
-    if(!book.writeToPdf(output)) {
+    if(!book.writeToPdf(output, page_start, page_end, page_step)) {
         std::cerr << "ERROR: " << plutobook_get_error_message() << std::endl;
         return 3;
     }
