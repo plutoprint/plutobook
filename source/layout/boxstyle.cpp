@@ -1796,29 +1796,29 @@ void BoxStyle::inheritFrom(const BoxStyle* parentStyle)
     m_color = parentStyle->color();
     for(const auto& [id, value] : parentStyle->properties()) {
         switch(id) {
-        case CSSPropertyID::Color:
-        case CSSPropertyID::Direction:
-        case CSSPropertyID::FontFamily:
-        case CSSPropertyID::FontKerning:
-        case CSSPropertyID::FontSize:
-        case CSSPropertyID::FontStretch:
-        case CSSPropertyID::FontStyle:
-        case CSSPropertyID::FontVariantLigatures:
-        case CSSPropertyID::FontVariantCaps:
-        case CSSPropertyID::FontVariantEastAsian:
-        case CSSPropertyID::FontVariantNumeric:
-        case CSSPropertyID::FontWeight:
-        case CSSPropertyID::FontFeatureSettings:
-        case CSSPropertyID::FontVariationSettings:
-        case CSSPropertyID::FontVariantPosition:
         case CSSPropertyID::BorderCollapse:
         case CSSPropertyID::CaptionSide:
         case CSSPropertyID::ClipRule:
+        case CSSPropertyID::Color:
+        case CSSPropertyID::Direction:
         case CSSPropertyID::DominantBaseline:
         case CSSPropertyID::EmptyCells:
         case CSSPropertyID::Fill:
         case CSSPropertyID::FillOpacity:
         case CSSPropertyID::FillRule:
+        case CSSPropertyID::FontFamily:
+        case CSSPropertyID::FontFeatureSettings:
+        case CSSPropertyID::FontKerning:
+        case CSSPropertyID::FontSize:
+        case CSSPropertyID::FontStretch:
+        case CSSPropertyID::FontStyle:
+        case CSSPropertyID::FontVariantCaps:
+        case CSSPropertyID::FontVariantEastAsian:
+        case CSSPropertyID::FontVariantLigatures:
+        case CSSPropertyID::FontVariantNumeric:
+        case CSSPropertyID::FontVariantPosition:
+        case CSSPropertyID::FontVariationSettings:
+        case CSSPropertyID::FontWeight:
         case CSSPropertyID::Hyphens:
         case CSSPropertyID::LetterSpacing:
         case CSSPropertyID::LineHeight:
@@ -1842,16 +1842,16 @@ void BoxStyle::inheritFrom(const BoxStyle* parentStyle)
         case CSSPropertyID::TabSize:
         case CSSPropertyID::TextAlign:
         case CSSPropertyID::TextAnchor:
-        case CSSPropertyID::TextIndent:
-        case CSSPropertyID::TextTransform:
-        case CSSPropertyID::Visibility:
-        case CSSPropertyID::Widows:
-        case CSSPropertyID::WordBreak:
-        case CSSPropertyID::WordSpacing:
-        case CSSPropertyID::WhiteSpace:
         case CSSPropertyID::TextDecorationColor:
         case CSSPropertyID::TextDecorationLine:
         case CSSPropertyID::TextDecorationStyle:
+        case CSSPropertyID::TextIndent:
+        case CSSPropertyID::TextTransform:
+        case CSSPropertyID::Visibility:
+        case CSSPropertyID::WhiteSpace:
+        case CSSPropertyID::Widows:
+        case CSSPropertyID::WordBreak:
+        case CSSPropertyID::WordSpacing:
             m_properties.insert_or_assign(id, value);
             break;
         default:
