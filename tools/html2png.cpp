@@ -5,7 +5,8 @@
 
 using namespace plutobook;
 
-int main(int argc, char* argv[]) {
+int main(int argc, char* argv[])
+{
     const char* input = "";
     const char* output = "";
 
