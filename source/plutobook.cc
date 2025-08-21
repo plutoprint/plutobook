@@ -54,10 +54,10 @@ const char* plutobook_version_string(void)
 
 const char* plutobook_build_info()
 {
-    return "System: " SYSTEM_NAME "\n"
-           "Machine: " MACHINE_NAME "\n"
-           "Compiler: " COMPILER_NAME "\n"
-           "Built: " __DATE__ " " __TIME__ "\n"
+    return "Compiler: " COMPILER_NAME "\n"
+           "Built   : " __DATE__ " " __TIME__ "\n"
+           "System  : " SYSTEM_NAME "\n"
+           "Machine : " MACHINE_NAME "\n"
            "Features:"
 #ifdef PLUTOBOOK_HAS_CURL
            " Curl"
