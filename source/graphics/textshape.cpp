@@ -99,30 +99,14 @@ uint32_t TextShapeRun::offsetForPosition(float position, Direction direction) co
 constexpr int kMaxGlyphs = 1 << 16;
 constexpr int kMaxCharacters = kMaxGlyphs;
 
-constexpr bool treatAsZeroWidthSpace(UChar cc)
-{
-    return cc == kFormFeedCharacter || cc == kCarriageReturnCharacter
-        || cc == kSoftHyphenCharacter || cc == kZeroWidthSpaceCharacter
-        || cc == kZeroWidthNoBreakSpaceCharacter || cc == kObjectReplacementCharacter
-        || cc == kZeroWidthNonJoinerCharacter || cc == kZeroWidthJoinerCharacter
-        || (cc >= kLeftToRightMarkCharacter && cc <= kRightToLeftMarkCharacter)
-        || (cc >= kLeftToRightEmbedCharacter && cc <= kRightToLeftOverrideCharacter);
-}
-
-constexpr bool treatAsSpace(UChar cc)
-{
-    return cc == kSpaceCharacter || cc == kTabulationCharacter
-        || cc == kNewlineCharacter || cc == kNoBreakSpaceCharacter;
-}
-
 #define HB_TO_FLT(v) (static_cast<float>(v) / (1 << 16))
 
-RefPtr<TextShape> TextShape::createForText(const UString& text, Direction direction, const BoxStyle* style)
+RefPtr<TextShape> TextShape::createForText(const UString& text, Direction direction, bool disableSpacing, const BoxStyle* style)
 {
     const auto& font = style->font();
     auto fontFeatures = style->fontFeatures();
-    auto letterSpacing = style->letterSpacing();
-    auto wordSpacing = style->wordSpacing();
+    auto letterSpacing = disableSpacing ? 0 : style->letterSpacing();
+    auto wordSpacing = disableSpacing ? 0 : style->wordSpacing();
     auto heap = style->heap();
 
     auto hbBuffer = hb_buffer_create();
@@ -200,11 +184,13 @@ RefPtr<TextShape> TextShape::createForText(const UString& text, Direction direct
             glyphData.yOffset = -HB_TO_FLT(glyphPosition.y_offset);
             glyphData.advance = HB_TO_FLT(glyphPosition.x_advance - glyphPosition.y_advance);
 
-            auto character = text.charAt(startIndex + glyphData.characterIndex);
-            if(letterSpacing && !treatAsZeroWidthSpace(character))
-                glyphData.advance += letterSpacing;
-            if(wordSpacing && treatAsSpace(character)) {
-                glyphData.advance += wordSpacing;
+            if(!disableSpacing) {
+                auto character = text.charAt(startIndex + glyphData.characterIndex);
+                if(letterSpacing && !treatAsZeroWidthSpace(character))
+                    glyphData.advance += letterSpacing;
+                if(wordSpacing && treatAsSpace(character)) {
+                    glyphData.advance += wordSpacing;
+                }
             }
 
             width += glyphData.advance;

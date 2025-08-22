@@ -76,6 +76,7 @@ void SVGElement::collectAttributeStyle(std::string& output, const GlobalString& 
         stroke_widthAttr,
         text_anchorAttr,
         text_decorationAttr,
+        text_orientationAttr,
         transform_originAttr,
         unicode_bidiAttr,
         vector_effectAttr,

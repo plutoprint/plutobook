@@ -428,6 +428,7 @@ extern const GlobalString textAttr;
 extern const GlobalString textLengthAttr;
 extern const GlobalString text_anchorAttr;
 extern const GlobalString text_decorationAttr;
+extern const GlobalString text_orientationAttr;
 extern const GlobalString titleAttr;
 extern const GlobalString transformAttr;
 extern const GlobalString transform_originAttr;

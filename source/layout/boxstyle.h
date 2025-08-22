@@ -122,6 +122,17 @@ enum class BackgroundAttachment : uint8_t {
     Local
 };
 
+enum class WritingMode : uint8_t {
+    HorizontalTb,
+    VerticalRl,
+    VerticalLr
+};
+
+enum class TextOrientation : uint8_t {
+    Mixed,
+    Upright
+};
+
 enum class TextAnchor : uint8_t {
     Start,
     Middle,
@@ -782,6 +793,9 @@ public:
     float borderHorizontalSpacing() const;
     float borderVerticalSpacing() const;
 
+    WritingMode writingMode() const { return m_writingMode; }
+    TextOrientation textOrientation() const { return m_textOrientation; }
+
     TextAlign textAlign() const { return m_textAlign; }
     TextAnchor textAnchor() const;
     TextTransform textTransform() const;
@@ -894,6 +908,9 @@ public:
     bool isClearLeft() const { return m_clear == Clear::Left || m_clear == Clear::Both; }
     bool isClearRight() const { return m_clear == Clear::Right || m_clear == Clear::Both; }
 
+    bool isVerticalWritingMode() const { return m_writingMode != WritingMode::HorizontalTb; }
+    bool isUprightTextOrientation() const { return m_textOrientation == TextOrientation::Upright; }
+
     bool isOverflowHidden() const { return overflow() != Overflow::Visible; }
     bool isVisibilityHidden() const { return visibility() != Visibility::Visible; }
 
@@ -967,6 +984,8 @@ public:
     static Visibility convertVisibility(const CSSValue& value);
     static LineStyle convertLineStyle(const CSSValue& value);
     static BackgroundBox convertBackgroundBox(const CSSValue& value);
+    static WritingMode convertWritingMode(const CSSValue& value);
+    static TextOrientation convertTextOrientation(const CSSValue& value);
     static TextAlign convertTextAlign(const CSSValue& value);
     static WhiteSpace convertWhiteSpace(const CSSValue& value);
     static WordBreak convertWordBreak(const CSSValue& value);
@@ -1010,6 +1029,8 @@ private:
     BoxSizing m_boxSizing{BoxSizing::ContentBox};
     BlendMode m_blendMode{BlendMode::Normal};
     MaskType m_maskType{MaskType::Luminance};
+    WritingMode m_writingMode{WritingMode::HorizontalTb};
+    TextOrientation m_textOrientation{TextOrientation::Mixed};
     TextAlign m_textAlign{TextAlign::Start};
     WhiteSpace m_whiteSpace{WhiteSpace::Normal};
     WordBreak m_wordBreak{WordBreak::Normal};

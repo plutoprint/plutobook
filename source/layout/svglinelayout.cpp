@@ -89,6 +89,58 @@ static float calculateTextAnchorOffset(const BoxStyle* style, float width)
     return 0.f;
 }
 
+using SVGTextFragmentIterator = SVGTextFragmentList::iterator;
+
+static float calculateTextChunkLength(SVGTextFragmentIterator begin, SVGTextFragmentIterator end, bool isVerticalText)
+{
+    float chunkLength = 0;
+    const SVGTextFragment* lastFragment = nullptr;
+    for(auto it = begin; it != end; ++it) {
+        const SVGTextFragment& fragment = *it;
+        chunkLength += isVerticalText ? fragment.height : fragment.width;
+        if(!lastFragment) {
+            lastFragment = &fragment;
+            continue;
+        }
+
+        if(isVerticalText) {
+            chunkLength += fragment.y - (lastFragment->y + lastFragment->height);
+        } else {
+            chunkLength += fragment.x - (lastFragment->x + lastFragment->width);
+        }
+
+        lastFragment = &fragment;
+    }
+
+    return chunkLength;
+}
+
+static void handleTextChunk(SVGTextFragmentIterator begin, SVGTextFragmentIterator end)
+{
+    const BoxStyle* style = nullptr;
+    for(auto it = begin; it != end; ++it) {
+        const SVGTextFragment& fragment = *it;
+        if(fragment.item.type() == LineItem::Type::BidiControl)
+            continue;
+        style = fragment.item.box()->style();
+        break;
+    }
+
+    if(needsTextAnchorAdjustment(style)) {
+        auto isVerticalText = style->isVerticalWritingMode();
+        auto chunkLength = calculateTextChunkLength(begin, end, isVerticalText);
+        auto chunkOffset = calculateTextAnchorOffset(style, chunkLength);
+        for(auto it = begin; it != end; ++it) {
+            SVGTextFragment& fragment = *it;
+            if(isVerticalText) {
+                fragment.y += chunkOffset;
+            } else {
+                fragment.x += chunkOffset;
+            }
+        }
+    }
+}
+
 void SVGTextFragmentsBuilder::layout()
 {
     for(const auto& item : m_data.items) {
@@ -102,35 +154,6 @@ void SVGTextFragmentsBuilder::layout()
             assert(false);
         }
     }
-
-    auto handleTextChunk = [](auto begin, auto end) {
-        const BoxStyle* style = nullptr;
-        for(auto it = begin; it != end; ++it) {
-            const SVGTextFragment& fragment = *it;
-            if(fragment.item.type() == LineItem::Type::BidiControl)
-                continue;
-            style = fragment.item.box()->style();
-            break;
-        }
-
-        if(!needsTextAnchorAdjustment(style))
-            return;
-        float chunkWidth = 0.f;
-        const SVGTextFragment* lastFragment = nullptr;
-        for(auto it = begin; it != end; ++it) {
-            const SVGTextFragment& fragment = *it;
-            chunkWidth += fragment.width;
-            if(lastFragment)
-                chunkWidth += fragment.x - (lastFragment->x + lastFragment->width);
-            lastFragment = &fragment;
-        }
-
-        auto chunkOffset = calculateTextAnchorOffset(style, chunkWidth);
-        for(auto it = begin; it != end; ++it) {
-            SVGTextFragment& fragment = *it;
-            fragment.x += chunkOffset;
-        }
-    };
 
     if(m_fragments.empty())
         return;
@@ -165,8 +188,10 @@ static AlignmentBaseline resolveDominantBaseline(const Box* box)
     const auto* style = box->style();
     switch(style->dominantBaseline()) {
     case DominantBaseline::Auto:
+        if(style->isVerticalWritingMode())
+            return AlignmentBaseline::Central;
+        return AlignmentBaseline::Alphabetic;
     case DominantBaseline::UseScript:
-        return AlignmentBaseline::Auto;
     case DominantBaseline::NoChange:
     case DominantBaseline::ResetSize:
         return resolveDominantBaseline(box->parentBox());
@@ -241,8 +266,12 @@ void SVGTextFragmentsBuilder::handleTextItem(const LineItem& item)
 {
     if(item.length() == 0)
         return;
-    SVGTextFragment fragment(item);
+    const auto* style = item.box()->style();
+    const auto isVerticalText = style->isVerticalWritingMode();
+    const auto isUprightText = style->isUprightTextOrientation();
     const auto& shape = item.shapeText(m_data);
+
+    SVGTextFragment fragment(item);
     auto recordTextFragment = [&](auto startOffset, auto endOffset) {
         assert(endOffset > startOffset && (startOffset >= item.startOffset() && startOffset <= item.endOffset()));
         if(shape->direction() == Direction::Ltr) {
@@ -252,14 +281,25 @@ void SVGTextFragmentsBuilder::handleTextItem(const LineItem& item)
         }
 
         fragment.width = fragment.shape.width();
+        fragment.height = style->fontLineSpacing();
+        if(isVerticalText) {
+            m_y += isUprightText ? fragment.height : fragment.width;
+        } else {
+            m_x += fragment.width;
+        }
+
         m_fragments.push_back(fragment);
-        m_x += fragment.width;
     };
+
+    auto letterSpacing = style->letterSpacing();
+    auto wordSpacing = style->wordSpacing();
 
     auto baselineOffset = calculateBaselineOffset(item.box());
     auto startOffset = item.startOffset();
     auto textOffset = item.startOffset();
     auto didStartTextFragment = false;
+    auto applySpacingToNextCharacter = false;
+    auto lastCharacter = 0u;
     auto lastAngle = 0.f;
     while(textOffset < item.endOffset()) {
         SVGCharacterPosition position;
@@ -267,13 +307,15 @@ void SVGTextFragmentsBuilder::handleTextItem(const LineItem& item)
             position = m_positions.at(m_characterOffset);
         }
 
+        auto currentCharacter = m_data.text.char32At(textOffset);
         auto angle = position.rotate.value_or(0);
         auto dx = position.dx.value_or(0);
         auto dy = position.dy.value_or(0);
 
-        auto shouldStartNewFragment = position.x || position.y || dx || dy || angle || angle != lastAngle;
+        auto shouldStartNewFragment = isVerticalText || applySpacingToNextCharacter || position.x || position.y || dx || dy || angle || angle != lastAngle;
         if(shouldStartNewFragment && didStartTextFragment) {
             recordTextFragment(startOffset, textOffset);
+            applySpacingToNextCharacter = false;
             startOffset = textOffset;
         }
 
@@ -281,14 +323,39 @@ void SVGTextFragmentsBuilder::handleTextItem(const LineItem& item)
         if(startsNewTextChunk || shouldStartNewFragment || !didStartTextFragment) {
             m_x = dx + position.x.value_or(m_x);
             m_y = dy + position.y.value_or(m_y);
-            fragment.startsNewTextChunk = startsNewTextChunk;
-            fragment.x = m_x;
-            fragment.y = m_y - baselineOffset;
+            fragment.x = isVerticalText ? m_x + baselineOffset : m_x;
+            fragment.y = isVerticalText ? m_y : m_y - baselineOffset;
             fragment.angle = angle;
+            if(isVerticalText) {
+                if(isUprightText) {
+                    fragment.y += style->fontHeight();
+                } else {
+                    fragment.angle += 90.f;
+                }
+            }
+
+            fragment.startsNewTextChunk = startsNewTextChunk;
             didStartTextFragment = true;
         }
 
+        auto spacing = letterSpacing;
+        if(currentCharacter && lastCharacter && wordSpacing) {
+            if(treatAsSpace(currentCharacter) && !treatAsSpace(lastCharacter)) {
+                spacing += wordSpacing;
+            }
+        }
+
+        if(spacing) {
+            applySpacingToNextCharacter = true;
+            if(isVerticalText) {
+                m_y += spacing;
+            } else {
+                m_x += spacing;
+            }
+        }
+
         lastAngle = angle;
+        lastCharacter = currentCharacter;
         ++textOffset;
         ++m_characterOffset;
     }

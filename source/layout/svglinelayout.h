@@ -57,8 +57,9 @@ struct SVGTextFragment {
     bool startsNewTextChunk = false;
     float x = 0;
     float y = 0;
-    float angle = 0;
     float width = 0;
+    float height = 0;
+    float angle = 0;
 };
 
 using SVGTextFragmentList = std::pmr::vector<SVGTextFragment>;

@@ -1667,6 +1667,12 @@ void BoxStyle::set(CSSPropertyID id, RefPtr<CSSValue> value)
     case CSSPropertyID::MaskType:
         m_maskType = convertMaskType(*value);
         break;
+    case CSSPropertyID::WritingMode:
+        m_writingMode = convertWritingMode(*value);
+        break;
+    case CSSPropertyID::TextOrientation:
+        m_textOrientation = convertTextOrientation(*value);
+        break;
     case CSSPropertyID::TextAlign:
         m_textAlign = convertTextAlign(*value);
         break;
@@ -1746,6 +1752,12 @@ void BoxStyle::reset(CSSPropertyID id)
     case CSSPropertyID::MaskType:
         m_maskType = MaskType::Luminance;
         break;
+    case CSSPropertyID::WritingMode:
+        m_writingMode = WritingMode::HorizontalTb;
+        break;
+    case CSSPropertyID::TextOrientation:
+        m_textOrientation = TextOrientation::Mixed;
+        break;
     case CSSPropertyID::TextAlign:
         m_textAlign = TextAlign::Left;
         break;
@@ -1785,6 +1797,8 @@ void BoxStyle::inheritFrom(const BoxStyle* parentStyle)
     m_font = parentStyle->font();
     m_direction = parentStyle->direction();
     m_visibility = parentStyle->visibility();
+    m_writingMode = parentStyle->writingMode();
+    m_textOrientation = parentStyle->textOrientation();
     m_textAlign = parentStyle->textAlign();
     m_whiteSpace = parentStyle->whiteSpace();
     m_wordBreak = parentStyle->wordBreak();
@@ -1846,12 +1860,14 @@ void BoxStyle::inheritFrom(const BoxStyle* parentStyle)
         case CSSPropertyID::TextDecorationLine:
         case CSSPropertyID::TextDecorationStyle:
         case CSSPropertyID::TextIndent:
+        case CSSPropertyID::TextOrientation:
         case CSSPropertyID::TextTransform:
         case CSSPropertyID::Visibility:
         case CSSPropertyID::WhiteSpace:
         case CSSPropertyID::Widows:
         case CSSPropertyID::WordBreak:
         case CSSPropertyID::WordSpacing:
+        case CSSPropertyID::WritingMode:
             m_properties.insert_or_assign(id, value);
             break;
         default:
@@ -2668,6 +2684,38 @@ BackgroundBox BoxStyle::convertBackgroundBox(const CSSValue& value)
     }
 
     return BackgroundBox::BorderBox;
+}
+
+WritingMode BoxStyle::convertWritingMode(const CSSValue& value)
+{
+    const auto& ident = to<CSSIdentValue>(value);
+    switch(ident.value()) {
+    case CSSValueID::HorizontalTb:
+        return WritingMode::HorizontalTb;
+    case CSSValueID::VerticalRl:
+        return WritingMode::VerticalRl;
+    case CSSValueID::VerticalLr:
+        return WritingMode::VerticalLr;
+    default:
+        assert(false);
+    }
+
+    return WritingMode::HorizontalTb;
+}
+
+TextOrientation BoxStyle::convertTextOrientation(const CSSValue& value)
+{
+    const auto& ident = to<CSSIdentValue>(value);
+    switch(ident.value()) {
+    case CSSValueID::Mixed:
+        return TextOrientation::Mixed;
+    case CSSValueID::Upright:
+        return TextOrientation::Upright;
+    default:
+        assert(false);
+    }
+
+    return TextOrientation::Mixed;
 }
 
 TextAlign BoxStyle::convertTextAlign(const CSSValue& value)

@@ -1163,6 +1163,7 @@ static CSSPropertyID csspropertyid(const std::string_view& name)
         {"text-decoration-line", CSSPropertyID::TextDecorationLine},
         {"text-decoration-style", CSSPropertyID::TextDecorationStyle},
         {"text-indent", CSSPropertyID::TextIndent},
+        {"text-orientation", CSSPropertyID::TextOrientation},
         {"text-overflow", CSSPropertyID::TextOverflow},
         {"text-transform", CSSPropertyID::TextTransform},
         {"top", CSSPropertyID::Top},
@@ -1177,6 +1178,7 @@ static CSSPropertyID csspropertyid(const std::string_view& name)
         {"width", CSSPropertyID::Width},
         {"word-break", CSSPropertyID::WordBreak},
         {"word-spacing", CSSPropertyID::WordSpacing},
+        {"writing-mode", CSSPropertyID::WritingMode},
         {"x", CSSPropertyID::X},
         {"y", CSSPropertyID::Y},
         {"z-index", CSSPropertyID::ZIndex}
@@ -3678,6 +3680,31 @@ RefPtr<CSSValue> CSSParser::consumeLonghand(CSSTokenStream& input, CSSPropertyID
             {"justify", CSSValueID::Justify},
             {"start", CSSValueID::Start},
             {"end", CSSValueID::End}
+        };
+
+        return consumeIdent(input, table);
+    }
+
+    case CSSPropertyID::WritingMode: {
+        static const CSSIdentValueEntry table[] = {
+            {"horizontal-tb", CSSValueID::HorizontalTb},
+            {"vertical-rl", CSSValueID::VerticalRl},
+            {"vertical-lr", CSSValueID::VerticalLr},
+            {"lr-tb", CSSValueID::HorizontalTb},
+            {"rl-tb", CSSValueID::HorizontalTb},
+            {"lr", CSSValueID::HorizontalTb},
+            {"rl", CSSValueID::HorizontalTb},
+            {"tb-rl", CSSValueID::VerticalRl},
+            {"tb", CSSValueID::VerticalLr}
+        };
+
+        return consumeIdent(input, table);
+    }
+
+    case CSSPropertyID::TextOrientation: {
+        static const CSSIdentValueEntry table[] = {
+            {"mixed", CSSValueID::Mixed},
+            {"upright", CSSValueID::Upright}
         };
 
         return consumeIdent(input, table);

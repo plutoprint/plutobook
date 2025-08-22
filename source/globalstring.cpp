@@ -439,6 +439,7 @@ const GlobalString textAttr("text");
 const GlobalString textLengthAttr("textLength");
 const GlobalString text_anchorAttr("text-anchor");
 const GlobalString text_decorationAttr("text-decoration");
+const GlobalString text_orientationAttr("text-orientation");
 const GlobalString titleAttr("title");
 const GlobalString transformAttr("transform");
 const GlobalString transform_originAttr("transform-origin");

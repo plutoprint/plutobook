@@ -64,7 +64,7 @@ class BoxStyle;
 
 class TextShape : public HeapMember, public RefCounted<TextShape> {
 public:
-    static RefPtr<TextShape> createForText(const UString& text, Direction direction, const BoxStyle* style);
+    static RefPtr<TextShape> createForText(const UString& text, Direction direction, bool disableSpacing, const BoxStyle* style);
     static RefPtr<TextShape> createForTabs(const UString& text, Direction direction, const BoxStyle* style);
 
     const UString& text() const { return m_text; }

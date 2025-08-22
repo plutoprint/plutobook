@@ -18,7 +18,7 @@ const RefPtr<TextShape>& LineItem::shapeText(const LineItemsData& data) const
         if(m_type == Type::TabulationText) {
             m_textShape = TextShape::createForTabs(text, direction, m_box->style());
         } else {
-            m_textShape = TextShape::createForText(text, direction, m_box->style());
+            m_textShape = TextShape::createForText(text, direction, m_box->isSVGInlineTextBox(), m_box->style());
         }
     }
 
