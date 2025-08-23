@@ -636,9 +636,17 @@ constexpr auto kMinPageScaleFactor = 1.f / 100.f;
 void PageLayout::layout()
 {
     auto& pages = m_document->pages();
+    if(!pages.empty()) {
+        const auto& pageBox = pages.front();
+        const auto pageWidth = pageBox->width() / pageBox->pageScale();
+        const auto pageHeight = pageBox->height() / pageBox->pageScale();
+        m_document->setContainerSize(pageWidth, pageHeight);
+        m_document->box()->layout(m_document);
+        return;
+    }
+
     auto book = m_document->book();
     auto box = m_document->box();
-    assert(book && box && pages.empty());
 
     auto pageStyle = m_document->styleForPage(emptyGlo, 0, PseudoType::FirstPage);
     auto pageSize = pageStyle->getPageSize(book->pageSize());

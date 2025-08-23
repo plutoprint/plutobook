@@ -962,11 +962,12 @@ void Document::build()
 
 void Document::layout()
 {
-    if(m_book) {
-        PageLayout(this).layout();
-    } else {
-        box()->layout(nullptr);
-    }
+    box()->layout(nullptr);
+}
+
+void Document::paginate()
+{
+    PageLayout(this).layout();
 }
 
 void Document::render(GraphicsContext& context, const Rect& rect)

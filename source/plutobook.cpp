@@ -331,14 +331,14 @@ float Book::documentHeight() const
 
 uint32_t Book::pageCount() const
 {
-    if(auto document = layoutIfNeeded())
+    if(auto document = paginateIfNeeded())
         return document->pageCount();
     return 0;
 }
 
 PageSize Book::pageSizeAt(uint32_t pageIndex) const
 {
-    if(auto document = layoutIfNeeded())
+    if(auto document = paginateIfNeeded())
         return document->pageSizeAt(pageIndex);
     return m_pageSize;
 }
@@ -430,6 +430,7 @@ void Book::clearContent()
     m_heap->release();
     m_needsBuild = true;
     m_needsLayout = true;
+    m_needsPagination = true;
 }
 
 void Book::renderPage(Canvas& canvas, uint32_t pageIndex) const
@@ -448,7 +449,7 @@ void Book::renderPage(plutobook_canvas_t* canvas, uint32_t pageIndex) const
 
 void Book::renderPage(cairo_t* canvas, uint32_t pageIndex) const
 {
-    if(auto document = layoutIfNeeded()) {
+    if(auto document = paginateIfNeeded()) {
         GraphicsContext context(canvas);
         document->renderPage(context, pageIndex);
     }
@@ -613,8 +614,22 @@ Document* Book::layoutIfNeeded() const
 {
     auto document = buildIfNeeded();
     if(document && m_needsLayout) {
+        document->setContainerSize(viewportWidth(), viewportHeight());
         document->layout();
+        m_needsPagination = true;
         m_needsLayout = false;
+    }
+
+    return document;
+}
+
+Document* Book::paginateIfNeeded() const
+{
+    auto document = buildIfNeeded();
+    if(document && m_needsPagination) {
+        document->paginate();
+        m_needsPagination = false;
+        m_needsLayout = true;
     }
 
     return document;

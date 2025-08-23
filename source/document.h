@@ -396,6 +396,7 @@ public:
 
     void build();
     void layout();
+    void paginate();
 
     void render(GraphicsContext& context, const Rect& rect);
 

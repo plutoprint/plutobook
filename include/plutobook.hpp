@@ -1334,6 +1334,7 @@ public:
 private:
     Document* buildIfNeeded() const;
     Document* layoutIfNeeded() const;
+    Document* paginateIfNeeded() const;
 
     PageSize m_pageSize;
     PageMargins m_pageMargins;
@@ -1341,6 +1342,7 @@ private:
 
     mutable bool m_needsBuild{true};
     mutable bool m_needsLayout{true};
+    mutable bool m_needsPagination{true};
 
     std::string m_title;
     std::string m_author;
