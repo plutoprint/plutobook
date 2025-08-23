@@ -676,7 +676,7 @@ void PageLayout::layout()
     if(m_document->containerHeight() > 0.f) {
         Counters counters(m_document, std::ceil(m_document->height() / m_document->containerHeight()));
         for(uint32_t pageIndex = 0; pageIndex < counters.pageCount(); ++pageIndex) {
-            auto pageStyle = m_document->styleForPage(emptyGlo, pageIndex, pagePseudoType(pageIndex));
+            if(pageIndex > 0) pageStyle = m_document->styleForPage(emptyGlo, pageIndex, pagePseudoType(pageIndex));
             auto pageBox = PageBox::create(pageStyle, emptyGlo, pageIndex, pageWidth, pageHeight, pageScaleFactor);
 
             pageBox->setX(marginLeft);
