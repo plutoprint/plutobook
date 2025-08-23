@@ -457,14 +457,14 @@ void Book::renderPage(cairo_t* canvas, uint32_t pageIndex) const
 void Book::renderDocument(Canvas& canvas) const
 {
     if(auto context = canvas.context()) {
-        return renderDocument(context);
+        renderDocument(context);
     }
 }
 
 void Book::renderDocument(Canvas& canvas, float x, float y, float width, float height) const
 {
     if(auto context = canvas.context()) {
-        return renderDocument(context, x, y, width, height);
+        renderDocument(context, x, y, width, height);
     }
 }
 
