@@ -1072,6 +1072,7 @@ enum class CSSPropertyID : uint16_t {
     OutlineStyle,
     OutlineWidth,
     Overflow,
+    OverflowWrap,
     Pad,
     Padding,
     PaddingBottom,

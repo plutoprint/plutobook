@@ -1118,14 +1118,13 @@ void LineBreaker::breakText(LineItemRun& run, const LineItem& item, const RefPtr
     auto style = item.box()->style();
     auto breakOffset = item.startOffset() + shape->offsetForPosition(endPosition);
     auto mayBreakInside = true;
-    if(style->wordBreak() == WordBreak::BreakAll) {
+    if(style->breakAnywhere()) {
         breakOffset = std::max(breakOffset, run.startOffset + 1);
     } else if(breakOffset < item.endOffset()) {
         auto breakOpportunity = m_breakIterator.previousBreakOpportunity(breakOffset, run.startOffset);
         if(breakOpportunity <= run.startOffset) {
-            auto breakWord = style->wordBreak() == WordBreak::BreakWord;
             breakOffset = std::max(breakOffset, run.startOffset + 1);
-            breakOpportunity = breakWord ? breakOffset : m_breakIterator.nextBreakOpportunity(breakOffset, item.endOffset());
+            breakOpportunity = style->breakWord() ? breakOffset : m_breakIterator.nextBreakOpportunity(breakOffset, item.endOffset());
             mayBreakInside = false;
         }
 

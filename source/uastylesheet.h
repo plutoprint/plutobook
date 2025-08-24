@@ -501,7 +501,7 @@ input, select, button, textarea {
 textarea {
     background-color: white;
     white-space: pre-wrap;
-    word-wrap: break-word;
+    overflow-wrap: break-word;
     font-family: monospace;
 }
 

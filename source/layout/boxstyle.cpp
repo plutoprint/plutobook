@@ -1682,6 +1682,9 @@ void BoxStyle::set(CSSPropertyID id, RefPtr<CSSValue> value)
     case CSSPropertyID::WordBreak:
         m_wordBreak = convertWordBreak(*value);
         break;
+    case CSSPropertyID::OverflowWrap:
+        m_overflowWrap = convertOverflowWrap(*value);
+        break;
     case CSSPropertyID::FillRule:
         m_fillRule = convertFillRule(*value);
         break;
@@ -1773,6 +1776,9 @@ void BoxStyle::reset(CSSPropertyID id)
     case CSSPropertyID::WordBreak:
         m_wordBreak = WordBreak::Normal;
         break;
+    case CSSPropertyID::OverflowWrap:
+        m_overflowWrap = OverflowWrap::Normal;
+        break;
     case CSSPropertyID::FillRule:
         m_fillRule = FillRule::NonZero;
         break;
@@ -1823,6 +1829,7 @@ void BoxStyle::inheritFrom(const BoxStyle* parentStyle)
     m_textAlign = parentStyle->textAlign();
     m_whiteSpace = parentStyle->whiteSpace();
     m_wordBreak = parentStyle->wordBreak();
+    m_overflowWrap = parentStyle->overflowWrap();
     m_fillRule = parentStyle->fillRule();
     m_clipRule = parentStyle->clipRule();
     m_captionSide = parentStyle->captionSide();
@@ -1864,6 +1871,7 @@ void BoxStyle::inheritFrom(const BoxStyle* parentStyle)
         case CSSPropertyID::MarkerMid:
         case CSSPropertyID::MarkerStart:
         case CSSPropertyID::Orphans:
+        case CSSPropertyID::OverflowWrap:
         case CSSPropertyID::PaintOrder:
         case CSSPropertyID::Quotes:
         case CSSPropertyID::Stroke:
@@ -2800,6 +2808,23 @@ WordBreak BoxStyle::convertWordBreak(const CSSValue& value)
     }
 
     return WordBreak::Normal;
+}
+
+OverflowWrap BoxStyle::convertOverflowWrap(const CSSValue& value)
+{
+    const auto& ident = to<CSSIdentValue>(value);
+    switch(ident.value()) {
+    case CSSValueID::Normal:
+        return OverflowWrap::Normal;
+    case CSSValueID::Anywhere:
+        return OverflowWrap::Anywhere;
+    case CSSValueID::BreakWord:
+        return OverflowWrap::BreakWord;
+    default:
+        assert(false);
+    }
+
+    return OverflowWrap::Normal;
 }
 
 BoxSizing BoxStyle::convertBoxSizing(const CSSValue& value)

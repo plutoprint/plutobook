@@ -1119,6 +1119,7 @@ static CSSPropertyID csspropertyid(const std::string_view& name)
         {"outline-style", CSSPropertyID::OutlineStyle},
         {"outline-width", CSSPropertyID::OutlineWidth},
         {"overflow", CSSPropertyID::Overflow},
+        {"overflow-wrap", CSSPropertyID::OverflowWrap},
         {"pad", CSSPropertyID::Pad},
         {"padding", CSSPropertyID::Padding},
         {"padding-bottom", CSSPropertyID::PaddingBottom},
@@ -3516,6 +3517,16 @@ RefPtr<CSSValue> CSSParser::consumeLonghand(CSSTokenStream& input, CSSPropertyID
             {"normal", CSSValueID::Normal},
             {"keep-all", CSSValueID::KeepAll},
             {"break-all", CSSValueID::BreakAll},
+            {"break-word", CSSValueID::BreakWord}
+        };
+
+        return consumeIdent(input, table);
+    }
+
+    case CSSPropertyID::OverflowWrap: {
+        static const CSSIdentValueEntry table[] = {
+            {"normal", CSSValueID::Normal},
+            {"anywhere", CSSValueID::Anywhere},
             {"break-word", CSSValueID::BreakWord}
         };
 

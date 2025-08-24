@@ -192,6 +192,12 @@ enum class WordBreak : uint8_t {
     BreakWord
 };
 
+enum class OverflowWrap : uint8_t {
+    Normal,
+    BreakWord,
+    Anywhere
+};
+
 enum class Hyphens : uint8_t {
     Auto,
     None,
@@ -805,6 +811,7 @@ public:
     Color textDecorationColor() const;
     WhiteSpace whiteSpace() const { return m_whiteSpace; }
     WordBreak wordBreak() const { return m_wordBreak; }
+    OverflowWrap overflowWrap() const { return m_overflowWrap; }
     Hyphens hyphens() const;
     TabSize tabSize() const;
     Length textIndent() const;
@@ -922,6 +929,9 @@ public:
     bool preserveNewline() const { return preserveNewline(whiteSpace()); }
     bool collapseWhiteSpace() const { return collapseWhiteSpace(whiteSpace()); }
 
+    bool breakAnywhere() const { return m_overflowWrap == OverflowWrap::Anywhere || m_wordBreak == WordBreak::BreakAll; }
+    bool breakWord() const { return m_wordBreak == WordBreak::BreakWord || m_overflowWrap == OverflowWrap::BreakWord; }
+
     Point getTransformOrigin(float width, float height) const;
     Transform getTransform(float width, float height) const;
 
@@ -989,6 +999,7 @@ public:
     static TextAlign convertTextAlign(const CSSValue& value);
     static WhiteSpace convertWhiteSpace(const CSSValue& value);
     static WordBreak convertWordBreak(const CSSValue& value);
+    static OverflowWrap convertOverflowWrap(const CSSValue& value);
     static BoxSizing convertBoxSizing(const CSSValue& value);
     static BlendMode convertBlendMode(const CSSValue& value);
     static MaskType convertMaskType(const CSSValue& value);
@@ -1034,6 +1045,7 @@ private:
     TextAlign m_textAlign{TextAlign::Start};
     WhiteSpace m_whiteSpace{WhiteSpace::Normal};
     WordBreak m_wordBreak{WordBreak::Normal};
+    OverflowWrap m_overflowWrap{OverflowWrap::Normal};
     FillRule m_fillRule{FillRule::NonZero};
     FillRule m_clipRule{FillRule::NonZero};
     CaptionSide m_captionSide{CaptionSide::Top};
