@@ -1277,7 +1277,7 @@ bool CSSParser::consumeFontFaceDescription(CSSTokenStream& input, CSSPropertyLis
 
     input.consumeWhitespace();
     if(value && input.empty()) {
-        addProperty(properties, id, false, value);
+        addProperty(properties, id, false, std::move(value));
         return true;
     }
 
@@ -1319,7 +1319,7 @@ bool CSSParser::consumeCounterStyleDescription(CSSTokenStream& input, CSSPropert
 
     input.consumeWhitespace();
     if(value && input.empty()) {
-        addProperty(properties, id, false, value);
+        addProperty(properties, id, false, std::move(value));
         return true;
     }
 
@@ -1713,7 +1713,7 @@ void CSSParser::addExpandedProperty(CSSPropertyList& properties, CSSPropertyID i
 {
     auto longhand = CSSShorthand::longhand(id);
     if(longhand.empty()) {
-        addProperty(properties, id, important, value);
+        addProperty(properties, id, important, std::move(value));
         return;
     }
 
@@ -4007,9 +4007,9 @@ bool CSSParser::consumeFlex(CSSTokenStream& input, CSSPropertyList& properties, 
 
     if(!input.empty())
         return false;
-    addProperty(properties, CSSPropertyID::FlexGrow, important, grow);
-    addProperty(properties, CSSPropertyID::FlexShrink, important, shrink);
-    addProperty(properties, CSSPropertyID::FlexBasis, important, basis);
+    addProperty(properties, CSSPropertyID::FlexGrow, important, std::move(grow));
+    addProperty(properties, CSSPropertyID::FlexShrink, important, std::move(shrink));
+    addProperty(properties, CSSPropertyID::FlexBasis, important, std::move(basis));
     return true;
 }
 
@@ -4052,14 +4052,14 @@ bool CSSParser::consumeBackground(CSSTokenStream& input, CSSPropertyList& proper
 
     if(clip == nullptr)
         clip = origin;
-    addProperty(properties, CSSPropertyID::BackgroundColor, important, color);
-    addProperty(properties, CSSPropertyID::BackgroundImage, important, image);
-    addProperty(properties, CSSPropertyID::BackgroundRepeat, important, repeat);
-    addProperty(properties, CSSPropertyID::BackgroundAttachment, important, attachment);
-    addProperty(properties, CSSPropertyID::BackgroundOrigin, important, origin);
-    addProperty(properties, CSSPropertyID::BackgroundClip, important, clip);
-    addProperty(properties, CSSPropertyID::BackgroundPosition, important, position);
-    addProperty(properties, CSSPropertyID::BackgroundSize, important, size);
+    addProperty(properties, CSSPropertyID::BackgroundColor, important, std::move(color));
+    addProperty(properties, CSSPropertyID::BackgroundImage, important, std::move(image));
+    addProperty(properties, CSSPropertyID::BackgroundRepeat, important, std::move(repeat));
+    addProperty(properties, CSSPropertyID::BackgroundAttachment, important, std::move(attachment));
+    addProperty(properties, CSSPropertyID::BackgroundOrigin, important, std::move(origin));
+    addProperty(properties, CSSPropertyID::BackgroundClip, important, std::move(clip));
+    addProperty(properties, CSSPropertyID::BackgroundPosition, important, std::move(position));
+    addProperty(properties, CSSPropertyID::BackgroundSize, important, std::move(size));
     return true;
 }
 
@@ -4079,8 +4079,8 @@ bool CSSParser::consumeColumns(CSSTokenStream& input, CSSPropertyList& propertie
 
     if(!input.empty())
         return false;
-    addProperty(properties, CSSPropertyID::ColumnWidth, important, width);
-    addProperty(properties, CSSPropertyID::ColumnCount, important, count);
+    addProperty(properties, CSSPropertyID::ColumnWidth, important, std::move(width));
+    addProperty(properties, CSSPropertyID::ColumnCount, important, std::move(count));
     return true;
 }
 
@@ -4112,9 +4112,9 @@ bool CSSParser::consumeListStyle(CSSTokenStream& input, CSSPropertyList& propert
         }
     }
 
-    addProperty(properties, CSSPropertyID::ListStyleType, important, type);
-    addProperty(properties, CSSPropertyID::ListStylePosition, important, position);
-    addProperty(properties, CSSPropertyID::ListStyleImage, important, image);
+    addProperty(properties, CSSPropertyID::ListStyleType, important, std::move(type));
+    addProperty(properties, CSSPropertyID::ListStylePosition, important, std::move(position));
+    addProperty(properties, CSSPropertyID::ListStyleImage, important, std::move(image));
     return true;
 }
 
@@ -4140,21 +4140,21 @@ bool CSSParser::consumeFont(CSSTokenStream& input, CSSPropertyList& properties, 
 
     if(input.empty())
         return false;
-    addProperty(properties, CSSPropertyID::FontStyle, important, style);
-    addProperty(properties, CSSPropertyID::FontWeight, important, weight);
-    addProperty(properties, CSSPropertyID::FontVariantCaps, important, variant);
-    addProperty(properties, CSSPropertyID::FontStretch, important, stretch);
+    addProperty(properties, CSSPropertyID::FontStyle, important, std::move(style));
+    addProperty(properties, CSSPropertyID::FontWeight, important, std::move(weight));
+    addProperty(properties, CSSPropertyID::FontVariantCaps, important, std::move(variant));
+    addProperty(properties, CSSPropertyID::FontStretch, important, std::move(stretch));
 
     auto size = consumeFontSize(input);
     if(size == nullptr || input.empty())
         return false;
-    addProperty(properties, CSSPropertyID::FontSize, important, size);
+    addProperty(properties, CSSPropertyID::FontSize, important, std::move(size));
     if(input->type() == CSSToken::Type::Delim && input->delim() == '/') {
         input.consumeIncludingWhitespace();
         auto value = consumeLengthOrPercentOrNormal(input, false, true);
         if(value == nullptr)
             return false;
-        addProperty(properties, CSSPropertyID::LineHeight, important, value);
+        addProperty(properties, CSSPropertyID::LineHeight, important, std::move(value));
     } else {
         addProperty(properties, CSSPropertyID::LineHeight, important, nullptr);
     }
@@ -4162,7 +4162,7 @@ bool CSSParser::consumeFont(CSSTokenStream& input, CSSPropertyList& properties, 
     auto family = consumeFontFamily(input);
     if(family == nullptr || !input.empty())
         return false;
-    addProperty(properties, CSSPropertyID::FontFamily, important, family);
+    addProperty(properties, CSSPropertyID::FontFamily, important, std::move(family));
     return true;
 }
 
@@ -4197,8 +4197,8 @@ bool CSSParser::consumeFontVariant(CSSTokenStream& input, CSSPropertyList& prope
         return false;
     }
 
-    addProperty(properties, CSSPropertyID::FontVariantCaps, important, caps);
-    addProperty(properties, CSSPropertyID::FontVariantPosition, important, position);
+    addProperty(properties, CSSPropertyID::FontVariantCaps, important, std::move(caps));
+    addProperty(properties, CSSPropertyID::FontVariantPosition, important, std::move(position));
     auto addListProperty = [&](CSSPropertyID id, CSSValueList&& values) {
         if(values.empty())
             addProperty(properties, id, important, createIdentValue(CSSValueID::Normal));
@@ -4228,9 +4228,9 @@ bool CSSParser::consumeBorder(CSSTokenStream& input, CSSPropertyList& properties
         return false;
     }
 
-    addExpandedProperty(properties, CSSPropertyID::BorderWidth, important, width);
-    addExpandedProperty(properties, CSSPropertyID::BorderStyle, important, style);
-    addExpandedProperty(properties, CSSPropertyID::BorderColor, important, color);
+    addExpandedProperty(properties, CSSPropertyID::BorderWidth, important, std::move(width));
+    addExpandedProperty(properties, CSSPropertyID::BorderStyle, important, std::move(style));
+    addExpandedProperty(properties, CSSPropertyID::BorderColor, important, std::move(color));
     return true;
 }
 
@@ -4284,10 +4284,10 @@ bool CSSParser::consumeBorderRadius(CSSTokenStream& input, CSSPropertyList& prop
     auto br = CSSPairValue::create(m_heap, horizontal[2], vertical[2]);
     auto bl = CSSPairValue::create(m_heap, horizontal[3], vertical[3]);
 
-    addProperty(properties, CSSPropertyID::BorderTopLeftRadius, important, tl);
-    addProperty(properties, CSSPropertyID::BorderTopRightRadius, important, tr);
-    addProperty(properties, CSSPropertyID::BorderBottomRightRadius, important, br);
-    addProperty(properties, CSSPropertyID::BorderBottomLeftRadius, important, bl);
+    addProperty(properties, CSSPropertyID::BorderTopLeftRadius, important, std::move(tl));
+    addProperty(properties, CSSPropertyID::BorderTopRightRadius, important, std::move(tr));
+    addProperty(properties, CSSPropertyID::BorderBottomRightRadius, important, std::move(br));
+    addProperty(properties, CSSPropertyID::BorderBottomLeftRadius, important, std::move(bl));
     return true;
 }
 
@@ -4374,7 +4374,7 @@ bool CSSParser::consumeShorthand(CSSTokenStream& input, CSSPropertyList& propert
     }
 
     for(size_t i = 0; i < longhand.length(); ++i)
-        addProperty(properties, longhand.at(i), important, values[i]);
+        addProperty(properties, longhand.at(i), important, std::move(values[i]));
     return true;
 }
 

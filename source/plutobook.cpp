@@ -542,9 +542,9 @@ bool Book::writeToPdf(plutobook_stream_write_callback_t callback, void* closure,
     canvas.setKeywords(m_keywords);
     canvas.setCreationDate(m_creationDate);
     canvas.setModificationDate(m_modificationDate);
-    for(auto pageIndex = pageStart; pageStep > 0 ? pageIndex <= pageEnd : pageIndex >= pageEnd; pageIndex += pageStep) {
-        canvas.setPageSize(pageSizeAt(pageIndex - 1));
-        renderPage(canvas, pageIndex - 1);
+    for(auto pageNum = pageStart; pageStep > 0 ? pageNum <= pageEnd : pageNum >= pageEnd; pageNum += pageStep) {
+        canvas.setPageSize(pageSizeAt(pageNum - 1));
+        renderPage(canvas, pageNum - 1);
         canvas.showPage();
     }
 

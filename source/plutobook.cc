@@ -52,7 +52,7 @@ const char* plutobook_version_string(void)
 #define COMPILER_NAME "Unknown"
 #endif
 
-const char* plutobook_build_info()
+const char* plutobook_build_info(void)
 {
     return "Compiler: " COMPILER_NAME "\n"
            "Built   : " __DATE__ " " __TIME__ "\n"
