@@ -1740,6 +1740,12 @@ void BoxStyle::reset(CSSPropertyID id)
     case CSSPropertyID::VerticalAlign:
         m_verticalAlignType = VerticalAlignType::Baseline;
         break;
+    case CSSPropertyID::Direction:
+        m_direction = Direction::Ltr;
+        break;
+    case CSSPropertyID::UnicodeBidi:
+        m_unicodeBidi = UnicodeBidi::Normal;
+        break;
     case CSSPropertyID::Visibility:
         m_visibility = Visibility::Visible;
         break;
@@ -1781,6 +1787,21 @@ void BoxStyle::reset(CSSPropertyID id)
         break;
     case CSSPropertyID::BorderCollapse:
         m_borderCollapse = BorderCollapse::Separate;
+        break;
+    case CSSPropertyID::BreakAfter:
+    case CSSPropertyID::ColumnBreakAfter:
+    case CSSPropertyID::PageBreakAfter:
+        m_breakBefore = BreakBetween::Auto;
+        break;
+    case CSSPropertyID::BreakBefore:
+    case CSSPropertyID::ColumnBreakBefore:
+    case CSSPropertyID::PageBreakBefore:
+        m_breakBefore = BreakBetween::Auto;
+        break;
+    case CSSPropertyID::BreakInside:
+    case CSSPropertyID::ColumnBreakInside:
+    case CSSPropertyID::PageBreakInside:
+        m_breakInside = BreakInside::Auto;
         break;
     case CSSPropertyID::Color:
         m_color = Color::Black;
