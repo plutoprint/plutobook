@@ -110,8 +110,8 @@ RefPtr<TextShape> TextShape::createForText(const UString& text, Direction direct
     auto heap = style->heap();
 
     auto hbBuffer = hb_buffer_create();
-    auto textBuffer = (const uint16_t*)(text.getBuffer());
     auto hbDirection = direction == Direction::Ltr ? HB_DIRECTION_LTR : HB_DIRECTION_RTL;
+    auto textBuffer = (const uint16_t*)(text.getBuffer());
 
     float totalWidth = 0.f;
     int startIndex = 0;
@@ -150,7 +150,7 @@ RefPtr<TextShape> TextShape::createForText(const UString& text, Direction direct
         auto hbScript = hb_script_from_string(scriptName, -1);
 
         std::vector<hb_feature_t> hbFeatures;
-        for(const auto& features : {fontFeatures, fontData->features()}) {
+        for(const auto& features : { fontFeatures, fontData->features() }) {
             for(const auto& feature : features) {
                 hb_feature_t hbFeature;
                 hbFeature.tag = feature.first.value();

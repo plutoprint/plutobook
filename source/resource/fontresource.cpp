@@ -270,6 +270,7 @@ RefPtr<FontData> RemoteFontFace::getFontData(const FontDataDescription& descript
 
     cairo_font_face_destroy(face);
     cairo_font_options_destroy(options);
+
     return SimpleFontData::create(font, m_features);
 }
 
@@ -322,10 +323,12 @@ RefPtr<SimpleFontData> SimpleFontData::create(cairo_scaled_font_t* font, FontFea
     info.zeroGlyph = zeroGlyph;
     info.spaceGlyph = spaceGlyph;
     cairo_ft_scaled_font_unlock_face(font);
+
     return adoptPtr(new SimpleFontData(font, charSet, info, std::move(features)));
 }
 
 #define FLT_TO_HB(v) static_cast<hb_position_t>(v * (1 << 16))
+
 hb_font_t* SimpleFontData::hbFont() const
 {
     if(m_hbFont != nullptr)
@@ -564,6 +567,7 @@ static RefPtr<SimpleFontData> createFontDataFromPattern(FcPattern* pattern, cons
     cairo_font_face_destroy(face);
     cairo_font_options_destroy(options);
     FcPatternDestroy(pattern);
+
     return SimpleFontData::create(font, std::move(featureSettings));
 }
 
