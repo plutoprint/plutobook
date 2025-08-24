@@ -499,12 +499,12 @@ void Book::renderDocument(cairo_t* canvas, float x, float y, float width, float 
     }
 }
 
-bool Book::writeToPdf(const std::string& filename, uint32_t fromPage, uint32_t toPage, int pageStep) const
+bool Book::writeToPdf(const std::string& filename, uint32_t pageStart, uint32_t pageEnd, int pageStep) const
 {
     FileOutputStream output(filename);
     if(!output.isOpen())
         return false;
-    if(writeToPdf(output, fromPage, toPage, pageStep)) {
+    if(writeToPdf(output, pageStart, pageEnd, pageStep)) {
         return true;
     }
 
@@ -512,26 +512,26 @@ bool Book::writeToPdf(const std::string& filename, uint32_t fromPage, uint32_t t
     return false;
 }
 
-bool Book::writeToPdf(OutputStream& output, uint32_t fromPage, uint32_t toPage, int pageStep) const
+bool Book::writeToPdf(OutputStream& output, uint32_t pageStart, uint32_t pageEnd, int pageStep) const
 {
-    return writeToPdf(stream_write_func, &output, fromPage, toPage, pageStep);
+    return writeToPdf(stream_write_func, &output, pageStart, pageEnd, pageStep);
 }
 
-bool Book::writeToPdf(plutobook_stream_write_callback_t callback, void* closure, uint32_t fromPage, uint32_t toPage, int pageStep) const
+bool Book::writeToPdf(plutobook_stream_write_callback_t callback, void* closure, uint32_t pageStart, uint32_t pageEnd, int pageStep) const
 {
     if(pageStep == 0) {
         plutobook_set_error_message("invalid page range: step cannot be zero");
         return false;
     }
 
-    fromPage = std::max(1u, std::min(fromPage, pageCount()));
-    toPage = std::max(1u, std::min(toPage, pageCount()));
-    if((pageStep > 0 && fromPage > toPage) || (pageStep < 0 && fromPage < toPage)) {
-        plutobook_set_error_message("invalid page range: step direction does not match range (from=%u to=%u step=%d)", fromPage, toPage, pageStep);
+    pageStart = std::max(1u, std::min(pageStart, pageCount()));
+    pageEnd = std::max(1u, std::min(pageEnd, pageCount()));
+    if((pageStep > 0 && pageStart > pageEnd) || (pageStep < 0 && pageStart < pageEnd)) {
+        plutobook_set_error_message("invalid page range: step direction does not match range (from=%u to=%u step=%d)", pageStart, pageEnd, pageStep);
         return false;
     }
 
-    PDFCanvas canvas(callback, closure, pageSizeAt(fromPage - 1));
+    PDFCanvas canvas(callback, closure, pageSizeAt(pageStart - 1));
     if(canvas.isNull())
         return false;
     canvas.scale(PLUTOBOOK_UNITS_PX, PLUTOBOOK_UNITS_PX);
@@ -542,7 +542,7 @@ bool Book::writeToPdf(plutobook_stream_write_callback_t callback, void* closure,
     canvas.setKeywords(m_keywords);
     canvas.setCreationDate(m_creationDate);
     canvas.setModificationDate(m_modificationDate);
-    for(auto pageIndex = fromPage; pageStep > 0 ? pageIndex <= toPage : pageIndex >= toPage; pageIndex += pageStep) {
+    for(auto pageIndex = pageStart; pageStep > 0 ? pageIndex <= pageEnd : pageIndex >= pageEnd; pageIndex += pageStep) {
         canvas.setPageSize(pageSizeAt(pageIndex - 1));
         renderPage(canvas, pageIndex - 1);
         canvas.showPage();

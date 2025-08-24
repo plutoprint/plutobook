@@ -945,7 +945,7 @@ PLUTOBOOK_API void plutobook_render_document_rect_cairo(const plutobook_t* book,
  * @brief Writes the entire document to a PDF file.
  *
  * @param book A pointer to a `plutobook_t` object.
- * @param filename The name of the PDF file to write the document to.
+ * @param filename The file path where the PDF document will be written.
  * @return `true` on success, or `false` on failure.
  */
 PLUTOBOOK_API bool plutobook_write_to_pdf(const plutobook_t* book, const char* filename);
@@ -954,13 +954,13 @@ PLUTOBOOK_API bool plutobook_write_to_pdf(const plutobook_t* book, const char* f
  * @brief Writes a range of pages from the document to a PDF file.
  *
  * @param book A pointer to a `plutobook_t` object.
- * @param filename The name of the PDF file to write the document to.
- * @param from_page The starting page number for the range to be written.
- * @param to_page The ending page number for the range to be written.
- * @param page_step The step value for iterating through the pages in the range.
+ * @param filename The file path where the PDF document will be written.
+ * @param page_start The first page in the range to be written (inclusive).
+ * @param page_end The last page in the range to be written (inclusive).
+ * @param page_step The increment used to advance through the pages in the range.
  * @return `true` on success, or `false` on failure.
  */
-PLUTOBOOK_API bool plutobook_write_to_pdf_range(const plutobook_t* book, const char* filename, unsigned int from_page, unsigned int to_page, int page_step);
+PLUTOBOOK_API bool plutobook_write_to_pdf_range(const plutobook_t* book, const char* filename, unsigned int page_start, unsigned int page_end, int page_step);
 
 /**
  * @brief Writes the entire document to a PDF stream using a callback function.
@@ -978,12 +978,12 @@ PLUTOBOOK_API bool plutobook_write_to_pdf_stream(const plutobook_t* book, plutob
  * @param book A pointer to a `plutobook_t` object.
  * @param callback A callback function used for writing the PDF stream.
  * @param closure A user-defined pointer passed to the callback function for additional data.
- * @param from_page The starting page number for the range to be written.
- * @param to_page The ending page number for the range to be written.
- * @param page_step The step value for iterating through the pages in the range.
+ * @param page_start The first page in the range to be written (inclusive).
+ * @param page_end The last page in the range to be written (inclusive).
+ * @param page_step The increment used to advance through the pages in the range.
  * @return `true` on success, or `false` on failure.
  */
-PLUTOBOOK_API bool plutobook_write_to_pdf_stream_range(const plutobook_t* book, plutobook_stream_write_callback_t callback, void* closure, unsigned int from_page, unsigned int to_page, int page_step);
+PLUTOBOOK_API bool plutobook_write_to_pdf_stream_range(const plutobook_t* book, plutobook_stream_write_callback_t callback, void* closure, unsigned int page_start, unsigned int page_end, int page_step);
 
 /**
  * @brief Writes the entire document to a PNG image file.

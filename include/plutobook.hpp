@@ -1250,34 +1250,34 @@ public:
 
     /**
      * @brief Writes a range of pages from the document to a PDF file.
-     * @param filename The name of the PDF file to write the document to.
-     * @param fromPage The starting page number.
-     * @param toPage The ending page number.
-     * @param pageStep The step value for iterating through pages.
+     * @param filename The file path where the PDF document will be written.
+     * @param pageStart The first page in the range to be written (inclusive).
+     * @param pageEnd The last page in the range to be written (inclusive).
+     * @param pageStep The increment used to advance through pages in the range.
      * @return `true` on success, or `false` on failure.
      */
-    bool writeToPdf(const std::string& filename, uint32_t fromPage = kMinPageCount, uint32_t toPage = kMaxPageCount, int pageStep = 1) const;
+    bool writeToPdf(const std::string& filename, uint32_t pageStart = kMinPageCount, uint32_t pageEnd = kMaxPageCount, int pageStep = 1) const;
 
     /**
      * @brief Writes the entire document to a PDF stream using a callback function.
      * @param output The output stream where the PDF document will be written.
-     * @param fromPage The starting page number.
-     * @param toPage The ending page number.
-     * @param pageStep The step value for iterating through pages.
+     * @param pageStart The first page in the range to be written (inclusive).
+     * @param pageEnd The last page in the range to be written (inclusive).
+     * @param pageStep The increment used to advance through pages in the range.
      * @return `true` on success, or `false` on failure.
      */
-    bool writeToPdf(OutputStream& output, uint32_t fromPage = kMinPageCount, uint32_t toPage = kMaxPageCount, int pageStep = 1) const;
+    bool writeToPdf(OutputStream& output, uint32_t pageStart = kMinPageCount, uint32_t pageEnd = kMaxPageCount, int pageStep = 1) const;
 
     /**
      * @brief Writes the entire document to a PDF stream using a callback function.
      * @param callback A callback function used for writing the PDF stream.
      * @param closure A user-defined pointer passed to the callback function for additional data.
-     * @param fromPage The starting page number.
-     * @param toPage The ending page number.
-     * @param pageStep The step value for iterating through pages.
+     * @param pageStart The first page in the range to be written (inclusive).
+     * @param pageEnd The last page in the range to be written (inclusive).
+     * @param pageStep The increment used to advance through pages in the range.
      * @return `true` on success, or `false` on failure.
      */
-    bool writeToPdf(plutobook_stream_write_callback_t callback, void* closure, uint32_t fromPage = kMinPageCount, uint32_t toPage = kMaxPageCount, int pageStep = 1) const;
+    bool writeToPdf(plutobook_stream_write_callback_t callback, void* closure, uint32_t pageStart = kMinPageCount, uint32_t pageEnd = kMaxPageCount, int pageStep = 1) const;
 
     /**
      * @brief Writes the entire document to a PNG image file.

@@ -677,9 +677,9 @@ bool plutobook_write_to_pdf(const plutobook_t* book, const char* filename)
     return plutobook_write_to_pdf_range(book, filename, PLUTOBOOK_MIN_PAGE_COUNT, PLUTOBOOK_MAX_PAGE_COUNT, 1);
 }
 
-bool plutobook_write_to_pdf_range(const plutobook_t* book, const char* filename, unsigned int from_page, unsigned int to_page, int page_step)
+bool plutobook_write_to_pdf_range(const plutobook_t* book, const char* filename, unsigned int page_start, unsigned int page_end, int page_step)
 {
-    return book->writeToPdf(filename, from_page, to_page, page_step);
+    return book->writeToPdf(filename, page_start, page_end, page_step);
 }
 
 bool plutobook_write_to_pdf_stream(const plutobook_t* book, plutobook_stream_write_callback_t callback, void* closure)
@@ -687,9 +687,9 @@ bool plutobook_write_to_pdf_stream(const plutobook_t* book, plutobook_stream_wri
     return plutobook_write_to_pdf_stream_range(book, callback, closure, PLUTOBOOK_MIN_PAGE_COUNT, PLUTOBOOK_MAX_PAGE_COUNT, 1);
 }
 
-bool plutobook_write_to_pdf_stream_range(const plutobook_t* book, plutobook_stream_write_callback_t callback, void* closure, unsigned int from_page, unsigned int to_page, int page_step)
+bool plutobook_write_to_pdf_stream_range(const plutobook_t* book, plutobook_stream_write_callback_t callback, void* closure, unsigned int page_start, unsigned int page_end, int page_step)
 {
-    return book->writeToPdf(callback, closure, from_page, to_page, page_step);
+    return book->writeToPdf(callback, closure, page_start, page_end, page_step);
 }
 
 bool plutobook_write_to_png(const plutobook_t* book, const char* filename, int width, int height)
