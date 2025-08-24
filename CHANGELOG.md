@@ -1,5 +1,11 @@
 # Changelog
 
+## PlutoBook 0.4.0 (2025-08-24)
+
+- Add support for `text-orientation` and `writing-mode`
+- PNG export outputs a single continuous image (no pagination)
+- Add page range and metadata options to `html2pdf` cli
+
 ## PlutoBook 0.3.0 (2025-08-19)
 
 - Replace the `format` parameter with `width` and `height` parameters in `Book::writeToPng` and related functions.
