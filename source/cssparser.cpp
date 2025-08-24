@@ -2967,6 +2967,8 @@ RefPtr<CSSValue> CSSParser::consumeTextDecorationLine(CSSTokenStream& input)
             break;
         values.push_back(std::move(value));
     } while(!input.empty());
+    if(values.empty())
+        return nullptr;
     return CSSListValue::create(m_heap, std::move(values));
 }
 
