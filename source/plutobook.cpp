@@ -575,7 +575,7 @@ bool Book::writeToPng(plutobook_stream_write_callback_t callback, void* closure,
     const auto docWidth = documentWidth();
     const auto docHeight = documentHeight();
     if(docWidth <= 0 || docHeight <= 0) {
-        plutobook_set_error_message("invalid document size: width=%d height=%d", docWidth, docHeight);
+        plutobook_set_error_message("invalid document size: width=%g height=%g", docWidth, docHeight);
         return false;
     }
 
