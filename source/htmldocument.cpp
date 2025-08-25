@@ -184,7 +184,7 @@ static std::optional<unsigned> parseHTMLNonNegativeInteger(std::string_view inpu
 }
 
 template<typename T>
-std::optional<T> HTMLElement::parseHTMLIntegerAttribute(const GlobalString& name) const
+std::optional<T> HTMLElement::parseIntegerAttribute(const GlobalString& name) const
 {
     const auto& value = getAttribute(name);
     if(!value.empty())
@@ -192,9 +192,9 @@ std::optional<T> HTMLElement::parseHTMLIntegerAttribute(const GlobalString& name
     return std::nullopt;
 }
 
-std::optional<unsigned> HTMLElement::parseHTMLNonNegativeIntegerAttribute(const GlobalString& name) const
+std::optional<unsigned> HTMLElement::parseNonNegativeIntegerAttribute(const GlobalString& name) const
 {
-    return parseHTMLIntegerAttribute<unsigned>(name);
+    return parseIntegerAttribute<unsigned>(name);
 }
 
 static void addHTMLAttributeStyle(std::string& output, const std::string_view& name, const std::string_view& value)
@@ -489,7 +489,7 @@ HTMLLIElement::HTMLLIElement(Document* document)
 
 std::optional<int> HTMLLIElement::value() const
 {
-    return parseHTMLIntegerAttribute(valueAttr);
+    return parseIntegerAttribute(valueAttr);
 }
 
 HTMLOLElement::HTMLOLElement(Document* document)
@@ -499,7 +499,7 @@ HTMLOLElement::HTMLOLElement(Document* document)
 
 int HTMLOLElement::start() const
 {
-    return parseHTMLIntegerAttribute(startAttr).value_or(1);
+    return parseIntegerAttribute(startAttr).value_or(1);
 }
 
 HTMLTableElement::HTMLTableElement(Document* document)
@@ -749,7 +749,7 @@ HTMLTableColElement::HTMLTableColElement(Document* document, const GlobalString&
 
 unsigned HTMLTableColElement::span() const
 {
-    return parseHTMLNonNegativeIntegerAttribute(spanAttr).value_or(1);
+    return parseNonNegativeIntegerAttribute(spanAttr).value_or(1);
 }
 
 void HTMLTableColElement::collectAdditionalAttributeStyle(std::string& output) const
@@ -777,12 +777,12 @@ HTMLTableCellElement::HTMLTableCellElement(Document* document, const GlobalStrin
 
 unsigned HTMLTableCellElement::colSpan() const
 {
-    return std::max(1u, parseHTMLNonNegativeIntegerAttribute(colspanAttr).value_or(1));
+    return std::max(1u, parseNonNegativeIntegerAttribute(colspanAttr).value_or(1));
 }
 
 unsigned HTMLTableCellElement::rowSpan() const
 {
-    return parseHTMLNonNegativeIntegerAttribute(rowspanAttr).value_or(1);
+    return parseNonNegativeIntegerAttribute(rowspanAttr).value_or(1);
 }
 
 void HTMLTableCellElement::collectAdditionalAttributeStyle(std::string& output) const
@@ -811,7 +811,7 @@ HTMLInputElement::HTMLInputElement(Document* document)
 
 unsigned HTMLInputElement::size() const
 {
-    return std::max(1u, parseHTMLNonNegativeIntegerAttribute(sizeAttr).value_or(20));
+    return std::max(1u, parseNonNegativeIntegerAttribute(sizeAttr).value_or(20));
 }
 
 Box* HTMLInputElement::createBox(const RefPtr<BoxStyle>& style)
@@ -838,12 +838,12 @@ HTMLTextAreaElement::HTMLTextAreaElement(Document* document)
 
 unsigned HTMLTextAreaElement::rows() const
 {
-    return std::max(1u, parseHTMLNonNegativeIntegerAttribute(rowsAttr).value_or(2));
+    return std::max(1u, parseNonNegativeIntegerAttribute(rowsAttr).value_or(2));
 }
 
 unsigned HTMLTextAreaElement::cols() const
 {
-    return std::max(1u, parseHTMLNonNegativeIntegerAttribute(colsAttr).value_or(20));
+    return std::max(1u, parseNonNegativeIntegerAttribute(colsAttr).value_or(20));
 }
 
 Box* HTMLTextAreaElement::createBox(const RefPtr<BoxStyle>& style)
@@ -861,7 +861,7 @@ HTMLSelectElement::HTMLSelectElement(Document* document)
 
 unsigned HTMLSelectElement::size() const
 {
-    if(auto size = parseHTMLNonNegativeIntegerAttribute(sizeAttr))
+    if(auto size = parseNonNegativeIntegerAttribute(sizeAttr))
         return std::max(1u, size.value());
     return hasAttribute(multipleAttr) ? 4 : 1;
 }
@@ -950,9 +950,7 @@ std::unique_ptr<HTMLDocument> HTMLDocument::create(Book* book, Heap* heap, Resou
 
 bool HTMLDocument::parse(const std::string_view& content)
 {
-    HTMLParser parser(this, content);
-    parser.parse();
-    return true;
+    return HTMLParser(this, content).parse();
 }
 
 HTMLDocument::HTMLDocument(Book* book, Heap* heap, ResourceFetcher* fetcher, Url baseUrl)

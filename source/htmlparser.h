@@ -100,7 +100,7 @@ class HTMLParser {
 public:
     HTMLParser(HTMLDocument* document, const std::string_view& content);
 
-    void parse();
+    bool parse();
 
 private:
     Element* createHTMLElement(const HTMLTokenView& token) const;

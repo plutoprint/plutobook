@@ -21,8 +21,8 @@ public:
 
 protected:
     template<typename T = int>
-    std::optional<T> parseHTMLIntegerAttribute(const GlobalString& name) const;
-    std::optional<unsigned> parseHTMLNonNegativeIntegerAttribute(const GlobalString& name) const;
+    std::optional<T> parseIntegerAttribute(const GlobalString& name) const;
+    std::optional<unsigned> parseNonNegativeIntegerAttribute(const GlobalString& name) const;
 };
 
 template<>

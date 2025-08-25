@@ -638,7 +638,7 @@ HTMLParser::HTMLParser(HTMLDocument* document, const std::string_view& content)
 {
 }
 
-void HTMLParser::parse()
+bool HTMLParser::parse()
 {
     while(!m_tokenizer.atEOF()) {
         auto token = m_tokenizer.nextToken();
@@ -664,6 +664,7 @@ void HTMLParser::parse()
     assert(!m_openElements.empty());
     m_openElements.popAll();
     m_document->finishParsingDocument();
+    return true;
 }
 
 Element* HTMLParser::createHTMLElement(const HTMLTokenView& token) const
