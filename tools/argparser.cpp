@@ -208,6 +208,11 @@ void parseArgs(const char* program, const char* description, ArgDesc* args, int 
                 exit(EXIT_SUCCESS);
             }
 
+            if(strcmp(value, "-i") == 0 || strcmp(value, "--info") == 0) {
+                fprintf(stderr, "%s", plutobook_build_info());
+                exit(EXIT_SUCCESS);
+            }
+
             plutobook_set_error_message("unrecognized argument: %s", value);
             printUsage(program, description, args, EXIT_FAILURE);
         }
