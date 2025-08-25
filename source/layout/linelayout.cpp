@@ -680,6 +680,7 @@ const LineInfo& LineBreaker::nextLine()
         }
     }
 
+    auto startOffset = m_block->leftOffsetForLine(m_block->height(), m_lineHeight, m_line.isFirstLine());
     if(!m_line.endsWithBreak()) {
         const auto& runs = m_line.runs();
         auto index = runs.size();
@@ -757,7 +758,7 @@ const LineInfo& LineBreaker::nextLine()
         }
     }
 
-    m_line.setLineOffset(m_block->lineOffsetForAlignment(remainingWidth));
+    m_line.setLineOffset(startOffset + m_block->lineOffsetForAlignment(remainingWidth));
     if(m_data.isBidiEnabled && !m_line.isEmptyLine()) {
         UBiDiLevel paragraphLevel = blockStyle->direction() == Direction::Ltr ? 0 : 1;
         auto& logicalRuns = m_line.runs();
@@ -1370,10 +1371,9 @@ void LineBuilder::buildLine(const LineInfo& info)
     const auto& rootLine = m_lines.back();
     if(m_lineIndex != rootLine->lineIndex())
         return;
-    auto startOffset = m_block->leftOffsetForLine(m_block->height(), info.isFirstLine());
     rootLine->setIsEmptyLine(info.isEmptyLine());
     rootLine->setIsFirstLine(info.isFirstLine());
-    rootLine->alignInHorizontalDirection(startOffset + info.lineOffset());
+    rootLine->alignInHorizontalDirection(info.lineOffset());
     auto blockHeight = rootLine->alignInVerticalDirection(m_fragmentainer, m_block->height());
     if(!rootLine->isEmptyLine()) {
         m_block->setHeight(blockHeight);
