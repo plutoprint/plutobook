@@ -1,4 +1,4 @@
-project('plutobook', 'cpp',
+project('plutobook', 'cpp', 'c',
     version: '0.5.0',
     license: 'MIT',
     meson_version: '>=0.64.0',
@@ -158,6 +158,7 @@ plutobook_sources = [
     'source/layout/listitembox.cpp',
     'source/layout/multicolumnbox.cpp',
     'source/layout/pagebox.cpp',
+    'source/layout/qrcodegen.c',
     'source/layout/replacedbox.cpp',
     'source/layout/svgboxmodel.cpp',
     'source/layout/svgcontainerbox.cpp',

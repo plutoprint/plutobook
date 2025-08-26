@@ -108,6 +108,7 @@ private:
     void addCounter(const CSSCounterValue& counter);
     void addTargetCounter(const CSSFunctionValue& function);
     void addQuote(CSSValueID value);
+    void addQrCode(const CSSFunctionValue& function);
     void addImage(RefPtr<Image> image);
 
     Counters& m_counters;

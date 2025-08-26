@@ -2443,6 +2443,8 @@ RefPtr<CSSValue> CSSParser::consumeContent(CSSTokenStream& input)
                 value = consumeContentTargetCounter(block, CSSValueID::TargetCounter);
             else if(identMatches("target-counters", 15, name))
                 value = consumeContentTargetCounter(block, CSSValueID::TargetCounters);
+            else if(identMatches("qrcode", 6, name))
+                value = consumeContentQrCode(block);
             input.consumeWhitespace();
         }
 
@@ -2532,6 +2534,26 @@ RefPtr<CSSValue> CSSParser::consumeContentTargetCounter(CSSTokenStream& input, C
     if(!input.empty())
         return nullptr;
     return CSSFunctionValue::create(m_heap, id, std::move(values));
+}
+
+RefPtr<CSSValue> CSSParser::consumeContentQrCode(CSSTokenStream& input)
+{
+    auto text = consumeString(input);
+    if(text == nullptr)
+        return nullptr;
+    CSSValueList values(m_heap);
+    values.push_back(std::move(text));
+    if(input.consumeCommaIncludingWhitespace()) {
+        auto fill = consumeColor(input);
+        if(fill == nullptr)
+            return nullptr;
+        values.push_back(std::move(fill));
+        input.consumeWhitespace();
+    }
+
+    if(!input.empty())
+        return nullptr;
+    return CSSFunctionValue::create(m_heap, CSSValueID::Qrcode, std::move(values));
 }
 
 RefPtr<CSSValue> CSSParser::consumeCounter(CSSTokenStream& input, bool increment)

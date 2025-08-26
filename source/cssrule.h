@@ -185,6 +185,7 @@ enum class CSSValueID : uint16_t {
     PreWrap,
     ProportionalNums,
     ProportionalWidth,
+    Qrcode,
     Recto,
     Relative,
     Repeat,

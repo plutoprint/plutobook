@@ -4,6 +4,9 @@
 #include "document.h"
 #include "cssrule.h"
 #include "counters.h"
+#include "qrcodegen.h"
+
+#include <sstream>
 
 namespace plutobook {
 
@@ -165,6 +168,40 @@ void ContentBoxBuilder::addQuote(CSSValueID value)
     }
 }
 
+void ContentBoxBuilder::addQrCode(const CSSFunctionValue& function)
+{
+    std::string text(to<CSSStringValue>(*function.at(0)).value());
+
+    char fill[64] = "black";
+    if(function.size() == 2) {
+        const auto& color = to<CSSColorValue>(*function.at(1)).value();
+        std::sprintf(fill, "rgba(%u,%u,%u,%g)", color.red(), color.green(), color.blue(), color.alpha() / 255.f);
+    }
+
+    uint8_t qrcode[qrcodegen_BUFFER_LEN_MAX];
+    uint8_t tempBuffer[qrcodegen_BUFFER_LEN_MAX];
+
+    if(qrcodegen_encodeText(text.data(), tempBuffer, qrcode, qrcodegen_Ecc_LOW, qrcodegen_VERSION_MIN, qrcodegen_VERSION_MAX, qrcodegen_Mask_AUTO, true)) {
+        auto size = qrcodegen_getSize(qrcode);
+
+        std::ostringstream ss;
+        ss << "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" viewBox=\"0 0 " << size << ' ' << size << "\">";
+        ss << "<path d=\"";
+        for(int y = 0; y < size; y++) {
+            for(int x = 0; x < size; x++) {
+                if(qrcodegen_getModule(qrcode, x, y)) {
+                    ss << 'M' << x << ',' << y << "h1v1h-1z";
+                }
+            }
+        }
+
+        ss << "\" fill=\"" << fill << "\"/>";
+        ss << "</svg>";
+
+        addImage(SVGImage::create(ss.view(), emptyGlo, nullptr));
+    }
+}
+
 void ContentBoxBuilder::addImage(RefPtr<Image> image)
 {
     if(image == nullptr)
@@ -216,7 +253,11 @@ void ContentBoxBuilder::build()
         } else if(auto counter = to<CSSCounterValue>(value)) {
             addCounter(*counter);
         } else if(auto function = to<CSSFunctionValue>(value)) {
-            addTargetCounter(*function);
+            if(function->id() == CSSValueID::Qrcode) {
+                addQrCode(*function);
+            } else {
+                addTargetCounter(*function);
+            }
         } else if(auto ident = to<CSSIdentValue>(value)) {
             addQuote(ident->value());
         } else {
