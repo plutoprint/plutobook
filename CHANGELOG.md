@@ -1,5 +1,13 @@
 # Changelog
 
+## PlutoBook 0.5.0 (2025-08-26)
+
+- Add support for `overflow-wrap` in inline line-breaking algorithm
+- Add CLI options `--info` / `-i` for build metadata inspection
+- Fix `text-indent` offset calculation in block-level inline formatting
+- Fix parser for `text-decoration-line` to return `nullptr` when no values are consumed
+- Fix luminance mask computation
+
 ## PlutoBook 0.4.0 (2025-08-24)
 
 - Add support for `text-orientation` and `writing-mode`
