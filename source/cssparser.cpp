@@ -976,6 +976,7 @@ static CSSPropertyID csspropertyid(const std::string_view& name)
         std::string_view name;
         CSSPropertyID value;
     } table[] = {
+        {"-pluto-page-scale", CSSPropertyID::PageScale},
         {"additive-symbols", CSSPropertyID::AdditiveSymbols},
         {"align-content", CSSPropertyID::AlignContent},
         {"align-items", CSSPropertyID::AlignItems},
@@ -1130,7 +1131,6 @@ static CSSPropertyID csspropertyid(const std::string_view& name)
         {"page-break-after", CSSPropertyID::PageBreakAfter},
         {"page-break-before", CSSPropertyID::PageBreakBefore},
         {"page-break-inside", CSSPropertyID::PageBreakInside},
-        {"page-scale", CSSPropertyID::PageScale},
         {"paint-order", CSSPropertyID::PaintOrder},
         {"position", CSSPropertyID::Position},
         {"prefix", CSSPropertyID::Prefix},
@@ -2443,7 +2443,7 @@ RefPtr<CSSValue> CSSParser::consumeContent(CSSTokenStream& input)
                 value = consumeContentTargetCounter(block, CSSValueID::TargetCounter);
             else if(identMatches("target-counters", 15, name))
                 value = consumeContentTargetCounter(block, CSSValueID::TargetCounters);
-            else if(identMatches("qrcode", 6, name))
+            else if(identMatches("-pluto-qrcode", 13, name))
                 value = consumeContentQrCode(block);
             input.consumeWhitespace();
         }
