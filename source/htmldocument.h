@@ -133,10 +133,10 @@ private:
 
     static Frame parseFrameAttribute(std::string_view  value);
 
-    uint16_t m_padding;
-    uint16_t m_border;
-    Rules m_rules;
-    Frame m_frame;
+    uint16_t m_padding = 0;
+    uint16_t m_border = 0;
+    Rules m_rules = Rules::Unset;
+    Frame m_frame = Frame::Unset;
 };
 
 class HTMLTablePartElement : public HTMLElement {
