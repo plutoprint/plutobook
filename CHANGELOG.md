@@ -1,5 +1,10 @@
 # Changelog
 
+## PlutoBook 0.6.0 (2025-08-27)
+
+- Add support for `-pluto-qrcode()` in CSS `content` property for embedding QR codes
+- Fix uninitialized table members causing large cell `padding` and `border`
+
 ## PlutoBook 0.5.0 (2025-08-26)
 
 - Add support for `overflow-wrap` in inline line-breaking algorithm
