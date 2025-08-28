@@ -1118,6 +1118,14 @@ ColumnFill BoxStyle::columnFill() const
     return ColumnFill::Balance;
 }
 
+std::optional<float> BoxStyle::rowGap() const
+{
+    auto value = get(CSSPropertyID::RowGap);
+    if(value == nullptr)
+        return std::nullopt;
+    return convertLengthOrNormal(*value);
+}
+
 std::optional<float> BoxStyle::columnGap() const
 {
     auto value = get(CSSPropertyID::ColumnGap);

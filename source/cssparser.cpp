@@ -1082,6 +1082,7 @@ static CSSPropertyID csspropertyid(const std::string_view& name)
         {"font-variant-position", CSSPropertyID::FontVariantPosition},
         {"font-variation-settings", CSSPropertyID::FontVariationSettings},
         {"font-weight", CSSPropertyID::FontWeight},
+        {"gap", CSSPropertyID::Gap},
         {"height", CSSPropertyID::Height},
         {"hyphens", CSSPropertyID::Hyphens},
         {"justify-content", CSSPropertyID::JustifyContent},
@@ -1138,6 +1139,7 @@ static CSSPropertyID csspropertyid(const std::string_view& name)
         {"r", CSSPropertyID::R},
         {"range", CSSPropertyID::Range},
         {"right", CSSPropertyID::Right},
+        {"row-gap", CSSPropertyID::RowGap},
         {"rx", CSSPropertyID::Rx},
         {"ry", CSSPropertyID::Ry},
         {"size", CSSPropertyID::Size},
@@ -1363,6 +1365,7 @@ bool CSSParser::consumeDescription(CSSTokenStream& input, CSSPropertyList& prope
     case CSSPropertyID::BorderStyle:
     case CSSPropertyID::BorderWidth:
         return consume4Shorthand(input, properties, id, important);
+    case CSSPropertyID::Gap:
     case CSSPropertyID::BorderSpacing:
         return consume2Shorthand(input, properties, id, important);
     case CSSPropertyID::Background:
@@ -1626,6 +1629,15 @@ CSSShorthand CSSShorthand::longhand(CSSPropertyID id)
             CSSPropertyID::BackgroundClip,
             CSSPropertyID::BackgroundPosition,
             CSSPropertyID::BackgroundSize
+        };
+
+        return CSSShorthand(data, std::size(data));
+    }
+
+    case CSSPropertyID::Gap: {
+        static const CSSPropertyID data[] = {
+            CSSPropertyID::RowGap,
+            CSSPropertyID::ColumnGap
         };
 
         return CSSShorthand(data, std::size(data));
@@ -3296,6 +3308,7 @@ RefPtr<CSSValue> CSSParser::consumeLonghand(CSSTokenStream& input, CSSPropertyID
     case CSSPropertyID::OutlineWidth:
     case CSSPropertyID::ColumnRuleWidth:
         return consumeLineWidth(input);
+    case CSSPropertyID::RowGap:
     case CSSPropertyID::ColumnGap:
         return consumeLengthOrNormal(input, false, false);
     case CSSPropertyID::ColumnWidth:

@@ -131,7 +131,7 @@ public:
     std::optional<float> lastLineBaseline() const final;
     std::optional<float> inlineBlockBaseline() const final;
 
-    float computeMainSize(float hypotheticalMainSize) const;
+    float computeMainContentSize(float hypotheticalMainSize) const;
     float availableCrossSize() const;
 
     float borderAndPaddingStart() const;
@@ -165,6 +165,9 @@ private:
     AlignContent m_alignContent;
     FlexItemList m_items;
     FlexLineList m_lines;
+
+    float m_gapBetweenItems = 0;
+    float m_gapBetweenLines = 0;
 };
 
 template<>

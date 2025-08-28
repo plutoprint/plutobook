@@ -855,6 +855,7 @@ public:
     ColumnSpan columnSpan() const;
     ColumnFill columnFill() const;
 
+    std::optional<float> rowGap() const;
     std::optional<float> columnGap() const;
     std::optional<float> columnWidth() const;
     std::optional<int> columnCount() const;

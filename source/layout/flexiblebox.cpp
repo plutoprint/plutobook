@@ -272,6 +272,14 @@ void FlexibleBox::computeIntrinsicWidths(float& minWidth, float& maxWidth) const
         }
     }
 
+    if(m_items.size() > 1 && isHorizontalFlow()) {
+        auto gapWidth = m_gapBetweenItems * (m_items.size() - 1);
+        maxWidth += gapWidth;
+        if(!isMultiLine()) {
+            minWidth += gapWidth;
+        }
+    }
+
     minWidth = std::max(0.f, minWidth);
     maxWidth = std::max(minWidth, maxWidth);
 }
@@ -321,16 +329,16 @@ std::optional<float> FlexibleBox::inlineBlockBaseline() const
     return firstLineBaseline();
 }
 
-float FlexibleBox::computeMainSize(float hypotheticalMainSize) const
+float FlexibleBox::computeMainContentSize(float hypotheticalMainSize) const
 {
     if(isHorizontalFlow())
-        return width();
+        return contentBoxWidth();
     float y = 0;
     float height = hypotheticalMainSize + borderAndPaddingHeight();
     float marginTop = 0;
     float marginBottom = 0;
     computeHeight(y, height, marginTop, marginBottom);
-    return height;
+    return height - borderAndPaddingHeight();
 }
 
 float FlexibleBox::availableCrossSize() const
@@ -394,9 +402,10 @@ void FlexibleBox::layout(FragmentBuilder* fragmentainer)
 {
     updateWidth();
     setHeight(borderAndPaddingHeight());
+
     m_lines.clear();
 
-    float hypotheticalMainSize = 0;
+    float maxHypotheticalMainSize = 0;
     for(auto& item : m_items) {
         auto child = item.box();
         child->clearOverrideSize();
@@ -405,11 +414,10 @@ void FlexibleBox::layout(FragmentBuilder* fragmentainer)
 
         item.setFlexBaseSize(item.computeFlexBaseSize());
         item.setTargetMainSize(item.constrainMainSize(item.flexBaseSize()));
-        hypotheticalMainSize += item.targetMainMarginBoxSize();
+        maxHypotheticalMainSize += m_gapBetweenItems + item.targetMainMarginBoxSize();
     }
 
-    auto mainSize = computeMainSize(hypotheticalMainSize);
-    auto availableMainSize = mainSize - borderAndPaddingStart() - borderAndPaddingEnd();
+    const auto lineBreakLength = computeMainContentSize(maxHypotheticalMainSize);
 
     auto it = m_items.begin();
     auto end = m_items.end();
@@ -418,39 +426,42 @@ void FlexibleBox::layout(FragmentBuilder* fragmentainer)
         float totalFlexShrink = 0;
         float totalScaledFlexShrink = 0;
         float totalHypotheticalMainSize = 0;
+        float totalFlexBaseSize = 0;
 
         auto begin = it;
         for(; it != end; ++it) {
-            if(isMultiLine() && it != begin && totalHypotheticalMainSize + it->targetMainMarginBoxSize() > availableMainSize)
+            if(isMultiLine() && it != begin && totalHypotheticalMainSize + it->targetMainMarginBoxSize() > lineBreakLength)
                 break;
             totalFlexGrow += it->flexGrow();
             totalFlexShrink += it->flexShrink();
             totalScaledFlexShrink += it->flexShrink() * it->flexBaseSize();
-            totalHypotheticalMainSize += it->targetMainMarginBoxSize();
+            totalHypotheticalMainSize += m_gapBetweenItems + it->targetMainMarginBoxSize();
+            totalFlexBaseSize += m_gapBetweenItems + it->flexBaseMarginBoxSize();
         }
 
-        auto sign = totalHypotheticalMainSize < availableMainSize ? FlexSign::Positive : FlexSign::Negative;
-        float frozenSpace = 0;
-        float unfrozenSpace = 0;
-        std::list<FlexItem*> unfrozenItems;
+        totalHypotheticalMainSize -= m_gapBetweenItems;
+        totalFlexBaseSize -= m_gapBetweenItems;
+
+        auto mainContentSize = computeMainContentSize(totalHypotheticalMainSize);
+        auto initialFreeSpace = mainContentSize - totalFlexBaseSize;
+        auto sign = totalHypotheticalMainSize < mainContentSize ? FlexSign::Positive : FlexSign::Negative;
 
         FlexItemSpan items(begin, it);
+        std::list<FlexItem*> unfrozenItems;
         for(auto& item : items) {
             if(item.flexFactor(sign) == 0 || (sign == FlexSign::Positive && item.flexBaseSize() > item.targetMainSize())
                 || (sign == FlexSign::Negative && item.flexBaseSize() < item.targetMainSize())) {
                 totalFlexGrow -= item.flexGrow();
                 totalFlexShrink -= item.flexShrink();
                 totalScaledFlexShrink -= item.flexShrink() * item.flexBaseSize();
-                frozenSpace += item.targetMainMarginBoxSize();
+                initialFreeSpace -= item.targetMainSize() - item.flexBaseSize();
             } else {
-                unfrozenSpace += item.flexBaseMarginBoxSize();
                 unfrozenItems.push_back(&item);
             }
         }
 
-        auto initialFreeSpace = availableMainSize - frozenSpace - unfrozenSpace;
+        auto remainingFreeSpace = initialFreeSpace;
         while(!unfrozenItems.empty()) {
-            auto remainingFreeSpace = availableMainSize - frozenSpace - unfrozenSpace;
             auto totalFlexFactor = sign == FlexSign::Positive ? totalFlexGrow : totalFlexShrink;
             if(totalFlexFactor > 0.f && totalFlexFactor < 1.f) {
                 auto scaledInitialFreeSpace = initialFreeSpace * totalFlexFactor;
@@ -499,14 +510,17 @@ void FlexibleBox::layout(FragmentBuilder* fragmentainer)
                     totalFlexGrow -= item->flexGrow();
                     totalFlexShrink -= item->flexShrink();
                     totalScaledFlexShrink -= item->flexShrink() * item->flexBaseSize();
-                    frozenSpace += item->targetMainMarginBoxSize();
-                    unfrozenSpace -= item->flexBaseMarginBoxSize();
+                    remainingFreeSpace -= item->targetMainSize() - item->flexBaseSize();
                     unfrozenItems.erase(currentIterator);
                 }
             }
         }
 
-        auto availableSpace = availableMainSize - frozenSpace;
+        auto availableSpace = mainContentSize;
+        for(const auto& item : items)
+            availableSpace -= item.targetMainSize();
+        availableSpace -= m_gapBetweenItems * (items.size() - 1);
+
         size_t autoMarginCount = 0;
         if(availableSpace > 0.f) {
             for(const auto& item : items) {
@@ -545,13 +559,12 @@ void FlexibleBox::layout(FragmentBuilder* fragmentainer)
         case AlignContent::SpaceAround:
             if(availableSpace > 0)
                 mainOffset += availableSpace / (2.f * items.size());
-            else
-                mainOffset += availableSpace / 2.f;
             break;
         default:
             break;
         }
 
+        auto mainSize = mainContentSize + borderAndPaddingStart() + borderAndPaddingEnd();
         for(const auto& item : items) {
             auto child = item.box();
             if(isHorizontalFlow()) {
@@ -597,16 +610,19 @@ void FlexibleBox::layout(FragmentBuilder* fragmentainer)
 
             mainOffset += item.borderBoxMainSize();
             mainOffset += item.marginEnd();
-            if(availableSpace > 0 && items.size() > 1) {
-                switch(m_justifyContent) {
-                case AlignContent::SpaceAround:
-                    mainOffset += availableSpace / items.size();
-                    break;
-                case AlignContent::SpaceBetween:
-                    mainOffset += availableSpace / (items.size() - 1);
-                    break;
-                default:
-                    break;
+            if(items.size() > 1) {
+                mainOffset += m_gapBetweenItems;
+                if(availableSpace > 0) {
+                    switch(m_justifyContent) {
+                    case AlignContent::SpaceAround:
+                        mainOffset += availableSpace / items.size();
+                        break;
+                    case AlignContent::SpaceBetween:
+                        mainOffset += availableSpace / (items.size() - 1);
+                        break;
+                    default:
+                        break;
+                    }
                 }
             }
         }
@@ -647,6 +663,8 @@ void FlexibleBox::layout(FragmentBuilder* fragmentainer)
         crossOffset += crossSize;
     }
 
+    if(m_lines.size() > 1)
+        crossOffset += m_gapBetweenLines * (m_lines.size() - 1);
     crossOffset += borderAndPaddingAfter();
     if(isHorizontalFlow())
         setHeight(std::max(crossOffset, height()));
@@ -656,9 +674,9 @@ void FlexibleBox::layout(FragmentBuilder* fragmentainer)
         m_lines.front().setCrossSize(availableCrossSize());
     if(isMultiLine() && !m_lines.empty()) {
         auto availableSpace = availableCrossSize();
-        for(const auto& line : m_lines) {
+        for(const auto& line : m_lines)
             availableSpace -= line.crossSize();
-        }
+        availableSpace -= m_gapBetweenLines * (m_lines.size() - 1);
 
         float lineOffset = 0;
         switch(m_alignContent) {
@@ -671,8 +689,6 @@ void FlexibleBox::layout(FragmentBuilder* fragmentainer)
         case AlignContent::SpaceAround:
             if(availableSpace > 0)
                 lineOffset += availableSpace / (2.f * m_lines.size());
-            else
-                lineOffset += availableSpace / 2.f;
             break;
         default:
             break;
@@ -695,16 +711,19 @@ void FlexibleBox::layout(FragmentBuilder* fragmentainer)
                 lineOffset += lineSize;
             }
 
-            if(availableSpace > 0 && m_lines.size() > 1) {
-                switch(m_alignContent) {
-                case AlignContent::SpaceAround:
-                    lineOffset += availableSpace / m_lines.size();
-                    break;
-                case AlignContent::SpaceBetween:
-                    lineOffset += availableSpace / (m_lines.size() - 1);
-                    break;
-                default:
-                    break;
+            if(m_lines.size() > 1) {
+                lineOffset += m_gapBetweenLines;
+                if(availableSpace > 0) {
+                    switch(m_alignContent) {
+                    case AlignContent::SpaceAround:
+                        lineOffset += availableSpace / m_lines.size();
+                        break;
+                    case AlignContent::SpaceBetween:
+                        lineOffset += availableSpace / (m_lines.size() - 1);
+                        break;
+                    default:
+                        break;
+                    }
                 }
             }
         }
@@ -855,6 +874,12 @@ void FlexibleBox::build()
             alignSelf = alignItems;
         m_items.emplace_back(child, order, flexGlow, flexShrink, alignSelf);
     }
+
+    auto rowGap = style()->rowGap().value_or(0);
+    auto columnGap = style()->columnGap().value_or(0);
+
+    m_gapBetweenItems = isVerticalFlow() ? rowGap : columnGap;
+    m_gapBetweenLines = isVerticalFlow() ? columnGap : rowGap;
 
     auto compare_func = [](const auto& a, const auto& b) { return a.order() < b.order(); };
     std::stable_sort(m_items.begin(), m_items.end(), compare_func);
