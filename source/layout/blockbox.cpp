@@ -437,6 +437,8 @@ void BlockBox::computeWidth(float& x, float& width, float& marginLeft, float& ma
 {
     if(hasOverrideWidth()) {
         width = overrideWidth();
+        if(isTableBox())
+            width = std::max(width, minPreferredWidth());
         return;
     }
 
