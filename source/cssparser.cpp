@@ -2163,24 +2163,34 @@ RefPtr<CSSValue> CSSParser::consumeImageOrNone(CSSTokenStream& input)
 RefPtr<CSSValue> CSSParser::consumeColor(CSSTokenStream& input)
 {
     if(input->type() == CSSToken::Type::Hash) {
-        int count = 0;
-        uint32_t value = 0;
-        for(auto cc : input->data()) {
-            if(count >= 6 || !isHexDigit(cc))
+        auto data = input->data();
+        for(auto cc : data) {
+            if(!isHexDigit(cc)) {
                 return nullptr;
-            value = value * 16 + toHexDigit(cc);
-            count += 1;
+            }
         }
 
-        if(count != 6 && count != 3)
+        int r, g, b, a = 255;
+        if(data.size() == 3 || data.size() == 4) {
+            r = toHexByte(data[0], data[0]);
+            g = toHexByte(data[1], data[1]);
+            b = toHexByte(data[2], data[2]);
+            if(data.size() == 4) {
+                a = toHexByte(data[3], data[3]);
+            }
+        } else if(data.size() == 6 || data.size() == 8) {
+            r = toHexByte(data[0], data[1]);
+            g = toHexByte(data[2], data[3]);
+            b = toHexByte(data[4], data[5]);
+            if(data.size() == 8) {
+                a = toHexByte(data[6], data[7]);
+            }
+        } else {
             return nullptr;
-        if(count == 3) {
-            value = ((value&0xf00) << 8) | ((value&0x0f0) << 4) | (value&0x00f);
-            value |= value << 4;
         }
 
         input.consumeIncludingWhitespace();
-        return createColorValue(Color(value | 0xFF000000));
+        return createColorValue(Color(r, g, b, a));
     }
 
     if(input->type() == CSSToken::Type::Function) {

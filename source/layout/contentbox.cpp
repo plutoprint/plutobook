@@ -175,7 +175,11 @@ void ContentBoxBuilder::addQrCode(const CSSFunctionValue& function)
     char fill[64] = "black";
     if(function.size() == 2) {
         const auto& color = to<CSSColorValue>(*function.at(1)).value();
-        std::snprintf(fill, sizeof(fill), "rgba(%u,%u,%u,%g)", color.red(), color.green(), color.blue(), color.alpha() / 255.f);
+        if(color.alpha() == 255) {
+            std::snprintf(fill, sizeof(fill), "#%02X%02X%02X", color.red(), color.green(), color.blue());
+        } else {
+            std::snprintf(fill, sizeof(fill), "#%02X%02X%02X%02X", color.red(), color.green(), color.blue(), color.alpha());
+        }
     }
 
     uint8_t qrcode[qrcodegen_BUFFER_LEN_MAX];
