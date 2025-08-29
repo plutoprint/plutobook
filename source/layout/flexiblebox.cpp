@@ -567,7 +567,8 @@ void FlexibleBox::layout(FragmentBuilder* fragmentainer)
         }
 
         auto mainSize = mainContentSize + borderAndPaddingStart() + borderAndPaddingEnd();
-        for(const auto& item : items) {
+        for(size_t i = 0; i < items.size(); i++) {
+            const auto& item = items[i];
             auto child = item.box();
             if(isHorizontalFlow()) {
                 child->setOverrideWidth(item.targetMainBorderBoxSize());
@@ -612,9 +613,9 @@ void FlexibleBox::layout(FragmentBuilder* fragmentainer)
 
             mainOffset += item.borderBoxMainSize();
             mainOffset += item.marginEnd();
-            if(items.size() > 1) {
+            if(i != items.size() - 1) {
                 mainOffset += m_gapBetweenItems;
-                if(availableSpace > 0) {
+                if(availableSpace > 0 && items.size() > 1) {
                     switch(m_justifyContent) {
                     case AlignContent::SpaceAround:
                         mainOffset += availableSpace / items.size();
