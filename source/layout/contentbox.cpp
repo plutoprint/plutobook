@@ -185,7 +185,7 @@ void ContentBoxBuilder::addQrCode(const CSSFunctionValue& function)
         auto size = qrcodegen_getSize(qrcode);
 
         std::ostringstream ss;
-        ss << "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" viewBox=\"0 0 " << size << ' ' << size << "\">";
+        ss << "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 " << size << ' ' << size << "\">";
         ss << "<path d=\"";
         for(int y = 0; y < size; y++) {
             for(int x = 0; x < size; x++) {
