@@ -518,7 +518,7 @@ void FlexibleBox::layout(FragmentBuilder* fragmentainer)
 
         auto availableSpace = mainContentSize;
         for(const auto& item : items)
-            availableSpace -= item.targetMainSize();
+            availableSpace -= item.targetMainMarginBoxSize();
         availableSpace -= m_gapBetweenItems * (items.size() - 1);
 
         size_t autoMarginCount = 0;
