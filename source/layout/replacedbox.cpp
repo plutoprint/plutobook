@@ -39,8 +39,10 @@ float ReplacedBox::computePreferredReplacedWidth() const
         return intrinsicWidth;
     if(intrinsicRatio && height)
         return constrainReplacedHeight(height.value()) * intrinsicRatio;
-    if(intrinsicRatio && !intrinsicWidth && intrinsicHeight) {
+    if(intrinsicRatio && !intrinsicWidth && intrinsicHeight)
         return constrainReplacedHeight(intrinsicHeight) * intrinsicRatio;
+    if(intrinsicRatio && !intrinsicWidth && !intrinsicHeight) {
+        return 0;
     }
 
     if(intrinsicWidth > 0.f)
