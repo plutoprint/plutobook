@@ -130,7 +130,7 @@ static std::string percentDecode(std::string_view input)
     while(!input.empty()) {
         auto cc = input.front();
         if(cc == '%' && input.length() > 2 && isHexDigit(input[1]) && isHexDigit(input[2])) {
-            output.push_back(toHexDigit(input[1]) << 4 | toHexDigit(input[2]));
+            output.push_back(toHexByte(input[1], input[2]));
             input.remove_prefix(3);
         } else {
             output.push_back(cc);
