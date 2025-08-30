@@ -1111,11 +1111,10 @@ static void distributeSpanCellToRows(const TableCellBox* cellBox, std::span<Tabl
 
 void TableSectionBox::layoutRows(FragmentBuilder* fragmentainer)
 {
-    setHeight(0.f);
+    float rowTop = 0;
     auto verticalSpacing = table()->borderVerticalSpacing();
     for(size_t rowIndex = 0; rowIndex < m_rows.size(); ++rowIndex) {
         auto rowBox = m_rows[rowIndex];
-        auto rowTop = height();
         if(fragmentainer) {
             fragmentainer->enterFragment(rowTop);
         }
@@ -1156,8 +1155,10 @@ void TableSectionBox::layoutRows(FragmentBuilder* fragmentainer)
             }
         }
 
-        setHeight(rowTop + rowBox->height() + (rowBox == lastRow() ? 0 : verticalSpacing));
+        rowTop += verticalSpacing + rowBox->height();
     }
+
+    setHeight(rowTop - verticalSpacing);
 }
 
 void TableSectionBox::layout(FragmentBuilder* fragmentainer)
