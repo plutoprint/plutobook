@@ -345,8 +345,8 @@ void TableBox::layout(FragmentBuilder* fragmentainer)
             }
         }
 
+        auto sectionTop = height() + borderVerticalSpacing();
         for(auto section : m_sections) {
-            auto sectionTop = height() + borderVerticalSpacing();
             if(fragmentainer) {
                 fragmentainer->enterFragment(sectionTop);
             }
@@ -358,10 +358,10 @@ void TableBox::layout(FragmentBuilder* fragmentainer)
                 fragmentainer->leaveFragment(sectionTop);
             }
 
-            setHeight(sectionTop + section->height() + borderVerticalSpacing());
+            sectionTop += section->height() + borderVerticalSpacing();
         }
 
-        setHeight(height() + borderVerticalSpacing());
+        setHeight(sectionTop);
     }
 
     setHeight(height() + borderAndPaddingBottom());
