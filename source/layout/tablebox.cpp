@@ -314,6 +314,9 @@ void TableBox::layout(FragmentBuilder* fragmentainer)
     if(auto height = computeHeightUsing(style()->height()))
         tableHeight = adjustContentBoxHeight(height.value());
     tableHeight = constrainContentBoxHeight(tableHeight);
+    if(hasOverrideHeight()) {
+        tableHeight = std::max(tableHeight, overrideHeight() - borderAndPaddingHeight() - height());
+    }
 
     setHeight(height() + borderAndPaddingTop());
     if(m_columns.empty()) {

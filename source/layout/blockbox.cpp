@@ -465,7 +465,8 @@ void BlockBox::computeHeight(float& y, float& height, float& marginTop, float& m
     if(isTableCellBox())
         return;
     if(hasOverrideHeight()) {
-        height = overrideHeight();
+        if(!isTableBox())
+            height = overrideHeight();
         return;
     }
 
