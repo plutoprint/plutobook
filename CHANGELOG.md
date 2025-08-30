@@ -1,5 +1,14 @@
 # Changelog
 
+## PlutoBook 0.7.0 (2025-08-30)
+
+- Add support for `row-gap`, `column-gap`, and `gap` in flex layout
+- Add support for CSS hex alpha notation
+- Fix flex layout to avoid shrinking table boxes below min preferred width
+- Fix flex layout to avoid shrinking table height
+- Fix table section height calculation to avoid double-counting border spacing
+- Fix preferred width calculation for replaced boxes
+
 ## PlutoBook 0.6.0 (2025-08-27)
 
 - Add support for `-pluto-qrcode()` in CSS `content` property for embedding QR codes
