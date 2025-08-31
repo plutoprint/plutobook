@@ -562,6 +562,10 @@ void FlexibleBox::layout(FragmentBuilder* fragmentainer)
             if(availableSpace > 0)
                 mainOffset += availableSpace / (2.f * items.size());
             break;
+        case AlignContent::SpaceEvenly:
+            if(availableSpace > 0)
+                mainOffset += availableSpace / (items.size() + 1);
+            break;
         default:
             break;
         }
@@ -623,6 +627,8 @@ void FlexibleBox::layout(FragmentBuilder* fragmentainer)
                     case AlignContent::SpaceBetween:
                         mainOffset += availableSpace / (items.size() - 1);
                         break;
+                    case AlignContent::SpaceEvenly:
+                        mainOffset += availableSpace / (items.size() + 1);
                     default:
                         break;
                     }
@@ -693,6 +699,10 @@ void FlexibleBox::layout(FragmentBuilder* fragmentainer)
             if(availableSpace > 0)
                 lineOffset += availableSpace / (2.f * m_lines.size());
             break;
+        case AlignContent::SpaceEvenly:
+            if(availableSpace > 0)
+                lineOffset += availableSpace / (m_lines.size() + 1);
+            break;
         default:
             break;
         }
@@ -723,6 +733,9 @@ void FlexibleBox::layout(FragmentBuilder* fragmentainer)
                         break;
                     case AlignContent::SpaceBetween:
                         lineOffset += availableSpace / (m_lines.size() - 1);
+                        break;
+                    case AlignContent::SpaceEvenly:
+                        lineOffset += availableSpace / (m_lines.size() + 1);
                         break;
                     default:
                         break;

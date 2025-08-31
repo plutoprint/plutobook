@@ -224,6 +224,7 @@ enum class CSSValueID : uint16_t {
     Space,
     SpaceAround,
     SpaceBetween,
+    SpaceEvenly,
     Square,
     StackedFractions,
     Start,

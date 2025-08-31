@@ -3963,7 +3963,8 @@ RefPtr<CSSValue> CSSParser::consumeLonghand(CSSTokenStream& input, CSSPropertyID
             {"flex-end", CSSValueID::FlexEnd},
             {"center", CSSValueID::Center},
             {"space-between", CSSValueID::SpaceBetween},
-            {"space-around", CSSValueID::SpaceAround}
+            {"space-around", CSSValueID::SpaceAround},
+            {"space-evenly", CSSValueID::SpaceEvenly}
         };
 
         return consumeIdent(input, table);
@@ -3976,6 +3977,7 @@ RefPtr<CSSValue> CSSParser::consumeLonghand(CSSTokenStream& input, CSSPropertyID
             {"center", CSSValueID::Center},
             {"space-between", CSSValueID::SpaceBetween},
             {"space-around", CSSValueID::SpaceAround},
+            {"space-evenly", CSSValueID::SpaceEvenly},
             {"stretch", CSSValueID::Stretch}
         };
 

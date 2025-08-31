@@ -2922,6 +2922,8 @@ AlignContent BoxStyle::convertAlignContent(const CSSValue& value)
         return AlignContent::SpaceBetween;
     case CSSValueID::SpaceAround:
         return AlignContent::SpaceAround;
+    case CSSValueID::SpaceEvenly:
+        return AlignContent::SpaceEvenly;
     case CSSValueID::Stretch:
         return AlignContent::Stretch;
     default:

@@ -248,6 +248,7 @@ enum class AlignContent : uint8_t {
     Center,
     SpaceBetween,
     SpaceAround,
+    SpaceEvenly,
     Stretch
 };
 
