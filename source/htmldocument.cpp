@@ -492,6 +492,32 @@ std::optional<int> HTMLLIElement::value() const
     return parseIntegerAttribute(valueAttr);
 }
 
+std::string_view listTypeAttributeToStyleName(const std::string_view& value)
+{
+    if(value == "a")
+        return "lower-alpha";
+    if(value == "A")
+        return "upper-alpha";
+    if(value == "i")
+        return "lower-roman";
+    if(value == "I")
+        return "upper-roman";
+    if(value == "1") {
+        return "decimal";
+    }
+
+    return value;
+}
+
+void HTMLLIElement::collectAttributeStyle(std::string& output, const GlobalString& name, const HeapString& value) const
+{
+    if(name == typeAttr) {
+        addHTMLAttributeStyle(output, "list-style-type", listTypeAttributeToStyleName(value));
+    } else {
+        HTMLElement::collectAttributeStyle(output, name, value);
+    }
+}
+
 HTMLOLElement::HTMLOLElement(Document* document)
     : HTMLElement(document, olTag)
 {
@@ -500,6 +526,15 @@ HTMLOLElement::HTMLOLElement(Document* document)
 int HTMLOLElement::start() const
 {
     return parseIntegerAttribute(startAttr).value_or(1);
+}
+
+void HTMLOLElement::collectAttributeStyle(std::string& output, const GlobalString& name, const HeapString& value) const
+{
+    if(name == typeAttr) {
+        addHTMLAttributeStyle(output, "list-style-type", listTypeAttributeToStyleName(value));
+    } else {
+        HTMLElement::collectAttributeStyle(output, name, value);
+    }
 }
 
 HTMLTableElement::HTMLTableElement(Document* document)

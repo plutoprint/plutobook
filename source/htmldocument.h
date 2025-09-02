@@ -84,6 +84,8 @@ public:
     HTMLLIElement(Document* document);
 
     std::optional<int> value() const;
+
+    void collectAttributeStyle(std::string& output, const GlobalString& name, const HeapString& value) const final;
 };
 
 class HTMLOLElement final : public HTMLElement {
@@ -91,6 +93,8 @@ public:
     HTMLOLElement(Document* document);
 
     int start() const;
+
+    void collectAttributeStyle(std::string& output, const GlobalString& name, const HeapString& value) const final;
 };
 
 class HTMLTableElement final : public HTMLElement {
