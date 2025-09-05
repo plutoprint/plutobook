@@ -203,6 +203,8 @@ public:
     const Attribute* findAttribute(const GlobalString& name) const;
     bool hasAttribute(const GlobalString& name) const;
     const HeapString& getAttribute(const GlobalString& name) const;
+    Url getUrlAttribute(const GlobalString& name) const;
+
     void setAttributes(const AttributeList& attributes);
     void setAttribute(const Attribute& attribute);
     void setAttribute(const GlobalString& name, const HeapString& value);

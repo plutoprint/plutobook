@@ -274,10 +274,8 @@ void Box::paintAnnotation(GraphicsContext& context, const Rect& rect) const
     if(element.isLinkDestination())
         context.addLinkDestination(element.id(), rect.origin());
     if(element.isLinkSource()) {
-        const auto& href = element.getAttribute(hrefAttr);
         const auto& baseUrl = document()->baseUrl();
-
-        auto completeUrl = baseUrl.complete(href);
+        auto completeUrl = element.getUrlAttribute(hrefAttr);
         auto fragmentName = completeUrl.fragment();
         if(!fragmentName.empty() && baseUrl == completeUrl.base()) {
             context.addLinkAnnotation(fragmentName.substr(1), emptyGlo, rect);

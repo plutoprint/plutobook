@@ -385,11 +385,6 @@ void HTMLImageElement::collectAttributeStyle(std::string& output, const GlobalSt
     }
 }
 
-const HeapString& HTMLImageElement::src() const
-{
-    return getAttribute(srcAttr);
-}
-
 const HeapString& HTMLImageElement::altText() const
 {
     return getAttribute(altAttr);
@@ -397,7 +392,7 @@ const HeapString& HTMLImageElement::altText() const
 
 RefPtr<Image> HTMLImageElement::srcImage() const
 {
-    auto url = document()->completeUrl(src());
+    auto url = getUrlAttribute(srcAttr);
     if(auto resource = document()->fetchImageResource(url))
         return resource->image();
     return nullptr;
@@ -948,15 +943,10 @@ const HeapString& HTMLLinkElement::media() const
     return getAttribute(mediaAttr);
 }
 
-const HeapString& HTMLLinkElement::href() const
-{
-    return getAttribute(hrefAttr);
-}
-
 void HTMLLinkElement::finishParsingDocument()
 {
     if(equals(rel(), "stylesheet", false) && document()->supportsMedia(type(), media())) {
-        auto url = document()->completeUrl(href());
+        auto url = getUrlAttribute(hrefAttr);
         if(auto resource = document()->fetchTextResource(url)) {
             document()->addAuthorStyleSheet(resource->text(), std::move(url));
         }

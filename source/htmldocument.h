@@ -51,7 +51,6 @@ public:
     HTMLImageElement(Document* document);
 
     void collectAttributeStyle(std::string& output, const GlobalString& name, const HeapString& value) const final;
-    const HeapString& src() const;
     const HeapString& altText() const;
     RefPtr<Image> srcImage() const;
 
@@ -230,7 +229,6 @@ public:
     const HeapString& rel() const;
     const HeapString& type() const;
     const HeapString& media() const;
-    const HeapString& href() const;
 
     void finishParsingDocument() final;
 };

@@ -326,6 +326,14 @@ const HeapString& Element::getAttribute(const GlobalString& name) const
     return emptyGlo;
 }
 
+Url Element::getUrlAttribute(const GlobalString& name) const
+{
+    const auto& value = getAttribute(name);
+    if(!value.empty())
+        return document()->completeUrl(value);
+    return Url();
+}
+
 void Element::setAttributes(const AttributeList& attributes)
 {
     assert(m_attributes.empty());
@@ -494,11 +502,9 @@ void Element::serialize(std::ostream& o) const
 
 void Element::finishParsingDocument()
 {
-    if(m_tagName == aTag) {
-        const auto& href = getAttribute(hrefAttr);
+    if(m_tagName == aTag && (m_namespaceURI == xhtmlNs || m_namespaceURI == svgNs)) {
         const auto& baseUrl = document()->baseUrl();
-
-        auto completeUrl = baseUrl.complete(href);
+        auto completeUrl = getUrlAttribute(hrefAttr);
         auto fragmentName = completeUrl.fragment();
         if(!fragmentName.empty() && baseUrl == completeUrl.base()) {
             auto element = document()->getElementById(fragmentName.substr(1));
