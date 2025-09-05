@@ -1,6 +1,6 @@
 [![Actions](https://github.com/plutoprint/plutobook/actions/workflows/main.yml/badge.svg)](https://github.com/plutoprint/plutobook/actions)
 [![Releases](https://img.shields.io/github/v/release/plutoprint/plutobook)](https://github.com/plutoprint/plutobook/releases)
-[![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/plutoprint/plutobook/blob/master/LICENSE)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/plutoprint/plutobook/blob/main/LICENSE)
 [![Sponsor](https://img.shields.io/badge/Sponsor-Github-orange.svg)](https://github.com/sponsors/plutoprint)
 
 > Prefer Python? Try [PlutoPrint](https://github.com/plutoprint/plutoprint) — a Python library built on PlutoBook for easy paged HTML rendering.
@@ -75,7 +75,7 @@ static const char kHTMLContent[] =
     "</head>\n"
     "<body>\n"
     "  <h1>Magnum Scopulum Corallinum</h1>\n"
-    "  <img src=\"https://picsum.photos/800/400?random=2\" alt=\"Magnum Scopulum Corallinum\">\n"
+    "  <img src=\"https://picsum.photos/id/128/800/400\" alt=\"Magnum Scopulum Corallinum\">\n"
     "  <p>Magnum Scopulum Corallinum est maximum systema scopulorum corallinorum in mundo, quod per plus quam 2,300 chiliometra oram septentrionalem-orientalem Australiae extenditur. Ex milibus scopulorum individualium et centenis insularum constat, e spatio videri potest et inter mirabilia naturalia mundi numeratur.</p>\n"
     "  <p>Domus est incredibili diversitati vitae marinae, cum plus quam 1,500 speciebus piscium, 400 generibus corallii, et innumerabilibus aliis organismis. Partem vitalem agit in salute oecosystematis marini conservanda et sustentat victum communitatum litoralium per otium et piscationem.</p>\n"
     "  <p>Quamquam pulchritudinem ac significationem oecologicam praebet, Magnum Scopulum Corallinum minas continenter patitur ex mutatione climatis, pollutione, et nimia piscatione. Eventus albi corallii ex temperaturis marinis crescentibus magnam partem scopuli nuper laeserunt. Conatus conservatorii toto orbe suscipiuntur ad hunc magnificum oecosystema subaquaneum tuendum et restaurandum.</p>\n"
