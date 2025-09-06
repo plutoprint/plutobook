@@ -172,7 +172,7 @@ void ContentBoxBuilder::addQrCode(const CSSFunctionValue& function)
 {
     std::string text(to<CSSStringValue>(*function.at(0)).value());
 
-    char fill[64] = "black";
+    char fill[16] = "black";
     if(function.size() == 2) {
         const auto& color = to<CSSColorValue>(*function.at(1)).value();
         if(color.alpha() == 255) {

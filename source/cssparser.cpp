@@ -1188,7 +1188,7 @@ static CSSPropertyID csspropertyid(const std::string_view& name)
     };
 
     char buffer[32];
-    if(name.length() >= sizeof(buffer))
+    if(name.length() > sizeof(buffer))
         return CSSPropertyID::Unknown;
     for(size_t i = 0; i < name.length(); ++i) {
         buffer[i] = toLower(name[i]);

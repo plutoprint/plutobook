@@ -208,7 +208,7 @@ std::optional<Color> Color::named(const std::string_view& name)
     };
 
     char buffer[32];
-    if(name.length() >= sizeof(buffer))
+    if(name.length() > sizeof(buffer))
         return std::nullopt;
     for(size_t i = 0; i < name.length(); ++i) {
         buffer[i] = toLower(name[i]);
