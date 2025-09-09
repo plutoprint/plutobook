@@ -485,6 +485,13 @@ meson compile -C build
 meson install -C build
 ```
 
+On **macOS**, you can also install PlutoBook directly with [Homebrew](https://formulae.brew.sh/formula/plutobook):
+
+```bash
+brew update
+brew install plutobook
+```
+
 ## API Documentation
 
 Detailed information on PlutoBook's functionalities can be found in the header files:
