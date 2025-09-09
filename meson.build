@@ -54,7 +54,7 @@ harfbuzz_dep = dependency('harfbuzz',
     fallback: ['harfbuzz', 'libharfbuzz_dep']
 )
 
-cairo_required_version = '>=1.14.0'
+cairo_required_version = '>=1.15.10'
 cairo_default_options = [
     'freetype=enabled',
     'fontconfig=enabled',
