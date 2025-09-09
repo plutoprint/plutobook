@@ -133,9 +133,8 @@ float BlockBox::computeWidthUsing(const Length& widthLength, const BlockBox* con
     auto marginLeft = style()->marginLeft().calcMin(containerWidth);
     auto marginRight = style()->marginRight().calcMin(containerWidth);
     auto width = containerWidth - marginLeft - marginRight;
-    auto containerBlock = to<BlockFlowBox>(container);
-    if(containerBlock && containerBlock->containsFloats() && shrinkToAvoidFloats())
-        width = std::min(width, shrinkWidthToAvoidFloats(marginLeft, marginRight, containerBlock));
+    if(auto block = to<BlockFlowBox>(container); block && block->containsFloats() && shrinkToAvoidFloats())
+        width = std::min(width, shrinkWidthToAvoidFloats(marginLeft, marginRight, block));
     if(isFloating() || isInline() || isFlexItem() || isTableBox()) {
         width = std::min(width, maxPreferredWidth());
         width = std::max(width, minPreferredWidth());
