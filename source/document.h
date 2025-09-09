@@ -68,7 +68,6 @@ public:
     virtual Node* cloneNode(bool deep) = 0;
     virtual Box* createBox(const RefPtr<BoxStyle>& style) = 0;
     virtual void buildBox(Counters& counters, Box* parent) = 0;
-    virtual void serialize(std::ostream& o) const = 0;
     virtual void finishParsingDocument() {}
 
 private:
@@ -94,7 +93,6 @@ public:
     Node* cloneNode(bool deep) final;
     Box* createBox(const RefPtr<BoxStyle>& style) final;
     void buildBox(Counters& counters, Box* parent) final;
-    void serialize(std::ostream& o) const final;
 
 private:
     HeapString m_data;
@@ -128,7 +126,6 @@ public:
     std::string textFromChildren() const;
 
     void buildBox(Counters& counters, Box* parent) override;
-    void serialize(std::ostream& o) const override;
     void finishParsingDocument() override;
 
 private:
@@ -233,7 +230,6 @@ public:
     Node* cloneNode(bool deep) override;
     Box* createBox(const RefPtr<BoxStyle>& style) override;
     void buildBox(Counters& counters, Box* parent) override;
-    void serialize(std::ostream& o) const override;
     void finishParsingDocument() override;
 
 private:

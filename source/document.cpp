@@ -133,11 +133,6 @@ void TextNode::buildBox(Counters& counters, Box* parent)
     }
 }
 
-void TextNode::serialize(std::ostream& o) const
-{
-    o << m_data;
-}
-
 ContainerNode::ContainerNode(Document* document)
     : Node(document)
 {
@@ -257,15 +252,6 @@ void ContainerNode::buildBox(Counters& counters, Box* parent)
     auto child = m_firstChild;
     while(child) {
         child->buildBox(counters, parent);
-        child = child->nextSibling();
-    }
-}
-
-void ContainerNode::serialize(std::ostream& o) const
-{
-    auto child = m_firstChild;
-    while(child) {
-        child->serialize(o);
         child = child->nextSibling();
     }
 }
@@ -472,32 +458,6 @@ void Element::buildBox(Counters& counters, Box* parent)
         return;
     parent->addChild(box);
     ContainerNode::buildBox(counters, box);
-}
-
-void Element::serialize(std::ostream& o) const
-{
-    o << '<';
-    o << m_tagName;
-    for(const auto& attribute : attributes()) {
-        o << ' ';
-        o << attribute.name();
-        o << '=';
-        o << '"';
-        o << attribute.value();
-        o << '"';
-    }
-
-    if(!firstChild()) {
-        o << '/';
-        o << '>';
-    } else {
-        o << '>';
-        ContainerNode::serialize(o);
-        o << '<';
-        o << '/';
-        o << m_tagName;
-        o << '>';
-    }
 }
 
 void Element::finishParsingDocument()
