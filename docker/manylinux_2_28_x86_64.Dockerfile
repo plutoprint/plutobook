@@ -17,7 +17,7 @@ WORKDIR /tmp
 
 RUN git clone https://github.com/plutoprint/plutobook.git && \
     cd plutobook && \
-    meson setup build --prefix=/usr && \
+    meson setup build --buildtype=release --prefix=/usr && \
     meson compile -C build && \
     meson install -C build --strip
 
