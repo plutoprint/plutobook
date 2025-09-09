@@ -19,7 +19,7 @@ public:
 
     Rect visualOverflowRect() const override;
     Rect borderBoundingBox() const override;
-    Rect linesBoundingBox() const;
+    Rect paintBoundingBox() const override;
 
     Point relativePositionedInlineOffset(const BoxModel* child) const;
 

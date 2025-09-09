@@ -35,9 +35,9 @@ public:
     virtual const Path& path() const = 0;
 
     SVGGeometryElement* element() const;
-    const Transform& localTransform() const override { return element()->transform(); }
-    const Rect& fillBoundingBox() const override;
-    const Rect& strokeBoundingBox() const override;
+    Transform localTransform() const override { return element()->transform(); }
+    Rect fillBoundingBox() const override;
+    Rect strokeBoundingBox() const override;
 
     void render(const SVGRenderState& state) const override;
     void layout() override;

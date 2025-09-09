@@ -60,9 +60,9 @@ public:
     bool isSVGTextBox() const final { return true; }
 
     SVGTextElement* element() const;
-    const Transform& localTransform() const final { return element()->transform(); }
-    const Rect& fillBoundingBox() const final;
-    const Rect& strokeBoundingBox() const final { return fillBoundingBox(); }
+    Transform localTransform() const final { return element()->transform(); }
+    Rect fillBoundingBox() const final;
+    Rect strokeBoundingBox() const final { return fillBoundingBox(); }
     void render(const SVGRenderState& state) const final;
     void layout() final;
     void build() final;

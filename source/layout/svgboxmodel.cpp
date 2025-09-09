@@ -87,7 +87,7 @@ void SVGBoxModel::build()
     Box::build();
 }
 
-const Rect& SVGBoxModel::paintBoundingBox() const
+Rect SVGBoxModel::paintBoundingBox() const
 {
     if(m_paintBoundingBox.isValid())
         return m_paintBoundingBox;

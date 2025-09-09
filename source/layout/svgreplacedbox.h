@@ -17,9 +17,9 @@ public:
 
     SVGSVGElement* element() const;
 
-    const Rect& fillBoundingBox() const final;
-    const Rect& strokeBoundingBox() const final;
-    const Rect& paintBoundingBox() const final;
+    Rect fillBoundingBox() const final;
+    Rect strokeBoundingBox() const final;
+    Rect paintBoundingBox() const final;
 
     void computeIntrinsicRatioInformation(float& intrinsicWidth, float& intrinsicHeight, double& intrinsicRatio) const final;
     void paintReplaced(const PaintInfo& info, const Point& offset) final;
@@ -58,9 +58,9 @@ public:
     SVGImageElement* element() const;
 
     const RefPtr<Image>& image() const { return m_image; }
-    const Transform& localTransform() const final { return element()->transform(); }
-    const Rect& fillBoundingBox() const final;
-    const Rect& strokeBoundingBox() const final;
+    Transform localTransform() const final { return element()->transform(); }
+    Rect fillBoundingBox() const final;
+    Rect strokeBoundingBox() const final;
 
     void render(const SVGRenderState& state) const final;
     void layout() final;

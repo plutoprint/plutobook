@@ -274,7 +274,7 @@ void Box::paintAnnotation(GraphicsContext& context, const Rect& rect) const
     if(element.isLinkDestination())
         context.addLinkDestination(element.id(), rect.origin());
     if(element.isLinkSource()) {
-        const auto& baseUrl = document()->baseUrl();
+        const auto& baseUrl = element.document()->baseUrl();
         auto completeUrl = element.getUrlAttribute(hrefAttr);
         auto fragmentName = completeUrl.fragment();
         if(!fragmentName.empty() && baseUrl == completeUrl.base()) {
@@ -290,6 +290,110 @@ void Box::build()
     auto child = m_firstChild;
     while(child) {
         child->build();
+        child = child->nextSibling();
+    }
+}
+
+static void writeIndent(std::ostream& o, int indent)
+{
+    for(int i = 0; i < indent; i++) {
+        o << ' ';
+    }
+}
+
+static void writeNewline(std::ostream& o)
+{
+    o << '\n';
+}
+
+void Box::serializeStart(std::ostream& o, int indent, bool selfClosing, const Box* box, const LineBox* line)
+{
+    auto name = line ? line->name() : box->name();
+    writeIndent(o, indent);
+    o << '<' << name;
+    auto element = to<Element>(box->node());
+    if(element == nullptr) {
+        switch(box->style()->pseudoType()) {
+        case PseudoType::Before:
+            o << "::before";
+            break;
+        case PseudoType::After:
+            o << "::after";
+            break;
+        case PseudoType::Marker:
+            o << "::marker";
+            break;
+        case PseudoType::FirstLetter:
+            o << "::first-letter";
+            break;
+        default:
+            break;
+        }
+    } else {
+        o << ':' << element->tagName();
+        const auto& id = element->id();
+        if(!id.empty()) {
+            o << '#' << id;
+        }
+    }
+
+    if(box->isAnonymous())
+        o << " anonymous";
+    if(box->isPositioned() && !box->isBoxView()) {
+        o << " positioned";
+    } else if(box->isFloating()) {
+        o << " floating";
+    }
+
+    auto rect = line ? line->rect() : box->paintBoundingBox();
+    if(!rect.isEmpty()) {
+        o << " rect=\'";
+        o << rect.x;
+        o << ' ';
+        o << rect.y;
+        o << ' ';
+        o << rect.w;
+        o << ' ';
+        o << rect.h;
+        o << '\'';
+    }
+
+    if(selfClosing) {
+        o << "/>";
+    } else {
+        o << '>';
+        if(!line || !line->isTextLineBox()) {
+            writeNewline(o);
+        }
+    }
+}
+
+void Box::serializeEnd(std::ostream& o, int indent, bool selfClosing, const Box* box, const LineBox* line)
+{
+    if(selfClosing) {
+        writeNewline(o);
+    } else {
+        auto name = line ? line->name() : box->name();
+        if(!line || !line->isTextLineBox()) {
+            writeIndent(o, indent);
+        }
+
+        o << "</" << name << ">\n";
+    }
+}
+
+void Box::serialize(std::ostream& o, int indent) const
+{
+    serializeStart(o, indent, !m_firstChild, this, nullptr);
+    serializeChildren(o, indent + 2);
+    serializeEnd(o, indent, !m_firstChild, this, nullptr);
+}
+
+void Box::serializeChildren(std::ostream& o, int indent) const
+{
+    auto child = m_firstChild;
+    while(child) {
+        child->serialize(o, indent);
         child = child->nextSibling();
     }
 }

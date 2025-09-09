@@ -301,6 +301,13 @@ TextShape::TextShape(const UString& text, Direction direction, float width, Text
 {
 }
 
+UString TextShapeView::text() const
+{
+    if(m_shape)
+        return m_shape->text().tempSubString(m_startOffset, length());
+    return UString();
+}
+
 uint32_t TextShapeView::expansionOpportunityCount() const
 {
     if(m_startOffset == m_endOffset)

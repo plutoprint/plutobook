@@ -353,6 +353,7 @@ public:
     void build();
 
     void paint(const PaintInfo& info, const Point& offset, PaintPhase phase);
+    void serialize(std::ostream& o, int indent) const;
 
 private:
     LineLayout(BlockFlowBox* block);

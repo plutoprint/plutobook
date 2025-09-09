@@ -20,14 +20,14 @@ SVGGeometryBox::SVGGeometryBox(SVGGeometryElement* element, const RefPtr<BoxStyl
 {
 }
 
-const Rect& SVGGeometryBox::fillBoundingBox() const
+Rect SVGGeometryBox::fillBoundingBox() const
 {
     if(!m_fillBoundingBox.isValid())
         m_fillBoundingBox = path().boundingRect();
     return m_fillBoundingBox;
 }
 
-const Rect& SVGGeometryBox::strokeBoundingBox() const
+Rect SVGGeometryBox::strokeBoundingBox() const
 {
     if(m_strokeBoundingBox.isValid())
         return m_strokeBoundingBox;

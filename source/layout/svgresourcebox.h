@@ -15,7 +15,7 @@ public:
     Size markerSize() const;
 
     SVGMarkerElement* element() const;
-    const Transform& localTransform() const final { return m_localTransform; }
+    Transform localTransform() const final { return m_localTransform; }
     Transform markerTransform(const Point& origin, float angle, float strokeWidth) const;
     Rect markerBoundingBox(const Point& origin, float angle, float strokeWidth) const;
     void renderMarker(const SVGRenderState& state, const Point& origin, float angle, float strokeWidth) const;

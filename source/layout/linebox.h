@@ -6,13 +6,17 @@
 namespace plutobook {
 
 class Box;
+class BoxModel;
+class BoxFrame;
 class BlockFlowBox;
 class FlowLineBox;
 class RootLineBox;
 
+class Node;
 class PaintInfo;
 class Point;
 class Size;
+class Rect;
 
 enum class PaintPhase;
 enum class VerticalAlignType : uint8_t;
@@ -29,6 +33,7 @@ public:
     virtual float baselinePosition() const = 0;
 
     Box* box() const { return m_box; }
+    Node* node() const;
     BoxStyle* style() const;
 
     FlowLineBox* parentLine() const { return m_parentLine; }
@@ -51,11 +56,15 @@ public:
 
     Point location() const;
     Size size() const;
+    Rect rect() const;
 
     float verticalAlignPosition() const;
     VerticalAlignType verticalAlignType() const;
 
     virtual void paint(const PaintInfo& info, const Point& offset, PaintPhase phase) = 0;
+    virtual void serialize(std::ostream& o, int indent) const;
+
+    virtual const char* name() const { return "LineBox"; }
 
 protected:
     LineBox(Box* box, float width);
@@ -84,8 +93,11 @@ public:
     float expansion() const { return m_expansion; }
 
     void paint(const PaintInfo& info, const Point& offset, PaintPhase phase) final;
+    void serialize(std::ostream& o, int indent) const final;
 
     ~TextLineBox() final;
+
+    const char* name() const final { return "TextLineBox"; }
 
 private:
     TextLineBox(TextBox* box, const TextShapeView& shape, float width, float expansion);
@@ -99,8 +111,6 @@ struct is_a<TextLineBox> {
     static bool check(const LineBox& line) { return line.isTextLineBox(); }
 };
 
-class BoxFrame;
-
 class ReplacedLineBox final : public LineBox {
 public:
     static std::unique_ptr<ReplacedLineBox> create(BoxFrame* box);
@@ -112,6 +122,8 @@ public:
 
     void paint(const PaintInfo& info, const Point& offset, PaintPhase phase) final;
 
+    const char* name() const final { return "ReplacedLineBox"; }
+
 private:
     ReplacedLineBox(BoxFrame* box);
 };
@@ -120,9 +132,6 @@ template<>
 struct is_a<ReplacedLineBox> {
     static bool check(const LineBox& line) { return line.isReplacedLineBox(); }
 };
-
-class BoxModel;
-class Rect;
 
 using LineBoxList = std::pmr::vector<LineBox*>;
 
@@ -180,6 +189,9 @@ public:
     void paintOutlines(const PaintInfo& info, const Point& offset) const;
     void paintDecorations(const PaintInfo& info, const Point& offset) const;
     void paint(const PaintInfo& info, const Point& offset, PaintPhase phase) override;
+    void serialize(std::ostream& o, int indent) const override;
+
+    const char* name() const override { return "FlowLineBox"; }
 
 protected:
     FlowLineBox(BoxModel* box);
@@ -200,7 +212,6 @@ struct is_a<FlowLineBox> {
     static bool check(const LineBox& line) { return line.isFlowLineBox(); }
 };
 
-class BlockFlowBox;
 class FragmentBuilder;
 
 class RootLineBox final : public FlowLineBox {
@@ -217,6 +228,8 @@ public:
     float alignInHorizontalDirection(float startOffset);
     float alignInVerticalDirection(FragmentBuilder* fragmentainer, float blockHeight);
     float adjustLineBoxInFragmentFlow(FragmentBuilder* fragmentainer, float offset, float lineHeight) const;
+
+    const char* name() const final { return "RootLineBox"; }
 
 private:
     RootLineBox(BlockFlowBox* box);

@@ -44,10 +44,10 @@ Rect InlineBox::visualOverflowRect() const
 
 Rect InlineBox::borderBoundingBox() const
 {
-    return Rect(linesBoundingBox().size());
+    return Rect(paintBoundingBox().size());
 }
 
-Rect InlineBox::linesBoundingBox() const
+Rect InlineBox::paintBoundingBox() const
 {
     if(m_lines.empty()) {
         return Rect(0, 0, 0, 0);

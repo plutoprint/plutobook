@@ -11,6 +11,11 @@ namespace plutobook {
 
 LineBox::~LineBox() = default;
 
+Node* LineBox::node() const
+{
+    return m_box->node();
+}
+
 BoxStyle* LineBox::style() const
 {
     return m_box->style();
@@ -34,6 +39,11 @@ Point LineBox::location() const
 Size LineBox::size() const
 {
     return Size(m_width, height());
+}
+
+Rect LineBox::rect() const
+{
+    return Rect(m_x, m_y, m_width, height());
 }
 
 float LineBox::verticalAlignPosition() const
@@ -85,6 +95,12 @@ VerticalAlignType LineBox::verticalAlignType() const
     if(isTextLineBox() && m_parentLine->isRootLineBox())
         return VerticalAlignType::Baseline;
     return style()->verticalAlignType();
+}
+
+void LineBox::serialize(std::ostream& o, int indent) const
+{
+    Box::serializeStart(o, indent, true, m_box, this);
+    Box::serializeEnd(o, indent, true, m_box, this);
 }
 
 LineBox::LineBox(Box* box, float width)
@@ -193,6 +209,16 @@ void TextLineBox::paint(const PaintInfo& info, const Point& offset, PaintPhase p
     }
 
     paintTextDecorations(*info, adjustedOffset, m_width, style());
+}
+
+void TextLineBox::serialize(std::ostream& o, int indent) const
+{
+    std::string data;
+    m_shape.text().toUTF8String(data);
+
+    Box::serializeStart(o, indent, data.empty(), m_box, this);
+    o << data;
+    Box::serializeEnd(o, indent, data.empty(), m_box, this);
 }
 
 TextLineBox::~TextLineBox() = default;
@@ -601,6 +627,14 @@ void FlowLineBox::paint(const PaintInfo& info, const Point& offset, PaintPhase p
     if(phase == PaintPhase::Outlines) {
         paintOutlines(info, offset);
     }
+}
+
+void FlowLineBox::serialize(std::ostream& o, int indent) const
+{
+    Box::serializeStart(o, indent, m_children.empty(), m_box, this);
+    for(auto child : m_children)
+        child->serialize(o, indent + 1);
+    Box::serializeEnd(o, indent, m_children.empty(), m_box, this);
 }
 
 FlowLineBox::FlowLineBox(BoxModel* box)

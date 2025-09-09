@@ -7,7 +7,7 @@ SVGContainerBox::SVGContainerBox(SVGElement* element, const RefPtr<BoxStyle>& st
 {
 }
 
-const Rect& SVGContainerBox::fillBoundingBox() const
+Rect SVGContainerBox::fillBoundingBox() const
 {
     if(m_fillBoundingBox.isValid())
         return m_fillBoundingBox;
@@ -23,7 +23,7 @@ const Rect& SVGContainerBox::fillBoundingBox() const
     return m_fillBoundingBox;
 }
 
-const Rect& SVGContainerBox::strokeBoundingBox() const
+Rect SVGContainerBox::strokeBoundingBox() const
 {
     if(m_strokeBoundingBox.isValid())
         return m_strokeBoundingBox;

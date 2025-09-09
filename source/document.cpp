@@ -907,6 +907,13 @@ void Document::finishParsingDocument()
     }
 }
 
+void Document::serialize(std::ostream& o) const
+{
+    o << "<?container width=\'" << m_containerWidth << "\'"
+      << " height=\'" << m_containerHeight << "\'?>\n";
+    box()->serialize(o, 0);
+}
+
 void Document::buildBox(Counters& counters, Box* parent)
 {
     auto rootStyle = BoxStyle::create(this, PseudoType::None, Display::Block);

@@ -15,7 +15,7 @@ bool SVGRootBox::requiresLayer() const
     return isPositioned() || isRelPositioned() || hasTransform() || style()->zIndex();
 }
 
-const Rect& SVGRootBox::fillBoundingBox() const
+Rect SVGRootBox::fillBoundingBox() const
 {
     if(m_fillBoundingBox.isValid())
         return m_fillBoundingBox;
@@ -31,7 +31,7 @@ const Rect& SVGRootBox::fillBoundingBox() const
     return m_fillBoundingBox;
 }
 
-const Rect& SVGRootBox::strokeBoundingBox() const
+Rect SVGRootBox::strokeBoundingBox() const
 {
     if(m_strokeBoundingBox.isValid())
         return m_strokeBoundingBox;
@@ -47,7 +47,7 @@ const Rect& SVGRootBox::strokeBoundingBox() const
     return m_strokeBoundingBox;
 }
 
-const Rect& SVGRootBox::paintBoundingBox() const
+Rect SVGRootBox::paintBoundingBox() const
 {
     if(m_paintBoundingBox.isValid())
         return m_paintBoundingBox;
@@ -140,7 +140,7 @@ SVGImageBox::SVGImageBox(SVGImageElement* element, const RefPtr<BoxStyle>& style
 {
 }
 
-const Rect& SVGImageBox::fillBoundingBox() const
+Rect SVGImageBox::fillBoundingBox() const
 {
     if(m_fillBoundingBox.isValid())
         return m_fillBoundingBox;
@@ -152,7 +152,7 @@ const Rect& SVGImageBox::fillBoundingBox() const
     return m_fillBoundingBox;
 }
 
-const Rect& SVGImageBox::strokeBoundingBox() const
+Rect SVGImageBox::strokeBoundingBox() const
 {
     return fillBoundingBox();
 }

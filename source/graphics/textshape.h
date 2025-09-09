@@ -106,6 +106,7 @@ public:
     uint32_t startOffset() const { return m_startOffset; }
     uint32_t endOffset() const { return m_endOffset; }
     uint32_t length() const { return m_endOffset - m_startOffset; }
+    UString text() const;
 
     uint32_t expansionOpportunityCount() const;
     void maxAscentAndDescent(float& maxAscent, float& maxDescent) const;

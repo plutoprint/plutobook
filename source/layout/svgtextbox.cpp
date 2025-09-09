@@ -26,7 +26,7 @@ SVGTextBox::SVGTextBox(SVGTextElement* element, const RefPtr<BoxStyle>& style)
 {
 }
 
-const Rect& SVGTextBox::fillBoundingBox() const
+Rect SVGTextBox::fillBoundingBox() const
 {
     if(!m_fillBoundingBox.isValid())
         m_fillBoundingBox = m_lineLayout.boundingRect();

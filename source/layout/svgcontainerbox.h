@@ -11,8 +11,8 @@ public:
 
     bool isSVGContainerBox() const final { return true; }
 
-    const Rect& fillBoundingBox() const override;
-    const Rect& strokeBoundingBox() const override;
+    Rect fillBoundingBox() const override;
+    Rect strokeBoundingBox() const override;
     void layout() override;
 
     void renderChildren(const SVGRenderState& state) const;
@@ -52,7 +52,7 @@ public:
     bool isSVGTransformableContainerBox() const final { return true; }
 
     SVGGraphicsElement* element() const;
-    const Transform& localTransform() const final { return m_localTransform; }
+    Transform localTransform() const final { return m_localTransform; }
     void render(const SVGRenderState& state) const final;
     void layout() final;
 
@@ -79,7 +79,7 @@ public:
     bool isSVGViewportContainerBox() const final { return true; }
 
     SVGSVGElement* element() const;
-    const Transform& localTransform() const final { return m_localTransform; }
+    Transform localTransform() const final { return m_localTransform; }
     void render(const SVGRenderState& state) const final;
     void layout() final;
 

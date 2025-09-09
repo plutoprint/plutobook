@@ -214,6 +214,7 @@ public:
 
     void paintFloats(const PaintInfo& info, const Point& offset);
     void paintContents(const PaintInfo& info, const Point& offset, PaintPhase phase) override;
+    void serializeChildren(std::ostream& o, int indent) const override;
 
     const char* name() const override { return "BlockFlowBox"; }
 

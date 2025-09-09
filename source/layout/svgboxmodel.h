@@ -53,8 +53,8 @@ public:
     const Transform& currentTransform() const { return m_currentTransform; }
     const SVGRenderMode mode() const { return m_mode; }
 
-    const Rect& fillBoundingBox() const { return m_box->fillBoundingBox(); }
-    const Rect& paintBoundingBox() const { return m_box->paintBoundingBox(); }
+    Rect fillBoundingBox() const { return m_box->fillBoundingBox(); }
+    Rect paintBoundingBox() const { return m_box->paintBoundingBox(); }
 
     bool hasCycleReference(const Box* box) const;
 
@@ -96,7 +96,7 @@ public:
     bool isSVGBoxModel() const final { return true; }
 
     SVGElement* element() const;
-    const Rect& paintBoundingBox() const override;
+    Rect paintBoundingBox() const override;
     virtual void render(const SVGRenderState& state) const = 0;
     virtual void layout();
     void build() override;

@@ -40,6 +40,7 @@ class BoxView;
 class BoxModel;
 class BlockBox;
 class BlockFlowBox;
+class LineBox;
 
 class Box : public HeapMember {
 public:
@@ -173,12 +174,18 @@ public:
 
     void paintAnnotation(GraphicsContext& context, const Rect& rect) const;
 
-    virtual const Rect& fillBoundingBox() const { return Rect::Invalid; }
-    virtual const Rect& strokeBoundingBox() const { return Rect::Invalid; }
-    virtual const Rect& paintBoundingBox() const { return Rect::Invalid; }
-    virtual const Transform& localTransform() const { return Transform::Identity; }
+    virtual Rect fillBoundingBox() const { return Rect::Invalid; }
+    virtual Rect strokeBoundingBox() const { return Rect::Invalid; }
+    virtual Rect paintBoundingBox() const { return Rect::Invalid; }
+    virtual Transform localTransform() const { return Transform::Identity; }
 
     virtual void build();
+
+    static void serializeStart(std::ostream& o, int indent, bool selfClosing, const Box* box, const LineBox* line);
+    static void serializeEnd(std::ostream& o, int indent, bool selfClosing, const Box* box, const LineBox* line);
+
+    void serialize(std::ostream& o, int indent) const;
+    virtual void serializeChildren(std::ostream& o, int indent) const;
 
     virtual const char* name() const { return "Box"; }
 
@@ -405,6 +412,7 @@ public:
 
     Rect visualOverflowRect() const override;
     Rect borderBoundingBox() const override;
+    Rect paintBoundingBox() const override;
 
     float overrideWidth() const { return m_overrideWidth; }
     float overrideHeight() const { return m_overrideHeight; }
@@ -531,6 +539,11 @@ inline Rect BoxFrame::visualOverflowRect() const
 inline Rect BoxFrame::borderBoundingBox() const
 {
     return Rect(m_x, m_y, m_width, m_height);
+}
+
+inline Rect BoxFrame::paintBoundingBox() const
+{
+    return borderBoundingBox();
 }
 
 } // namespace plutobook
