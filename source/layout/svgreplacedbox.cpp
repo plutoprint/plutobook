@@ -62,6 +62,27 @@ Rect SVGRootBox::paintBoundingBox() const
     return m_paintBoundingBox;
 }
 
+float SVGRootBox::computePreferredReplacedWidth() const
+{
+    if(document()->isSVGImageDocument())
+        return document()->containerWidth();
+    return ReplacedBox::computePreferredReplacedWidth();
+}
+
+float SVGRootBox::computeReplacedWidth() const
+{
+    if(document()->isSVGImageDocument())
+        return document()->containerWidth();
+    return ReplacedBox::computeReplacedWidth();
+}
+
+float SVGRootBox::computeReplacedHeight() const
+{
+    if(document()->isSVGImageDocument())
+        return document()->containerHeight();
+    return ReplacedBox::computeReplacedHeight();
+}
+
 void SVGRootBox::computeIntrinsicRatioInformation(float& intrinsicWidth, float& intrinsicHeight, double& intrinsicRatio) const
 {
     element()->computeIntrinsicDimensions(intrinsicWidth, intrinsicHeight, intrinsicRatio);

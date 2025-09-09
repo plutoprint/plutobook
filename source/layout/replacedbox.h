@@ -14,7 +14,7 @@ public:
     virtual void computeIntrinsicRatioInformation(float& intrinsicWidth, float& intrinsicHeight, double& intrinsicRatio) const = 0;
     void computeAspectRatioInformation(float& intrinsicWidth, float& intrinsicHeight, double& intrinsicRatio) const;
 
-    float computePreferredReplacedWidth() const;
+    virtual float computePreferredReplacedWidth() const;
     void computePreferredWidths(float& minPreferredWidth, float& maxPreferredWidth) const override;
 
     void computePositionedReplacedWidth(float& x, float& width, float& marginLeft, float& marginRight) const;
@@ -26,9 +26,10 @@ public:
     float constrainReplacedWidth(float width) const;
     float constrainReplacedHeight(float height) const;
 
-    float computeReplacedWidth() const;
-    float computeReplacedHeight() const;
     float availableReplacedWidth() const;
+
+    virtual float computeReplacedWidth() const;
+    virtual float computeReplacedHeight() const;
 
     Rect computeObjectFitRect(const Rect& contentRect) const;
 

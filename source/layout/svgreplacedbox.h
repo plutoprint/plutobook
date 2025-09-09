@@ -21,6 +21,10 @@ public:
     Rect strokeBoundingBox() const final;
     Rect paintBoundingBox() const final;
 
+    float computePreferredReplacedWidth() const final;
+    float computeReplacedWidth() const final;
+    float computeReplacedHeight() const final;
+
     void computeIntrinsicRatioInformation(float& intrinsicWidth, float& intrinsicHeight, double& intrinsicRatio) const final;
     void paintReplaced(const PaintInfo& info, const Point& offset) final;
     void layout(FragmentBuilder* fragmentainer) final;

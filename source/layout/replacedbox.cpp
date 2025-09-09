@@ -273,10 +273,16 @@ float ReplacedBox::constrainReplacedHeight(float height) const
     return height;
 }
 
+float ReplacedBox::availableReplacedWidth() const
+{
+    auto containerWidth = containingBlockWidthForContent();
+    auto marginLeft = style()->marginLeft().calcMin(containerWidth);
+    auto marginRight = style()->marginRight().calcMin(containerWidth);
+    return containerWidth - marginLeft - marginRight - borderAndPaddingWidth();
+}
+
 float ReplacedBox::computeReplacedWidth() const
 {
-    if(document()->isSVGImageDocument())
-        return document()->containerWidth();
     if(auto width = computeReplacedWidthUsing(style()->width())) {
         return constrainReplacedWidth(*width);
     }
@@ -304,8 +310,6 @@ float ReplacedBox::computeReplacedWidth() const
 
 float ReplacedBox::computeReplacedHeight() const
 {
-    if(document()->isSVGImageDocument())
-        return document()->containerHeight();
     if(auto height = computeReplacedHeightUsing(style()->height())) {
         return constrainReplacedHeight(*height);
     }
@@ -329,14 +333,6 @@ float ReplacedBox::computeReplacedHeight() const
     if(intrinsicHeight > 0.f)
         return constrainReplacedHeight(intrinsicHeight);
     return constrainReplacedHeight(intrinsicReplacedHeight());
-}
-
-float ReplacedBox::availableReplacedWidth() const
-{
-    auto containerWidth = containingBlockWidthForContent();
-    auto marginLeft = style()->marginLeft().calcMin(containerWidth);
-    auto marginRight = style()->marginRight().calcMin(containerWidth);
-    return containerWidth - marginLeft - marginRight - borderAndPaddingWidth();
 }
 
 static Size computeObjectFitSize(ObjectFit objectFit, const Size& intrinsicSize, const Size& contentSize)
