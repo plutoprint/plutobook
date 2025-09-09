@@ -1,5 +1,13 @@
 # Changelog
 
+## PlutoBook 0.8.0 (2025-09-09)
+
+- Add support for `space-evenly` in flex layout
+- Add support for presentational attributes on `<li>` and `<ol>`
+- Fix table height computation for positioned tables
+- Ensure empty list items with outside markers generate boxes
+- PlutoBook is now available via Homebrew :)
+
 ## PlutoBook 0.7.0 (2025-08-30)
 
 - Add support for `row-gap`, `column-gap`, and `gap` in flex layout
