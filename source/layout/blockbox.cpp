@@ -73,9 +73,9 @@ std::optional<float> BlockBox::availableHeight() const
         return overrideHeight() - borderAndPaddingHeight();
     if(isAnonymous())
         return containingBlockHeightForContent();
-    if(isPositioned() && (!style()->height().isAuto() || (!style()->top().isAuto() && !style()->bottom().isAuto()))) {
+    if(isPositioned() && style()->height().isAuto() && !(style()->top().isAuto() || style()->bottom().isAuto())) {
         float y = 0;
-        float height = 0;
+        float height = borderAndPaddingHeight();
         float marginTop = 0;
         float marginBottom = 0;
         computePositionedHeight(y, height, marginTop, marginBottom);
@@ -331,7 +331,7 @@ void BlockBox::computePositionedHeightUsing(const Length& heightLength, const Bo
     float heightLengthValue = 0;
     if(isTableBox()) {
         heightLengthValue = contentHeight;
-        heightLenghtIsAuto = true;
+        heightLenghtIsAuto = false;
     } else {
         heightLengthValue = heightLength.calc(containerHeight);
         heightLengthValue = adjustContentBoxHeight(heightLengthValue);
