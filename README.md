@@ -2,6 +2,7 @@
 [![Releases](https://img.shields.io/github/v/release/plutoprint/plutobook)](https://github.com/plutoprint/plutobook/releases)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/plutoprint/plutobook/blob/main/LICENSE)
 [![Sponsor](https://img.shields.io/badge/Sponsor-Github-orange.svg)](https://github.com/sponsors/plutoprint)
+[![Packaging status](https://repology.org/badge/tiny-repos/plutobook.svg)](https://repology.org/project/plutobook/versions)
 
 > Prefer Python? Try [PlutoPrint](https://github.com/plutoprint/plutoprint) — a Python library built on PlutoBook for easy paged HTML rendering.
 
@@ -12,6 +13,12 @@ PlutoBook is a robust HTML rendering library tailored for paged media. It takes 
 > [!NOTE]
 > PlutoBook implements its own rendering engine and does **not** depend on rendering engines like Chromium, WebKit, or Gecko.  
 > The engine is designed to be robust, lightweight, and memory-efficient, leveraging modern C++ features such as [`std::pmr::monotonic_buffer_resource`](https://en.cppreference.com/w/cpp/memory/monotonic_buffer_resource) to minimize memory fragmentation and optimize allocation performance.
+
+---
+
+## Packages
+
+[![Packaging status](https://repology.org/badge/vertical-allrepos/plutobook.svg)](https://repology.org/project/plutobook/versions)
 
 ---
 
