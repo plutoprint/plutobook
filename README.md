@@ -16,12 +16,6 @@ PlutoBook is a robust HTML rendering library tailored for paged media. It takes 
 
 ---
 
-## Packages
-
-[![Packaging status](https://repology.org/badge/vertical-allrepos/plutobook.svg)](https://repology.org/project/plutobook/versions)
-
----
-
 ## Basic Usage
 
 This example creates a PDF from inline HTML using **plutobook**. It sets up a book with A4 page size and **narrow margins** (36 points or 0.5 inches on all sides), then writes the output to `hello.pdf`.
@@ -498,6 +492,12 @@ On **macOS** and **Linux**, you can also install PlutoBook directly with [Homebr
 brew update
 brew install plutobook
 ```
+
+---
+
+## Packages
+
+[![Packaging status](https://repology.org/badge/vertical-allrepos/plutobook.svg)](https://repology.org/project/plutobook/versions)
 
 ## API Documentation
 
