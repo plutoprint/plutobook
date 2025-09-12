@@ -14,6 +14,10 @@ PlutoBook is a robust HTML rendering library tailored for paged media. It takes 
 > PlutoBook implements its own rendering engine and does **not** depend on rendering engines like Chromium, WebKit, or Gecko.  
 > The engine is designed to be robust, lightweight, and memory-efficient, leveraging modern C++ features such as [`std::pmr::monotonic_buffer_resource`](https://en.cppreference.com/w/cpp/memory/monotonic_buffer_resource) to minimize memory fragmentation and optimize allocation performance.
 
+**Testimonial**  
+> *"PlutoBook is incredibly fast and lightweight. In my invoicing app (built in 2010), I replaced headless Chrome with PlutoBook and saw at least a **10× speed improvement** and **10× lower memory usage**, while achieving similar output quality."*  
+> — **Nikola Radovanović**
+
 ---
 
 ## Basic Usage
