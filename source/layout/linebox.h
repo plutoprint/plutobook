@@ -62,7 +62,7 @@ public:
     VerticalAlignType verticalAlignType() const;
 
     virtual void paint(const PaintInfo& info, const Point& offset, PaintPhase phase) = 0;
-    virtual void serialize(std::ostream& o, int indent) const;
+    virtual void serialize(std::ostream& o, int indent) const = 0;
 
     virtual const char* name() const { return "LineBox"; }
 
@@ -121,6 +121,7 @@ public:
     BoxFrame* box() const;
 
     void paint(const PaintInfo& info, const Point& offset, PaintPhase phase) final;
+    void serialize(std::ostream& o, int indent) const final;
 
     const char* name() const final { return "ReplacedLineBox"; }
 

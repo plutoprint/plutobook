@@ -97,12 +97,6 @@ VerticalAlignType LineBox::verticalAlignType() const
     return style()->verticalAlignType();
 }
 
-void LineBox::serialize(std::ostream& o, int indent) const
-{
-    Box::serializeStart(o, indent, true, m_box, this);
-    Box::serializeEnd(o, indent, true, m_box, this);
-}
-
 LineBox::LineBox(Box* box, float width)
     : m_box(box), m_width(width)
 {
@@ -261,6 +255,13 @@ void ReplacedLineBox::paint(const PaintInfo& info, const Point& offset, PaintPha
         box()->paint(info, offset, PaintPhase::Contents);
         box()->paint(info, offset, PaintPhase::Outlines);
     }
+}
+
+void ReplacedLineBox::serialize(std::ostream& o, int indent) const
+{
+    Box::serializeStart(o, indent, false, m_box, this);
+    m_box->serialize(o, indent + 1);
+    Box::serializeEnd(o, indent, false, m_box, this);
 }
 
 ReplacedLineBox::ReplacedLineBox(BoxFrame* box)
