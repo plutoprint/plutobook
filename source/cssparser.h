@@ -22,10 +22,30 @@ using CSSIdentValueEntry = CSSIdentEntry<CSSValueID>;
 
 class CSSTokenStream;
 
+class CSSParserContext {
+public:
+    CSSParserContext(const Node* node, CSSStyleOrigin origin, Url baseUrl);
+
+    bool inHTMLDocument() const { return m_inHTMLDocument; }
+    bool inSVGElement() const { return m_inSVGElement; }
+
+    CSSStyleOrigin origin() const { return m_origin; }
+    const Url& baseUrl() const { return m_baseUrl; }
+
+    Url completeUrl(std::string_view url) const { return m_baseUrl.complete(url); }
+
+private:
+    bool m_inHTMLDocument;
+    bool m_inSVGElement;
+    CSSStyleOrigin m_origin;
+    Url m_baseUrl;
+};
+
 class CSSParser {
 public:
-    CSSParser(CSSStyleOrigin origin, Node* node, Url baseUrl);
-    CSSParser(CSSStyleOrigin origin, Heap* heap, Url baseUrl);
+    CSSParser(const CSSParserContext& context, Heap* heap)
+        : m_heap(heap), m_context(context)
+    {}
 
     CSSRuleList parseSheet(const std::string_view& content);
     CSSPropertyList parseStyle(const std::string_view& content);
@@ -205,14 +225,8 @@ private:
     const GlobalString& defaultNamespace() const { return m_defaultNamespace; }
     const GlobalString& determineNamespace(const GlobalString& prefix) const;
 
-    CSSStyleOrigin m_origin;
-    bool m_inHTMLDocument;
-    bool m_inSVGElement;
-
-    Node* m_node;
     Heap* m_heap;
-    Url m_baseUrl;
-
+    const CSSParserContext& m_context;
     RefPtr<CSSInitialValue> m_initialValue;
     RefPtr<CSSInheritValue> m_inheritValue;
     std::map<CSSValueID, RefPtr<CSSIdentValue>> m_identValueCache;

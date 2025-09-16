@@ -1078,7 +1078,8 @@ const CSSCounterStyleMap* userAgentCounterStyleMap()
 {
     static std::unique_ptr<CSSCounterStyleMap> counterStyleMap = [](){
         static Heap heap(1024 * 96);
-        CSSParser parser(CSSStyleOrigin::UserAgent, &heap, ResourceLoader::baseUrl());
+        CSSParserContext context(nullptr, CSSStyleOrigin::UserAgent, ResourceLoader::baseUrl());
+        CSSParser parser(context, &heap);
         CSSRuleList rules(parser.parseSheet(kUserAgentCounterStyle));
         return CSSCounterStyleMap::create(&heap, rules, nullptr);
     }();

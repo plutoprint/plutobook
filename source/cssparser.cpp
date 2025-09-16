@@ -9,20 +9,9 @@
 
 namespace plutobook {
 
-CSSParser::CSSParser(CSSStyleOrigin origin, Node* node, Url baseUrl)
-    : m_origin(origin)
-    , m_inHTMLDocument(node->isHTMLDocument())
-    , m_inSVGElement(node->isSVGElement())
-    , m_node(node), m_heap(node->heap())
-    , m_baseUrl(std::move(baseUrl))
-{
-}
-
-CSSParser::CSSParser(CSSStyleOrigin origin, Heap* heap, Url baseUrl)
-    : m_origin(origin)
-    , m_inHTMLDocument(false)
-    , m_inSVGElement(false)
-    , m_node(nullptr), m_heap(heap)
+CSSParserContext::CSSParserContext(const Node* node, CSSStyleOrigin origin, Url baseUrl)
+    : m_inHTMLDocument(node && node->isHTMLDocument())
+    , m_inSVGElement(node && node->isSVGElement())
     , m_baseUrl(std::move(baseUrl))
 {
 }
@@ -309,7 +298,7 @@ RefPtr<CSSImportRule> CSSParser::consumeImportRule(CSSTokenStream& input)
     CSSMediaQueryList queries(m_heap);
     if(!consumeMediaQueries(input, queries))
         return nullptr;
-    return CSSImportRule::create(m_heap, m_origin, m_baseUrl.complete(token->data()), std::move(queries));
+    return CSSImportRule::create(m_heap, m_context.origin(), m_context.completeUrl(token->data()), std::move(queries));
 }
 
 RefPtr<CSSNamespaceRule> CSSParser::consumeNamespaceRule(CSSTokenStream& input)
@@ -604,7 +593,7 @@ bool CSSParser::consumeTagSelector(CSSTokenStream& input, CSSCompoundSelector& s
     if(name == starGlo) {
         selector.emplace_front(CSSSimpleSelector::MatchType::Universal);
     } else {
-        if(m_inHTMLDocument)
+        if(m_context.inHTMLDocument())
             name = name.foldCase();
         selector.emplace_front(CSSSimpleSelector::MatchType::Tag, name);
     }
@@ -646,7 +635,7 @@ bool CSSParser::consumeAttributeSelector(CSSTokenStream& input, CSSCompoundSelec
     if(block->type() != CSSToken::Type::Ident)
         return false;
     GlobalString name(block->data());
-    if(m_inHTMLDocument)
+    if(m_context.inHTMLDocument())
         name = name.foldCase();
     block.consumeIncludingWhitespace();
     if(block.empty()) {
@@ -1432,7 +1421,7 @@ void CSSParser::addProperty(CSSPropertyList& properties, CSSPropertyID id, bool 
         }
     }
 
-    properties.emplace_back(id, m_origin, important, std::move(value));
+    properties.emplace_back(id, m_context.origin(), important, std::move(value));
 }
 
 class CSSShorthand {
@@ -1967,7 +1956,7 @@ RefPtr<CSSValue> CSSParser::consumeLength(CSSTokenStream& input, bool negative, 
     if(value < 0.0 && !negative)
         return nullptr;
     if(input->type() == CSSToken::Type::Number) {
-        if(value && !unitless && !m_inSVGElement)
+        if(value && !unitless && ! m_context.inSVGElement())
             return nullptr;
         input.consumeIncludingWhitespace();
         return CSSLengthValue::create(m_heap, value, CSSLengthValue::Units::None);
@@ -2135,7 +2124,7 @@ RefPtr<CSSValue> CSSParser::consumeLocalUrlOrNone(CSSTokenStream& input)
 RefPtr<CSSValue> CSSParser::consumeUrl(CSSTokenStream& input)
 {
     if(auto token = consumeUrlToken(input))
-        return CSSUrlValue::create(m_heap, m_baseUrl.complete(token->data()));
+        return CSSUrlValue::create(m_heap, m_context.completeUrl(token->data()));
     return nullptr;
 }
 
@@ -2149,7 +2138,7 @@ RefPtr<CSSValue> CSSParser::consumeUrlOrNone(CSSTokenStream& input)
 RefPtr<CSSValue> CSSParser::consumeImage(CSSTokenStream& input)
 {
     if(auto token = consumeUrlToken(input))
-        return CSSImageValue::create(m_heap, m_baseUrl.complete(token->data()));
+        return CSSImageValue::create(m_heap, m_context.completeUrl(token->data()));
     return nullptr;
 }
 

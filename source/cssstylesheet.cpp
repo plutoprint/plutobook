@@ -636,7 +636,8 @@ static const CSSRuleList& userAgentRules()
 {
     static CSSRuleList rules = [](){
         static Heap heap(1024 * 72);
-        CSSParser parser(CSSStyleOrigin::UserAgent, &heap, ResourceLoader::baseUrl());
+        CSSParserContext context(nullptr, CSSStyleOrigin::UserAgent, ResourceLoader::baseUrl());
+        CSSParser parser(context, &heap);
         return parser.parseSheet(kUserAgentStyle);
     }();
 
@@ -728,7 +729,8 @@ std::string CSSStyleSheet::getMarkerText(int value, const GlobalString& listType
 
 void CSSStyleSheet::parseStyle(const std::string_view& content, CSSStyleOrigin origin, Url baseUrl)
 {
-    CSSParser parser(origin, m_document, std::move(baseUrl));
+    CSSParserContext context(m_document, origin, std::move(baseUrl));
+    CSSParser parser(context, m_document->heap());
     addRuleList(parser.parseSheet(content));
 }
 

@@ -388,7 +388,8 @@ CSSPropertyList Element::inlineStyle()
     auto value = getAttribute(styleAttr);
     if(value.empty())
         return CSSPropertyList();
-    CSSParser parser(CSSStyleOrigin::Inline, this, document()->baseUrl());
+    CSSParserContext context(this, CSSStyleOrigin::Inline, document()->baseUrl());
+    CSSParser parser(context, document()->heap());
     return parser.parseStyle(value);
 }
 
@@ -401,7 +402,8 @@ CSSPropertyList Element::presentationAttributeStyle()
 
     if(output.empty())
         return CSSPropertyList();
-    CSSParser parser(CSSStyleOrigin::PresentationAttribute, this, document()->baseUrl());
+    CSSParserContext context(this, CSSStyleOrigin::PresentationAttribute, document()->baseUrl());
+    CSSParser parser(context, document()->heap());
     return parser.parseStyle(output);
 }
 
@@ -819,7 +821,8 @@ bool Document::supportsMedia(const std::string_view& type, const std::string_vie
     if(m_book == nullptr || media.empty())
         return true;
     if(type.empty() || equals(type, "text/css", isXMLDocument())) {
-        CSSParser parser(CSSStyleOrigin::Author, m_heap, m_baseUrl);
+        CSSParserContext context(this, CSSStyleOrigin::Author, m_baseUrl);
+        CSSParser parser(context, m_heap);
         CSSMediaQueryList queries(parser.parseMediaQueries(media));
         return supportsMediaQueries(queries);
     }
