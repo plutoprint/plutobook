@@ -34,6 +34,19 @@ CSSPropertyList CSSParser::parseStyle(const std::string_view& content)
     return properties;
 }
 
+template<typename T>
+struct CSSIdentEntry {
+    constexpr CSSIdentEntry(const char* name, T value)
+        : name(name), value(value), length(std::strlen(name))
+    {}
+
+    const char* name;
+    const T value;
+    const int length;
+};
+
+using CSSIdentValueEntry = CSSIdentEntry<CSSValueID>;
+
 static bool identMatches(const char* name, int length, const std::string_view& ident)
 {
     if(length != ident.length())
@@ -1325,7 +1338,7 @@ bool CSSParser::consumeDescription(CSSTokenStream& input, CSSPropertyList& prope
             input.consumeIncludingWhitespace();
             if(!input.empty())
                 return false;
-            addExpandedProperty(properties, id, important, createInitialValue());
+            addExpandedProperty(properties, id, important, CSSInitialValue::create());
             return true;
         }
 
@@ -1333,7 +1346,7 @@ bool CSSParser::consumeDescription(CSSTokenStream& input, CSSPropertyList& prope
             input.consumeIncludingWhitespace();
             if(!input.empty())
                 return false;
-            addExpandedProperty(properties, id, important, createInheritValue());
+            addExpandedProperty(properties, id, important, CSSInheritValue::create());
             return true;
         }
     }
@@ -1402,11 +1415,11 @@ void CSSParser::addProperty(CSSPropertyList& properties, CSSPropertyID id, bool 
         case CSSPropertyID::FontVariantNumeric:
         case CSSPropertyID::FontVariantPosition:
         case CSSPropertyID::LineHeight:
-            value = createIdentValue(CSSValueID::Normal);
+            value = CSSIdentValue::create(CSSValueID::Normal);
             break;
         case CSSPropertyID::ColumnWidth:
         case CSSPropertyID::ColumnCount:
-            value = createIdentValue(CSSValueID::Auto);
+            value = CSSIdentValue::create(CSSValueID::Auto);
             break;
         case CSSPropertyID::FlexGrow:
         case CSSPropertyID::FlexShrink:
@@ -1416,7 +1429,7 @@ void CSSParser::addProperty(CSSPropertyList& properties, CSSPropertyID id, bool 
             value = CSSPercentValue::create(m_heap, 0.0);
             break;
         default:
-            value = createInitialValue();
+            value = CSSInitialValue::create();
             break;
         }
     }
@@ -1739,13 +1752,13 @@ static CSSValueID matchIdent(const CSSTokenStream& input, const CSSIdentValueEnt
 }
 
 template<unsigned int N>
-RefPtr<CSSIdentValue> CSSParser::consumeIdent(CSSTokenStream& input, const CSSIdentValueEntry(&table)[N])
+static RefPtr<CSSIdentValue> consumeIdent(CSSTokenStream& input, const CSSIdentValueEntry(&table)[N])
 {
     auto id = matchIdent(input, table);
     if(id == CSSValueID::Unknown)
         return nullptr;
     input.consumeIncludingWhitespace();
-    return createIdentValue(id);
+    return CSSIdentValue::create(id);
 }
 
 RefPtr<CSSIdentValue> CSSParser::consumeFontStyleIdent(CSSTokenStream& input)
@@ -1852,21 +1865,21 @@ RefPtr<CSSIdentValue> CSSParser::consumeFontVariantNumericIdent(CSSTokenStream& 
 RefPtr<CSSValue> CSSParser::consumeNone(CSSTokenStream& input)
 {
     if(consumeIdentIncludingWhitespace(input, "none", 4))
-        return createIdentValue(CSSValueID::None);
+        return CSSIdentValue::create(CSSValueID::None);
     return nullptr;
 }
 
 RefPtr<CSSValue> CSSParser::consumeAuto(CSSTokenStream& input)
 {
     if(consumeIdentIncludingWhitespace(input, "auto", 4))
-        return createIdentValue(CSSValueID::Auto);
+        return CSSIdentValue::create(CSSValueID::Auto);
     return nullptr;
 }
 
 RefPtr<CSSValue> CSSParser::consumeNormal(CSSTokenStream& input)
 {
     if(consumeIdentIncludingWhitespace(input, "normal", 6))
-        return createIdentValue(CSSValueID::Normal);
+        return CSSIdentValue::create(CSSValueID::Normal);
     return nullptr;
 }
 
@@ -2179,7 +2192,7 @@ RefPtr<CSSValue> CSSParser::consumeColor(CSSTokenStream& input)
         }
 
         input.consumeIncludingWhitespace();
-        return createColorValue(Color(r, g, b, a));
+        return CSSColorValue::create(m_heap, Color(r, g, b, a));
     }
 
     if(input->type() == CSSToken::Type::Function) {
@@ -2195,19 +2208,19 @@ RefPtr<CSSValue> CSSParser::consumeColor(CSSTokenStream& input)
         auto name = input->data();
         if(identMatches("currentcolor", 12, name)) {
             input.consumeIncludingWhitespace();
-            return createIdentValue(CSSValueID::CurrentColor);
+            return CSSIdentValue::create(CSSValueID::CurrentColor);
         }
 
         if(identMatches("transparent", 11, name)) {
             input.consumeIncludingWhitespace();
-            return createColorValue(Color::Transparent);
+            return CSSColorValue::create(m_heap, Color::Transparent);
         }
 
         auto color = Color::named(name);
         if(color == std::nullopt)
             return nullptr;
         input.consumeIncludingWhitespace();
-        return createColorValue(*color);
+        return CSSColorValue::create(m_heap, *color);
     }
 
     return nullptr;
@@ -2283,7 +2296,7 @@ RefPtr<CSSValue> CSSParser::consumeRgb(CSSTokenStream& input)
         return nullptr;
     input.consumeWhitespace();
     guard.release();
-    return createColorValue(Color(red, green, blue, std::lroundf(alpha * 255.f)));
+    return CSSColorValue::create(m_heap, Color(red, green, blue, std::lroundf(alpha * 255.f)));
 }
 
 static bool consumeHueComponent(CSSTokenStream& input, float& component)
@@ -2376,7 +2389,7 @@ RefPtr<CSSValue> CSSParser::consumeHsl(CSSTokenStream& input)
     auto r = computeHslComponent(h, s, l, 0);
     auto g = computeHslComponent(h, s, l, 8);
     auto b = computeHslComponent(h, s, l, 4);
-    return createColorValue(Color(r, g, b, std::lroundf(a * 255.f)));
+    return CSSColorValue::create(m_heap, Color(r, g, b, std::lroundf(a * 255.f)));
 }
 
 RefPtr<CSSValue> CSSParser::consumePaint(CSSTokenStream& input)
@@ -3042,9 +3055,9 @@ RefPtr<CSSValue> CSSParser::consumePositionCoordinate(CSSTokenStream& input)
     if(first == nullptr && second == nullptr)
         return nullptr;
     if(first == nullptr)
-        first = createIdentValue(CSSValueID::Center);
+        first = CSSIdentValue::create(CSSValueID::Center);
     if(second == nullptr)
-        second = createIdentValue(CSSValueID::Center);
+        second = CSSIdentValue::create(CSSValueID::Center);
     return CSSPairValue::create(m_heap, first, second);
 }
 
@@ -3062,7 +3075,7 @@ RefPtr<CSSValue> CSSParser::consumeBackgroundSize(CSSTokenStream& input)
         return nullptr;
     auto second = consumeLengthOrPercentOrAuto(input, false, false);
     if(second == nullptr)
-        second = createIdentValue(CSSValueID::Auto);
+        second = CSSIdentValue::create(CSSValueID::Auto);
     return CSSPairValue::create(m_heap, first, second);
 }
 
@@ -4022,7 +4035,7 @@ bool CSSParser::consumeFlex(CSSTokenStream& input, CSSPropertyList& properties, 
             return false;
         addProperty(properties, CSSPropertyID::FlexGrow, important, CSSNumberValue::create(m_heap, 0.0));
         addProperty(properties, CSSPropertyID::FlexShrink, important, CSSNumberValue::create(m_heap, 0.0));
-        addProperty(properties, CSSPropertyID::FlexBasis, important, createIdentValue(CSSValueID::Auto));
+        addProperty(properties, CSSPropertyID::FlexBasis, important, CSSIdentValue::create(CSSValueID::Auto));
         return true;
     }
 
@@ -4250,7 +4263,7 @@ bool CSSParser::consumeFontVariant(CSSTokenStream& input, CSSPropertyList& prope
     addProperty(properties, CSSPropertyID::FontVariantPosition, important, std::move(position));
     auto addListProperty = [&](CSSPropertyID id, CSSValueList&& values) {
         if(values.empty())
-            addProperty(properties, id, important, createIdentValue(CSSValueID::Normal));
+            addProperty(properties, id, important, CSSIdentValue::create(CSSValueID::Normal));
         else {
             addProperty(properties, id, important, CSSListValue::create(m_heap, std::move(values)));
         }
@@ -4583,7 +4596,7 @@ RefPtr<CSSValue> CSSParser::consumeCounterStyleSymbol(CSSTokenStream& input)
 RefPtr<CSSValue> CSSParser::consumeCounterStyleRangeBound(CSSTokenStream& input)
 {
     if(consumeIdentIncludingWhitespace(input, "infinite", 8))
-        return createIdentValue(CSSValueID::Infinite);
+        return CSSIdentValue::create(CSSValueID::Infinite);
     return consumeInteger(input, true);
 }
 
@@ -4641,39 +4654,6 @@ RefPtr<CSSValue> CSSParser::consumeCounterStyleAdditiveSymbols(CSSTokenStream& i
         values.push_back(std::move(value));
     } while(input.consumeCommaIncludingWhitespace());
     return CSSListValue::create(m_heap, std::move(values));
-}
-
-const RefPtr<CSSInitialValue>& CSSParser::createInitialValue()
-{
-    if(m_initialValue == nullptr)
-        m_initialValue = CSSInitialValue::create(m_heap);
-    return m_initialValue;
-}
-
-const RefPtr<CSSInheritValue>& CSSParser::createInheritValue()
-{
-    if(m_inheritValue == nullptr)
-        m_inheritValue = CSSInheritValue::create(m_heap);
-    return m_inheritValue;
-}
-
-const RefPtr<CSSIdentValue>& CSSParser::createIdentValue(CSSValueID id)
-{
-    auto& ident = m_identValueCache[id];
-    if(ident == nullptr)
-        ident = CSSIdentValue::create(m_heap, id);
-    return ident;
-}
-
-const RefPtr<CSSColorValue>& CSSParser::createColorValue(const Color& value)
-{
-    constexpr auto kMaximumColorCacheSize = 512;
-    if(m_colorValueCache.size() > kMaximumColorCacheSize)
-        m_colorValueCache.clear();
-    auto& color = m_colorValueCache[value];
-    if(color == nullptr)
-        color = CSSColorValue::create(m_heap, value);
-    return color;
 }
 
 const GlobalString& CSSParser::determineNamespace(const GlobalString& prefix) const

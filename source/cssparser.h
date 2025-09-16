@@ -7,21 +7,6 @@ namespace plutobook {
 
 class Node;
 
-template<typename T>
-struct CSSIdentEntry {
-    constexpr CSSIdentEntry(const char* name, T value)
-        : name(name), value(value), length(std::strlen(name))
-    {}
-
-    const char* name;
-    const T value;
-    const int length;
-};
-
-using CSSIdentValueEntry = CSSIdentEntry<CSSValueID>;
-
-class CSSTokenStream;
-
 class CSSParserContext {
 public:
     CSSParserContext(const Node* node, CSSStyleOrigin origin, Url baseUrl);
@@ -40,6 +25,8 @@ private:
     CSSStyleOrigin m_origin;
     Url m_baseUrl;
 };
+
+class CSSTokenStream;
 
 class CSSParser {
 public:
@@ -95,8 +82,6 @@ private:
     void addProperty(CSSPropertyList& properties, CSSPropertyID id, bool important, RefPtr<CSSValue> value);
     void addExpandedProperty(CSSPropertyList& properties, CSSPropertyID id, bool important, RefPtr<CSSValue> value);
 
-    template<unsigned int N>
-    RefPtr<CSSIdentValue> consumeIdent(CSSTokenStream& input, const CSSIdentValueEntry(&table)[N]);
     RefPtr<CSSIdentValue> consumeFontStyleIdent(CSSTokenStream& input);
     RefPtr<CSSIdentValue> consumeFontStretchIdent(CSSTokenStream& input);
     RefPtr<CSSIdentValue> consumeFontVariantCapsIdent(CSSTokenStream& input);
@@ -216,21 +201,11 @@ private:
     RefPtr<CSSValue> consumeCounterStyleSymbols(CSSTokenStream& input);
     RefPtr<CSSValue> consumeCounterStyleAdditiveSymbols(CSSTokenStream& input);
 
-    const RefPtr<CSSInitialValue>& createInitialValue();
-    const RefPtr<CSSInheritValue>& createInheritValue();
-
-    const RefPtr<CSSIdentValue>& createIdentValue(CSSValueID id);
-    const RefPtr<CSSColorValue>& createColorValue(const Color& value);
-
     const GlobalString& defaultNamespace() const { return m_defaultNamespace; }
     const GlobalString& determineNamespace(const GlobalString& prefix) const;
 
     Heap* m_heap;
     const CSSParserContext& m_context;
-    RefPtr<CSSInitialValue> m_initialValue;
-    RefPtr<CSSInheritValue> m_inheritValue;
-    std::map<CSSValueID, RefPtr<CSSIdentValue>> m_identValueCache;
-    std::map<Color, RefPtr<CSSColorValue>> m_colorValueCache;
     std::map<GlobalString, GlobalString> m_namespaces;
     GlobalString m_defaultNamespace = starGlo;
 };

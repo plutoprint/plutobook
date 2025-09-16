@@ -119,6 +119,74 @@ float CSSLengthResolver::viewportMax() const
     return 0.f;
 }
 
+class CSSValuePool {
+public:
+    CSSValuePool();
+
+    CSSInitialValue* createInitialValue();
+    CSSInheritValue* createInheritValue();
+
+    CSSIdentValue* createIdentValue(CSSValueID id);
+
+private:
+    Heap m_heap;
+    CSSInitialValue* m_initialValue;
+    CSSInheritValue* m_inheritValue;
+    std::pmr::vector<CSSIdentValue*> m_identValues;
+};
+
+constexpr auto kNumCSSValueKeywords = static_cast<int>(CSSValueID::kLastKeyword);
+
+CSSValuePool::CSSValuePool()
+    : m_heap(1024 * 24)
+    , m_identValues(&m_heap)
+{
+    m_identValues.resize(kNumCSSValueKeywords, nullptr);
+}
+
+CSSInitialValue* CSSValuePool::createInitialValue()
+{
+    if(m_initialValue == nullptr)
+        m_initialValue = new (&m_heap) CSSInitialValue();
+    return m_initialValue;
+}
+
+CSSInheritValue* CSSValuePool::createInheritValue()
+{
+    if(m_inheritValue == nullptr)
+        m_inheritValue = new (&m_heap) CSSInheritValue();
+    return m_inheritValue;
+}
+
+CSSIdentValue* CSSValuePool::createIdentValue(CSSValueID id)
+{
+    auto& identValue = m_identValues[static_cast<int>(id)];
+    if(identValue == nullptr)
+        identValue = new (&m_heap) CSSIdentValue(id);
+    return identValue;
+}
+
+static CSSValuePool* cssValuePool()
+{
+    thread_local CSSValuePool pool;
+    return &pool;
+}
+
+RefPtr<CSSInitialValue> CSSInitialValue::create()
+{
+    return cssValuePool()->createInitialValue();
+}
+
+RefPtr<CSSInheritValue> CSSInheritValue::create()
+{
+    return cssValuePool()->createInheritValue();
+}
+
+RefPtr<CSSIdentValue> CSSIdentValue::create(CSSValueID value)
+{
+    return cssValuePool()->createIdentValue(value);
+}
+
 RefPtr<CSSImageValue> CSSImageValue::create(Heap* heap, Url value)
 {
     return adoptPtr(new (heap) CSSImageValue(std::move(value)));

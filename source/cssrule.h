@@ -276,7 +276,8 @@ enum class CSSValueID : uint16_t {
     XSmall,
     XxLarge,
     XxSmall,
-    XxxLarge
+    XxxLarge,
+    kLastKeyword
 };
 
 enum class CSSValueType {
@@ -316,18 +317,14 @@ using CSSValueList = std::pmr::vector<RefPtr<CSSValue>>;
 
 class CSSInitialValue final : public CSSValue {
 public:
-    static RefPtr<CSSInitialValue> create(Heap* heap);
+    static RefPtr<CSSInitialValue> create();
 
     CSSValueType type() const final { return CSSValueType::Initial; }
 
 private:
     CSSInitialValue() = default;
+    friend class CSSValuePool;
 };
-
-inline RefPtr<CSSInitialValue> CSSInitialValue::create(Heap* heap)
-{
-    return adoptPtr(new (heap) CSSInitialValue);
-}
 
 template<>
 struct is_a<CSSInitialValue> {
@@ -336,18 +333,14 @@ struct is_a<CSSInitialValue> {
 
 class CSSInheritValue final : public CSSValue {
 public:
-    static RefPtr<CSSInheritValue> create(Heap* heap);
+    static RefPtr<CSSInheritValue> create();
 
     CSSValueType type() const final { return CSSValueType::Inherit; }
 
 private:
     CSSInheritValue() = default;
+    friend class CSSValuePool;
 };
-
-inline RefPtr<CSSInheritValue> CSSInheritValue::create(Heap* heap)
-{
-    return adoptPtr(new (heap) CSSInheritValue);
-}
 
 template<>
 struct is_a<CSSInheritValue> {
@@ -356,20 +349,16 @@ struct is_a<CSSInheritValue> {
 
 class CSSIdentValue final : public CSSValue {
 public:
-    static RefPtr<CSSIdentValue> create(Heap* heap, CSSValueID value);
+    static RefPtr<CSSIdentValue> create(CSSValueID value);
 
     CSSValueID value() const { return m_value; }
     CSSValueType type() const final { return CSSValueType::Ident; }
 
 private:
     CSSIdentValue(CSSValueID value) : m_value(value) {}
+    friend class CSSValuePool;
     CSSValueID m_value;
 };
-
-inline RefPtr<CSSIdentValue> CSSIdentValue::create(Heap* heap, CSSValueID value)
-{
-    return adoptPtr(new (heap) CSSIdentValue(value));
-}
 
 template<>
 struct is_a<CSSIdentValue> {
