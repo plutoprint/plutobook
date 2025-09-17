@@ -123,10 +123,10 @@ class CSSValuePool {
 public:
     CSSValuePool();
 
-    CSSInitialValue* createInitialValue();
-    CSSInheritValue* createInheritValue();
+    CSSInitialValue* initialValue() const { return m_initialValue; }
+    CSSInheritValue* inheritValue() const { return m_inheritValue; }
 
-    CSSIdentValue* createIdentValue(CSSValueID id);
+    CSSIdentValue* identValue(CSSValueID id) const;
 
 private:
     Heap m_heap;
@@ -138,53 +138,41 @@ private:
 constexpr auto kNumCSSValueKeywords = static_cast<int>(CSSValueID::kLastKeyword);
 
 CSSValuePool::CSSValuePool()
-    : m_heap(1024 * 24)
-    , m_identValues(&m_heap)
+    : m_heap(1024 * 8)
+    , m_initialValue(new (&m_heap) CSSInitialValue)
+    , m_inheritValue(new (&m_heap) CSSInheritValue)
+    , m_identValues(kNumCSSValueKeywords, &m_heap)
 {
-    m_identValues.resize(kNumCSSValueKeywords, nullptr);
+    for(int i = 1; i < kNumCSSValueKeywords; ++i) {
+        const auto id = static_cast<CSSValueID>(i);
+        m_identValues[i] = new (&m_heap) CSSIdentValue(id);
+    }
 }
 
-CSSInitialValue* CSSValuePool::createInitialValue()
+CSSIdentValue* CSSValuePool::identValue(CSSValueID id) const
 {
-    if(m_initialValue == nullptr)
-        m_initialValue = new (&m_heap) CSSInitialValue();
-    return m_initialValue;
-}
-
-CSSInheritValue* CSSValuePool::createInheritValue()
-{
-    if(m_inheritValue == nullptr)
-        m_inheritValue = new (&m_heap) CSSInheritValue();
-    return m_inheritValue;
-}
-
-CSSIdentValue* CSSValuePool::createIdentValue(CSSValueID id)
-{
-    auto& identValue = m_identValues[static_cast<int>(id)];
-    if(identValue == nullptr)
-        identValue = new (&m_heap) CSSIdentValue(id);
-    return identValue;
+    return m_identValues[static_cast<int>(id)];
 }
 
 static CSSValuePool* cssValuePool()
 {
-    thread_local CSSValuePool pool;
+    static CSSValuePool pool;
     return &pool;
 }
 
 RefPtr<CSSInitialValue> CSSInitialValue::create()
 {
-    return cssValuePool()->createInitialValue();
+    return cssValuePool()->initialValue();
 }
 
 RefPtr<CSSInheritValue> CSSInheritValue::create()
 {
-    return cssValuePool()->createInheritValue();
+    return cssValuePool()->inheritValue();
 }
 
 RefPtr<CSSIdentValue> CSSIdentValue::create(CSSValueID value)
 {
-    return cssValuePool()->createIdentValue(value);
+    return cssValuePool()->identValue(value);
 }
 
 RefPtr<CSSVariableData> CSSVariableData::create(Heap* heap, const CSSTokenStream& value)
