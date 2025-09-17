@@ -9,10 +9,8 @@
 
 namespace plutobook {
 
-CSSParserContext::CSSParserContext(const Node* node, CSSStyleOrigin origin, Url baseUrl)
-    : m_inHTMLDocument(node && node->isHTMLDocument())
-    , m_inSVGElement(node && node->isSVGElement())
-    , m_baseUrl(std::move(baseUrl))
+CSSParser::CSSParser(const CSSParserContext& context, Heap* heap)
+    : m_heap(heap), m_context(context)
 {
 }
 
@@ -31,6 +29,22 @@ CSSPropertyList CSSParser::parseStyle(const std::string_view& content)
     CSSTokenizer tokenizer(content);
     CSSTokenStream input(tokenizer.tokenize());
     consumeDeclaractionList(input, properties, CSSRuleType::Style);
+    return properties;
+}
+
+CSSMediaQueryList CSSParser::parseMediaQueries(const std::string_view& content)
+{
+    CSSMediaQueryList queries(m_heap);
+    CSSTokenizer tokenizer(content);
+    CSSTokenStream input(tokenizer.tokenize());
+    consumeMediaQueries(input, queries);
+    return queries;
+}
+
+CSSPropertyList CSSParser::parsePropertyValue(CSSTokenStream input, CSSPropertyID id, bool important)
+{
+    CSSPropertyList properties(m_heap);
+    consumeDescription(input, properties, id, important);
     return properties;
 }
 
@@ -82,15 +96,6 @@ static bool consumeIdentIncludingWhitespace(CSSTokenStream& input, const char* n
     }
 
     return false;
-}
-
-CSSMediaQueryList CSSParser::parseMediaQueries(const std::string_view& content)
-{
-    CSSMediaQueryList queries(m_heap);
-    CSSTokenizer tokenizer(content);
-    CSSTokenStream input(tokenizer.tokenize());
-    consumeMediaQueries(input, queries);
-    return queries;
 }
 
 static CSSMediaQuery::Type consumeMediaType(CSSTokenStream& input)
@@ -972,8 +977,15 @@ void CSSParser::consumeDeclaractionList(CSSTokenStream& input, CSSPropertyList& 
     }
 }
 
+constexpr bool isCustomPropertyName(std::string_view name)
+{
+    return name.length() > 2 && name[0] == '-' && name[1] == '-';
+}
+
 static CSSPropertyID csspropertyid(const std::string_view& name)
 {
+    if(isCustomPropertyName(name))
+        return CSSPropertyID::Custom;
     static const struct {
         std::string_view name;
         CSSPropertyID value;
@@ -1213,7 +1225,8 @@ bool CSSParser::consumeDeclaraction(CSSTokenStream& input, CSSPropertyList& prop
     CSSTokenStream newInput(begin, input.begin());
     if(newInput->type() != CSSToken::Type::Ident)
         return false;
-    auto id = csspropertyid(newInput->data());
+    auto name = newInput->data();
+    auto id = csspropertyid(name);
     if(id == CSSPropertyID::Unknown)
         return false;
     newInput.consumeIncludingWhitespace();
@@ -1241,6 +1254,14 @@ bool CSSParser::consumeDeclaraction(CSSTokenStream& input, CSSPropertyList& prop
     if(important && (ruleType == CSSRuleType::FontFace || ruleType == CSSRuleType::CounterStyle))
         return false;
     CSSTokenStream value(valueBegin, valueEnd);
+    if(id == CSSPropertyID::Custom) {
+        if(ruleType == CSSRuleType::FontFace || ruleType == CSSRuleType::CounterStyle)
+            return false;
+        auto custom = CSSCustomPropertyValue::create(m_heap, GlobalString(name), CSSVariableData::create(m_heap, value));
+        addProperty(properties, id, important, std::move(custom));
+        return true;
+    }
+
     switch(ruleType) {
     case CSSRuleType::FontFace:
         return consumeFontFaceDescription(value, properties, id);
@@ -1331,8 +1352,25 @@ bool CSSParser::consumeCounterStyleDescription(CSSTokenStream& input, CSSPropert
     return false;
 }
 
+static bool containsVariableReferences(CSSTokenStream input)
+{
+    while(!input.empty()) {
+        if(input->type() == CSSToken::Type::Function && identMatches("var", 3, input->data()))
+            return true;
+        input.consumeIncludingWhitespace();
+    }
+
+    return false;
+}
+
 bool CSSParser::consumeDescription(CSSTokenStream& input, CSSPropertyList& properties, CSSPropertyID id, bool important)
 {
+    if(containsVariableReferences(input)) {
+        auto variable = CSSVariableReferenceValue::create(m_heap, m_context, id, important, CSSVariableData::create(m_heap, input));
+        addProperty(properties, id, important, std::move(variable));
+        return true;
+    }
+
     if(input->type() == CSSToken::Type::Ident) {
         if(identMatches("initial", 7, input->data())) {
             input.consumeIncludingWhitespace();

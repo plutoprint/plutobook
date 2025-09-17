@@ -353,25 +353,40 @@ FontDescription FontDescriptionBuilder::build() const
 }
 
 class StyleBuilder {
-public:
-    virtual ~StyleBuilder() = default;
-    virtual RefPtr<BoxStyle> build() = 0;
-
-    void merge(uint32_t specificity, uint32_t position, const CSSPropertyList& properties);
-    FontDescription fontDescription() const;
-
 protected:
-    StyleBuilder(const BoxStyle* parentStyle) : m_parentStyle(parentStyle) {}
-    const BoxStyle* m_parentStyle;
+    StyleBuilder(const BoxStyle* parentStyle, PseudoType pseudoType)
+        : m_parentStyle(parentStyle), m_pseudoType(pseudoType)
+    {}
+
+    FontDescription fontDescription() const;
+    void merge(uint32_t specificity, uint32_t position, const CSSPropertyList& properties);
+    void buildStyle(BoxStyle* newStyle);
+
     CSSPropertyDataList m_properties;
+    const BoxStyle* m_parentStyle;
+    PseudoType m_pseudoType;
 };
+
+FontDescription StyleBuilder::fontDescription() const
+{
+    return FontDescriptionBuilder(m_parentStyle, m_properties).build();
+}
 
 void StyleBuilder::merge(uint32_t specificity, uint32_t position, const CSSPropertyList& properties)
 {
     for(const auto& property : properties) {
-        auto predicate_func = [&](const auto& item) { return item.id() == property.id(); };
-        auto it = std::find_if(m_properties.begin(), m_properties.end(), predicate_func);
         CSSPropertyData data(specificity, position, property);
+        auto predicate_func = [&property](const CSSPropertyData& item) {
+            if(property.id() == CSSPropertyID::Custom && item.id() == CSSPropertyID::Custom) {
+                const auto& a = to<CSSCustomPropertyValue>(*property.value());
+                const auto& b = to<CSSCustomPropertyValue>(*item.value());
+                return a.name() == b.name();
+            }
+
+            return property.id() == item.id();
+        };
+
+        auto it = std::find_if(m_properties.begin(), m_properties.end(), predicate_func);
         if(it == m_properties.end()) {
             m_properties.push_back(std::move(data));
         } else if(!data.isLessThan(*it)) {
@@ -380,9 +395,39 @@ void StyleBuilder::merge(uint32_t specificity, uint32_t position, const CSSPrope
     }
 }
 
-FontDescription StyleBuilder::fontDescription() const
+void StyleBuilder::buildStyle(BoxStyle* newStyle)
 {
-    return FontDescriptionBuilder(m_parentStyle, m_properties).build();
+    CSSPropertyDataList variables;
+    for(const auto& property : m_properties) {
+        if(is<CSSVariableReferenceValue>(*property.value())) {
+            variables.push_back(property);
+        } else if(property.id() == CSSPropertyID::Custom) {
+            const auto& custom = to<CSSCustomPropertyValue>(*property.value());
+            newStyle->setCustom(custom.name(), custom.value());
+        }
+    }
+
+    for(const auto& variable : variables) {
+        const auto& value = to<CSSVariableReferenceValue>(*variable.value());
+        merge(variable.specificity(), variable.position(), value.resolve(newStyle));
+    }
+
+    newStyle->setFontDescription(fontDescription());
+
+    for(const auto& property : m_properties) {
+        auto id = property.id();
+        auto value = property.value();
+        if(id == CSSPropertyID::Custom || is<CSSVariableReferenceValue>(*value))
+            continue;
+        if(is<CSSInitialValue>(*value)) {
+            newStyle->reset(id);
+            continue;
+        }
+
+        if(is<CSSInheritValue>(*value) && !(value = m_parentStyle->get(id)))
+            continue;
+        newStyle->set(id, std::move(value));
+    }
 }
 
 class ElementStyleBuilder final : public StyleBuilder {
@@ -390,17 +435,15 @@ public:
     ElementStyleBuilder(Element* element, PseudoType pseudoType, const BoxStyle* parentStyle);
 
     void add(const CSSRuleDataList* rules);
-    RefPtr<BoxStyle> build() final;
+    RefPtr<BoxStyle> build();
 
 private:
     Element* m_element;
-    PseudoType m_pseudoType;
 };
 
 ElementStyleBuilder::ElementStyleBuilder(Element* element, PseudoType pseudoType, const BoxStyle* parentStyle)
-    : StyleBuilder(parentStyle)
+    : StyleBuilder(parentStyle, pseudoType)
     , m_element(element)
-    , m_pseudoType(pseudoType)
 {
 }
 
@@ -435,18 +478,8 @@ RefPtr<BoxStyle> ElementStyleBuilder::build()
     }
 
     auto newStyle = BoxStyle::create(m_element, m_parentStyle, m_pseudoType, Display::Inline);
-    for(const auto& property : m_properties) {
-        auto id = property.id();
-        auto value = property.value();
-        if(is<CSSInitialValue>(*value)) {
-            newStyle->reset(id);
-            continue;
-        }
 
-        if(is<CSSInheritValue>(*value) && !(value = m_parentStyle->get(id)))
-            continue;
-        newStyle->set(id, std::move(value));
-    }
+    buildStyle(newStyle.get());
 
     if(newStyle->display() == Display::None)
         return newStyle;
@@ -490,7 +523,6 @@ RefPtr<BoxStyle> ElementStyleBuilder::build()
 
     if(newStyle->isPositioned() || m_parentStyle->isDisplayFlex())
         newStyle->setFloating(Float::None);
-    newStyle->setFontDescription(fontDescription());
     return newStyle;
 }
 
@@ -499,21 +531,19 @@ public:
     PageStyleBuilder(const GlobalString& pageName, uint32_t pageIndex, PageMarginType marginType, PseudoType pseudoType, const BoxStyle* parentStyle);
 
     void add(const CSSPageRuleDataList& rules);
-    RefPtr<BoxStyle> build() final;
+    RefPtr<BoxStyle> build();
 
 private:
     GlobalString m_pageName;
     uint32_t m_pageIndex;
     PageMarginType m_marginType;
-    PseudoType m_pseudoType;
 };
 
 PageStyleBuilder::PageStyleBuilder(const GlobalString& pageName, uint32_t pageIndex, PageMarginType marginType, PseudoType pseudoType, const BoxStyle* parentStyle)
-    : StyleBuilder(parentStyle)
+    : StyleBuilder(parentStyle, pseudoType)
     , m_pageName(pageName)
     , m_pageIndex(pageIndex)
     , m_marginType(marginType)
-    , m_pseudoType(pseudoType)
 {
 }
 
@@ -612,20 +642,8 @@ RefPtr<BoxStyle> PageStyleBuilder::build()
         break;
     }
 
-    for(const auto& property : m_properties) {
-        auto id = property.id();
-        auto value = property.value();
-        if(is<CSSInitialValue>(*value)) {
-            newStyle->reset(id);
-            continue;
-        }
+    buildStyle(newStyle.get());
 
-        if(is<CSSInheritValue>(*value) && !(value = m_parentStyle->get(id)))
-            continue;
-        newStyle->set(id, std::move(value));
-    }
-
-    newStyle->setFontDescription(fontDescription());
     newStyle->setPosition(Position::Static);
     newStyle->setDisplay(Display::Block);
     newStyle->setFloating(Float::None);

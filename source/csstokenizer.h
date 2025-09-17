@@ -97,6 +97,7 @@ public:
     }
 
 private:
+    friend class CSSVariableData;
     Type m_type{Type::Unknown};
     HashType m_hashType{HashType::Identifier};
     NumberType m_numberType{NumberType::Integer};

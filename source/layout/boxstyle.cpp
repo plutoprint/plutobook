@@ -1631,6 +1631,19 @@ const HeapString& BoxStyle::getQuote(bool open, size_t depth) const
     return to<CSSStringValue>(*quote).value();
 }
 
+CSSVariableData* BoxStyle::getCustom(const std::string_view& name) const
+{
+    auto it = m_customProperties.find(name);
+    if(it == m_customProperties.end())
+        return nullptr;
+    return it->second.get();
+}
+
+void BoxStyle::setCustom(const GlobalString& name, RefPtr<CSSVariableData> value)
+{
+    m_customProperties.insert_or_assign(name, std::move(value));
+}
+
 CSSValue* BoxStyle::get(CSSPropertyID id) const
 {
     auto it = m_properties.find(id);
@@ -1844,6 +1857,7 @@ void BoxStyle::inheritFrom(const BoxStyle* parentStyle)
     m_emptyCells = parentStyle->emptyCells();
     m_borderCollapse = parentStyle->borderCollapse();
     m_color = parentStyle->color();
+    m_customProperties = parentStyle->customProperties();
     for(const auto& [id, value] : parentStyle->properties()) {
         switch(id) {
         case CSSPropertyID::BorderCollapse:
@@ -3154,6 +3168,7 @@ BoxStyle::~BoxStyle() = default;
 
 BoxStyle::BoxStyle(Node* node, PseudoType pseudoType, Display display)
     : m_node(node), m_properties(node->heap())
+    , m_customProperties(node->heap())
     , m_pseudoType(pseudoType), m_display(display)
 {
 }

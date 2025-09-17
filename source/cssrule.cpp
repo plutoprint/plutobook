@@ -187,6 +187,101 @@ RefPtr<CSSIdentValue> CSSIdentValue::create(CSSValueID value)
     return cssValuePool()->createIdentValue(value);
 }
 
+RefPtr<CSSVariableData> CSSVariableData::create(Heap* heap, const CSSTokenStream& value)
+{
+    return adoptPtr(new (heap) CSSVariableData(heap, value));
+}
+
+CSSVariableData::CSSVariableData(Heap* heap, const CSSTokenStream& value)
+    : m_tokens(heap)
+{
+    m_tokens.assign(value.begin(), value.end());
+    for(auto& token : m_tokens) {
+        if(!token.m_data.empty()) {
+            token.m_data = heap->createString(token.data());
+        }
+    }
+}
+
+bool CSSVariableData::resolve(const BoxStyle* style, CSSTokenList& tokens) const
+{
+    CSSTokenStream input(m_tokens.data(), m_tokens.size());
+    return resolve(input, style, tokens);
+}
+
+bool CSSVariableData::resolve(CSSTokenStream input, const BoxStyle* style, CSSTokenList& tokens) const
+{
+    while(!input.empty()) {
+        if(input->type() == CSSToken::Type::Function && equalsIgnoringCase("var", input->data())) {
+            auto block = input.consumeBlock();
+            if(!resolveVar(block, style, tokens))
+                return false;
+            continue;
+        }
+
+        tokens.push_back(input.get());
+        input.consume();
+    }
+
+    return true;
+}
+
+bool CSSVariableData::resolveVar(CSSTokenStream input, const BoxStyle* style, CSSTokenList& tokens) const
+{
+    input.consumeWhitespace();
+    if(input->type() != CSSToken::Type::Ident)
+        return false;
+    auto data = style->getCustom(input->data());
+    input.consumeIncludingWhitespace();
+    if(data == nullptr) {
+        if(!input.consumeCommaIncludingWhitespace())
+            return false;
+        return resolve(input, style, tokens);
+    }
+
+    if(!input.empty() && input->type() != CSSToken::Type::Comma)
+        return false;
+    return data->resolve(style, tokens);
+}
+
+RefPtr<CSSCustomPropertyValue> CSSCustomPropertyValue::create(Heap* heap, const GlobalString& name, RefPtr<CSSVariableData> value)
+{
+    return adoptPtr(new (heap) CSSCustomPropertyValue(name, std::move(value)));
+}
+
+CSSCustomPropertyValue::CSSCustomPropertyValue(const GlobalString& name, RefPtr<CSSVariableData> value)
+    : m_name(name), m_value(std::move(value))
+{
+}
+
+CSSParserContext::CSSParserContext(const Node* node, CSSStyleOrigin origin, Url baseUrl)
+    : m_inHTMLDocument(node && node->isHTMLDocument())
+    , m_inSVGElement(node && node->isSVGElement())
+    , m_origin(origin)
+    , m_baseUrl(std::move(baseUrl))
+{
+}
+
+RefPtr<CSSVariableReferenceValue> CSSVariableReferenceValue::create(Heap* heap, const CSSParserContext& context, CSSPropertyID id, bool important, RefPtr<CSSVariableData> value)
+{
+    return adoptPtr(new (heap) CSSVariableReferenceValue(context, id, important, std::move(value)));
+}
+
+CSSPropertyList CSSVariableReferenceValue::resolve(const BoxStyle* style) const
+{
+    CSSTokenList tokens;
+    if(!m_value->resolve(style, tokens))
+        return CSSPropertyList();
+    CSSTokenStream input(tokens.data(), tokens.size());
+    CSSParser parser(m_context, style->heap());
+    return parser.parsePropertyValue(input, m_id, m_important);
+}
+
+CSSVariableReferenceValue::CSSVariableReferenceValue(const CSSParserContext& context, CSSPropertyID id, bool important, RefPtr<CSSVariableData> value)
+    : m_context(context), m_id(id), m_important(important), m_value(std::move(value))
+{
+}
+
 RefPtr<CSSImageValue> CSSImageValue::create(Heap* heap, Url value)
 {
     return adoptPtr(new (heap) CSSImageValue(std::move(value)));

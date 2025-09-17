@@ -5,38 +5,15 @@
 
 namespace plutobook {
 
-class Node;
-
-class CSSParserContext {
-public:
-    CSSParserContext(const Node* node, CSSStyleOrigin origin, Url baseUrl);
-
-    bool inHTMLDocument() const { return m_inHTMLDocument; }
-    bool inSVGElement() const { return m_inSVGElement; }
-
-    CSSStyleOrigin origin() const { return m_origin; }
-    const Url& baseUrl() const { return m_baseUrl; }
-
-    Url completeUrl(std::string_view url) const { return m_baseUrl.complete(url); }
-
-private:
-    bool m_inHTMLDocument;
-    bool m_inSVGElement;
-    CSSStyleOrigin m_origin;
-    Url m_baseUrl;
-};
-
-class CSSTokenStream;
-
 class CSSParser {
 public:
-    CSSParser(const CSSParserContext& context, Heap* heap)
-        : m_heap(heap), m_context(context)
-    {}
+    CSSParser(const CSSParserContext& context, Heap* heap);
 
     CSSRuleList parseSheet(const std::string_view& content);
     CSSPropertyList parseStyle(const std::string_view& content);
     CSSMediaQueryList parseMediaQueries(const std::string_view& content);
+
+    CSSPropertyList parsePropertyValue(CSSTokenStream input, CSSPropertyID id, bool important);
 
 private:
     bool consumeMediaFeature(CSSTokenStream& input, CSSMediaFeatureList& features);

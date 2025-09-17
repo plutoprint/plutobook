@@ -3,6 +3,7 @@
 
 #include "pointer.h"
 #include "globalstring.h"
+#include "csstokenizer.h"
 #include "color.h"
 #include "url.h"
 
@@ -10,10 +11,9 @@
 #include <forward_list>
 #include <memory>
 #include <numbers>
+#include <vector>
 
 namespace plutobook {
-
-class Document;
 
 enum class CSSValueID : uint16_t {
     Unknown,
@@ -285,6 +285,8 @@ enum class CSSValueType {
     Inherit,
     Ident,
     CustomIdent,
+    CustomProperty,
+    VariableReference,
     Integer,
     Number,
     Percent,
@@ -314,6 +316,249 @@ public:
 };
 
 using CSSValueList = std::pmr::vector<RefPtr<CSSValue>>;
+
+enum class CSSPropertyID : uint16_t {
+    Unknown,
+    Custom,
+    AdditiveSymbols,
+    AlignContent,
+    AlignItems,
+    AlignSelf,
+    AlignmentBaseline,
+    Background,
+    BackgroundAttachment,
+    BackgroundClip,
+    BackgroundColor,
+    BackgroundImage,
+    BackgroundOrigin,
+    BackgroundPosition,
+    BackgroundRepeat,
+    BackgroundSize,
+    BaselineShift,
+    Border,
+    BorderBottom,
+    BorderBottomColor,
+    BorderBottomLeftRadius,
+    BorderBottomRightRadius,
+    BorderBottomStyle,
+    BorderBottomWidth,
+    BorderCollapse,
+    BorderColor,
+    BorderHorizontalSpacing,
+    BorderLeft,
+    BorderLeftColor,
+    BorderLeftStyle,
+    BorderLeftWidth,
+    BorderRadius,
+    BorderRight,
+    BorderRightColor,
+    BorderRightStyle,
+    BorderRightWidth,
+    BorderSpacing,
+    BorderStyle,
+    BorderTop,
+    BorderTopColor,
+    BorderTopLeftRadius,
+    BorderTopRightRadius,
+    BorderTopStyle,
+    BorderTopWidth,
+    BorderVerticalSpacing,
+    BorderWidth,
+    Bottom,
+    BoxSizing,
+    BreakAfter,
+    BreakBefore,
+    BreakInside,
+    CaptionSide,
+    Clear,
+    Clip,
+    ClipPath,
+    ClipRule,
+    Color,
+    ColumnBreakAfter,
+    ColumnBreakBefore,
+    ColumnBreakInside,
+    ColumnCount,
+    ColumnFill,
+    ColumnGap,
+    ColumnRule,
+    ColumnRuleColor,
+    ColumnRuleStyle,
+    ColumnRuleWidth,
+    ColumnSpan,
+    ColumnWidth,
+    Columns,
+    Content,
+    CounterIncrement,
+    CounterReset,
+    CounterSet,
+    Cx,
+    Cy,
+    Direction,
+    Display,
+    DominantBaseline,
+    EmptyCells,
+    Fallback,
+    Fill,
+    FillOpacity,
+    FillRule,
+    Flex,
+    FlexBasis,
+    FlexDirection,
+    FlexFlow,
+    FlexGrow,
+    FlexShrink,
+    FlexWrap,
+    Float,
+    Font,
+    FontFamily,
+    FontFeatureSettings,
+    FontKerning,
+    FontSize,
+    FontStretch,
+    FontStyle,
+    FontVariant,
+    FontVariantCaps,
+    FontVariantEastAsian,
+    FontVariantLigatures,
+    FontVariantNumeric,
+    FontVariantPosition,
+    FontVariationSettings,
+    FontWeight,
+    Gap,
+    Height,
+    Hyphens,
+    JustifyContent,
+    Left,
+    LetterSpacing,
+    LineHeight,
+    ListStyle,
+    ListStyleImage,
+    ListStylePosition,
+    ListStyleType,
+    Margin,
+    MarginBottom,
+    MarginLeft,
+    MarginRight,
+    MarginTop,
+    Marker,
+    MarkerEnd,
+    MarkerMid,
+    MarkerStart,
+    Mask,
+    MaskType,
+    MaxHeight,
+    MaxWidth,
+    MinHeight,
+    MinWidth,
+    MixBlendMode,
+    Negative,
+    ObjectFit,
+    ObjectPosition,
+    Opacity,
+    Order,
+    Orientation,
+    Orphans,
+    Outline,
+    OutlineColor,
+    OutlineOffset,
+    OutlineStyle,
+    OutlineWidth,
+    Overflow,
+    OverflowWrap,
+    Pad,
+    Padding,
+    PaddingBottom,
+    PaddingLeft,
+    PaddingRight,
+    PaddingTop,
+    Page,
+    PageBreakAfter,
+    PageBreakBefore,
+    PageBreakInside,
+    PageScale,
+    PaintOrder,
+    Position,
+    Prefix,
+    Quotes,
+    R,
+    Range,
+    Right,
+    RowGap,
+    Rx,
+    Ry,
+    Size,
+    Src,
+    StopColor,
+    StopOpacity,
+    Stroke,
+    StrokeDasharray,
+    StrokeDashoffset,
+    StrokeLinecap,
+    StrokeLinejoin,
+    StrokeMiterlimit,
+    StrokeOpacity,
+    StrokeWidth,
+    Suffix,
+    Symbols,
+    System,
+    TabSize,
+    TableLayout,
+    TextAlign,
+    TextAnchor,
+    TextDecoration,
+    TextDecorationColor,
+    TextDecorationLine,
+    TextDecorationStyle,
+    TextIndent,
+    TextOrientation,
+    TextOverflow,
+    TextTransform,
+    Top,
+    Transform,
+    TransformOrigin,
+    UnicodeBidi,
+    VectorEffect,
+    VerticalAlign,
+    Visibility,
+    WhiteSpace,
+    Widows,
+    Width,
+    WordBreak,
+    WordSpacing,
+    WritingMode,
+    X,
+    Y,
+    ZIndex
+};
+
+enum class CSSStyleOrigin : uint8_t {
+    UserAgent,
+    PresentationAttribute,
+    Author,
+    Inline,
+    User
+};
+
+class CSSProperty {
+public:
+    CSSProperty(CSSPropertyID id, CSSStyleOrigin origin, bool important, RefPtr<CSSValue> value)
+        : m_id(id), m_origin(origin), m_important(important), m_value(std::move(value))
+    {}
+
+    CSSPropertyID id() const { return m_id; }
+    CSSStyleOrigin origin() const { return m_origin; }
+    bool important() const { return m_important; }
+    const RefPtr<CSSValue>& value() const { return m_value; }
+
+private:
+    CSSPropertyID m_id;
+    CSSStyleOrigin m_origin;
+    bool m_important;
+    RefPtr<CSSValue> m_value;
+};
+
+using CSSPropertyList = std::pmr::vector<CSSProperty>;
 
 class CSSInitialValue final : public CSSValue {
 public:
@@ -380,7 +625,7 @@ public:
     CSSValueType type() const final { return CSSValueType::CustomIdent; }
 
 private:
-    CSSCustomIdentValue(const HeapString& value) : m_value(value) {}
+    CSSCustomIdentValue(const GlobalString& value) : m_value(value) {}
     GlobalString m_value;
 };
 
@@ -392,6 +637,86 @@ inline RefPtr<CSSCustomIdentValue> CSSCustomIdentValue::create(Heap* heap, const
 template<>
 struct is_a<CSSCustomIdentValue> {
     static bool check(const CSSValue& value) { return value.type() == CSSValueType::CustomIdent; }
+};
+
+class BoxStyle;
+
+class CSSVariableData : public HeapMember, public RefCounted<CSSVariableData> {
+public:
+    static RefPtr<CSSVariableData> create(Heap* heap, const CSSTokenStream& value);
+
+    bool resolve(const BoxStyle* style, CSSTokenList& tokens) const;
+
+private:
+    CSSVariableData(Heap* heap, const CSSTokenStream& value);
+    bool resolve(CSSTokenStream input, const BoxStyle* style, CSSTokenList& tokens) const;
+    bool resolveVar(CSSTokenStream input, const BoxStyle* style, CSSTokenList& tokens) const;
+    std::pmr::vector<CSSToken> m_tokens;
+};
+
+class CSSCustomPropertyValue final : public CSSValue {
+public:
+    static RefPtr<CSSCustomPropertyValue> create(Heap* heap, const GlobalString& name, RefPtr<CSSVariableData> value);
+
+    const GlobalString& name() const { return m_name; }
+    const RefPtr<CSSVariableData>& value() const { return m_value; }
+    CSSValueType type() const final { return CSSValueType::CustomProperty; }
+
+private:
+    CSSCustomPropertyValue(const GlobalString& name, RefPtr<CSSVariableData> value);
+    GlobalString m_name;
+    RefPtr<CSSVariableData> m_value;
+};
+
+template<>
+struct is_a<CSSCustomPropertyValue> {
+    static bool check(const CSSValue& value) { return value.type() == CSSValueType::CustomProperty; }
+};
+
+class Node;
+
+class CSSParserContext {
+public:
+    CSSParserContext(const Node* node, CSSStyleOrigin origin, Url baseUrl);
+
+    bool inHTMLDocument() const { return m_inHTMLDocument; }
+    bool inSVGElement() const { return m_inSVGElement; }
+
+    CSSStyleOrigin origin() const { return m_origin; }
+    const Url& baseUrl() const { return m_baseUrl; }
+
+    Url completeUrl(std::string_view url) const { return m_baseUrl.complete(url); }
+
+private:
+    bool m_inHTMLDocument;
+    bool m_inSVGElement;
+    CSSStyleOrigin m_origin;
+    Url m_baseUrl;
+};
+
+class CSSVariableReferenceValue final : public CSSValue {
+public:
+    static RefPtr<CSSVariableReferenceValue> create(Heap* heap, const CSSParserContext& context, CSSPropertyID id, bool important, RefPtr<CSSVariableData> value);
+
+    const CSSParserContext& context() const { return m_context; }
+    CSSPropertyID id() const { return m_id; }
+    bool important() const { return m_important; }
+    const RefPtr<CSSVariableData>& value() const { return m_value; }
+    CSSValueType type() const final { return CSSValueType::VariableReference; }
+
+    CSSPropertyList resolve(const BoxStyle* style) const;
+
+private:
+    CSSVariableReferenceValue(const CSSParserContext& context, CSSPropertyID id, bool important, RefPtr<CSSVariableData> value);
+    CSSParserContext m_context;
+    CSSPropertyID m_id;
+    bool m_important;
+    RefPtr<CSSVariableData> m_value;
+};
+
+template<>
+struct is_a<CSSVariableReferenceValue> {
+    static bool check(const CSSValue& value) { return value.type() == CSSValueType::VariableReference; }
 };
 
 class CSSIntegerValue final : public CSSValue {
@@ -560,6 +885,7 @@ struct is_a<CSSLengthValue> {
 };
 
 class Font;
+class Document;
 
 class CSSLengthResolver {
 public:
@@ -916,248 +1242,6 @@ template<>
 struct is_a<CSSUnaryFunctionValue> {
     static bool check(const CSSValue& value) { return value.type() == CSSValueType::UnaryFunction; }
 };
-
-enum class CSSPropertyID : uint16_t {
-    Unknown,
-    AdditiveSymbols,
-    AlignContent,
-    AlignItems,
-    AlignSelf,
-    AlignmentBaseline,
-    Background,
-    BackgroundAttachment,
-    BackgroundClip,
-    BackgroundColor,
-    BackgroundImage,
-    BackgroundOrigin,
-    BackgroundPosition,
-    BackgroundRepeat,
-    BackgroundSize,
-    BaselineShift,
-    Border,
-    BorderBottom,
-    BorderBottomColor,
-    BorderBottomLeftRadius,
-    BorderBottomRightRadius,
-    BorderBottomStyle,
-    BorderBottomWidth,
-    BorderCollapse,
-    BorderColor,
-    BorderHorizontalSpacing,
-    BorderLeft,
-    BorderLeftColor,
-    BorderLeftStyle,
-    BorderLeftWidth,
-    BorderRadius,
-    BorderRight,
-    BorderRightColor,
-    BorderRightStyle,
-    BorderRightWidth,
-    BorderSpacing,
-    BorderStyle,
-    BorderTop,
-    BorderTopColor,
-    BorderTopLeftRadius,
-    BorderTopRightRadius,
-    BorderTopStyle,
-    BorderTopWidth,
-    BorderVerticalSpacing,
-    BorderWidth,
-    Bottom,
-    BoxSizing,
-    BreakAfter,
-    BreakBefore,
-    BreakInside,
-    CaptionSide,
-    Clear,
-    Clip,
-    ClipPath,
-    ClipRule,
-    Color,
-    ColumnBreakAfter,
-    ColumnBreakBefore,
-    ColumnBreakInside,
-    ColumnCount,
-    ColumnFill,
-    ColumnGap,
-    ColumnRule,
-    ColumnRuleColor,
-    ColumnRuleStyle,
-    ColumnRuleWidth,
-    ColumnSpan,
-    ColumnWidth,
-    Columns,
-    Content,
-    CounterIncrement,
-    CounterReset,
-    CounterSet,
-    Cx,
-    Cy,
-    Direction,
-    Display,
-    DominantBaseline,
-    EmptyCells,
-    Fallback,
-    Fill,
-    FillOpacity,
-    FillRule,
-    Flex,
-    FlexBasis,
-    FlexDirection,
-    FlexFlow,
-    FlexGrow,
-    FlexShrink,
-    FlexWrap,
-    Float,
-    Font,
-    FontFamily,
-    FontFeatureSettings,
-    FontKerning,
-    FontSize,
-    FontStretch,
-    FontStyle,
-    FontVariant,
-    FontVariantCaps,
-    FontVariantEastAsian,
-    FontVariantLigatures,
-    FontVariantNumeric,
-    FontVariantPosition,
-    FontVariationSettings,
-    FontWeight,
-    Gap,
-    Height,
-    Hyphens,
-    JustifyContent,
-    Left,
-    LetterSpacing,
-    LineHeight,
-    ListStyle,
-    ListStyleImage,
-    ListStylePosition,
-    ListStyleType,
-    Margin,
-    MarginBottom,
-    MarginLeft,
-    MarginRight,
-    MarginTop,
-    Marker,
-    MarkerEnd,
-    MarkerMid,
-    MarkerStart,
-    Mask,
-    MaskType,
-    MaxHeight,
-    MaxWidth,
-    MinHeight,
-    MinWidth,
-    MixBlendMode,
-    Negative,
-    ObjectFit,
-    ObjectPosition,
-    Opacity,
-    Order,
-    Orientation,
-    Orphans,
-    Outline,
-    OutlineColor,
-    OutlineOffset,
-    OutlineStyle,
-    OutlineWidth,
-    Overflow,
-    OverflowWrap,
-    Pad,
-    Padding,
-    PaddingBottom,
-    PaddingLeft,
-    PaddingRight,
-    PaddingTop,
-    Page,
-    PageBreakAfter,
-    PageBreakBefore,
-    PageBreakInside,
-    PageScale,
-    PaintOrder,
-    Position,
-    Prefix,
-    Quotes,
-    R,
-    Range,
-    Right,
-    RowGap,
-    Rx,
-    Ry,
-    Size,
-    Src,
-    StopColor,
-    StopOpacity,
-    Stroke,
-    StrokeDasharray,
-    StrokeDashoffset,
-    StrokeLinecap,
-    StrokeLinejoin,
-    StrokeMiterlimit,
-    StrokeOpacity,
-    StrokeWidth,
-    Suffix,
-    Symbols,
-    System,
-    TabSize,
-    TableLayout,
-    TextAlign,
-    TextAnchor,
-    TextDecoration,
-    TextDecorationColor,
-    TextDecorationLine,
-    TextDecorationStyle,
-    TextIndent,
-    TextOrientation,
-    TextOverflow,
-    TextTransform,
-    Top,
-    Transform,
-    TransformOrigin,
-    UnicodeBidi,
-    VectorEffect,
-    VerticalAlign,
-    Visibility,
-    WhiteSpace,
-    Widows,
-    Width,
-    WordBreak,
-    WordSpacing,
-    WritingMode,
-    X,
-    Y,
-    ZIndex
-};
-
-enum class CSSStyleOrigin : uint8_t {
-    UserAgent,
-    PresentationAttribute,
-    Author,
-    Inline,
-    User
-};
-
-class CSSProperty {
-public:
-    CSSProperty(CSSPropertyID id, CSSStyleOrigin origin, bool important, RefPtr<CSSValue> value)
-        : m_id(id), m_origin(origin), m_important(important), m_value(std::move(value))
-    {}
-
-    CSSPropertyID id() const { return m_id; }
-    CSSStyleOrigin origin() const { return m_origin; }
-    bool important() const { return m_important; }
-    const RefPtr<CSSValue>& value() const { return m_value; }
-
-private:
-    CSSPropertyID m_id;
-    CSSStyleOrigin m_origin;
-    bool m_important;
-    RefPtr<CSSValue> m_value;
-};
-
-using CSSPropertyList = std::pmr::vector<CSSProperty>;
 
 class CSSSimpleSelector;
 class CSSComplexSelector;

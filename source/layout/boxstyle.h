@@ -651,7 +651,6 @@ class Image;
 class Node;
 class Document;
 class Book;
-class CSSValue;
 
 enum class CSSValueID : uint16_t;
 enum class CSSPropertyID : uint16_t;
@@ -662,7 +661,11 @@ using FontFeatureList = std::forward_list<FontFeature>;
 using FontVariationList = std::forward_list<FontVariation>;
 using FontFamilyList = std::forward_list<GlobalString>;
 
+class CSSValue;
+class CSSVariableData;
+
 using CSSPropertyMap = std::pmr::map<CSSPropertyID, RefPtr<CSSValue>>;
+using CSSCustomPropertyMap = std::pmr::map<GlobalString, RefPtr<CSSVariableData>, std::less<>>;
 
 enum class PseudoType : uint8_t {
     None,
@@ -693,6 +696,7 @@ public:
     Node* node() const { return m_node; }
     PseudoType pseudoType() const { return m_pseudoType; }
     const CSSPropertyMap& properties() const { return m_properties; }
+    const CSSCustomPropertyMap& customProperties() const { return m_customProperties; }
 
     const RefPtr<Font>& font() const { return m_font; }
     void setFont(RefPtr<Font> font);
@@ -949,6 +953,9 @@ public:
 
     const HeapString& getQuote(bool open, size_t depth) const;
 
+    CSSVariableData* getCustom(const std::string_view& name) const;
+    void setCustom(const GlobalString& name, RefPtr<CSSVariableData> value);
+
     CSSValue* get(CSSPropertyID id) const;
     void set(CSSPropertyID id, RefPtr<CSSValue> value);
     void reset(CSSPropertyID id);
@@ -1029,6 +1036,7 @@ private:
     BoxStyle(Node* node, PseudoType pseudoType, Display display);
     Node* m_node;
     CSSPropertyMap m_properties;
+    CSSCustomPropertyMap m_customProperties;
     RefPtr<Font> m_font;
     PseudoType m_pseudoType;
     Display m_display;
