@@ -191,18 +191,18 @@ CSSVariableData::CSSVariableData(Heap* heap, const CSSTokenStream& value)
     }
 }
 
-bool CSSVariableData::resolve(const BoxStyle* style, CSSTokenList& tokens) const
+bool CSSVariableData::resolve(const BoxStyle* style, CSSTokenList& tokens, std::set<CSSVariableData*>& references) const
 {
     CSSTokenStream input(m_tokens.data(), m_tokens.size());
-    return resolve(input, style, tokens);
+    return resolve(input, style, tokens, references);
 }
 
-bool CSSVariableData::resolve(CSSTokenStream input, const BoxStyle* style, CSSTokenList& tokens) const
+bool CSSVariableData::resolve(CSSTokenStream input, const BoxStyle* style, CSSTokenList& tokens, std::set<CSSVariableData*>& references) const
 {
     while(!input.empty()) {
         if(input->type() == CSSToken::Type::Function && equalsIgnoringCase("var", input->data())) {
             auto block = input.consumeBlock();
-            if(!resolveVar(block, style, tokens))
+            if(!resolveVar(block, style, tokens, references))
                 return false;
             continue;
         }
@@ -214,22 +214,25 @@ bool CSSVariableData::resolve(CSSTokenStream input, const BoxStyle* style, CSSTo
     return true;
 }
 
-bool CSSVariableData::resolveVar(CSSTokenStream input, const BoxStyle* style, CSSTokenList& tokens) const
+bool CSSVariableData::resolveVar(CSSTokenStream input, const BoxStyle* style, CSSTokenList& tokens, std::set<CSSVariableData*>& references) const
 {
     input.consumeWhitespace();
     if(input->type() != CSSToken::Type::Ident)
         return false;
     auto data = style->getCustom(input->data());
     input.consumeIncludingWhitespace();
+    if(!input.empty() && input->type() != CSSToken::Type::Comma)
+        return false;
     if(data == nullptr) {
         if(!input.consumeCommaIncludingWhitespace())
             return false;
-        return resolve(input, style, tokens);
+        return resolve(input, style, tokens, references);
     }
 
-    if(!input.empty() && input->type() != CSSToken::Type::Comma)
+    if(references.contains(data))
         return false;
-    return data->resolve(style, tokens);
+    references.insert(data);
+    return data->resolve(style, tokens, references);
 }
 
 RefPtr<CSSCustomPropertyValue> CSSCustomPropertyValue::create(Heap* heap, const GlobalString& name, RefPtr<CSSVariableData> value)
@@ -258,7 +261,8 @@ RefPtr<CSSVariableReferenceValue> CSSVariableReferenceValue::create(Heap* heap, 
 CSSPropertyList CSSVariableReferenceValue::resolve(const BoxStyle* style) const
 {
     CSSTokenList tokens;
-    if(!m_value->resolve(style, tokens))
+    std::set<CSSVariableData*> references;
+    if(!m_value->resolve(style, tokens, references))
         return CSSPropertyList();
     CSSTokenStream input(tokens.data(), tokens.size());
     CSSParser parser(m_context, style->heap());
