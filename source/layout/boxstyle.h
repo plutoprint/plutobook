@@ -967,12 +967,14 @@ public:
     float chFontSize() const;
     float remFontSize() const;
 
+    FontFeatureList fontFeatures() const;
+
     float viewportWidth() const;
     float viewportHeight() const;
     float viewportMin() const;
     float viewportMax() const;
 
-    FontFeatureList fontFeatures() const;
+    RefPtr<CSSValue> resolveLength(const RefPtr<CSSValue>& value) const;
 
     float convertLengthValue(const CSSValue& value) const;
     float convertLineWidth(const CSSValue& value) const;

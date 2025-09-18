@@ -293,6 +293,7 @@ enum class CSSValueType {
     Percent,
     Angle,
     Length,
+    Calc,
     String,
     LocalUrl,
     Url,
@@ -840,42 +841,42 @@ struct is_a<CSSAngleValue> {
     static bool check(const CSSValue& value) { return value.type() == CSSValueType::Angle; }
 };
 
+enum class CSSLengthUnits : uint8_t {
+    None,
+    Pixels,
+    Points,
+    Picas,
+    Centimeters,
+    Millimeters,
+    Inches,
+    ViewportWidth,
+    ViewportHeight,
+    ViewportMin,
+    ViewportMax,
+    Ems,
+    Exs,
+    Chs,
+    Rems
+};
+
 class CSSLengthValue final : public CSSValue {
 public:
-    enum class Units {
-        None,
-        Pixels,
-        Points,
-        Picas,
-        Centimeters,
-        Millimeters,
-        Inches,
-        ViewportWidth,
-        ViewportHeight,
-        ViewportMin,
-        ViewportMax,
-        Ems,
-        Exs,
-        Chs,
-        Rems
-    };
-
-    static RefPtr<CSSLengthValue> create(Heap* heap, float value, Units units);
+    static RefPtr<CSSLengthValue> create(Heap* heap, float value, CSSLengthUnits units = CSSLengthUnits::Pixels);
 
     float value() const { return m_value; }
-    Units units() const { return m_units; }
+    CSSLengthUnits units() const { return m_units; }
     CSSValueType type() const final { return CSSValueType::Length; }
 
 private:
-    CSSLengthValue(float value, Units units)
+    CSSLengthValue(float value, CSSLengthUnits units)
         : m_value(value), m_units(units)
     {}
 
     float m_value;
-    Units m_units;
+    CSSLengthUnits m_units;
 };
 
-inline RefPtr<CSSLengthValue> CSSLengthValue::create(Heap* heap, float value, Units units)
+inline RefPtr<CSSLengthValue> CSSLengthValue::create(Heap* heap, float value, CSSLengthUnits units)
 {
     return adoptPtr(new (heap) CSSLengthValue(value, units));
 }
@@ -893,6 +894,8 @@ public:
     CSSLengthResolver(const Document* document, const Font* font);
 
     float resolveLength(const CSSValue& value) const;
+    float resolveLength(const CSSLengthValue& length) const;
+    float resolveLength(float value, CSSLengthUnits units) const;
 
 private:
     float emFontSize() const;
@@ -907,6 +910,60 @@ private:
 
     const Document* m_document;
     const Font* m_font;
+};
+
+enum class CSSCalcOperator : uint8_t {
+    None,
+    Add,
+    Sub,
+    Mul,
+    Div
+};
+
+struct CSSCalc {
+    CSSCalc() = default;
+    explicit CSSCalc(CSSCalcOperator op) : op(op) {}
+    CSSCalc(float value, CSSLengthUnits units = CSSLengthUnits::None)
+        : value(value), units(units)
+    {}
+
+    float value = 0;
+    CSSLengthUnits units = CSSLengthUnits::None;
+    CSSCalcOperator op = CSSCalcOperator::None;
+};
+
+using CSSCalcList = std::pmr::vector<CSSCalc>;
+
+class CSSCalcValue final : public CSSValue {
+public:
+    static RefPtr<CSSCalcValue> create(Heap* heap, bool negative, bool unitless, CSSCalcList values);
+
+    const bool negative() const { return m_negative; }
+    const bool unitless() const { return m_unitless; }
+    const CSSCalcList& values() const { return m_values; }
+    CSSValueType type() const final { return CSSValueType::Calc; }
+
+    float resolve(const CSSLengthResolver& resolver) const;
+
+private:
+    CSSCalcValue(bool negative, bool unitless, CSSCalcList values)
+        : m_negative(negative), m_unitless(unitless)
+        , m_values(std::move(values))
+    {}
+
+    const bool m_negative;
+    const bool m_unitless;
+    CSSCalcList m_values;
+};
+
+inline RefPtr<CSSCalcValue> CSSCalcValue::create(Heap* heap, bool negative, bool unitless, CSSCalcList values)
+{
+    return adoptPtr(new (heap) CSSCalcValue(negative, unitless, std::move(values)));
+}
+
+template<>
+struct is_a<CSSCalcValue> {
+    static bool check(const CSSValue& value) { return value.type() == CSSValueType::Calc; }
 };
 
 class CSSStringValue final : public CSSValue {

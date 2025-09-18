@@ -802,7 +802,7 @@ TabSize BoxStyle::tabSize() const
     if(value == nullptr)
         return TabSize(TabSize::Type::Space, 8.0);
     const auto& length = to<CSSLengthValue>(*value);
-    if(length.units() == CSSLengthValue::Units::None)
+    if(length.units() == CSSLengthUnits::None)
         return TabSize(TabSize::Type::Space, length.value());
     return TabSize(TabSize::Type::Length, convertLengthValue(length));
 }
@@ -839,7 +839,7 @@ float BoxStyle::lineHeight() const
     if(auto percent = to<CSSPercentValue>(value))
         return percent->value() * fontSize() / 100.f;
     const auto& length = to<CSSLengthValue>(*value);
-    if(length.units() == CSSLengthValue::Units::None)
+    if(length.units() == CSSLengthUnits::None)
         return length.value() * fontSize();
     return convertLengthValue(length);
 }
@@ -1948,26 +1948,6 @@ float BoxStyle::remFontSize() const
     return kMediumFontSize;
 }
 
-float BoxStyle::viewportWidth() const
-{
-    return document()->viewportWidth();
-}
-
-float BoxStyle::viewportHeight() const
-{
-    return document()->viewportHeight();
-}
-
-float BoxStyle::viewportMin() const
-{
-    return std::min(document()->viewportWidth(), document()->viewportHeight());
-}
-
-float BoxStyle::viewportMax() const
-{
-    return std::max(document()->viewportWidth(), document()->viewportHeight());
-}
-
 class FontFeaturesBuilder {
 public:
     explicit FontFeaturesBuilder(const CSSPropertyMap& properties);
@@ -2294,6 +2274,54 @@ void FontFeaturesBuilder::buildFeatureSettings(FontFeatureList& features) const
 FontFeatureList BoxStyle::fontFeatures() const
 {
     return FontFeaturesBuilder(properties()).build();
+}
+
+float BoxStyle::viewportWidth() const
+{
+    return document()->viewportWidth();
+}
+
+float BoxStyle::viewportHeight() const
+{
+    return document()->viewportHeight();
+}
+
+float BoxStyle::viewportMin() const
+{
+    return std::min(document()->viewportWidth(), document()->viewportHeight());
+}
+
+float BoxStyle::viewportMax() const
+{
+    return std::max(document()->viewportWidth(), document()->viewportHeight());
+}
+
+RefPtr<CSSValue> BoxStyle::resolveLength(const RefPtr<CSSValue>& value) const
+{
+    if(is<CSSLengthValue>(value)) {
+        const auto& length = to<CSSLengthValue>(*value);
+        switch(length.units()) {
+        case CSSLengthUnits::None:
+        case CSSLengthUnits::Pixels:
+        case CSSLengthUnits::Points:
+        case CSSLengthUnits::Picas:
+        case CSSLengthUnits::Centimeters:
+        case CSSLengthUnits::Millimeters:
+        case CSSLengthUnits::Inches:
+            return value;
+        case CSSLengthUnits::ViewportWidth:
+        case CSSLengthUnits::ViewportHeight:
+        case CSSLengthUnits::ViewportMin:
+        case CSSLengthUnits::ViewportMax:
+        case CSSLengthUnits::Ems:
+        case CSSLengthUnits::Exs:
+        case CSSLengthUnits::Chs:
+        case CSSLengthUnits::Rems:
+            break;
+        }
+    }
+
+    return CSSLengthValue::create(heap(), convertLengthValue(*value));
 }
 
 float BoxStyle::convertLengthValue(const CSSValue& value) const

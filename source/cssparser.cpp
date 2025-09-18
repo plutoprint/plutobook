@@ -1999,38 +1999,135 @@ RefPtr<CSSValue> CSSParser::consumeNumberOrPercentOrAuto(CSSTokenStream& input, 
     return consumeNumberOrPercent(input, negative);
 }
 
+static std::optional<CSSLengthUnits> matchUnitType(std::string_view name)
+{
+    static const CSSIdentEntry<CSSLengthUnits> table[] = {
+        {"px", CSSLengthUnits::Pixels},
+        {"pt", CSSLengthUnits::Points},
+        {"pc", CSSLengthUnits::Picas},
+        {"cm", CSSLengthUnits::Centimeters},
+        {"mm", CSSLengthUnits::Millimeters},
+        {"in", CSSLengthUnits::Inches},
+        {"vw", CSSLengthUnits::ViewportWidth},
+        {"vh", CSSLengthUnits::ViewportHeight},
+        {"vmin", CSSLengthUnits::ViewportMin},
+        {"vmax", CSSLengthUnits::ViewportMax},
+        {"em", CSSLengthUnits::Ems},
+        {"ex", CSSLengthUnits::Exs},
+        {"ch", CSSLengthUnits::Chs},
+        {"rem", CSSLengthUnits::Rems}
+    };
+
+    return matchIdent(table, name);
+}
+
+RefPtr<CSSValue> CSSParser::consumeCalc(CSSTokenStream& input, bool negative, bool unitless)
+{
+    if(input->type() != CSSToken::Type::Function && !identMatches("calc", 4, input->data()))
+        return nullptr;
+    CSSCalcList values(m_heap);
+    auto resolve_op = [](const CSSToken& token) {
+        switch(token.delim()) {
+        case '+':
+            return CSSCalcOperator::Add;
+        case '-':
+            return CSSCalcOperator::Sub;
+        case '*':
+            return CSSCalcOperator::Mul;
+        case '/':
+            return CSSCalcOperator::Div;
+        default:
+            return CSSCalcOperator::None;
+        }
+    };
+
+    CSSTokenStreamGuard guard(input);
+    auto block = input.consumeBlock();
+    block.consumeWhitespace();
+
+    CSSTokenList stack;
+    while(!block.empty()) {
+        const auto& token = block.get();
+        if(token.type() == CSSToken::Type::Number) {
+            values.emplace_back(token.number());
+        } else if(token.type() == CSSToken::Type::Dimension) {
+            auto unitType = matchUnitType(token.data());
+            if(unitType == std::nullopt)
+                return nullptr;
+            values.emplace_back(token.number(), unitType.value());
+        } else if(token.type() == CSSToken::Type::Delim) {
+            auto token_op = resolve_op(token);
+            if(token_op == CSSCalcOperator::None)
+                return nullptr;
+            while(!stack.empty()) {
+                if(stack.back().type() != CSSToken::Type::Delim)
+                    break;
+                auto stack_op = resolve_op(stack.back());
+                if(stack_op == CSSCalcOperator::None)
+                    return nullptr;
+                if((token_op == CSSCalcOperator::Mul || token_op == CSSCalcOperator::Div)
+                    && (stack_op == CSSCalcOperator::Add || stack_op == CSSCalcOperator::Sub)) {
+                    break;
+                }
+
+                values.emplace_back(stack_op);
+                stack.pop_back();
+            }
+
+            stack.push_back(token);
+        } else if(token.type() == CSSToken::Type::Function) {
+            if(!identMatches("calc", 4, input->data()))
+                return nullptr;
+            stack.push_back(token);
+        } else if(token.type() == CSSToken::Type::LeftParenthesis) {
+            stack.push_back(token);
+        } else if(token.type() == CSSToken::Type::RightParenthesis) {
+            while(!stack.empty() && stack.back().type() == CSSToken::Type::Delim) {
+                values.emplace_back(resolve_op(stack.back()));
+                stack.pop_back();
+            }
+
+            if(stack.empty())
+                return nullptr;
+            stack.pop_back();
+        } else {
+            return nullptr;
+        }
+
+        block.consumeIncludingWhitespace();
+    }
+
+    input.consumeWhitespace();
+    while(!stack.empty()) {
+        if(stack.back().type() == CSSToken::Type::Delim)
+            values.emplace_back(resolve_op(stack.back()));
+        stack.pop_back();
+    }
+
+    unitless |= m_context.inSVGElement();
+    if(values.empty())
+        return nullptr;
+    guard.release();
+    return CSSCalcValue::create(m_heap, negative, unitless, std::move(values));
+}
+
 RefPtr<CSSValue> CSSParser::consumeLength(CSSTokenStream& input, bool negative, bool unitless)
 {
+    if(auto value = consumeCalc(input, negative, unitless))
+        return value;
     if(input->type() != CSSToken::Type::Dimension && input->type() != CSSToken::Type::Number)
         return nullptr;
     auto value = input->number();
     if(value < 0.0 && !negative)
         return nullptr;
     if(input->type() == CSSToken::Type::Number) {
-        if(value && !unitless && ! m_context.inSVGElement())
+        if(value && !unitless && !m_context.inSVGElement())
             return nullptr;
         input.consumeIncludingWhitespace();
-        return CSSLengthValue::create(m_heap, value, CSSLengthValue::Units::None);
+        return CSSLengthValue::create(m_heap, value, CSSLengthUnits::None);
     }
 
-    static const CSSIdentEntry<CSSLengthValue::Units> table[] = {
-        {"px", CSSLengthValue::Units::Pixels},
-        {"pt", CSSLengthValue::Units::Points},
-        {"pc", CSSLengthValue::Units::Picas},
-        {"cm", CSSLengthValue::Units::Centimeters},
-        {"mm", CSSLengthValue::Units::Millimeters},
-        {"in", CSSLengthValue::Units::Inches},
-        {"vw", CSSLengthValue::Units::ViewportWidth},
-        {"vh", CSSLengthValue::Units::ViewportHeight},
-        {"vmin", CSSLengthValue::Units::ViewportMin},
-        {"vmax", CSSLengthValue::Units::ViewportMax},
-        {"em", CSSLengthValue::Units::Ems},
-        {"ex", CSSLengthValue::Units::Exs},
-        {"ch", CSSLengthValue::Units::Chs},
-        {"rem", CSSLengthValue::Units::Rems}
-    };
-
-    auto unitType = matchIdent(table, input->data());
+    auto unitType = matchUnitType(input->data());
     if(unitType == std::nullopt)
         return nullptr;
     input.consumeIncludingWhitespace();
@@ -4089,7 +4186,7 @@ bool CSSParser::consumeFlex(CSSTokenStream& input, CSSPropertyList& properties, 
             else if(shrink == nullptr)
                 shrink = CSSNumberValue::create(m_heap, input->number());
             else if(input->number() == 0.0)
-                basis = CSSLengthValue::create(m_heap, 0.0, CSSLengthValue::Units::None);
+                basis = CSSLengthValue::create(m_heap, 0.0, CSSLengthUnits::None);
             else
                 return false;
             input.consumeIncludingWhitespace();

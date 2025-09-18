@@ -81,6 +81,7 @@ private:
     RefPtr<CSSValue> consumeNumber(CSSTokenStream& input, bool negative);
     RefPtr<CSSValue> consumeNumberOrPercent(CSSTokenStream& input, bool negative);
     RefPtr<CSSValue> consumeNumberOrPercentOrAuto(CSSTokenStream& input, bool negative);
+    RefPtr<CSSValue> consumeCalc(CSSTokenStream& input, bool negative, bool unitless);
     RefPtr<CSSValue> consumeLength(CSSTokenStream& input, bool negative, bool unitless);
     RefPtr<CSSValue> consumeLengthOrPercent(CSSTokenStream& input, bool negative, bool unitless);
     RefPtr<CSSValue> consumeLengthOrAuto(CSSTokenStream& input, bool negative, bool unitless);

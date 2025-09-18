@@ -18,38 +18,49 @@ CSSLengthResolver::CSSLengthResolver(const Document* document, const Font* font)
 
 float CSSLengthResolver::resolveLength(const CSSValue& value) const
 {
+    if(is<CSSLengthValue>(value))
+        return resolveLength(to<CSSLengthValue>(value));
+    return to<CSSCalcValue>(value).resolve(*this);
+}
+
+float CSSLengthResolver::resolveLength(const CSSLengthValue& length) const
+{
+    return resolveLength(length.value(), length.units());
+}
+
+float CSSLengthResolver::resolveLength(float value, CSSLengthUnits units) const
+{
     constexpr auto dpi = 96.f;
-    const auto& length = to<CSSLengthValue>(value);
-    switch(length.units()) {
-    case CSSLengthValue::Units::None:
-    case CSSLengthValue::Units::Pixels:
-        return length.value();
-    case CSSLengthValue::Units::Inches:
-        return length.value() * dpi;
-    case CSSLengthValue::Units::Centimeters:
-        return length.value() * dpi / 2.54f;
-    case CSSLengthValue::Units::Millimeters:
-        return length.value() * dpi / 25.4f;
-    case CSSLengthValue::Units::Points:
-        return length.value() * dpi / 72.f;
-    case CSSLengthValue::Units::Picas:
-        return length.value() * dpi / 6.f;
-    case CSSLengthValue::Units::Ems:
-        return length.value() * emFontSize();
-    case CSSLengthValue::Units::Exs:
-        return length.value() * exFontSize();
-    case CSSLengthValue::Units::Rems:
-        return length.value() * remFontSize();
-    case CSSLengthValue::Units::Chs:
-        return length.value() * chFontSize();
-    case CSSLengthValue::Units::ViewportWidth:
-        return length.value() * viewportWidth() / 100.f;
-    case CSSLengthValue::Units::ViewportHeight:
-        return length.value() * viewportHeight() / 100.f;
-    case CSSLengthValue::Units::ViewportMin:
-        return length.value() * viewportMin() / 100.f;
-    case CSSLengthValue::Units::ViewportMax:
-        return length.value() * viewportMax() / 100.f;
+    switch(units) {
+    case CSSLengthUnits::None:
+    case CSSLengthUnits::Pixels:
+        return value;
+    case CSSLengthUnits::Inches:
+        return value * dpi;
+    case CSSLengthUnits::Centimeters:
+        return value * dpi / 2.54f;
+    case CSSLengthUnits::Millimeters:
+        return value * dpi / 25.4f;
+    case CSSLengthUnits::Points:
+        return value * dpi / 72.f;
+    case CSSLengthUnits::Picas:
+        return value * dpi / 6.f;
+    case CSSLengthUnits::Ems:
+        return value * emFontSize();
+    case CSSLengthUnits::Exs:
+        return value * exFontSize();
+    case CSSLengthUnits::Rems:
+        return value * remFontSize();
+    case CSSLengthUnits::Chs:
+        return value * chFontSize();
+    case CSSLengthUnits::ViewportWidth:
+        return value * viewportWidth() / 100.f;
+    case CSSLengthUnits::ViewportHeight:
+        return value * viewportHeight() / 100.f;
+    case CSSLengthUnits::ViewportMin:
+        return value * viewportMin() / 100.f;
+    case CSSLengthUnits::ViewportMax:
+        return value * viewportMax() / 100.f;
     default:
         assert(false);
     }
@@ -117,6 +128,64 @@ float CSSLengthResolver::viewportMax() const
     if(m_document)
         return std::max(m_document->viewportWidth(), m_document->viewportHeight());
     return 0.f;
+}
+
+float CSSCalcValue::resolve(const CSSLengthResolver& resolver) const
+{
+    std::vector<CSSCalc> stack;
+    for(const auto& item : m_values) {
+        if(item.op == CSSCalcOperator::None) {
+            if(item.units == CSSLengthUnits::None) {
+                stack.emplace_back(item);
+            } else {
+                auto value = resolver.resolveLength(item.value, item.units);
+                stack.emplace_back(value, CSSLengthUnits::Pixels);
+            }
+        } else {
+            if(stack.size() < 2)
+                return 0;
+            auto right = stack.back();
+            stack.pop_back();
+            auto left = stack.back();
+            stack.pop_back();
+
+            switch(item.op) {
+            case CSSCalcOperator::Add:
+                if(right.units != left.units)
+                    return 0;
+                stack.emplace_back(left.value + right.value, right.units);
+                break;
+            case CSSCalcOperator::Sub:
+                if(right.units != left.units)
+                    return 0;
+                stack.emplace_back(left.value - right.value, right.units);
+                break;
+            case CSSCalcOperator::Mul:
+                if(right.units == CSSLengthUnits::Pixels && left.units == CSSLengthUnits::Pixels)
+                    return 0;
+                stack.emplace_back(left.value * right.value, std::max(left.units, right.units));
+                break;
+            case CSSCalcOperator::Div:
+                if(right.units == CSSLengthUnits::Pixels || right.value == 0)
+                    return 0;
+                stack.emplace_back(left.value / right.value, left.units);
+                break;
+            default:
+                assert(false);
+            }
+        }
+    }
+
+    if(stack.size() == 1) {
+        const auto& result = stack.back();
+        if(result.value < 0 && !m_negative)
+            return 0;
+        if(result.units == CSSLengthUnits::None && !m_unitless)
+            return 0;
+        return result.value;
+    }
+
+    return 0;
 }
 
 class CSSValuePool {

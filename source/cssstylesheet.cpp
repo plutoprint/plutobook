@@ -108,8 +108,11 @@ FontDescriptionBuilder::FontDescriptionBuilder(const BoxStyle* parentStyle, cons
     : m_parentStyle(parentStyle)
 {
     for(const auto& property : properties) {
-        if(is<CSSInheritValue>(*property.value()))
+        if(is<CSSInheritValue>(*property.value())
+            || is<CSSVariableReferenceValue>(*property.value())) {
             continue;
+        }
+
         switch(property.id()) {
         case CSSPropertyID::FontFamily:
             m_family = property.value();
@@ -415,9 +418,22 @@ void StyleBuilder::buildStyle(BoxStyle* newStyle)
     newStyle->setFontDescription(fontDescription());
 
     for(const auto& property : m_properties) {
-        auto id = property.id();
+        const auto id = property.id();
+        switch(id) {
+        case CSSPropertyID::Custom:
+        case CSSPropertyID::FontFamily:
+        case CSSPropertyID::FontSize:
+        case CSSPropertyID::FontWeight:
+        case CSSPropertyID::FontStretch:
+        case CSSPropertyID::FontStyle:
+        case CSSPropertyID::FontVariationSettings:
+            continue;
+        default:
+            break;
+        }
+
         auto value = property.value();
-        if(id == CSSPropertyID::Custom || is<CSSVariableReferenceValue>(*value))
+        if(is<CSSVariableReferenceValue>(*value))
             continue;
         if(is<CSSInitialValue>(*value)) {
             newStyle->reset(id);
@@ -426,6 +442,8 @@ void StyleBuilder::buildStyle(BoxStyle* newStyle)
 
         if(is<CSSInheritValue>(*value) && !(value = m_parentStyle->get(id)))
             continue;
+        if(is<CSSLengthValue>(*value) || is<CSSCalcValue>(*value))
+            value = newStyle->resolveLength(value);
         newStyle->set(id, std::move(value));
     }
 }
