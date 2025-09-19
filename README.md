@@ -414,6 +414,8 @@ PlutoBook is designed to grow into a powerful, flexible tool for static HTML ren
 
 * **CSS Logical Properties:** We intend to support logical CSS properties such as `margin-inline-start` and `padding-block-end`. These allow layouts to adapt more naturally to different writing modes, languages, and directions.
 
+* **CSS Exclusions:** We plan to support CSS Exclusions, which allow inline content to wrap around custom shapes defined by properties such as `shape-outside`. This makes it possible to flow text around non-rectangular elements, enabling more expressive and magazine-style layouts.
+
 Your support keeps PlutoBook moving forward as a fast, modern tool for static HTML rendering. If you’d like to help, consider becoming a sponsor: [https://github.com/sponsors/plutoprint](https://github.com/sponsors/plutoprint)
 
 Every contribution, no matter the size, helps move the project forward.
