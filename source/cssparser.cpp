@@ -2023,7 +2023,7 @@ static std::optional<CSSLengthUnits> matchUnitType(std::string_view name)
 
 RefPtr<CSSValue> CSSParser::consumeCalc(CSSTokenStream& input, bool negative, bool unitless)
 {
-    if(input->type() != CSSToken::Type::Function && !identMatches("calc", 4, input->data()))
+    if(input->type() != CSSToken::Type::Function || !identMatches("calc", 4, input->data()))
         return nullptr;
     CSSCalcList values(m_heap);
     auto resolve_op = [](const CSSToken& token) {
@@ -2045,7 +2045,7 @@ RefPtr<CSSValue> CSSParser::consumeCalc(CSSTokenStream& input, bool negative, bo
     auto block = input.consumeBlock();
     block.consumeWhitespace();
 
-    CSSTokenList stack;
+    std::vector<CSSCalcOperator> stack;
     while(!block.empty()) {
         const auto& token = block.get();
         if(token.type() == CSSToken::Type::Number) {
@@ -2060,11 +2060,9 @@ RefPtr<CSSValue> CSSParser::consumeCalc(CSSTokenStream& input, bool negative, bo
             if(token_op == CSSCalcOperator::None)
                 return nullptr;
             while(!stack.empty()) {
-                if(stack.back().type() != CSSToken::Type::Delim)
-                    break;
-                auto stack_op = resolve_op(stack.back());
+                auto stack_op = stack.back();
                 if(stack_op == CSSCalcOperator::None)
-                    return nullptr;
+                    break;
                 if((token_op == CSSCalcOperator::Mul || token_op == CSSCalcOperator::Div)
                     && (stack_op == CSSCalcOperator::Add || stack_op == CSSCalcOperator::Sub)) {
                     break;
@@ -2074,16 +2072,16 @@ RefPtr<CSSValue> CSSParser::consumeCalc(CSSTokenStream& input, bool negative, bo
                 stack.pop_back();
             }
 
-            stack.push_back(token);
+            stack.push_back(token_op);
         } else if(token.type() == CSSToken::Type::Function) {
-            if(!identMatches("calc", 4, input->data()))
+            if(!identMatches("calc", 4, token.data()))
                 return nullptr;
-            stack.push_back(token);
+            stack.push_back(CSSCalcOperator::None);
         } else if(token.type() == CSSToken::Type::LeftParenthesis) {
-            stack.push_back(token);
+            stack.push_back(CSSCalcOperator::None);
         } else if(token.type() == CSSToken::Type::RightParenthesis) {
-            while(!stack.empty() && stack.back().type() == CSSToken::Type::Delim) {
-                values.emplace_back(resolve_op(stack.back()));
+            while(!stack.empty() && stack.back() != CSSCalcOperator::None) {
+                values.emplace_back(stack.back());
                 stack.pop_back();
             }
 
@@ -2099,8 +2097,8 @@ RefPtr<CSSValue> CSSParser::consumeCalc(CSSTokenStream& input, bool negative, bo
 
     input.consumeWhitespace();
     while(!stack.empty()) {
-        if(stack.back().type() == CSSToken::Type::Delim)
-            values.emplace_back(resolve_op(stack.back()));
+        if(stack.back() != CSSCalcOperator::None)
+            values.emplace_back(stack.back());
         stack.pop_back();
     }
 
