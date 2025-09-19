@@ -2359,13 +2359,15 @@ RefPtr<CSSValue> CSSParser::consumeColor(CSSTokenStream& input)
     return nullptr;
 }
 
-static bool consumeRgbComponent(CSSTokenStream& input, int& component)
+static bool consumeRgbComponent(CSSTokenStream& input, int& component, bool requiresPercent)
 {
     if(input->type() != CSSToken::Type::Number
         && input->type() != CSSToken::Type::Percentage) {
         return false;
     }
 
+    if(requiresPercent && input->type() != CSSToken::Type::Percentage)
+        return false;
     auto value = input->number();
     if(input->type() == CSSToken::Type::Percentage)
         value *= 2.55;
@@ -2389,6 +2391,18 @@ static bool consumeAlphaComponent(CSSTokenStream& input, float& component)
     return true;
 }
 
+static bool consumeAlphaDelimiter(CSSTokenStream& input, bool requiresPercent)
+{
+    if(requiresPercent)
+        return input.consumeCommaIncludingWhitespace();
+    if(input->type() == CSSToken::Type::Delim && input->delim() == '/') {
+        input.consumeIncludingWhitespace();
+        return true;
+    }
+
+    return false;
+}
+
 RefPtr<CSSValue> CSSParser::consumeRgb(CSSTokenStream& input)
 {
     assert(input->type() == CSSToken::Type::Function);
@@ -2396,30 +2410,31 @@ RefPtr<CSSValue> CSSParser::consumeRgb(CSSTokenStream& input)
     auto block = input.consumeBlock();
     block.consumeWhitespace();
 
+    auto requiresPercent = block->type() == CSSToken::Type::Percentage;
+
     int red = 0;
-    if(!consumeRgbComponent(block, red))
-        return nullptr;
-    if(block->type() != CSSToken::Type::Comma) {
+    if(!consumeRgbComponent(block, red, requiresPercent)) {
         return nullptr;
     }
 
+    auto requiresComma = block.consumeCommaIncludingWhitespace();
+
     int green = 0;
-    block.consumeIncludingWhitespace();
-    if(!consumeRgbComponent(block, green))
+    if(!consumeRgbComponent(block, green, requiresPercent)) {
         return nullptr;
-    if(block->type() != CSSToken::Type::Comma) {
+    }
+
+    if(requiresComma && !block.consumeCommaIncludingWhitespace()) {
         return nullptr;
     }
 
     int blue = 0;
-    block.consumeIncludingWhitespace();
-    if(!consumeRgbComponent(block, blue)) {
+    if(!consumeRgbComponent(block, blue, requiresPercent)) {
         return nullptr;
     }
 
     float alpha = 1.f;
-    if(block->type() == CSSToken::Type::Comma) {
-        block.consumeIncludingWhitespace();
+    if(consumeAlphaDelimiter(block, requiresComma)) {
         if(!consumeAlphaComponent(block, alpha)) {
             return nullptr;
         }
@@ -2432,7 +2447,7 @@ RefPtr<CSSValue> CSSParser::consumeRgb(CSSTokenStream& input)
     return CSSColorValue::create(m_heap, Color(red, green, blue, std::lroundf(alpha * 255.f)));
 }
 
-static bool consumeHueComponent(CSSTokenStream& input, float& component)
+static bool consumeAngleComponent(CSSTokenStream& input, float& component)
 {
     if(input->type() != CSSToken::Type::Number
         && input->type() != CSSToken::Type::Dimension) {
@@ -2466,6 +2481,19 @@ static bool consumeHueComponent(CSSTokenStream& input, float& component)
         }
     }
 
+    component = std::fmod(component, 360.f);
+    if(component < 0.f) { component += 360.f; }
+
+    input.consumeIncludingWhitespace();
+    return true;
+}
+
+static bool consumePercentComponent(CSSTokenStream& input, float& component)
+{
+    if(input->type() != CSSToken::Type::Percentage)
+        return false;
+    auto value = input->number() / 100.0;
+    component = std::clamp(value, 0.0, 1.0);
     input.consumeIncludingWhitespace();
     return true;
 }
@@ -2486,26 +2514,25 @@ RefPtr<CSSValue> CSSParser::consumeHsl(CSSTokenStream& input)
     block.consumeWhitespace();
 
     float h, s, l, a = 1.f;
-    if(!consumeHueComponent(block, h))
-        return nullptr;
-    if(block->type() != CSSToken::Type::Comma) {
+    if(!consumeAngleComponent(block, h)) {
         return nullptr;
     }
 
-    block.consumeIncludingWhitespace();
-    if(!consumeAlphaComponent(block, s))
-        return nullptr;
-    if(block->type() != CSSToken::Type::Comma) {
+    auto requiresComma = block.consumeCommaIncludingWhitespace();
+
+    if(!consumePercentComponent(block, s)) {
         return nullptr;
     }
 
-    block.consumeIncludingWhitespace();
-    if(!consumeAlphaComponent(block, l)) {
+    if(requiresComma && !block.consumeCommaIncludingWhitespace()) {
         return nullptr;
     }
 
-    if(block->type() == CSSToken::Type::Comma) {
-        block.consumeIncludingWhitespace();
+    if(!consumePercentComponent(block, l)) {
+        return nullptr;
+    }
+
+    if(consumeAlphaDelimiter(block, requiresComma)) {
         if(!consumeAlphaComponent(block, a)) {
             return nullptr;
         }
@@ -2515,9 +2542,6 @@ RefPtr<CSSValue> CSSParser::consumeHsl(CSSTokenStream& input)
         return nullptr;
     input.consumeWhitespace();
     guard.release();
-
-    h = std::fmod(h, 360.f);
-    if(h < 0.f) { h += 360.f; }
 
     auto r = computeHslComponent(h, s, l, 0);
     auto g = computeHslComponent(h, s, l, 8);
