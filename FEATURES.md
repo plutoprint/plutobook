@@ -14,6 +14,8 @@
 - [Tables](#tables)
 - [Multiple Columns](#multiple-columns)
 - [Flexible Box](#flexible-box)
+- [Custom Properties](#custom-properties)
+- [Math Functions](#math-functions)
 - [Media Queries](#media-queries)
 - [Paged Media](#paged-media)
 - [Scalable Vector Graphics](#scalable-vector-graphics)
@@ -27,6 +29,8 @@ PlutoBook also supports the `@font-face` rule for loading fonts, with both local
 ## Color
 
 PlutoBook fully supports standard CSS color formats as defined in the [CSS Color Module Level 3](https://www.w3.org/TR/css-color-3), including hexadecimal (`#rgb` and `#rrggbb`), functional notations like `rgb()`, `rgba()`, `hsl()`, and `hsla()`, as well as both basic and extended keyword colors. It also recognizes the special keywords `transparent` and `currentColor`, but does not support deprecated system color keywords such as `ButtonFace` and `WindowText`, which have been removed from modern CSS. In addition, PlutoBook honors the `opacity` property, which applies a uniform alpha transparency to an element and all its descendants, so the entire subtree appears with the same level of transparency.
+
+PlutoBook also provides partial support for [CSS Color Module Level 4](https://www.w3.org/TR/css-color-4). This includes modern hexadecimal forms with alpha (`#rgba`, `#rrggbbaa`), the `hwb()` function, and the updated space-separated syntax with an optional `/` for alpha (e.g. `rgb(255 0 0 / 0.5)`). More advanced Level 4 features such as `lab()`, `lch()`, and `color()` are not yet supported.
 
 ## Backgrounds and Borders
 
@@ -117,6 +121,24 @@ The `display` property accepts `flex` and `inline-flex` to define a flex contain
 Alignment and spacing are handled using `justify-content` (for main-axis alignment), `align-items` (for cross-axis alignment of items), and `align-content` (for alignment of multiple lines when wrapping). Individual flex items can override alignment with `align-self`.
 
 Flex items can grow, shrink, and maintain base sizes using the `flex` shorthand or its longhand properties: `flex-grow`, `flex-shrink`, and `flex-basis`. The `order` property lets you control the visual order of items independent of their source order, providing powerful layout flexibility.
+
+Spacing between flex items is managed with the `gap` property, which defines a uniform spacing value. More granular control is available with `row-gap` (for spacing between rows) and `column-gap` (for spacing between columns).
+
+## Custom Properties
+
+PlutoBook supports [CSS Custom Properties](https://www.w3.org/TR/css-variables-1/), also known as CSS variables. Custom properties allow reusable values to be defined once and referenced throughout a stylesheet using the `var()` function. They provide a powerful way to centralize colors, sizes, and other design tokens, improving maintainability and consistency across documents.
+
+Custom properties are declared with identifiers prefixed by `--` and can be applied anywhere a property value is accepted. PlutoBook also supports fallback values in the `var()` function, so `var(--unknown, red)` will use `red` if `--unknown` is not defined.
+
+PlutoBook fully supports the cascading and inheritance behavior of custom properties as defined in the specification, ensuring that updates propagate naturally through the document. However, advanced features introduced in later drafts, such as typed custom properties defined with the `@property` at-rule, are not yet supported.
+
+## Math Functions
+
+PlutoBook supports [CSS math functions](https://www.w3.org/TR/css-values-4/#math), which allow property values to be calculated dynamically at render time. Math functions provide flexibility when combining lengths and other units in styles.
+
+PlutoBook currently supports the `calc()` function, including nested expressions, so complex formulas with addition, subtraction, multiplication, and division are possible. However, percentage values inside `calc()` are not supported, and calculations must use absolute or relative length units instead.
+
+PlutoBook fully supports the evaluation of nested `calc()` expressions as defined in the specification, ensuring consistent results for complex layouts. More advanced math functions introduced in CSS Values and Units Level 4, such as `min()`, `max()`, and `clamp()`, are not yet supported.
 
 ## Media Queries
 

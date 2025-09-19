@@ -410,8 +410,6 @@ PlutoBook is designed to grow into a powerful, flexible tool for static HTML ren
 
 * **Accessibility Improvements:** We aim to support full PDF/UA compliance, allowing PlutoBook to automatically tag structure like headings, lists, and figures for screen readers and assistive technologies.
 
-* **CSS Custom Properties:** Planned support for CSS variables using `var()` and the `@property` rule will make it easier to build maintainable, themeable documents with clean and reusable styling logic.
-
 * **CSS Grid Layout:** We plan to support full CSS Grid features including auto-placement, named lines, and implicit tracks. This will give authors greater control over page layout without extra markup or layout workarounds.
 
 * **CSS Logical Properties:** We intend to support logical CSS properties such as `margin-inline-start` and `padding-block-end`. These allow layouts to adapt more naturally to different writing modes, languages, and directions.
