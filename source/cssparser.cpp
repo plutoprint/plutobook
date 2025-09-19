@@ -2334,6 +2334,8 @@ RefPtr<CSSValue> CSSParser::consumeColor(CSSTokenStream& input)
             return consumeRgb(input);
         if(identMatches("hsl", 3, name) || identMatches("hsla", 4, name))
             return consumeHsl(input);
+        if(identMatches("hwb", 3, name))
+            return consumeHwb(input);
         return nullptr;
     }
 
@@ -2547,6 +2549,62 @@ RefPtr<CSSValue> CSSParser::consumeHsl(CSSTokenStream& input)
     auto r = computeHslComponent(h, s, l, 0);
     auto g = computeHslComponent(h, s, l, 8);
     auto b = computeHslComponent(h, s, l, 4);
+    return CSSColorValue::create(m_heap, Color(r, g, b, alpha));
+}
+
+RefPtr<CSSValue> CSSParser::consumeHwb(CSSTokenStream& input)
+{
+    assert(input->type() == CSSToken::Type::Function);
+    CSSTokenStreamGuard guard(input);
+    auto block = input.consumeBlock();
+    block.consumeWhitespace();
+
+    float hue, white, black;
+    if(!consumeAngleComponent(block, hue)) {
+        return nullptr;
+    }
+
+    auto requiresComma = block.consumeCommaIncludingWhitespace();
+
+    if(!consumePercentComponent(block, white)) {
+        return nullptr;
+    }
+
+    if(requiresComma && !block.consumeCommaIncludingWhitespace()) {
+        return nullptr;
+    }
+
+    if(!consumePercentComponent(block, black)) {
+        return nullptr;
+    }
+
+    int alpha = 255;
+    if(consumeAlphaDelimiter(block, requiresComma)) {
+        if(!consumeAlphaComponent(block, alpha)) {
+            return nullptr;
+        }
+    }
+
+    if(!block.empty())
+        return nullptr;
+    input.consumeWhitespace();
+    guard.release();
+
+    if(white + black > 1.0f) {
+        auto sum = white + black;
+        white /= sum;
+        black /= sum;
+    }
+
+    int components[3] = { 0, 8, 4 };
+    for(auto& component : components) {
+        auto channel = computeHslComponent(hue, 1.0f, 0.5f, component);
+        component = std::lroundf(channel * (1 - white - black) + (white * 255));
+    }
+
+    const auto r = components[0];
+    const auto g = components[1];
+    const auto b = components[2];
     return CSSColorValue::create(m_heap, Color(r, g, b, alpha));
 }
 
