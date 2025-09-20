@@ -1042,6 +1042,25 @@ bool CSSParser::consumeCounterStyleDescription(CSSTokenStream& input, CSSPropert
     return false;
 }
 
+static RefPtr<CSSValue> consumeWideKeyword(CSSTokenStream& input)
+{
+    if(input->type() != CSSToken::Type::Ident) {
+        return nullptr;
+    }
+
+    if(identMatches("initial", 7, input->data())) {
+        input.consumeIncludingWhitespace();
+        return CSSInitialValue::create();
+    }
+
+    if(identMatches("inherit", 7, input->data())) {
+        input.consumeIncludingWhitespace();
+        return CSSInheritValue::create();
+    }
+
+    return nullptr;
+}
+
 static bool containsVariableReferences(CSSTokenStream input)
 {
     while(!input.empty()) {
@@ -1061,22 +1080,11 @@ bool CSSParser::consumeDescription(CSSTokenStream& input, CSSPropertyList& prope
         return true;
     }
 
-    if(input->type() == CSSToken::Type::Ident) {
-        if(identMatches("initial", 7, input->data())) {
-            input.consumeIncludingWhitespace();
-            if(!input.empty())
-                return false;
-            addExpandedProperty(properties, id, important, CSSInitialValue::create());
-            return true;
-        }
-
-        if(identMatches("inherit", 7, input->data())) {
-            input.consumeIncludingWhitespace();
-            if(!input.empty())
-                return false;
-            addExpandedProperty(properties, id, important, CSSInheritValue::create());
-            return true;
-        }
+    if(auto value = consumeWideKeyword(input)) {
+        if(!input.empty())
+            return false;
+        addExpandedProperty(properties, id, important, std::move(value));
+        return true;
     }
 
     switch(id) {
