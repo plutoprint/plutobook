@@ -1,5 +1,18 @@
 # Changelog
 
+## PlutoBook 0.9.0 (2025-09-20)
+
+- Add support for CSS Custom Properties
+- Add support for CSS `calc()` function with length values
+- Add support for extended `rgb()` and `hsl()` functions with whitespace and alpha slash syntax
+- Add support for CSS `hwb()` color function
+- Add support for CSS wide keyword `unset`
+
+Backers and sponsors:
+
+- [Woza Labs](https://github.com/wozalabs)
+- [Ashish Kulkarni](https://github.com/ashkulz)
+
 ## PlutoBook 0.8.0 (2025-09-09)
 
 - Add support for `space-evenly` in flex layout
