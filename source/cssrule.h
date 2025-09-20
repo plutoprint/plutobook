@@ -284,6 +284,7 @@ enum class CSSValueID : uint16_t {
 enum class CSSValueType {
     Initial,
     Inherit,
+    Unset,
     Ident,
     CustomIdent,
     CustomProperty,
@@ -592,6 +593,22 @@ private:
 template<>
 struct is_a<CSSInheritValue> {
     static bool check(const CSSValue& value) { return value.type() == CSSValueType::Inherit; }
+};
+
+class CSSUnsetValue final : public CSSValue {
+public:
+    static RefPtr<CSSUnsetValue> create();
+
+    CSSValueType type() const final { return CSSValueType::Unset; }
+
+private:
+    CSSUnsetValue() = default;
+    friend class CSSValuePool;
+};
+
+template<>
+struct is_a<CSSUnsetValue> {
+    static bool check(const CSSValue& value) { return value.type() == CSSValueType::Unset; }
 };
 
 class CSSIdentValue final : public CSSValue {

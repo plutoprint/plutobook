@@ -194,6 +194,7 @@ public:
 
     CSSInitialValue* initialValue() const { return m_initialValue; }
     CSSInheritValue* inheritValue() const { return m_inheritValue; }
+    CSSUnsetValue* unsetValue() const { return m_unsetValue; }
 
     CSSIdentValue* identValue(CSSValueID id) const;
 
@@ -201,6 +202,7 @@ private:
     Heap m_heap;
     CSSInitialValue* m_initialValue;
     CSSInheritValue* m_inheritValue;
+    CSSUnsetValue* m_unsetValue;
     std::pmr::vector<CSSIdentValue*> m_identValues;
 };
 
@@ -210,6 +212,7 @@ CSSValuePool::CSSValuePool()
     : m_heap(1024 * 8)
     , m_initialValue(new (&m_heap) CSSInitialValue)
     , m_inheritValue(new (&m_heap) CSSInheritValue)
+    , m_unsetValue(new (&m_heap) CSSUnsetValue)
     , m_identValues(kNumCSSValueKeywords, &m_heap)
 {
     for(int i = 1; i < kNumCSSValueKeywords; ++i) {
@@ -237,6 +240,11 @@ RefPtr<CSSInitialValue> CSSInitialValue::create()
 RefPtr<CSSInheritValue> CSSInheritValue::create()
 {
     return cssValuePool()->inheritValue();
+}
+
+RefPtr<CSSUnsetValue> CSSUnsetValue::create()
+{
+    return cssValuePool()->unsetValue();
 }
 
 RefPtr<CSSIdentValue> CSSIdentValue::create(CSSValueID value)

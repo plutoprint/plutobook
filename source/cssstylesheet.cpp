@@ -109,6 +109,7 @@ FontDescriptionBuilder::FontDescriptionBuilder(const BoxStyle* parentStyle, cons
 {
     for(const auto& property : properties) {
         if(is<CSSInheritValue>(*property.value())
+            || is<CSSUnsetValue>(*property.value())
             || is<CSSVariableReferenceValue>(*property.value())) {
             continue;
         }
@@ -433,7 +434,7 @@ void StyleBuilder::buildStyle(BoxStyle* newStyle)
         }
 
         auto value = property.value();
-        if(is<CSSVariableReferenceValue>(*value))
+        if(is<CSSUnsetValue>(*value) || is<CSSVariableReferenceValue>(*value))
             continue;
         if(is<CSSInitialValue>(*value)) {
             newStyle->reset(id);

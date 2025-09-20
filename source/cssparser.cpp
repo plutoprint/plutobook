@@ -1058,6 +1058,11 @@ static RefPtr<CSSValue> consumeWideKeyword(CSSTokenStream& input)
         return CSSInheritValue::create();
     }
 
+    if(identMatches("unset", 5, input->data())) {
+        input.consumeIncludingWhitespace();
+        return CSSUnsetValue::create();
+    }
+
     return nullptr;
 }
 
