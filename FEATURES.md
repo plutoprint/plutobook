@@ -15,7 +15,8 @@
 - [Multiple Columns](#multiple-columns)
 - [Flexible Box](#flexible-box)
 - [Custom Properties](#custom-properties)
-- [Math Functions](#math-functions)
+- [Values and Units](#values-and-units)
+- [Transforms](#transforms)
 - [Media Queries](#media-queries)
 - [Paged Media](#paged-media)
 - [Scalable Vector Graphics](#scalable-vector-graphics)
@@ -126,19 +127,29 @@ Spacing between flex items is managed with the `gap` property, which defines a u
 
 ## Custom Properties
 
-PlutoBook supports [CSS Custom Properties](https://www.w3.org/TR/css-variables-1/), also known as CSS variables. Custom properties allow reusable values to be defined once and referenced throughout a stylesheet using the `var()` function. They provide a powerful way to centralize colors, sizes, and other design tokens, improving maintainability and consistency across documents.
+PlutoBook supports CSS custom properties as described in the [CSS Custom Properties for Cascading Variables Module Level 1](https://www.w3.org/TR/css-variables-1/), also known as CSS variables. Custom properties allow reusable values to be defined once and referenced throughout a stylesheet using the `var()` function. They provide a powerful way to centralize colors, sizes, and other design tokens, improving maintainability and consistency across documents.
 
 Custom properties are declared with identifiers prefixed by `--` and can be applied anywhere a property value is accepted. PlutoBook also supports fallback values in the `var()` function, so `var(--unknown, red)` will use `red` if `--unknown` is not defined.
 
 PlutoBook fully supports the cascading and inheritance behavior of custom properties as defined in the specification, ensuring that updates propagate naturally through the document. However, advanced features introduced in later drafts, such as typed custom properties defined with the `@property` at-rule, are not yet supported.
 
-## Math Functions
+## Values and Units
 
-PlutoBook supports [CSS math functions](https://www.w3.org/TR/css-values-4/#math), which allow property values to be calculated dynamically at render time. Math functions provide flexibility when combining lengths and other units in styles.
+PlutoBook supports CSS values and units as described in the [CSS Values and Units Module Level 3](https://www.w3.org/TR/css-values-3/), which define the data types and measurement systems used throughout CSS. Values and units form the foundation of style rules, allowing authors to express sizes, positions, colors, and other aspects of presentation with precision.
 
-PlutoBook currently supports the `calc()` function, including nested expressions, so complex formulas with addition, subtraction, multiplication, and division are possible. However, percentage values inside `calc()` are not supported, and calculations must use absolute or relative length units instead.
+PlutoBook currently supports the most common absolute and relative length units, including `px`, `pt`, `cm`, `mm`, `in`, `pc`, `em`, `rem`, `%`, and viewport-based units like `vw`, `vh`, `vmin`, and `vmax`. Color values are supported through keywords (such as `red`), hexadecimal notation, and functional syntaxes like `rgb()` and `hsl()`. Angles (`deg`, `rad`, `grad`, `turn`) are also supported wherever relevant.
 
-PlutoBook fully supports the evaluation of nested `calc()` expressions as defined in the specification, ensuring consistent results for complex layouts. More advanced math functions introduced in CSS Values and Units Level 4, such as `min()`, `max()`, and `clamp()`, are not yet supported.
+PlutoBook also supports CSS wide keywords (`initial`, `inherit`, and `unset`), which provide standardized mechanisms for resetting or inheriting property values. These keywords work consistently across all supported properties, following the behavior defined in the specification.
+
+PlutoBook also supports CSS math functions, which allow property values to be calculated dynamically at render time. Math functions provide flexibility when combining lengths and other units in styles. Currently, the `calc()` function is supported, including nested expressions, so complex formulas with addition, subtraction, multiplication, and division are possible. However, percentage values inside `calc()` are not supported, and calculations must use absolute or relative length units instead.
+
+## Transforms
+
+PlutoBook supports CSS transforms as described in the [CSS Transforms Module Level 1](https://drafts.csswg.org/css-transforms-1/). Transforms allow authors to modify the coordinate space of elements for effects such as translation, rotation, scaling, and skewing, enabling rich layout and visual transformations without altering document flow.
+
+PlutoBook currently supports the `transform` and `transform-origin` properties and the full set of 2D transform functions: `matrix()`, `rotate()`, `translate()`, `translateX()`, `translateY()`, `scale()`, `scaleX()`, `scaleY()`, `skew()`, `skewX()`, and `skewY()`. These functions may be combined in `transform` lists and accept length, angle, and number values according to the specification. `transform-origin` is supported to control the transform's reference point.
+
+PlutoBook does not currently support the 3D transform related properties and functions, nor the 3D transform rendering behaviors. Specifically, `transform-style`, `perspective`, `perspective-origin`, and `backface-visibility` are not supported, and the 3D transform functions `matrix3d()`, `rotate3d()`, `rotateX()`, `rotateY()`, `rotateZ()`, `translate3d()`, `translateZ()`, `scale3d()`, and `scaleZ()` are not available.
 
 ## Media Queries
 
