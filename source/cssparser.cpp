@@ -962,19 +962,172 @@ bool CSSParser::consumeMatchPattern(CSSTokenStream& input, CSSSimpleSelector::Ma
     return true;
 }
 
-void CSSParser::consumeDeclaractionList(CSSTokenStream& input, CSSPropertyList& properties, CSSRuleType ruleType)
+bool CSSParser::consumeFontFaceDescription(CSSTokenStream& input, CSSPropertyList& properties, CSSPropertyID id)
+{
+    RefPtr<CSSValue> value;
+    switch(id) {
+    case CSSPropertyID::Src:
+        value = consumeFontFaceSrc(input);
+        break;
+    case CSSPropertyID::FontFamily:
+        value = consumeFontFamilyName(input);
+        break;
+    case CSSPropertyID::FontWeight:
+        value = consumeFontFaceWeight(input);
+        break;
+    case CSSPropertyID::FontStretch:
+        value = consumeFontFaceStretch(input);
+        break;
+    case CSSPropertyID::FontStyle:
+        value = consumeFontFaceStyle(input);
+        break;
+    case CSSPropertyID::FontFeatureSettings:
+        value = consumeFontFeatureSettings(input);
+        break;
+    case CSSPropertyID::FontVariationSettings:
+        value = consumeFontVariationSettings(input);
+        break;
+    default:
+        return false;
+    }
+
+    input.consumeWhitespace();
+    if(value && input.empty()) {
+        addProperty(properties, id, false, std::move(value));
+        return true;
+    }
+
+    return false;
+}
+
+bool CSSParser::consumeCounterStyleDescription(CSSTokenStream& input, CSSPropertyList& properties, CSSPropertyID id)
+{
+    RefPtr<CSSValue> value;
+    switch(id) {
+    case CSSPropertyID::System:
+        value = consumeCounterStyleSystem(input);
+        break;
+    case CSSPropertyID::Negative:
+        value = consumeCounterStyleNegative(input);
+        break;
+    case CSSPropertyID::Prefix:
+    case CSSPropertyID::Suffix:
+        value = consumeCounterStyleSymbol(input);
+        break;
+    case CSSPropertyID::Range:
+        value = consumeCounterStyleRange(input);
+        break;
+    case CSSPropertyID::Pad:
+        value = consumeCounterStylePad(input);
+        break;
+    case CSSPropertyID::Fallback:
+        value = consumeCounterStyleName(input);
+        break;
+    case CSSPropertyID::Symbols:
+        value = consumeCounterStyleSymbols(input);
+        break;
+    case CSSPropertyID::AdditiveSymbols:
+        value = consumeCounterStyleAdditiveSymbols(input);
+        break;
+    default:
+        return false;
+    }
+
+    input.consumeWhitespace();
+    if(value && input.empty()) {
+        addProperty(properties, id, false, std::move(value));
+        return true;
+    }
+
+    return false;
+}
+
+static bool containsVariableReferences(CSSTokenStream input)
 {
     while(!input.empty()) {
-        switch(input->type()) {
-        case CSSToken::Type::Whitespace:
-        case CSSToken::Type::Semicolon:
-            input.consume();
-            break;
-        default:
-            consumeDeclaraction(input, properties, ruleType);
-            break;
+        if(input->type() == CSSToken::Type::Function && identMatches("var", 3, input->data()))
+            return true;
+        input.consumeIncludingWhitespace();
+    }
+
+    return false;
+}
+
+bool CSSParser::consumeDescription(CSSTokenStream& input, CSSPropertyList& properties, CSSPropertyID id, bool important)
+{
+    if(containsVariableReferences(input)) {
+        auto variable = CSSVariableReferenceValue::create(m_heap, m_context, id, important, CSSVariableData::create(m_heap, input));
+        addProperty(properties, id, important, std::move(variable));
+        return true;
+    }
+
+    if(input->type() == CSSToken::Type::Ident) {
+        if(identMatches("initial", 7, input->data())) {
+            input.consumeIncludingWhitespace();
+            if(!input.empty())
+                return false;
+            addExpandedProperty(properties, id, important, CSSInitialValue::create());
+            return true;
+        }
+
+        if(identMatches("inherit", 7, input->data())) {
+            input.consumeIncludingWhitespace();
+            if(!input.empty())
+                return false;
+            addExpandedProperty(properties, id, important, CSSInheritValue::create());
+            return true;
         }
     }
+
+    switch(id) {
+    case CSSPropertyID::BorderTop:
+    case CSSPropertyID::BorderRight:
+    case CSSPropertyID::BorderBottom:
+    case CSSPropertyID::BorderLeft:
+    case CSSPropertyID::FlexFlow:
+    case CSSPropertyID::ColumnRule:
+    case CSSPropertyID::Outline:
+    case CSSPropertyID::TextDecoration:
+        return consumeShorthand(input, properties, id, important);
+    case CSSPropertyID::Margin:
+    case CSSPropertyID::Padding:
+    case CSSPropertyID::BorderColor:
+    case CSSPropertyID::BorderStyle:
+    case CSSPropertyID::BorderWidth:
+        return consume4Shorthand(input, properties, id, important);
+    case CSSPropertyID::Gap:
+    case CSSPropertyID::BorderSpacing:
+        return consume2Shorthand(input, properties, id, important);
+    case CSSPropertyID::Background:
+        return consumeBackground(input, properties, important);
+    case CSSPropertyID::Font:
+        return consumeFont(input, properties, important);
+    case CSSPropertyID::FontVariant:
+        return consumeFontVariant(input, properties, important);
+    case CSSPropertyID::Border:
+        return consumeBorder(input, properties, important);
+    case CSSPropertyID::BorderRadius:
+        return consumeBorderRadius(input, properties, important);
+    case CSSPropertyID::Columns:
+        return consumeColumns(input, properties, important);
+    case CSSPropertyID::Flex:
+        return consumeFlex(input, properties, important);
+    case CSSPropertyID::ListStyle:
+        return consumeListStyle(input, properties, important);
+    case CSSPropertyID::Marker:
+        return consumeMarker(input, properties, important);
+    default:
+        break;
+    }
+
+    auto value = consumeLonghand(input, id);
+    input.consumeWhitespace();
+    if(value && input.empty()) {
+        addProperty(properties, id, important, std::move(value));
+        return true;
+    }
+
+    return false;
 }
 
 constexpr bool isCustomPropertyName(std::string_view name)
@@ -1272,172 +1425,19 @@ bool CSSParser::consumeDeclaraction(CSSTokenStream& input, CSSPropertyList& prop
     }
 }
 
-bool CSSParser::consumeFontFaceDescription(CSSTokenStream& input, CSSPropertyList& properties, CSSPropertyID id)
-{
-    RefPtr<CSSValue> value;
-    switch(id) {
-    case CSSPropertyID::Src:
-        value = consumeFontFaceSrc(input);
-        break;
-    case CSSPropertyID::FontFamily:
-        value = consumeFontFamilyName(input);
-        break;
-    case CSSPropertyID::FontWeight:
-        value = consumeFontFaceWeight(input);
-        break;
-    case CSSPropertyID::FontStretch:
-        value = consumeFontFaceStretch(input);
-        break;
-    case CSSPropertyID::FontStyle:
-        value = consumeFontFaceStyle(input);
-        break;
-    case CSSPropertyID::FontFeatureSettings:
-        value = consumeFontFeatureSettings(input);
-        break;
-    case CSSPropertyID::FontVariationSettings:
-        value = consumeFontVariationSettings(input);
-        break;
-    default:
-        return false;
-    }
-
-    input.consumeWhitespace();
-    if(value && input.empty()) {
-        addProperty(properties, id, false, std::move(value));
-        return true;
-    }
-
-    return false;
-}
-
-bool CSSParser::consumeCounterStyleDescription(CSSTokenStream& input, CSSPropertyList& properties, CSSPropertyID id)
-{
-    RefPtr<CSSValue> value;
-    switch(id) {
-    case CSSPropertyID::System:
-        value = consumeCounterStyleSystem(input);
-        break;
-    case CSSPropertyID::Negative:
-        value = consumeCounterStyleNegative(input);
-        break;
-    case CSSPropertyID::Prefix:
-    case CSSPropertyID::Suffix:
-        value = consumeCounterStyleSymbol(input);
-        break;
-    case CSSPropertyID::Range:
-        value = consumeCounterStyleRange(input);
-        break;
-    case CSSPropertyID::Pad:
-        value = consumeCounterStylePad(input);
-        break;
-    case CSSPropertyID::Fallback:
-        value = consumeCounterStyleName(input);
-        break;
-    case CSSPropertyID::Symbols:
-        value = consumeCounterStyleSymbols(input);
-        break;
-    case CSSPropertyID::AdditiveSymbols:
-        value = consumeCounterStyleAdditiveSymbols(input);
-        break;
-    default:
-        return false;
-    }
-
-    input.consumeWhitespace();
-    if(value && input.empty()) {
-        addProperty(properties, id, false, std::move(value));
-        return true;
-    }
-
-    return false;
-}
-
-static bool containsVariableReferences(CSSTokenStream input)
+void CSSParser::consumeDeclaractionList(CSSTokenStream& input, CSSPropertyList& properties, CSSRuleType ruleType)
 {
     while(!input.empty()) {
-        if(input->type() == CSSToken::Type::Function && identMatches("var", 3, input->data()))
-            return true;
-        input.consumeIncludingWhitespace();
-    }
-
-    return false;
-}
-
-bool CSSParser::consumeDescription(CSSTokenStream& input, CSSPropertyList& properties, CSSPropertyID id, bool important)
-{
-    if(containsVariableReferences(input)) {
-        auto variable = CSSVariableReferenceValue::create(m_heap, m_context, id, important, CSSVariableData::create(m_heap, input));
-        addProperty(properties, id, important, std::move(variable));
-        return true;
-    }
-
-    if(input->type() == CSSToken::Type::Ident) {
-        if(identMatches("initial", 7, input->data())) {
-            input.consumeIncludingWhitespace();
-            if(!input.empty())
-                return false;
-            addExpandedProperty(properties, id, important, CSSInitialValue::create());
-            return true;
-        }
-
-        if(identMatches("inherit", 7, input->data())) {
-            input.consumeIncludingWhitespace();
-            if(!input.empty())
-                return false;
-            addExpandedProperty(properties, id, important, CSSInheritValue::create());
-            return true;
+        switch(input->type()) {
+        case CSSToken::Type::Whitespace:
+        case CSSToken::Type::Semicolon:
+            input.consume();
+            break;
+        default:
+            consumeDeclaraction(input, properties, ruleType);
+            break;
         }
     }
-
-    switch(id) {
-    case CSSPropertyID::BorderTop:
-    case CSSPropertyID::BorderRight:
-    case CSSPropertyID::BorderBottom:
-    case CSSPropertyID::BorderLeft:
-    case CSSPropertyID::FlexFlow:
-    case CSSPropertyID::ColumnRule:
-    case CSSPropertyID::Outline:
-    case CSSPropertyID::TextDecoration:
-        return consumeShorthand(input, properties, id, important);
-    case CSSPropertyID::Margin:
-    case CSSPropertyID::Padding:
-    case CSSPropertyID::BorderColor:
-    case CSSPropertyID::BorderStyle:
-    case CSSPropertyID::BorderWidth:
-        return consume4Shorthand(input, properties, id, important);
-    case CSSPropertyID::Gap:
-    case CSSPropertyID::BorderSpacing:
-        return consume2Shorthand(input, properties, id, important);
-    case CSSPropertyID::Background:
-        return consumeBackground(input, properties, important);
-    case CSSPropertyID::Font:
-        return consumeFont(input, properties, important);
-    case CSSPropertyID::FontVariant:
-        return consumeFontVariant(input, properties, important);
-    case CSSPropertyID::Border:
-        return consumeBorder(input, properties, important);
-    case CSSPropertyID::BorderRadius:
-        return consumeBorderRadius(input, properties, important);
-    case CSSPropertyID::Columns:
-        return consumeColumns(input, properties, important);
-    case CSSPropertyID::Flex:
-        return consumeFlex(input, properties, important);
-    case CSSPropertyID::ListStyle:
-        return consumeListStyle(input, properties, important);
-    case CSSPropertyID::Marker:
-        return consumeMarker(input, properties, important);
-    default:
-        break;
-    }
-
-    auto value = consumeLonghand(input, id);
-    input.consumeWhitespace();
-    if(value && input.empty()) {
-        addProperty(properties, id, important, std::move(value));
-        return true;
-    }
-
-    return false;
 }
 
 void CSSParser::addProperty(CSSPropertyList& properties, CSSPropertyID id, bool important, RefPtr<CSSValue> value)
@@ -2355,7 +2355,7 @@ RefPtr<CSSValue> CSSParser::consumeColor(CSSTokenStream& input)
         if(color == std::nullopt)
             return nullptr;
         input.consumeIncludingWhitespace();
-        return CSSColorValue::create(m_heap, *color);
+        return CSSColorValue::create(m_heap, color.value());
     }
 
     return nullptr;
