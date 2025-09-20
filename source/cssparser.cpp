@@ -1128,11 +1128,12 @@ bool CSSParser::consumeDescription(CSSTokenStream& input, CSSPropertyList& prope
         break;
     }
 
-    auto value = consumeLonghand(input, id);
-    input.consumeWhitespace();
-    if(value && input.empty()) {
-        addProperty(properties, id, important, std::move(value));
-        return true;
+    if(auto value = consumeLonghand(input, id)) {
+        input.consumeWhitespace();
+        if(input.empty()) {
+            addProperty(properties, id, important, std::move(value));
+            return true;
+        }
     }
 
     return false;
