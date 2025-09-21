@@ -105,6 +105,7 @@ private:
     void addText(const HeapString& text);
     void addLeaderText(const HeapString& text);
     void addLeader(const CSSValue& value);
+    void addElement(const CSSValue& value);
     void addCounter(const CSSCounterValue& counter);
     void addTargetCounter(const CSSFunctionValue& function);
     void addQuote(CSSValueID value);

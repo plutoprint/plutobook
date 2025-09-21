@@ -2582,6 +2582,12 @@ Display BoxStyle::convertDisplay(const CSSValue& value)
 
 Position BoxStyle::convertPosition(const CSSValue& value)
 {
+    if(is<CSSUnaryFunctionValue>(value)) {
+        const auto& function = to<CSSUnaryFunctionValue>(value);
+        assert(function.id() == CSSValueID::Running);
+        return Position::Running;
+    }
+
     const auto& ident = to<CSSIdentValue>(value);
     switch(ident.value()) {
     case CSSValueID::Static:

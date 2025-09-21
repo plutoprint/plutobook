@@ -2689,6 +2689,8 @@ RefPtr<CSSValue> CSSParser::consumeContent(CSSTokenStream& input)
             block.consumeWhitespace();
             if(identMatches("leader", 6, name))
                 value = consumeContentLeader(block);
+            else if(identMatches("element", 7, name))
+                value = consumeContentElement(block);
             else if(identMatches("counter", 7, name))
                 value = consumeContentCounter(block, CSSValueID::Counter);
             else if(identMatches("counters", 8, name))
@@ -2723,6 +2725,14 @@ RefPtr<CSSValue> CSSParser::consumeContentLeader(CSSTokenStream& input)
     if(value == nullptr || !input.empty())
         return nullptr;
     return CSSUnaryFunctionValue::create(m_heap, CSSValueID::Leader, std::move(value));
+}
+
+RefPtr<CSSValue> CSSParser::consumeContentElement(CSSTokenStream& input)
+{
+    auto value = consumeCustomIdent(input);
+    if(value == nullptr || !input.empty())
+        return nullptr;
+    return CSSUnaryFunctionValue::create(m_heap, CSSValueID::Element, std::move(value));
 }
 
 RefPtr<CSSValue> CSSParser::consumeContentCounter(CSSTokenStream& input, CSSValueID id)
@@ -3196,6 +3206,30 @@ RefPtr<CSSValue> CSSParser::consumeDashList(CSSTokenStream& input)
     return CSSListValue::create(m_heap, std::move(values));
 }
 
+RefPtr<CSSValue> CSSParser::consumePosition(CSSTokenStream& input)
+{
+    static const CSSIdentValueEntry table[] = {
+        {"static", CSSValueID::Static},
+        {"relative", CSSValueID::Relative},
+        {"absolute", CSSValueID::Absolute},
+        {"fixed", CSSValueID::Fixed}
+    };
+
+    if(auto value = consumeIdent(input, table))
+        return value;
+    if(input->type() != CSSToken::Type::Function || !identMatches("running", 7, input->data()))
+        return nullptr;
+    CSSTokenStreamGuard guard(input);
+    auto block = input.consumeBlock();
+    block.consumeWhitespace();
+    auto value = consumeCustomIdent(block);
+    if(value == nullptr || !block.empty())
+        return nullptr;
+    input.consumeWhitespace();
+    guard.release();
+    return CSSUnaryFunctionValue::create(m_heap, CSSValueID::Running, std::move(value));
+}
+
 RefPtr<CSSValue> CSSParser::consumeVerticalAlign(CSSTokenStream& input)
 {
     static const CSSIdentValueEntry table[] = {
@@ -3625,6 +3659,8 @@ RefPtr<CSSValue> CSSParser::consumeLonghand(CSSTokenStream& input, CSSPropertyID
         return consumeDashList(input);
     case CSSPropertyID::BaselineShift:
         return consumeBaselineShift(input);
+    case CSSPropertyID::Position:
+        return consumePosition(input);
     case CSSPropertyID::VerticalAlign:
         return consumeVerticalAlign(input);
     case CSSPropertyID::TextDecorationLine:
@@ -3879,17 +3915,6 @@ RefPtr<CSSValue> CSSParser::consumeLonghand(CSSTokenStream& input, CSSPropertyID
         static const CSSIdentValueEntry table[] = {
             {"auto", CSSValueID::Auto},
             {"avoid", CSSValueID::Avoid}
-        };
-
-        return consumeIdent(input, table);
-    }
-
-    case CSSPropertyID::Position: {
-        static const CSSIdentValueEntry table[] = {
-            {"static", CSSValueID::Static},
-            {"relative", CSSValueID::Relative},
-            {"absolute", CSSValueID::Absolute},
-            {"fixed", CSSValueID::Fixed}
         };
 
         return consumeIdent(input, table);

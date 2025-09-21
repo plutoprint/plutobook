@@ -103,6 +103,10 @@ void ContentBoxBuilder::addLeader(const CSSValue& value)
     }
 }
 
+void ContentBoxBuilder::addElement(const CSSValue& value)
+{
+}
+
 void ContentBoxBuilder::addCounter(const CSSCounterValue& counter)
 {
     addText(m_counters.counterText(counter.identifier(), counter.listStyle(), counter.separator()));
@@ -268,9 +272,11 @@ void ContentBoxBuilder::build()
             const auto& function = to<CSSUnaryFunctionValue>(*value);
             if(function.id() == CSSValueID::Attr) {
                 addText(getAttributeText(m_element, *function.value()));
-            } else {
-                assert(function.id() == CSSValueID::Leader);
+            } else if(function.id() == CSSValueID::Leader) {
                 addLeader(*function.value());
+            } else {
+                assert(function.id() == CSSValueID::Element);
+                addElement(*function.value());
             }
         }
     }

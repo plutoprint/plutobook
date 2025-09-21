@@ -115,6 +115,7 @@ private:
     RefPtr<CSSValue> consumeQuotes(CSSTokenStream& input);
     RefPtr<CSSValue> consumeContent(CSSTokenStream& input);
     RefPtr<CSSValue> consumeContentLeader(CSSTokenStream& input);
+    RefPtr<CSSValue> consumeContentElement(CSSTokenStream& input);
     RefPtr<CSSValue> consumeContentCounter(CSSTokenStream& input, CSSValueID id);
     RefPtr<CSSValue> consumeContentTargetCounter(CSSTokenStream& input, CSSValueID id);
     RefPtr<CSSValue> consumeContentQrCode(CSSTokenStream& input);
@@ -141,6 +142,7 @@ private:
     RefPtr<CSSValue> consumeBorderRadiusValue(CSSTokenStream& input);
     RefPtr<CSSValue> consumeClip(CSSTokenStream& input);
     RefPtr<CSSValue> consumeDashList(CSSTokenStream& input);
+    RefPtr<CSSValue> consumePosition(CSSTokenStream& input);
     RefPtr<CSSValue> consumeVerticalAlign(CSSTokenStream& input);
     RefPtr<CSSValue> consumeBaselineShift(CSSTokenStream& input);
     RefPtr<CSSValue> consumeTextDecorationLine(CSSTokenStream& input);

@@ -54,7 +54,8 @@ enum class Position : uint8_t {
     Static,
     Relative,
     Absolute,
-    Fixed
+    Fixed,
+    Running
 };
 
 enum class Overflow : uint8_t {
