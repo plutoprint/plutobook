@@ -136,7 +136,7 @@ float CSSCalcValue::resolve(const CSSLengthResolver& resolver) const
     for(const auto& item : m_values) {
         if(item.op == CSSCalcOperator::None) {
             if(item.units == CSSLengthUnits::None) {
-                stack.emplace_back(item);
+                stack.push_back(item);
             } else {
                 auto value = resolver.resolveLength(item.value, item.units);
                 stack.emplace_back(value, CSSLengthUnits::Pixels);
