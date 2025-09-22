@@ -125,7 +125,7 @@ public:
 
     std::string textFromChildren() const;
 
-    void buildBox(Counters& counters, Box* parent) override;
+    void buildChildrenBox(Counters& counters, Box* parent);
     void finishParsingDocument() override;
 
 private:
@@ -299,6 +299,7 @@ using DocumentElementMap = std::pmr::multimap<HeapString, Element*, std::less<>>
 using DocumentResourceMap = std::pmr::map<Url, RefPtr<Resource>>;
 using DocumentFontMap = std::pmr::map<FontDescription, RefPtr<Font>>;
 using DocumentCounterMap = std::pmr::map<HeapString, CounterMap, std::less<>>;
+using DocumentRunningStyleMap = std::pmr::map<GlobalString, RefPtr<BoxStyle>>;
 
 class BoxView;
 class GraphicsContext;
@@ -352,6 +353,9 @@ public:
     Element* getElementById(const std::string_view& id) const;
     void addElementById(const HeapString& id, Element* element);
     void removeElementById(const HeapString& id, Element* element);
+
+    void addRunningStyle(const GlobalString& name, RefPtr<BoxStyle> style);
+    RefPtr<BoxStyle> getRunningStyle(const GlobalString& name) const;
 
     void addTargetCounters(const HeapString& id, const CounterMap& counters);
 
@@ -427,6 +431,7 @@ private:
     DocumentResourceMap m_resourceCache;
     DocumentFontMap m_fontCache;
     DocumentCounterMap m_counterCache;
+    DocumentRunningStyleMap m_runningStyles;
     CSSStyleSheet m_styleSheet;
 
     float m_containerWidth{0};

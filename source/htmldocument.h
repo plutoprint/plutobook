@@ -17,6 +17,7 @@ public:
 
     void buildFirstLetterPseudoBox(Box* parent);
     void buildPseudoBox(Counters& counters, Box* parent, PseudoType pseudoType);
+    void buildElementBox(Counters& counters, Box* box);
     void buildBox(Counters& counters, Box* parent) override;
 
 protected:

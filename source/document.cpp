@@ -247,7 +247,7 @@ std::string ContainerNode::textFromChildren() const
     return content;
 }
 
-void ContainerNode::buildBox(Counters& counters, Box* parent)
+void ContainerNode::buildChildrenBox(Counters& counters, Box* parent)
 {
     auto child = m_firstChild;
     while(child) {
@@ -458,8 +458,8 @@ void Element::buildBox(Counters& counters, Box* parent)
     auto box = createBox(style);
     if(box == nullptr)
         return;
+    buildChildrenBox(counters, box);
     parent->addChild(box);
-    ContainerNode::buildBox(counters, box);
 }
 
 void Element::finishParsingDocument()
@@ -493,6 +493,7 @@ Document::Document(Book* book, Heap* heap, ResourceFetcher* fetcher, Url baseUrl
     , m_resourceCache(heap)
     , m_fontCache(heap)
     , m_counterCache(heap)
+    , m_runningStyles(heap)
     , m_styleSheet(this)
 {
 }
@@ -697,6 +698,19 @@ void Document::removeElementById(const HeapString& id, Element* element)
             break;
         }
     }
+}
+
+void Document::addRunningStyle(const GlobalString& name, RefPtr<BoxStyle> style)
+{
+    m_runningStyles.emplace(name, std::move(style));
+}
+
+RefPtr<BoxStyle> Document::getRunningStyle(const GlobalString& name) const
+{
+    auto it = m_runningStyles.find(name);
+    if(it == m_runningStyles.end())
+        return nullptr;
+    return it->second;
 }
 
 void Document::addTargetCounters(const HeapString& id, const CounterMap& counters)
@@ -925,7 +939,7 @@ void Document::buildBox(Counters& counters, Box* parent)
 
     auto rootBox = createBox(rootStyle);
     counters.push();
-    ContainerNode::buildBox(counters, rootBox);
+    buildChildrenBox(counters, rootBox);
     counters.pop();
     rootBox->build();
 }

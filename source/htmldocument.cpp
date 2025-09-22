@@ -132,23 +132,37 @@ void HTMLElement::buildPseudoBox(Counters& counters, Box* parent, PseudoType pse
     ContentBoxBuilder(counters, this, box).build();
 }
 
+void HTMLElement::buildElementBox(Counters& counters, Box* box)
+{
+    counters.update(box);
+    counters.push();
+    buildPseudoBox(counters, box, PseudoType::Marker);
+    buildPseudoBox(counters, box, PseudoType::Before);
+    buildChildrenBox(counters, box);
+    buildPseudoBox(counters, box, PseudoType::After);
+    buildFirstLetterPseudoBox(box);
+    counters.pop();
+}
+
 void HTMLElement::buildBox(Counters& counters, Box* parent)
 {
     auto style = document()->styleForElement(this, parent->style());
     if(style == nullptr || style->display() == Display::None)
         return;
+    if(style->position() == Position::Running) {
+        const auto* value = style->get(CSSPropertyID::Position);
+        const auto& position = to<CSSUnaryFunctionValue>(*value);
+        const auto& name = to<CSSCustomIdentValue>(*position.value());
+        style->reset(CSSPropertyID::Position);
+        document()->addRunningStyle(name.value(), std::move(style));
+        return;
+    }
+
     auto box = createBox(style);
     if(box == nullptr)
         return;
+    buildElementBox(counters, box);
     parent->addChild(box);
-    counters.update(box);
-    counters.push();
-    buildPseudoBox(counters, box, PseudoType::Marker);
-    buildPseudoBox(counters, box, PseudoType::Before);
-    ContainerNode::buildBox(counters, box);
-    buildPseudoBox(counters, box, PseudoType::After);
-    buildFirstLetterPseudoBox(box);
-    counters.pop();
 }
 
 template<typename T = int>

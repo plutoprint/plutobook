@@ -1,7 +1,7 @@
 #include "contentbox.h"
 #include "replacedbox.h"
 #include "imageresource.h"
-#include "document.h"
+#include "htmldocument.h"
 #include "cssrule.h"
 #include "counters.h"
 #include "qrcodegen.h"
@@ -105,6 +105,17 @@ void ContentBoxBuilder::addLeader(const CSSValue& value)
 
 void ContentBoxBuilder::addElement(const CSSValue& value)
 {
+    if(!m_parentBox->isPageMarginBox())
+        return;
+    const auto& name = to<CSSCustomIdentValue>(value).value();
+    auto style = m_parentStyle->document()->getRunningStyle(name);
+    if(style == nullptr)
+        return;
+    auto& element = to<HTMLElement>(*style->node());
+    auto newBox = element.createBox(style);
+    element.buildElementBox(m_counters, newBox);
+    m_parentBox->addChild(newBox);
+    m_lastTextBox = nullptr;
 }
 
 void ContentBoxBuilder::addCounter(const CSSCounterValue& counter)
