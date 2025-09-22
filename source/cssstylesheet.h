@@ -123,10 +123,9 @@ private:
 
     CSSRuleDataList m_universalRules;
     CSSPageRuleDataList m_pageRules;
+    CSSRuleList m_counterStyleRules;
     CSSFontFaceCache m_fontFaceCache;
-
     std::unique_ptr<CSSCounterStyleMap> m_counterStyleMap;
-    std::unique_ptr<CSSRuleList> m_counterStyleRules;
 };
 
 } // namespace plutobook
