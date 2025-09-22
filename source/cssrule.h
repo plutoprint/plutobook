@@ -30,7 +30,6 @@ enum class CSSValueID : uint16_t {
     Alpha,
     Alphabetic,
     Anywhere,
-    Attr,
     Auto,
     Avoid,
     AvoidColumn,
@@ -67,8 +66,6 @@ enum class CSSValueID : uint16_t {
     Contain,
     ContentBox,
     Contextual,
-    Counter,
-    Counters,
     Cover,
     CurrentColor,
     Cyclic,
@@ -79,7 +76,6 @@ enum class CSSValueID : uint16_t {
     DiscretionaryLigatures,
     Dotted,
     Double,
-    Element,
     Ellipsis,
     Embed,
     End,
@@ -95,7 +91,6 @@ enum class CSSValueID : uint16_t {
     Flex,
     FlexEnd,
     FlexStart,
-    Format,
     FullWidth,
     Groove,
     Hanging,
@@ -107,8 +102,6 @@ enum class CSSValueID : uint16_t {
     Hue,
     Ideographic,
     Infinite,
-    Inherit,
-    Initial,
     Inline,
     InlineBlock,
     InlineFlex,
@@ -127,7 +120,6 @@ enum class CSSValueID : uint16_t {
     Landscape,
     Large,
     Larger,
-    Leader,
     Ledger,
     Left,
     Legal,
@@ -146,7 +138,6 @@ enum class CSSValueID : uint16_t {
     Manual,
     Markers,
     Mathematical,
-    Matrix,
     MaxContent,
     Medium,
     Middle,
@@ -187,7 +178,6 @@ enum class CSSValueID : uint16_t {
     PreWrap,
     ProportionalNums,
     ProportionalWidth,
-    Qrcode,
     Recto,
     Relative,
     Repeat,
@@ -196,18 +186,13 @@ enum class CSSValueID : uint16_t {
     ResetSize,
     Ridge,
     Right,
-    Rotate,
     Round,
     Row,
     RowReverse,
     Rtl,
     Ruby,
-    Running,
     Saturation,
-    Scale,
     ScaleDown,
-    ScaleX,
-    ScaleY,
     Screen,
     Scroll,
     SemiCondensed,
@@ -215,9 +200,6 @@ enum class CSSValueID : uint16_t {
     Separate,
     Show,
     Simplified,
-    Skew,
-    SkewX,
-    SkewY,
     SlashedZero,
     Small,
     SmallCaps,
@@ -247,8 +229,6 @@ enum class CSSValueID : uint16_t {
     TableRow,
     TableRowGroup,
     TabularNums,
-    TargetCounter,
-    TargetCounters,
     TextAfterEdge,
     TextBeforeEdge,
     TextBottom,
@@ -258,9 +238,6 @@ enum class CSSValueID : uint16_t {
     TitlingCaps,
     Top,
     Traditional,
-    Translate,
-    TranslateX,
-    TranslateY,
     UltraCondensed,
     UltraExpanded,
     Underline,
@@ -1267,23 +1244,46 @@ struct is_a<CSSListValue> {
     static bool check(const CSSValue& value) { return value.type() == CSSValueType::List; }
 };
 
+enum class CSSFunctionID {
+    Attr,
+    Element,
+    Format,
+    Leader,
+    Local,
+    Matrix,
+    Qrcode,
+    Rotate,
+    Running,
+    Scale,
+    ScaleX,
+    ScaleY,
+    Skew,
+    SkewX,
+    SkewY,
+    TargetCounter,
+    TargetCounters,
+    Translate,
+    TranslateX,
+    TranslateY
+};
+
 class CSSFunctionValue final : public CSSListValue {
 public:
-    static RefPtr<CSSFunctionValue> create(Heap* heap, CSSValueID id, CSSValueList values);
+    static RefPtr<CSSFunctionValue> create(Heap* heap, CSSFunctionID id, CSSValueList values);
 
-    CSSValueID id() const { return m_id; }
+    CSSFunctionID id() const { return m_id; }
     CSSValueType type() const final { return CSSValueType::Function; }
 
 private:
-    CSSFunctionValue(CSSValueID id, CSSValueList values)
+    CSSFunctionValue(CSSFunctionID id, CSSValueList values)
         : CSSListValue(std::move(values))
         , m_id(id)
     {}
 
-    CSSValueID m_id;
+    CSSFunctionID m_id;
 };
 
-inline RefPtr<CSSFunctionValue> CSSFunctionValue::create(Heap* heap, CSSValueID id, CSSValueList values)
+inline RefPtr<CSSFunctionValue> CSSFunctionValue::create(Heap* heap, CSSFunctionID id, CSSValueList values)
 {
     return adoptPtr(new (heap) CSSFunctionValue(id, std::move(values)));
 }
@@ -1295,22 +1295,22 @@ struct is_a<CSSFunctionValue> {
 
 class CSSUnaryFunctionValue final : public CSSValue {
 public:
-    static RefPtr<CSSUnaryFunctionValue> create(Heap* heap, CSSValueID id, RefPtr<CSSValue> value);
+    static RefPtr<CSSUnaryFunctionValue> create(Heap* heap, CSSFunctionID id, RefPtr<CSSValue> value);
 
-    CSSValueID id() const { return m_id; }
+    CSSFunctionID id() const { return m_id; }
     const RefPtr<CSSValue>& value() const { return m_value; }
     CSSValueType type() const final { return CSSValueType::UnaryFunction; }
 
 private:
-    CSSUnaryFunctionValue(CSSValueID id, RefPtr<CSSValue> value)
+    CSSUnaryFunctionValue(CSSFunctionID id, RefPtr<CSSValue> value)
         : m_id(id), m_value(std::move(value))
     {}
 
-    CSSValueID m_id;
+    CSSFunctionID m_id;
     RefPtr<CSSValue> m_value;
 };
 
-inline RefPtr<CSSUnaryFunctionValue> CSSUnaryFunctionValue::create(Heap* heap, CSSValueID id, RefPtr<CSSValue> value)
+inline RefPtr<CSSUnaryFunctionValue> CSSUnaryFunctionValue::create(Heap* heap, CSSFunctionID id, RefPtr<CSSValue> value)
 {
     return adoptPtr(new (heap) CSSUnaryFunctionValue(id, std::move(value)));
 }

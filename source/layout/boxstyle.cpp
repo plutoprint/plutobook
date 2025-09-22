@@ -1509,7 +1509,7 @@ Transform BoxStyle::getTransform(float width, float height) const
     for(const auto& operation : to<CSSListValue>(*value)) {
         const auto& function = to<CSSFunctionValue>(*operation);
         switch(function.id()) {
-        case CSSValueID::Translate: {
+        case CSSFunctionID::Translate: {
             float firstValue = convertLengthOrPercent(width, *function.at(0));
             float secondValue = 0.f;
             if(function.size() == 2)
@@ -1518,13 +1518,13 @@ Transform BoxStyle::getTransform(float width, float height) const
             break;
         }
 
-        case CSSValueID::TranslateX:
+        case CSSFunctionID::TranslateX:
             transform.translate(convertLengthOrPercent(width, *function.at(0)), 0.f);
             break;
-        case CSSValueID::TranslateY:
+        case CSSFunctionID::TranslateY:
             transform.translate(0.f, convertLengthOrPercent(height, *function.at(0)));
             break;
-        case CSSValueID::Scale: {
+        case CSSFunctionID::Scale: {
             float firstValue = convertNumberOrPercent(*function.at(0));
             float secondValue = firstValue;
             if(function.size() == 2)
@@ -1533,13 +1533,13 @@ Transform BoxStyle::getTransform(float width, float height) const
             break;
         }
 
-        case CSSValueID::ScaleX:
+        case CSSFunctionID::ScaleX:
             transform.scale(convertNumberOrPercent(*function.at(0)), 1.f);
             break;
-        case CSSValueID::ScaleY:
+        case CSSFunctionID::ScaleY:
             transform.scale(1.f, convertNumberOrPercent(*function.at(0)));
             break;
-        case CSSValueID::Skew: {
+        case CSSFunctionID::Skew: {
             float firstValue = convertAngle(*function.at(0));
             float secondValue = 0.f;
             if(function.size() == 2)
@@ -1548,17 +1548,17 @@ Transform BoxStyle::getTransform(float width, float height) const
             break;
         }
 
-        case CSSValueID::SkewX:
+        case CSSFunctionID::SkewX:
             transform.shear(convertAngle(*function.at(0)), 0.f);
             break;
-        case CSSValueID::SkewY:
+        case CSSFunctionID::SkewY:
             transform.shear(0.f, convertAngle(*function.at(0)));
             break;
-        case CSSValueID::Rotate:
+        case CSSFunctionID::Rotate:
             transform.rotate(convertAngle(*function.at(0)));
             break;
         default:
-            assert(function.id() == CSSValueID::Matrix && function.size() == 6);
+            assert(function.id() == CSSFunctionID::Matrix && function.size() == 6);
             auto a = convertNumber(*function.at(0));
             auto b = convertNumber(*function.at(1));
             auto c = convertNumber(*function.at(2));
@@ -2584,7 +2584,7 @@ Position BoxStyle::convertPosition(const CSSValue& value)
 {
     if(is<CSSUnaryFunctionValue>(value)) {
         const auto& function = to<CSSUnaryFunctionValue>(value);
-        assert(function.id() == CSSValueID::Running);
+        assert(function.id() == CSSFunctionID::Running);
         return Position::Running;
     }
 

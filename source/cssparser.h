@@ -116,8 +116,8 @@ private:
     RefPtr<CSSValue> consumeContent(CSSTokenStream& input);
     RefPtr<CSSValue> consumeContentLeader(CSSTokenStream& input);
     RefPtr<CSSValue> consumeContentElement(CSSTokenStream& input);
-    RefPtr<CSSValue> consumeContentCounter(CSSTokenStream& input, CSSValueID id);
-    RefPtr<CSSValue> consumeContentTargetCounter(CSSTokenStream& input, CSSValueID id);
+    RefPtr<CSSValue> consumeContentCounter(CSSTokenStream& input, bool counters);
+    RefPtr<CSSValue> consumeContentTargetCounter(CSSTokenStream& input, bool counters);
     RefPtr<CSSValue> consumeContentQrCode(CSSTokenStream& input);
     RefPtr<CSSValue> consumeCounter(CSSTokenStream& input, bool increment);
     RefPtr<CSSValue> consumePage(CSSTokenStream& input);

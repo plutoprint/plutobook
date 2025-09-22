@@ -130,7 +130,7 @@ static const HeapString& getAttributeText(const Element* element, const CSSValue
 
 void ContentBoxBuilder::addTargetCounter(const CSSFunctionValue& function)
 {
-    assert(function.id() == CSSValueID::TargetCounter || function.id() == CSSValueID::TargetCounters);
+    assert(function.id() == CSSFunctionID::TargetCounter || function.id() == CSSFunctionID::TargetCounters);
     HeapString fragment;
     GlobalString identifier;
     HeapString seperator;
@@ -142,14 +142,14 @@ void ContentBoxBuilder::addTargetCounter(const CSSFunctionValue& function)
         fragment = to<CSSLocalUrlValue>(*value).value();
     } else {
         const auto& attr = to<CSSUnaryFunctionValue>(*function.at(index));
-        assert(attr.id() == CSSValueID::Attr);
+        assert(attr.id() == CSSFunctionID::Attr);
         fragment = getAttributeText(m_element, *attr.value());
     }
 
     ++index;
 
     identifier = to<CSSCustomIdentValue>(*function.at(index++)).value();
-    if(function.id() == CSSValueID::TargetCounters)
+    if(function.id() == CSSFunctionID::TargetCounters)
         seperator = to<CSSStringValue>(*function.at(index++)).value();
     if(index < function.size()) {
         listStyle = to<CSSCustomIdentValue>(*function.at(index++)).value();
@@ -272,7 +272,7 @@ void ContentBoxBuilder::build()
         } else if(auto counter = to<CSSCounterValue>(value)) {
             addCounter(*counter);
         } else if(auto function = to<CSSFunctionValue>(value)) {
-            if(function->id() == CSSValueID::Qrcode) {
+            if(function->id() == CSSFunctionID::Qrcode) {
                 addQrCode(*function);
             } else {
                 addTargetCounter(*function);
@@ -281,12 +281,12 @@ void ContentBoxBuilder::build()
             addQuote(ident->value());
         } else {
             const auto& function = to<CSSUnaryFunctionValue>(*value);
-            if(function.id() == CSSValueID::Attr) {
+            if(function.id() == CSSFunctionID::Attr) {
                 addText(getAttributeText(m_element, *function.value()));
-            } else if(function.id() == CSSValueID::Leader) {
+            } else if(function.id() == CSSFunctionID::Leader) {
                 addLeader(*function.value());
             } else {
-                assert(function.id() == CSSValueID::Element);
+                assert(function.id() == CSSFunctionID::Element);
                 addElement(*function.value());
             }
         }

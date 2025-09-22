@@ -2257,7 +2257,7 @@ RefPtr<CSSValue> CSSParser::consumeAttr(CSSTokenStream& input)
     input.consumeWhitespace();
     guard.release();
 
-    return CSSUnaryFunctionValue::create(m_heap, CSSValueID::Attr, std::move(value));
+    return CSSUnaryFunctionValue::create(m_heap, CSSFunctionID::Attr, std::move(value));
 }
 
 RefPtr<CSSValue> CSSParser::consumeLocalUrl(CSSTokenStream& input)
@@ -2692,13 +2692,13 @@ RefPtr<CSSValue> CSSParser::consumeContent(CSSTokenStream& input)
             else if(identMatches("element", 7, name))
                 value = consumeContentElement(block);
             else if(identMatches("counter", 7, name))
-                value = consumeContentCounter(block, CSSValueID::Counter);
+                value = consumeContentCounter(block, false);
             else if(identMatches("counters", 8, name))
-                value = consumeContentCounter(block, CSSValueID::Counters);
+                value = consumeContentCounter(block, true);
             else if(identMatches("target-counter", 14, name))
-                value = consumeContentTargetCounter(block, CSSValueID::TargetCounter);
+                value = consumeContentTargetCounter(block, false);
             else if(identMatches("target-counters", 15, name))
-                value = consumeContentTargetCounter(block, CSSValueID::TargetCounters);
+                value = consumeContentTargetCounter(block, false);
             else if(identMatches("-pluto-qrcode", 13, name))
                 value = consumeContentQrCode(block);
             input.consumeWhitespace();
@@ -2724,7 +2724,7 @@ RefPtr<CSSValue> CSSParser::consumeContentLeader(CSSTokenStream& input)
         value = consumeIdent(input, table);
     if(value == nullptr || !input.empty())
         return nullptr;
-    return CSSUnaryFunctionValue::create(m_heap, CSSValueID::Leader, std::move(value));
+    return CSSUnaryFunctionValue::create(m_heap, CSSFunctionID::Leader, std::move(value));
 }
 
 RefPtr<CSSValue> CSSParser::consumeContentElement(CSSTokenStream& input)
@@ -2732,17 +2732,17 @@ RefPtr<CSSValue> CSSParser::consumeContentElement(CSSTokenStream& input)
     auto value = consumeCustomIdent(input);
     if(value == nullptr || !input.empty())
         return nullptr;
-    return CSSUnaryFunctionValue::create(m_heap, CSSValueID::Element, std::move(value));
+    return CSSUnaryFunctionValue::create(m_heap, CSSFunctionID::Element, std::move(value));
 }
 
-RefPtr<CSSValue> CSSParser::consumeContentCounter(CSSTokenStream& input, CSSValueID id)
+RefPtr<CSSValue> CSSParser::consumeContentCounter(CSSTokenStream& input, bool counters)
 {
     if(input->type() != CSSToken::Type::Ident)
         return nullptr;
     auto identifier = GlobalString(input->data());
     input.consumeIncludingWhitespace();
     HeapString separator;
-    if(id == CSSValueID::Counters) {
+    if(counters) {
         if(!input.consumeCommaIncludingWhitespace())
             return nullptr;
         if(input->type() != CSSToken::Type::String)
@@ -2764,7 +2764,7 @@ RefPtr<CSSValue> CSSParser::consumeContentCounter(CSSTokenStream& input, CSSValu
     return CSSCounterValue::create(m_heap, identifier, listStyle, separator);
 }
 
-RefPtr<CSSValue> CSSParser::consumeContentTargetCounter(CSSTokenStream& input, CSSValueID id)
+RefPtr<CSSValue> CSSParser::consumeContentTargetCounter(CSSTokenStream& input, bool counters)
 {
     auto fragment = consumeLocalUrlOrAttr(input);
     if(fragment == nullptr || !input.consumeCommaIncludingWhitespace())
@@ -2777,7 +2777,7 @@ RefPtr<CSSValue> CSSParser::consumeContentTargetCounter(CSSTokenStream& input, C
     CSSValueList values(m_heap);
     values.push_back(std::move(fragment));
     values.push_back(std::move(identifier));
-    if(id == CSSValueID::TargetCounters) {
+    if(counters) {
         if(!input.consumeCommaIncludingWhitespace())
             return nullptr;
         auto separator = consumeString(input);
@@ -2787,6 +2787,7 @@ RefPtr<CSSValue> CSSParser::consumeContentTargetCounter(CSSTokenStream& input, C
         input.consumeWhitespace();
     }
 
+    auto id = counters ? CSSFunctionID::TargetCounters : CSSFunctionID::TargetCounter;
     if(input.consumeCommaIncludingWhitespace()) {
         auto listStyle = consumeCustomIdent(input);
         if(listStyle == nullptr)
@@ -2817,7 +2818,7 @@ RefPtr<CSSValue> CSSParser::consumeContentQrCode(CSSTokenStream& input)
 
     if(!input.empty())
         return nullptr;
-    return CSSFunctionValue::create(m_heap, CSSValueID::Qrcode, std::move(values));
+    return CSSFunctionValue::create(m_heap, CSSFunctionID::Qrcode, std::move(values));
 }
 
 RefPtr<CSSValue> CSSParser::consumeCounter(CSSTokenStream& input, bool increment)
@@ -3227,7 +3228,7 @@ RefPtr<CSSValue> CSSParser::consumePosition(CSSTokenStream& input)
         return nullptr;
     input.consumeWhitespace();
     guard.release();
-    return CSSUnaryFunctionValue::create(m_heap, CSSValueID::Running, std::move(value));
+    return CSSUnaryFunctionValue::create(m_heap, CSSFunctionID::Running, std::move(value));
 }
 
 RefPtr<CSSValue> CSSParser::consumeVerticalAlign(CSSTokenStream& input)
@@ -3366,36 +3367,36 @@ RefPtr<CSSValue> CSSParser::consumeTransformValue(CSSTokenStream& input)
 {
     if(input->type() != CSSToken::Type::Function)
         return nullptr;
-    static const CSSIdentValueEntry table[] = {
-        {"skew", CSSValueID::Skew},
-        {"skewx", CSSValueID::SkewX},
-        {"skewy", CSSValueID::SkewY},
-        {"scale", CSSValueID::Scale},
-        {"scalex", CSSValueID::ScaleX},
-        {"scaley", CSSValueID::ScaleY},
-        {"translate", CSSValueID::Translate},
-        {"translatex", CSSValueID::TranslateX},
-        {"translatey", CSSValueID::TranslateY},
-        {"rotate", CSSValueID::Rotate},
-        {"matrix", CSSValueID::Matrix}
+    static const CSSIdentEntry<CSSFunctionID> table[] = {
+        {"skew", CSSFunctionID::Skew},
+        {"skewx", CSSFunctionID::SkewX},
+        {"skewy", CSSFunctionID::SkewY},
+        {"scale", CSSFunctionID::Scale},
+        {"scalex", CSSFunctionID::ScaleX},
+        {"scaley", CSSFunctionID::ScaleY},
+        {"translate", CSSFunctionID::Translate},
+        {"translatex", CSSFunctionID::TranslateX},
+        {"translatey", CSSFunctionID::TranslateY},
+        {"rotate", CSSFunctionID::Rotate},
+        {"matrix", CSSFunctionID::Matrix}
     };
 
-    auto transformType = matchIdent(table, input->data());
-    if(transformType == std::nullopt)
+    auto id = matchIdent(table, input->data());
+    if(id == std::nullopt)
         return nullptr;
     CSSValueList values(m_heap);
     auto block = input.consumeBlock();
     block.consumeWhitespace();
-    switch(transformType.value()) {
-    case CSSValueID::Skew:
-    case CSSValueID::SkewX:
-    case CSSValueID::SkewY:
-    case CSSValueID::Rotate: {
+    switch(id.value()) {
+    case CSSFunctionID::Skew:
+    case CSSFunctionID::SkewX:
+    case CSSFunctionID::SkewY:
+    case CSSFunctionID::Rotate: {
         auto value = consumeAngle(block);
         if(value == nullptr)
             return nullptr;
         values.push_back(std::move(value));
-        if(transformType.value() == CSSValueID::Skew && block->type() == CSSToken::Type::Comma) {
+        if(id.value() == CSSFunctionID::Skew && block->type() == CSSToken::Type::Comma) {
             block.consumeIncludingWhitespace();
             auto value = consumeAngle(block);
             if(value == nullptr)
@@ -3406,14 +3407,14 @@ RefPtr<CSSValue> CSSParser::consumeTransformValue(CSSTokenStream& input)
         break;
     }
 
-    case CSSValueID::Scale:
-    case CSSValueID::ScaleX:
-    case CSSValueID::ScaleY: {
+    case CSSFunctionID::Scale:
+    case CSSFunctionID::ScaleX:
+    case CSSFunctionID::ScaleY: {
         auto value = consumeNumberOrPercent(block, true);
         if(value == nullptr)
             return nullptr;
         values.push_back(std::move(value));
-        if(transformType.value() == CSSValueID::Scale && block->type() == CSSToken::Type::Comma) {
+        if(id.value() == CSSFunctionID::Scale && block->type() == CSSToken::Type::Comma) {
             block.consumeIncludingWhitespace();
             auto value = consumeNumberOrPercent(block, true);
             if(value == nullptr)
@@ -3424,14 +3425,14 @@ RefPtr<CSSValue> CSSParser::consumeTransformValue(CSSTokenStream& input)
         break;
     }
 
-    case CSSValueID::Translate:
-    case CSSValueID::TranslateX:
-    case CSSValueID::TranslateY: {
+    case CSSFunctionID::Translate:
+    case CSSFunctionID::TranslateX:
+    case CSSFunctionID::TranslateY: {
         auto value = consumeLengthOrPercent(block, true, false);
         if(value == nullptr)
             return nullptr;
         values.push_back(std::move(value));
-        if(transformType.value() == CSSValueID::Translate && block->type() == CSSToken::Type::Comma) {
+        if(id.value() == CSSFunctionID::Translate && block->type() == CSSToken::Type::Comma) {
             block.consumeIncludingWhitespace();
             auto value = consumeLengthOrPercent(block, true, false);
             if(value == nullptr)
@@ -3442,7 +3443,7 @@ RefPtr<CSSValue> CSSParser::consumeTransformValue(CSSTokenStream& input)
         break;
     }
 
-    case CSSValueID::Matrix: {
+    case CSSFunctionID::Matrix: {
         int count = 6;
         while(count > 0) {
             auto value = consumeNumber(block, true);
@@ -3464,7 +3465,7 @@ RefPtr<CSSValue> CSSParser::consumeTransformValue(CSSTokenStream& input)
     if(!block.empty())
         return nullptr;
     input.consumeWhitespace();
-    return CSSFunctionValue::create(m_heap, *transformType, std::move(values));
+    return CSSFunctionValue::create(m_heap, *id, std::move(values));
 }
 
 RefPtr<CSSValue> CSSParser::consumeTransform(CSSTokenStream& input)
@@ -4704,7 +4705,7 @@ RefPtr<CSSValue> CSSParser::consumeFontFaceSource(CSSTokenStream& input)
         auto value = consumeFontFamilyName(block);
         if(value == nullptr || !block.empty())
             return nullptr;
-        auto function = CSSUnaryFunctionValue::create(m_heap, CSSValueID::Local, std::move(value));
+        auto function = CSSUnaryFunctionValue::create(m_heap, CSSFunctionID::Local, std::move(value));
         input.consumeWhitespace();
         values.push_back(std::move(function));
     } else {
@@ -4718,7 +4719,7 @@ RefPtr<CSSValue> CSSParser::consumeFontFaceSource(CSSTokenStream& input)
             auto value = consumeStringOrCustomIdent(block);
             if(value == nullptr || !block.empty())
                 return nullptr;
-            auto format = CSSUnaryFunctionValue::create(m_heap, CSSValueID::Format, std::move(value));
+            auto format = CSSUnaryFunctionValue::create(m_heap, CSSFunctionID::Format, std::move(value));
             input.consumeWhitespace();
             values.push_back(std::move(format));
         }
