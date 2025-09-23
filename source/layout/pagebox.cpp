@@ -36,62 +36,50 @@ void PageBox::computeHeight(float& y, float& height, float& marginTop, float& ma
     assert(false);
 }
 
-class PageMarginMap {
-public:
-    PageMarginMap() = default;
-
-    PageMarginBox* operator[](PageMarginType type) const {
-        return entries[static_cast<size_t>(type)];
-    }
-
-    PageMarginBox*& operator[](PageMarginType type) {
-        return entries[static_cast<size_t>(type)];
-    }
-
-private:
-    std::array<PageMarginBox*, 16> entries = {};
-};
-
-void PageBox::layout(FragmentBuilder* fragmentainer)
+static void layoutPageMarginBox(PageMarginBox* marginBox, float availableWidth, float availableHeight, bool fixedWidth, bool fixedHeight)
 {
-    PageMarginMap margins;
-    for(auto child = firstMarginBox(); child; child = child->nextMarginBox()) {
-        margins[child->marginType()] = child;
+    if(fixedWidth) {
+        marginBox->setOverrideWidth(availableWidth);
+    } else {
+        auto widthLength = marginBox->style()->width();
+        auto minWidthLength = marginBox->style()->minWidth();
+        auto maxWidthLength = marginBox->style()->maxWidth();
+
+        auto width = std::max(0.f, availableWidth - marginBox->marginWidth());
+        if(!widthLength.isAuto())
+            width = marginBox->adjustBorderBoxWidth(widthLength.calc(availableWidth));
+        if(!maxWidthLength.isNone())
+            width = std::min(width, marginBox->adjustBorderBoxWidth(maxWidthLength.calc(availableWidth)));
+        if(!minWidthLength.isAuto()) {
+            width = std::max(width, marginBox->adjustBorderBoxWidth(minWidthLength.calc(availableWidth)));
+        }
+
+        marginBox->setOverrideWidth(width);
     }
 
-    auto leftWidth = marginLeft();
-    auto rightWidth = marginRight();
+    if(fixedHeight) {
+        marginBox->setOverrideHeight(availableHeight);
+    } else {
+        auto heightLength = marginBox->style()->height();
+        auto minHeightLength = marginBox->style()->minHeight();
+        auto maxHeightLength = marginBox->style()->maxHeight();
 
-    auto topHeight = marginTop();
-    auto bottomHeight = marginBottom();
+        auto height = std::max(0.f, availableHeight - marginBox->marginHeight());
+        if(!heightLength.isAuto())
+            height = marginBox->adjustBorderBoxHeight(heightLength.calc(availableHeight));
+        if(!maxHeightLength.isNone())
+            height = std::min(height, marginBox->adjustBorderBoxHeight(maxHeightLength.calc(availableHeight)));
+        if(!minHeightLength.isAuto()) {
+            height = std::max(height, marginBox->adjustBorderBoxHeight(minHeightLength.calc(availableHeight)));
+        }
 
-    Rect topLeftCornerRect(0, 0, leftWidth, topHeight);
-    Rect topRightCornerRect(m_pageWidth - rightWidth, 0, rightWidth, topHeight);
-    Rect bottomRightCornerRect(m_pageWidth - rightWidth, m_pageHeight - bottomHeight, rightWidth, bottomHeight);
-    Rect bottomLeftCornerRect(0, m_pageHeight - bottomHeight, leftWidth, bottomHeight);
+        marginBox->setOverrideHeight(height);
+    }
 
-    Rect topEdgeRect(leftWidth, 0, m_pageWidth - leftWidth - rightWidth, topHeight);
-    Rect rightEdgeRect(m_pageWidth - rightWidth, topHeight, rightWidth, m_pageHeight - topHeight - bottomHeight);
-    Rect bottomEdgeRect(leftWidth, m_pageHeight - bottomHeight, m_pageWidth - leftWidth - rightWidth, bottomHeight);
-    Rect leftEdgeRect(0, topHeight, leftWidth, m_pageHeight - topHeight - bottomHeight);
-
-    layoutCornerPageMargin(margins[PageMarginType::TopLeftCorner], topLeftCornerRect);
-    layoutEdgePageMargins(margins[PageMarginType::TopLeft], margins[PageMarginType::TopCenter], margins[PageMarginType::TopRight], topEdgeRect, BoxSideTop);
-
-    layoutCornerPageMargin(margins[PageMarginType::TopRightCorner], topRightCornerRect);
-    layoutEdgePageMargins(margins[PageMarginType::RightTop], margins[PageMarginType::RightMiddle], margins[PageMarginType::RightBottom], rightEdgeRect, BoxSideRight);
-
-    layoutCornerPageMargin(margins[PageMarginType::BottomRightCorner], bottomRightCornerRect);
-    layoutEdgePageMargins(margins[PageMarginType::BottomLeft], margins[PageMarginType::BottomCenter], margins[PageMarginType::BottomRight], bottomEdgeRect, BoxSideBottom);
-
-    layoutCornerPageMargin(margins[PageMarginType::BottomLeftCorner], bottomLeftCornerRect);
-    layoutEdgePageMargins(margins[PageMarginType::LeftTop], margins[PageMarginType::LeftMiddle], margins[PageMarginType::LeftBottom], leftEdgeRect, BoxSideLeft);
-
-    updateOverflowRect();
-    updateLayerPosition();
+    marginBox->layout(nullptr);
 }
 
-void PageBox::layoutCornerPageMargin(PageMarginBox* cornerBox, const Rect& cornerRect)
+static void layoutCornerPageMargin(PageMarginBox* cornerBox, const Rect& cornerRect)
 {
     if(cornerBox == nullptr) {
         return;
@@ -99,7 +87,7 @@ void PageBox::layoutCornerPageMargin(PageMarginBox* cornerBox, const Rect& corne
 
     cornerBox->updateMargins(cornerRect.size());
     cornerBox->updatePaddings(cornerRect.size());
-    cornerBox->layoutContent(cornerRect.size());
+    layoutPageMarginBox(cornerBox, cornerRect.w, cornerRect.h, false, false);
     cornerBox->updateAutoMargins(cornerRect.size());
 
     cornerBox->setX(cornerRect.x + cornerBox->marginLeft());
@@ -108,16 +96,16 @@ void PageBox::layoutCornerPageMargin(PageMarginBox* cornerBox, const Rect& corne
 
 constexpr bool isHorizontalEdge(BoxSide side) { return side == BoxSideTop || side == BoxSideBottom; }
 
-void PageBox::layoutEdgePageMargin(PageMarginBox* edgeBox, const Rect& edgeRect, BoxSide edgeSide, float mainAxisSize)
+static void layoutEdgePageMargin(PageMarginBox* edgeBox, const Rect& edgeRect, BoxSide edgeSide, float mainAxisSize)
 {
     if(edgeBox == nullptr) {
         return;
     }
 
     if(isHorizontalEdge(edgeSide)) {
-        edgeBox->layoutContent(mainAxisSize, edgeRect.h, true, false);
+        layoutPageMarginBox(edgeBox, mainAxisSize, edgeRect.h, true, false);
     } else {
-        edgeBox->layoutContent(edgeRect.w, mainAxisSize, false, true);
+        layoutPageMarginBox(edgeBox, edgeRect.w, mainAxisSize, false, true);
     }
 
     edgeBox->updateAutoMargins(edgeRect.size());
@@ -219,7 +207,22 @@ static PreferredSizeInfo computeEdgePreferredSize(PageMarginBox* edgeBox, const 
 
     auto heightLength = edgeBox->style()->height();
     if(heightLength.isAuto()) {
-        edgeBox->layoutWidth(edgeRect.w, false);
+        auto widthLength = edgeBox->style()->width();
+        auto minWidthLength = edgeBox->style()->minWidth();
+        auto maxWidthLength = edgeBox->style()->maxWidth();
+
+        auto width = std::max(0.f, edgeRect.w - edgeBox->marginWidth());
+        if(!widthLength.isAuto())
+            width = edgeBox->adjustBorderBoxWidth(widthLength.calc(edgeRect.w));
+        if(!maxWidthLength.isNone())
+            width = std::min(width, edgeBox->adjustBorderBoxWidth(maxWidthLength.calc(edgeRect.w)));
+        if(!minWidthLength.isAuto()) {
+            width = std::max(width, edgeBox->adjustBorderBoxWidth(minWidthLength.calc(edgeRect.w)));
+        }
+
+        edgeBox->setOverrideWidth(width);
+        edgeBox->layout(nullptr);
+
         return PreferredSizeInfo(PreferredSizeInfo::Auto, edgeBox->height(), edgeBox->height(), edgeBox->marginHeight());
     }
 
@@ -300,7 +303,7 @@ static void resolveTwoEdgePageMarginLengths(const std::array<PreferredSizeInfo, 
     }
 }
 
-void PageBox::layoutEdgePageMargins(PageMarginBox* edgeStartBox, PageMarginBox* edgeCenterBox, PageMarginBox* edgeEndBox, const Rect& edgeRect, BoxSide edgeSide)
+static void layoutEdgePageMargins(PageMarginBox* edgeStartBox, PageMarginBox* edgeCenterBox, PageMarginBox* edgeEndBox, const Rect& edgeRect, BoxSide edgeSide)
 {
     if(edgeStartBox == nullptr && edgeCenterBox == nullptr && edgeEndBox == nullptr)
         return;
@@ -352,6 +355,61 @@ void PageBox::layoutEdgePageMargins(PageMarginBox* edgeStartBox, PageMarginBox* 
     layoutEdgePageMargin(edgeStartBox, edgeRect, edgeSide, mainAxisSizes[StartMargin]);
     layoutEdgePageMargin(edgeCenterBox, edgeRect, edgeSide, mainAxisSizes[CenterMargin]);
     layoutEdgePageMargin(edgeEndBox, edgeRect, edgeSide, mainAxisSizes[EndMargin]);
+}
+
+class PageMarginMap {
+public:
+    PageMarginMap() = default;
+
+    PageMarginBox* operator[](PageMarginType type) const {
+        return entries[static_cast<size_t>(type)];
+    }
+
+    PageMarginBox*& operator[](PageMarginType type) {
+        return entries[static_cast<size_t>(type)];
+    }
+
+private:
+    std::array<PageMarginBox*, 16> entries = {};
+};
+
+void PageBox::layout(FragmentBuilder* fragmentainer)
+{
+    PageMarginMap margins;
+    for(auto child = firstMarginBox(); child; child = child->nextMarginBox()) {
+        margins[child->marginType()] = child;
+    }
+
+    auto leftWidth = marginLeft();
+    auto rightWidth = marginRight();
+
+    auto topHeight = marginTop();
+    auto bottomHeight = marginBottom();
+
+    Rect topLeftCornerRect(0, 0, leftWidth, topHeight);
+    Rect topRightCornerRect(m_pageWidth - rightWidth, 0, rightWidth, topHeight);
+    Rect bottomRightCornerRect(m_pageWidth - rightWidth, m_pageHeight - bottomHeight, rightWidth, bottomHeight);
+    Rect bottomLeftCornerRect(0, m_pageHeight - bottomHeight, leftWidth, bottomHeight);
+
+    Rect topEdgeRect(leftWidth, 0, m_pageWidth - leftWidth - rightWidth, topHeight);
+    Rect rightEdgeRect(m_pageWidth - rightWidth, topHeight, rightWidth, m_pageHeight - topHeight - bottomHeight);
+    Rect bottomEdgeRect(leftWidth, m_pageHeight - bottomHeight, m_pageWidth - leftWidth - rightWidth, bottomHeight);
+    Rect leftEdgeRect(0, topHeight, leftWidth, m_pageHeight - topHeight - bottomHeight);
+
+    layoutCornerPageMargin(margins[PageMarginType::TopLeftCorner], topLeftCornerRect);
+    layoutEdgePageMargins(margins[PageMarginType::TopLeft], margins[PageMarginType::TopCenter], margins[PageMarginType::TopRight], topEdgeRect, BoxSideTop);
+
+    layoutCornerPageMargin(margins[PageMarginType::TopRightCorner], topRightCornerRect);
+    layoutEdgePageMargins(margins[PageMarginType::RightTop], margins[PageMarginType::RightMiddle], margins[PageMarginType::RightBottom], rightEdgeRect, BoxSideRight);
+
+    layoutCornerPageMargin(margins[PageMarginType::BottomRightCorner], bottomRightCornerRect);
+    layoutEdgePageMargins(margins[PageMarginType::BottomLeft], margins[PageMarginType::BottomCenter], margins[PageMarginType::BottomRight], bottomEdgeRect, BoxSideBottom);
+
+    layoutCornerPageMargin(margins[PageMarginType::BottomLeftCorner], bottomLeftCornerRect);
+    layoutEdgePageMargins(margins[PageMarginType::LeftTop], margins[PageMarginType::LeftMiddle], margins[PageMarginType::LeftBottom], leftEdgeRect, BoxSideLeft);
+
+    updateOverflowRect();
+    updateLayerPosition();
 }
 
 void PageBox::paintRootBackground(const PaintInfo& info) const
@@ -428,6 +486,29 @@ bool PageMarginBox::isVerticalFlow() const
     }
 }
 
+bool PageMarginBox::updateIntrinsicPaddings()
+{
+    if(!hasOverrideHeight())
+        return false;
+    float intrinsicPaddingTop = 0.f;
+    auto availableHeight = overrideHeight();
+    switch(style()->verticalAlignType()) {
+    case VerticalAlignType::Middle:
+        intrinsicPaddingTop = (availableHeight - height()) / 2.f;
+        break;
+    case VerticalAlignType::Bottom:
+        intrinsicPaddingTop = availableHeight - height();
+        break;
+    default:
+        break;
+    }
+
+    auto intrinsicPaddingBottom = availableHeight - intrinsicPaddingTop - height();
+    setPaddingTop(intrinsicPaddingTop + paddingTop());
+    setPaddingBottom(intrinsicPaddingBottom + paddingBottom());
+    return intrinsicPaddingTop || intrinsicPaddingBottom;
+}
+
 void PageMarginBox::updatePaddings(const Size& availableSize)
 {
     auto paddingTopLength = style()->paddingTop();
@@ -444,26 +525,6 @@ void PageMarginBox::updatePaddings(const Size& availableSize)
     setPaddingBottom(paddingBottom);
     setPaddingLeft(paddingLeft);
     setPaddingRight(paddingRight);
-}
-
-bool PageMarginBox::updateIntrinsicPaddings(float availableHeight)
-{
-    float intrinsicPaddingTop = 0.f;
-    switch(style()->verticalAlignType()) {
-    case VerticalAlignType::Middle:
-        intrinsicPaddingTop = (availableHeight - height()) / 2.f;
-        break;
-    case VerticalAlignType::Bottom:
-        intrinsicPaddingTop = availableHeight - height();
-        break;
-    default:
-        break;
-    }
-
-    auto intrinsicPaddingBottom = availableHeight - intrinsicPaddingTop - height();
-    setPaddingTop(intrinsicPaddingTop + paddingTop());
-    setPaddingBottom(intrinsicPaddingBottom + paddingBottom());
-    return intrinsicPaddingTop || intrinsicPaddingBottom;
 }
 
 void PageMarginBox::updateMargins(const Size& availableSize)
@@ -549,72 +610,6 @@ void PageMarginBox::updateAutoMargins(const Size& availableSize)
             break;
         }
     }
-}
-
-void PageMarginBox::layoutFixedWidth(float width)
-{
-    setOverrideWidth(width);
-    layout(nullptr);
-}
-
-void PageMarginBox::layoutFixedHeight(float height)
-{
-    setOverrideHeight(height);
-    if(updateIntrinsicPaddings(height)) {
-        layout(nullptr);
-    }
-}
-
-void PageMarginBox::layoutWidth(float availableWidth, bool fixedWidth)
-{
-    if(fixedWidth) {
-        layoutFixedWidth(availableWidth);
-        return;
-    }
-
-    auto widthLength = style()->width();
-    auto minWidthLength = style()->minWidth();
-    auto maxWidthLength = style()->maxWidth();
-
-    auto width = std::max(0.f, availableWidth - marginWidth());
-    if(!widthLength.isAuto())
-        width = adjustBorderBoxWidth(widthLength.calc(availableWidth));
-    if(!maxWidthLength.isNone())
-        width = std::min(width, adjustBorderBoxWidth(maxWidthLength.calc(availableWidth)));
-    if(!minWidthLength.isAuto()) {
-        width = std::max(width, adjustBorderBoxWidth(minWidthLength.calc(availableWidth)));
-    }
-
-    layoutFixedWidth(width);
-}
-
-void PageMarginBox::layoutHeight(float availableHeight, bool fixedHeight)
-{
-    if(fixedHeight) {
-        layoutFixedHeight(availableHeight);
-        return;
-    }
-
-    auto heightLength = style()->height();
-    auto minHeightLength = style()->minHeight();
-    auto maxHeightLength = style()->maxHeight();
-
-    auto height = std::max(0.f, availableHeight - marginHeight());
-    if(!heightLength.isAuto())
-        height = adjustBorderBoxHeight(heightLength.calc(availableHeight));
-    if(!maxHeightLength.isNone())
-        height = std::min(height, adjustBorderBoxHeight(maxHeightLength.calc(availableHeight)));
-    if(!minHeightLength.isAuto()) {
-        height = std::max(height, adjustBorderBoxHeight(minHeightLength.calc(availableHeight)));
-    }
-
-    layoutFixedHeight(height);
-}
-
-void PageMarginBox::layoutContent(float availableWidth, float availableHeight, bool fixedWidth, bool fixedHeight)
-{
-    layoutWidth(availableWidth, fixedWidth);
-    layoutHeight(availableHeight, fixedHeight);
 }
 
 PageLayout::PageLayout(Document* document)

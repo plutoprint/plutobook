@@ -1133,7 +1133,7 @@ void TableSectionBox::layoutRows(FragmentBuilder* fragmentainer)
             }
 
             cellBox->setY(0.f);
-            cellBox->updateIntrinsicPaddings(rowHeight);
+            cellBox->setOverrideHeight(rowHeight);
             cellBox->layout(fragmentainer);
             if(fragmentainer && cellBox->height() > rowHeight) {
                 rowHeightIncreaseForFragmentation = std::max(rowHeightIncreaseForFragmentation, cellBox->height() - rowHeight);
@@ -1704,9 +1704,12 @@ float TableCellBox::cellBaselinePosition() const
     return paddingTop() + borderTop() + contentBoxHeight();
 }
 
-bool TableCellBox::updateIntrinsicPaddings(float rowHeight)
+bool TableCellBox::updateIntrinsicPaddings()
 {
+    if(!hasOverrideHeight())
+        return false;
     float intrinsicPaddingTop = 0.f;
+    auto rowHeight = overrideHeight();
     switch(style()->verticalAlignType()) {
     case VerticalAlignType::Sub:
     case VerticalAlignType::Super:

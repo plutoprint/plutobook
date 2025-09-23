@@ -1560,6 +1560,16 @@ void BlockFlowBox::layoutBlockChildren(FragmentBuilder* fragmentainer)
     handleBottomOfBlock(top, bottom, marginInfo);
 }
 
+void BlockFlowBox::layoutContents(FragmentBuilder* fragmentainer)
+{
+    setHeight(borderAndPaddingTop());
+    if(isChildrenInline()) {
+        m_lineLayout->layout(fragmentainer);
+    } else {
+        layoutBlockChildren(fragmentainer);
+    }
+}
+
 void BlockFlowBox::layout(FragmentBuilder* fragmentainer)
 {
     if(isChildrenInline()) {
@@ -1570,16 +1580,12 @@ void BlockFlowBox::layout(FragmentBuilder* fragmentainer)
 
     updateMaxMargins();
     collectIntrudingFloats();
-
-    setHeight(borderAndPaddingTop());
-    if(isChildrenInline()) {
-        m_lineLayout->layout(fragmentainer);
-    } else {
-        layoutBlockChildren(fragmentainer);
-    }
+    layoutContents(fragmentainer);
 
     if(avoidsFloats() && floatBottom() > (height() - borderAndPaddingBottom()))
         setHeight(floatBottom() + borderAndPaddingBottom());
+    if(updateIntrinsicPaddings())
+        layoutContents(fragmentainer);
     updateHeight();
     collectOverhangingFloats();
     layoutPositionedBoxes();

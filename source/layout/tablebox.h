@@ -413,7 +413,7 @@ public:
 
     bool isBaselineAligned() const;
     float cellBaselinePosition() const;
-    bool updateIntrinsicPaddings(float rowHeight);
+    bool updateIntrinsicPaddings() final;
 
     void computeBorderWidths(float& borderTop, float& borderBottom, float& borderLeft, float& borderRight) const;
 

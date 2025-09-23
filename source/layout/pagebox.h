@@ -34,10 +34,6 @@ public:
     void computeHeight(float& y, float& height, float& marginTop, float& marginBottom) const final;
     void layout(FragmentBuilder* fragmentainer) final;
 
-    void layoutCornerPageMargin(PageMarginBox* cornerBox, const Rect& cornerRect);
-    void layoutEdgePageMargin(PageMarginBox* edgeBox, const Rect& edgeRect, BoxSide edgeSide, float mainAxisSize);
-    void layoutEdgePageMargins(PageMarginBox* edgeStartBox, PageMarginBox* edgeCenterBox, PageMarginBox* edgeEndBox, const Rect& edgeRect, BoxSide edgeSide);
-
     void paintRootBackground(const PaintInfo& info) const final;
     void paintContents(const PaintInfo& info, const Point& offset, PaintPhase phase) final;
 
@@ -84,20 +80,11 @@ public:
     PageMarginBox* nextMarginBox() const;
     PageMarginBox* prevMarginBox() const;
 
-    void updatePaddings(const Size& availableSize);
-    bool updateIntrinsicPaddings(float availableHeight);
+    bool updateIntrinsicPaddings() final;
 
+    void updatePaddings(const Size& availableSize);
     void updateMargins(const Size& availableSize);
     void updateAutoMargins(const Size& availableSize);
-
-    void layoutFixedWidth(float availableWidth);
-    void layoutFixedHeight(float availableHeight);
-
-    void layoutWidth(float availableWidth, bool fixedWidth);
-    void layoutHeight(float availableHeight, bool fixedHeight);
-
-    void layoutContent(float availableWidth, float availableHeight, bool fixedWidth, bool fixedHeight);
-    void layoutContent(const Size& availableSize) { layoutContent(availableSize.w, availableSize.h, false, false); }
 
     const char* name() const final { return "PageMarginBox"; }
 
