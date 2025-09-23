@@ -913,7 +913,9 @@ enum class CSSCalcOperator : uint8_t {
     Add,
     Sub,
     Mul,
-    Div
+    Div,
+    Min,
+    Max
 };
 
 struct CSSCalc {

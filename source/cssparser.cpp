@@ -2035,48 +2035,53 @@ static std::optional<CSSLengthUnits> matchUnitType(std::string_view name)
     return matchIdent(table, name);
 }
 
-RefPtr<CSSValue> CSSParser::consumeCalc(CSSTokenStream& input, bool negative, bool unitless)
+static bool isValidCalcFunction(std::string_view name)
 {
-    if(input->type() != CSSToken::Type::Function || !identMatches("calc", 4, input->data()))
-        return nullptr;
-    CSSCalcList values(m_heap);
-    auto resolve_op = [](const CSSToken& token) {
-        switch(token.delim()) {
-        case '+':
-            return CSSCalcOperator::Add;
-        case '-':
-            return CSSCalcOperator::Sub;
-        case '*':
-            return CSSCalcOperator::Mul;
-        case '/':
-            return CSSCalcOperator::Div;
-        default:
-            return CSSCalcOperator::None;
-        }
-    };
+    return identMatches("calc", 4, name) || identMatches("clamp", 5, name)
+        || identMatches("min", 3, name) || identMatches("max", 3, name);
+}
 
-    CSSTokenStreamGuard guard(input);
+static CSSCalcOperator convertCalcDelim(const CSSToken& token)
+{
+    switch(token.delim()) {
+    case '+':
+        return CSSCalcOperator::Add;
+    case '-':
+        return CSSCalcOperator::Sub;
+    case '*':
+        return CSSCalcOperator::Mul;
+    case '/':
+        return CSSCalcOperator::Div;
+    default:
+        return CSSCalcOperator::None;
+    }
+};
+
+static bool consumeCalcBlock(CSSTokenStream& input, CSSTokenList& stack, CSSCalcList& values)
+{
+    assert(input->type() == CSSToken::Type::Function || input->type() == CSSToken::Type::LeftParenthesis);
+    stack.push_back(input.get());
     auto block = input.consumeBlock();
     block.consumeWhitespace();
-
-    std::vector<CSSCalcOperator> stack;
     while(!block.empty()) {
         const auto& token = block.get();
         if(token.type() == CSSToken::Type::Number) {
             values.emplace_back(token.number());
+            block.consumeIncludingWhitespace();
         } else if(token.type() == CSSToken::Type::Dimension) {
             auto unitType = matchUnitType(token.data());
             if(unitType == std::nullopt)
-                return nullptr;
+                return false;
             values.emplace_back(token.number(), unitType.value());
+            block.consumeIncludingWhitespace();
         } else if(token.type() == CSSToken::Type::Delim) {
-            auto token_op = resolve_op(token);
+            auto token_op = convertCalcDelim(token);
             if(token_op == CSSCalcOperator::None)
-                return nullptr;
+                return false;
             while(!stack.empty()) {
-                auto stack_op = stack.back();
-                if(stack_op == CSSCalcOperator::None)
+                if(stack.back().type() != CSSToken::Type::Delim)
                     break;
+                auto stack_op = convertCalcDelim(stack.back());
                 if((token_op == CSSCalcOperator::Mul || token_op == CSSCalcOperator::Div)
                     && (stack_op == CSSCalcOperator::Add || stack_op == CSSCalcOperator::Sub)) {
                     break;
@@ -2086,40 +2091,92 @@ RefPtr<CSSValue> CSSParser::consumeCalc(CSSTokenStream& input, bool negative, bo
                 stack.pop_back();
             }
 
-            stack.push_back(token_op);
+            stack.push_back(token);
+            block.consumeIncludingWhitespace();
         } else if(token.type() == CSSToken::Type::Function) {
-            if(!identMatches("calc", 4, token.data()))
-                return nullptr;
-            stack.push_back(CSSCalcOperator::None);
+            if(!isValidCalcFunction(token.data()))
+                return false;
+            if(!consumeCalcBlock(block, stack, values))
+                return false;
+            block.consumeWhitespace();
         } else if(token.type() == CSSToken::Type::LeftParenthesis) {
-            stack.push_back(CSSCalcOperator::None);
-        } else if(token.type() == CSSToken::Type::RightParenthesis) {
-            while(!stack.empty() && stack.back() != CSSCalcOperator::None) {
-                values.emplace_back(stack.back());
+            if(!consumeCalcBlock(block, stack, values))
+                return false;
+            block.consumeWhitespace();
+        } else if(token.type() == CSSToken::Type::Comma) {
+            while(!stack.empty()) {
+                if(stack.back().type() != CSSToken::Type::Delim)
+                    break;
+                values.emplace_back(convertCalcDelim(stack.back()));
                 stack.pop_back();
             }
 
-            if(stack.empty())
-                return nullptr;
-            stack.pop_back();
+            if(stack.empty() || stack.back().type() == CSSToken::Type::LeftParenthesis)
+                return false;
+            stack.push_back(token);
+            block.consumeIncludingWhitespace();
         } else {
-            return nullptr;
+            return false;
         }
-
-        block.consumeIncludingWhitespace();
     }
 
-    input.consumeWhitespace();
+    size_t commaCount = 0;
     while(!stack.empty()) {
-        if(stack.back() != CSSCalcOperator::None)
-            values.emplace_back(stack.back());
+        if(stack.back().type() == CSSToken::Type::Delim) {
+            values.emplace_back(convertCalcDelim(stack.back()));
+        } else if(stack.back().type() == CSSToken::Type::Comma) {
+            ++commaCount;
+        } else {
+            break;
+        }
+
         stack.pop_back();
     }
 
-    unitless |= m_context.inSVGElement();
-    if(values.empty())
+    if(stack.empty())
+        return false;
+    auto left = stack.back();
+    stack.pop_back();
+    if(left.type() == CSSToken::Type::LeftParenthesis)
+        return commaCount == 0;
+    assert(left.type() == CSSToken::Type::Function);
+    if(identMatches("calc", 4, left.data())) {
+        return commaCount == 0;
+    }
+
+    if(identMatches("clamp", 5, left.data())) {
+        if(commaCount != 2)
+            return false;
+        values.emplace_back(CSSCalcOperator::Min);
+        values.emplace_back(CSSCalcOperator::Max);
+        return true;
+    }
+
+    auto op = identMatches("min", 3, left.data()) ? CSSCalcOperator::Min : CSSCalcOperator::Max;
+    for(size_t i = 0; i < commaCount; ++i)
+        values.emplace_back(op);
+    return true;
+}
+
+RefPtr<CSSValue> CSSParser::consumeCalc(CSSTokenStream& input, bool negative, bool unitless)
+{
+    if(input->type() != CSSToken::Type::Function || !isValidCalcFunction(input->data()))
         return nullptr;
+    CSSTokenList stack;
+    CSSCalcList values(m_heap);
+    CSSTokenStreamGuard guard(input);
+    if(!consumeCalcBlock(input, stack, values))
+        return nullptr;
+    input.consumeWhitespace();
     guard.release();
+
+    unitless |= m_context.inSVGElement();
+    while(!stack.empty()) {
+        if(stack.back().type() == CSSToken::Type::Delim)
+            values.emplace_back(convertCalcDelim(stack.back()));
+        stack.pop_back();
+    }
+
     return CSSCalcValue::create(m_heap, negative, unitless, std::move(values));
 }
 

@@ -170,6 +170,16 @@ float CSSCalcValue::resolve(const CSSLengthResolver& resolver) const
                     return 0;
                 stack.emplace_back(left.value / right.value, left.units);
                 break;
+            case CSSCalcOperator::Min:
+                if(right.units != left.units)
+                    return 0;
+                stack.emplace_back(std::min(left.value, right.value), right.units);
+                break;
+            case CSSCalcOperator::Max:
+                if(right.units != left.units)
+                    return 0;
+                stack.emplace_back(std::max(left.value, right.value), right.units);
+                break;
             default:
                 assert(false);
             }
