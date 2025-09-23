@@ -458,8 +458,8 @@ void Element::buildBox(Counters& counters, Box* parent)
     auto box = createBox(style);
     if(box == nullptr)
         return;
-    buildChildrenBox(counters, box);
     parent->addChild(box);
+    buildChildrenBox(counters, box);
 }
 
 void Element::finishParsingDocument()

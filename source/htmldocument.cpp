@@ -161,8 +161,8 @@ void HTMLElement::buildBox(Counters& counters, Box* parent)
     auto box = createBox(style);
     if(box == nullptr)
         return;
-    buildElementBox(counters, box);
     parent->addChild(box);
+    buildElementBox(counters, box);
 }
 
 template<typename T = int>

@@ -113,8 +113,8 @@ void ContentBoxBuilder::addElement(const CSSValue& value)
         return;
     auto& element = to<HTMLElement>(*style->node());
     auto newBox = element.createBox(style);
-    element.buildElementBox(m_counters, newBox);
     m_parentBox->addChild(newBox);
+    element.buildElementBox(m_counters, newBox);
     m_lastTextBox = nullptr;
 }
 
