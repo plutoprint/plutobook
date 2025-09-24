@@ -137,8 +137,6 @@ public:
     void updateOverflowRect() override;
     void computeIntrinsicWidths(float& minWidth, float& maxWidth) const override;
 
-    virtual bool updateIntrinsicPaddings() { return false; }
-
     LineLayout* lineLayout() const { return m_lineLayout.get(); }
     const FloatingBoxList* floatingBoxes() const { return m_floatingBoxes.get(); }
     MultiColumnFlowBox* columnFlowBox() const { return m_columnFlowBox; }

@@ -77,6 +77,9 @@ static void layoutPageMarginBox(PageMarginBox* marginBox, float availableWidth, 
     }
 
     marginBox->layout(nullptr);
+    if(marginBox->updateIntrinsicPaddings()) {
+        marginBox->layoutContents(nullptr);
+    }
 }
 
 static void layoutCornerPageMargin(PageMarginBox* cornerBox, const Rect& cornerRect)
@@ -488,8 +491,7 @@ bool PageMarginBox::isVerticalFlow() const
 
 bool PageMarginBox::updateIntrinsicPaddings()
 {
-    if(!hasOverrideHeight())
-        return false;
+    assert(hasOverrideHeight());
     float intrinsicPaddingTop = 0.f;
     auto availableHeight = overrideHeight();
     switch(style()->verticalAlignType()) {

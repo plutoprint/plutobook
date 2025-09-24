@@ -80,7 +80,7 @@ public:
     PageMarginBox* nextMarginBox() const;
     PageMarginBox* prevMarginBox() const;
 
-    bool updateIntrinsicPaddings() final;
+    bool updateIntrinsicPaddings();
 
     void updatePaddings(const Size& availableSize);
     void updateMargins(const Size& availableSize);

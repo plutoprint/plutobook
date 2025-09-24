@@ -461,14 +461,14 @@ void BlockBox::computeWidth(float& x, float& width, float& marginLeft, float& ma
 
 void BlockBox::computeHeight(float& y, float& height, float& marginTop, float& marginBottom) const
 {
+    if(isTableCellBox() || isPageMarginBox())
+        return;
     if(hasOverrideHeight()) {
         if(!isTableBox())
             height = overrideHeight();
         return;
     }
 
-    if(isTableCellBox())
-        return;
     if(isPositioned()) {
         computePositionedHeight(y, height, marginTop, marginBottom);
         return;
@@ -1584,8 +1584,6 @@ void BlockFlowBox::layout(FragmentBuilder* fragmentainer)
 
     if(avoidsFloats() && floatBottom() > (height() - borderAndPaddingBottom()))
         setHeight(floatBottom() + borderAndPaddingBottom());
-    if(updateIntrinsicPaddings())
-        layoutContents(fragmentainer);
     updateHeight();
     collectOverhangingFloats();
     layoutPositionedBoxes();
