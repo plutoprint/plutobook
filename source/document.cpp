@@ -385,7 +385,7 @@ void Element::parseAttribute(const GlobalString& name, const HeapString& value)
 
 CSSPropertyList Element::inlineStyle()
 {
-    auto value = getAttribute(styleAttr);
+    const auto& value = getAttribute(styleAttr);
     if(value.empty())
         return CSSPropertyList();
     CSSParserContext context(this, CSSStyleOrigin::Inline, document()->baseUrl());

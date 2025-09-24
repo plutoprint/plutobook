@@ -497,18 +497,16 @@ RefPtr<BoxStyle> ElementStyleBuilder::build()
     }
 
     auto newStyle = BoxStyle::create(m_element, m_parentStyle, m_pseudoType, Display::Inline);
-
     buildStyle(newStyle.get());
-
     if(newStyle->display() == Display::None)
         return newStyle;
     if(newStyle->position() == Position::Static && !m_parentStyle->isDisplayFlex())
         newStyle->reset(CSSPropertyID::ZIndex);
     if(m_pseudoType == PseudoType::FirstLetter) {
         newStyle->setPosition(Position::Static);
-        if(newStyle->isFloating())
+        if(newStyle->isFloating()) {
             newStyle->setDisplay(Display::Block);
-        else {
+        } else {
             newStyle->setDisplay(Display::Inline);
         }
     }
@@ -705,8 +703,8 @@ RefPtr<BoxStyle> CSSStyleSheet::styleForElement(Element* element, const BoxStyle
         builder.add(m_classRules.get(className));
     for(const auto& attribute : element->attributes())
         builder.add(m_attributeRules.get(element->foldCase(attribute.name())));
-    builder.add(m_idRules.get(element->id()));
     builder.add(m_tagRules.get(element->foldTagNameCase()));
+    builder.add(m_idRules.get(element->id()));
     builder.add(&m_universalRules);
     return builder.build();
 }
