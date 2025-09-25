@@ -50,9 +50,9 @@ private:
     bool consumeCombinator(CSSTokenStream& input, CSSComplexSelector::Combinator& combinator);
     bool consumeMatchPattern(CSSTokenStream& input, CSSSimpleSelector::MatchPattern& pattern);
 
-    bool consumeFontFaceDescription(CSSTokenStream& input, CSSPropertyList& properties, CSSPropertyID id);
-    bool consumeCounterStyleDescription(CSSTokenStream& input, CSSPropertyList& properties, CSSPropertyID id);
-    bool consumeDescription(CSSTokenStream& input, CSSPropertyList& properties, CSSPropertyID id, bool important);
+    bool consumeFontFaceDescriptor(CSSTokenStream& input, CSSPropertyList& properties, CSSPropertyID id);
+    bool consumeCounterStyleDescriptor(CSSTokenStream& input, CSSPropertyList& properties, CSSPropertyID id);
+    bool consumeDescriptor(CSSTokenStream& input, CSSPropertyList& properties, CSSPropertyID id, bool important);
 
     bool consumeDeclaraction(CSSTokenStream& input, CSSPropertyList& properties, CSSRuleType ruleType);
     void consumeDeclaractionList(CSSTokenStream& input, CSSPropertyList& properties, CSSRuleType ruleType);

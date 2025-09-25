@@ -44,7 +44,7 @@ CSSMediaQueryList CSSParser::parseMediaQueries(const std::string_view& content)
 CSSPropertyList CSSParser::parsePropertyValue(CSSTokenStream input, CSSPropertyID id, bool important)
 {
     CSSPropertyList properties(m_heap);
-    consumeDescription(input, properties, id, important);
+    consumeDescriptor(input, properties, id, important);
     return properties;
 }
 
@@ -962,7 +962,7 @@ bool CSSParser::consumeMatchPattern(CSSTokenStream& input, CSSSimpleSelector::Ma
     return true;
 }
 
-bool CSSParser::consumeFontFaceDescription(CSSTokenStream& input, CSSPropertyList& properties, CSSPropertyID id)
+bool CSSParser::consumeFontFaceDescriptor(CSSTokenStream& input, CSSPropertyList& properties, CSSPropertyID id)
 {
     RefPtr<CSSValue> value;
     switch(id) {
@@ -1000,7 +1000,7 @@ bool CSSParser::consumeFontFaceDescription(CSSTokenStream& input, CSSPropertyLis
     return false;
 }
 
-bool CSSParser::consumeCounterStyleDescription(CSSTokenStream& input, CSSPropertyList& properties, CSSPropertyID id)
+bool CSSParser::consumeCounterStyleDescriptor(CSSTokenStream& input, CSSPropertyList& properties, CSSPropertyID id)
 {
     RefPtr<CSSValue> value;
     switch(id) {
@@ -1077,7 +1077,7 @@ static bool containsVariableReferences(CSSTokenStream input)
     return false;
 }
 
-bool CSSParser::consumeDescription(CSSTokenStream& input, CSSPropertyList& properties, CSSPropertyID id, bool important)
+bool CSSParser::consumeDescriptor(CSSTokenStream& input, CSSPropertyList& properties, CSSPropertyID id, bool important)
 {
     if(containsVariableReferences(input)) {
         auto variable = CSSVariableReferenceValue::create(m_heap, m_context, id, important, CSSVariableData::create(m_heap, input));
@@ -1431,11 +1431,11 @@ bool CSSParser::consumeDeclaraction(CSSTokenStream& input, CSSPropertyList& prop
 
     switch(ruleType) {
     case CSSRuleType::FontFace:
-        return consumeFontFaceDescription(value, properties, id);
+        return consumeFontFaceDescriptor(value, properties, id);
     case CSSRuleType::CounterStyle:
-        return consumeCounterStyleDescription(value, properties, id);
+        return consumeCounterStyleDescriptor(value, properties, id);
     default:
-        return consumeDescription(value, properties, id, important);
+        return consumeDescriptor(value, properties, id, important);
     }
 }
 
