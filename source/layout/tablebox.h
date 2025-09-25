@@ -411,9 +411,10 @@ public:
     bool isTableCellBox() const final { return true; }
     bool avoidsFloats() const final { return true; }
 
+    float computeVerticalAlignShift() const final;
+
     bool isBaselineAligned() const;
     float cellBaselinePosition() const;
-    bool updateIntrinsicPaddings();
 
     void computeBorderWidths(float& borderTop, float& borderBottom, float& borderLeft, float& borderRight) const;
 

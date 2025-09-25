@@ -71,6 +71,8 @@ std::optional<float> BlockBox::availableHeight() const
         return document()->containerHeight();
     if(hasOverrideHeight())
         return overrideHeight() - borderAndPaddingHeight();
+    if(isTableCellBox() || isPageMarginBox())
+        return std::nullopt;
     if(isAnonymous())
         return containingBlockHeightForContent();
     if(isPositioned() && style()->height().isAuto() && !(style()->top().isAuto() || style()->bottom().isAuto())) {
@@ -461,14 +463,16 @@ void BlockBox::computeWidth(float& x, float& width, float& marginLeft, float& ma
 
 void BlockBox::computeHeight(float& y, float& height, float& marginTop, float& marginBottom) const
 {
-    if(isTableCellBox() || isPageMarginBox())
-        return;
     if(hasOverrideHeight()) {
-        if(!isTableBox())
+        if(isTableCellBox())
+            height = std::max(height, overrideHeight());
+        else if(!isTableBox())
             height = overrideHeight();
         return;
     }
 
+    if(isTableCellBox() || isPageMarginBox())
+        return;
     if(isPositioned()) {
         computePositionedHeight(y, height, marginTop, marginBottom);
         return;
@@ -1548,7 +1552,7 @@ void BlockFlowBox::layoutBlockChildren(FragmentBuilder* fragmentainer)
             marginInfo.clearMargin();
         } else if(child->isMultiColumnFlowBox()) {
             assert(child == m_columnFlowBox);
-            child->setY(top);
+            child->setY(height());
             child->updatePaddingWidths(this);
             child->layout(nullptr);
             determineHorizontalPosition(child);
@@ -1560,9 +1564,9 @@ void BlockFlowBox::layoutBlockChildren(FragmentBuilder* fragmentainer)
     handleBottomOfBlock(top, bottom, marginInfo);
 }
 
-void BlockFlowBox::layoutContents(FragmentBuilder* fragmentainer)
+void BlockFlowBox::layoutContents(FragmentBuilder* fragmentainer, float verticalShift)
 {
-    setHeight(borderAndPaddingTop());
+    setHeight(verticalShift + borderAndPaddingTop());
     if(isChildrenInline()) {
         m_lineLayout->layout(fragmentainer);
     } else {
@@ -1580,10 +1584,12 @@ void BlockFlowBox::layout(FragmentBuilder* fragmentainer)
 
     updateMaxMargins();
     collectIntrudingFloats();
-    layoutContents(fragmentainer);
+    layoutContents(fragmentainer, 0.f);
 
     if(avoidsFloats() && floatBottom() > (height() - borderAndPaddingBottom()))
         setHeight(floatBottom() + borderAndPaddingBottom());
+    if(auto shift = computeVerticalAlignShift())
+        layoutContents(fragmentainer, shift);
     updateHeight();
     collectOverhangingFloats();
     layoutPositionedBoxes();

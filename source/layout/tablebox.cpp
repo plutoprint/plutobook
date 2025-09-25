@@ -1134,8 +1134,7 @@ void TableSectionBox::layoutRows(FragmentBuilder* fragmentainer)
 
             cellBox->setY(0.f);
             cellBox->setOverrideHeight(rowHeight);
-            cellBox->updateIntrinsicPaddings();
-            cellBox->layoutContents(fragmentainer);
+            cellBox->layout(fragmentainer);
             if(fragmentainer && cellBox->height() > rowHeight) {
                 rowHeightIncreaseForFragmentation = std::max(rowHeightIncreaseForFragmentation, cellBox->height() - rowHeight);
                 cellBox->setHeight(rowHeight);
@@ -1705,11 +1704,11 @@ float TableCellBox::cellBaselinePosition() const
     return paddingTop() + borderTop() + contentBoxHeight();
 }
 
-bool TableCellBox::updateIntrinsicPaddings()
+float TableCellBox::computeVerticalAlignShift() const
 {
-    assert(hasOverrideHeight());
-    float intrinsicPaddingTop = 0.f;
     auto rowHeight = overrideHeight();
+    if(rowHeight < height())
+        return 0.f;
     switch(style()->verticalAlignType()) {
     case VerticalAlignType::Sub:
     case VerticalAlignType::Super:
@@ -1717,22 +1716,14 @@ bool TableCellBox::updateIntrinsicPaddings()
     case VerticalAlignType::TextBottom:
     case VerticalAlignType::Length:
     case VerticalAlignType::Baseline:
-        intrinsicPaddingTop = row()->maxBaseline() - cellBaselinePosition();
-        break;
+        return std::max(0.f, row()->maxBaseline() - cellBaselinePosition());
     case VerticalAlignType::Middle:
-        intrinsicPaddingTop = (rowHeight - height()) / 2.f;
-        break;
+        return (rowHeight - height()) / 2.f;
     case VerticalAlignType::Bottom:
-        intrinsicPaddingTop = rowHeight - height();
-        break;
+        return rowHeight - height();
     default:
-        break;
+        return 0.f;
     }
-
-    auto intrinsicPaddingBottom = rowHeight - intrinsicPaddingTop - height();
-    setPaddingTop(intrinsicPaddingTop + paddingTop());
-    setPaddingBottom(intrinsicPaddingBottom + paddingBottom());
-    return intrinsicPaddingTop || intrinsicPaddingBottom;
 }
 
 void TableCellBox::computeBorderWidths(float& borderTop, float& borderBottom, float& borderLeft, float& borderRight) const

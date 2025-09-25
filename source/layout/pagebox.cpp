@@ -77,9 +77,6 @@ static void layoutPageMarginBox(PageMarginBox* marginBox, float availableWidth, 
     }
 
     marginBox->layout(nullptr);
-    if(marginBox->updateIntrinsicPaddings()) {
-        marginBox->layoutContents(nullptr);
-    }
 }
 
 static void layoutCornerPageMargin(PageMarginBox* cornerBox, const Rect& cornerRect)
@@ -489,26 +486,19 @@ bool PageMarginBox::isVerticalFlow() const
     }
 }
 
-bool PageMarginBox::updateIntrinsicPaddings()
+float PageMarginBox::computeVerticalAlignShift() const
 {
-    assert(hasOverrideHeight());
-    float intrinsicPaddingTop = 0.f;
     auto availableHeight = overrideHeight();
+    if(availableHeight < height())
+        return 0.f;
     switch(style()->verticalAlignType()) {
     case VerticalAlignType::Middle:
-        intrinsicPaddingTop = (availableHeight - height()) / 2.f;
-        break;
+        return (availableHeight - height()) / 2.f;
     case VerticalAlignType::Bottom:
-        intrinsicPaddingTop = availableHeight - height();
-        break;
+        return availableHeight - height();
     default:
-        break;
+        return 0.f;
     }
-
-    auto intrinsicPaddingBottom = availableHeight - intrinsicPaddingTop - height();
-    setPaddingTop(intrinsicPaddingTop + paddingTop());
-    setPaddingBottom(intrinsicPaddingBottom + paddingBottom());
-    return intrinsicPaddingTop || intrinsicPaddingBottom;
 }
 
 void PageMarginBox::updatePaddings(const Size& availableSize)
