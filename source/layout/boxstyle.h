@@ -374,23 +374,6 @@ private:
     HeapString m_uri;
 };
 
-class TabSize {
-public:
-    enum class Type {
-        Length,
-        Space
-    };
-
-    TabSize(Type type, float value) : m_type(type), m_value(value) {}
-
-    Type type() const { return m_type; }
-    float value() const { return m_value; }
-
-private:
-    Type m_type;
-    float m_value;
-};
-
 class Length {
 public:
     enum class Type {
@@ -819,11 +802,12 @@ public:
     WordBreak wordBreak() const { return m_wordBreak; }
     OverflowWrap overflowWrap() const { return m_overflowWrap; }
     Hyphens hyphens() const;
-    TabSize tabSize() const;
     Length textIndent() const;
     float letterSpacing() const;
     float wordSpacing() const;
     float lineHeight() const;
+
+    float tabWidth(float spaceWidth) const;
 
     BoxSizing boxSizing() const { return m_boxSizing; }
     BlendMode blendMode() const { return m_blendMode; }

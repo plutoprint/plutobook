@@ -409,7 +409,6 @@ public:
     float spaceWidth() const { return m_info.spaceWidth; }
     uint16_t zeroGlyph() const { return m_info.zeroGlyph; }
     uint16_t spaceGlyph() const { return m_info.spaceGlyph; }
-    float tabWidth(const TabSize& tabSize) const;
 
     ~SimpleFontData() final;
 

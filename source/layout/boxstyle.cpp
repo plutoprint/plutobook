@@ -796,17 +796,6 @@ Hyphens BoxStyle::hyphens() const
     return Hyphens::Manual;
 }
 
-TabSize BoxStyle::tabSize() const
-{
-    auto value = get(CSSPropertyID::TabSize);
-    if(value == nullptr)
-        return TabSize(TabSize::Type::Space, 8.0);
-    const auto& length = to<CSSLengthValue>(*value);
-    if(length.units() == CSSLengthUnits::None)
-        return TabSize(TabSize::Type::Space, length.value());
-    return TabSize(TabSize::Type::Length, convertLengthValue(length));
-}
-
 Length BoxStyle::textIndent() const
 {
     auto value = get(CSSPropertyID::TextIndent);
@@ -841,6 +830,17 @@ float BoxStyle::lineHeight() const
     const auto& length = to<CSSLengthValue>(*value);
     if(length.units() == CSSLengthUnits::None)
         return length.value() * fontSize();
+    return convertLengthValue(length);
+}
+
+float BoxStyle::tabWidth(float spaceWidth) const
+{
+    auto value = get(CSSPropertyID::TabSize);
+    if(value == nullptr)
+        return 8.f;
+    const auto& length = to<CSSLengthValue>(*value);
+    if(length.units() == CSSLengthUnits::None)
+        return spaceWidth * length.value();
     return convertLengthValue(length);
 }
 

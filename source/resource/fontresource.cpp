@@ -433,13 +433,6 @@ const SimpleFontData* SimpleFontData::getFontData(uint32_t codepoint) const
     return nullptr;
 }
 
-float SimpleFontData::tabWidth(const TabSize& tabSize) const
-{
-    if(tabSize.type() == TabSize::Type::Space)
-        return tabSize.value() * spaceWidth();
-    return tabSize.value();
-}
-
 SimpleFontData::~SimpleFontData()
 {
     hb_font_destroy(m_hbFont);

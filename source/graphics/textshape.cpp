@@ -220,8 +220,7 @@ RefPtr<TextShape> TextShape::createForTabs(const UString& text, Direction direct
 
     TextShapeRunList runs(heap);
     if(auto fontData = font->getFontData(kSpaceCharacter)) {
-        auto tabSize = style->tabSize();
-        auto tabWidth = fontData->tabWidth(tabSize);
+        auto tabWidth = style->tabWidth(fontData->spaceWidth());
         auto spaceGlyph = fontData->spaceGlyph();
         while(totalLength > 0) {
             auto numGlyphs = std::min(totalLength, kMaxGlyphs);
