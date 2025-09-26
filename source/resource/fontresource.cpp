@@ -646,6 +646,7 @@ RefPtr<SimpleFontData> FontDataCache::getFontData(uint32_t codepoint, const Font
     FcPatternAddInteger(pattern, FC_WEIGHT, fcWeight(description.request.weight));
     FcPatternAddInteger(pattern, FC_WIDTH, fcWidth(description.request.width));
     FcPatternAddInteger(pattern, FC_SLANT, fcSlant(description.request.slope));
+    FcPatternAddBool(pattern, FC_SCALABLE, FcTrue);
 
     FcConfigSubstitute(m_config, pattern, FcMatchPattern);
     FcDefaultSubstitute(pattern);

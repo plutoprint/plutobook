@@ -1118,7 +1118,6 @@ RefPtr<FontFace> CSSFontFaceBuilder::build(Document* document) const
             }
         }
 
-
         if(auto fontResource = document->fetchFontResource(url.value())) {
             return RemoteFontFace::create(featureSettings(), variationSettings(), unicodeRanges(), std::move(fontResource));
         }
