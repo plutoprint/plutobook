@@ -920,6 +920,7 @@ public:
 
     FontFeatureList featureSettings() const;
     FontVariationList variationSettings() const;
+    UnicodeRangeList unicodeRanges() const;
 
     GlobalString family() const;
     FontSelectionDescription description() const;
@@ -934,6 +935,7 @@ private:
     RefPtr<CSSValue> m_style;
     RefPtr<CSSValue> m_featureSettings;
     RefPtr<CSSValue> m_variationSettings;
+    RefPtr<CSSValue> m_unicodeRange;
 };
 
 CSSFontFaceBuilder::CSSFontFaceBuilder(const CSSPropertyList& properties)
@@ -954,6 +956,9 @@ CSSFontFaceBuilder::CSSFontFaceBuilder(const CSSPropertyList& properties)
             break;
         case CSSPropertyID::FontStyle:
             m_style = property.value();
+            break;
+        case CSSPropertyID::UnicodeRange:
+            m_unicodeRange = property.value();
             break;
         case CSSPropertyID::FontFeatureSettings:
             m_featureSettings = property.value();
@@ -1057,6 +1062,19 @@ FontVariationList CSSFontFaceBuilder::variationSettings() const
     return variationSettings;
 }
 
+UnicodeRangeList CSSFontFaceBuilder::unicodeRanges() const
+{
+    UnicodeRangeList unicodeRanges;
+    if(m_unicodeRange == nullptr)
+        return unicodeRanges;
+    for(const auto& value : to<CSSListValue>(*m_unicodeRange)) {
+        const auto& range = to<CSSUnicodeRangeValue>(*value);
+        unicodeRanges.emplace_front(range.from(), range.to());
+    }
+
+    return unicodeRanges;
+}
+
 GlobalString CSSFontFaceBuilder::family() const
 {
     if(auto family = to<CSSCustomIdentValue>(m_family))
@@ -1087,7 +1105,7 @@ RefPtr<FontFace> CSSFontFaceBuilder::build(Document* document) const
             const auto& family = to<CSSCustomIdentValue>(*function->value());
             if(!fontDataCache()->isFamilyAvailable(family.value()))
                 continue;
-            return LocalFontFace::create(family.value());
+            return LocalFontFace::create(family.value(), featureSettings(), variationSettings(), unicodeRanges());
         }
 
         const auto& url = to<CSSUrlValue>(*list.at(0));
@@ -1100,8 +1118,9 @@ RefPtr<FontFace> CSSFontFaceBuilder::build(Document* document) const
             }
         }
 
+
         if(auto fontResource = document->fetchFontResource(url.value())) {
-            return RemoteFontFace::create(featureSettings(), variationSettings(), std::move(fontResource));
+            return RemoteFontFace::create(featureSettings(), variationSettings(), unicodeRanges(), std::move(fontResource));
         }
     }
 

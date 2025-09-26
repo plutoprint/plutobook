@@ -25,6 +25,7 @@ public:
         Number,
         Percentage,
         Dimension,
+        UnicodeRange,
         Whitespace,
         Comment,
         CDO,
@@ -60,6 +61,7 @@ public:
     CSSToken() = default;
     explicit CSSToken(Type type) : m_type(type) {}
     CSSToken(Type type, uint32_t delim) : m_type(type), m_delim(delim) {}
+    CSSToken(Type type, uint32_t from, uint32_t to) : m_type(type), m_from(from), m_to(to) {}
     CSSToken(Type type, const std::string_view& data) : m_type(type), m_data(data) {}
     CSSToken(Type type, HashType hashType, const std::string_view& data) : m_type(type), m_hashType(hashType), m_data(data) {}
 
@@ -76,8 +78,10 @@ public:
     NumberType numberType() const { return m_numberType; }
     NumberSign numberSign() const { return m_numberSign; }
     uint32_t delim() const { return m_delim; }
-    double number() const { return m_number; }
+    float number() const { return m_number; }
     int integer() const { return static_cast<int>(m_number); }
+    uint32_t from() const { return m_from; }
+    uint32_t to() const { return m_to; }
     const std::string_view& data() const { return m_data; }
 
     static Type closeType(Type type) {
@@ -97,14 +101,19 @@ public:
     }
 
 private:
-    friend class CSSVariableData;
-    Type m_type{Type::Unknown};
-    HashType m_hashType{HashType::Identifier};
-    NumberType m_numberType{NumberType::Integer};
-    NumberSign m_numberSign{NumberSign::None};
-    uint32_t m_delim{0};
-    double m_number{0};
+    Type m_type;
+    HashType m_hashType;
+    NumberType m_numberType;
+    NumberSign m_numberSign;
+    union {
+        uint32_t m_delim;
+        float m_number;
+    };
+
+    uint32_t m_from;
+    uint32_t m_to;
     std::string_view m_data;
+    friend class CSSVariableData;
 };
 
 using CSSTokenList = std::vector<CSSToken>;
@@ -272,6 +281,7 @@ private:
     bool isIdentSequence() const;
     bool isNumberSequence() const;
     bool isExponentSequence() const;
+    bool isUnicodeRangeSequence() const;
 
     std::string_view addstring(std::string&& value);
 
@@ -280,6 +290,7 @@ private:
 
     CSSToken consumeStringToken();
     CSSToken consumeNumericToken();
+    CSSToken consumeUnicodeRangeToken();
     CSSToken consumeIdentLikeToken();
     CSSToken consumeUrlToken();
     CSSToken consumeBadUrlRemnants();

@@ -1,7 +1,6 @@
 #include "fontresource.h"
 #include "document.h"
 #include "stringutils.h"
-#include "boxstyle.h"
 
 #include "plutobook.hpp"
 
@@ -279,10 +278,17 @@ RefPtr<FontData> SegmentedFontFace::getFontData(const FontDataDescription& descr
     auto& fontData = m_table[description];
     if(fontData != nullptr)
         return fontData;
-    FontDataSet fonts;
+    FontDataRangeList fonts;
     for(const auto& face : m_faces) {
         if(auto font = face->getFontData(description)) {
-            fonts.insert(std::move(font));
+            const auto& ranges = face->ranges();
+            if(ranges.empty()) {
+                fonts.emplace_front(0, 0x10FFFF, std::move(font));
+            } else {
+                for(const auto& range : ranges) {
+                    fonts.emplace_front(range.first, range.second, font);
+                }
+            }
         }
     }
 
@@ -303,9 +309,9 @@ RefPtr<SimpleFontData> SimpleFontData::create(cairo_scaled_font_t* font, FontFea
     auto zeroGlyph = FcFreeTypeCharIndex(face, '0');
     auto spaceGlyph = FcFreeTypeCharIndex(face, ' ');
     auto xGlyph = FcFreeTypeCharIndex(face, 'x');
-    auto glyph_extents = [font](auto index) {
+    auto glyph_extents = [font](unsigned long index) {
+        cairo_glyph_t glyph = { index, 0, 0 };
         cairo_text_extents_t extents;
-        cairo_glyph_t glyph = {index, 0, 0};
         cairo_scaled_font_glyph_extents(font, &glyph, 1, &extents);
         return extents;
     };
@@ -440,10 +446,17 @@ SimpleFontData::~SimpleFontData()
     FcCharSetDestroy(m_charSet);
 }
 
+const SimpleFontData* FontDataRange::getFontData(uint32_t codepoint) const
+{
+    if(m_from <= codepoint && m_to >= codepoint)
+        return m_data->getFontData(codepoint);
+    return nullptr;
+}
+
 const SimpleFontData* SegmentedFontData::getFontData(uint32_t codepoint) const
 {
     for(const auto& font : m_fonts) {
-        if(auto fontData = font->getFontData(codepoint)) {
+        if(auto fontData = font.getFontData(codepoint)) {
             return fontData;
         }
     }

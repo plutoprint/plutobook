@@ -89,6 +89,13 @@ bool CSSTokenizer::isExponentSequence() const
     return false;
 }
 
+bool CSSTokenizer::isUnicodeRangeSequence() const
+{
+    if(m_input.peek() == 'U' || m_input.peek() == 'u')
+        return m_input.peek(1) == '+' && (m_input.peek(2) == '?' || isHexDigit(m_input.peek(2)));
+    return false;
+}
+
 std::string_view CSSTokenizer::addstring(std::string&& value)
 {
     m_stringList.push_back(std::move(value));
@@ -283,8 +290,52 @@ CSSToken CSSTokenizer::consumeNumericToken()
     return CSSToken(CSSToken::Type::Number, numberType, numberSign, number);
 }
 
+CSSToken CSSTokenizer::consumeUnicodeRangeToken()
+{
+    assert(m_input.peek() == 'U' || m_input.peek() == 'u');
+    m_input.advance();
+    assert(m_input.peek() == '+');
+
+    auto cc = m_input.consume();
+    assert(cc == '?' || isHexDigit(cc));
+
+    int count = 0;
+    uint32_t from = 0;
+    if(isHexDigit(cc)) {
+        do {
+            from = from * 16 + toHexDigit(cc);
+            cc = m_input.consume();
+            count += 1;
+        } while(count < 6 && isHexDigit(cc));
+    }
+
+    uint32_t to = from;
+    if(count < 6 && cc == '?') {
+        m_input.advance();
+        do {
+            from *= 16;
+            to = to * 16 + 0xF;
+            cc = m_input.consume();
+            count += 1;
+        } while(count < 6 && cc == '?');
+    } else if(cc == '-' && isHexDigit(m_input.peek(1))) {
+        cc = m_input.consume();
+        count = 0;
+        to = 0;
+        do {
+            to = to * 16 + toHexDigit(cc);
+            cc = m_input.consume();
+            count += 1;
+        } while(count < 6 && isHexDigit(cc));
+    }
+
+    return CSSToken(CSSToken::Type::UnicodeRange, from, to);
+}
+
 CSSToken CSSTokenizer::consumeIdentLikeToken()
 {
+    if(isUnicodeRangeSequence())
+        return consumeUnicodeRangeToken();
     auto name = consumeName();
     if(equals(name, "url", false) && m_input.peek() == '(') {
         auto cc = m_input.consume();

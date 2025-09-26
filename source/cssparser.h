@@ -172,6 +172,7 @@ private:
     RefPtr<CSSValue> consumeFontFaceWeight(CSSTokenStream& input);
     RefPtr<CSSValue> consumeFontFaceStyle(CSSTokenStream& input);
     RefPtr<CSSValue> consumeFontFaceStretch(CSSTokenStream& input);
+    RefPtr<CSSValue> consumeFontFaceUnicodeRange(CSSTokenStream& input);
 
     RefPtr<CSSValue> consumeCounterStyleName(CSSTokenStream& input);
     RefPtr<CSSValue> consumeCounterStyleSystem(CSSTokenStream& input);

@@ -282,6 +282,7 @@ enum class CSSValueType {
     Counter,
     FontFeature,
     FontVariation,
+    UnicodeRange,
     Pair,
     Rect,
     List,
@@ -500,6 +501,7 @@ enum class CSSPropertyID : uint16_t {
     Transform,
     TransformOrigin,
     UnicodeBidi,
+    UnicodeRange,
     VectorEffect,
     VerticalAlign,
     Visibility,
@@ -1155,6 +1157,33 @@ inline RefPtr<CSSFontVariationValue> CSSFontVariationValue::create(Heap* heap, c
 template<>
 struct is_a<CSSFontVariationValue> {
     static bool check(const CSSValue& value) { return value.type() == CSSValueType::FontVariation; }
+};
+
+class CSSUnicodeRangeValue : public CSSValue {
+public:
+    static RefPtr<CSSUnicodeRangeValue> create(Heap* heap, uint32_t from, uint32_t to);
+
+    uint32_t from() const { return m_from; }
+    uint32_t to() const { return m_to; }
+    CSSValueType type() const final { return CSSValueType::UnicodeRange; }
+
+private:
+    CSSUnicodeRangeValue(uint32_t from, uint32_t to)
+        : m_from(from), m_to(to)
+    {}
+
+    uint32_t m_from;
+    uint32_t m_to;
+};
+
+inline RefPtr<CSSUnicodeRangeValue> CSSUnicodeRangeValue::create(Heap* heap, uint32_t from, uint32_t to)
+{
+    return adoptPtr(new (heap) CSSUnicodeRangeValue(from, to));
+}
+
+template<>
+struct is_a<CSSUnicodeRangeValue> {
+    static bool check(const CSSValue& value) { return value.type() == CSSValueType::UnicodeRange; }
 };
 
 class CSSPairValue final : public CSSValue {

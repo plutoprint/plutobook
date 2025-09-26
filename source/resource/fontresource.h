@@ -4,6 +4,7 @@
 #include "resource.h"
 #include "globalstring.h"
 
+#include <vector>
 #include <forward_list>
 #include <map>
 #include <set>
@@ -266,90 +267,86 @@ constexpr bool operator>(const FontDescription& a, const FontDescription& b)
     return std::tie(a.families, a.data) > std::tie(b.families, b.data);
 }
 
+using UnicodeRange = std::pair<uint32_t, uint32_t>;
+using UnicodeRangeList = std::forward_list<UnicodeRange>;
+
 class FontData;
 
 class FontFace : public RefCounted<FontFace> {
 public:
-    enum class Type {
-        Local,
-        Remote,
-        Segmented
-    };
-
     virtual ~FontFace() = default;
     virtual RefPtr<FontData> getFontData(const FontDataDescription& description) = 0;
-    virtual Type type() const = 0;
+
+    const FontFeatureList& features() const { return m_features; }
+    const FontVariationList& variations() const { return m_variations; }
+    const UnicodeRangeList& ranges() const { return m_ranges; }
 
 protected:
-    FontFace() = default;
-};
-
-class LocalFontFace final : public FontFace {
-public:
-    static RefPtr<LocalFontFace> create(const GlobalString& family);
-
-    RefPtr<FontData> getFontData(const FontDataDescription& description) final;
-    Type type() const final { return Type::Local; }
-
-private:
-    LocalFontFace(const GlobalString& family) : m_family(family) {}
-    GlobalString m_family;
-};
-
-inline RefPtr<LocalFontFace> LocalFontFace::create(const GlobalString& family)
-{
-    return adoptPtr(new LocalFontFace(family));
-}
-
-template<>
-struct is_a<LocalFontFace> {
-    static bool check(const FontFace& value) { return value.type() == FontFace::Type::Local; }
-};
-
-class RemoteFontFace final : public FontFace {
-public:
-    static RefPtr<RemoteFontFace> create(FontFeatureList features, FontVariationList variations, RefPtr<FontResource> resource);
-
-    RefPtr<FontData> getFontData(const FontDataDescription& description) final;
-    Type type() const final { return Type::Remote; }
-
-private:
-    RemoteFontFace(FontFeatureList features, FontVariationList variations, RefPtr<FontResource> resource)
-        : m_features(std::move(features)), m_variations(std::move(variations)), m_resource(std::move(resource))
+    FontFace(FontFeatureList features, FontVariationList variations, UnicodeRangeList ranges)
+        : m_features(std::move(features))
+        , m_variations(std::move(variations))
+        , m_ranges(std::move(ranges))
     {}
 
     FontFeatureList m_features;
     FontVariationList m_variations;
+    UnicodeRangeList m_ranges;
+};
+
+class LocalFontFace final : public FontFace {
+public:
+    static RefPtr<LocalFontFace> create(const GlobalString& family, FontFeatureList features, FontVariationList variations, UnicodeRangeList ranges);
+
+    RefPtr<FontData> getFontData(const FontDataDescription& description) final;
+
+private:
+    LocalFontFace(const GlobalString& family, FontFeatureList features, FontVariationList variations, UnicodeRangeList ranges)
+        : FontFace(std::move(features), std::move(variations), std::move(ranges))
+        , m_family(family)
+    {}
+
+    GlobalString m_family;
+};
+
+inline RefPtr<LocalFontFace> LocalFontFace::create(const GlobalString& family, FontFeatureList features, FontVariationList variations, UnicodeRangeList ranges)
+{
+    return adoptPtr(new LocalFontFace(family, std::move(features), std::move(variations), std::move(ranges)));
+}
+
+class RemoteFontFace final : public FontFace {
+public:
+    static RefPtr<RemoteFontFace> create(FontFeatureList features, FontVariationList variations, UnicodeRangeList ranges, RefPtr<FontResource> resource);
+
+    RefPtr<FontData> getFontData(const FontDataDescription& description) final;
+
+private:
+    RemoteFontFace(FontFeatureList features, FontVariationList variations, UnicodeRangeList ranges, RefPtr<FontResource> resource)
+        : FontFace(std::move(features), std::move(variations), std::move(ranges))
+        , m_resource(std::move(resource))
+    {}
+
     RefPtr<FontResource> m_resource;
 };
 
-inline RefPtr<RemoteFontFace> RemoteFontFace::create(FontFeatureList features, FontVariationList variations, RefPtr<FontResource> resource)
+inline RefPtr<RemoteFontFace> RemoteFontFace::create(FontFeatureList features, FontVariationList variations, UnicodeRangeList ranges, RefPtr<FontResource> resource)
 {
-    return adoptPtr(new RemoteFontFace(std::move(features), std::move(variations), std::move(resource)));
+    return adoptPtr(new RemoteFontFace(std::move(features), std::move(variations), std::move(ranges), std::move(resource)));
 }
-
-template<>
-struct is_a<RemoteFontFace> {
-    static bool check(const FontFace& value) { return value.type() == FontFace::Type::Local; }
-};
 
 class SegmentedFontData;
 
-class SegmentedFontFace final : public FontFace {
+class SegmentedFontFace : public RefCounted<SegmentedFontFace> {
 public:
     static RefPtr<SegmentedFontFace> create(const FontSelectionDescription& description);
 
     const FontSelectionDescription& description() const { return m_description; }
-    const std::set<RefPtr<FontFace>>& faces() const { return m_faces; }
-    RefPtr<FontData> getFontData(const FontDataDescription& description) final;
-    Type type() const final { return Type::Segmented; }
-
-    void add(RefPtr<FontFace> face) { m_faces.insert(std::move(face)); }
+    RefPtr<FontData> getFontData(const FontDataDescription& description);
+    void add(RefPtr<FontFace> face) { m_faces.push_back(std::move(face)); }
 
 private:
     SegmentedFontFace(const FontSelectionDescription& description) : m_description(description) {}
     FontSelectionDescription m_description;
-    std::set<RefPtr<FontFace>> m_faces;
+    std::vector<RefPtr<FontFace>> m_faces;
     std::map<FontDataDescription, RefPtr<SegmentedFontData>> m_table;
 };
 
@@ -358,18 +355,12 @@ inline RefPtr<SegmentedFontFace> SegmentedFontFace::create(const FontSelectionDe
     return adoptPtr(new SegmentedFontFace(description));
 }
 
-template<>
-struct is_a<SegmentedFontFace> {
-    static bool check(const FontFace& value) { return value.type() == FontFace::Type::Segmented; }
-};
-
 class SimpleFontData;
 
 class FontData : public RefCounted<FontData> {
 public:
     virtual ~FontData() = default;
     virtual const SimpleFontData* getFontData(uint32_t codepoint) const = 0;
-    virtual bool isSegmented() const = 0;
 
 protected:
     FontData() = default;
@@ -386,18 +377,17 @@ struct FontDataInfo {
     uint16_t spaceGlyph;
 };
 
-class TabSize;
-
 class SimpleFontData final : public FontData {
 public:
     static RefPtr<SimpleFontData> create(cairo_scaled_font_t* font, FontFeatureList features);
 
     hb_font_t* hbFont() const;
+
     cairo_scaled_font_t* font() const { return m_font; }
     const FontDataInfo& info() const { return m_info; }
     const FontFeatureList& features() const { return m_features; }
+
     const SimpleFontData* getFontData(uint32_t codepoint) const final;
-    bool isSegmented() const final { return false; }
 
     float ascent() const { return m_info.ascent; }
     float descent() const { return m_info.descent; }
@@ -424,35 +414,37 @@ private:
     FontFeatureList m_features;
 };
 
-template<>
-struct is_a<SimpleFontData> {
-    static bool check(const FontData& value) { return !value.isSegmented(); }
+class FontDataRange {
+public:
+    FontDataRange(uint32_t from, uint32_t to, RefPtr<FontData> data)
+        : m_from(from), m_to(to), m_data(std::move(data))
+    {}
+
+    const SimpleFontData* getFontData(uint32_t codepoint) const;
+
+private:
+    uint32_t m_from;
+    uint32_t m_to;
+    RefPtr<FontData> m_data;
 };
 
-using FontDataSet = std::set<RefPtr<FontData>>;
+using FontDataRangeList = std::forward_list<FontDataRange>;
 
 class SegmentedFontData final : public FontData {
 public:
-    static RefPtr<SegmentedFontData> create(FontDataSet fonts);
+    static RefPtr<SegmentedFontData> create(FontDataRangeList fonts);
 
-    const FontDataSet& fonts() const { return m_fonts; }
     const SimpleFontData* getFontData(uint32_t codepoint) const final;
-    bool isSegmented() const final { return true; }
 
 private:
-    SegmentedFontData(FontDataSet fonts) : m_fonts(std::move(fonts)) {}
-    FontDataSet m_fonts;
+    SegmentedFontData(FontDataRangeList fonts) : m_fonts(std::move(fonts)) {}
+    FontDataRangeList m_fonts;
 };
 
-inline RefPtr<SegmentedFontData> SegmentedFontData::create(FontDataSet fonts)
+inline RefPtr<SegmentedFontData> SegmentedFontData::create(FontDataRangeList fonts)
 {
     return adoptPtr(new SegmentedFontData(std::move(fonts)));
 }
-
-template<>
-struct is_a<SegmentedFontData> {
-    static bool check(const FontData& value) { return value.isSegmented(); }
-};
 
 class FontDataCache {
 public:

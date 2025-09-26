@@ -981,6 +981,9 @@ bool CSSParser::consumeFontFaceDescriptor(CSSTokenStream& input, CSSPropertyList
     case CSSPropertyID::FontStyle:
         value = consumeFontFaceStyle(input);
         break;
+    case CSSPropertyID::UnicodeRange:
+        value = consumeFontFaceUnicodeRange(input);
+        break;
     case CSSPropertyID::FontFeatureSettings:
         value = consumeFontFeatureSettings(input);
         break;
@@ -1354,6 +1357,7 @@ static CSSPropertyID csspropertyid(const std::string_view& name)
         {"transform", CSSPropertyID::Transform},
         {"transform-origin", CSSPropertyID::TransformOrigin},
         {"unicode-bidi", CSSPropertyID::UnicodeBidi},
+        {"unicode-range", CSSPropertyID::UnicodeRange},
         {"vector-effect", CSSPropertyID::VectorEffect},
         {"vertical-align", CSSPropertyID::VerticalAlign},
         {"visibility", CSSPropertyID::Visibility},
@@ -2443,8 +2447,8 @@ static bool consumeRgbComponent(CSSTokenStream& input, int& component, bool requ
         return false;
     auto value = input->number();
     if(input->type() == CSSToken::Type::Percentage)
-        value *= 2.55;
-    component = std::lroundf(std::clamp(value, 0.0, 255.0));
+        value *= 2.55f;
+    component = std::lroundf(std::clamp(value, 0.f, 255.f));
     input.consumeIncludingWhitespace();
     return true;
 }
@@ -2458,8 +2462,8 @@ static bool consumeAlphaComponent(CSSTokenStream& input, int& component)
 
     auto value = input->number();
     if(input->type() == CSSToken::Type::Percentage)
-        value /= 100.0;
-    component = std::lroundf(255.f * std::clamp(value, 0.0, 1.0));
+        value /= 100.f;
+    component = std::lroundf(255.f * std::clamp(value, 0.f, 1.f));
     input.consumeIncludingWhitespace();
     return true;
 }
@@ -2565,8 +2569,8 @@ static bool consumePercentComponent(CSSTokenStream& input, float& component)
 {
     if(input->type() != CSSToken::Type::Percentage)
         return false;
-    auto value = input->number() / 100.0;
-    component = std::clamp(value, 0.0, 1.0);
+    auto value = input->number() / 100.f;
+    component = std::clamp(value, 0.f, 1.f);
     input.consumeIncludingWhitespace();
     return true;
 }
@@ -4846,6 +4850,20 @@ RefPtr<CSSValue> CSSParser::consumeFontFaceStretch(CSSTokenStream& input)
     if(endPercent == nullptr)
         endPercent = startPercent;
     return CSSPairValue::create(m_heap, startPercent, endPercent);
+}
+
+RefPtr<CSSValue> CSSParser::consumeFontFaceUnicodeRange(CSSTokenStream& input)
+{
+    CSSValueList values(m_heap);
+    do {
+        if(input->type() != CSSToken::Type::UnicodeRange)
+            return nullptr;
+        if(input->to() > 0x10FFFF || input->from() > input->to())
+            return nullptr;
+        values.push_back(CSSUnicodeRangeValue::create(m_heap, input->from(), input->to()));
+        input.consumeIncludingWhitespace();
+    } while(input.consumeCommaIncludingWhitespace());
+    return CSSListValue::create(m_heap, std::move(values));
 }
 
 RefPtr<CSSValue> CSSParser::consumeCounterStyleName(CSSTokenStream& input)
