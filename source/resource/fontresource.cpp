@@ -603,6 +603,9 @@ RefPtr<SimpleFontData> FontDataCache::getFontData(const GlobalString& family, co
     std::string familyName(family.value());
     FcPatternAddString(pattern, FC_FAMILY, (FcChar8*)(familyName.data()));
     FcPatternAddBool(pattern, FC_SCALABLE, FcTrue);
+    if(equalsIgnoringCase(familyName, "emoji")) {
+        FcPatternAddBool(pattern, FC_COLOR, FcTrue);
+    }
 
     FcConfigSubstitute(m_config, pattern, FcMatchPattern);
     FcDefaultSubstitute(pattern);
