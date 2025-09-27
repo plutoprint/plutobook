@@ -11,15 +11,27 @@ RefPtr<TextResource> TextResource::create(Document* document, const Url& url)
     auto resource = ResourceLoader::loadUrl(url, document->customResourceFetcher());
     if(resource.isNull())
         return nullptr;
-    auto text = decode(resource.content(), resource.contentLength(), resource.mimeType(), resource.textEncoding());
+    std::string text(decode(resource.content(), resource.contentLength(), resource.mimeType(), resource.textEncoding()));
     if(text.empty())
         return nullptr;
     return adoptPtr(new (document->heap()) TextResource(std::move(text)));
 }
 
-std::string TextResource::decode(const char* data, size_t length, const std::string_view& mimeType, const std::string_view& textEncoding)
+std::string_view TextResource::decode(const char* data, size_t length, const std::string_view& mimeType, const std::string_view& textEncoding)
 {
-    return std::string(data, length);
+    std::string_view output(data, length);
+    if(length >= 3) {
+        auto buffer = (const uint8_t*)(data);
+
+        const auto c1 = buffer[0];
+        const auto c2 = buffer[1];
+        const auto c3 = buffer[2];
+        if(c1 == 0xEF && c2 == 0xBB && c3 == 0xBF) {
+            output.remove_prefix(3);
+        }
+    }
+
+    return output;
 }
 
 bool TextResource::isXMLMIMEType(const std::string_view& mimeType)
