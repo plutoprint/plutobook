@@ -1588,8 +1588,8 @@ void BlockFlowBox::layout(FragmentBuilder* fragmentainer)
 
     if(avoidsFloats() && floatBottom() > (height() - borderAndPaddingBottom()))
         setHeight(floatBottom() + borderAndPaddingBottom());
-    if(auto shift = computeVerticalAlignShift())
-        layoutContents(fragmentainer, shift);
+    if(auto verticalShift = computeVerticalAlignShift())
+        layoutContents(fragmentainer, verticalShift);
     updateHeight();
     collectOverhangingFloats();
     layoutPositionedBoxes();
