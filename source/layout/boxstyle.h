@@ -648,7 +648,23 @@ using FontFamilyList = std::forward_list<GlobalString>;
 class CSSValue;
 class CSSVariableData;
 
-using CSSPropertyMap = std::pmr::map<CSSPropertyID, RefPtr<CSSValue>>;
+using CSSPropertyMapEntry = std::pair<CSSPropertyID, RefPtr<CSSValue>>;
+
+class CSSPropertyMap {
+public:
+    explicit CSSPropertyMap(Heap* heap);
+
+    CSSValue* get(CSSPropertyID id) const;
+    void set(CSSPropertyID id, RefPtr<CSSValue> value);
+    void reset(CSSPropertyID id);
+
+    const CSSPropertyMapEntry* begin() const { return m_values.data(); }
+    const CSSPropertyMapEntry* end() const { return m_values.data() + m_values.size(); }
+
+private:
+    std::pmr::vector<CSSPropertyMapEntry> m_values;
+};
+
 using CSSCustomPropertyMap = std::pmr::map<GlobalString, RefPtr<CSSVariableData>, std::less<>>;
 
 enum class PseudoType : uint8_t {
@@ -944,7 +960,6 @@ public:
     CSSValue* get(CSSPropertyID id) const;
     void set(CSSPropertyID id, RefPtr<CSSValue> value);
     void reset(CSSPropertyID id);
-    bool has(CSSPropertyID id) const { return m_properties.contains(id); }
 
     void inheritFrom(const BoxStyle* parentStyle);
 

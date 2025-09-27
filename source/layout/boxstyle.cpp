@@ -17,6 +17,39 @@ const Length Length::FitContent(Length::Type::FitContent);
 const Length Length::ZeroFixed(Length::Type::Fixed);
 const Length Length::ZeroPercent(Length::Type::Percent);
 
+CSSPropertyMap::CSSPropertyMap(Heap* heap)
+    : m_values(heap)
+{
+}
+
+inline bool operator<(const CSSPropertyMapEntry& entry, CSSPropertyID id) { return entry.first < id; }
+
+CSSValue* CSSPropertyMap::get(CSSPropertyID id) const
+{
+    auto it = std::lower_bound(m_values.begin(), m_values.end(), id);
+    if(it != m_values.end() && it->first == id)
+        return it->second.get();
+    return nullptr;
+}
+
+void CSSPropertyMap::set(CSSPropertyID id, RefPtr<CSSValue> value)
+{
+    auto it = std::lower_bound(m_values.begin(), m_values.end(), id);
+    if(it != m_values.end() && it->first == id) {
+        it->second = std::move(value);
+    } else {
+        m_values.insert(it, std::make_pair(id, std::move(value)));
+    }
+}
+
+void CSSPropertyMap::reset(CSSPropertyID id)
+{
+    auto it = std::lower_bound(m_values.begin(), m_values.end(), id);
+    if(it != m_values.end() && it->first == id) {
+        m_values.erase(it);
+    }
+}
+
 RefPtr<BoxStyle> BoxStyle::create(Node* node, PseudoType pseudoType, Display display)
 {
     return adoptPtr(new (node->heap()) BoxStyle(node, pseudoType, display));
@@ -1646,10 +1679,7 @@ void BoxStyle::setCustom(const GlobalString& name, RefPtr<CSSVariableData> value
 
 CSSValue* BoxStyle::get(CSSPropertyID id) const
 {
-    auto it = m_properties.find(id);
-    if(it == m_properties.end())
-        return nullptr;
-    return it->second.get();
+    return m_properties.get(id);
 }
 
 void BoxStyle::set(CSSPropertyID id, RefPtr<CSSValue> value)
@@ -1743,7 +1773,7 @@ void BoxStyle::set(CSSPropertyID id, RefPtr<CSSValue> value)
         break;
     }
 
-    m_properties.insert_or_assign(id, std::move(value));
+    m_properties.set(id, std::move(value));
 }
 
 void BoxStyle::reset(CSSPropertyID id)
@@ -1837,7 +1867,7 @@ void BoxStyle::reset(CSSPropertyID id)
         break;
     }
 
-    m_properties.erase(id);
+    m_properties.reset(id);
 }
 
 void BoxStyle::inheritFrom(const BoxStyle* parentStyle)
@@ -1919,7 +1949,7 @@ void BoxStyle::inheritFrom(const BoxStyle* parentStyle)
         case CSSPropertyID::WordBreak:
         case CSSPropertyID::WordSpacing:
         case CSSPropertyID::WritingMode:
-            m_properties.insert_or_assign(id, value);
+            m_properties.set(id, value);
             break;
         default:
             break;
