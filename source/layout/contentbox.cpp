@@ -123,14 +123,8 @@ void ContentBoxBuilder::addCounter(const CSSCounterValue& counter)
     addText(m_counters.counterText(counter.identifier(), counter.listStyle(), counter.separator()));
 }
 
-static const HeapString& getAttributeText(const Element* element, const CSSValue& value)
-{
-    return element == nullptr ? emptyGlo : element->getAttribute(to<CSSCustomIdentValue>(value).value());
-}
-
 void ContentBoxBuilder::addTargetCounter(const CSSFunctionValue& function)
 {
-    assert(function.id() == CSSFunctionID::TargetCounter || function.id() == CSSFunctionID::TargetCounters);
     HeapString fragment;
     GlobalString identifier;
     HeapString seperator;
@@ -141,9 +135,7 @@ void ContentBoxBuilder::addTargetCounter(const CSSFunctionValue& function)
     if(auto value = to<CSSLocalUrlValue>(function.at(index))) {
         fragment = to<CSSLocalUrlValue>(*value).value();
     } else {
-        const auto& attr = to<CSSUnaryFunctionValue>(*function.at(index));
-        assert(attr.id() == CSSFunctionID::Attr);
-        fragment = getAttributeText(m_element, *attr.value());
+        fragment = resolveAttr(to<CSSAttrValue>(*function.at(index)));
     }
 
     ++index;
@@ -232,6 +224,16 @@ void ContentBoxBuilder::addImage(RefPtr<Image> image)
     m_lastTextBox = nullptr;
 }
 
+const HeapString& ContentBoxBuilder::resolveAttr(const CSSAttrValue& attr) const
+{
+    if(m_element == nullptr)
+        return emptyGlo;
+    auto attribute = m_element->findAttributePossiblyIgnoringCase(attr.name());
+    if(attribute == nullptr)
+        return attr.fallback();
+    return attribute->value();
+}
+
 void ContentBoxBuilder::build()
 {
     auto content = m_parentStyle->get(CSSPropertyID::Content);
@@ -271,23 +273,28 @@ void ContentBoxBuilder::build()
             addImage(image->fetch(m_parentStyle->document()));
         } else if(auto counter = to<CSSCounterValue>(value)) {
             addCounter(*counter);
-        } else if(auto function = to<CSSFunctionValue>(value)) {
-            if(function->id() == CSSFunctionID::Qrcode) {
-                addQrCode(*function);
-            } else {
-                addTargetCounter(*function);
-            }
         } else if(auto ident = to<CSSIdentValue>(value)) {
             addQuote(ident->value());
+        } else if(auto attr = to<CSSAttrValue>(value)) {
+            addText(resolveAttr(*attr));
         } else {
-            const auto& function = to<CSSUnaryFunctionValue>(*value);
-            if(function.id() == CSSFunctionID::Attr) {
-                addText(getAttributeText(m_element, *function.value()));
-            } else if(function.id() == CSSFunctionID::Leader) {
-                addLeader(*function.value());
+            if(is<CSSFunctionValue>(value)) {
+                const auto& function = to<CSSFunctionValue>(*value);
+                if(function.id() == CSSFunctionID::TargetCounter
+                    || function.id() == CSSFunctionID::TargetCounters) {
+                    addTargetCounter(function);
+                } else {
+                    assert(function.id() == CSSFunctionID::Qrcode);
+                    addQrCode(function);
+                }
             } else {
-                assert(function.id() == CSSFunctionID::Element);
-                addElement(*function.value());
+                const auto& function = to<CSSUnaryFunctionValue>(*value);
+                if(function.id() == CSSFunctionID::Leader) {
+                    addLeader(*function.value());
+                } else {
+                    assert(function.id() == CSSFunctionID::Element);
+                    addElement(*function.value());
+                }
             }
         }
     }

@@ -198,6 +198,7 @@ public:
     const ClassNameList& classNames() const { return m_classNames; }
 
     const Attribute* findAttribute(const GlobalString& name) const;
+    const Attribute* findAttributePossiblyIgnoringCase(const GlobalString& name) const;
     bool hasAttribute(const GlobalString& name) const;
     const HeapString& getAttribute(const GlobalString& name) const;
     Url getUrlAttribute(const GlobalString& name) const;

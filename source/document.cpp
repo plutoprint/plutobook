@@ -290,6 +290,19 @@ const Attribute* Element::findAttribute(const GlobalString& name) const
     return nullptr;
 }
 
+const Attribute* Element::findAttributePossiblyIgnoringCase(const GlobalString& name) const
+{
+    if(m_isCaseSensitive)
+        return findAttribute(name);
+    for(const auto& attribute : m_attributes) {
+        if(equalsIgnoringCase(name, attribute.name())) {
+            return &attribute;
+        }
+    }
+
+    return nullptr;
+}
+
 bool Element::hasAttribute(const GlobalString& name) const
 {
     for(const auto& attribute : m_attributes) {

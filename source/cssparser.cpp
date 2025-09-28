@@ -2312,13 +2312,33 @@ RefPtr<CSSValue> CSSParser::consumeAttr(CSSTokenStream& input)
     CSSTokenStreamGuard guard(input);
     auto block = input.consumeBlock();
     block.consumeWhitespace();
-    auto value = consumeCustomIdent(block);
-    if(value == nullptr || !block.empty())
+    if(block->type() != CSSToken::Type::Ident)
+        return nullptr;
+    GlobalString name(block->data());
+    if(m_context.inHTMLDocument()) {
+        name = name.foldCase();
+    }
+
+    block.consumeIncludingWhitespace();
+    if(block->type() == CSSToken::Type::Ident) {
+        if(!identMatches("url", 3, block->data()) && !identMatches("string", 6, block->data()))
+            return nullptr;
+        block.consumeIncludingWhitespace();
+    }
+
+    HeapString fallback;
+    if(block.consumeCommaIncludingWhitespace()) {
+        if(block->type() != CSSToken::Type::String)
+            return nullptr;
+        fallback = m_heap->createString(block->data());
+        block.consumeIncludingWhitespace();
+    }
+
+    if(!block.empty())
         return nullptr;
     input.consumeWhitespace();
     guard.release();
-
-    return CSSUnaryFunctionValue::create(m_heap, CSSFunctionID::Attr, std::move(value));
+    return CSSAttrValue::create(m_heap, name, fallback);
 }
 
 RefPtr<CSSValue> CSSParser::consumeLocalUrl(CSSTokenStream& input)

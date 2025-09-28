@@ -94,6 +94,7 @@ class Element;
 
 class CSSCounterValue;
 class CSSFunctionValue;
+class CSSAttrValue;
 
 class ContentBoxBuilder {
 public:
@@ -111,6 +112,8 @@ private:
     void addQuote(CSSValueID value);
     void addQrCode(const CSSFunctionValue& function);
     void addImage(RefPtr<Image> image);
+
+    const HeapString& resolveAttr(const CSSAttrValue& attr) const;
 
     Counters& m_counters;
     Element* m_element;

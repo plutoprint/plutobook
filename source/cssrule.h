@@ -274,6 +274,7 @@ enum class CSSValueType {
     Angle,
     Length,
     Calc,
+    Attr,
     String,
     LocalUrl,
     Url,
@@ -966,6 +967,33 @@ struct is_a<CSSCalcValue> {
     static bool check(const CSSValue& value) { return value.type() == CSSValueType::Calc; }
 };
 
+class CSSAttrValue final : public CSSValue {
+public:
+    static RefPtr<CSSAttrValue> create(Heap* heap, const GlobalString& name, const HeapString& fallback);
+
+    const GlobalString& name() const { return m_name; }
+    const HeapString& fallback() const { return m_fallback; }
+    CSSValueType type() const final { return CSSValueType::Attr; }
+
+private:
+    CSSAttrValue(const GlobalString& name, const HeapString& fallback)
+        : m_name(name), m_fallback(fallback)
+    {}
+
+    GlobalString m_name;
+    HeapString m_fallback;
+};
+
+inline RefPtr<CSSAttrValue> CSSAttrValue::create(Heap* heap, const GlobalString& name, const HeapString& fallback)
+{
+    return adoptPtr(new (heap) CSSAttrValue(name, fallback));
+}
+
+template<>
+struct is_a<CSSAttrValue> {
+    static bool check(const CSSValue& value) { return value.type() == CSSValueType::Attr; }
+};
+
 class CSSStringValue final : public CSSValue {
 public:
     static RefPtr<CSSStringValue> create(Heap* heap, const HeapString& value);
@@ -1276,7 +1304,6 @@ struct is_a<CSSListValue> {
 };
 
 enum class CSSFunctionID {
-    Attr,
     Element,
     Format,
     Leader,
