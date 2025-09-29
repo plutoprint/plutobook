@@ -169,7 +169,9 @@ Leaders, such as repeating dots or lines often used in tables of contents, are s
 
 Cross-referencing is possible with the `target-counter()` and `target-counters()` functions, which allow you to show counter values from linked elements, such as displaying the page number where a section starts.
 
-Some limits currently exist. PlutoBook uses only the page size and margin defined for the first page, and `@page :first` is the only pseudo-page selector that works reliably for now. Named pages created with the `@page name` syntax are not fully implemented yet, so custom page styles may not apply as expected. Running elements, which extract content from the flow to reuse in headers or footers, are also not yet available.
+PlutoBook also supports running elements, which make it possible to reuse document content inside headers or footers. Running headers and footers can be created using CSS `position: running(NAME)` on the source element and `content: element(NAME)` inside margin boxes.
+
+Some limits currently exist. PlutoBook uses only the page size and margin defined for the first page, and `@page :first` is the only pseudo-page selector that works reliably for now. Named pages created with the `@page name` syntax are not fully implemented yet, so custom page styles may not apply as expected.
 
 ## Scalable Vector Graphics
 
