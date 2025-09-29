@@ -5,8 +5,9 @@
 #include "heapstring.h"
 #include "color.h"
 
-#include <forward_list>
 #include <optional>
+#include <forward_list>
+#include <vector>
 #include <map>
 
 namespace plutobook {

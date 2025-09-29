@@ -44,11 +44,11 @@ PagesCounterBox::PagesCounterBox(const RefPtr<BoxStyle>& style)
 {
 }
 
-ContentBoxBuilder::ContentBoxBuilder(Counters& counters, Element* element, Box* box)
+ContentBoxBuilder::ContentBoxBuilder(Counters& counters, Element* element, Box* parent)
     : m_counters(counters)
     , m_element(element)
-    , m_parentBox(box)
-    , m_parentStyle(box->style())
+    , m_parentBox(parent)
+    , m_parentStyle(parent->style())
 {
 }
 
@@ -61,19 +61,19 @@ void ContentBoxBuilder::addText(const HeapString& text)
         return;
     }
 
-    auto box = new (m_parentStyle->heap()) TextBox(nullptr, m_parentStyle);
-    box->setText(text);
-    m_parentBox->addChild(box);
-    m_lastTextBox = box;
+    auto newBox = new (m_parentStyle->heap()) TextBox(nullptr, m_parentStyle);
+    newBox->setText(text);
+    m_parentBox->addChild(newBox);
+    m_lastTextBox = newBox;
 }
 
 void ContentBoxBuilder::addLeaderText(const HeapString& text)
 {
     if(text.empty())
         return;
-    auto box = new (m_parentStyle->heap()) LeaderBox(m_parentStyle);
-    box->setText(text);
-    m_parentBox->addChild(box);
+    auto newBox = new (m_parentStyle->heap()) LeaderBox(m_parentStyle);
+    newBox->setText(text);
+    m_parentBox->addChild(newBox);
     m_lastTextBox = nullptr;
 }
 
@@ -113,6 +113,8 @@ void ContentBoxBuilder::addElement(const CSSValue& value)
         return;
     auto& element = to<HTMLElement>(*style->node());
     auto newBox = element.createBox(style);
+    if(newBox == nullptr)
+        return;
     m_parentBox->addChild(newBox);
     element.buildElementBox(m_counters, newBox);
     m_lastTextBox = nullptr;
@@ -149,14 +151,14 @@ void ContentBoxBuilder::addTargetCounter(const CSSFunctionValue& function)
 
     assert(index == function.size());
 
-    if(m_element == nullptr) {
+    if(m_parentBox->isPageMarginBox()) {
         addText(m_parentStyle->document()->getTargetCounterText(fragment, identifier, listStyle, seperator));
         return;
     }
 
-    auto style = BoxStyle::create(m_parentStyle, Display::Inline);
-    auto box = new (m_parentStyle->heap()) TargetCounterBox(style, fragment, identifier, seperator, listStyle);
-    m_parentBox->addChild(box);
+    auto newStyle = BoxStyle::create(m_parentStyle, Display::Inline);
+    auto newBox = new (m_parentStyle->heap()) TargetCounterBox(newStyle, fragment, identifier, seperator, listStyle);
+    m_parentBox->addChild(newBox);
     m_lastTextBox = nullptr;
 }
 
@@ -217,10 +219,10 @@ void ContentBoxBuilder::addImage(RefPtr<Image> image)
 {
     if(image == nullptr)
         return;
-    auto style = BoxStyle::create(m_parentStyle, Display::Inline);
-    auto box = new (m_parentStyle->heap()) ImageBox(nullptr, style);
-    box->setImage(std::move(image));
-    m_parentBox->addChild(box);
+    auto newStyle = BoxStyle::create(m_parentStyle, Display::Inline);
+    auto newBox = new (m_parentStyle->heap()) ImageBox(nullptr, newStyle);
+    newBox->setImage(std::move(image));
+    m_parentBox->addChild(newBox);
     m_lastTextBox = nullptr;
 }
 

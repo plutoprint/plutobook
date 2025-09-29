@@ -40,11 +40,6 @@ public:
 
     bool isTargetCounterBox() const final { return true; }
 
-    const HeapString& fragment() const { return m_fragment; }
-    const GlobalString& identifier() const { return m_identifier; }
-    const HeapString& seperator() const { return m_seperator; }
-    const GlobalString& listStyle() const { return m_listStyle; }
-
     void build() final;
 
     const char* name() const final { return "TargetCounterBox"; }
