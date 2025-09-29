@@ -56,13 +56,15 @@ struct is_a<TargetCounterBox> {
     static bool check(const Box& box) { return box.isTargetCounterBox(); }
 };
 
-class PageCounterBox final : public ContentBox{
+class PageCounterBox : public ContentBox {
 public:
     PageCounterBox(const RefPtr<BoxStyle>& style);
 
     bool isPageCounterBox() const final { return true; }
 
-    const char* name() const final { return "PageCounterBox"; }
+    virtual uint32_t pageNumber() const;
+
+    const char* name() const override { return "PageCounterBox"; }
 };
 
 template<>
@@ -70,11 +72,13 @@ struct is_a<PageCounterBox> {
     static bool check(const Box& box) { return box.isPageCounterBox(); }
 };
 
-class PagesCounterBox final : public ContentBox{
+class PagesCounterBox final : public PageCounterBox {
 public:
     PagesCounterBox(const RefPtr<BoxStyle>& style);
 
     bool isPagesCounterBox() const final { return true; }
+
+    uint32_t pageNumber() const final;
 
     const char* name() const final { return "PagesCounterBox"; }
 };
@@ -84,16 +88,36 @@ struct is_a<PagesCounterBox> {
     static bool check(const Box& box) { return box.isPagesCounterBox(); }
 };
 
-class Counters;
 class Element;
+
+class TargetPageCounterBox final : public PageCounterBox {
+public:
+    TargetPageCounterBox(const RefPtr<BoxStyle>& style, const Element* element);
+
+    bool isTargetPageCounterBox() const final { return true; }
+
+    uint32_t pageNumber() const final;
+
+    const char* name() const final { return "TargetPageCounterBox"; }
+
+private:
+    const Element* m_element;
+};
+
+template<>
+struct is_a<TargetPageCounterBox> {
+    static bool check(const Box& box) { return box.isTargetPageCounterBox(); }
+};
 
 class CSSCounterValue;
 class CSSFunctionValue;
 class CSSAttrValue;
 
+class Counters;
+
 class ContentBoxBuilder {
 public:
-    ContentBoxBuilder(Counters& counters, Element* element, Box* box);
+    ContentBoxBuilder(Counters& counters, Element* element, Box* parent);
 
     void build();
 

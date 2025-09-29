@@ -39,9 +39,30 @@ PageCounterBox::PageCounterBox(const RefPtr<BoxStyle>& style)
 {
 }
 
-PagesCounterBox::PagesCounterBox(const RefPtr<BoxStyle>& style)
-    : ContentBox(style)
+uint32_t PageCounterBox::pageNumber() const
 {
+    return 0;
+}
+
+PagesCounterBox::PagesCounterBox(const RefPtr<BoxStyle>& style)
+    : PageCounterBox(style)
+{
+}
+
+uint32_t PagesCounterBox::pageNumber() const
+{
+    return document()->pageCount();
+}
+
+TargetPageCounterBox::TargetPageCounterBox(const RefPtr<BoxStyle>& style, const Element* element)
+    : PageCounterBox(style)
+    , m_element(element)
+{
+}
+
+uint32_t TargetPageCounterBox::pageNumber() const
+{
+    return 0;
 }
 
 ContentBoxBuilder::ContentBoxBuilder(Counters& counters, Element* element, Box* parent)
