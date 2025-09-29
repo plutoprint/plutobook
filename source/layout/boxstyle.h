@@ -7,6 +7,7 @@
 
 #include <optional>
 #include <forward_list>
+#include <unordered_map>
 #include <vector>
 #include <map>
 
@@ -649,23 +650,7 @@ using FontFamilyList = std::forward_list<GlobalString>;
 class CSSValue;
 class CSSVariableData;
 
-using CSSPropertyMapEntry = std::pair<CSSPropertyID, RefPtr<CSSValue>>;
-
-class CSSPropertyMap {
-public:
-    explicit CSSPropertyMap(Heap* heap);
-
-    CSSValue* get(CSSPropertyID id) const;
-    void set(CSSPropertyID id, RefPtr<CSSValue> value);
-    void reset(CSSPropertyID id);
-
-    const CSSPropertyMapEntry* begin() const { return m_values.data(); }
-    const CSSPropertyMapEntry* end() const { return m_values.data() + m_values.size(); }
-
-private:
-    std::pmr::vector<CSSPropertyMapEntry> m_values;
-};
-
+using CSSPropertyMap = std::pmr::unordered_map<CSSPropertyID, RefPtr<CSSValue>>;
 using CSSCustomPropertyMap = std::pmr::map<GlobalString, RefPtr<CSSVariableData>, std::less<>>;
 
 enum class PseudoType : uint8_t {
@@ -1084,6 +1069,14 @@ inline bool BoxStyle::isDisplayInlineType(Display display)
         || display == Display::InlineBlock
         || display == Display::InlineFlex
         || display == Display::InlineTable;
+}
+
+inline CSSValue* BoxStyle::get(CSSPropertyID id) const
+{
+    auto it = m_properties.find(id);
+    if(it == m_properties.end())
+        return nullptr;
+    return it->second.get();
 }
 
 } // namespace plutobook
