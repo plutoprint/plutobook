@@ -141,7 +141,7 @@ PlutoBook currently supports the most common absolute and relative length units,
 
 PlutoBook also supports CSS wide keywords (`initial`, `inherit`, and `unset`), which provide standardized mechanisms for resetting or inheriting property values. These keywords work consistently across all supported properties, following the behavior defined in the specification.
 
-PlutoBook also supports CSS math functions, which allow property values to be calculated dynamically at render time. Math functions provide flexibility when combining lengths and other units in styles. Currently, the `calc()` function is supported, including nested expressions, so complex formulas with addition, subtraction, multiplication, and division are possible. However, percentage values inside `calc()` are not supported, and calculations must use absolute or relative length units instead.
+PlutoBook also supports CSS math functions, which allow property values to be calculated dynamically at render time. Math functions provide flexibility when combining lengths and other units in styles. Currently, the functions `calc()`, `min()`, `max()`, and `clamp()` are supported, including nested expressions, so complex formulas with addition, subtraction, multiplication, and division are possible. However, percentage values inside math functions are not supported, and calculations must use absolute or relative length units instead.
 
 ## Transforms
 
