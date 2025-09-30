@@ -93,6 +93,7 @@ jobs:
             --buildtype=release \
             --wrap-mode=nodownload \
             --prefer-static \
+            -Dcpp_link_args='-static -static-libgcc -static-libstdc++ -lwinpthread' \
             -Dcpp_args='-DCAIRO_WIN32_STATIC_BUILD -DCURL_STATICLIB -DU_STATIC_IMPLEMENTATION'
           meson compile -C build
           meson install -C build --strip
