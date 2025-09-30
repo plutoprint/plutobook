@@ -88,9 +88,12 @@ public:
     HeapMember() = default;
 
     static void* operator new(size_t size, Heap* heap) { return heap->allocate(size); }
-    static void operator delete(void* data) {}
-
     static void* operator new[](size_t size, Heap* heap) { return heap->allocate(size); }
+
+    static void operator delete(void* data, Heap* heap) {}
+    static void operator delete[](void* data, Heap* heap) {}
+
+    static void operator delete(void* data) {}
     static void operator delete[](void* data) {}
 
 private:
