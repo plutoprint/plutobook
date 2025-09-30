@@ -100,9 +100,10 @@ jobs:
 
       - name: Create artifact
         run: |
+          mkdir -p plutobook-win64/licenses
           cp -v /mingw64/bin/pkgconf.exe plutobook-win64/bin
           cp -v /mingw64/bin/libpkgconf*.dll plutobook-win64/bin
-          cp -v licenses/* plutobook-win64/licenses
+          cp -r licenses/* plutobook-win64/licenses/
           cp -v CREDITS plutobook-win64/
           cp -v LICENSE plutobook-win64/
           zip -r plutobook-win64.zip plutobook-win64/
