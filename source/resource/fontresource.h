@@ -7,7 +7,6 @@
 #include <vector>
 #include <forward_list>
 #include <map>
-#include <set>
 #include <mutex>
 
 typedef struct hb_font_t hb_font_t;
@@ -366,6 +365,8 @@ protected:
     FontData() = default;
 };
 
+using FontDataList = std::pmr::vector<RefPtr<FontData>>;
+
 struct FontDataInfo {
     float ascent;
     float descent;
@@ -452,7 +453,7 @@ public:
     RefPtr<SimpleFontData> getFontData(const GlobalString& family, const FontDataDescription& description);
     RefPtr<SimpleFontData> getFontData(uint32_t codepoint, const FontDataDescription& description);
 
-    bool isFamilyAvailable(const GlobalString& family) const { return m_families.contains(family); }
+    bool isFamilyAvailable(const GlobalString& family);
 
     ~FontDataCache();
 
@@ -460,16 +461,11 @@ private:
     FontDataCache();
     FcConfig* m_config;
     std::mutex m_mutex;
-    std::set<GlobalString> m_families;
     std::map<GlobalString, std::map<FontDataDescription, RefPtr<SimpleFontData>>> m_table;
     friend FontDataCache* fontDataCache();
 };
 
 FontDataCache* fontDataCache();
-
-using FontDataList = std::pmr::vector<RefPtr<FontData>>;
-
-class Document;
 
 class Font : public HeapMember, public RefCounted<Font> {
 public:

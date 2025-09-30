@@ -5,17 +5,13 @@
 
 #include <unicode/brkiter.h>
 
-#include <optional>
-
 namespace plutobook {
 
 class CharacterBreakIterator {
 public:
     explicit CharacterBreakIterator(const UString& text);
 
-    std::optional<int> preceding(int offset) const;
-    std::optional<int> following(int offset) const;
-    bool isBoundary(int offset) const;
+    int nextBreakOpportunity(int pos, int end) const;
 
 private:
     static icu::BreakIterator* getIterator();

@@ -126,10 +126,12 @@ RefPtr<TextShape> TextShape::createForText(const UString& text, Direction direct
         auto scriptCode = uscript_getScript(character, &errorCode);
         if(!fontData || U_FAILURE(errorCode))
             break;
-        auto nextIndex = iterator.following(startIndex).value();
+        auto nextIndex = iterator.nextBreakOpportunity(startIndex, totalLength);
         auto endIndex = startIndex + std::min(totalLength, kMaxCharacters);
-        while(nextIndex < endIndex) {
+        for(; nextIndex < endIndex; nextIndex = iterator.nextBreakOpportunity(nextIndex, endIndex)) {
             auto nextCharacter = text.char32At(nextIndex);
+            if(treatAsZeroWidthSpace(nextCharacter))
+                continue;
             auto nextFontData = font->getFontData(nextCharacter);
             auto nextScriptCode = uscript_getScript(nextCharacter, &errorCode);
             if(fontData != nextFontData || U_FAILURE(errorCode))
@@ -140,8 +142,6 @@ RefPtr<TextShape> TextShape::createForText(const UString& text, Direction direct
                 && !uscript_hasScript(nextCharacter, scriptCode)) {
                 break;
             }
-
-            nextIndex = iterator.following(nextIndex).value();
         }
 
         assert(nextIndex > startIndex);
@@ -150,7 +150,7 @@ RefPtr<TextShape> TextShape::createForText(const UString& text, Direction direct
         auto hbScript = hb_script_from_string(scriptName, -1);
 
         std::vector<hb_feature_t> hbFeatures;
-        for(const auto& features : { fontFeatures, fontData->features() }) {
+        auto addFeatures = [&hbFeatures](const FontFeatureList& features) {
             for(const auto& feature : features) {
                 hb_feature_t hbFeature;
                 hbFeature.tag = feature.first.value();
@@ -159,7 +159,10 @@ RefPtr<TextShape> TextShape::createForText(const UString& text, Direction direct
                 hbFeature.end = static_cast<unsigned>(-1);
                 hbFeatures.push_back(hbFeature);
             }
-        }
+        };
+
+        addFeatures(fontFeatures);
+        addFeatures(fontData->features());
 
         hb_buffer_reset(hbBuffer);
         hb_buffer_add_utf16(hbBuffer, textBuffer + startIndex, numCharacters, 0, numCharacters);

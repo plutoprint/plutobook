@@ -12,31 +12,19 @@ CharacterBreakIterator::CharacterBreakIterator(const UString& text)
     m_iterator->setText(text);
 }
 
-std::optional<int> CharacterBreakIterator::preceding(int offset) const
-{
-    auto position = m_iterator->preceding(offset);
-    if(position == UBRK_DONE)
-        return std::nullopt;
-    return position;
-}
-
-std::optional<int> CharacterBreakIterator::following(int offset) const
+int CharacterBreakIterator::nextBreakOpportunity(int offset, int end) const
 {
     auto position = m_iterator->following(offset);
     if(position == UBRK_DONE)
-        return std::nullopt;
+        return end;
     return position;
-}
-
-bool CharacterBreakIterator::isBoundary(int offset) const
-{
-    return m_iterator->isBoundary(offset);
 }
 
 icu::BreakIterator* CharacterBreakIterator::getIterator()
 {
     UErrorCode status = U_ZERO_ERROR;
-    thread_local std::unique_ptr<icu::BreakIterator> iterator(icu::BreakIterator::createCharacterInstance(icu::Locale(), status));
+    thread_local std::unique_ptr<icu::BreakIterator> iterator(
+        icu::BreakIterator::createCharacterInstance(icu::Locale::getDefault(), status));
     assert(iterator && U_SUCCESS(status));
     return iterator.get();
 }
@@ -182,7 +170,8 @@ bool LineBreakIterator::isBreakable(uint32_t pos) const
 icu::BreakIterator* LineBreakIterator::getIterator()
 {
     UErrorCode status = U_ZERO_ERROR;
-    thread_local std::unique_ptr<icu::BreakIterator> iterator(icu::BreakIterator::createLineInstance(icu::Locale(), status));
+    thread_local std::unique_ptr<icu::BreakIterator> iterator(
+        icu::BreakIterator::createLineInstance(icu::Locale::getDefault(), status));
     assert(iterator && U_SUCCESS(status));
     return iterator.get();
 }

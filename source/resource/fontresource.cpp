@@ -370,8 +370,7 @@ hb_font_t* SimpleFontData::hbFont() const
     hb_font_set_variations(hbFont, settings.data(), settings.size());
     cairo_font_options_destroy(font_options);
 
-    static hb_font_funcs_t* hbFunctions = nullptr;
-    if(hbFunctions == nullptr) {
+    static hb_font_funcs_t* hbFunctions = []() {
         auto nominal_glyph_func = [](hb_font_t*, void* context, hb_codepoint_t unicode, hb_codepoint_t* glyph, void*) -> hb_bool_t {
             auto font = static_cast<cairo_scaled_font_t*>(context);
             if(auto face = cairo_ft_scaled_font_lock_face(font)) {
@@ -415,13 +414,14 @@ hb_font_t* SimpleFontData::hbFont() const
             return true;
         };
 
-        hbFunctions = hb_font_funcs_create();
+        auto hbFunctions = hb_font_funcs_create();
         hb_font_funcs_set_nominal_glyph_func(hbFunctions, nominal_glyph_func, nullptr, nullptr);
         hb_font_funcs_set_variation_glyph_func(hbFunctions, variation_glyph_func, nullptr, nullptr);
         hb_font_funcs_set_glyph_h_advance_func(hbFunctions, glyph_h_advance_func, nullptr, nullptr);
         hb_font_funcs_set_glyph_extents_func(hbFunctions, glyph_extents_func, nullptr, nullptr);
         hb_font_funcs_make_immutable(hbFunctions);
-    }
+        return hbFunctions;
+    }();
 
     hb_font_set_funcs(hbFont, hbFunctions, m_font, nullptr);
     hb_font_make_immutable(hbFont);
@@ -677,14 +677,9 @@ RefPtr<SimpleFontData> FontDataCache::getFontData(uint32_t codepoint, const Font
     return nullptr;
 }
 
-FontDataCache::~FontDataCache()
+bool FontDataCache::isFamilyAvailable(const GlobalString& family)
 {
-    FcConfigDestroy(m_config);
-}
-
-FontDataCache::FontDataCache()
-    : m_config(FcInitLoadConfigAndFonts())
-{
+    std::lock_guard guard(m_mutex);
     for(auto nameSet : { FcSetSystem, FcSetApplication }) {
         auto allFonts = FcConfigGetFonts(m_config, nameSet);
         if(allFonts == nullptr)
@@ -694,11 +689,24 @@ FontDataCache::FontDataCache()
             int matchFamilyIndex = 0;
             char* matchFamilyName = nullptr;
             while(FcPatternGetString(matchPattern, FC_FAMILY, matchFamilyIndex, (FcChar8**)(&matchFamilyName)) == FcResultMatch) {
-                m_families.emplace(matchFamilyName);
+                if(equals(family, matchFamilyName, false))
+                    return true;
                 ++matchFamilyIndex;
             }
         }
     }
+
+    return false;
+}
+
+FontDataCache::~FontDataCache()
+{
+    FcConfigDestroy(m_config);
+}
+
+FontDataCache::FontDataCache()
+    : m_config(FcInitLoadConfigAndFonts())
+{
 }
 
 FontDataCache* fontDataCache()
