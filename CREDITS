@@ -1,0 +1,16 @@
+PlutoBook is built on the shoulders of some amazing open source projects.  
+We are deeply grateful to the communities behind these libraries.  
+
+You can find the licenses for each of them in the installation package:  
+
+cairo           licenses/cairo  
+curl            licenses/curl  
+expat           licenses/expat  
+fontconfig      licenses/fontconfig  
+freetype        licenses/freetype  
+harfbuzz        licenses/harfbuzz  
+icu             licenses/icu  
+libjpeg-turbo   licenses/libjpeg-turbo  
+libwebp         licenses/libwebp  
+qrcodegen       licenses/qrcodegen  
+stb             licenses/stb  
