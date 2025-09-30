@@ -102,9 +102,6 @@ jobs:
         run: |
           cp -v /mingw64/bin/pkgconf.exe plutobook-win64/bin
           cp -v /mingw64/bin/libpkgconf*.dll plutobook-win64/bin
-          cp -v /mingw64/bin/libgcc*.dll plutobook-win64/bin
-          cp -v /mingw64/bin/libstdc++*.dll plutobook-win64/bin
-          cp -v /mingw64/bin/libwinpthread*.dll plutobook-win64/bin
           zip -r plutobook-win64.zip plutobook-win64/
           
       - name: Upload artifact
