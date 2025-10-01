@@ -644,7 +644,7 @@ class FontDataSet {
 public:
     static std::unique_ptr<FontDataSet> create(FcConfig* config, const FontDataDescription& description, bool preferColor);
 
-    FcPattern* match(FcConfig* config, uint32_t codepoint) const;
+    FcPattern* match(FcConfig* config, uint32_t codepoint, bool preferColor) const;
 
     ~FontDataSet();
 
@@ -680,11 +680,19 @@ std::unique_ptr<FontDataSet> FontDataSet::create(FcConfig* config, const FontDat
     return std::unique_ptr<FontDataSet>(new FontDataSet(pattern, fontSet, charSet));
 }
 
-FcPattern* FontDataSet::match(FcConfig* config, uint32_t codepoint) const
+FcPattern* FontDataSet::match(FcConfig* config, uint32_t codepoint, bool preferColor) const
 {
     for(int i = 0; i < m_fontSet->nfont; ++i) {
-        FcCharSet* charSet;
         FcPattern* fontPattern = m_fontSet->fonts[i];
+        if(preferColor) {
+            FcBool hasColor = FcFalse;
+            FcPatternGetBool(fontPattern, FC_COLOR, 0, &hasColor);
+            if(!hasColor) {
+                continue;
+            }
+        }
+
+        FcCharSet* charSet;
         if(FcPatternGetCharSet(fontPattern, FC_CHARSET, 0, &charSet) == FcResultMatch) {
             if(FcCharSetHasChar(charSet, codepoint)) {
                 return FcFontRenderPrepare(config, m_pattern, fontPattern);
@@ -710,7 +718,7 @@ RefPtr<SimpleFontData> FontDataCache::getFontData(uint32_t codepoint, bool prefe
         fontDataSet = FontDataSet::create(m_config, description, preferColor);
     }
 
-    if(auto matchPattern = fontDataSet->match(m_config, codepoint))
+    if(auto matchPattern = fontDataSet->match(m_config, codepoint, preferColor))
         return createFontDataFromPattern(matchPattern, description);
     return nullptr;
 }
