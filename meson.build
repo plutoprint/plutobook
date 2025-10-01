@@ -13,7 +13,7 @@ expat_dep = dependency('expat',
 
 icu_dep = dependency('icu-uc',
     required: true,
-    version: '>=49.0',
+    version: '>=57.0',
     fallback: ['icu', 'icuuc_dep']
 )
 

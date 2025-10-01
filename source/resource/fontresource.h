@@ -4,6 +4,7 @@
 #include "resource.h"
 #include "globalstring.h"
 
+#include <memory>
 #include <vector>
 #include <forward_list>
 #include <map>
@@ -359,7 +360,7 @@ class SimpleFontData;
 class FontData : public RefCounted<FontData> {
 public:
     virtual ~FontData() = default;
-    virtual const SimpleFontData* getFontData(uint32_t codepoint) const = 0;
+    virtual const SimpleFontData* getFontData(uint32_t codepoint, bool preferColor) const = 0;
 
 protected:
     FontData() = default;
@@ -376,6 +377,7 @@ struct FontDataInfo {
     float spaceWidth;
     uint16_t zeroGlyph;
     uint16_t spaceGlyph;
+    bool hasColor;
 };
 
 class SimpleFontData final : public FontData {
@@ -388,7 +390,7 @@ public:
     const FontDataInfo& info() const { return m_info; }
     const FontFeatureList& features() const { return m_features; }
 
-    const SimpleFontData* getFontData(uint32_t codepoint) const final;
+    const SimpleFontData* getFontData(uint32_t codepoint, bool preferColor) const final;
 
     float ascent() const { return m_info.ascent; }
     float descent() const { return m_info.descent; }
@@ -421,7 +423,7 @@ public:
         : m_from(from), m_to(to), m_data(std::move(data))
     {}
 
-    const SimpleFontData* getFontData(uint32_t codepoint) const;
+    const SimpleFontData* getFontData(uint32_t codepoint, bool preferColor) const;
 
 private:
     uint32_t m_from;
@@ -435,7 +437,7 @@ class SegmentedFontData final : public FontData {
 public:
     static RefPtr<SegmentedFontData> create(FontDataRangeList fonts);
 
-    const SimpleFontData* getFontData(uint32_t codepoint) const final;
+    const SimpleFontData* getFontData(uint32_t codepoint, bool preferColor) const final;
 
 private:
     SegmentedFontData(FontDataRangeList fonts) : m_fonts(std::move(fonts)) {}
@@ -447,11 +449,13 @@ inline RefPtr<SegmentedFontData> SegmentedFontData::create(FontDataRangeList fon
     return adoptPtr(new SegmentedFontData(std::move(fonts)));
 }
 
+class FontDataSet;
+
 class FontDataCache {
 public:
     RefPtr<SimpleFontData> getFontData(const FontDataDescription& description);
     RefPtr<SimpleFontData> getFontData(const GlobalString& family, const FontDataDescription& description);
-    RefPtr<SimpleFontData> getFontData(uint32_t codepoint, const FontDataDescription& description);
+    RefPtr<SimpleFontData> getFontData(uint32_t codepoint, bool preferColor, const FontDataDescription& description);
 
     bool isFamilyAvailable(const GlobalString& family);
 
@@ -461,7 +465,8 @@ private:
     FontDataCache();
     FcConfig* m_config;
     std::mutex m_mutex;
-    std::map<GlobalString, std::map<FontDataDescription, RefPtr<SimpleFontData>>> m_table;
+    std::map<GlobalString, std::map<FontDataDescription, RefPtr<SimpleFontData>>> m_fontDataCache;
+    std::map<std::pair<FontDataDescription, bool>, std::unique_ptr<FontDataSet>> m_fontSetCache;
     friend FontDataCache* fontDataCache();
 };
 
@@ -484,7 +489,7 @@ public:
 
     const FontFamilyList& family() const { return m_description.families; }
     const FontVariationList& variationSettings() const { return m_description.data.variations; }
-    const SimpleFontData* getFontData(uint32_t codepoint) const;
+    const SimpleFontData* getFontData(uint32_t codepoint, bool preferColor) const;
 
 private:
     Font(Document* document, const FontDescription& description);

@@ -6,6 +6,7 @@
 
 #include <algorithm>
 
+#include <unicode/uchar.h>
 #include <unicode/uscript.h>
 #include <cairo-ft.h>
 #include <hb-ft.h>
@@ -101,6 +102,13 @@ constexpr int kMaxCharacters = kMaxGlyphs;
 
 #define HB_TO_FLT(v) (static_cast<float>(v) / (1 << 16))
 
+static bool isEmojiCodepoint(uint32_t codepoint)
+{
+    if(codepoint > 0xFF)
+        return u_hasBinaryProperty(codepoint, UCHAR_EMOJI);
+    return false;
+}
+
 RefPtr<TextShape> TextShape::createForText(const UString& text, Direction direction, bool disableSpacing, const BoxStyle* style)
 {
     const auto& font = style->font();
@@ -122,7 +130,7 @@ RefPtr<TextShape> TextShape::createForText(const UString& text, Direction direct
     while(totalLength > 0) {
         auto errorCode = U_ZERO_ERROR;
         auto character = text.char32At(startIndex);
-        auto fontData = font->getFontData(character);
+        auto fontData = font->getFontData(character, isEmojiCodepoint(character));
         auto scriptCode = uscript_getScript(character, &errorCode);
         if(!fontData || U_FAILURE(errorCode))
             break;
@@ -132,7 +140,7 @@ RefPtr<TextShape> TextShape::createForText(const UString& text, Direction direct
             auto nextCharacter = text.char32At(nextIndex);
             if(treatAsZeroWidthSpace(nextCharacter))
                 continue;
-            auto nextFontData = font->getFontData(nextCharacter);
+            auto nextFontData = font->getFontData(nextCharacter, isEmojiCodepoint(nextCharacter));
             auto nextScriptCode = uscript_getScript(nextCharacter, &errorCode);
             if(fontData != nextFontData || U_FAILURE(errorCode))
                 break;
@@ -222,7 +230,7 @@ RefPtr<TextShape> TextShape::createForTabs(const UString& text, Direction direct
     int totalLength = text.length();
 
     TextShapeRunList runs(heap);
-    if(auto fontData = font->getFontData(kSpaceCharacter)) {
+    if(auto fontData = font->getFontData(kSpaceCharacter, false)) {
         auto tabWidth = style->tabWidth(fontData->spaceWidth());
         auto spaceGlyph = fontData->spaceGlyph();
         while(totalLength > 0) {

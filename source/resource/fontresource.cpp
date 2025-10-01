@@ -328,6 +328,7 @@ RefPtr<SimpleFontData> SimpleFontData::create(cairo_scaled_font_t* font, FontFea
     info.zeroWidth = glyph_extents(zeroGlyph).x_advance;
     info.zeroGlyph = zeroGlyph;
     info.spaceGlyph = spaceGlyph;
+    info.hasColor = FT_HAS_COLOR(face);
     cairo_ft_scaled_font_unlock_face(font);
 
     return adoptPtr(new SimpleFontData(font, charSet, info, std::move(features)));
@@ -432,8 +433,10 @@ hb_font_t* SimpleFontData::hbFont() const
     return hbFont;
 }
 
-const SimpleFontData* SimpleFontData::getFontData(uint32_t codepoint) const
+const SimpleFontData* SimpleFontData::getFontData(uint32_t codepoint, bool preferColor) const
 {
+    if(preferColor && !m_info.hasColor)
+        return nullptr;
     if(FcCharSetHasChar(m_charSet, codepoint))
         return this;
     return nullptr;
@@ -446,17 +449,17 @@ SimpleFontData::~SimpleFontData()
     FcCharSetDestroy(m_charSet);
 }
 
-const SimpleFontData* FontDataRange::getFontData(uint32_t codepoint) const
+const SimpleFontData* FontDataRange::getFontData(uint32_t codepoint, bool preferColor) const
 {
     if(m_from <= codepoint && m_to >= codepoint)
-        return m_data->getFontData(codepoint);
+        return m_data->getFontData(codepoint, preferColor);
     return nullptr;
 }
 
-const SimpleFontData* SegmentedFontData::getFontData(uint32_t codepoint) const
+const SimpleFontData* SegmentedFontData::getFontData(uint32_t codepoint, bool preferColor) const
 {
     for(const auto& font : m_fonts) {
-        if(auto fontData = font.getFontData(codepoint)) {
+        if(auto fontData = font.getFontData(codepoint, preferColor)) {
             return fontData;
         }
     }
@@ -591,7 +594,7 @@ constexpr bool isGenericFamilyName(const std::string_view& familyName)
 RefPtr<SimpleFontData> FontDataCache::getFontData(const GlobalString& family, const FontDataDescription& description)
 {
     std::lock_guard guard(m_mutex);
-    auto& fontData = m_table[family][description];
+    auto& fontData = m_fontDataCache[family][description];
     if(fontData != nullptr)
         return fontData;
     auto pattern = FcPatternCreate();
@@ -637,43 +640,78 @@ RefPtr<SimpleFontData> FontDataCache::getFontData(const GlobalString& family, co
     return nullptr;
 }
 
-RefPtr<SimpleFontData> FontDataCache::getFontData(uint32_t codepoint, const FontDataDescription& description)
-{
-    std::lock_guard guard(m_mutex);
-    auto pattern = FcPatternCreate();
-    auto charSet = FcCharSetCreate();
+class FontDataSet {
+public:
+    static std::unique_ptr<FontDataSet> create(FcConfig* config, const FontDataDescription& description, bool preferColor);
 
-    FcCharSetAddChar(charSet, codepoint);
-    FcPatternAddCharSet(pattern, FC_CHARSET, charSet);
+    FcPattern* match(FcConfig* config, uint32_t codepoint) const;
+
+    ~FontDataSet();
+
+private:
+    FontDataSet(FcPattern* pattern, FcFontSet* fontSet, FcCharSet* charSet)
+        : m_pattern(pattern), m_fontSet(fontSet), m_charSet(charSet)
+    {}
+
+    FcPattern* m_pattern;
+    FcFontSet* m_fontSet;
+    FcCharSet* m_charSet;
+};
+
+std::unique_ptr<FontDataSet> FontDataSet::create(FcConfig* config, const FontDataDescription& description, bool preferColor)
+{
+    FcPattern* pattern = FcPatternCreate();
     FcPatternAddDouble(pattern, FC_PIXEL_SIZE, description.size);
     FcPatternAddInteger(pattern, FC_WEIGHT, fcWeight(description.request.weight));
     FcPatternAddInteger(pattern, FC_WIDTH, fcWidth(description.request.width));
     FcPatternAddInteger(pattern, FC_SLANT, fcSlant(description.request.slope));
     FcPatternAddBool(pattern, FC_SCALABLE, FcTrue);
+    if(preferColor) {
+        FcPatternAddBool(pattern, FC_COLOR, FcTrue);
+    }
 
-    FcConfigSubstitute(m_config, pattern, FcMatchPattern);
+    FcConfigSubstitute(config, pattern, FcMatchPattern);
     FcDefaultSubstitute(pattern);
-    FcResult matchResult;
-    auto matchPattern = FcFontMatch(m_config, pattern, &matchResult);
-    if(matchResult == FcResultMatch) {
-        matchResult = FcResultNoMatch;
-        int matchCharSetIndex = 0;
-        FcCharSet* matchCharSet = nullptr;
-        while(FcPatternGetCharSet(matchPattern, FC_CHARSET, matchCharSetIndex, &matchCharSet) == FcResultMatch) {
-            if(FcCharSetHasChar(matchCharSet, codepoint)) {
-                matchResult = FcResultMatch;
-                break;
-            }
 
-            ++matchCharSetIndex;
+    FcResult sortResult;
+    FcCharSet* charSet;
+    FcFontSet* fontSet = FcFontSort(config, pattern, FcTrue, &charSet, &sortResult);
+
+    return std::unique_ptr<FontDataSet>(new FontDataSet(pattern, fontSet, charSet));
+}
+
+FcPattern* FontDataSet::match(FcConfig* config, uint32_t codepoint) const
+{
+    for(int i = 0; i < m_fontSet->nfont; ++i) {
+        FcCharSet* charSet;
+        FcPattern* fontPattern = m_fontSet->fonts[i];
+        if(FcPatternGetCharSet(fontPattern, FC_CHARSET, 0, &charSet) == FcResultMatch) {
+            if(FcCharSetHasChar(charSet, codepoint)) {
+                return FcFontRenderPrepare(config, m_pattern, fontPattern);
+            }
         }
     }
 
-    FcCharSetDestroy(charSet);
-    FcPatternDestroy(pattern);
-    if(matchResult == FcResultMatch)
+    return nullptr;
+}
+
+FontDataSet::~FontDataSet()
+{
+    FcCharSetDestroy(m_charSet);
+    FcFontSetSortDestroy(m_fontSet);
+    FcPatternDestroy(m_pattern);
+}
+
+RefPtr<SimpleFontData> FontDataCache::getFontData(uint32_t codepoint, bool preferColor, const FontDataDescription& description)
+{
+    std::lock_guard guard(m_mutex);
+    auto& fontDataSet = m_fontSetCache[std::make_pair(description, preferColor)];
+    if(fontDataSet == nullptr) {
+        fontDataSet = FontDataSet::create(m_config, description, preferColor);
+    }
+
+    if(auto matchPattern = fontDataSet->match(m_config, codepoint))
         return createFontDataFromPattern(matchPattern, description);
-    FcPatternDestroy(matchPattern);
     return nullptr;
 }
 
@@ -725,19 +763,21 @@ Heap* Font::heap() const
     return m_document->heap();
 }
 
-const SimpleFontData* Font::getFontData(uint32_t codepoint) const
+const SimpleFontData* Font::getFontData(uint32_t codepoint, bool preferColor) const
 {
     for(const auto& font : m_fonts) {
-        if(auto fontData = font->getFontData(codepoint)) {
+        if(auto fontData = font->getFontData(codepoint, preferColor)) {
             return fontData;
         }
     }
 
-    if(auto fontData = fontDataCache()->getFontData(codepoint, m_description.data)) {
+    if(auto fontData = fontDataCache()->getFontData(codepoint, preferColor, m_description.data)) {
         m_fonts.push_back(fontData);
         return fontData.get();
     }
 
+    if(preferColor)
+        return getFontData(codepoint, false);
     return m_primaryFont;
 }
 
@@ -753,7 +793,7 @@ Font::Font(Document* document, const FontDescription& description)
     }
 
     for(const auto& font : m_fonts) {
-        if(auto fontData = font->getFontData(' ')) {
+        if(auto fontData = font->getFontData(' ', false)) {
             m_primaryFont = fontData;
             break;
         }
