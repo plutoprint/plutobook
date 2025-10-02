@@ -384,8 +384,7 @@ class SimpleFontData final : public FontData {
 public:
     static RefPtr<SimpleFontData> create(cairo_scaled_font_t* font, FontFeatureList features);
 
-    hb_font_t* hbFont() const;
-
+    hb_font_t* hbFont() const { return m_hbFont; }
     cairo_scaled_font_t* font() const { return m_font; }
     const FontDataInfo& info() const { return m_info; }
     const FontFeatureList& features() const { return m_features; }
@@ -406,12 +405,12 @@ public:
     ~SimpleFontData() final;
 
 private:
-    SimpleFontData(cairo_scaled_font_t* font, FcCharSet* charSet, const FontDataInfo& info, FontFeatureList features)
-        : m_font(font), m_charSet(charSet), m_info(info), m_features(std::move(features))
+    SimpleFontData(cairo_scaled_font_t* font, hb_font_t* hbFont, FcCharSet* charSet, const FontDataInfo& info, FontFeatureList features)
+        : m_font(font), m_hbFont(hbFont), m_charSet(charSet), m_info(info), m_features(std::move(features))
     {}
 
-    mutable hb_font_t* m_hbFont{nullptr};
     cairo_scaled_font_t* m_font;
+    hb_font_t* m_hbFont;
     FcCharSet* m_charSet;
     FontDataInfo m_info;
     FontFeatureList m_features;
