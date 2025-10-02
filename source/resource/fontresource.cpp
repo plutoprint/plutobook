@@ -591,12 +591,8 @@ constexpr bool isGenericFamilyName(const std::string_view& familyName)
         || equals(familyName, "emoji", false);
 }
 
-RefPtr<SimpleFontData> FontDataCache::getFontData(const GlobalString& family, const FontDataDescription& description)
+static RefPtr<SimpleFontData> createFontData(FcConfig* config, const GlobalString& family, const FontDataDescription& description)
 {
-    std::lock_guard guard(m_mutex);
-    auto& fontData = m_fontDataCache[family][description];
-    if(fontData != nullptr)
-        return fontData;
     auto pattern = FcPatternCreate();
     FcPatternAddDouble(pattern, FC_PIXEL_SIZE, description.size);
     FcPatternAddInteger(pattern, FC_WEIGHT, fcWeight(description.request.weight));
@@ -610,14 +606,14 @@ RefPtr<SimpleFontData> FontDataCache::getFontData(const GlobalString& family, co
         FcPatternAddBool(pattern, FC_COLOR, FcTrue);
     }
 
-    FcConfigSubstitute(m_config, pattern, FcMatchPattern);
+    FcConfigSubstitute(config, pattern, FcMatchPattern);
     FcDefaultSubstitute(pattern);
 
     char* configFamilyName = nullptr;
     FcPatternGetString(pattern, FC_FAMILY, 0, (FcChar8**)(&configFamilyName));
 
     FcResult matchResult;
-    auto matchPattern = FcFontMatch(m_config, pattern, &matchResult);
+    auto matchPattern = FcFontMatch(config, pattern, &matchResult);
     if(matchResult == FcResultMatch && !familyName.empty() && !isGenericFamilyName(familyName)) {
         matchResult = FcResultNoMatch;
         FcValue matchValue;
@@ -625,7 +621,7 @@ RefPtr<SimpleFontData> FontDataCache::getFontData(const GlobalString& family, co
         int matchFamilyIndex = 0;
         while(FcPatternGetWithBinding(matchPattern, FC_FAMILY, matchFamilyIndex, &matchValue, &matchBinding) == FcResultMatch) {
             auto matchFamilyName = (const char*)(matchValue.u.s);
-            if(matchBinding == FcValueBindingStrong || equals(configFamilyName, matchFamilyName, false) || equals(familyName, matchFamilyName, false)) {
+            if(matchBinding == FcValueBindingStrong || equalsIgnoringCase(configFamilyName, matchFamilyName) || equalsIgnoringCase(familyName, matchFamilyName)) {
                matchResult = FcResultMatch;
                break;
             }
@@ -636,8 +632,17 @@ RefPtr<SimpleFontData> FontDataCache::getFontData(const GlobalString& family, co
 
     FcPatternDestroy(pattern);
     if(matchResult == FcResultMatch)
-        return (fontData = createFontDataFromPattern(matchPattern, description));
+        return createFontDataFromPattern(matchPattern, description);
     return nullptr;
+}
+
+RefPtr<SimpleFontData> FontDataCache::getFontData(const GlobalString& family, const FontDataDescription& description)
+{
+    std::lock_guard guard(m_mutex);
+    auto& fontData = m_fontDataCache[family][description];
+    if(fontData == nullptr)
+        fontData = createFontData(m_config, family, description);
+    return fontData;
 }
 
 class FontDataSet {
@@ -735,7 +740,7 @@ bool FontDataCache::isFamilyAvailable(const GlobalString& family)
             int matchFamilyIndex = 0;
             char* matchFamilyName = nullptr;
             while(FcPatternGetString(matchPattern, FC_FAMILY, matchFamilyIndex, (FcChar8**)(&matchFamilyName)) == FcResultMatch) {
-                if(equals(family, matchFamilyName, false))
+                if(equalsIgnoringCase(family, matchFamilyName))
                     return true;
                 ++matchFamilyIndex;
             }
@@ -771,7 +776,7 @@ Heap* Font::heap() const
     return m_document->heap();
 }
 
-const SimpleFontData* Font::getFontData(uint32_t codepoint, bool preferColor) const
+const SimpleFontData* Font::getFontData(uint32_t codepoint, bool preferColor)
 {
     for(const auto& font : m_fonts) {
         if(auto fontData = font->getFontData(codepoint, preferColor)) {

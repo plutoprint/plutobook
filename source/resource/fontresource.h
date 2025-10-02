@@ -489,13 +489,14 @@ public:
 
     const FontFamilyList& family() const { return m_description.families; }
     const FontVariationList& variationSettings() const { return m_description.data.variations; }
-    const SimpleFontData* getFontData(uint32_t codepoint, bool preferColor) const;
+
+    const SimpleFontData* getFontData(uint32_t codepoint, bool preferColor);
 
 private:
     Font(Document* document, const FontDescription& description);
     Document* m_document;
     FontDescription m_description;
-    mutable FontDataList m_fonts;
+    FontDataList m_fonts;
     const SimpleFontData* m_primaryFont{nullptr};
 };
 
