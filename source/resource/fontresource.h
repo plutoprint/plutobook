@@ -452,7 +452,6 @@ class FontDataSet;
 
 class FontDataCache {
 public:
-    RefPtr<SimpleFontData> getFontData(const FontDataDescription& description);
     RefPtr<SimpleFontData> getFontData(const GlobalString& family, const FontDataDescription& description);
     RefPtr<SimpleFontData> getFontData(uint32_t codepoint, bool preferColor, const FontDataDescription& description);
 

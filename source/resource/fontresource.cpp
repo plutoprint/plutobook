@@ -457,11 +457,6 @@ const SimpleFontData* SegmentedFontData::getFontData(uint32_t codepoint, bool pr
     return nullptr;
 }
 
-RefPtr<SimpleFontData> FontDataCache::getFontData(const FontDataDescription& description)
-{
-    return getFontData(emptyGlo, description);
-}
-
 constexpr int fcWeight(FontSelectionValue weight)
 {
     if(weight < FontSelectionValue(150))
@@ -604,7 +599,7 @@ static RefPtr<SimpleFontData> createFontData(FcConfig* config, const GlobalStrin
 
     FcResult matchResult;
     auto matchPattern = FcFontMatch(config, pattern, &matchResult);
-    if(matchResult == FcResultMatch && !familyName.empty() && !isGenericFamilyName(familyName)) {
+    if(matchResult == FcResultMatch && !isGenericFamilyName(familyName)) {
         matchResult = FcResultNoMatch;
         FcValue matchValue;
         FcValueBinding matchBinding;
@@ -769,7 +764,8 @@ Font::Font(Document* document, const FontDescription& description)
     }
 
     if(m_primaryFont == nullptr) {
-        if(auto fontData = fontDataCache()->getFontData(description.data)) {
+        static const GlobalString serif("serif");
+        if(auto fontData = fontDataCache()->getFontData(serif, description.data)) {
             m_primaryFont = fontData.get();
             m_fonts.push_back(std::move(fontData));
         }
