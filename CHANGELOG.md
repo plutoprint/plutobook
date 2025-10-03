@@ -1,5 +1,21 @@
 # Changelog
 
+## PlutoBook 0.10.0 (2025-10-03)
+
+- Add support for running headers and footers
+- Add support for CSS `min()`, `max()` and `clamp()` functions
+- Add support for `unicode-range` in `@font-face` for selective font coverage
+- Add support for `type` and `fallback` in `attr()` function
+- Prioritize color emoji fonts during font selection
+- Use `serif` as the last-resort fallback font
+- Handle UTF-8 BOM
+
+Backers and sponsors:
+
+- [Woza Labs](https://github.com/wozalabs)
+- [Ashish Kulkarni](https://github.com/ashkulz)
+- [Nap2016](https://github.com/Nap2016)
+
 ## PlutoBook 0.9.0 (2025-09-20)
 
 - Add support for CSS Custom Properties
