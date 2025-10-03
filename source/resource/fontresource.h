@@ -464,8 +464,7 @@ private:
     FontDataCache();
     FcConfig* m_config;
     std::mutex m_mutex;
-    std::map<GlobalString, std::map<FontDataDescription, RefPtr<SimpleFontData>>> m_fontDataCache;
-    std::map<std::pair<FontDataDescription, bool>, std::unique_ptr<FontDataSet>> m_fontSetCache;
+    std::map<GlobalString, std::map<FontDataDescription, RefPtr<SimpleFontData>>> m_table;
     friend FontDataCache* fontDataCache();
 };
 
@@ -497,6 +496,7 @@ private:
     FontDescription m_description;
     FontDataList m_fonts;
     const SimpleFontData* m_primaryFont{nullptr};
+    const SimpleFontData* m_emojiFont{nullptr};
 };
 
 } // namespace plutobook
