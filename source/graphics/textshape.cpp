@@ -36,9 +36,9 @@ TextShapeRun::TextShapeRun(const SimpleFontData* fontData, uint32_t offset, uint
 float TextShapeRun::positionForOffset(uint32_t offset, Direction direction) const
 {
     assert(offset <= m_length);
-    auto numGlyphs = m_glyphs.size();
     uint32_t glyphIndex = 0;
     float position = 0;
+    const auto numGlyphs = m_glyphs.size();
     if(direction == Direction::Rtl) {
         while(glyphIndex < numGlyphs && m_glyphs[glyphIndex].characterIndex > offset) {
             position += m_glyphs[glyphIndex++].advance;
@@ -75,10 +75,10 @@ uint32_t TextShapeRun::offsetForPosition(float position, Direction direction) co
     assert(position >= 0.f && position <= m_width);
     if(position <= 0.f)
         return direction == Direction::Ltr ? 0 : m_length;
-    auto numGlyphs = m_glyphs.size();
     uint32_t glyphIndex = 0;
     float currentPosition = 0.f;
-    while(glyphIndex < m_glyphs.size()) {
+    const auto numGlyphs = m_glyphs.size();
+    while(glyphIndex < numGlyphs) {
         currentPosition += m_glyphs[glyphIndex].advance;
 
         auto characterIndex = m_glyphs[glyphIndex].characterIndex;
