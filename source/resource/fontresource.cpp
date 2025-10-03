@@ -649,6 +649,9 @@ RefPtr<SimpleFontData> FontDataCache::getFontData(uint32_t codepoint, bool prefe
     FcPatternAddInteger(pattern, FC_WIDTH, fcWidth(description.request.width));
     FcPatternAddInteger(pattern, FC_SLANT, fcSlant(description.request.slope));
     FcPatternAddBool(pattern, FC_SCALABLE, FcTrue);
+    if(preferColor) {
+        FcPatternAddBool(pattern, FC_COLOR, FcTrue);
+    }
 
     FcConfigSubstitute(m_config, pattern, FcMatchPattern);
     FcDefaultSubstitute(pattern);
