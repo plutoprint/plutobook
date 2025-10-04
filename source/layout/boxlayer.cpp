@@ -14,13 +14,11 @@ BoxLayer* BoxLayer::containingLayer() const
 {
     auto parentLayer = parent();
     if(m_box->style()->position() == Position::Fixed) {
-        while(parentLayer && !parentLayer->box()->isBoxView()
-            && !parentLayer->box()->hasTransform()) {
+        while(parentLayer && !parentLayer->box()->canContainFixedPositionedBoxes()) {
             parentLayer = parentLayer->parent();
         }
     } else if(m_box->style()->position() == Position::Absolute) {
-        while(parentLayer && parentLayer->box()->style()->position() == Position::Static
-            && !parentLayer->box()->hasTransform()) {
+        while(parentLayer && !parentLayer->box()->canContainAbsolutePositionedBoxes()) {
             parentLayer = parentLayer->parent();
         }
     }

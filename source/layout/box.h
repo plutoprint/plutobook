@@ -72,6 +72,9 @@ public:
     static Box* createAnonymous(Display display, const BoxStyle* parentStyle);
     static BlockFlowBox* createAnonymousBlock(const BoxStyle* parentStyle);
 
+    bool canContainFixedPositionedBoxes() const;
+    bool canContainAbsolutePositionedBoxes() const;
+
     BlockBox* containingBlock() const;
     BoxModel* containingBox() const;
     BoxLayer* enclosingLayer() const;

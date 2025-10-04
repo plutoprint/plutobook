@@ -181,6 +181,16 @@ BlockFlowBox* Box::createAnonymousBlock(const BoxStyle* parentStyle)
     return newBlock;
 }
 
+bool Box::canContainFixedPositionedBoxes() const
+{
+    return (hasTransform() && isBlockBox()) || !parentBox();
+}
+
+bool Box::canContainAbsolutePositionedBoxes() const
+{
+    return style()->position() != Position::Static || canContainFixedPositionedBoxes();
+}
+
 BlockBox* Box::containingBlock() const
 {
     auto parent = parentBox();
@@ -191,19 +201,13 @@ BlockBox* Box::containingBlock() const
     }
 
     if(style()->position() == Position::Fixed) {
-        while(parent && !parent->isBoxView()) {
-            if(parent->hasTransform() && parent->isBlockBox())
-                break;
+        while(parent && !parent->canContainFixedPositionedBoxes()) {
             parent = parent->parentBox();
         }
-
-        return to<BlockBox>(parent);
-    }
-
-    while(parent && parent->style()->position() == Position::Static) {
-        if(parent->hasTransform() && parent->isBlockBox())
-            break;
-        parent = parent->parentBox();
+    } else {
+        while(parent && !parent->canContainAbsolutePositionedBoxes()) {
+            parent = parent->parentBox();
+        }
     }
 
     if(parent && !parent->isBlockBox())
@@ -218,15 +222,11 @@ BoxModel* Box::containingBox() const
     auto parent = parentBox();
     if(!isTextBox()) {
         if(style()->position() == Position::Fixed) {
-            while(parent && !parent->isBoxView()) {
-                if(parent->hasTransform() && parent->isBlockBox())
-                    break;
+            while(parent && !parent->canContainFixedPositionedBoxes()) {
                 parent = parent->parentBox();
             }
         } else if(style()->position() == Position::Absolute) {
-            while(parent && parent->style()->position() == Position::Static) {
-                if(parent->hasTransform() && parent->isBlockBox())
-                    break;
+            while(parent && !parent->canContainAbsolutePositionedBoxes()) {
                 parent = parent->parentBox();
             }
         }
