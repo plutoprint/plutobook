@@ -71,7 +71,7 @@ RefPtr<FontResource> FontResource::create(Document* document, const Url& url)
         return nullptr;
     }
 
-    return adoptPtr(new (document->heap()) FontResource(face));
+    return adoptPtr(new (document->heap()) FontResource(face, FcFreeTypeCharSet(fontData->face(), nullptr)));
 }
 
 bool FontResource::supportsFormat(const std::string_view& format)
@@ -81,6 +81,7 @@ bool FontResource::supportsFormat(const std::string_view& format)
 
 FontResource::~FontResource()
 {
+    FcCharSetDestroy(m_charSet);
     cairo_font_face_destroy(m_face);
 }
 
@@ -264,13 +265,14 @@ RefPtr<FontData> RemoteFontFace::getFontData(const FontDataDescription& descript
     cairo_font_options_set_variations(options, variations.data());
     cairo_font_options_set_hint_metrics(options, CAIRO_HINT_METRICS_OFF);
 
+    auto charSet = FcCharSetCopy(m_resource->charSet());
     auto face = cairo_font_face_reference(m_resource->face());
     auto font = cairo_scaled_font_create(face, &ftm, &ctm, options);
 
     cairo_font_face_destroy(face);
     cairo_font_options_destroy(options);
 
-    return SimpleFontData::create(font, m_features);
+    return SimpleFontData::create(font, charSet, m_features);
 }
 
 RefPtr<FontData> SegmentedFontFace::getFontData(const FontDataDescription& description)
@@ -299,7 +301,7 @@ RefPtr<FontData> SegmentedFontFace::getFontData(const FontDataDescription& descr
 
 #define FLT_TO_HB(v) static_cast<hb_position_t>(v * (1 << 16))
 
-RefPtr<SimpleFontData> SimpleFontData::create(cairo_scaled_font_t* font, FontFeatureList features)
+RefPtr<SimpleFontData> SimpleFontData::create(cairo_scaled_font_t* font, FcCharSet* charSet, FontFeatureList features)
 {
     auto ftFace = cairo_ft_scaled_font_lock_face(font);
     if(ftFace == nullptr) {
@@ -307,7 +309,6 @@ RefPtr<SimpleFontData> SimpleFontData::create(cairo_scaled_font_t* font, FontFea
         return nullptr;
     }
 
-    auto charSet = FcFreeTypeCharSet(ftFace, nullptr);
     auto zeroGlyph = FcFreeTypeCharIndex(ftFace, '0');
     auto spaceGlyph = FcFreeTypeCharIndex(ftFace, ' ');
     auto xGlyph = FcFreeTypeCharIndex(ftFace, 'x');
@@ -522,6 +523,15 @@ static RefPtr<SimpleFontData> createFontDataFromPattern(FcPattern* pattern, cons
         ++matchMatrixIndex;
     }
 
+    int matchCharSetIndex = 0;
+    FcCharSet* matchCharSet = nullptr;
+
+    auto charSet = FcCharSetCreate();
+    while(FcPatternGetCharSet(pattern, FC_CHARSET, matchCharSetIndex, &matchCharSet) == FcResultMatch) {
+        FcCharSetMerge(charSet, matchCharSet, nullptr);
+        ++matchCharSetIndex;
+    }
+
     cairo_matrix_t ctm;
     cairo_matrix_init_identity(&ctm);
 
@@ -562,7 +572,7 @@ static RefPtr<SimpleFontData> createFontDataFromPattern(FcPattern* pattern, cons
     cairo_font_options_destroy(options);
     FcPatternDestroy(pattern);
 
-    return SimpleFontData::create(font, std::move(featureSettings));
+    return SimpleFontData::create(font, charSet, std::move(featureSettings));
 }
 
 constexpr bool isGenericFamilyName(const std::string_view& familyName)

@@ -4,7 +4,6 @@
 #include "resource.h"
 #include "globalstring.h"
 
-#include <memory>
 #include <vector>
 #include <forward_list>
 #include <map>
@@ -25,13 +24,18 @@ public:
     static RefPtr<FontResource> create(Document* document, const Url& url);
     static bool supportsFormat(const std::string_view& format);
     cairo_font_face_t* face() const { return m_face; }
+    FcCharSet* charSet() const { return m_charSet; }
     Type type() const final { return Type::Font; }
 
     ~FontResource() final;
 
 private:
-    FontResource(cairo_font_face_t* face) : m_face(face) {}
+    FontResource(cairo_font_face_t* face, FcCharSet* charSet)
+        : m_face(face), m_charSet(charSet)
+    {}
+
     cairo_font_face_t* m_face;
+    FcCharSet* m_charSet;
 };
 
 template<>
@@ -382,7 +386,7 @@ struct FontDataInfo {
 
 class SimpleFontData final : public FontData {
 public:
-    static RefPtr<SimpleFontData> create(cairo_scaled_font_t* font, FontFeatureList features);
+    static RefPtr<SimpleFontData> create(cairo_scaled_font_t* font, FcCharSet* charSet, FontFeatureList features);
 
     hb_font_t* hbFont() const { return m_hbFont; }
     cairo_scaled_font_t* font() const { return m_font; }
