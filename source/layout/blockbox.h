@@ -210,7 +210,7 @@ public:
 
     void layoutBlockChild(BoxFrame* child, FragmentBuilder* fragmentainer, MarginInfo& marginInfo);
     void layoutBlockChildren(FragmentBuilder* fragmentainer);
-    void layoutContents(FragmentBuilder* fragmentainer, float verticalShift);
+    void layoutContents(FragmentBuilder* fragmentainer);
     void layout(FragmentBuilder* fragmentainer) override;
 
     void build() override;
