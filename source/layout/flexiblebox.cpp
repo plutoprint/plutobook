@@ -1,6 +1,7 @@
 #include "flexiblebox.h"
 #include "boxlayer.h"
 
+#include <span>
 #include <ranges>
 #include <list>
 
@@ -216,7 +217,6 @@ FlexibleBox::FlexibleBox(Node* node, const RefPtr<BoxStyle>& style)
     , m_justifyContent(style->justifyContent())
     , m_alignContent(style->alignContent())
     , m_items(style->heap())
-    , m_lines(style->heap())
 {
 }
 
@@ -400,12 +400,37 @@ float FlexibleBox::borderAndPaddingAfter() const
     return borderEnd() + paddingEnd();
 }
 
+using FlexItemSpan = std::span<FlexItem>;
+
+class FlexLine {
+public:
+    explicit FlexLine(const FlexItemSpan& items)
+        : m_items(items)
+    {}
+
+    const FlexItemSpan& items() const { return m_items; }
+
+    float crossOffset() const { return m_crossOffset; }
+    float crossSize() const { return m_crossSize; }
+    float crossBaseline() const { return m_crossBaseline; }
+
+    void setCrossOffset(float offset) { m_crossOffset = offset; }
+    void setCrossSize(float size) { m_crossSize = size; }
+    void setCrossBaseline(float baseline) { m_crossBaseline = baseline; }
+
+private:
+    FlexItemSpan m_items;
+    float m_crossOffset = 0;
+    float m_crossSize = 0;
+    float m_crossBaseline = 0;
+};
+
+using FlexLineList = std::vector<FlexLine>;
+
 void FlexibleBox::layout(FragmentBuilder* fragmentainer)
 {
     updateWidth();
     setHeight(borderAndPaddingHeight());
-
-    m_lines.clear();
 
     float maxHypotheticalMainSize = 0;
     for(auto& item : m_items) {
@@ -423,6 +448,8 @@ void FlexibleBox::layout(FragmentBuilder* fragmentainer)
 
     auto it = m_items.begin();
     auto end = m_items.end();
+
+    FlexLineList lines;
     while(it != end) {
         float totalFlexGrow = 0;
         float totalFlexShrink = 0;
@@ -639,11 +666,11 @@ void FlexibleBox::layout(FragmentBuilder* fragmentainer)
         mainOffset += borderAndPaddingEnd();
         if(isVerticalFlow())
             setHeight(std::max(mainOffset, height()));
-        m_lines.emplace_back(items);
+        lines.emplace_back(items);
     }
 
     auto crossOffset = borderAndPaddingBefore();
-    for(auto& line : m_lines) {
+    for(auto& line : lines) {
         float crossSize = 0;
         float maxCrossAscent = 0;
         float maxCrossDescent = 0;
@@ -672,20 +699,20 @@ void FlexibleBox::layout(FragmentBuilder* fragmentainer)
         crossOffset += crossSize;
     }
 
-    if(m_lines.size() > 1)
-        crossOffset += m_gapBetweenLines * (m_lines.size() - 1);
+    if(lines.size() > 1)
+        crossOffset += m_gapBetweenLines * (lines.size() - 1);
     crossOffset += borderAndPaddingAfter();
     if(isHorizontalFlow())
         setHeight(std::max(crossOffset, height()));
     updateHeight();
 
-    if(!isMultiLine() && !m_lines.empty())
-        m_lines.front().setCrossSize(availableCrossSize());
-    if(isMultiLine() && !m_lines.empty()) {
+    if(!isMultiLine() && !lines.empty())
+        lines.front().setCrossSize(availableCrossSize());
+    if(isMultiLine() && !lines.empty()) {
         auto availableSpace = availableCrossSize();
-        for(const auto& line : m_lines)
+        for(const auto& line : lines)
             availableSpace -= line.crossSize();
-        availableSpace -= m_gapBetweenLines * (m_lines.size() - 1);
+        availableSpace -= m_gapBetweenLines * (lines.size() - 1);
 
         float lineOffset = 0;
         switch(m_alignContent) {
@@ -697,17 +724,17 @@ void FlexibleBox::layout(FragmentBuilder* fragmentainer)
             break;
         case AlignContent::SpaceAround:
             if(availableSpace > 0)
-                lineOffset += availableSpace / (2.f * m_lines.size());
+                lineOffset += availableSpace / (2.f * lines.size());
             break;
         case AlignContent::SpaceEvenly:
             if(availableSpace > 0)
-                lineOffset += availableSpace / (m_lines.size() + 1);
+                lineOffset += availableSpace / (lines.size() + 1);
             break;
         default:
             break;
         }
 
-        for(auto& line : m_lines) {
+        for(auto& line : lines) {
             line.setCrossOffset(lineOffset + line.crossOffset());
             for(const auto& item : line.items()) {
                 auto child = item.box();
@@ -719,23 +746,23 @@ void FlexibleBox::layout(FragmentBuilder* fragmentainer)
             }
 
             if(m_alignContent == AlignContent::Stretch && availableSpace > 0) {
-                auto lineSize = availableSpace / m_lines.size();
+                auto lineSize = availableSpace / lines.size();
                 line.setCrossSize(lineSize + line.crossSize());
                 lineOffset += lineSize;
             }
 
-            if(m_lines.size() > 1) {
+            if(lines.size() > 1) {
                 lineOffset += m_gapBetweenLines;
                 if(availableSpace > 0) {
                     switch(m_alignContent) {
                     case AlignContent::SpaceAround:
-                        lineOffset += availableSpace / m_lines.size();
+                        lineOffset += availableSpace / lines.size();
                         break;
                     case AlignContent::SpaceBetween:
-                        lineOffset += availableSpace / (m_lines.size() - 1);
+                        lineOffset += availableSpace / (lines.size() - 1);
                         break;
                     case AlignContent::SpaceEvenly:
-                        lineOffset += availableSpace / (m_lines.size() + 1);
+                        lineOffset += availableSpace / (lines.size() + 1);
                         break;
                     default:
                         break;
@@ -745,7 +772,7 @@ void FlexibleBox::layout(FragmentBuilder* fragmentainer)
         }
     }
 
-    for(const auto& line : m_lines) {
+    for(const auto& line : lines) {
         for(const auto& item : line.items()) {
             auto child = item.box();
             auto childStyle = child->style();
@@ -845,7 +872,7 @@ void FlexibleBox::layout(FragmentBuilder* fragmentainer)
 
     if(m_flexWrap == FlexWrap::WrapReverse) {
         auto availableSpace = availableCrossSize();
-        for(const auto& line : m_lines) {
+        for(const auto& line : lines) {
             auto originalOffset = line.crossOffset() - borderAndPaddingBefore();
             auto newOffset = availableSpace - originalOffset - line.crossSize();
             auto delta = newOffset - originalOffset;

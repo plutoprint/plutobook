@@ -3,8 +3,6 @@
 
 #include "blockbox.h"
 
-#include <span>
-
 namespace plutobook {
 
 enum class FlexSign {
@@ -89,33 +87,7 @@ private:
     float m_targetMainSize{0};
 };
 
-using FlexItemSpan = std::span<FlexItem>;
-
-class FlexLine {
-public:
-    explicit FlexLine(const FlexItemSpan& items)
-        : m_items(items)
-    {}
-
-    const FlexItemSpan& items() const { return m_items; }
-
-    float crossOffset() const { return m_crossOffset; }
-    float crossSize() const { return m_crossSize; }
-    float crossBaseline() const { return m_crossBaseline; }
-
-    void setCrossOffset(float offset) { m_crossOffset = offset; }
-    void setCrossSize(float size) { m_crossSize = size; }
-    void setCrossBaseline(float baseline) { m_crossBaseline = baseline; }
-
-private:
-    FlexItemSpan m_items;
-    float m_crossOffset = 0;
-    float m_crossSize = 0;
-    float m_crossBaseline = 0;
-};
-
 using FlexItemList = std::pmr::vector<FlexItem>;
-using FlexLineList = std::pmr::vector<FlexLine>;
 
 class FlexibleBox final : public BlockBox {
 public:
@@ -149,7 +121,6 @@ public:
     bool isMultiLine() const { return m_flexWrap == FlexWrap::Wrap || m_flexWrap == FlexWrap::WrapReverse; }
 
     const FlexItemList& items() { return m_items; }
-    const FlexLineList& lines() const { return m_lines; }
 
     void layout(FragmentBuilder* fragmentainer) final;
     void build() final;
@@ -164,7 +135,6 @@ private:
     AlignContent m_justifyContent;
     AlignContent m_alignContent;
     FlexItemList m_items;
-    FlexLineList m_lines;
 
     float m_gapBetweenItems = 0;
     float m_gapBetweenLines = 0;
