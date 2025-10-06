@@ -1178,7 +1178,7 @@ void CSSCounterStyle::extend(const CSSCounterStyle& extended)
 
 CSSCounterStyle& CSSCounterStyle::defaultStyle()
 {
-    static CSSCounterStyle* defaultStyle = [](){
+    static CSSCounterStyle* defaultStyle = []() {
         const GlobalString decimal("decimal");
         return userAgentCounterStyleMap()->findCounterStyle(decimal);
     }();
@@ -1305,7 +1305,7 @@ CSSCounterStyleMap::CSSCounterStyleMap(Heap* heap, const CSSRuleList& rules, con
 
 const CSSCounterStyleMap* userAgentCounterStyleMap()
 {
-    static std::unique_ptr<CSSCounterStyleMap> counterStyleMap = [](){
+    static std::unique_ptr<CSSCounterStyleMap> counterStyleMap = []() {
         static Heap heap(1024 * 96);
         CSSParserContext context(nullptr, CSSStyleOrigin::UserAgent, ResourceLoader::baseUrl());
         CSSParser parser(context, &heap);

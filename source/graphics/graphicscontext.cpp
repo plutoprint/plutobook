@@ -118,10 +118,10 @@ static void set_cairo_path(cairo_t* cr, const Path& path)
 static void set_cairo_gradient(cairo_pattern_t* pattern, const GradientStops& stops, const Transform& transform, SpreadMethod method, float opacity)
 {
     for(const auto& stop : stops) {
-        auto red = stop.second.red() / 255.f;
-        auto green = stop.second.green() / 255.f;
-        auto blue = stop.second.blue() / 255.f;
-        auto alpha = stop.second.alpha() / 255.f;
+        auto red = stop.second.red() / 255.0;
+        auto green = stop.second.green() / 255.0;
+        auto blue = stop.second.blue() / 255.0;
+        auto alpha = stop.second.alpha() / 255.0;
         cairo_pattern_add_color_stop_rgba(pattern, stop.first, red, green, blue, alpha * opacity);
     }
 
@@ -154,10 +154,10 @@ GraphicsContext::~GraphicsContext()
 
 void GraphicsContext::setColor(const Color& color)
 {
-    auto red = color.red() / 255.f;
-    auto green = color.green() / 255.f;
-    auto blue = color.blue() / 255.f;
-    auto alpha = color.alpha() / 255.f;
+    auto red = color.red() / 255.0;
+    auto green = color.green() / 255.0;
+    auto blue = color.blue() / 255.0;
+    auto alpha = color.alpha() / 255.0;
     cairo_set_source_rgba(m_canvas, red, green, blue, alpha);
 }
 

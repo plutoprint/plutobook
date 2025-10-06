@@ -22,7 +22,10 @@ public:
     ~FTFontData() { FT_Done_Face(m_face); }
 
 private:
-    FTFontData(FT_Face face, ResourceData resource) : m_face(face), m_resource(std::move(resource)) {}
+    FTFontData(FT_Face face, ResourceData resource)
+        : m_face(face), m_resource(std::move(resource))
+    {}
+
     FT_Face m_face;
     ResourceData m_resource;
 };
@@ -299,7 +302,7 @@ RefPtr<FontData> SegmentedFontFace::getFontData(const FontDataDescription& descr
     return fontData;
 }
 
-#define FLT_TO_HB(v) static_cast<hb_position_t>(v * (1 << 16))
+#define FLT_TO_HB(v) static_cast<hb_position_t>((v) * (1 << 16))
 
 RefPtr<SimpleFontData> SimpleFontData::create(cairo_scaled_font_t* font, FcCharSet* charSet, FontFeatureList features)
 {
@@ -660,6 +663,7 @@ RefPtr<SimpleFontData> FontDataCache::getFontData(uint32_t codepoint, bool prefe
 
     FcConfigSubstitute(m_config, pattern, FcMatchPattern);
     FcDefaultSubstitute(pattern);
+
     FcResult matchResult;
     auto matchPattern = FcFontMatch(m_config, pattern, &matchResult);
     if(matchResult == FcResultMatch) {

@@ -660,7 +660,6 @@ RefPtr<BoxStyle> PageStyleBuilder::build()
     }
 
     buildStyle(newStyle.get());
-
     newStyle->setPosition(Position::Static);
     newStyle->setDisplay(Display::Block);
     newStyle->setFloating(Float::None);
@@ -669,7 +668,7 @@ RefPtr<BoxStyle> PageStyleBuilder::build()
 
 static const CSSRuleList& userAgentRules()
 {
-    static CSSRuleList rules = [](){
+    static CSSRuleList rules = []() {
         static Heap heap(1024 * 72);
         CSSParserContext context(nullptr, CSSStyleOrigin::UserAgent, ResourceLoader::baseUrl());
         CSSParser parser(context, &heap);
