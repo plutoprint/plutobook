@@ -715,6 +715,8 @@ void Document::removeElementById(const HeapString& id, Element* element)
 
 void Document::addRunningStyle(const GlobalString& name, RefPtr<BoxStyle> style)
 {
+    assert(style->position() == Position::Running);
+    style->setPosition(Position::Static);
     m_runningStyles.emplace(name, std::move(style));
 }
 

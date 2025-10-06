@@ -152,8 +152,8 @@ void HTMLElement::buildBox(Counters& counters, Box* parent)
     if(style->position() == Position::Running) {
         const auto* value = style->get(CSSPropertyID::Position);
         const auto& position = to<CSSUnaryFunctionValue>(*value);
+        assert(position.id() == CSSFunctionID::Running);
         const auto& name = to<CSSCustomIdentValue>(*position.value());
-        style->reset(CSSPropertyID::Position);
         document()->addRunningStyle(name.value(), std::move(style));
         return;
     }
