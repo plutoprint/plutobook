@@ -4,6 +4,7 @@
 #include "svggeometrybox.h"
 #include "svgtextbox.h"
 #include "imageresource.h"
+#include "stringutils.h"
 
 #include <set>
 
@@ -260,17 +261,17 @@ void SVGSVGElement::computeIntrinsicDimensions(float& intrinsicWidth, float& int
 static void addSVGTransformAttributeStyle(std::string& output, const Transform& matrix)
 {
     output += "transform:matrix(";
-    output += std::to_string(matrix.a);
+    output += toString(matrix.a);
     output += ',';
-    output += std::to_string(matrix.b);
+    output += toString(matrix.b);
     output += ',';
-    output += std::to_string(matrix.c);
+    output += toString(matrix.c);
     output += ',';
-    output += std::to_string(matrix.d);
+    output += toString(matrix.d);
     output += ',';
-    output += std::to_string(matrix.e);
+    output += toString(matrix.e);
     output += ',';
-    output += std::to_string(matrix.f);
+    output += toString(matrix.f);
     output += ");";
 }
 

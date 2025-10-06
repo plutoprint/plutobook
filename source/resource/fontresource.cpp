@@ -244,9 +244,9 @@ static std::string buildVariationSettings(const FontDataDescription& description
 
         if(!output.empty())
             output += ',';
-        output += std::string_view(name, 4);
+        output.append(name, 4);
         output += '=';
-        output += std::to_string(value);
+        output += toString(value);
     }
 
     return output;

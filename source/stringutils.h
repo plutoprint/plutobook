@@ -2,6 +2,7 @@
 #define PLUTOBOOK_STRINGUTILS_H
 
 #include <string>
+#include <cstdio>
 #include <cstdint>
 
 namespace plutobook {
@@ -162,7 +163,21 @@ constexpr void stripLeadingAndTrailingSpaces(std::string_view& input)
     stripTrailingSpaces(input);
 }
 
-inline void appendCodepoint(std::string& output, uint32_t cp)
+static std::string toString(int value)
+{
+    char buffer[16];
+    std::snprintf(buffer, sizeof(buffer), "%d", value);
+    return buffer;
+}
+
+static std::string toString(float value)
+{
+    char buffer[32];
+    std::snprintf(buffer, sizeof(buffer), "%g", value);
+    return buffer;
+}
+
+static void appendCodepoint(std::string& output, uint32_t cp)
 {
     char c[5] = {0, 0, 0, 0, 0};
     if(cp < 0x80) {
