@@ -706,7 +706,7 @@ bool CSSRuleData::matchPseudoClassCheckedSelector(const Element* element, const 
 
 bool CSSRuleData::matchPseudoClassLangSelector(const Element* element, const CSSSimpleSelector& selector)
 {
-    return dashequals(element->lang(), selector.name(), false);
+    return dashequals(element->lang(), selector.value(), false);
 }
 
 bool CSSRuleData::matchPseudoClassRootSelector(const Element* element, const CSSSimpleSelector& selector)
