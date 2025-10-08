@@ -178,11 +178,11 @@ public:
     uint32_t columnCount() const { return m_columnCount; }
     float columnGap() const { return m_columnGap; }
 
-    bool layoutColumns(bool balancing);
+    bool layoutColumns(FragmentBuilder* fragmentainer, bool balancing);
 
     void computePreferredWidths(float& minPreferredWidth, float& maxPreferredWidth) const final;
     void computeWidth(float& x, float& width, float& marginLeft, float& marginRight) const final;
-    void layout(FragmentBuilder* fragmentainer) final;
+    void layoutContents(FragmentBuilder* fragmentainer) final;
     void build() final;
 
     const char* name() const final { return "MultiColumnFlowBox"; }

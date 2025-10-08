@@ -449,13 +449,18 @@ void MultiColumnFlowBox::skipColumnSpanner(MultiColumnSpanBox* spanner, float of
     }
 }
 
-bool MultiColumnFlowBox::layoutColumns(bool balancing)
+bool MultiColumnFlowBox::layoutColumns(FragmentBuilder* fragmentainer, bool balancing)
 {
     m_currentRow = firstRow();
     if(m_currentRow)
-        m_currentRow->setRowTop(0.f);
+        m_currentRow->setRowTop(height());
     assert(fragmentOffset() == 0.f);
-    BlockFlowBox::layout(this);
+    if(m_columnCount == 1) {
+        BlockFlowBox::layoutContents(fragmentainer);
+    } else {
+        BlockFlowBox::layoutContents(this);
+    }
+
     assert(fragmentOffset() == 0.f);
     if(m_currentRow) {
         assert(m_currentRow == lastRow());
@@ -511,7 +516,7 @@ void MultiColumnFlowBox::computeWidth(float& x, float& width, float& marginLeft,
     }
 }
 
-void MultiColumnFlowBox::layout(FragmentBuilder* fragmentainer)
+void MultiColumnFlowBox::layoutContents(FragmentBuilder* fragmentainer)
 {
     auto container = columnBlockFlow();
     auto containerStyle = container->style();
@@ -526,9 +531,10 @@ void MultiColumnFlowBox::layout(FragmentBuilder* fragmentainer)
         row->resetColumnHeight(availableColumnHeight);
     }
 
-    auto changed = layoutColumns(false);
+    auto changed = layoutColumns(fragmentainer, false);
     while(changed) {
-        changed = layoutColumns(true);
+        setHeight(borderAndPaddingTop());
+        changed = layoutColumns(fragmentainer, true);
     }
 }
 
