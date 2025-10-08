@@ -837,7 +837,7 @@ float BoxStyle::tabWidth(float spaceWidth) const
 {
     auto value = get(CSSPropertyID::TabSize);
     if(value == nullptr)
-        return 8.f;
+        return 8 * spaceWidth;
     const auto& length = to<CSSLengthValue>(*value);
     if(length.units() == CSSLengthUnits::None)
         return spaceWidth * length.value();
