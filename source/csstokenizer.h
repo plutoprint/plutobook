@@ -12,7 +12,6 @@ namespace plutobook {
 class CSSToken {
 public:
     enum class Type : uint8_t {
-        Unknown,
         Ident,
         Function,
         AtKeyword,
@@ -58,18 +57,17 @@ public:
         Minus
     };
 
-    CSSToken() = default;
     explicit CSSToken(Type type) : m_type(type) {}
     CSSToken(Type type, uint32_t delim) : m_type(type), m_delim(delim) {}
     CSSToken(Type type, uint32_t from, uint32_t to) : m_type(type), m_from(from), m_to(to) {}
     CSSToken(Type type, const std::string_view& data) : m_type(type), m_data(data) {}
     CSSToken(Type type, HashType hashType, const std::string_view& data) : m_type(type), m_hashType(hashType), m_data(data) {}
 
-    CSSToken(Type type, NumberType numberType, NumberSign numberSign, double number)
+    CSSToken(Type type, NumberType numberType, NumberSign numberSign, float number)
         : m_type(type), m_numberType(numberType), m_numberSign(numberSign), m_number(number)
     {}
 
-    CSSToken(Type type, NumberType numberType, NumberSign numberSign, double number, const std::string_view& unit)
+    CSSToken(Type type, NumberType numberType, NumberSign numberSign, float number, const std::string_view& unit)
         : m_type(type), m_numberType(numberType), m_numberSign(numberSign), m_number(number), m_data(unit)
     {}
 
@@ -97,7 +95,7 @@ public:
             assert(false);
         }
 
-        return Type::Unknown;
+        return type;
     }
 
 private:
