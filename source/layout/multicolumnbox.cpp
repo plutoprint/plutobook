@@ -351,6 +351,20 @@ MultiColumnFlowBox* MultiColumnFlowBox::create(const BoxStyle* parentStyle)
     return newColumn;
 }
 
+bool MultiColumnFlowBox::isSingleColumn() const
+{
+    if(m_columnCount > 1)
+        return false;
+    for(auto box = nextSibling(); box; box = box->nextSibling()) {
+        if(!box->isMultiColumnRowBox()) {
+            assert(box->style()->columnSpan() == ColumnSpan::All);
+            return false;
+        }
+    }
+
+    return true;
+}
+
 MultiColumnRowBox* MultiColumnFlowBox::firstRow() const
 {
     for(auto box = nextSibling(); box; box = box->nextSibling()) {
@@ -449,18 +463,13 @@ void MultiColumnFlowBox::skipColumnSpanner(MultiColumnSpanBox* spanner, float of
     }
 }
 
-bool MultiColumnFlowBox::layoutColumns(FragmentBuilder* fragmentainer, bool balancing)
+bool MultiColumnFlowBox::layoutColumns(bool balancing)
 {
     m_currentRow = firstRow();
     if(m_currentRow)
         m_currentRow->setRowTop(height());
     assert(fragmentOffset() == 0.f);
-    if(m_columnCount == 1) {
-        BlockFlowBox::layoutContents(fragmentainer);
-    } else {
-        BlockFlowBox::layoutContents(this);
-    }
-
+    BlockFlowBox::layoutContents(this);
     assert(fragmentOffset() == 0.f);
     if(m_currentRow) {
         assert(m_currentRow == lastRow());
@@ -518,6 +527,11 @@ void MultiColumnFlowBox::computeWidth(float& x, float& width, float& marginLeft,
 
 void MultiColumnFlowBox::layoutContents(FragmentBuilder* fragmentainer)
 {
+    if(isSingleColumn()) {
+        BlockFlowBox::layoutContents(fragmentainer);
+        return;
+    }
+
     auto container = columnBlockFlow();
     auto containerStyle = container->style();
 
@@ -531,10 +545,10 @@ void MultiColumnFlowBox::layoutContents(FragmentBuilder* fragmentainer)
         row->resetColumnHeight(availableColumnHeight);
     }
 
-    auto changed = layoutColumns(fragmentainer, false);
+    auto changed = layoutColumns(false);
     while(changed) {
         setHeight(borderAndPaddingTop());
-        changed = layoutColumns(fragmentainer, true);
+        changed = layoutColumns(true);
     }
 }
 

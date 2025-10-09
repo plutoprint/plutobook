@@ -159,6 +159,8 @@ public:
     bool requiresLayer() const final { return true; }
     bool avoidsFloats() const final { return true; }
 
+    bool isSingleColumn() const;
+
     BlockFlowBox* columnBlockFlow() const;
     MultiColumnRowBox* firstRow() const;
     MultiColumnRowBox* lastRow() const;
@@ -178,7 +180,7 @@ public:
     uint32_t columnCount() const { return m_columnCount; }
     float columnGap() const { return m_columnGap; }
 
-    bool layoutColumns(FragmentBuilder* fragmentainer, bool balancing);
+    bool layoutColumns(bool balancing);
 
     void computePreferredWidths(float& minPreferredWidth, float& maxPreferredWidth) const final;
     void computeWidth(float& x, float& width, float& marginLeft, float& marginRight) const final;
