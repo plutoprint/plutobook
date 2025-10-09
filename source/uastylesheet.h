@@ -284,6 +284,26 @@ constexpr char kUserAgentCounterStyle[] = R"CSS(
     suffix: ', ';
     negative: "\B9C8\C774\B108\C2A4  ";
     fallback: cjk-decimal;
+}
+
+@counter-style binary {
+    system: numeric;
+    symbols: '\30' '\31';
+}
+
+@counter-style lower-hexadecimal {
+    system: numeric;
+    symbols: '\30' '\31' '\32' '\33' '\34' '\35' '\36' '\37' '\38' '\39' '\61' '\62' '\63' '\64' '\65' '\66';
+}
+
+@counter-style upper-hexadecimal {
+    system: numeric;
+    symbols: '\30' '\31' '\32' '\33' '\34' '\35' '\36' '\37' '\38' '\39' '\41' '\42' '\43' '\44' '\45' '\46';
+}
+
+@counter-style octal {
+    system: numeric;
+    symbols: '\30' '\31' '\32' '\33' '\34' '\35' '\36' '\37';
 })CSS";
 
 constexpr char kUserAgentStyle[] = R"CSS(
