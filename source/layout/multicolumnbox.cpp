@@ -528,6 +528,8 @@ void MultiColumnFlowBox::layoutContents(FragmentBuilder* fragmentainer)
 {
     if(isSingleColumn()) {
         BlockFlowBox::layoutContents(fragmentainer);
+        for(auto row = firstRow(); row; row = row->nextRow())
+            row->resetColumnHeight(0);
         return;
     }
 
