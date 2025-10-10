@@ -356,8 +356,7 @@ bool MultiColumnFlowBox::isSingleColumn() const
     if(m_columnCount > 1)
         return false;
     for(auto box = nextSibling(); box; box = box->nextSibling()) {
-        if(!box->isMultiColumnRowBox()) {
-            assert(box->style()->columnSpan() == ColumnSpan::All);
+        if(box->isColumnSpanner()) {
             return false;
         }
     }
@@ -552,9 +551,9 @@ void MultiColumnFlowBox::layoutContents(FragmentBuilder* fragmentainer)
     }
 }
 
-static bool isValidColumnSpanner(const BoxFrame* box)
+static bool isValidColumnSpanner(const Box* box)
 {
-    return !box->isInline() && !box->isFloatingOrPositioned() && box->style()->columnSpan() == ColumnSpan::All;
+    return box->isBoxFrame() && !box->isInline() && !box->isFloatingOrPositioned() && box->style()->columnSpan() == ColumnSpan::All;
 }
 
 void MultiColumnFlowBox::build()
@@ -567,18 +566,19 @@ void MultiColumnFlowBox::build()
 
     auto child = firstChild();
     while(child) {
-        auto spanner = to<BoxFrame>(child);
-        if(spanner && isValidColumnSpanner(spanner)) {
-            auto parent = to<BlockFlowBox>(spanner->parentBox());
-            assert(parent && !parent->isChildrenInline());
-            auto newSpanner = MultiColumnSpanBox::create(spanner, parent->style());
-            parent->insertChild(newSpanner, spanner->nextSibling());
-            parent->removeChild(spanner);
+        if(isValidColumnSpanner(child)) {
+            auto spanner = to<BoxFrame>(child);
+            spanner->setIsColumnSpanner(true);
+            auto spannerParent = to<BlockFlowBox>(spanner->parentBox());
+            assert(spannerParent && !spannerParent->isChildrenInline());
+            auto spannerPlaceholder = MultiColumnSpanBox::create(spanner, spannerParent->style());
+            spannerParent->insertChild(spannerPlaceholder, spanner->nextSibling());
+            spannerParent->removeChild(spanner);
             container->appendChild(spanner);
             if(currentRow)
                currentRow->setColumnFill(ColumnFill::Balance);
+            child = spannerPlaceholder;
             currentRow = nullptr;
-            child = newSpanner;
         } else if(!child->isFloatingOrPositioned()) {
             if(currentRow == nullptr) {
                 auto newRow = MultiColumnRowBox::create(this, containerStyle);

@@ -154,6 +154,7 @@ public:
     bool isReplaced() const { return m_isReplaced; }
     bool isOverflowHidden() const { return m_isOverflowHidden; }
     bool isBackgroundStolen() const { return m_isBackgroundStolen; }
+    bool isColumnSpanner() const { return m_isColumnSpanner; }
 
     void setIsAnonymous(bool value) { m_isAnonymous = value; }
     void setIsAnonymousBlock(bool value) { m_isAnonymousBlock = value; }
@@ -164,6 +165,7 @@ public:
     void setIsReplaced(bool value) { m_isReplaced = value; }
     void setIsOverflowHidden(bool value) { m_isOverflowHidden = value; }
     void setIsBackgroundStolen(bool value) { m_isBackgroundStolen = value; }
+    void setIsColumnSpanner(bool value) { m_isColumnSpanner = value; }
 
     bool hasColumnFlowBox() const { return m_hasColumnFlowBox; }
     bool hasTransform() const { return m_hasTransform; }
@@ -210,6 +212,7 @@ private:
     bool m_isReplaced : 1 {false};
     bool m_isOverflowHidden : 1 {false};
     bool m_isBackgroundStolen : 1 {false};
+    bool m_isColumnSpanner : 1 {false};
     bool m_hasColumnFlowBox : 1 {false};
     bool m_hasTransform : 1 {false};
     bool m_hasLayer : 1 {false};
