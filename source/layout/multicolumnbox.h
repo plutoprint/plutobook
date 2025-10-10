@@ -75,6 +75,8 @@ public:
     void resetColumnHeight(float availableHeight);
     bool recalculateColumnHeight(bool balancing);
 
+    const char* name() const final { return "MultiColumnRowBox"; }
+
 private:
     MultiColumnRowBox(MultiColumnFlowBox* columnFlow, const RefPtr<BoxStyle>& style);
 
@@ -121,8 +123,9 @@ public:
     void computeWidth(float& x, float& width, float& marginLeft, float& marginRight) const final;
     void computeHeight(float& y, float& height, float& marginTop, float& marginBottom) const final;
     void layout(FragmentBuilder* fragmentainer) final;
-
     void paint(const PaintInfo& info, const Point& offset, PaintPhase phase) final;
+
+    const char* name() const final { return "MultiColumnSpanBox"; }
 
 private:
     MultiColumnSpanBox(BoxFrame* box, const RefPtr<BoxStyle>& style);
