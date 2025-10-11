@@ -162,8 +162,6 @@ public:
     bool requiresLayer() const final { return true; }
     bool avoidsFloats() const final { return true; }
 
-    bool isSingleColumn() const;
-
     BlockFlowBox* columnBlockFlow() const;
     MultiColumnRowBox* firstRow() const;
     MultiColumnRowBox* lastRow() const;

@@ -351,19 +351,6 @@ MultiColumnFlowBox* MultiColumnFlowBox::create(const BoxStyle* parentStyle)
     return newColumn;
 }
 
-bool MultiColumnFlowBox::isSingleColumn() const
-{
-    if(m_columnCount > 1)
-        return false;
-    for(auto box = nextSibling(); box; box = box->nextSibling()) {
-        if(box->isColumnSpanner()) {
-            return false;
-        }
-    }
-
-    return true;
-}
-
 MultiColumnRowBox* MultiColumnFlowBox::firstRow() const
 {
     for(auto box = nextSibling(); box; box = box->nextSibling()) {
@@ -526,13 +513,6 @@ void MultiColumnFlowBox::computeWidth(float& x, float& width, float& marginLeft,
 
 void MultiColumnFlowBox::layoutContents(FragmentBuilder* fragmentainer)
 {
-    if(isSingleColumn()) {
-        BlockFlowBox::layoutContents(fragmentainer);
-        for(auto row = firstRow(); row; row = row->nextRow())
-            row->resetColumnHeight(0);
-        return;
-    }
-
     auto container = columnBlockFlow();
     auto containerStyle = container->style();
 

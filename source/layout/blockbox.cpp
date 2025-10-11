@@ -1555,8 +1555,6 @@ void BlockFlowBox::layoutBlockChildren(FragmentBuilder* fragmentainer)
             child->setY(height());
             child->updatePaddingWidths(this);
             child->layout(fragmentainer);
-            if(m_columnFlowBox->isSingleColumn())
-                setHeight(height() + child->height());
             determineHorizontalPosition(child);
         } else {
             layoutBlockChild(child, fragmentainer, marginInfo);

@@ -183,11 +183,6 @@ void BoxLayer::paintLayerContents(BoxLayer* rootLayer, GraphicsContext& context,
 void BoxLayer::paintLayerColumnContents(BoxLayer* rootLayer, GraphicsContext& context, const Rect& rect, const Point& offset)
 {
     const auto& column = to<MultiColumnFlowBox>(*m_box);
-    if(column.isSingleColumn()) {
-        paintLayerContents(rootLayer, context, rect, offset);
-        return;
-    }
-
     for(auto row = column.firstRow(); row; row = row->nextRow()) {
         auto clipRect = row->visualOverflowRect();
         clipRect.translate(row->location() + offset - column.location());
