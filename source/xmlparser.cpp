@@ -32,7 +32,7 @@ static void characterDataCallback(void* userData, const XML_Char* data, int leng
     getParser(userData)->handleCharacterData((const char*)(data), (size_t)(length));
 }
 
-constexpr XML_Char kXmlNamespaceSep = 1;
+constexpr XML_Char kXmlNamespaceSep = '|';
 
 bool XMLParser::parse(const std::string_view& content)
 {
