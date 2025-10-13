@@ -556,7 +556,7 @@ void HTMLTableElement::parseAttribute(const GlobalString& name, const HeapString
     if(name == cellpaddingAttr) {
         m_padding = parseHTMLNonNegativeInteger(value).value_or(0);
     } else if(name == borderAttr) {
-        m_border = parseHTMLNonNegativeInteger(value).value_or(0);
+        m_border = parseHTMLNonNegativeInteger(value).value_or(1);
     } else if(name == rulesAttr) {
         m_rules = parseRulesAttribute(value);
     } else if(name == frameAttr) {
