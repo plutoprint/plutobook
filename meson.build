@@ -20,7 +20,7 @@ icu_dep = dependency('icu-uc',
 freetype_dep = dependency('freetype2',
     required: true,
     version: '>=9.7.3',
-    default_options: ['harfbuzz=disabled'],
+    default_options: ['harfbuzz=disabled', 'error_strings=true'],
     fallback: ['freetype2', 'freetype_dep']
 )
 
