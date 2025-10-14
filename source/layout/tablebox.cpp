@@ -290,8 +290,8 @@ void TableBox::layoutCaption(TableCaptionBox* caption, FragmentBuilder* fragment
         fragmentainer->enterFragment(captionTop);
     }
 
-    caption->layout(fragmentainer);
     caption->setY(captionTop);
+    caption->layout(fragmentainer);
     caption->setX(caption->marginLeft());
     if(fragmentainer) {
         fragmentainer->leaveFragment(captionTop);

@@ -147,12 +147,12 @@ void SelectBox::layout(FragmentBuilder* fragmentainer)
         auto optionTop = height() + child->marginTop();
         if(fragmentainer)
             fragmentainer->enterFragment(optionTop);
+        child->setY(optionTop);
         child->layout(fragmentainer);
         if(fragmentainer) {
             fragmentainer->leaveFragment(optionTop);
         }
 
-        child->setY(optionTop);
         child->setX(borderStart() + paddingStart() + child->marginStart(style()->direction()));
         if(style()->isRightToLeftDirection())
             child->setX(width() - child->x() - child->width());
