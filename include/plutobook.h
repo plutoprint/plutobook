@@ -46,6 +46,12 @@ extern "C" {
 #define PLUTOBOOK_API PLUTOBOOK_IMPORT
 #endif
 
+#if defined(__GNUC__) && (__GNUC__ > 2)
+#define PLUTOBOOK_PRINTF_FORMAT(fmt_index, va_index) __attribute__((format(printf, fmt_index, va_index)))
+#else
+#define PLUTOBOOK_PRINTF_FORMAT(fmt_index, va_index)
+#endif
+
 #define PLUTOBOOK_VERSION_MAJOR 0
 #define PLUTOBOOK_VERSION_MINOR 10
 #define PLUTOBOOK_VERSION_MICRO 0
@@ -1041,7 +1047,7 @@ PLUTOBOOK_API void* plutobook_get_custom_resource_fetcher_closure(const plutoboo
  * @param format A `printf`-style format string specifying the error message.
  * @param ... Arguments corresponding to the format string.
  */
-PLUTOBOOK_API void plutobook_set_error_message(const char* format, ...);
+PLUTOBOOK_API void plutobook_set_error_message(const char* format, ...) PLUTOBOOK_PRINTF_FORMAT(1, 2);
 
 /**
  * @brief Retrieves the last error message that occurred on the current thread.
