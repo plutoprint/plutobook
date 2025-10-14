@@ -193,7 +193,7 @@ void TextLineBox::paint(const PaintInfo& info, const Point& offset, PaintPhase p
     Point adjustedOffset(offset + location());
     Point origin(adjustedOffset.x, adjustedOffset.y + style()->fontAscent());
     int repeatCount = std::max(1.f, std::floor(m_width / m_shapeWidth));
-    if(style()->direction() == Direction::Ltr) {
+    if(repeatCount > 1 && style()->direction() == Direction::Ltr) {
         origin.x += std::max(0.f, m_width - (m_shapeWidth * repeatCount));
     }
 
