@@ -241,6 +241,13 @@ public:
     void finishParsingDocument() final;
 };
 
+class HTMLBaseElement final : public HTMLElement {
+public:
+    HTMLBaseElement(Document* document);
+
+    void finishParsingDocument() final;
+};
+
 class HTMLDocument final : public Document {
 public:
     static std::unique_ptr<HTMLDocument> create(Book* book, Heap* heap, ResourceFetcher* fetcher, Url baseUrl);

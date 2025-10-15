@@ -599,6 +599,8 @@ Element* Document::createElement(const GlobalString& namespaceURI, const GlobalS
             return new (m_heap) HTMLLinkElement(this);
         if(tagName == titleTag)
             return new (m_heap) HTMLTitleElement(this);
+        if(tagName == baseTag)
+            return new (m_heap) HTMLBaseElement(this);
         return new (m_heap) HTMLElement(this, tagName);
     }
 

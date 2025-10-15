@@ -982,6 +982,19 @@ void HTMLTitleElement::finishParsingDocument()
     HTMLElement::finishParsingDocument();
 }
 
+HTMLBaseElement::HTMLBaseElement(Document* document)
+    : HTMLElement(document, baseTag)
+{
+}
+
+void HTMLBaseElement::finishParsingDocument()
+{
+    Url baseUrl(getAttribute(hrefAttr));
+    if(!baseUrl.isEmpty())
+        document()->setBaseUrl(std::move(baseUrl));
+    HTMLElement::finishParsingDocument();
+}
+
 std::unique_ptr<HTMLDocument> HTMLDocument::create(Book* book, Heap* heap, ResourceFetcher* fetcher, Url baseUrl)
 {
     return std::unique_ptr<HTMLDocument>(new (heap) HTMLDocument(book, heap, fetcher, std::move(baseUrl)));
