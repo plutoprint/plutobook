@@ -539,9 +539,9 @@ inline BoxFrame* BoxFrame::lastBoxFrame() const
 
 inline Rect BoxFrame::visualOverflowRect() const
 {
-    if(isOverflowHidden())
-        return borderBoxRect();
-    return Rect(m_overflowLeft, m_overflowTop, m_overflowRight - m_overflowLeft, m_overflowBottom - m_overflowTop);
+    if(!isOverflowHidden())
+        return Rect(m_overflowLeft, m_overflowTop, m_overflowRight - m_overflowLeft, m_overflowBottom - m_overflowTop);
+    return borderBoxRect();
 }
 
 inline Rect BoxFrame::borderBoundingBox() const
