@@ -100,13 +100,14 @@ void ContentBoxBuilder::addLeaderText(const HeapString& text)
 
 void ContentBoxBuilder::addLeader(const CSSValue& value)
 {
-    static const GlobalString dotted(".");
-    static const GlobalString solid("_");
-    static const GlobalString space(" ");
     if(is<CSSStringValue>(value)) {
         addLeaderText(to<CSSStringValue>(value).value());
         return;
     }
+
+    static const GlobalString dotted(".");
+    static const GlobalString solid("_");
+    static const GlobalString space(" ");
 
     const auto& ident = to<CSSIdentValue>(value);
     switch(ident.value()) {
