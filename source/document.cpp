@@ -544,8 +544,8 @@ float Document::viewportHeight() const
 
 bool Document::setContainerSize(float containerWidth, float containerHeight)
 {
-    auto width = std::round(containerWidth);
-    auto height = std::round(containerHeight);
+    auto width = std::ceil(containerWidth);
+    auto height = std::ceil(containerHeight);
     if(width == m_containerWidth && height == m_containerHeight)
         return false;
     m_containerWidth = width;
