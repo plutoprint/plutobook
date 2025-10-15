@@ -143,13 +143,14 @@ public:
     virtual bool isSVGResourceLinearGradientBox() const { return false; }
     virtual bool isSVGResourceRadialGradientBox() const { return false; }
 
+    bool isRelativePositioned() const { return m_style->position() == Position::Relative; }
+
     bool isAnonymous() const { return m_isAnonymous; }
     bool isAnonymousBlock() const { return m_isAnonymousBlock; }
     bool isChildrenInline() const { return m_isChildrenInline; }
     bool isInline() const { return m_isInline; }
     bool isFloating() const { return m_isFloating; }
     bool isPositioned() const { return m_isPositioned; }
-    bool isRelPositioned() const { return m_style->position() == Position::Relative; }
     bool isFloatingOrPositioned() const { return m_isFloating || m_isPositioned; }
     bool isReplaced() const { return m_isReplaced; }
     bool isOverflowHidden() const { return m_isOverflowHidden; }

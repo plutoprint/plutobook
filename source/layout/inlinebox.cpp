@@ -15,7 +15,7 @@ InlineBox::~InlineBox() = default;
 
 bool InlineBox::requiresLayer() const
 {
-    return isRelPositioned() || style()->hasOpacity() || style()->hasBlendMode();
+    return isRelativePositioned() || style()->hasOpacity() || style()->hasBlendMode();
 }
 
 Rect InlineBox::visualOverflowRect() const

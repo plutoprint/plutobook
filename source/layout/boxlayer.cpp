@@ -31,7 +31,7 @@ void BoxLayer::updatePosition()
     m_borderRect = m_box->borderBoundingBox();
     if(m_box->isPositioned()) {
         auto container = containingLayer();
-        if(container && container->box()->isRelPositioned()) {
+        if(container && container->box()->isRelativePositioned()) {
             if(auto box = to<InlineBox>(container->box())) {
                 m_borderRect.translate(box->relativePositionedInlineOffset(m_box));
             }
@@ -45,7 +45,7 @@ void BoxLayer::updatePosition()
         }
     }
 
-    if(m_box->isRelPositioned()) {
+    if(m_box->isRelativePositioned()) {
         m_borderRect.translate(m_box->relativePositionOffset());
     }
 

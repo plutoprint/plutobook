@@ -813,7 +813,7 @@ BoxFrame::BoxFrame(Node* node, const RefPtr<BoxStyle>& style)
 
 bool BoxFrame::requiresLayer() const
 {
-    return isPositioned() || isRelPositioned() || isOverflowHidden() || hasTransform() || hasColumnFlowBox()
+    return isPositioned() || isRelativePositioned() || isOverflowHidden() || hasTransform() || hasColumnFlowBox()
         || style()->hasOpacity() || style()->hasBlendMode() || style()->zIndex();
 }
 
