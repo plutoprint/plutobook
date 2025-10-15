@@ -144,6 +144,7 @@ public:
     virtual bool isSVGResourceRadialGradientBox() const { return false; }
 
     bool isRelativePositioned() const { return m_style->position() == Position::Relative; }
+    bool isFixedPositioned() const { return m_style->position() == Position::Fixed; }
 
     bool isAnonymous() const { return m_isAnonymous; }
     bool isAnonymousBlock() const { return m_isAnonymousBlock; }
