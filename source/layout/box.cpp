@@ -637,30 +637,42 @@ void BoxModel::updateLayerPosition()
     m_layer->updatePosition();
 }
 
-Point BoxModel::relativePositionOffset() const
+float BoxModel::relativePositionOffsetX() const
 {
     auto container = containingBlock();
 
     auto leftLength = style()->left();
     auto rightLength = style()->right();
+
+    auto availableWidth = containingBlockWidthForContent(container);
+    if(!leftLength.isAuto())
+        return leftLength.calc(availableWidth);
+    if(!rightLength.isAuto())
+        return -rightLength.calc(availableWidth);
+    return 0;
+}
+
+float BoxModel::relativePositionOffsetY() const
+{
+    auto container = containingBlock();
+
     auto topLength = style()->top();
     auto bottomLength = style()->bottom();
 
-    Point offset;
-    if(!leftLength.isAuto()) {
-        offset.x = leftLength.calc(containingBlockWidthForContent(container));
-    } else if(!rightLength.isAuto()) {
-        offset.x = -rightLength.calc(containingBlockWidthForContent(container));
-    }
-
     auto availableHeight = containingBlockHeightForContent(container);
-    if(!topLength.isAuto() && (availableHeight || !topLength.isPercent())) {
-        offset.y = topLength.calc(availableHeight.value_or(0.f));
-    } else if(!bottomLength.isAuto() && (availableHeight || !bottomLength.isPercent())) {
-        offset.y = -bottomLength.calc(availableHeight.value_or(0.f));
-    }
+    if(!topLength.isAuto() && (availableHeight || !topLength.isPercent()))
+        return topLength.calc(availableHeight.value_or(0.f));
+    if(!bottomLength.isAuto() && (availableHeight || !bottomLength.isPercent()))
+        return -bottomLength.calc(availableHeight.value_or(0.f));
+    return 0;
+}
 
-    return offset;
+Point BoxModel::relativePositionOffset() const
+{
+    auto xOffset = relativePositionOffsetX();
+    auto yOffset = relativePositionOffsetY();
+
+    return Point(xOffset, yOffset);
 }
 
 float BoxModel::containingBlockWidthForPositioned(const BoxModel* container) const
@@ -881,6 +893,9 @@ void BoxFrame::computeHorizontalStaticDistance(Length& leftLength, Length& right
         for(; parent && parent != container; parent = parent->containingBox()) {
             if(auto box = to<BoxFrame>(parent)) {
                 staticPosition += box->x();
+                if(box->isRelativePositioned()) {
+                    staticPosition += box->relativePositionOffsetX();
+                }
             }
         }
 
@@ -894,6 +909,9 @@ void BoxFrame::computeHorizontalStaticDistance(Length& leftLength, Length& right
         for(; parent && parent != container; parent = parent->containingBox()) {
             if(auto box = to<BoxFrame>(parent)) {
                 staticPosition -= box->x();
+                if(box->isRelativePositioned()) {
+                    staticPosition -= box->relativePositionOffsetX();
+                }
             }
         }
 
@@ -909,6 +927,9 @@ void BoxFrame::computeVerticalStaticDistance(Length& topLength, Length& bottomLe
     for(auto parent = parentBox(); parent && parent != container; parent = parent->containingBox()) {
         if(auto box = to<BoxFrame>(parent)) {
             staticTop += box->y();
+            if(box->isRelativePositioned()) {
+                staticTop += box->relativePositionOffsetY();
+            }
         }
     }
 
