@@ -645,8 +645,12 @@ float BoxModel::relativePositionOffsetX() const
     auto rightLength = style()->right();
 
     auto availableWidth = containingBlockWidthForContent(container);
-    if(!leftLength.isAuto())
+    if(!leftLength.isAuto()) {
+        if(!rightLength.isAuto() && container->style()->isRightToLeftDirection())
+            return -rightLength.calc(availableWidth);
         return leftLength.calc(availableWidth);
+    }
+
     if(!rightLength.isAuto())
         return -rightLength.calc(availableWidth);
     return 0;
