@@ -79,7 +79,16 @@ RefPtr<FontResource> FontResource::create(Document* document, const Url& url)
 
 bool FontResource::supportsFormat(const std::string_view& format)
 {
-    return true;
+    return equals(format, "opentype", false)
+        || equals(format, "opentype-variations", false)
+        || equals(format, "truetype", false)
+        || equals(format, "truetype-variations", false)
+#ifdef FT_CONFIG_OPTION_USE_BROTLI
+        || equals(format, "woff2", false)
+        || equals(format, "woff2-variations", false)
+#endif
+        || equals(format, "woff", false)
+        || equals(format, "woff-variations", false);
 }
 
 FontResource::~FontResource()
