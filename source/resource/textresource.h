@@ -18,7 +18,7 @@ public:
     Type type() const final { return Type::Text; }
 
 private:
-    TextResource(std::string text) : m_text(std::move(text)) {}
+    TextResource(const std::string_view& text) : m_text(text) {}
     std::string m_text;
 };
 
