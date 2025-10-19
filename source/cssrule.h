@@ -257,8 +257,10 @@ enum class CSSValueID : uint16_t {
     XxLarge,
     XxSmall,
     XxxLarge,
-    kLastKeyword
+    LastCSSValueID
 };
+
+constexpr auto kNumCSSValueIDs = static_cast<int>(CSSValueID::LastCSSValueID);
 
 enum class CSSValueType {
     Initial,

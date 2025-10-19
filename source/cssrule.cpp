@@ -216,16 +216,15 @@ private:
     std::pmr::vector<CSSIdentValue*> m_identValues;
 };
 
-constexpr auto kNumCSSValueKeywords = static_cast<int>(CSSValueID::kLastKeyword);
-
 CSSValuePool::CSSValuePool()
     : m_heap(1024 * 8)
     , m_initialValue(new (&m_heap) CSSInitialValue)
     , m_inheritValue(new (&m_heap) CSSInheritValue)
     , m_unsetValue(new (&m_heap) CSSUnsetValue)
-    , m_identValues(kNumCSSValueKeywords, &m_heap)
+    , m_identValues(kNumCSSValueIDs, &m_heap)
 {
-    for(int i = 1; i < kNumCSSValueKeywords; ++i) {
+    assert(CSSValueID::Unknown == static_cast<CSSValueID>(0));
+    for(int i = 1; i < kNumCSSValueIDs; ++i) {
         const auto id = static_cast<CSSValueID>(i);
         m_identValues[i] = new (&m_heap) CSSIdentValue(id);
     }
@@ -238,8 +237,8 @@ CSSIdentValue* CSSValuePool::identValue(CSSValueID id) const
 
 static CSSValuePool* cssValuePool()
 {
-    static CSSValuePool pool;
-    return &pool;
+    static CSSValuePool valuePool;
+    return &valuePool;
 }
 
 RefPtr<CSSInitialValue> CSSInitialValue::create()
