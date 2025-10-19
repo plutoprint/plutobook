@@ -226,24 +226,23 @@ RefPtr<FontData> LocalFontFace::getFontData(const FontDataDescription& descripti
     return fontDataCache()->getFontData(m_family, description);
 }
 
-static std::string buildVariationSettings(const FontDataDescription& description, FontVariationList variations)
+static std::string buildVariationSettings(const FontDataDescription& description, const FontVariationList& variations)
 {
     constexpr FontTag wghtTag("wght");
     constexpr FontTag wdthTag("wdth");
     constexpr FontTag slntTag("slnt");
 
-    variations.emplace_front(wghtTag, description.request.weight);
-    variations.emplace_front(wdthTag, description.request.width);
-    variations.emplace_front(slntTag, description.request.slope);
+    std::map<FontTag, float> variationSettings;
     for(const auto& variation : description.variations) {
-        variations.push_front(variation);
+        variationSettings.insert(variation);
     }
 
-    variations.sort();
-    variations.unique();
+    variationSettings.emplace(wghtTag, description.request.weight);
+    variationSettings.emplace(wdthTag, description.request.width);
+    variationSettings.emplace(slntTag, description.request.slope);
 
     std::string output;
-    for(const auto& [tag, value] : variations) {
+    for(const auto& [tag, value] : variationSettings) {
         const char name[4] = {
             static_cast<char>(0xFF & (tag.value() >> 24)),
             static_cast<char>(0xFF & (tag.value() >> 16)),
