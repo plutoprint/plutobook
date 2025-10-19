@@ -3179,42 +3179,151 @@ RefPtr<CSSValue> CSSParser::consumeFontVariantPosition(CSSTokenStream& input)
 
 RefPtr<CSSValue> CSSParser::consumeFontVariantEastAsian(CSSTokenStream& input)
 {
-    if(auto value = consumeNormal(input))
+    if(auto value = consumeNormal(input)) {
         return value;
+    }
+
+    bool consumedEastAsianVariant = false;
+    bool consumedEastAsianWidth = false;
+    bool consumedEastAsianRuby = false;
+
     CSSValueList values(m_heap);
     do {
-        auto value = consumeFontVariantEastAsianIdent(input);
-        if(value == nullptr)
+        auto ident = consumeFontVariantEastAsianIdent(input);
+        if(ident == nullptr)
             return nullptr;
-        values.push_back(std::move(value));
+        switch(ident->value()) {
+        case CSSValueID::Jis78:
+        case CSSValueID::Jis83:
+        case CSSValueID::Jis90:
+        case CSSValueID::Jis04:
+        case CSSValueID::Simplified:
+        case CSSValueID::Traditional:
+            if(consumedEastAsianVariant)
+                return nullptr;
+            consumedEastAsianVariant = true;
+            break;
+        case CSSValueID::FullWidth:
+        case CSSValueID::ProportionalWidth:
+            if(consumedEastAsianWidth)
+                return nullptr;
+            consumedEastAsianWidth = true;
+            break;
+        case CSSValueID::Ruby:
+            if(consumedEastAsianRuby)
+                return nullptr;
+            consumedEastAsianRuby = true;
+            break;
+        default:
+            assert(false);
+        }
+
+        values.push_back(std::move(ident));
     } while(!input.empty());
     return CSSListValue::create(m_heap, std::move(values));
 }
 
 RefPtr<CSSValue> CSSParser::consumeFontVariantLigatures(CSSTokenStream& input)
 {
-    if(auto value = consumeNoneOrNormal(input))
+    if(auto value = consumeNoneOrNormal(input)) {
         return value;
+    }
+
+    bool consumedCommonLigatures = false;
+    bool consumedHistoricalLigatures = false;
+    bool consumedDiscretionaryLigatures = false;
+    bool consumedContextualLigatures = false;
+
     CSSValueList values(m_heap);
     do {
-        auto value = consumeFontVariantLigaturesIdent(input);
-        if(value == nullptr)
+        auto ident = consumeFontVariantLigaturesIdent(input);
+        if(ident == nullptr)
             return nullptr;
-        values.push_back(std::move(value));
+        switch(ident->value()) {
+        case CSSValueID::CommonLigatures:
+        case CSSValueID::NoCommonLigatures:
+            if(consumedCommonLigatures)
+                return nullptr;
+            consumedCommonLigatures = true;
+            break;
+        case CSSValueID::HistoricalLigatures:
+        case CSSValueID::NoHistoricalLigatures:
+            if(consumedHistoricalLigatures)
+                return nullptr;
+            consumedHistoricalLigatures = true;
+            break;
+        case CSSValueID::DiscretionaryLigatures:
+        case CSSValueID::NoDiscretionaryLigatures:
+            if(consumedDiscretionaryLigatures)
+                return nullptr;
+            consumedDiscretionaryLigatures = true;
+            break;
+        case CSSValueID::Contextual:
+        case CSSValueID::NoContextual:
+            if(consumedContextualLigatures)
+                return nullptr;
+            consumedContextualLigatures = true;
+            break;
+        default:
+            assert(false);
+        }
+
+        values.push_back(std::move(ident));
     } while(!input.empty());
     return CSSListValue::create(m_heap, std::move(values));
 }
 
 RefPtr<CSSValue> CSSParser::consumeFontVariantNumeric(CSSTokenStream& input)
 {
-    if(auto value = consumeNormal(input))
+    if(auto value = consumeNormal(input)) {
         return value;
+    }
+
+    bool consumedNumericFigure = false;
+    bool consumedNumericSpacing = false;
+    bool consumedNumericFraction = false;
+    bool consumedOrdinal = false;
+    bool consumedSlashedZero = false;
+
     CSSValueList values(m_heap);
     do {
-        auto value = consumeFontVariantNumericIdent(input);
-        if(value == nullptr)
+        auto ident = consumeFontVariantNumericIdent(input);
+        if(ident == nullptr)
             return nullptr;
-        values.push_back(std::move(value));
+        switch(ident->value()) {
+        case CSSValueID::LiningNums:
+        case CSSValueID::OldstyleNums:
+            if(consumedNumericFigure)
+                return nullptr;
+            consumedNumericFigure = true;
+            break;
+        case CSSValueID::ProportionalNums:
+        case CSSValueID::TabularNums:
+            if(consumedNumericSpacing)
+                return nullptr;
+            consumedNumericSpacing = true;
+            break;
+        case CSSValueID::DiagonalFractions:
+        case CSSValueID::StackedFractions:
+            if(consumedNumericFraction)
+                return nullptr;
+            consumedNumericFraction = true;
+            break;
+        case CSSValueID::Ordinal:
+            if(consumedOrdinal)
+                return nullptr;
+            consumedOrdinal = true;
+            break;
+        case CSSValueID::SlashedZero:
+            if(consumedSlashedZero)
+                return nullptr;
+            consumedSlashedZero = true;
+            break;
+        default:
+            assert(false);
+        }
+
+        values.push_back(std::move(ident));
     } while(!input.empty());
     return CSSListValue::create(m_heap, std::move(values));
 }
@@ -3353,12 +3462,36 @@ RefPtr<CSSValue> CSSParser::consumeTextDecorationLine(CSSTokenStream& input)
         {"line-through", CSSValueID::LineThrough}
     };
 
+    bool consumedUnderline = false;
+    bool consumedOverline = false;
+    bool consumedLineThrough = false;
+
     CSSValueList values(m_heap);
     do {
-        auto value = consumeIdent(input, table);
-        if(value == nullptr)
+        auto ident = consumeIdent(input, table);
+        if(ident == nullptr)
             break;
-        values.push_back(std::move(value));
+        switch(ident->value()) {
+        case CSSValueID::Underline:
+            if(consumedUnderline)
+                return nullptr;
+            consumedUnderline = true;
+            break;
+        case CSSValueID::Overline:
+            if(consumedOverline)
+                return nullptr;
+            consumedOverline = true;
+            break;
+        case CSSValueID::LineThrough:
+            if(consumedLineThrough)
+                return nullptr;
+            consumedLineThrough = true;
+            break;
+        default:
+            assert(false);
+        }
+
+        values.push_back(std::move(ident));
     } while(!input.empty());
     if(values.empty())
         return nullptr;
