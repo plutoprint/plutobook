@@ -3187,7 +3187,7 @@ RefPtr<CSSValue> CSSParser::consumeFontVariantEastAsian(CSSTokenStream& input)
         if(value == nullptr)
             return nullptr;
         values.push_back(std::move(value));
-    } while(input.consumeCommaIncludingWhitespace());
+    } while(!input.empty());
     return CSSListValue::create(m_heap, std::move(values));
 }
 
@@ -3201,7 +3201,7 @@ RefPtr<CSSValue> CSSParser::consumeFontVariantLigatures(CSSTokenStream& input)
         if(value == nullptr)
             return nullptr;
         values.push_back(std::move(value));
-    } while(input.consumeCommaIncludingWhitespace());
+    } while(!input.empty());
     return CSSListValue::create(m_heap, std::move(values));
 }
 
@@ -3215,7 +3215,7 @@ RefPtr<CSSValue> CSSParser::consumeFontVariantNumeric(CSSTokenStream& input)
         if(value == nullptr)
             return nullptr;
         values.push_back(std::move(value));
-    } while(input.consumeCommaIncludingWhitespace());
+    } while(!input.empty());
     return CSSListValue::create(m_heap, std::move(values));
 }
 
