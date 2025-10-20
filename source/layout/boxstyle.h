@@ -180,6 +180,13 @@ enum class TextDecorationStyle : uint8_t {
     Wavy
 };
 
+enum class FontVariantEmoji : uint8_t {
+    Normal,
+    Text,
+    Emoji,
+    Unicode
+};
+
 enum class WhiteSpace : uint8_t {
     Normal,
     Pre,
@@ -803,6 +810,7 @@ public:
     WhiteSpace whiteSpace() const { return m_whiteSpace; }
     WordBreak wordBreak() const { return m_wordBreak; }
     OverflowWrap overflowWrap() const { return m_overflowWrap; }
+    FontVariantEmoji fontVariantEmoji() const;
     Hyphens hyphens() const;
     Length textIndent() const;
     float letterSpacing() const;

@@ -63,6 +63,7 @@ private:
     RefPtr<CSSIdentValue> consumeFontStyleIdent(CSSTokenStream& input);
     RefPtr<CSSIdentValue> consumeFontStretchIdent(CSSTokenStream& input);
     RefPtr<CSSIdentValue> consumeFontVariantCapsIdent(CSSTokenStream& input);
+    RefPtr<CSSIdentValue> consumeFontVariantEmojiIdent(CSSTokenStream& input);
     RefPtr<CSSIdentValue> consumeFontVariantPositionIdent(CSSTokenStream& input);
     RefPtr<CSSIdentValue> consumeFontVariantEastAsianIdent(CSSTokenStream& input);
     RefPtr<CSSIdentValue> consumeFontVariantLigaturesIdent(CSSTokenStream& input);
@@ -134,6 +135,7 @@ private:
     RefPtr<CSSValue> consumeFontVariation(CSSTokenStream& input);
     RefPtr<CSSValue> consumeFontVariationSettings(CSSTokenStream& input);
     RefPtr<CSSValue> consumeFontVariantCaps(CSSTokenStream& input);
+    RefPtr<CSSValue> consumeFontVariantEmoji(CSSTokenStream& input);
     RefPtr<CSSValue> consumeFontVariantPosition(CSSTokenStream& input);
     RefPtr<CSSValue> consumeFontVariantEastAsian(CSSTokenStream& input);
     RefPtr<CSSValue> consumeFontVariantLigatures(CSSTokenStream& input);

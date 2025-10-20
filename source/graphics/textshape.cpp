@@ -102,17 +102,16 @@ constexpr int kMaxCharacters = kMaxGlyphs;
 
 #define HB_TO_FLT(v) (static_cast<float>(v) / (1 << 16))
 
-static bool isEmojiCodepoint(uint32_t codepoint)
+static bool isEmojiCodepoint(uint32_t codepoint, FontVariantEmoji variantEmoji)
 {
-    if(codepoint > 0xFF)
-        return u_hasBinaryProperty(codepoint, UCHAR_EMOJI);
-    return false;
+    return variantEmoji != FontVariantEmoji::Text && codepoint > 0xFF && u_hasBinaryProperty(codepoint, UCHAR_EMOJI);
 }
 
 RefPtr<TextShape> TextShape::createForText(const UString& text, Direction direction, bool disableSpacing, const BoxStyle* style)
 {
     const auto& font = style->font();
     auto fontFeatures = style->fontFeatures();
+    auto fontVariantEmoji = style->fontVariantEmoji();
     auto letterSpacing = disableSpacing ? 0 : style->letterSpacing();
     auto wordSpacing = disableSpacing ? 0 : style->wordSpacing();
     auto heap = style->heap();
@@ -130,7 +129,7 @@ RefPtr<TextShape> TextShape::createForText(const UString& text, Direction direct
     while(totalLength > 0) {
         auto errorCode = U_ZERO_ERROR;
         auto character = text.char32At(startIndex);
-        auto fontData = font->getFontData(character, isEmojiCodepoint(character));
+        auto fontData = font->getFontData(character, isEmojiCodepoint(character, fontVariantEmoji));
         auto scriptCode = uscript_getScript(character, &errorCode);
         if(!fontData || U_FAILURE(errorCode))
             break;
@@ -140,7 +139,7 @@ RefPtr<TextShape> TextShape::createForText(const UString& text, Direction direct
             auto nextCharacter = text.char32At(nextIndex);
             if(treatAsZeroWidthSpace(nextCharacter))
                 continue;
-            auto nextFontData = font->getFontData(nextCharacter, isEmojiCodepoint(nextCharacter));
+            auto nextFontData = font->getFontData(nextCharacter, isEmojiCodepoint(nextCharacter, fontVariantEmoji));
             auto nextScriptCode = uscript_getScript(nextCharacter, &errorCode);
             if(fontData != nextFontData || U_FAILURE(errorCode))
                 break;

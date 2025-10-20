@@ -1261,6 +1261,7 @@ static CSSPropertyID csspropertyid(const std::string_view& name)
         {"font-variant", CSSPropertyID::FontVariant},
         {"font-variant-caps", CSSPropertyID::FontVariantCaps},
         {"font-variant-east-asian", CSSPropertyID::FontVariantEastAsian},
+        {"font-variant-emoji", CSSPropertyID::FontVariantEmoji},
         {"font-variant-ligatures", CSSPropertyID::FontVariantLigatures},
         {"font-variant-numeric", CSSPropertyID::FontVariantNumeric},
         {"font-variant-position", CSSPropertyID::FontVariantPosition},
@@ -1466,6 +1467,7 @@ void CSSParser::addProperty(CSSPropertyList& properties, CSSPropertyID id, bool 
         case CSSPropertyID::FontWeight:
         case CSSPropertyID::FontStretch:
         case CSSPropertyID::FontVariantCaps:
+        case CSSPropertyID::FontVariantEmoji:
         case CSSPropertyID::FontVariantEastAsian:
         case CSSPropertyID::FontVariantLigatures:
         case CSSPropertyID::FontVariantNumeric:
@@ -1728,6 +1730,7 @@ CSSShorthand CSSShorthand::longhand(CSSPropertyID id)
         static const CSSPropertyID data[] = {
             CSSPropertyID::FontVariantCaps,
             CSSPropertyID::FontVariantEastAsian,
+            CSSPropertyID::FontVariantEmoji,
             CSSPropertyID::FontVariantLigatures,
             CSSPropertyID::FontVariantNumeric,
             CSSPropertyID::FontVariantPosition
@@ -1854,6 +1857,17 @@ RefPtr<CSSIdentValue> CSSParser::consumeFontVariantCapsIdent(CSSTokenStream& inp
         {"all-petite-caps", CSSValueID::AllPetiteCaps},
         {"unicase", CSSValueID::Unicase},
         {"titling-caps", CSSValueID::TitlingCaps}
+    };
+
+    return consumeIdent(input, table);
+}
+
+RefPtr<CSSIdentValue> CSSParser::consumeFontVariantEmojiIdent(CSSTokenStream& input)
+{
+    static const CSSIdentValueEntry table[] = {
+        {"text", CSSValueID::Text},
+        {"emoji", CSSValueID::Emoji},
+        {"unicode", CSSValueID::Unicode}
     };
 
     return consumeIdent(input, table);
@@ -3170,6 +3184,13 @@ RefPtr<CSSValue> CSSParser::consumeFontVariantCaps(CSSTokenStream& input)
     return consumeFontVariantCapsIdent(input);
 }
 
+RefPtr<CSSValue> CSSParser::consumeFontVariantEmoji(CSSTokenStream& input)
+{
+    if(auto value = consumeNormal(input))
+        return value;
+    return consumeFontVariantEmojiIdent(input);
+}
+
 RefPtr<CSSValue> CSSParser::consumeFontVariantPosition(CSSTokenStream& input)
 {
     if(auto value = consumeNormal(input))
@@ -3828,6 +3849,8 @@ RefPtr<CSSValue> CSSParser::consumeLonghand(CSSTokenStream& input, CSSPropertyID
         return consumeFontVariationSettings(input);
     case CSSPropertyID::FontVariantCaps:
         return consumeFontVariantCaps(input);
+    case CSSPropertyID::FontVariantEmoji:
+        return consumeFontVariantEmoji(input);
     case CSSPropertyID::FontVariantPosition:
         return consumeFontVariantPosition(input);
     case CSSPropertyID::FontVariantEastAsian:
@@ -4702,6 +4725,7 @@ bool CSSParser::consumeFontVariant(CSSTokenStream& input, CSSPropertyList& prope
 {
     if(auto value = consumeNoneOrNormal(input)) {
         addProperty(properties, CSSPropertyID::FontVariantCaps, important, nullptr);
+        addProperty(properties, CSSPropertyID::FontVariantEmoji, important, nullptr);
         addProperty(properties, CSSPropertyID::FontVariantPosition, important, nullptr);
         addProperty(properties, CSSPropertyID::FontVariantEastAsian, important, nullptr);
         addProperty(properties, CSSPropertyID::FontVariantNumeric, important, nullptr);
@@ -4710,6 +4734,7 @@ bool CSSParser::consumeFontVariant(CSSTokenStream& input, CSSPropertyList& prope
     }
 
     RefPtr<CSSValue> caps;
+    RefPtr<CSSValue> emoji;
     RefPtr<CSSValue> position;
 
     CSSValueList eastAsian;
@@ -4717,6 +4742,8 @@ bool CSSParser::consumeFontVariant(CSSTokenStream& input, CSSPropertyList& prope
     CSSValueList numeric;
     while(!input.empty()) {
         if(caps == nullptr && (caps = consumeFontVariantCapsIdent(input)))
+            continue;
+        if(emoji == nullptr && (emoji = consumeFontVariantEmojiIdent(input)))
             continue;
         if(position == nullptr && (position = consumeFontVariantPositionIdent(input)))
             continue;
@@ -4739,6 +4766,7 @@ bool CSSParser::consumeFontVariant(CSSTokenStream& input, CSSPropertyList& prope
     }
 
     addProperty(properties, CSSPropertyID::FontVariantCaps, important, std::move(caps));
+    addProperty(properties, CSSPropertyID::FontVariantEmoji, important, std::move(emoji));
     addProperty(properties, CSSPropertyID::FontVariantPosition, important, std::move(position));
     auto addListProperty = [&](CSSPropertyID id, CSSValueList&& values) {
         if(values.empty())

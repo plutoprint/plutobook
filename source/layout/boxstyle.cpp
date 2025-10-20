@@ -776,6 +776,28 @@ Color BoxStyle::textDecorationColor() const
     return convertColor(*value);
 }
 
+FontVariantEmoji BoxStyle::fontVariantEmoji() const
+{
+    auto value = get(CSSPropertyID::FontVariantEmoji);
+    if(value == nullptr)
+        return FontVariantEmoji::Normal;
+    const auto& ident = to<CSSIdentValue>(*value);
+    switch(ident.value()) {
+    case CSSValueID::Normal:
+        return FontVariantEmoji::Normal;
+    case CSSValueID::Unicode:
+        return FontVariantEmoji::Unicode;
+    case CSSValueID::Emoji:
+        return FontVariantEmoji::Emoji;
+    case CSSValueID::Text:
+        return FontVariantEmoji::Text;
+    default:
+        assert(false);
+    }
+
+    return FontVariantEmoji::Normal;
+}
+
 Hyphens BoxStyle::hyphens() const
 {
     auto value = get(CSSPropertyID::Hyphens);
@@ -1869,6 +1891,7 @@ void BoxStyle::inheritFrom(const BoxStyle* parentStyle)
         case CSSPropertyID::FontStretch:
         case CSSPropertyID::FontStyle:
         case CSSPropertyID::FontVariantCaps:
+        case CSSPropertyID::FontVariantEmoji:
         case CSSPropertyID::FontVariantEastAsian:
         case CSSPropertyID::FontVariantLigatures:
         case CSSPropertyID::FontVariantNumeric:
