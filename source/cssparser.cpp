@@ -4700,6 +4700,15 @@ bool CSSParser::consumeFont(CSSTokenStream& input, CSSPropertyList& properties, 
 
 bool CSSParser::consumeFontVariant(CSSTokenStream& input, CSSPropertyList& properties, bool important)
 {
+    if(auto value = consumeNormal(input)) {
+        addProperty(properties, CSSPropertyID::FontVariantCaps, important, value);
+        addProperty(properties, CSSPropertyID::FontVariantPosition, important, value);
+        addProperty(properties, CSSPropertyID::FontVariantEastAsian, important, value);
+        addProperty(properties, CSSPropertyID::FontVariantLigatures, important, value);
+        addProperty(properties, CSSPropertyID::FontVariantNumeric, important, value);
+        return true;
+    }
+
     RefPtr<CSSValue> caps;
     RefPtr<CSSValue> position;
 
