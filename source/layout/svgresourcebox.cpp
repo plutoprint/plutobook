@@ -170,7 +170,7 @@ void SVGResourceClipperBox::applyClipMask(const SVGRenderState& state) const
     }
     {
         SVGBlendInfo blendInfo(m_clipper, nullptr, 1.f, BlendMode::Normal);
-        SVGRenderState newState(blendInfo, this, &state, SVGRenderMode::Clipping, context, context.getTransform());
+        SVGRenderState newState(blendInfo, this, state, SVGRenderMode::Clipping, context);
         renderChildren(newState);
     }
 
@@ -243,7 +243,7 @@ void SVGResourceMaskerBox::applyMask(const SVGRenderState& state) const
     }
     {
         SVGBlendInfo blendInfo(m_clipper, m_masker, 1.f, BlendMode::Normal);
-        SVGRenderState newState(blendInfo, this, &state, state.mode(), context, context.getTransform());
+        SVGRenderState newState(blendInfo, this, state, state.mode(), context);
         renderChildren(newState);
     }
 
@@ -309,7 +309,7 @@ void SVGResourcePatternBox::applyPaint(const SVGRenderState& state, float opacit
     }
     {
         SVGBlendInfo blendInfo(m_clipper, m_masker, opacity, BlendMode::Normal);
-        SVGRenderState newState(blendInfo, this, &state, SVGRenderMode::Painting, context, context.getTransform());
+        SVGRenderState newState(blendInfo, this, state, SVGRenderMode::Painting, context);
         patternContentBox->renderChildren(newState);
     }
 

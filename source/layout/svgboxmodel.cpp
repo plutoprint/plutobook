@@ -13,6 +13,11 @@ SVGRenderState::SVGRenderState(const SVGBlendInfo& info, const Box* box, const S
 {
 }
 
+SVGRenderState::SVGRenderState(const SVGBlendInfo& info, const Box* box, const SVGRenderState& parent, SVGRenderMode mode, GraphicsContext& context)
+    : SVGRenderState(info, box, &parent, mode, context, context.getTransform())
+{
+}
+
 SVGRenderState::SVGRenderState(const SVGBlendInfo& info, const Box* box, const SVGRenderState* parent, SVGRenderMode mode, GraphicsContext& context, const Transform& currentTransform)
     : m_box(box), m_parent(parent), m_info(info), m_context(context), m_currentTransform(currentTransform)
     , m_mode(mode), m_requiresCompositing(info.requiresCompositing(mode))

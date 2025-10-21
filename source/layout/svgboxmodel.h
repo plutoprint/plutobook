@@ -39,6 +39,7 @@ private:
 class SVGRenderState {
 public:
     SVGRenderState(const SVGBlendInfo& info, const Box* box, const SVGRenderState& parent, const Transform& localTransform);
+    SVGRenderState(const SVGBlendInfo& info, const Box* box, const SVGRenderState& parent, SVGRenderMode mode, GraphicsContext& context);
     SVGRenderState(const SVGBlendInfo& info, const Box* box, const SVGRenderState* parent, SVGRenderMode mode, GraphicsContext& context, const Transform& currentTransform);
 
     ~SVGRenderState();
