@@ -291,16 +291,11 @@ void SVGResourcePatternBox::applyPaint(const SVGRenderState& state, float opacit
         patternRect.h = patternRect.h * bbox.h;
     }
 
-    auto currentTransform = m_attributes.patternTransform() * state.currentTransform();
-    auto xScale = currentTransform.xScale();
-    auto yScale = currentTransform.yScale();
-
-    cairo_rectangle_t rectangle = {0, 0, patternRect.w * xScale, patternRect.h * yScale};
+    cairo_rectangle_t rectangle = {0, 0, patternRect.w, patternRect.h};
     auto surface = cairo_recording_surface_create(CAIRO_CONTENT_COLOR_ALPHA, &rectangle);
     auto canvas = cairo_create(surface);
 
     GraphicsContext context(canvas);
-    context.scale(xScale, yScale);
     if(m_attributes.viewBox().isValid()) {
         context.addTransform(m_attributes.preserveAspectRatio().getTransform(m_attributes.viewBox(), patternRect.size()));
     } else if(m_attributes.patternContentUnits() == SVGUnitsTypeObjectBoundingBox) {
@@ -315,7 +310,6 @@ void SVGResourcePatternBox::applyPaint(const SVGRenderState& state, float opacit
 
     Transform patternTransform(m_attributes.patternTransform());
     patternTransform.translate(patternRect.x, patternRect.y);
-    patternTransform.scale(1.0 / xScale, 1.0 / yScale);
     state->setPattern(surface, patternTransform);
 
     cairo_destroy(canvas);
