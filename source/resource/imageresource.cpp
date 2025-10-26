@@ -66,18 +66,16 @@ bool ImageResource::supportsMimeType(const std::string_view& mimeType)
 struct png_read_stream_t {
     const char* data;
     size_t size;
-    size_t read;
 };
 
 static cairo_status_t png_read_function(void* closure, uint8_t* data, uint32_t length)
 {
     auto stream = static_cast<png_read_stream_t*>(closure);
-    for(size_t i = 0; i < length; ++i, ++stream->read) {
-        if(stream->read >= stream->size)
-            return CAIRO_STATUS_READ_ERROR;
-        data[i] = stream->data[stream->read];
-    }
-
+    if(length > stream->size)
+        return CAIRO_STATUS_READ_ERROR;
+    std::memcpy(data, stream->data, length);
+    stream->data += length;
+    stream->size -= length;
     return CAIRO_STATUS_SUCCESS;
 }
 
@@ -87,10 +85,7 @@ static cairo_surface_t* decodeBitmapImage(const char* data, size_t size)
 {
 #ifdef CAIRO_HAS_PNG_FUNCTIONS
     if(size > 8 && std::memcmp(data, "\x89PNG\r\n\x1A\n", 8) == 0) {
-        png_read_stream_t stream;
-        stream.data = data;
-        stream.size = size;
-        stream.read = 0;
+        png_read_stream_t stream = { data, size };
         return cairo_image_surface_create_from_png_stream(png_read_function, &stream);
     }
 #endif // CAIRO_HAS_PNG_FUNCTIONS
