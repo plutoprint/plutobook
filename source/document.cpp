@@ -701,11 +701,13 @@ Element* Document::getElementById(const std::string_view& id) const
 
 void Document::addElementById(const HeapString& id, Element* element)
 {
+    assert(element && !id.empty());
     m_idCache.emplace(id, element);
 }
 
 void Document::removeElementById(const HeapString& id, Element* element)
 {
+    assert(element && !id.empty());
     auto range = m_idCache.equal_range(id);
     for(auto it = range.first; it != range.second; ++it) {
         if(it->second == element) {
@@ -732,6 +734,7 @@ RefPtr<BoxStyle> Document::getRunningStyle(const GlobalString& name) const
 
 void Document::addTargetCounters(const HeapString& id, const CounterMap& counters)
 {
+    assert(!id.empty() && !counters.empty());
     m_counterCache.emplace(id, counters);
 }
 
