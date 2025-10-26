@@ -335,6 +335,7 @@ extern const GlobalString gradientTransformAttr;
 extern const GlobalString gradientUnitsAttr;
 extern const GlobalString gradientUnitsAttr;
 extern const GlobalString heightAttr;
+extern const GlobalString hiddenAttr;
 extern const GlobalString hrefAttr;
 extern const GlobalString hspaceAttr;
 extern const GlobalString idAttr;

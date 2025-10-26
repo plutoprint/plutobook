@@ -165,6 +165,27 @@ void HTMLElement::buildBox(Counters& counters, Box* parent)
     buildElementBox(counters, box);
 }
 
+static void addHTMLAttributeStyle(std::string& output, const std::string_view& name, const std::string_view& value)
+{
+    if(value.empty())
+        return;
+    output += name;
+    output += ':';
+    output += value;
+    output += ';';
+}
+
+void HTMLElement::collectAttributeStyle(std::string& output, const GlobalString& name, const HeapString& value) const
+{
+    if(name == hiddenAttr) {
+        addHTMLAttributeStyle(output, "display", "none");
+    } else if(name == alignAttr) {
+        addHTMLAttributeStyle(output, "text-align", value);
+    } else {
+        Element::collectAttributeStyle(output, name, value);
+    }
+}
+
 template<typename T = int>
 static std::optional<T> parseHTMLInteger(std::string_view input)
 {
@@ -209,16 +230,6 @@ std::optional<T> HTMLElement::parseIntegerAttribute(const GlobalString& name) co
 std::optional<unsigned> HTMLElement::parseNonNegativeIntegerAttribute(const GlobalString& name) const
 {
     return parseIntegerAttribute<unsigned>(name);
-}
-
-static void addHTMLAttributeStyle(std::string& output, const std::string_view& name, const std::string_view& value)
-{
-    if(value.empty())
-        return;
-    output += name;
-    output += ':';
-    output += value;
-    output += ';';
 }
 
 static void addHTMLLengthAttributeStyle(std::string& output, const std::string_view& name, const std::string_view& value)
@@ -685,8 +696,6 @@ void HTMLTableElement::collectAttributeStyle(std::string& output, const GlobalSt
         addHTMLLengthAttributeStyle(output, "height", value);
     } else if(name == valignAttr) {
         addHTMLAttributeStyle(output, "vertical-align", value);
-    } else if(name == alignAttr) {
-        addHTMLAttributeStyle(output, "text-align", value);
     } else if(name == cellspacingAttr) {
         addHTMLLengthAttributeStyle(output, "border-spacing", value);
     } else if(name == bordercolorAttr) {
@@ -757,8 +766,6 @@ void HTMLTablePartElement::collectAttributeStyle(std::string& output, const Glob
         addHTMLLengthAttributeStyle(output, "height", value);
     } else if(name == valignAttr) {
         addHTMLAttributeStyle(output, "vertical-align", value);
-    } else if(name == alignAttr) {
-        addHTMLAttributeStyle(output, "text-align", value);
     } else if(name == bgcolorAttr) {
         addHTMLAttributeStyle(output, "background-color", value);
     } else if(name == backgroundAttr) {

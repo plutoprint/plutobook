@@ -310,7 +310,7 @@ constexpr char kUserAgentStyle[] = R"CSS(
 @namespace url('http://www.w3.org/1999/xhtml');
 @namespace svg url('http://www.w3.org/2000/svg');
 
-[hidden], area, base, basefont, datalist, head, link, menu[type=context i], meta,
+area, base, basefont, datalist, head, link, menu[type=context i], meta,
 noembed, noframes, param, rp, script, source, style, template, track, title {
     display: none;
 }

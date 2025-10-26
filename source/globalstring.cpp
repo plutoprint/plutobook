@@ -346,6 +346,7 @@ const GlobalString glyphRefAttr("glyphRef");
 const GlobalString gradientTransformAttr("gradientTransform");
 const GlobalString gradientUnitsAttr("gradientUnits");
 const GlobalString heightAttr("height");
+const GlobalString hiddenAttr("hidden");
 const GlobalString hrefAttr("href");
 const GlobalString hspaceAttr("hspace");
 const GlobalString idAttr("id");

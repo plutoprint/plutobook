@@ -20,6 +20,8 @@ public:
     void buildElementBox(Counters& counters, Box* box);
     void buildBox(Counters& counters, Box* parent) override;
 
+    void collectAttributeStyle(std::string& output, const GlobalString& name, const HeapString& value) const override;
+
 protected:
     template<typename T = int>
     std::optional<T> parseIntegerAttribute(const GlobalString& name) const;
