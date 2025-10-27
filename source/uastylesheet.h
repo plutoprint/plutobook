@@ -444,18 +444,13 @@ dir, menu, ul { list-style-type: disc; }
 
 table { display: table; }
 caption { display: table-caption; }
-colgroup, colgroup[hidden] { display: table-column-group; }
-col, col[hidden] { display: table-column; }
-thead, thead[hidden] { display: table-header-group; }
-tbody, tbody[hidden] { display: table-row-group; }
-tfoot, tfoot[hidden] { display: table-footer-group; }
-tr, tr[hidden] { display: table-row; }
-td, th, td[hidden], th[hidden] { display: table-cell; }
-
-colgroup[hidden], col[hidden], thead[hidden], tbody[hidden],
-tfoot[hidden], tr[hidden], td[hidden], th[hidden] {
-    visibility: collapse;
-}
+colgroup { display: table-column-group; }
+col { display: table-column; }
+thead { display: table-header-group; }
+tbody { display: table-row-group; }
+tfoot { display: table-footer-group; }
+tr { display: table-row; }
+td, th { display: table-cell; }
 
 table {
     box-sizing: border-box;
