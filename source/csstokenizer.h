@@ -233,11 +233,17 @@ public:
         return char(0);
     }
 
-    void advance(size_t count = 1) { m_offset += count; }
+    void advance(size_t count = 1) {
+        assert(m_offset + count <= m_length);
+        m_offset += count;
+    }
 
     char consume() {
-        m_offset++;
-        return peek();
+        auto index = ++m_offset;
+        if(index < m_length)
+            return m_data[index];
+        assert(index == m_length);
+        return char(0);
     }
 
     std::string_view substring(size_t offset, size_t count) const {
