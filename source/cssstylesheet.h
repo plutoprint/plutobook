@@ -45,7 +45,9 @@ private:
 template<typename T>
 void CSSRuleDataMap<T>::add(const T& name, CSSRuleData&& rule)
 {
-    m_table[name].push_back(std::move(rule));
+    auto resource = m_table.get_allocator().resource();
+    auto [it, inserted] = m_table.try_emplace(name, CSSRuleDataList(resource));
+    it->second.push_back(std::move(rule));
 }
 
 template<typename T>
