@@ -669,7 +669,7 @@ RefPtr<BoxStyle> PageStyleBuilder::build()
 static const CSSRuleList& userAgentRules()
 {
     static CSSRuleList rules = []() {
-        static Heap heap(1024 * 72);
+        static Heap heap(1024 * 96);
         CSSParserContext context(nullptr, CSSStyleOrigin::UserAgent, ResourceLoader::baseUrl());
         CSSParser parser(context, &heap);
         return parser.parseSheet(kUserAgentStyle);
