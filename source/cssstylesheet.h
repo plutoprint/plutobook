@@ -35,7 +35,7 @@ class CSSRuleDataMap {
 public:
     explicit CSSRuleDataMap(Heap* heap) : m_table(heap) {}
 
-    void add(const T& name, CSSRuleData&& rule);
+    bool add(const T& name, CSSRuleData&& rule);
     const CSSRuleDataList* get(const T& name) const;
 
 private:
@@ -43,11 +43,12 @@ private:
 };
 
 template<typename T>
-void CSSRuleDataMap<T>::add(const T& name, CSSRuleData&& rule)
+bool CSSRuleDataMap<T>::add(const T& name, CSSRuleData&& rule)
 {
     auto resource = m_table.get_allocator().resource();
     auto [it, inserted] = m_table.try_emplace(name, CSSRuleDataList(resource));
     it->second.push_back(std::move(rule));
+    return inserted;
 }
 
 template<typename T>
