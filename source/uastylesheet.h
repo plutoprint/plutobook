@@ -508,6 +508,7 @@ input, select, button, textarea {
     line-height: initial;
     text-transform: initial;
     text-indent: initial;
+    font-size: initial;
     display: inline-block;
     border: 1px solid black;
     padding: 2px;
