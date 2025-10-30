@@ -4724,6 +4724,8 @@ bool CSSParser::consumeFont(CSSTokenStream& input, CSSPropertyList& properties, 
 bool CSSParser::consumeFontVariant(CSSTokenStream& input, CSSPropertyList& properties, bool important)
 {
     if(auto value = consumeNoneOrNormal(input)) {
+        if(!input.empty())
+            return false;
         addProperty(properties, CSSPropertyID::FontVariantCaps, important, nullptr);
         addProperty(properties, CSSPropertyID::FontVariantEmoji, important, nullptr);
         addProperty(properties, CSSPropertyID::FontVariantPosition, important, nullptr);
