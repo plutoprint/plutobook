@@ -4807,14 +4807,13 @@ bool CSSParser::consumeBorder(CSSTokenStream& input, CSSPropertyList& properties
 
 bool CSSParser::consumeBorderRadius(CSSTokenStream& input, CSSPropertyList& properties, bool important)
 {
-    RefPtr<CSSValue> horizontal[4] = {nullptr, nullptr, nullptr, nullptr};
-    RefPtr<CSSValue> vertical[4] = {nullptr, nullptr, nullptr, nullptr};
     auto completesides = [](auto sides[4]) {
         if(sides[1] == nullptr) sides[1] = sides[0];
         if(sides[2] == nullptr) sides[2] = sides[0];
         if(sides[3] == nullptr) sides[3] = sides[1];
     };
 
+    RefPtr<CSSValue> horizontal[4];
     for(auto& side : horizontal) {
         if(input.empty() || input->type() == CSSToken::Type::Delim)
             break;
@@ -4827,6 +4826,8 @@ bool CSSParser::consumeBorderRadius(CSSTokenStream& input, CSSPropertyList& prop
     if(horizontal[0] == nullptr)
         return false;
     completesides(horizontal);
+
+    RefPtr<CSSValue> vertical[4];
     if(input->type() == CSSToken::Type::Delim && input->delim() == '/') {
         input.consumeIncludingWhitespace();
         for(auto& side : vertical) {
