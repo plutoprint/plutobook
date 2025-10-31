@@ -4928,9 +4928,9 @@ bool CSSParser::consume4Shorthand(CSSTokenStream& input, CSSPropertyList& proper
 
 bool CSSParser::consumeShorthand(CSSTokenStream& input, CSSPropertyList& properties, CSSPropertyID id, bool important)
 {
-    RefPtr<CSSValue> values[6] = {nullptr, nullptr, nullptr, nullptr, nullptr, nullptr};
+    RefPtr<CSSValue> values[6];
     auto longhand = CSSShorthand::longhand(id);
-    assert(longhand.length() > 0 && longhand.length() < 7);
+    assert(longhand.length() <= sizeof(values));
     while(!input.empty()) {
         bool consumed = false;
         for(size_t i = 0; i < longhand.length(); ++i) {
