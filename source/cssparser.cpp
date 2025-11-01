@@ -2073,7 +2073,7 @@ static CSSCalcOperator convertCalcDelim(const CSSToken& token)
     default:
         return CSSCalcOperator::None;
     }
-};
+}
 
 static bool consumeCalcBlock(CSSTokenStream& input, CSSTokenList& stack, CSSCalcList& values)
 {
