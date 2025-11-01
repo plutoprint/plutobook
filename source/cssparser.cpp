@@ -553,7 +553,8 @@ bool CSSParser::consumeSelector(CSSTokenStream& input, CSSSelector& selector)
 bool CSSParser::consumeCompoundSelector(CSSTokenStream& input, CSSCompoundSelector& selector, bool& failed)
 {
     if(!consumeTagSelector(input, selector)) {
-        selector.emplace_front(CSSSimpleSelector::MatchType::Namespace, m_defaultNamespace);
+        if(m_defaultNamespace != starGlo)
+            selector.emplace_front(CSSSimpleSelector::MatchType::Namespace, m_defaultNamespace);
         if(!consumeSimpleSelector(input, selector, failed)) {
             return false;
         }
@@ -607,7 +608,8 @@ bool CSSParser::consumeTagSelector(CSSTokenStream& input, CSSCompoundSelector& s
         }
     }
 
-    selector.emplace_front(CSSSimpleSelector::MatchType::Namespace, namespaceURI);
+    if(namespaceURI != starGlo)
+        selector.emplace_front(CSSSimpleSelector::MatchType::Namespace, namespaceURI);
     if(name == starGlo) {
         selector.emplace_front(CSSSimpleSelector::MatchType::Universal);
     } else {
