@@ -4553,7 +4553,7 @@ bool CSSParser::consumeFlex(CSSTokenStream& input, CSSPropertyList& properties, 
             continue;
         }
 
-        if(basis == nullptr && (basis = consumeLengthOrPercentOrAuto(input, false, false))) {
+        if(basis == nullptr && (basis = consumeWidthOrHeightOrAuto(input, false))) {
             if(index == 1 && !input.empty())
                 return false;
             continue;
