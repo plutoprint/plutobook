@@ -18,12 +18,10 @@ void TextBox::appendText(const std::string_view& text)
 
 TextBox::~TextBox() = default;
 
-static const GlobalString newLine("\n");
-
 LineBreakBox::LineBreakBox(Node* node, const RefPtr<BoxStyle>& style)
     : TextBox(node, style)
 {
-    setText(newLine);
+    setText(newLineGlo);
 }
 
 WordBreakBox::WordBreakBox(Node* node, const RefPtr<BoxStyle>& style)

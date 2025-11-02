@@ -5,10 +5,6 @@
 
 namespace plutobook {
 
-static const GlobalString pageGlo("page");
-static const GlobalString pagesGlo("pages");
-static const GlobalString listItemGlo("list-item");
-
 Counters::Counters(Document* document, uint32_t pageCount)
     : m_document(document)
     , m_pageCount(pageCount)

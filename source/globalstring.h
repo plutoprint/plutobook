@@ -83,6 +83,11 @@ extern const GlobalString nullGlo;
 extern const GlobalString emptyGlo;
 extern const GlobalString starGlo;
 
+extern const GlobalString newLineGlo;
+extern const GlobalString listItemGlo;
+extern const GlobalString pageGlo;
+extern const GlobalString pagesGlo;
+
 extern const GlobalString xhtmlNs;
 extern const GlobalString mathmlNs;
 extern const GlobalString svgNs;

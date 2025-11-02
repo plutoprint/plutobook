@@ -85,6 +85,11 @@ const GlobalString nullGlo;
 const GlobalString emptyGlo("");
 const GlobalString starGlo("*");
 
+const GlobalString newLineGlo("\n");
+const GlobalString listItemGlo("list-item");
+const GlobalString pageGlo("page");
+const GlobalString pagesGlo("pages");
+
 const GlobalString xhtmlNs("http://www.w3.org/1999/xhtml");
 const GlobalString mathmlNs("http://www.w3.org/1998/Math/MathML");
 const GlobalString svgNs("http://www.w3.org/2000/svg");
