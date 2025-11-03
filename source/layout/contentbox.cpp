@@ -271,15 +271,34 @@ void ContentBoxBuilder::build()
             return;
         }
 
+        static const GlobalString disc("\u2022 ");
+        static const GlobalString circle("\u25E6 ");
+        static const GlobalString square("\u25AA ");
+
         auto listStyleType = m_parentStyle->get(CSSPropertyID::ListStyleType);
         if(listStyleType == nullptr) {
-            static const GlobalString disc("disc");
-            addText(m_counters.markerText(disc));
+            addText(disc);
             return;
         }
 
-        if(listStyleType->id() == CSSValueID::None)
-            return;
+        if(auto ident = to<CSSIdentValue>(listStyleType)) {
+            switch(ident->value()) {
+            case CSSValueID::None:
+                return;
+            case CSSValueID::Disc:
+                addText(disc);
+                return;
+            case CSSValueID::Circle:
+                addText(circle);
+                return;
+            case CSSValueID::Square:
+                addText(square);
+                return;
+            default:
+                assert(false);
+            }
+        }
+
         if(auto listStyle = to<CSSStringValue>(listStyleType)) {
             addText(listStyle->value());
             return;

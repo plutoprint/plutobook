@@ -2736,7 +2736,14 @@ RefPtr<CSSValue> CSSParser::consumePaint(CSSTokenStream& input)
 
 RefPtr<CSSValue> CSSParser::consumeListStyleType(CSSTokenStream& input)
 {
-    if(auto value = consumeNone(input))
+    static const CSSIdentValueEntry table[] = {
+        {"none", CSSValueID::None},
+        {"disc", CSSValueID::Disc},
+        {"circle", CSSValueID::Circle},
+        {"square", CSSValueID::Square}
+    };
+
+    if(auto value = consumeIdent(input, table))
         return value;
     return consumeStringOrCustomIdent(input);
 }
