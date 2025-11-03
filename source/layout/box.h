@@ -94,9 +94,6 @@ public:
     virtual bool isContentBox() const { return false; }
     virtual bool isLeaderBox() const { return false; }
     virtual bool isTargetCounterBox() const { return false; }
-    virtual bool isPageCounterBox() const { return false; }
-    virtual bool isPagesCounterBox() const { return false; }
-    virtual bool isTargetPageCounterBox() const { return false; }
     virtual bool isInlineBox() const { return false; }
     virtual bool isBlockBox() const { return false; }
     virtual bool isBlockFlowBox() const { return false; }

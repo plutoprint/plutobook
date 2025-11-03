@@ -34,37 +34,6 @@ void TargetCounterBox::build()
     setText(document()->getTargetCounterText(m_fragment, m_identifier, m_listStyle, m_seperator));
 }
 
-PageCounterBox::PageCounterBox(const RefPtr<BoxStyle>& style)
-    : ContentBox(style)
-{
-}
-
-uint32_t PageCounterBox::pageNumber() const
-{
-    return 0;
-}
-
-PagesCounterBox::PagesCounterBox(const RefPtr<BoxStyle>& style)
-    : PageCounterBox(style)
-{
-}
-
-uint32_t PagesCounterBox::pageNumber() const
-{
-    return document()->pageCount();
-}
-
-TargetPageCounterBox::TargetPageCounterBox(const RefPtr<BoxStyle>& style, const Element* element)
-    : PageCounterBox(style)
-    , m_element(element)
-{
-}
-
-uint32_t TargetPageCounterBox::pageNumber() const
-{
-    return 0;
-}
-
 ContentBoxBuilder::ContentBoxBuilder(Counters& counters, Element* element, Box* box)
     : m_counters(counters)
     , m_element(element)
