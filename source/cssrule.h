@@ -126,7 +126,6 @@ enum class CSSValueID : uint16_t {
     Ledger,
     Left,
     Legal,
-    Length,
     Letter,
     Lighten,
     Lighter,
