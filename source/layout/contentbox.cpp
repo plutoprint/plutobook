@@ -65,11 +65,11 @@ uint32_t TargetPageCounterBox::pageNumber() const
     return 0;
 }
 
-ContentBoxBuilder::ContentBoxBuilder(Counters& counters, Element* element, Box* parent)
+ContentBoxBuilder::ContentBoxBuilder(Counters& counters, Element* element, Box* box)
     : m_counters(counters)
     , m_element(element)
-    , m_parentBox(parent)
-    , m_parentStyle(parent->style())
+    , m_box(box)
+    , m_style(box->style())
 {
 }
 
@@ -82,9 +82,9 @@ void ContentBoxBuilder::addText(const HeapString& text)
         return;
     }
 
-    auto newBox = new (m_parentStyle->heap()) TextBox(nullptr, m_parentStyle);
+    auto newBox = new (m_style->heap()) TextBox(nullptr, m_style);
     newBox->setText(text);
-    m_parentBox->addChild(newBox);
+    m_box->addChild(newBox);
     m_lastTextBox = newBox;
 }
 
@@ -92,9 +92,9 @@ void ContentBoxBuilder::addLeaderText(const HeapString& text)
 {
     if(text.empty())
         return;
-    auto newBox = new (m_parentStyle->heap()) LeaderBox(m_parentStyle);
+    auto newBox = new (m_style->heap()) LeaderBox(m_style);
     newBox->setText(text);
-    m_parentBox->addChild(newBox);
+    m_box->addChild(newBox);
     m_lastTextBox = nullptr;
 }
 
@@ -127,17 +127,17 @@ void ContentBoxBuilder::addLeader(const CSSValue& value)
 
 void ContentBoxBuilder::addElement(const CSSValue& value)
 {
-    if(!m_parentBox->isPageMarginBox())
+    if(!m_box->isPageMarginBox())
         return;
     const auto& name = to<CSSCustomIdentValue>(value).value();
-    auto style = m_parentStyle->document()->getRunningStyle(name);
+    auto style = m_style->document()->getRunningStyle(name);
     if(style == nullptr)
         return;
     auto& element = to<HTMLElement>(*style->node());
     auto newBox = element.createBox(style);
     if(newBox == nullptr)
         return;
-    m_parentBox->addChild(newBox);
+    m_box->addChild(newBox);
     element.buildElementBox(m_counters, newBox);
     m_lastTextBox = nullptr;
 }
@@ -173,14 +173,14 @@ void ContentBoxBuilder::addTargetCounter(const CSSFunctionValue& function)
 
     assert(index == function.size());
 
-    if(m_parentBox->isPageMarginBox()) {
-        addText(m_parentStyle->document()->getTargetCounterText(fragment, identifier, listStyle, seperator));
+    if(m_box->isPageMarginBox()) {
+        addText(m_style->document()->getTargetCounterText(fragment, identifier, listStyle, seperator));
         return;
     }
 
-    auto newStyle = BoxStyle::create(m_parentStyle, Display::Inline);
-    auto newBox = new (m_parentStyle->heap()) TargetCounterBox(newStyle, fragment, identifier, seperator, listStyle);
-    m_parentBox->addChild(newBox);
+    auto newStyle = BoxStyle::create(m_style, Display::Inline);
+    auto newBox = new (m_style->heap()) TargetCounterBox(newStyle, fragment, identifier, seperator, listStyle);
+    m_box->addChild(newBox);
     m_lastTextBox = nullptr;
 }
 
@@ -193,7 +193,7 @@ void ContentBoxBuilder::addQuote(CSSValueID value)
     if(closequote && m_counters.quoteDepth())
         m_counters.decreaseQuoteDepth();
     if(usequote)
-        addText(m_parentStyle->getQuote(openquote, m_counters.quoteDepth()));
+        addText(m_style->getQuote(openquote, m_counters.quoteDepth()));
     if(openquote) {
         m_counters.increaseQuoteDepth();
     }
@@ -241,10 +241,10 @@ void ContentBoxBuilder::addImage(RefPtr<Image> image)
 {
     if(image == nullptr)
         return;
-    auto newStyle = BoxStyle::create(m_parentStyle, Display::Inline);
-    auto newBox = new (m_parentStyle->heap()) ImageBox(nullptr, newStyle);
+    auto newStyle = BoxStyle::create(m_style, Display::Inline);
+    auto newBox = new (m_style->heap()) ImageBox(nullptr, newStyle);
     newBox->setImage(std::move(image));
-    m_parentBox->addChild(newBox);
+    m_box->addChild(newBox);
     m_lastTextBox = nullptr;
 }
 
@@ -260,13 +260,13 @@ const HeapString& ContentBoxBuilder::resolveAttr(const CSSAttrValue& attr) const
 
 void ContentBoxBuilder::build()
 {
-    auto content = m_parentStyle->get(CSSPropertyID::Content);
+    auto content = m_style->get(CSSPropertyID::Content);
     if(content && content->id() == CSSValueID::None)
         return;
     if(content == nullptr || content->id() == CSSValueID::Normal) {
-        if(m_parentStyle->pseudoType() != PseudoType::Marker)
+        if(m_style->pseudoType() != PseudoType::Marker)
             return;
-        if(auto image = m_parentStyle->listStyleImage()) {
+        if(auto image = m_style->listStyleImage()) {
             addImage(std::move(image));
             return;
         }
@@ -275,7 +275,7 @@ void ContentBoxBuilder::build()
         static const GlobalString circle("\u25E6 ");
         static const GlobalString square("\u25AA ");
 
-        auto listStyleType = m_parentStyle->get(CSSPropertyID::ListStyleType);
+        auto listStyleType = m_style->get(CSSPropertyID::ListStyleType);
         if(listStyleType == nullptr) {
             addText(disc);
             return;
@@ -313,7 +313,7 @@ void ContentBoxBuilder::build()
         if(auto string = to<CSSStringValue>(value)) {
             addText(string->value());
         } else if(auto image = to<CSSImageValue>(value)) {
-            addImage(image->fetch(m_parentStyle->document()));
+            addImage(image->fetch(m_style->document()));
         } else if(auto counter = to<CSSCounterValue>(value)) {
             addCounter(*counter);
         } else if(auto ident = to<CSSIdentValue>(value)) {

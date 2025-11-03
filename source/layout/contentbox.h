@@ -117,7 +117,7 @@ class Counters;
 
 class ContentBoxBuilder {
 public:
-    ContentBoxBuilder(Counters& counters, Element* element, Box* parent);
+    ContentBoxBuilder(Counters& counters, Element* element, Box* box);
 
     void build();
 
@@ -136,8 +136,8 @@ private:
 
     Counters& m_counters;
     Element* m_element;
-    Box* m_parentBox;
-    BoxStyle* m_parentStyle;
+    Box* m_box;
+    BoxStyle* m_style;
     TextBox* m_lastTextBox{nullptr};
 };
 
