@@ -440,6 +440,7 @@ dir, menu, ul { list-style-type: disc; }
     font-variant-numeric: tabular-nums;
     text-transform: none;
     text-indent: 0 !important;
+    line-height: normal !important;
 }
 
 table { display: table; }
