@@ -774,7 +774,6 @@ public:
 
     RoundedRect getBorderRoundedRect(const Rect& borderRect, bool includeLeftEdge, bool includeRightEdge) const;
 
-    HeapString listStyleType() const;
     ListStylePosition listStylePosition() const;
     RefPtr<Image> listStyleImage() const;
 

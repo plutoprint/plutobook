@@ -442,16 +442,6 @@ RoundedRect BoxStyle::getBorderRoundedRect(const Rect& borderRect, bool includeL
     return RoundedRect(borderRect, borderRadii);
 }
 
-HeapString BoxStyle::listStyleType() const
-{
-    auto value = get(CSSPropertyID::ListStyleType);
-    if(value == nullptr || value->id() == CSSValueID::None)
-        return emptyGlo;
-    if(is<CSSStringValue>(*value))
-        return to<CSSStringValue>(*value).value();
-    return to<CSSCustomIdentValue>(*value).value();
-}
-
 ListStylePosition BoxStyle::listStylePosition() const
 {
     auto value = get(CSSPropertyID::ListStylePosition);
