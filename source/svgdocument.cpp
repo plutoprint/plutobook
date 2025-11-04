@@ -498,7 +498,7 @@ SVGLineElement::SVGLineElement(Document* document)
     addProperty(y2Attr, m_y2);
 }
 
-Rect SVGLineElement::updateShape(Path& path) const
+Rect SVGLineElement::getPath(Path& path) const
 {
     SVGLengthContext lengthContext(this);
     auto x1 = lengthContext.valueForLength(m_x1);
@@ -528,7 +528,7 @@ SVGRectElement::SVGRectElement(Document* document)
     addProperty(ryAttr, m_ry);
 }
 
-Rect SVGRectElement::updateShape(Path& path) const
+Rect SVGRectElement::getPath(Path& path) const
 {
     SVGLengthContext lengthContext(this);
     auto width = lengthContext.valueForLength(m_width);
@@ -564,7 +564,7 @@ SVGCircleElement::SVGCircleElement(Document* document)
     addProperty(rAttr, m_r);
 }
 
-Rect SVGCircleElement::updateShape(Path& path) const
+Rect SVGCircleElement::getPath(Path& path) const
 {
     SVGLengthContext lengthContext(this);
     auto r = lengthContext.valueForLength(m_r);
@@ -591,7 +591,7 @@ SVGEllipseElement::SVGEllipseElement(Document* document)
     addProperty(ryAttr, m_ry);
 }
 
-Rect SVGEllipseElement::updateShape(Path& path) const
+Rect SVGEllipseElement::getPath(Path& path) const
 {
     SVGLengthContext lengthContext(this);
     auto rx = lengthContext.valueForLength(m_rx);
@@ -612,7 +612,7 @@ SVGPolyElement::SVGPolyElement(Document* document, const GlobalString& tagName)
     addProperty(pointsAttr, m_points);
 }
 
-Rect SVGPolyElement::updateShape(Path& path) const
+Rect SVGPolyElement::getPath(Path& path) const
 {
     const auto& points = m_points.values();
     if(points.empty()) {

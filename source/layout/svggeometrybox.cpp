@@ -195,7 +195,7 @@ SVGShapeBox::SVGShapeBox(SVGShapeElement* element, const RefPtr<BoxStyle>& style
 void SVGShapeBox::layout()
 {
     m_path.clear();
-    m_fillBoundingBox = element()->updateShape(m_path);
+    m_fillBoundingBox = element()->getPath(m_path);
     SVGGeometryBox::layout();
 }
 

@@ -205,7 +205,7 @@ class SVGShapeElement : public SVGGeometryElement {
 public:
     SVGShapeElement(Document* document, const GlobalString& tagName);
 
-    virtual Rect updateShape(Path& path) const = 0;
+    virtual Rect getPath(Path& path) const = 0;
 
     Box* createBox(const RefPtr<BoxStyle>& style) final;
 };
@@ -219,7 +219,7 @@ public:
     const SVGLength& x2() const { return m_x2; }
     const SVGLength& y2() const { return m_y2; }
 
-    Rect updateShape(Path& path) const final;
+    Rect getPath(Path& path) const final;
 
 private:
     SVGLength m_x1;
@@ -239,7 +239,7 @@ public:
     const SVGLength& rx() const { return m_rx; }
     const SVGLength& ry() const { return m_ry; }
 
-    Rect updateShape(Path& path) const final;
+    Rect getPath(Path& path) const final;
 
 private:
     SVGLength m_x;
@@ -259,7 +259,7 @@ public:
     const SVGLength& rx() const { return m_rx; }
     const SVGLength& ry() const { return m_ry; }
 
-    Rect updateShape(Path& path) const final;
+    Rect getPath(Path& path) const final;
 
 private:
     SVGLength m_cx;
@@ -276,7 +276,7 @@ public:
     const SVGLength& cy() const { return m_cy; }
     const SVGLength& r() const { return m_r; }
 
-    Rect updateShape(Path& path) const final;
+    Rect getPath(Path& path) const final;
 
 private:
     SVGLength m_cx;
@@ -290,7 +290,7 @@ public:
 
     const SVGPointList& points() const { return m_points; }
 
-    Rect updateShape(Path& path) const final;
+    Rect getPath(Path& path) const final;
 
 private:
     SVGPointList m_points;
