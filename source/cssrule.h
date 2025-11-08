@@ -1431,6 +1431,7 @@ public:
         PseudoClassLastChild,
         PseudoClassLastOfType,
         PseudoClassLink,
+        PseudoClassLocalLink,
         PseudoClassNot,
         PseudoClassNthChild,
         PseudoClassNthLastChild,
@@ -1863,6 +1864,7 @@ private:
     static bool matchPseudoClassNotSelector(const Element* element, const CSSSimpleSelector& selector);
 
     static bool matchPseudoClassLinkSelector(const Element* element, const CSSSimpleSelector& selector);
+    static bool matchPseudoClassLocalLinkSelector(const Element* element, const CSSSimpleSelector& selector);
     static bool matchPseudoClassEnabledSelector(const Element* element, const CSSSimpleSelector& selector);
     static bool matchPseudoClassDisabledSelector(const Element* element, const CSSSimpleSelector& selector);
     static bool matchPseudoClassCheckedSelector(const Element* element, const CSSSimpleSelector& selector);

@@ -757,6 +757,7 @@ bool CSSParser::consumePseudoSelector(CSSTokenStream& input, CSSCompoundSelector
             {"last-child", CSSSimpleSelector::MatchType::PseudoClassLastChild},
             {"last-of-type", CSSSimpleSelector::MatchType::PseudoClassLastOfType},
             {"link", CSSSimpleSelector::MatchType::PseudoClassLink},
+            {"local-link", CSSSimpleSelector::MatchType::PseudoClassLocalLink},
             {"only-child", CSSSimpleSelector::MatchType::PseudoClassOnlyChild},
             {"only-of-type", CSSSimpleSelector::MatchType::PseudoClassOnlyOfType},
             {"root", CSSSimpleSelector::MatchType::PseudoClassRoot},

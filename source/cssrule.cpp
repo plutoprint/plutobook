@@ -549,6 +549,8 @@ bool CSSRuleData::matchSimpleSelector(const Element* element, const CSSSimpleSel
     case CSSSimpleSelector::MatchType::PseudoClassLink:
     case CSSSimpleSelector::MatchType::PseudoClassAnyLink:
         return matchPseudoClassLinkSelector(element, selector);
+    case CSSSimpleSelector::MatchType::PseudoClassLocalLink:
+        return matchPseudoClassLocalLinkSelector(element, selector);
     case CSSSimpleSelector::MatchType::PseudoClassEnabled:
         return matchPseudoClassEnabledSelector(element, selector);
     case CSSSimpleSelector::MatchType::PseudoClassDisabled:
@@ -687,6 +689,17 @@ bool CSSRuleData::matchPseudoClassNotSelector(const Element* element, const CSSS
 bool CSSRuleData::matchPseudoClassLinkSelector(const Element* element, const CSSSimpleSelector& selector)
 {
     return element->tagName() == aTag && element->hasAttribute(hrefAttr);
+}
+
+bool CSSRuleData::matchPseudoClassLocalLinkSelector(const Element* element, const CSSSimpleSelector& selector)
+{
+    if(matchPseudoClassLinkSelector(element, selector)) {
+        const auto& baseUrl = element->document()->baseUrl();
+        auto completeUrl = element->getUrlAttribute(hrefAttr);
+        return baseUrl == completeUrl.base();
+    }
+
+    return false;
 }
 
 bool CSSRuleData::matchPseudoClassEnabledSelector(const Element* element, const CSSSimpleSelector& selector)
