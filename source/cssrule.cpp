@@ -828,7 +828,7 @@ bool CSSPageRuleData::matchSelector(const GlobalString& pageName, uint32_t pageI
     case CSSSimpleSelector::MatchType::PseudoPageBlank:
         return pseudoType == PseudoType::BlankPage;
     case CSSSimpleSelector::MatchType::PseudoPageNth:
-        return selector.matchnth(pageIndex);
+        return selector.matchnth(pageIndex + 1);
     default:
         assert(false);
     }
