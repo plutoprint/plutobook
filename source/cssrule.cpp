@@ -791,8 +791,9 @@ bool CSSRuleData::matchPseudoClassNthOfTypeSelector(const Element* element, cons
 {
     int count = 1;
     auto child = element->previousElement();
-    while(child && child->isOfType(element->namespaceURI(), element->tagName())) {
-        count += 1;
+    while(child) {
+        if(child->isOfType(element->namespaceURI(), element->tagName()))
+            count += 1;
         child = child->previousElement();
     }
 
@@ -803,8 +804,9 @@ bool CSSRuleData::matchPseudoClassNthLastOfTypeSelector(const Element* element, 
 {
     int count = 1;
     auto child = element->nextElement();
-    while(child && child->isOfType(element->namespaceURI(), element->tagName())) {
-        count += 1;
+    while(child) {
+        if(child->isOfType(element->namespaceURI(), element->tagName()))
+            count += 1;
         child = child->nextElement();
     }
 
