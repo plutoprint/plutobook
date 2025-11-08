@@ -812,11 +812,11 @@ bool CSSRuleData::matchPseudoClassNthLastOfTypeSelector(const Element* element, 
 
 bool CSSPageRuleData::match(const GlobalString& pageName, uint32_t pageIndex, PseudoType pseudoType) const
 {
-    if(m_selector == nullptr)
-        return true;
-    for(const auto& sel : *m_selector) {
-        if(!matchSelector(pageName, pageIndex, pseudoType, sel)) {
-            return false;
+    if(m_selector) {
+        for(const auto& sel : *m_selector) {
+            if(!matchSelector(pageName, pageIndex, pseudoType, sel)) {
+                return false;
+            }
         }
     }
 
