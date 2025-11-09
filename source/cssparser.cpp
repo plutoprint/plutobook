@@ -264,7 +264,7 @@ RefPtr<CSSStyleRule> CSSParser::consumeStyleRule(CSSTokenStream& input)
     CSSTokenStream prelude(preludeBegin, input.begin());
     auto block = input.consumeBlock();
     CSSSelectorList selectors(m_heap);
-    if(!consumeSelectorList(prelude, selectors))
+    if(!consumeSelectorList(prelude, selectors, false))
         return nullptr;
     CSSPropertyList properties(m_heap);
     consumeDeclaractionList(block, properties, CSSRuleType::Style);
@@ -526,20 +526,24 @@ bool CSSParser::consumePageSelector(CSSTokenStream& input, CSSPageSelector& sele
     return true;
 }
 
-bool CSSParser::consumeSelectorList(CSSTokenStream& input, CSSSelectorList& selectors)
+bool CSSParser::consumeSelectorList(CSSTokenStream& input, CSSSelectorList& selectors, bool relative)
 {
     do {
         CSSSelector selector(m_heap);
-        if(!consumeSelector(input, selector))
+        if(!consumeSelector(input, selector, relative))
             return false;
         selectors.push_front(std::move(selector));
     } while(input.consumeCommaIncludingWhitespace());
     return input.empty();
 }
 
-bool CSSParser::consumeSelector(CSSTokenStream& input, CSSSelector& selector)
+bool CSSParser::consumeSelector(CSSTokenStream& input, CSSSelector& selector, bool relative)
 {
     auto combinator = CSSComplexSelector::Combinator::None;
+    if(relative) {
+        consumeCombinator(input, combinator);
+    }
+
     do {
         bool failed = false;
         CSSCompoundSelector sel(m_heap);
@@ -786,6 +790,7 @@ bool CSSParser::consumePseudoSelector(CSSTokenStream& input, CSSCompoundSelector
             {"is", CSSSimpleSelector::MatchType::PseudoClassIs},
             {"lang", CSSSimpleSelector::MatchType::PseudoClassLang},
             {"not", CSSSimpleSelector::MatchType::PseudoClassNot},
+            {"has", CSSSimpleSelector::MatchType::PseudoClassHas},
             {"nth-child", CSSSimpleSelector::MatchType::PseudoClassNthChild},
             {"nth-last-child", CSSSimpleSelector::MatchType::PseudoClassNthLastChild},
             {"nth-last-of-type", CSSSimpleSelector::MatchType::PseudoClassNthLastOfType},
@@ -797,9 +802,10 @@ bool CSSParser::consumePseudoSelector(CSSTokenStream& input, CSSCompoundSelector
             return false;
         switch(matchType.value()) {
         case CSSSimpleSelector::MatchType::PseudoClassIs:
-        case CSSSimpleSelector::MatchType::PseudoClassNot: {
+        case CSSSimpleSelector::MatchType::PseudoClassNot:
+        case CSSSimpleSelector::MatchType::PseudoClassHas: {
             CSSSelectorList subSelectors(m_heap);
-            if(!consumeSelectorList(block, subSelectors))
+            if(!consumeSelectorList(block, subSelectors, matchType == CSSSimpleSelector::MatchType::PseudoClassHas))
                 return false;
             selector.emplace_front(*matchType, std::move(subSelectors));
             break;

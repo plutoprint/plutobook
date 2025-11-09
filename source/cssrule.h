@@ -1425,6 +1425,7 @@ public:
         PseudoClassFocus,
         PseudoClassFocusVisible,
         PseudoClassFocusWithin,
+        PseudoClassHas,
         PseudoClassHover,
         PseudoClassIs,
         PseudoClassLang,
@@ -1862,6 +1863,7 @@ private:
 
     static bool matchPseudoClassIsSelector(const Element* element, const CSSSimpleSelector& selector);
     static bool matchPseudoClassNotSelector(const Element* element, const CSSSimpleSelector& selector);
+    static bool matchPseudoClassHasSelector(const Element* element, const CSSSimpleSelector& selector);
 
     static bool matchPseudoClassLinkSelector(const Element* element, const CSSSimpleSelector& selector);
     static bool matchPseudoClassLocalLinkSelector(const Element* element, const CSSSimpleSelector& selector);

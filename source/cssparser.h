@@ -36,8 +36,8 @@ private:
     bool consumePageSelectorList(CSSTokenStream& input, CSSPageSelectorList& selectors);
     bool consumePageSelector(CSSTokenStream& input, CSSPageSelector& selector);
 
-    bool consumeSelectorList(CSSTokenStream& input, CSSSelectorList& selectors);
-    bool consumeSelector(CSSTokenStream& input, CSSSelector& selector);
+    bool consumeSelectorList(CSSTokenStream& input, CSSSelectorList& selectors, bool relative);
+    bool consumeSelector(CSSTokenStream& input, CSSSelector& selector, bool relative);
     bool consumeCompoundSelector(CSSTokenStream& input, CSSCompoundSelector& selector, bool& failed);
     bool consumeSimpleSelector(CSSTokenStream& input, CSSCompoundSelector& selector, bool& failed);
 

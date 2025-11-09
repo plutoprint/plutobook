@@ -546,6 +546,8 @@ bool CSSRuleData::matchSimpleSelector(const Element* element, const CSSSimpleSel
         return matchPseudoClassIsSelector(element, selector);
     case CSSSimpleSelector::MatchType::PseudoClassNot:
         return matchPseudoClassNotSelector(element, selector);
+    case CSSSimpleSelector::MatchType::PseudoClassHas:
+        return matchPseudoClassHasSelector(element, selector);
     case CSSSimpleSelector::MatchType::PseudoClassLink:
     case CSSSimpleSelector::MatchType::PseudoClassAnyLink:
         return matchPseudoClassLinkSelector(element, selector);
@@ -684,6 +686,63 @@ bool CSSRuleData::matchPseudoClassIsSelector(const Element* element, const CSSSi
 bool CSSRuleData::matchPseudoClassNotSelector(const Element* element, const CSSSimpleSelector& selector)
 {
     return !matchPseudoClassIsSelector(element, selector);
+}
+
+bool CSSRuleData::matchPseudoClassHasSelector(const Element* element, const CSSSimpleSelector& selector)
+{
+    for(const auto& subSelector : selector.subSelectors()) {
+        auto combinator = CSSComplexSelector::Combinator::None;
+        for(const auto& selector : subSelector) {
+            combinator = selector.combinator();
+        }
+
+        switch(combinator) {
+        case CSSComplexSelector::Combinator::None:
+        case CSSComplexSelector::Combinator::Descendant:
+        case CSSComplexSelector::Combinator::Child: {
+            auto child = element->firstChild();
+            while(child) {
+                if(auto descendant = to<Element>(child)) {
+                    if(matchSelector(descendant, PseudoType::None, subSelector))
+                        return true;
+                    if(combinator != CSSComplexSelector::Combinator::Child && child->firstChild()) {
+                        child = child->firstChild();
+                        continue;
+                    }
+                }
+
+                while(true) {
+                    if(child->nextSibling()) {
+                        child = child->nextSibling();
+                        break;
+                    }
+
+                    child = child->parentNode();
+                    if(child == element) {
+                        child = nullptr;
+                        break;
+                    }
+                }
+            }
+
+            break;
+        }
+
+        case CSSComplexSelector::Combinator::DirectAdjacent:
+        case CSSComplexSelector::Combinator::InDirectAdjacent:
+            for(auto sibling = element->nextElement(); sibling; sibling = sibling->nextElement()) {
+                if(matchSelector(sibling, PseudoType::None, subSelector))
+                    return true;
+                if(combinator == CSSComplexSelector::Combinator::DirectAdjacent) {
+                    return false;
+                }
+            }
+
+            break;
+        }
+    }
+
+    return false;
 }
 
 bool CSSRuleData::matchPseudoClassLinkSelector(const Element* element, const CSSSimpleSelector& selector)
