@@ -420,34 +420,74 @@ PseudoType CSSSimpleSelector::pseudoType() const
 
 uint32_t CSSSimpleSelector::specificity() const
 {
-    if(m_matchType == MatchType::PseudoClassIs || m_matchType == MatchType::PseudoClassNot) {
-        uint32_t specificity = 0x0;
+    switch(m_matchType) {
+    case MatchType::Id:
+        return 0x10000;
+    case MatchType::Class:
+    case MatchType::AttributeContains:
+    case MatchType::AttributeDashEquals:
+    case MatchType::AttributeEndsWith:
+    case MatchType::AttributeEquals:
+    case MatchType::AttributeHas:
+    case MatchType::AttributeIncludes:
+    case MatchType::AttributeStartsWith:
+    case MatchType::PseudoClassActive:
+    case MatchType::PseudoClassAnyLink:
+    case MatchType::PseudoClassChecked:
+    case MatchType::PseudoClassDisabled:
+    case MatchType::PseudoClassEmpty:
+    case MatchType::PseudoClassEnabled:
+    case MatchType::PseudoClassFirstChild:
+    case MatchType::PseudoClassFirstOfType:
+    case MatchType::PseudoClassFocus:
+    case MatchType::PseudoClassFocusVisible:
+    case MatchType::PseudoClassFocusWithin:
+    case MatchType::PseudoClassHover:
+    case MatchType::PseudoClassLang:
+    case MatchType::PseudoClassLastChild:
+    case MatchType::PseudoClassLastOfType:
+    case MatchType::PseudoClassLink:
+    case MatchType::PseudoClassLocalLink:
+    case MatchType::PseudoClassNthChild:
+    case MatchType::PseudoClassNthLastChild:
+    case MatchType::PseudoClassNthLastOfType:
+    case MatchType::PseudoClassNthOfType:
+    case MatchType::PseudoClassOnlyChild:
+    case MatchType::PseudoClassOnlyOfType:
+    case MatchType::PseudoClassRoot:
+    case MatchType::PseudoClassScope:
+    case MatchType::PseudoClassTarget:
+    case MatchType::PseudoClassTargetWithin:
+    case MatchType::PseudoClassVisited:
+        return 0x100;
+    case MatchType::Tag:
+    case MatchType::PseudoElementAfter:
+    case MatchType::PseudoElementBefore:
+    case MatchType::PseudoElementFirstLetter:
+    case MatchType::PseudoElementFirstLine:
+    case MatchType::PseudoElementMarker:
+        return 0x1;
+    case MatchType::PseudoClassIs:
+    case MatchType::PseudoClassNot:
+    case MatchType::PseudoClassHas: {
+        uint32_t maxSpecificity = 0;
         for(const auto& subSelector : m_subSelectors) {
+            uint32_t specificity = 0x0;
             for(const auto& complexSelector : subSelector) {
                 for(const auto& simpleSelector : complexSelector.compoundSelector()) {
                     specificity += simpleSelector.specificity();
                 }
             }
+
+            maxSpecificity = std::max(specificity, maxSpecificity);
         }
 
-        return specificity;
+        return maxSpecificity;
     }
 
-    switch(m_matchType) {
-    case MatchType::Universal:
-    case MatchType::Namespace:
-        return 0x0;
-    case MatchType::Id:
-        return 0x10000;
-    case MatchType::Class:
-        return 0x100;
-    case MatchType::Tag:
-        return 0x1;
     default:
-        break;
+        return 0x0;
     }
-
-    return 0x100;
 }
 
 bool CSSRuleData::match(const Element* element, PseudoType pseudoType) const

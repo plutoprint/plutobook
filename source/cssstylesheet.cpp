@@ -892,11 +892,11 @@ void CSSStyleSheet::addPageRule(const RefPtr<CSSPageRule>& rule)
                 specificity += 0x10000;
                 break;
             case CSSSimpleSelector::MatchType::PseudoPageFirst:
+            case CSSSimpleSelector::MatchType::PseudoPageBlank:
                 specificity += 0x100;
                 break;
             case CSSSimpleSelector::MatchType::PseudoPageLeft:
             case CSSSimpleSelector::MatchType::PseudoPageRight:
-            case CSSSimpleSelector::MatchType::PseudoPageBlank:
             case CSSSimpleSelector::MatchType::PseudoPageNth:
                 specificity += 0x1;
                 break;
