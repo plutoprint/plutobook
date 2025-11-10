@@ -848,8 +848,8 @@ bool CSSRuleData::matchPseudoClassOnlyChildSelector(const Element* element, cons
 
 bool CSSRuleData::matchPseudoClassFirstOfTypeSelector(const Element* element, const CSSSimpleSelector& selector)
 {
-    for(auto child = element->previousElement(); child; child = child->previousElement()) {
-        if(child->isOfType(element->namespaceURI(), element->tagName())) {
+    for(auto sibling = element->previousElement(); sibling; sibling = sibling->previousElement()) {
+        if(sibling->isOfType(element->namespaceURI(), element->tagName())) {
             return false;
         }
     }
@@ -859,8 +859,8 @@ bool CSSRuleData::matchPseudoClassFirstOfTypeSelector(const Element* element, co
 
 bool CSSRuleData::matchPseudoClassLastOfTypeSelector(const Element* element, const CSSSimpleSelector& selector)
 {
-    for(auto child = element->nextElement(); child; child = child->nextElement()) {
-        if(child->isOfType(element->namespaceURI(), element->tagName())) {
+    for(auto sibling = element->nextElement(); sibling; sibling = sibling->nextElement()) {
+        if(sibling->isOfType(element->namespaceURI(), element->tagName())) {
             return false;
         }
     }
@@ -876,7 +876,7 @@ bool CSSRuleData::matchPseudoClassOnlyOfTypeSelector(const Element* element, con
 bool CSSRuleData::matchPseudoClassNthChildSelector(const Element* element, const CSSSimpleSelector& selector)
 {
     int index = 0;
-    for(auto child = element->previousElement(); child; child = child->previousElement())
+    for(auto sibling = element->previousElement(); sibling; sibling = sibling->previousElement())
         ++index;
     return selector.matchnth(index + 1);
 }
@@ -884,7 +884,7 @@ bool CSSRuleData::matchPseudoClassNthChildSelector(const Element* element, const
 bool CSSRuleData::matchPseudoClassNthLastChildSelector(const Element* element, const CSSSimpleSelector& selector)
 {
     int index = 0;
-    for(auto child = element->nextElement(); child; child = child->nextElement())
+    for(auto sibling = element->nextElement(); sibling; sibling = sibling->nextElement())
         ++index;
     return selector.matchnth(index + 1);
 }
@@ -892,8 +892,8 @@ bool CSSRuleData::matchPseudoClassNthLastChildSelector(const Element* element, c
 bool CSSRuleData::matchPseudoClassNthOfTypeSelector(const Element* element, const CSSSimpleSelector& selector)
 {
     int index = 0;
-    for(auto child = element->previousElement(); child; child = child->previousElement()) {
-        if(child->isOfType(element->namespaceURI(), element->tagName())) {
+    for(auto sibling = element->previousElement(); sibling; sibling = sibling->previousElement()) {
+        if(sibling->isOfType(element->namespaceURI(), element->tagName())) {
             ++index;
         }
     }
@@ -904,8 +904,8 @@ bool CSSRuleData::matchPseudoClassNthOfTypeSelector(const Element* element, cons
 bool CSSRuleData::matchPseudoClassNthLastOfTypeSelector(const Element* element, const CSSSimpleSelector& selector)
 {
     int index = 0;
-    for(auto child = element->nextElement(); child; child = child->nextElement()) {
-        if(child->isOfType(element->namespaceURI(), element->tagName())) {
+    for(auto sibling = element->nextElement(); sibling; sibling = sibling->nextElement()) {
+        if(sibling->isOfType(element->namespaceURI(), element->tagName())) {
             ++index;
         }
     }
