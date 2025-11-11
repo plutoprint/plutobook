@@ -112,7 +112,7 @@ bool TextNode::isHidden(const Box* parent) const
 
 Node* TextNode::cloneNode(bool deep)
 {
-    return document()->createTextNode(m_data);
+    return new (heap()) TextNode(document(), data());
 }
 
 Box* TextNode::createBox(const RefPtr<BoxStyle>& style)
