@@ -583,6 +583,7 @@ bool CSSRuleData::matchSimpleSelector(const Element* element, const CSSSimpleSel
     case CSSSimpleSelector::MatchType::AttributeEndsWith:
         return matchAttributeEndsWithSelector(element, selector);
     case CSSSimpleSelector::MatchType::PseudoClassIs:
+    case CSSSimpleSelector::MatchType::PseudoClassWhere:
         return matchPseudoClassIsSelector(element, selector);
     case CSSSimpleSelector::MatchType::PseudoClassNot:
         return matchPseudoClassNotSelector(element, selector);

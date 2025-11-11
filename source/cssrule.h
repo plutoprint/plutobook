@@ -1445,6 +1445,7 @@ public:
         PseudoClassTarget,
         PseudoClassTargetWithin,
         PseudoClassVisited,
+        PseudoClassWhere,
         PseudoElementAfter,
         PseudoElementBefore,
         PseudoElementFirstLetter,

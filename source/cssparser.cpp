@@ -790,6 +790,7 @@ bool CSSParser::consumePseudoSelector(CSSTokenStream& input, CSSCompoundSelector
             {"is", CSSSimpleSelector::MatchType::PseudoClassIs},
             {"not", CSSSimpleSelector::MatchType::PseudoClassNot},
             {"has", CSSSimpleSelector::MatchType::PseudoClassHas},
+            {"where", CSSSimpleSelector::MatchType::PseudoClassWhere},
             {"lang", CSSSimpleSelector::MatchType::PseudoClassLang},
             {"nth-child", CSSSimpleSelector::MatchType::PseudoClassNthChild},
             {"nth-last-child", CSSSimpleSelector::MatchType::PseudoClassNthLastChild},
@@ -803,7 +804,8 @@ bool CSSParser::consumePseudoSelector(CSSTokenStream& input, CSSCompoundSelector
         switch(matchType.value()) {
         case CSSSimpleSelector::MatchType::PseudoClassIs:
         case CSSSimpleSelector::MatchType::PseudoClassNot:
-        case CSSSimpleSelector::MatchType::PseudoClassHas: {
+        case CSSSimpleSelector::MatchType::PseudoClassHas:
+        case CSSSimpleSelector::MatchType::PseudoClassWhere: {
             CSSSelectorList subSelectors(m_heap);
             if(!consumeSelectorList(block, subSelectors, matchType == CSSSimpleSelector::MatchType::PseudoClassHas))
                 return false;
