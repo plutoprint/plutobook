@@ -788,9 +788,9 @@ bool CSSParser::consumePseudoSelector(CSSTokenStream& input, CSSCompoundSelector
         block.consumeWhitespace();
         static const CSSIdentEntry<CSSSimpleSelector::MatchType> table[] = {
             {"is", CSSSimpleSelector::MatchType::PseudoClassIs},
-            {"lang", CSSSimpleSelector::MatchType::PseudoClassLang},
             {"not", CSSSimpleSelector::MatchType::PseudoClassNot},
             {"has", CSSSimpleSelector::MatchType::PseudoClassHas},
+            {"lang", CSSSimpleSelector::MatchType::PseudoClassLang},
             {"nth-child", CSSSimpleSelector::MatchType::PseudoClassNthChild},
             {"nth-last-child", CSSSimpleSelector::MatchType::PseudoClassNthLastChild},
             {"nth-last-of-type", CSSSimpleSelector::MatchType::PseudoClassNthLastOfType},
