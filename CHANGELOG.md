@@ -1,5 +1,33 @@
 # Changelog
 
+## PlutoBook 0.11.0 (2025-11-17)
+
+- Add support for `<base>` tag to resolve relative URLs
+- Add support for `font-variant-emoji`
+- Add support for `min-content`, `max-content`, and `fit-content` in `flex` shorthand
+- Add support for `:local-link` selector
+- Add support for `:has` selector
+- Add support for `:where` selector
+- Add `line-height: normal` to `::marker` to prevent inherited `line-height` issues
+- Fix `:nth-of-type` and `:nth-last-of-type` sibling counting
+- Fix `:nth()` page selector matching
+- Fix CSS `:lang()` selector matching
+- Fix CSS selector specificity calculation to match W3C specification
+- Fix Windows Fontconfig failing to load its default config files
+- Refactor `align` and `hidden`  presentational attributes
+- Reset form control `font-size` to match most browsers
+- Fully implement `format()` support in `@font-face` to skip unsupported font sources
+- Add some subset of ready-made counter styles (`binary`, `octal`, `lower-hexadecimal`, `upper-hexadecimal`)
+- Add `plutobook_set_fontconfig_path()` to set the Fontconfig configuration directory
+- Enable FreeType error strings for clearer diagnostic messages
+- Fix default border value for table elements
+- Account for relative positioning offsets when computing static distances
+- Handle RTL direction when computing horizontal relative offsets
+
+Backers and sponsors:
+
+- [Ashish Kulkarni](https://github.com/ashkulz)
+
 ## PlutoBook 0.10.0 (2025-10-03)
 
 - Add support for running headers and footers

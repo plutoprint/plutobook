@@ -53,7 +53,7 @@ extern "C" {
 #endif
 
 #define PLUTOBOOK_VERSION_MAJOR 0
-#define PLUTOBOOK_VERSION_MINOR 10
+#define PLUTOBOOK_VERSION_MINOR 11
 #define PLUTOBOOK_VERSION_MICRO 0
 
 #define PLUTOBOOK_VERSION_ENCODE(major, minor, micro) (((major) * 10000) + ((minor) * 100) + ((micro) * 1))
