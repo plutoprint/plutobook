@@ -1075,6 +1075,20 @@ PLUTOBOOK_API const char* plutobook_get_error_message(void);
  */
 PLUTOBOOK_API void plutobook_clear_error_message(void);
 
+/**
+ * @brief Sets the `FONTCONFIG_PATH` environment variable for the current process.
+ *
+ * This function specifies the directory that Fontconfig should use to locate
+ * its configuration files.
+ *
+ * @param path A null-terminated string specifying the directory containing Fontconfig
+ * configuration files.
+ *
+ * @note This function must be called before creating any `plutobook_t` instance
+ * to ensure that Fontconfig uses the specified configuration path.
+ */
+PLUTOBOOK_API void plutobook_set_fontconfig_path(const char* path);
+
 #ifdef __cplusplus
 }
 #endif

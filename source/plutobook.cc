@@ -742,3 +742,12 @@ void plutobook_clear_error_message(void)
 {
     std::memset(plutobook_error_message, 0, sizeof(plutobook_error_message));
 }
+
+void plutobook_set_fontconfig_path(const char* path)
+{
+#ifdef _WIN32
+    _putenv_s("FONTCONFIG_PATH", path);
+#else
+    setenv("FONTCONFIG_PATH", path, 1);
+#endif
+}
