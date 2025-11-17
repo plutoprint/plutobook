@@ -732,47 +732,54 @@ bool CSSRuleData::matchPseudoClassNotSelector(const Element* element, const CSSS
 bool CSSRuleData::matchPseudoClassHasSelector(const Element* element, const CSSSimpleSelector& selector)
 {
     for(const auto& subSelector : selector.subSelectors()) {
+        int maxDepth = 0;
         auto combinator = CSSComplexSelector::Combinator::None;
         for(const auto& selector : subSelector) {
             combinator = selector.combinator();
+            ++maxDepth;
         }
 
-        switch(combinator) {
-        case CSSComplexSelector::Combinator::None:
-        case CSSComplexSelector::Combinator::Descendant:
-        case CSSComplexSelector::Combinator::Child: {
-            auto child = element->firstChild();
-            while(child) {
-                if(auto descendant = to<Element>(child)) {
-                    if(matchSelector(descendant, PseudoType::None, subSelector))
-                        return true;
-                    if(combinator != CSSComplexSelector::Combinator::Child && child->firstChild()) {
-                        child = child->firstChild();
-                        continue;
-                    }
+        if(combinator == CSSComplexSelector::Combinator::None)
+            combinator = CSSComplexSelector::Combinator::Descendant;
+        auto checkDescendants = [&](const Element* descendant) {
+            int depth = 0;
+            do {
+                if(matchSelector(descendant, PseudoType::None, subSelector))
+                    return true;
+                if((combinator == CSSComplexSelector::Combinator::Descendant || depth < maxDepth - 1)
+                    && descendant->firstChildElement()) {
+                    descendant = descendant->firstChildElement();
+                    ++depth;
+                    continue;
                 }
 
-                while(true) {
-                    if(child->nextSibling()) {
-                        child = child->nextSibling();
+                while(depth > 0) {
+                    if(descendant->nextSiblingElement()) {
+                        descendant = descendant->nextSiblingElement();
                         break;
                     }
 
-                    child = child->parentNode();
-                    if(child == element) {
-                        child = nullptr;
-                        break;
-                    }
+                    descendant = descendant->parentElement();
+                    --depth;
+                }
+            } while(descendant && depth > 0);
+            return false;
+        };
+
+        switch(combinator) {
+        case CSSComplexSelector::Combinator::Descendant:
+        case CSSComplexSelector::Combinator::Child:
+            for(auto child = element->firstChildElement(); child; child = child->nextSiblingElement()) {
+                if(checkDescendants(child)) {
+                    return true;
                 }
             }
 
-            break;
-        }
-
+            return false;
         case CSSComplexSelector::Combinator::DirectAdjacent:
         case CSSComplexSelector::Combinator::InDirectAdjacent:
             for(auto sibling = element->nextSiblingElement(); sibling; sibling = sibling->nextSiblingElement()) {
-                if(matchSelector(sibling, PseudoType::None, subSelector))
+                if(checkDescendants(sibling))
                     return true;
                 if(combinator == CSSComplexSelector::Combinator::DirectAdjacent) {
                     return false;
@@ -780,6 +787,8 @@ bool CSSRuleData::matchPseudoClassHasSelector(const Element* element, const CSSS
             }
 
             break;
+        case CSSComplexSelector::Combinator::None:
+            assert(false);
         }
     }
 

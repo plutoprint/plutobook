@@ -216,6 +216,8 @@ public:
     CSSPropertyList presentationAttributeStyle();
 
     Element* parentElement() const;
+    Element* firstChildElement() const;
+    Element* lastChildElement() const;
     Element* previousSiblingElement() const;
     Element* nextSiblingElement() const;
 

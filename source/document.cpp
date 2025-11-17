@@ -425,6 +425,28 @@ Element* Element::parentElement() const
     return to<Element>(parentNode());
 }
 
+Element* Element::firstChildElement() const
+{
+    for(auto child = firstChild(); child; child = child->nextSibling()) {
+        if(auto element = to<Element>(child)) {
+            return element;
+        }
+    }
+
+    return nullptr;
+}
+
+Element* Element::lastChildElement() const
+{
+    for(auto child = lastChild(); child; child = child->previousSibling()) {
+        if(auto element = to<Element>(child)) {
+            return element;
+        }
+    }
+
+    return nullptr;
+}
+
 Element* Element::previousSiblingElement() const
 {
     for(auto sibling = previousSibling(); sibling; sibling = sibling->previousSibling()) {
