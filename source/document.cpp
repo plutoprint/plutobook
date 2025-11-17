@@ -425,25 +425,23 @@ Element* Element::parentElement() const
     return to<Element>(parentNode());
 }
 
-Element* Element::previousElement() const
+Element* Element::previousSiblingElement() const
 {
-    auto node = previousSibling();
-    while(node) {
-        if(auto element = to<Element>(node))
+    for(auto sibling = previousSibling(); sibling; sibling = sibling->previousSibling()) {
+        if(auto element = to<Element>(sibling)) {
             return element;
-        node = node->previousSibling();
+        }
     }
 
     return nullptr;
 }
 
-Element* Element::nextElement() const
+Element* Element::nextSiblingElement() const
 {
-    auto node = nextSibling();
-    while(node) {
-        if(auto element = to<Element>(node))
+    for(auto sibling = nextSibling(); sibling; sibling = sibling->nextSibling()) {
+        if(auto element = to<Element>(sibling)) {
             return element;
-        node = node->nextSibling();
+        }
     }
 
     return nullptr;

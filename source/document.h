@@ -216,8 +216,8 @@ public:
     CSSPropertyList presentationAttributeStyle();
 
     Element* parentElement() const;
-    Element* previousElement() const;
-    Element* nextElement() const;
+    Element* previousSiblingElement() const;
+    Element* nextSiblingElement() const;
 
     void setIsCaseSensitive(bool value) { m_isCaseSensitive = value; }
     bool isCaseSensitive() const { return m_isCaseSensitive; }

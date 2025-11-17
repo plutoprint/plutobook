@@ -515,7 +515,7 @@ bool CSSRuleData::matchSelector(const Element* element, PseudoType pseudoType, c
             break;
         case CSSComplexSelector::Combinator::DirectAdjacent:
         case CSSComplexSelector::Combinator::InDirectAdjacent:
-            element = element->previousElement();
+            element = element->previousSiblingElement();
             break;
         case CSSComplexSelector::Combinator::None:
             assert(false);
@@ -771,7 +771,7 @@ bool CSSRuleData::matchPseudoClassHasSelector(const Element* element, const CSSS
 
         case CSSComplexSelector::Combinator::DirectAdjacent:
         case CSSComplexSelector::Combinator::InDirectAdjacent:
-            for(auto sibling = element->nextElement(); sibling; sibling = sibling->nextElement()) {
+            for(auto sibling = element->nextSiblingElement(); sibling; sibling = sibling->nextSiblingElement()) {
                 if(matchSelector(sibling, PseudoType::None, subSelector))
                     return true;
                 if(combinator == CSSComplexSelector::Combinator::DirectAdjacent) {
@@ -834,12 +834,12 @@ bool CSSRuleData::matchPseudoClassEmptySelector(const Element* element, const CS
 
 bool CSSRuleData::matchPseudoClassFirstChildSelector(const Element* element, const CSSSimpleSelector& selector)
 {
-    return !element->previousElement();
+    return !element->previousSiblingElement();
 }
 
 bool CSSRuleData::matchPseudoClassLastChildSelector(const Element* element, const CSSSimpleSelector& selector)
 {
-    return !element->nextElement();
+    return !element->nextSiblingElement();
 }
 
 bool CSSRuleData::matchPseudoClassOnlyChildSelector(const Element* element, const CSSSimpleSelector& selector)
@@ -849,7 +849,7 @@ bool CSSRuleData::matchPseudoClassOnlyChildSelector(const Element* element, cons
 
 bool CSSRuleData::matchPseudoClassFirstOfTypeSelector(const Element* element, const CSSSimpleSelector& selector)
 {
-    for(auto sibling = element->previousElement(); sibling; sibling = sibling->previousElement()) {
+    for(auto sibling = element->previousSiblingElement(); sibling; sibling = sibling->previousSiblingElement()) {
         if(sibling->isOfType(element->namespaceURI(), element->tagName())) {
             return false;
         }
@@ -860,7 +860,7 @@ bool CSSRuleData::matchPseudoClassFirstOfTypeSelector(const Element* element, co
 
 bool CSSRuleData::matchPseudoClassLastOfTypeSelector(const Element* element, const CSSSimpleSelector& selector)
 {
-    for(auto sibling = element->nextElement(); sibling; sibling = sibling->nextElement()) {
+    for(auto sibling = element->nextSiblingElement(); sibling; sibling = sibling->nextSiblingElement()) {
         if(sibling->isOfType(element->namespaceURI(), element->tagName())) {
             return false;
         }
@@ -877,7 +877,7 @@ bool CSSRuleData::matchPseudoClassOnlyOfTypeSelector(const Element* element, con
 bool CSSRuleData::matchPseudoClassNthChildSelector(const Element* element, const CSSSimpleSelector& selector)
 {
     int index = 0;
-    for(auto sibling = element->previousElement(); sibling; sibling = sibling->previousElement())
+    for(auto sibling = element->previousSiblingElement(); sibling; sibling = sibling->previousSiblingElement())
         ++index;
     return selector.matchnth(index + 1);
 }
@@ -885,7 +885,7 @@ bool CSSRuleData::matchPseudoClassNthChildSelector(const Element* element, const
 bool CSSRuleData::matchPseudoClassNthLastChildSelector(const Element* element, const CSSSimpleSelector& selector)
 {
     int index = 0;
-    for(auto sibling = element->nextElement(); sibling; sibling = sibling->nextElement())
+    for(auto sibling = element->nextSiblingElement(); sibling; sibling = sibling->nextSiblingElement())
         ++index;
     return selector.matchnth(index + 1);
 }
@@ -893,7 +893,7 @@ bool CSSRuleData::matchPseudoClassNthLastChildSelector(const Element* element, c
 bool CSSRuleData::matchPseudoClassNthOfTypeSelector(const Element* element, const CSSSimpleSelector& selector)
 {
     int index = 0;
-    for(auto sibling = element->previousElement(); sibling; sibling = sibling->previousElement()) {
+    for(auto sibling = element->previousSiblingElement(); sibling; sibling = sibling->previousSiblingElement()) {
         if(sibling->isOfType(element->namespaceURI(), element->tagName())) {
             ++index;
         }
@@ -905,7 +905,7 @@ bool CSSRuleData::matchPseudoClassNthOfTypeSelector(const Element* element, cons
 bool CSSRuleData::matchPseudoClassNthLastOfTypeSelector(const Element* element, const CSSSimpleSelector& selector)
 {
     int index = 0;
-    for(auto sibling = element->nextElement(); sibling; sibling = sibling->nextElement()) {
+    for(auto sibling = element->nextSiblingElement(); sibling; sibling = sibling->nextSiblingElement()) {
         if(sibling->isOfType(element->namespaceURI(), element->tagName())) {
             ++index;
         }
