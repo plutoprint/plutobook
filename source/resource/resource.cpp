@@ -365,7 +365,7 @@ ResourceData ResourceLoader::loadUrl(const Url& url, ResourceFetcher* customFetc
 Url ResourceLoader::baseUrl()
 {
     auto path = std::filesystem::current_path().generic_string();
-    if(path.size() >= 2 && isAlpha(path[0]) && path[1] == ':')
+    if(path.front() != '/')
         path.insert(path.begin(), '/');
     return Url("file://" + path + "/");
 }
@@ -387,13 +387,10 @@ Url ResourceLoader::completeUrl(const std::string_view& value)
 {
     if(isAbsoluteFilename(value)) {
         std::string url("file://");
-        if(isAlpha(value.front()))
+        if(value.front() != '/')
             url.push_back('/');
-        for(auto cc : value) {
-            if(cc == '\\') cc = '/';
-            url.push_back(cc);
-        }
-
+        for(auto cc : value)
+            url.push_back(cc == '\\' ? '/' : cc);
         return Url(url);
     }
 
