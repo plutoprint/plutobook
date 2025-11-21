@@ -364,7 +364,10 @@ ResourceData ResourceLoader::loadUrl(const Url& url, ResourceFetcher* customFetc
 
 Url ResourceLoader::baseUrl()
 {
-    return Url("file://" + std::filesystem::current_path().generic_string() + "/");
+    auto path = std::filesystem::current_path().generic_string();
+    if(path.size() >= 2 && isAlpha(path[0]) && path[1] == ':')
+        path.insert(path.begin(), '/');
+    return Url("file://" + path + "/");
 }
 
 static bool isAbsoluteFilename(const std::string_view& value)
