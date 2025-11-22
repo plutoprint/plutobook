@@ -332,7 +332,15 @@ ResourceData DefaultResourceFetcher::fetchUrl(const std::string& url)
     }
 
     input.remove_prefix(7);
+    if(input.size() >= 3 && input[0] == '/' && isAlpha(input[1]) && input[2] == ':') {
+        input.remove_prefix(1);
+    }
+
     auto filename = percentDecode(input.substr(0, input.rfind('?')));
+#ifdef _WIN32
+    std::replace(filename.begin(), filename.end(), '/', '\\');
+#endif
+
     std::ifstream in(filename, std::ios::ate | std::ios::binary);
     if(!in.is_open()) {
         plutobook_set_error_message("Unable to fetch URL '%s': %s", url.data(), std::strerror(errno));
