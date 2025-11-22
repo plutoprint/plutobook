@@ -550,9 +550,31 @@ Url::Url(const std::string_view& input)
     m_fragmentEnd = m_value.length();
 }
 
+constexpr bool isAbsoluteFilename(const std::string_view& input)
+{
+    if(!input.empty()) {
+        if(input.front() == '/')
+            return true;
+        return input.size() >= 3
+            && isAlpha(input[0]) && input[1] == ':'
+            && (input[2] == '\\' || input[2] == '/');
+    }
+
+    return false;
+}
+
 Url Url::complete(std::string_view input) const
 {
     stripLeadingAndTrailingSpaces(input);
+    if(isAbsoluteFilename(input)) {
+        std::string value("file://");
+        if(input.front() != '/')
+            value.push_back('/');
+        for(auto cc : input)
+            value.push_back(cc == '\\' ? '/' : cc);
+        return Url(value);
+    }
+
     if(m_value.empty())
         return Url(input);
     assert(m_value[m_schemeEnd] == ':');

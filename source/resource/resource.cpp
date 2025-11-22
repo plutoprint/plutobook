@@ -378,30 +378,8 @@ Url ResourceLoader::baseUrl()
     return Url("file://" + path + "/");
 }
 
-static bool isAbsoluteFilename(const std::string_view& value)
-{
-    if(!value.empty()) {
-        if(value.front() == '/')
-            return true;
-        return value.size() >= 3
-            && isAlpha(value[0]) && value[1] == ':'
-            && (value[2] == '\\' || value[2] == '/');
-    }
-
-    return false;
-}
-
 Url ResourceLoader::completeUrl(const std::string_view& value)
 {
-    if(isAbsoluteFilename(value)) {
-        std::string url("file://");
-        if(value.front() != '/')
-            url.push_back('/');
-        for(auto cc : value)
-            url.push_back(cc == '\\' ? '/' : cc);
-        return Url(url);
-    }
-
     return baseUrl().complete(value);
 }
 
