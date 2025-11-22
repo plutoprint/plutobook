@@ -365,7 +365,7 @@ ResourceData ResourceLoader::loadUrl(const Url& url, ResourceFetcher* customFetc
 Url ResourceLoader::baseUrl()
 {
     auto path = std::filesystem::current_path().generic_string();
-    if(path.front() != '/')
+    if(!path.empty() && path.front() != '/')
         path.insert(path.begin(), '/');
     return Url("file://" + path + "/");
 }
