@@ -1,0 +1,22 @@
+diff -urN cairo-1.18.4-original/src/cairo-scaled-font-subsets.c cairo-1.18.4/src/cairo-scaled-font-subsets.c
+--- cairo-1.18.4-original/src/cairo-scaled-font-subsets.c	2025-03-08 13:35:35.000000000 +0100
++++ cairo-1.18.4/src/cairo-scaled-font-subsets.c	2025-11-23 07:04:02.965885207 +0100
+@@ -929,6 +929,7 @@
+                                                       &identity,
+                                                       &identity,
+                                                       &font_options);
++            _cairo_font_options_fini (&font_options);
+ 	    if (unlikely (unscaled_font->status))
+ 		return unscaled_font->status;
+ 
+diff -urN cairo-1.18.4-original/src/cairo-surface-wrapper.c cairo-1.18.4/src/cairo-surface-wrapper.c
+--- cairo-1.18.4-original/src/cairo-surface-wrapper.c	2025-03-08 13:35:35.000000000 +0100
++++ cairo-1.18.4/src/cairo-surface-wrapper.c	2025-11-23 06:56:34.103822822 +0100
+@@ -507,6 +507,7 @@
+ 					      dev_scaled_font,
+ 					      dev_clip);
+  FINISH:
++    _cairo_font_options_fini (&options);
+     _cairo_clip_destroy (dev_clip);
+     if (dev_glyphs != stack_glyphs)
+ 	free (dev_glyphs);
