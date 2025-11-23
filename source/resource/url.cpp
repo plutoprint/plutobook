@@ -553,7 +553,7 @@ Url::Url(const std::string_view& input)
 constexpr bool isAbsoluteFilename(const std::string_view& input)
 {
     if(!input.empty()) {
-        if(input.front() == '/')
+        if(input.front() == '/' || input.front() == '\\')
             return true;
         return input.size() >= 3
             && isAlpha(input[0]) && input[1] == ':'
