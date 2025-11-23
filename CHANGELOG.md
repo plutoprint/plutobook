@@ -1,5 +1,14 @@
 # Changelog
 
+## PlutoBook 0.11.1 (2025-11-23)
+
+- Fix URL resolution for Windows absolute paths by mapping them to proper `file://` URLs
+- Add `cairo-fix-font-options-leaks.patch` to address memory leaks in Cairo
+
+Backers and sponsors:
+
+- [Ashish Kulkarni](https://github.com/ashkulz)
+
 ## PlutoBook 0.11.0 (2025-11-17)
 
 - Add support for `<base>` tag to resolve relative URLs

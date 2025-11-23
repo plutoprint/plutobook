@@ -1,5 +1,5 @@
 project('plutobook', 'cpp', 'c',
-    version: '0.11.0',
+    version: '0.11.1',
     license: 'MIT',
     meson_version: '>=0.64.0',
     default_options: ['cpp_std=c++20']
