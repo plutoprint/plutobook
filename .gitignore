@@ -1,3 +1,5 @@
 /build
-/subprojects/*/
+/subprojects/*
+!/subprojects/*.wrap
+!/subprojects/packagefiles
 *.user
