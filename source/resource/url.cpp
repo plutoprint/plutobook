@@ -566,7 +566,7 @@ constexpr bool isAbsoluteFilename(const std::string_view& input)
 Url Url::complete(std::string_view input) const
 {
     stripLeadingAndTrailingSpaces(input);
-    if(isAbsoluteFilename(input)) {
+    if(protocolIs("file") && isAbsoluteFilename(input)) {
         std::string value("file://");
         if(input.front() != '/')
             value.push_back('/');
