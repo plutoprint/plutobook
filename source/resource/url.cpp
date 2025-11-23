@@ -587,7 +587,7 @@ Url Url::complete(std::string_view input) const
         if(it != end && *it == ':') {
             auto length = it - input.begin();
             ++it;
-            if(it == end || *it == '/' || !isHierarchical() || !equals(input.data(), length, m_value.data(), m_schemeEnd, false))
+            if(it == end || *it == '/' || !isHierarchical() || !protocolIs(input.substr(0, length)))
                 return Url(input);
             input.remove_prefix(length + 1);
         }
