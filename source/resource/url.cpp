@@ -567,9 +567,9 @@ Url Url::complete(std::string_view input) const
 {
     stripLeadingAndTrailingSpaces(input);
     if(protocolIs("file") && isAbsoluteFilename(input)) {
-        std::string value("file://");
-        if(input.front() != '/' && input.front() != '\\')
-            value.push_back('/');
+        std::string value("file:///");
+        while(!input.empty() && (input.front() == '/' || input.front() == '\\'))
+            input.remove_prefix(1);
         for(auto cc : input)
             value.push_back(cc == '\\' ? '/' : cc);
         return Url(value);
