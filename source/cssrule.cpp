@@ -775,14 +775,14 @@ bool CSSRuleData::matchPseudoClassHasSelector(const Element* element, const CSSS
                 }
             }
 
-            return false;
+            break;
         case CSSComplexSelector::Combinator::DirectAdjacent:
         case CSSComplexSelector::Combinator::InDirectAdjacent:
             for(auto sibling = element->nextSiblingElement(); sibling; sibling = sibling->nextSiblingElement()) {
                 if(checkDescendants(sibling))
                     return true;
                 if(combinator == CSSComplexSelector::Combinator::DirectAdjacent) {
-                    return false;
+                    break;
                 }
             }
 
