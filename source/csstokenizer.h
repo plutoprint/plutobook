@@ -270,9 +270,7 @@ private:
 
 class CSSTokenizer {
 public:
-    explicit CSSTokenizer(const std::string_view& input)
-        : m_input(input)
-    {}
+    explicit CSSTokenizer(const std::string_view& input);
 
     CSSTokenStream tokenize();
 
