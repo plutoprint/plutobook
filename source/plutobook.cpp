@@ -7,35 +7,61 @@
 #include "replacedbox.h"
 #include "graphicscontext.h"
 
-#include <fstream>
-#include <filesystem>
 #include <cmath>
 #include <utility>
+#include <cstdio>
+
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
+FILE* plutobook__open_output_file(const char* filename)
+{
+#ifdef _WIN32
+    wchar_t wfilename[1024];
+    if(!MultiByteToWideChar(CP_UTF8, 0, filename, -1, wfilename, sizeof(wfilename) / sizeof(wchar_t))) {
+        return NULL;
+    }
+
+    return _wfopen(wfilename, L"wb");
+#else
+    return fopen(filename, "wb");
+#endif
+}
 
 namespace plutobook {
 
 class FileOutputStream final : public OutputStream {
 public:
-    explicit FileOutputStream(const std::filesystem::path& filename);
+    explicit FileOutputStream(const std::string& filename);
 
-    bool isOpen() const { return m_stream.is_open(); }
+    bool isOpen() const { return m_handle; }
     bool write(const char* data, size_t length) final;
 
+    ~FileOutputStream() final;
+
 private:
-    std::ofstream m_stream;
+    FILE* m_handle;
 };
 
-FileOutputStream::FileOutputStream(const std::filesystem::path& filename)
-    : m_stream(filename, std::ios::binary)
+FileOutputStream::FileOutputStream(const std::string& filename)
+    : m_handle(plutobook__open_output_file(filename.data()))
 {
-    if(!m_stream.is_open()) {
-        plutobook_set_error_message("Unable to open file '%s': %s", filename.string().data(), std::strerror(errno));
+    if(m_handle == NULL) {
+        plutobook_set_error_message("Unable to open file '%s': %s", filename.data(), std::strerror(errno));
     }
 }
 
 bool FileOutputStream::write(const char* data, size_t length)
 {
-    return m_stream.write(data, length).good();
+    return length == fwrite(data, 1, length, m_handle);
+}
+
+FileOutputStream::~FileOutputStream()
+{
+    if(m_handle) {
+        fclose(m_handle);
+    }
 }
 
 static plutobook_stream_status_t stream_write_func(void* closure, const char* data, unsigned int length)
