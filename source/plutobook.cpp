@@ -8,6 +8,7 @@
 #include "graphicscontext.h"
 
 #include <fstream>
+#include <filesystem>
 #include <cmath>
 #include <utility>
 
@@ -15,7 +16,7 @@ namespace plutobook {
 
 class FileOutputStream final : public OutputStream {
 public:
-    explicit FileOutputStream(const std::string& filename);
+    explicit FileOutputStream(const std::filesystem::path& filename);
 
     bool isOpen() const { return m_stream.is_open(); }
     bool write(const char* data, size_t length) final;
@@ -24,11 +25,11 @@ private:
     std::ofstream m_stream;
 };
 
-FileOutputStream::FileOutputStream(const std::string& filename)
+FileOutputStream::FileOutputStream(const std::filesystem::path& filename)
     : m_stream(filename, std::ios::binary)
 {
     if(!m_stream.is_open()) {
-        plutobook_set_error_message("Unable to open file '%s': %s", filename.data(), std::strerror(errno));
+        plutobook_set_error_message("Unable to open file '%s': %s", filename.string().data(), std::strerror(errno));
     }
 }
 
