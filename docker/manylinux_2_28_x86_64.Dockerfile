@@ -3,7 +3,8 @@ FROM quay.io/pypa/manylinux_2_28_x86_64:latest
 ENV PYTHON3=/opt/python/cp312-cp312/bin/python3
 ENV PATH="/opt/python/cp312-cp312/bin:${PATH}"
 
-RUN dnf install -y \
+RUN dnf -y update && \
+    dnf -y install \
         libcurl-devel \
         libicu-devel \
         bzip2-devel \
