@@ -1,5 +1,15 @@
 # Changelog
 
+## PlutoBook 0.11.2 (2025-12-05)
+
+- Fix `:has()` matching by preventing premature return so all sub-selectors are evaluated
+- Handle UTF-8 filenames on Windows when opening output files
+- Skip zero-width spaces during text rendering to prevent invisible characters in PDF output
+
+Backers and sponsors:
+
+- [Ashish Kulkarni](https://github.com/ashkulz)
+
 ## PlutoBook 0.11.1 (2025-11-23)
 
 - Fix URL resolution for Windows absolute paths by mapping them to proper `file://` URLs
