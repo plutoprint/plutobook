@@ -35,6 +35,7 @@ static FILE* output_stream_fopen(const char* filename)
 #ifdef _WIN32
     wchar_t wfilename[1024];
     if(!MultiByteToWideChar(CP_UTF8, 0, filename, -1, wfilename, sizeof(wfilename) / sizeof(wchar_t))) {
+        errno = EINVAL;
         return NULL;
     }
 
