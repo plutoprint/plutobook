@@ -99,9 +99,16 @@ foreach feature: cairo_required_features
     )
 endforeach
 
+curl_default_options = [
+    'tool=disabled',
+    'tests=disabled',
+    'unittests=disabled'
+]
+
 curl_dep = dependency('libcurl',
     required: get_option('curl'),
     version: '>=7.61.1',
+    default_options: curl_default_options,
     fallback: ['curl', 'curl_dep']
 )
 
