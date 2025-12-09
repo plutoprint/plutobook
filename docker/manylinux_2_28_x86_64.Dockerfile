@@ -7,6 +7,7 @@ RUN dnf -y update && \
     dnf -y install \
         libcurl-devel \
         libicu-devel \
+        openssl-devel \
         bzip2-devel \
         brotli-devel \
         gperf && \
