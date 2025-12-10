@@ -202,7 +202,7 @@ void ContentBoxBuilder::addQrCode(const CSSFunctionValue& function)
         ss << "\" fill=\"" << fill << "\"/>";
         ss << "</svg>";
 
-        addImage(SVGImage::create(ss.view(), emptyGlo, nullptr));
+        addImage(SVGImage::create(ss.str(), emptyGlo, nullptr));
     }
 }
 
