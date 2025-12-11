@@ -1,5 +1,15 @@
 # Changelog
 
+## PlutoBook 0.11.3 (2025-12-11)
+
+- Fix GCC 12 compilation error
+- Refactor SSL verification settings in curl
+- Remove incorrect `isElementNode` assertion in `BoxView::build()`
+
+Backers and sponsors:
+
+- [Ashish Kulkarni](https://github.com/ashkulz)
+
 ## PlutoBook 0.11.2 (2025-12-05)
 
 - Fix `:has()` matching by preventing premature return so all sub-selectors are evaluated
