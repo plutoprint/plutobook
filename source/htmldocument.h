@@ -172,6 +172,7 @@ public:
 
     unsigned span() const;
 
+    void collectAttributeStyle(std::string& output, const GlobalString& name, const HeapString& value) const final;
     void collectAdditionalAttributeStyle(std::string& output) const final;
     Box* createBox(const RefPtr<BoxStyle>& style) final;
 };
@@ -183,6 +184,7 @@ public:
     unsigned colSpan() const;
     unsigned rowSpan() const;
 
+    void collectAttributeStyle(std::string& output, const GlobalString& name, const HeapString& value) const final;
     void collectAdditionalAttributeStyle(std::string& output) const final;
     Box* createBox(const RefPtr<BoxStyle>& style) final;
 };

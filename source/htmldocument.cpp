@@ -803,6 +803,15 @@ unsigned HTMLTableColElement::span() const
     return parseNonNegativeIntegerAttribute(spanAttr).value_or(1);
 }
 
+void HTMLTableColElement::collectAttributeStyle(std::string& output, const GlobalString& name, const HeapString& value) const
+{
+    if(name == widthAttr) {
+        addHTMLLengthAttributeStyle(output, "width", value);
+    } else {
+        HTMLTablePartElement::collectAttributeStyle(output, name, value);
+    }
+}
+
 void HTMLTableColElement::collectAdditionalAttributeStyle(std::string& output) const
 {
     HTMLTablePartElement::collectAdditionalAttributeStyle(output);
@@ -834,6 +843,15 @@ unsigned HTMLTableCellElement::colSpan() const
 unsigned HTMLTableCellElement::rowSpan() const
 {
     return parseNonNegativeIntegerAttribute(rowspanAttr).value_or(1);
+}
+
+void HTMLTableCellElement::collectAttributeStyle(std::string& output, const GlobalString& name, const HeapString& value) const
+{
+    if(name == widthAttr) {
+        addHTMLLengthAttributeStyle(output, "width", value);
+    } else {
+        HTMLTablePartElement::collectAttributeStyle(output, name, value);
+    }
 }
 
 void HTMLTableCellElement::collectAdditionalAttributeStyle(std::string& output) const
