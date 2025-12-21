@@ -435,6 +435,7 @@ dir, menu, ul { list-style-type: disc; }
 }
 
 ::marker {
+    content: normal;
     white-space: pre;
     unicode-bidi: isolate;
     font-variant-numeric: tabular-nums;

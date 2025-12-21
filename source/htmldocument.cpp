@@ -120,8 +120,17 @@ void HTMLElement::buildPseudoBox(Counters& counters, Box* parent, PseudoType pse
     if(pseudoType == PseudoType::Marker && !parent->isListItemBox())
         return;
     auto style = document()->pseudoStyleForElement(this, pseudoType, parent->style());
-    if(style == nullptr || style->display() == Display::None)
+    if(style == nullptr || style->display() == Display::None) {
         return;
+    }
+
+    auto content = style->get(CSSPropertyID::Content);
+    if(content == nullptr || content->id() == CSSValueID::None)
+        return;
+    if(pseudoType != PseudoType::Marker && content->id() == CSSValueID::Normal) {
+        return;
+    }
+
     auto box = Box::create(nullptr, style);
     parent->addChild(box);
     if(pseudoType == PseudoType::Before || pseudoType == PseudoType::After) {
