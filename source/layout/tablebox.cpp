@@ -1311,6 +1311,10 @@ void TableSectionBox::build()
 void TableSectionBox::paint(const PaintInfo& info, const Point& offset, PaintPhase phase)
 {
     for(auto rowBox : m_rows) {
+        if(phase == PaintPhase::Outlines && !rowBox->hasLayer() && rowBox->style()->visibility() == Visibility::Visible) {
+            rowBox->paintOutlines(info, offset + location() + rowBox->location());
+        }
+
         for(const auto& [col, cell] : rowBox->cells()) {
             auto cellBox = cell.box();
             if(cell.inColOrRowSpan() || (cellBox->emptyCells() == EmptyCells::Hide && !cellBox->firstChild()))
@@ -1331,6 +1335,10 @@ void TableSectionBox::paint(const PaintInfo& info, const Point& offset, PaintPha
                 cellBox->paint(info, adjustedOffset, phase);
             }
         }
+    }
+
+    if(phase == PaintPhase::Outlines && style()->visibility() == Visibility::Visible) {
+        paintOutlines(info, offset + location());
     }
 }
 
@@ -1368,6 +1376,10 @@ TableCellBox* TableRowBox::cellAt(uint32_t columnIndex) const
 
 void TableRowBox::paint(const PaintInfo& info, const Point& offset, PaintPhase phase)
 {
+    if(phase == PaintPhase::Outlines && style()->visibility() == Visibility::Visible) {
+        paintOutlines(info, offset + location());
+    }
+
     for(const auto& [col, cell] : m_cells) {
         auto cellBox = cell.box();
         if(cell.inColOrRowSpan() || (cellBox->emptyCells() == EmptyCells::Hide && !cellBox->firstChild()))
