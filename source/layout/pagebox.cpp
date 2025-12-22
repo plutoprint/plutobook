@@ -711,7 +711,7 @@ void PageLayout::buildPageMargin(const Counters& counters, PageBox* pageBox, Pag
     auto marginBox = new (m_document->heap()) PageMarginBox(marginStyle, marginType);
     Counters marginCounters(counters);
     marginCounters.update(marginBox);
-    ContentBoxBuilder(marginCounters, nullptr, marginBox).build();
+    ContentBoxBuilder(marginCounters, nullptr, marginBox).build(*content);
     pageBox->addChild(marginBox);
 }
 

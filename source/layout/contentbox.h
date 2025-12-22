@@ -67,7 +67,7 @@ class ContentBoxBuilder {
 public:
     ContentBoxBuilder(Counters& counters, Element* element, Box* box);
 
-    void build();
+    void build(const CSSValue& content);
 
 private:
     void addText(const HeapString& text);

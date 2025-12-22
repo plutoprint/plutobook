@@ -138,7 +138,7 @@ void HTMLElement::buildPseudoBox(Counters& counters, Box* parent, PseudoType pse
         buildPseudoBox(counters, box, PseudoType::Marker);
     }
 
-    ContentBoxBuilder(counters, this, box).build();
+    ContentBoxBuilder(counters, this, box).build(*content);
 }
 
 void HTMLElement::buildElementBox(Counters& counters, Box* box)

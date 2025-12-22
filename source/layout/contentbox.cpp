@@ -227,12 +227,11 @@ const HeapString& ContentBoxBuilder::resolveAttr(const CSSAttrValue& attr) const
     return attribute->value();
 }
 
-void ContentBoxBuilder::build()
+void ContentBoxBuilder::build(const CSSValue& content)
 {
-    auto content = m_style->get(CSSPropertyID::Content);
-    if(content && content->id() == CSSValueID::None)
+    if(content.id() == CSSValueID::None)
         return;
-    if(content == nullptr || content->id() == CSSValueID::Normal) {
+    if(content.id() == CSSValueID::Normal) {
         if(m_style->pseudoType() != PseudoType::Marker)
             return;
         if(auto image = m_style->listStyleImage()) {
@@ -278,7 +277,7 @@ void ContentBoxBuilder::build()
         return;
     }
 
-    for(const auto& value : to<CSSListValue>(*content)) {
+    for(const auto& value : to<CSSListValue>(content)) {
         if(auto string = to<CSSStringValue>(value)) {
             addText(string->value());
         } else if(auto image = to<CSSImageValue>(value)) {
