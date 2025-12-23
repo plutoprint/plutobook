@@ -1,5 +1,16 @@
 # Changelog
 
+## PlutoBook 0.12.0 (2025-12-23)
+
+- Add support for the `width` style attribute on `td`, `th`, `col`, and `colgroup` elements
+- Support outline painting for table rows and sections
+- Fix unnecessary pseudo-element box generation when content is `none` or `normal`
+
+Backers and sponsors:
+
+- [Peter Nguyen](https://github.com/jupetern)
+- [Ashish Kulkarni](https://github.com/ashkulz)
+
 ## PlutoBook 0.11.3 (2025-12-11)
 
 - Fix GCC 12 compilation error
