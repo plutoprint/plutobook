@@ -108,6 +108,7 @@ void ContentBoxBuilder::addElement(const CSSValue& value)
         return;
     m_box->addChild(newBox);
     element.buildElementBox(m_counters, newBox);
+    newBox->setIsRunning(true);
     m_lastTextBox = nullptr;
 }
 

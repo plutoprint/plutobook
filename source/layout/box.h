@@ -151,6 +151,7 @@ public:
     bool isPositioned() const { return m_isPositioned; }
     bool isFloatingOrPositioned() const { return m_isFloating || m_isPositioned; }
     bool isReplaced() const { return m_isReplaced; }
+    bool isRunning() const { return m_isRunning; }
     bool isOverflowHidden() const { return m_isOverflowHidden; }
     bool isBackgroundStolen() const { return m_isBackgroundStolen; }
     bool isColumnSpanner() const { return m_isColumnSpanner; }
@@ -162,6 +163,7 @@ public:
     void setIsFloating(bool value) { m_isFloating = value; }
     void setIsPositioned(bool value) { m_isPositioned = value; }
     void setIsReplaced(bool value) { m_isReplaced = value; }
+    void setIsRunning(bool value) { m_isRunning = value; }
     void setIsOverflowHidden(bool value) { m_isOverflowHidden = value; }
     void setIsBackgroundStolen(bool value) { m_isBackgroundStolen = value; }
     void setIsColumnSpanner(bool value) { m_isColumnSpanner = value; }
@@ -209,6 +211,7 @@ private:
     bool m_isFloating : 1 {false};
     bool m_isPositioned : 1 {false};
     bool m_isReplaced : 1 {false};
+    bool m_isRunning : 1 {false};
     bool m_isOverflowHidden : 1 {false};
     bool m_isBackgroundStolen : 1 {false};
     bool m_isColumnSpanner : 1 {false};
