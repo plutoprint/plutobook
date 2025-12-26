@@ -183,7 +183,7 @@ BlockFlowBox* Box::createAnonymousBlock(const BoxStyle* parentStyle)
 
 bool Box::canContainFixedPositionedBoxes() const
 {
-    return (hasTransform() && isBlockBox()) || !parentBox() || isRunning();
+    return (hasTransform() && isBlockBox()) || !parentBox() || isPageMarginBox();
 }
 
 bool Box::canContainAbsolutePositionedBoxes() const
