@@ -16,9 +16,9 @@ enum class PageSizeType {
     Ledger
 };
 
-static PageSize getPageSize(PageSizeType type)
+static PageSize getPageSize(PageSizeType sizeType)
 {
-    switch(type) {
+    switch(sizeType) {
     case PageSizeType::A3:
         return PageSize::A3;
     case PageSizeType::A4:
