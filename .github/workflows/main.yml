@@ -101,12 +101,11 @@ jobs:
       - name: Create artifact
         run: |
           mkdir -p plutobook-win64/{licenses,bin/fonts}
-          cp -v /mingw64/bin/pkgconf.exe /mingw64/bin/libpkgconf*.dll plutobook-win64/bin/
           cp -r /mingw64/etc/fonts/* plutobook-win64/bin/fonts/
           cp -r licenses/* plutobook-win64/licenses/
           cp -v CREDITS LICENSE plutobook-win64/
           zip -r plutobook-win64.zip plutobook-win64/
-          
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
