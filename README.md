@@ -1,4 +1,4 @@
-[![Actions](https://github.com/plutoprint/plutobook/actions/workflows/main.yml/badge.svg)](https://github.com/plutoprint/plutobook/actions)
+[![Actions](https://img.shields.io/github/actions/workflow/status/plutoprint/plutobook/main.yml)](https://github.com/plutoprint/plutobook/actions)
 [![Releases](https://img.shields.io/github/v/release/plutoprint/plutobook)](https://github.com/plutoprint/plutobook/releases)
 [![License](https://img.shields.io/github/license/plutoprint/plutobook)](https://github.com/plutoprint/plutobook/blob/main/LICENSE)
 [![Sponsors](https://img.shields.io/github/sponsors/plutoprint)](https://github.com/sponsors/plutoprint)
