@@ -519,4 +519,4 @@ Contributions to PlutoBook are welcome! Feel free to open issues for bug reports
 
 ## License
 
-PlutoBook is licensed under the [MIT License](https://github.com/plutoprint/plutobook/blob/main/LICENSE), allowing for both personal and commercial use.
+PlutoBook is licensed under the [Mozilla Public License Version 2.0](https://github.com/plutoprint/plutobook/blob/main/LICENSE), allowing for both personal and commercial use.
