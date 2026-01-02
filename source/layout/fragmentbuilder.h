@@ -9,9 +9,9 @@
 #ifndef PLUTOBOOK_FRAGMENTBUILDER_H
 #define PLUTOBOOK_FRAGMENTBUILDER_H
 
-namespace plutobook {
+#include "box.h"
 
-class BoxFrame;
+namespace plutobook {
 
 enum class FragmentType {
     Column,
@@ -42,6 +42,9 @@ public:
     void leaveFragment(float offset) { m_fragmentOffset -= offset; }
 
     float fragmentOffset() const { return m_fragmentOffset; }
+
+    bool needsBreakBetween(BreakBetween between) const;
+    bool needsBreakInside(BreakInside inside) const;
 
 private:
     float m_fragmentOffset = 0;
