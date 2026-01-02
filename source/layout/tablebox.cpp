@@ -1124,6 +1124,28 @@ void TableSectionBox::layoutRows(FragmentBuilder* fragmentainer)
     for(size_t rowIndex = 0; rowIndex < m_rows.size(); ++rowIndex) {
         auto rowBox = m_rows[rowIndex];
         if(fragmentainer) {
+            auto fragmentHeight = fragmentainer->fragmentHeightForOffset(rowTop);
+            if(fragmentHeight > 0.f) {
+                float maxRowHeight = rowBox->height();
+                for(const auto& [col, cell] : rowBox->cells()) {
+                    auto cellBox = cell.box();
+                    if(!cell.inColOrRowSpan()) {
+                        maxRowHeight = std::max(maxRowHeight, cellBox->height());
+                    }
+                }
+
+                auto remainingHeight = fragmentainer->fragmentRemainingHeightForOffset(rowTop, AssociateWithLatterFragment);
+                if(maxRowHeight >= remainingHeight && maxRowHeight < fragmentHeight) {
+                    rowTop += remainingHeight;
+                    if(table()->borderCollapse() == BorderCollapse::Collapse) {
+                        float borderTop = 0.f;
+                        for(const auto& [col, cell] : rowBox->cells())
+                            borderTop = std::max(borderTop, cell->borderTop());
+                        rowTop += borderTop;
+                    }
+                }
+            }
+
             fragmentainer->enterFragment(rowTop);
         }
 
