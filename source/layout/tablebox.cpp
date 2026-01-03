@@ -9,6 +9,7 @@
 #include "tablebox.h"
 #include "borderpainter.h"
 #include "fragmentbuilder.h"
+#include "boxview.h"
 
 #include <span>
 #include <ranges>
@@ -197,6 +198,22 @@ std::optional<float> TableBox::inlineBlockBaseline() const
     return firstLineBaseline();
 }
 
+TableSectionBox* TableBox::headerSection() const
+{
+    auto section = topSection();
+    if(section && section->style()->display() == Display::TableHeaderGroup)
+        return section;
+    return nullptr;
+}
+
+TableSectionBox* TableBox::footerSection() const
+{
+    auto section = bottomSection();
+    if(section && section->style()->display() == Display::TableFooterGroup)
+        return section;
+    return nullptr;
+}
+
 TableSectionBox* TableBox::topSection() const
 {
     if(m_sections.empty())
@@ -356,15 +373,26 @@ void TableBox::layout(FragmentBuilder* fragmentainer)
             }
         }
 
+        const auto* header = headerSection();
+        const auto* footer = footerSection();
+
         auto sectionTop = height() + borderVerticalSpacing();
         for(auto section : m_sections) {
             if(fragmentainer) {
                 fragmentainer->enterFragment(sectionTop);
             }
 
+            float headerHeight = 0;
+            float footerHeight = 0;
+            if(header && header != section)
+                headerHeight += borderVerticalSpacing() + header->height();
+            if(footer && footer != section) {
+                footerHeight += borderVerticalSpacing() + footer->height();
+            }
+
             section->setY(sectionTop);
             section->setX(borderAndPaddingLeft());
-            section->layoutRows(fragmentainer);
+            section->layoutRows(fragmentainer, headerHeight, footerHeight);
             if(fragmentainer) {
                 fragmentainer->leaveFragment(sectionTop);
             }
@@ -501,15 +529,24 @@ void TableBox::paintContents(const PaintInfo& info, const Point& offset, PaintPh
         }
     }
 
-    if(phase == PaintPhase::Decorations && m_collapsedBorderEdges && style()->borderCollapse() == BorderCollapse::Collapse) {
+    auto shouldPaintCollapsedBorders = phase == PaintPhase::Decorations && m_collapsedBorderEdges && style()->borderCollapse() == BorderCollapse::Collapse;
+    if(shouldPaintCollapsedBorders) {
         for(const auto& edge : *m_collapsedBorderEdges) {
             for(auto section : m_sections | std::views::reverse) {
-                for(auto row : section->rows() | std::views::reverse) {
-                    Point adjustedOffset(offset + section->location() + row->location());
-                    for(const auto& [col, cell] : row->cells()) {
-                        if(!cell.inColOrRowSpan()) {
-                            cell->paintCollapsedBorders(info, adjustedOffset, edge);
-                        }
+                section->paintCollapsedBorders(info, offset, edge);
+            }
+        }
+    }
+
+    if(view()->currentPage()) {
+        if(auto header = headerSection()) {
+            const auto& rect = info.rect();
+            if(rect.y > offset.y + header->y()) {
+                Point headerOffset(offset.x, rect.y - header->y());
+                header->paint(info, headerOffset, phase);
+                if(shouldPaintCollapsedBorders) {
+                    for(const auto& edge : *m_collapsedBorderEdges) {
+                        header->paintCollapsedBorders(info, headerOffset, edge);
                     }
                 }
             }
@@ -1117,7 +1154,7 @@ static void distributeSpanCellToRows(const TableCellBox* cellBox, std::span<Tabl
     }
 }
 
-void TableSectionBox::layoutRows(FragmentBuilder* fragmentainer)
+void TableSectionBox::layoutRows(FragmentBuilder* fragmentainer, float headerHeight, float footerHeight)
 {
     float rowTop = 0;
     auto verticalSpacing = table()->borderVerticalSpacing();
@@ -1135,8 +1172,8 @@ void TableSectionBox::layoutRows(FragmentBuilder* fragmentainer)
                 }
 
                 auto remainingHeight = fragmentainer->fragmentRemainingHeightForOffset(rowTop, AssociateWithLatterFragment);
-                if(maxRowHeight >= remainingHeight - verticalSpacing && maxRowHeight < fragmentHeight) {
-                    rowTop += remainingHeight;
+                if(maxRowHeight >= remainingHeight /*- footerHeight */- verticalSpacing && maxRowHeight < fragmentHeight) {
+                    rowTop += remainingHeight + headerHeight;
                     if(table()->borderCollapse() == BorderCollapse::Collapse) {
                         float borderTop = 0.f;
                         for(const auto& [col, cell] : rowBox->cells())
@@ -1336,6 +1373,18 @@ void TableSectionBox::build()
     auto compare_func = [](const auto& a, const auto& b) { return a->rowSpan() < b->rowSpan(); };
     std::sort(m_spanningCells.begin(), m_spanningCells.end(), compare_func);
     BoxFrame::build();
+}
+
+void TableSectionBox::paintCollapsedBorders(const PaintInfo& info, const Point& offset, const TableCollapsedBorderEdge& currentEdge) const
+{
+    for(auto row : m_rows | std::views::reverse) {
+        Point adjustedOffset(offset + location() + row->location());
+        for(const auto& [col, cell] : row->cells()) {
+            if(!cell.inColOrRowSpan()) {
+                cell->paintCollapsedBorders(info, adjustedOffset, currentEdge);
+            }
+        }
+    }
 }
 
 void TableSectionBox::paint(const PaintInfo& info, const Point& offset, PaintPhase phase)

@@ -52,8 +52,13 @@ public:
     size_t columnCount() const;
 
     const TableSectionBoxList& sections() const { return m_sections; }
+
+    TableSectionBox* headerSection() const;
+    TableSectionBox* footerSection() const;
+
     TableSectionBox* topSection() const;
     TableSectionBox* bottomSection() const;
+
     TableSectionBox* sectionAbove(const TableSectionBox* sectionBox) const;
     TableSectionBox* sectionBelow(const TableSectionBox* sectionBox) const;
 
@@ -170,10 +175,11 @@ public:
 
     void distributeExcessHeightToRows(float distributableHeight);
 
-    void layoutRows(FragmentBuilder* fragmentainer);
+    void layoutRows(FragmentBuilder* fragmentainer, float headerHeight, float footerHeight);
     void layout(FragmentBuilder* fragmentainer) final;
     void build() final;
 
+    void paintCollapsedBorders(const PaintInfo& info, const Point& offset, const TableCollapsedBorderEdge& currentEdge) const;
     void paint(const PaintInfo& info, const Point& offset, PaintPhase phase) final;
 
     const char* name() const final { return "TableSectionBox"; }
