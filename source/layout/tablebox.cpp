@@ -530,25 +530,27 @@ void TableBox::paintContents(const PaintInfo& info, const Point& offset, PaintPh
     }
 
     auto shouldPaintCollapsedBorders = phase == PaintPhase::Decorations && m_collapsedBorderEdges && style()->borderCollapse() == BorderCollapse::Collapse;
-    if(shouldPaintCollapsedBorders) {
-        for(const auto& edge : *m_collapsedBorderEdges) {
-            for(auto section : m_sections | std::views::reverse) {
-                section->paintCollapsedBorders(info, offset, edge);
-            }
-        }
-    }
-
     if(view()->currentPage()) {
         if(auto header = headerSection()) {
             const auto& rect = info.rect();
             if(rect.y > offset.y + header->y()) {
                 Point headerOffset(offset.x, rect.y - header->y());
+                if(style()->borderCollapse() == BorderCollapse::Collapse)
+                   headerOffset.y += borderTop();
                 header->paint(info, headerOffset, phase);
                 if(shouldPaintCollapsedBorders) {
                     for(const auto& edge : *m_collapsedBorderEdges) {
                         header->paintCollapsedBorders(info, headerOffset, edge);
                     }
                 }
+            }
+        }
+    }
+
+    if(shouldPaintCollapsedBorders) {
+        for(const auto& edge : *m_collapsedBorderEdges) {
+            for(auto section : m_sections | std::views::reverse) {
+                section->paintCollapsedBorders(info, offset, edge);
             }
         }
     }
@@ -1175,10 +1177,7 @@ void TableSectionBox::layoutRows(FragmentBuilder* fragmentainer, float headerHei
                 if(maxRowHeight >= remainingHeight /*- footerHeight */- verticalSpacing && maxRowHeight < fragmentHeight) {
                     rowTop += remainingHeight + headerHeight;
                     if(table()->borderCollapse() == BorderCollapse::Collapse) {
-                        float borderTop = 0.f;
-                        for(const auto& [col, cell] : rowBox->cells())
-                            borderTop = std::max(borderTop, cell->borderTop());
-                        rowTop += borderTop;
+                        rowTop += table()->borderTop();
                     }
                 }
             }
