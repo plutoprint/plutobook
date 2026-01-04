@@ -162,6 +162,7 @@ public:
     bool isRunning() const { return m_isRunning; }
     bool isOverflowHidden() const { return m_isOverflowHidden; }
     bool isBackgroundStolen() const { return m_isBackgroundStolen; }
+    bool isBorderCollapsed() const { return m_isBorderCollapsed; }
     bool isColumnSpanner() const { return m_isColumnSpanner; }
 
     void setIsAnonymous(bool value) { m_isAnonymous = value; }
@@ -174,6 +175,7 @@ public:
     void setIsRunning(bool value) { m_isRunning = value; }
     void setIsOverflowHidden(bool value) { m_isOverflowHidden = value; }
     void setIsBackgroundStolen(bool value) { m_isBackgroundStolen = value; }
+    void setIsBorderCollapsed(bool value) { m_isBorderCollapsed = value; }
     void setIsColumnSpanner(bool value) { m_isColumnSpanner = value; }
 
     bool hasColumnFlowBox() const { return m_hasColumnFlowBox; }
@@ -223,6 +225,7 @@ private:
     bool m_isOverflowHidden : 1 {false};
     bool m_isBackgroundStolen : 1 {false};
     bool m_isColumnSpanner : 1 {false};
+    bool m_isBorderCollapsed : 1 {false};
     bool m_hasColumnFlowBox : 1 {false};
     bool m_hasTransform : 1 {false};
     bool m_hasLayer : 1 {false};

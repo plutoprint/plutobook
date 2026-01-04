@@ -739,16 +739,24 @@ void BoxModel::updateMarginWidths(const BlockBox* container)
 
 void BoxModel::updateVerticalPaddings(const BlockBox* container)
 {
-    auto containerWidth = containingBlockWidthForContent(container);
-    m_paddingTop = style()->paddingTop().calcMin(containerWidth);
-    m_paddingBottom = style()->paddingBottom().calcMin(containerWidth);
+    if(isBorderCollapsed()) {
+        m_paddingTop = m_paddingBottom = 0;
+    } else {
+        auto containerWidth = containingBlockWidthForContent(container);
+        m_paddingTop = style()->paddingTop().calcMin(containerWidth);
+        m_paddingBottom = style()->paddingBottom().calcMin(containerWidth);
+    }
 }
 
 void BoxModel::updateHorizontalPaddings(const BlockBox* container)
 {
-    auto containerWidth = containingBlockWidthForContent(container);
-    m_paddingLeft = style()->paddingLeft().calcMin(containerWidth);
-    m_paddingRight = style()->paddingRight().calcMin(containerWidth);
+    if(isBorderCollapsed()) {
+        m_paddingLeft = m_paddingRight = 0;
+    } else {
+        auto containerWidth = containingBlockWidthForContent(container);
+        m_paddingLeft = style()->paddingLeft().calcMin(containerWidth);
+        m_paddingRight = style()->paddingRight().calcMin(containerWidth);
+    }
 }
 
 void BoxModel::updatePaddingWidths(const BlockBox* container)

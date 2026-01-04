@@ -24,9 +24,15 @@ TableBox::TableBox(Node* node, const RefPtr<BoxStyle>& style)
     , m_borderHorizontalSpacing(0.f)
     , m_borderVerticalSpacing(0.f)
 {
-    if(style->borderCollapse() == BorderCollapse::Separate) {
+    switch(style->borderCollapse()) {
+    case BorderCollapse::Separate:
         m_borderHorizontalSpacing = style->borderHorizontalSpacing();
         m_borderVerticalSpacing = style->borderVerticalSpacing();
+        setIsBorderCollapsed(false);
+        break;
+    case BorderCollapse::Collapse:
+        setIsBorderCollapsed(true);
+        break;
     }
 }
 
@@ -62,17 +68,17 @@ void TableBox::updateOverflowRect()
                     continue;
                 Point offset(section->location() + row->location() + cellBox->location());
                 addOverflowRect(cellBox, offset.x, offset.y);
-                if(style()->borderCollapse() == BorderCollapse::Separate)
-                    continue;
-                const auto& edges = cellBox->collapsedBorderEdges();
-                auto topHalfWidth = edges.topEdge().width() / 2.f;
-                auto bottomHalfWidth = edges.bottomEdge().width() / 2.f;
-                auto leftHalfWidth = edges.leftEdge().width() / 2.f;
-                auto rightHalfWidth = edges.rightEdge().width() / 2.f;
+                if(isBorderCollapsed()) {
+                    const auto& edges = cellBox->collapsedBorderEdges();
+                    auto topHalfWidth = edges.topEdge().width() / 2.f;
+                    auto bottomHalfWidth = edges.bottomEdge().width() / 2.f;
+                    auto leftHalfWidth = edges.leftEdge().width() / 2.f;
+                    auto rightHalfWidth = edges.rightEdge().width() / 2.f;
 
-                Rect borderRect(offset, cellBox->size());
-                borderRect.expand(topHalfWidth, rightHalfWidth, bottomHalfWidth, leftHalfWidth);
-                addOverflowRect(borderRect.y, borderRect.bottom(), borderRect.x, borderRect.right());
+                    Rect borderRect(offset, cellBox->size());
+                    borderRect.expand(topHalfWidth, rightHalfWidth, bottomHalfWidth, leftHalfWidth);
+                    addOverflowRect(borderRect.y, borderRect.bottom(), borderRect.x, borderRect.right());
+                }
             }
         }
     }
@@ -129,7 +135,7 @@ void TableBox::computePreferredWidths(float& minPreferredWidth, float& maxPrefer
 
 void TableBox::computeBorderWidths(float& borderTop, float& borderBottom, float& borderLeft, float& borderRight) const
 {
-    if(style()->borderCollapse() == BorderCollapse::Separate) {
+    if(!isBorderCollapsed()) {
         BlockBox::computeBorderWidths(borderTop, borderBottom, borderLeft, borderRight);
         return;
     }
@@ -300,7 +306,7 @@ TableCellBox* TableBox::cellAfter(const TableCellBox* cellBox) const
 
 float TableBox::availableHorizontalSpace() const
 {
-    if(!m_columns.empty() && style()->borderCollapse() == BorderCollapse::Separate)
+    if(!m_columns.empty() && !isBorderCollapsed())
         return contentBoxWidth() - borderHorizontalSpacing() * (m_columns.size() + 1);
     return contentBoxWidth();
 }
@@ -480,7 +486,7 @@ void TableBox::build()
         m_tableLayout->build();
     }
 
-    if(style()->borderCollapse() == BorderCollapse::Collapse) {
+    if(isBorderCollapsed()) {
         for(auto section : m_sections) {
             for(auto row : section->rows()) {
                 for(const auto& [col, cell] : row->cells()) {
@@ -510,7 +516,7 @@ void TableBox::paintDecorations(const PaintInfo& info, const Point& offset)
     }
 
     paintBackground(info, borderRect);
-    if(style()->borderCollapse() == BorderCollapse::Separate) {
+    if(!isBorderCollapsed()) {
         paintBorder(info, borderRect);
     }
 }
@@ -529,14 +535,14 @@ void TableBox::paintContents(const PaintInfo& info, const Point& offset, PaintPh
         }
     }
 
-    auto shouldPaintCollapsedBorders = phase == PaintPhase::Decorations && m_collapsedBorderEdges && style()->borderCollapse() == BorderCollapse::Collapse;
+    auto shouldPaintCollapsedBorders = phase == PaintPhase::Decorations && m_collapsedBorderEdges && isBorderCollapsed();
     if(view()->currentPage()) {
         if(auto header = headerSection()) {
             const auto& rect = info.rect();
             if(rect.y > offset.y + header->y()) {
                 Point headerOffset(offset.x, rect.y - header->y());
-                if(style()->borderCollapse() == BorderCollapse::Collapse)
-                   headerOffset.y += borderTop();
+                if(isBorderCollapsed())
+                    headerOffset.y += borderTop();
                 header->paint(info, headerOffset, phase);
                 if(shouldPaintCollapsedBorders) {
                     for(const auto& edge : *m_collapsedBorderEdges) {
@@ -1176,7 +1182,7 @@ void TableSectionBox::layoutRows(FragmentBuilder* fragmentainer, float headerHei
                 auto remainingHeight = fragmentainer->fragmentRemainingHeightForOffset(rowTop, AssociateWithLatterFragment);
                 if(maxRowHeight >= remainingHeight /*- footerHeight */- verticalSpacing && maxRowHeight < fragmentHeight) {
                     rowTop += remainingHeight + headerHeight;
-                    if(table()->borderCollapse() == BorderCollapse::Collapse) {
+                    if(table()->isBorderCollapsed()) {
                         rowTop += table()->borderTop();
                     }
                 }
@@ -1818,7 +1824,7 @@ float TableCellBox::computeVerticalAlignShift() const
 
 void TableCellBox::computeBorderWidths(float& borderTop, float& borderBottom, float& borderLeft, float& borderRight) const
 {
-    if(style()->borderCollapse() == BorderCollapse::Separate) {
+    if(!table()->isBorderCollapsed()) {
         BlockBox::computeBorderWidths(borderTop, borderBottom, borderLeft, borderRight);
         return;
     }
@@ -1832,7 +1838,7 @@ void TableCellBox::computeBorderWidths(float& borderTop, float& borderBottom, fl
 
 const TableCollapsedBorderEdges& TableCellBox::collapsedBorderEdges() const
 {
-    assert(table()->borderCollapse() == BorderCollapse::Collapse);
+    assert(table()->isBorderCollapsed());
     if(m_collapsedBorderEdges == nullptr)
         m_collapsedBorderEdges = TableCollapsedBorderEdges::create(this);
     return *m_collapsedBorderEdges;
@@ -1936,7 +1942,7 @@ void TableCellBox::paintDecorations(const PaintInfo& info, const Point& offset)
 {
     Rect borderRect(offset, size());
     paintBackground(info, borderRect);
-    if(table()->borderCollapse() == BorderCollapse::Separate) {
+    if(!table()->isBorderCollapsed()) {
         paintBorder(info, borderRect);
     }
 }

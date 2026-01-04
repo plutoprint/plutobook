@@ -67,7 +67,6 @@ public:
     TableCellBox* cellBefore(const TableCellBox* cellBox) const;
     TableCellBox* cellAfter(const TableCellBox* cellBox) const;
 
-    BorderCollapse borderCollapse() const { return style()->borderCollapse(); }
     float borderHorizontalSpacing() const { return m_borderHorizontalSpacing; }
     float borderVerticalSpacing() const { return m_borderVerticalSpacing; }
 
