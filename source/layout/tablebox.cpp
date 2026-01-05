@@ -1183,7 +1183,14 @@ void TableSectionBox::layoutRows(FragmentBuilder* fragmentainer, float headerHei
                 if(maxRowHeight >= remainingHeight /*- footerHeight */- verticalSpacing && maxRowHeight < fragmentHeight) {
                     rowTop += remainingHeight + headerHeight;
                     if(table()->isBorderCollapsed()) {
-                        rowTop += table()->borderTop();
+                        if(headerHeight) {
+                            rowTop += table()->borderTop();
+                        } else {
+                            float borderTop = 0.f;
+                            for(const auto& [col, cell] : rowBox->cells())
+                                borderTop = std::max(borderTop, cell->borderTop());
+                            rowTop += borderTop;
+                        }
                     }
                 }
             }
