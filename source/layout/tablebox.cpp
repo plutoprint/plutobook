@@ -1171,12 +1171,18 @@ void TableSectionBox::layoutRows(FragmentBuilder* fragmentainer, float headerHei
         if(fragmentainer) {
             auto fragmentHeight = fragmentainer->fragmentHeightForOffset(rowTop);
             if(fragmentHeight > 0.f) {
-                float maxRowHeight = rowBox->height();
+                auto maxRowHeight = rowBox->height();
                 for(const auto& [col, cell] : rowBox->cells()) {
                     auto cellBox = cell.box();
-                    if(!cell.inColOrRowSpan()) {
-                        maxRowHeight = std::max(maxRowHeight, cellBox->height());
+                    if(cell.inColOrRowSpan())
+                        continue;
+                    auto rowHeight = -verticalSpacing;
+                    for(size_t index = 0; index < cellBox->rowSpan(); ++index) {
+                        auto row = m_rows[rowIndex + index];
+                        rowHeight += verticalSpacing + row->height();
                     }
+
+                    maxRowHeight = std::max(rowHeight, maxRowHeight);
                 }
 
                 auto remainingHeight = fragmentainer->fragmentRemainingHeightForOffset(rowTop, AssociateWithLatterFragment);
