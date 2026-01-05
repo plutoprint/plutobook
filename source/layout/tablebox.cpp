@@ -560,6 +560,33 @@ void TableBox::paintContents(const PaintInfo& info, const Point& offset, PaintPh
             }
         }
     }
+
+    if(view()->currentPage()) {
+        if(auto footer = footerSection()) {
+            const auto& rect = info.rect();
+            if(rect.bottom() < offset.y + footer->y()) {
+                float sectionBottom = 0.f;
+                for(auto section : m_sections) {
+                    if(section->y() < rect.bottom()) {
+                        for(auto row : section->rows()) {
+                            auto rowBottom = offset.y + section->y() + row->y() + row->height();
+                            if(rowBottom > sectionBottom && rowBottom < rect.bottom()) {
+                                sectionBottom = rowBottom;
+                            }
+                        }
+                    }
+                }
+
+                Point footerOffset(offset.x, sectionBottom - footer->y());
+                footer->paint(info, footerOffset, phase);
+                if(shouldPaintCollapsedBorders) {
+                    for(const auto& edge : *m_collapsedBorderEdges) {
+                        footer->paintCollapsedBorders(info, footerOffset, edge);
+                    }
+                }
+            }
+        }
+    }
 }
 
 std::unique_ptr<TableLayoutAlgorithm> TableLayoutAlgorithm::create(TableBox* table)
@@ -1186,7 +1213,7 @@ void TableSectionBox::layoutRows(FragmentBuilder* fragmentainer, float headerHei
                 }
 
                 auto remainingHeight = fragmentainer->fragmentRemainingHeightForOffset(rowTop, AssociateWithLatterFragment);
-                if(maxRowHeight >= remainingHeight /*- footerHeight */- verticalSpacing && maxRowHeight < fragmentHeight) {
+                if(maxRowHeight >= remainingHeight - footerHeight - verticalSpacing && maxRowHeight < fragmentHeight) {
                     rowTop += remainingHeight + headerHeight;
                     if(table()->isBorderCollapsed()) {
                         if(headerHeight) {
