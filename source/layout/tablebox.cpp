@@ -1429,9 +1429,9 @@ void TableSectionBox::paintCollapsedBorders(const PaintInfo& info, const Point& 
             auto cellBox = cell.box();
             if(!cell.inColOrRowSpan()) {
                 const auto& rect = info.rect();
-                if(!printing || rect.y <= adjustedOffset.y + cellBox->y()) {
-                    cell->paintCollapsedBorders(info, adjustedOffset, currentEdge);
-                }
+                if(printing && rect.y > adjustedOffset.y + cellBox->y())
+                    continue;
+                cellBox->paintCollapsedBorders(info, adjustedOffset, currentEdge);
             }
         }
     }
