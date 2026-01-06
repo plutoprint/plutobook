@@ -567,11 +567,13 @@ void TableBox::paintContents(const PaintInfo& info, const Point& offset, PaintPh
             if(rect.bottom() < offset.y + footer->y()) {
                 float sectionBottom = 0.f;
                 for(auto section : m_sections) {
-                    if(section->y() < rect.bottom()) {
-                        for(auto row : section->rows()) {
-                            auto rowBottom = offset.y + section->y() + row->y() + row->height();
-                            if(rowBottom > sectionBottom && rowBottom < rect.bottom()) {
+                    auto sectionTop = offset.y + section->y();
+                    if(sectionTop < rect.bottom()) {
+                        for(auto row : section->rows() | std::views::reverse) {
+                            auto rowBottom = sectionTop + row->y() + row->height();
+                            if(rowBottom < rect.bottom()) {
                                 sectionBottom = rowBottom;
+                                break;
                             }
                         }
                     }
