@@ -207,7 +207,7 @@ std::optional<float> TableBox::inlineBlockBaseline() const
 TableSectionBox* TableBox::headerSection() const
 {
     auto section = topSection();
-    if(section && section->style()->display() == Display::TableHeaderGroup)
+    if(section && section->isTableHeader())
         return section;
     return nullptr;
 }
@@ -215,7 +215,7 @@ TableSectionBox* TableBox::headerSection() const
 TableSectionBox* TableBox::footerSection() const
 {
     auto section = bottomSection();
-    if(section && section->style()->display() == Display::TableFooterGroup)
+    if(section && section->isTableFooter())
         return section;
     return nullptr;
 }
@@ -236,28 +236,32 @@ TableSectionBox* TableBox::bottomSection() const
 
 TableSectionBox* TableBox::sectionAbove(const TableSectionBox* sectionBox) const
 {
-    auto prevSection = sectionBox->prevSibling();
+    if(sectionBox->isTableHeader())
+        return nullptr;
+    auto prevSection = sectionBox->isTableFooter() ? lastChild() : sectionBox->prevSibling();
     while(prevSection) {
         auto section = to<TableSectionBox>(prevSection);
-        if(section && section->firstRow())
+        if(section && !section->isTableHeader() && !section->isTableFooter() && section->firstRow())
             return section;
         prevSection = prevSection->prevSibling();
     }
 
-    return nullptr;
+    return headerSection();
 }
 
 TableSectionBox* TableBox::sectionBelow(const TableSectionBox* sectionBox) const
 {
-    auto nextSection = sectionBox->nextSibling();
+    if(sectionBox->isTableFooter())
+        return nullptr;
+    auto nextSection = sectionBox->isTableHeader() ? firstChild() : sectionBox->nextSibling();
     while(nextSection) {
         auto section = to<TableSectionBox>(nextSection);
-        if(section && section->firstRow())
+        if(section && !section->isTableHeader() && !section->isTableFooter() && section->firstRow())
             return section;
         nextSection = nextSection->nextSibling();
     }
 
-    return nullptr;
+    return footerSection();
 }
 
 TableCellBox* TableBox::cellAbove(const TableCellBox* cellBox) const
@@ -474,9 +478,13 @@ void TableBox::build()
         }
     }
 
-    if(headerSection)
+    if(headerSection) {
+        headerSection->setIsTableHeader(true);
         m_sections.push_front(headerSection);
+    }
+
     if(footerSection) {
+        footerSection->setIsTableFooter(true);
         m_sections.push_back(footerSection);
     }
 
