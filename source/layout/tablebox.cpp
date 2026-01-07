@@ -281,7 +281,8 @@ TableCellBox* TableBox::cellAbove(const TableCellBox* cellBox) const
 TableCellBox* TableBox::cellBelow(const TableCellBox* cellBox) const
 {
     const TableRowBox* rowBox = nullptr;
-    if(auto rowIndex = cellBox->rowIndex(); rowIndex < cellBox->section()->rowCount() - 1) {
+    auto rowIndex = cellBox->rowIndex() + cellBox->rowSpan() - 1;
+    if(rowIndex < cellBox->section()->rowCount() - 1) {
         rowBox = cellBox->section()->rowAt(rowIndex + 1);
     } else if(auto section = sectionBelow(cellBox->section())) {
         rowBox = section->firstRow();
