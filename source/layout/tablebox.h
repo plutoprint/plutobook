@@ -332,6 +332,7 @@ public:
 
     uint32_t span() const { return m_span; }
     void setSpan(uint32_t span) { m_span = span; }
+    TableColumnBox* columnGroup() const;
 
     const char* name() const final { return "TableColumnBox"; }
 
@@ -347,8 +348,9 @@ struct is_a<TableColumnBox> {
 enum class TableCollapsedBorderSource : uint8_t {
     None,
     Table,
+    ColumnGroup,
     Column,
-    Section,
+    RowGroup,
     Row,
     Cell
 };
