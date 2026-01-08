@@ -1462,6 +1462,8 @@ void TableSectionBox::paint(const PaintInfo& info, const Point& offset, PaintPha
             Point adjustedOffset(offset + location() + rowBox->location());
             if(phase == PaintPhase::Decorations) {
                 if(auto columnBox = table()->columnAt(col)) {
+                    if(auto columnGroupBox = columnBox->columnGroup())
+                        cellBox->paintBackgroundBehindCell(info, adjustedOffset, columnGroupBox->style());
                     cellBox->paintBackgroundBehindCell(info, adjustedOffset, columnBox->style());
                 }
 
