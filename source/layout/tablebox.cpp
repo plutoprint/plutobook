@@ -1745,7 +1745,8 @@ TableCollapsedBorderEdge TableCollapsedBorderEdges::calcLeftEdge(const TableCell
 
     if(cellBefore) {
         if(auto column = cellBefore->column()) {
-            edge = chooseEdge(getLeftEdge(TableCollapsedBorderSource::Column, column->style()), edge);
+            auto rightEdge = getRightEdge(TableCollapsedBorderSource::Column, column->style());
+            edge = direction == Direction::Ltr ? chooseEdge(rightEdge, edge) : chooseEdge(edge, rightEdge);
             if(!edge.exists()) {
                 return edge;
             }
@@ -1804,7 +1805,8 @@ TableCollapsedBorderEdge TableCollapsedBorderEdges::calcRightEdge(const TableCel
 
     if(cellAfter) {
         if(auto column = cellAfter->column()) {
-            edge = chooseEdge(edge, getRightEdge(TableCollapsedBorderSource::Column, column->style()));
+            auto leftEdge = getLeftEdge(TableCollapsedBorderSource::Column, column->style());
+            edge = direction == Direction::Ltr ? chooseEdge(edge, leftEdge) : chooseEdge(leftEdge, edge);
             if(!edge.exists()) {
                 return edge;
             }
