@@ -1,13 +1,14 @@
 [wrap-file]
-directory = libwebp-1.5.0
-source_url = https://storage.googleapis.com/downloads.webmproject.org/releases/webp/libwebp-1.5.0.tar.gz
-source_filename = libwebp-1.5.0.tar.gz
-source_hash = 7d6fab70cf844bf6769077bd5d7a74893f8ffd4dfb42861745750c63c2a5c92c
-patch_filename = libwebp_1.5.0-1_patch.zip
-patch_url = https://wrapdb.mesonbuild.com/v2/libwebp_1.5.0-1/get_patch
-patch_hash = 5e94fed7f748f73500a30eee83cc194a2a2b9f906145184d79a19feb14b4aca0
-source_fallback_url = https://github.com/mesonbuild/wrapdb/releases/download/libwebp_1.5.0-1/libwebp-1.5.0.tar.gz
-wrapdb_version = 1.5.0-1
+directory = libwebp-1.6.0
+source_url = https://storage.googleapis.com/downloads.webmproject.org/releases/webp/libwebp-1.6.0.tar.gz
+source_filename = libwebp-1.6.0.tar.gz
+source_hash = e4ab7009bf0629fd11982d4c2aa83964cf244cffba7347ecd39019a9e38c4564
+source_fallback_url = https://github.com/mesonbuild/wrapdb/releases/download/libwebp_1.6.0-1/libwebp-1.6.0.tar.gz
+patch_filename = libwebp_1.6.0-1_patch.zip
+patch_url = https://wrapdb.mesonbuild.com/v2/libwebp_1.6.0-1/get_patch
+patch_hash = e23e8485fc85c14767c26b8ecff8737b3993d070ae459e9620f3b7afdb6b9977
+wrapdb_version = 1.6.0-1
 
 [provide]
 dependency_names = libsharyuv, libwebp, libwebpdecoder, libwebpdemux, libwebpmux
+program_names = cwebp, dwebp, webpinfo, webpmux
