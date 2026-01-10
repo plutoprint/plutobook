@@ -1433,15 +1433,11 @@ void TableSectionBox::build()
 
 void TableSectionBox::paintCollapsedBorders(const PaintInfo& info, const Point& offset, const TableCollapsedBorderEdge& currentEdge) const
 {
-    const auto printing = view()->currentPage();
     for(auto row : m_rows | std::views::reverse) {
         Point adjustedOffset(offset + location() + row->location());
         for(const auto& [col, cell] : row->cells()) {
             auto cellBox = cell.box();
             if(!cell.inColOrRowSpan()) {
-                const auto& rect = info.rect();
-                if(printing && rect.y > adjustedOffset.y + cellBox->y())
-                    continue;
                 cellBox->paintCollapsedBorders(info, adjustedOffset, currentEdge);
             }
         }
