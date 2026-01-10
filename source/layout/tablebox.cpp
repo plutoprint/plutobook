@@ -1500,19 +1500,8 @@ void TableRowBox::updateOverflowRect()
     BoxFrame::updateOverflowRect();
     for(const auto& [col, cell] : m_cells) {
         auto cellBox = cell.box();
-        if(cell.inColOrRowSpan())
-            continue;
-        addOverflowRect(cellBox, cellBox->x(), cellBox->y());
-        if(table()->isBorderCollapsed()) {
-            const auto& edges = cellBox->collapsedBorderEdges();
-            auto topHalfWidth = edges.topEdge().width() / 2.f;
-            auto bottomHalfWidth = edges.bottomEdge().width() / 2.f;
-            auto leftHalfWidth = edges.leftEdge().width() / 2.f;
-            auto rightHalfWidth = edges.rightEdge().width() / 2.f;
-
-            Rect borderRect(cellBox->location(), cellBox->size());
-            borderRect.expand(topHalfWidth, rightHalfWidth, bottomHalfWidth, leftHalfWidth);
-            addOverflowRect(borderRect.y, borderRect.bottom(), borderRect.x, borderRect.right());
+        if(!cell.inColOrRowSpan()) {
+            addOverflowRect(cellBox, cellBox->x(), cellBox->y());
         }
     }
 }
