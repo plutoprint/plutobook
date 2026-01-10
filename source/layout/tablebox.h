@@ -160,6 +160,8 @@ public:
     bool isTableSectionBox() const final { return true; }
     void addChild(Box* newChild) final;
 
+    void updateOverflowRect() final;
+
     std::optional<float> firstLineBaseline() const final;
     std::optional<float> lastLineBaseline() const final;
 
@@ -226,6 +228,8 @@ public:
 
     bool isTableRowBox() const final { return true; }
     void addChild(Box* newChild) final;
+
+    void updateOverflowRect() final;
 
     TableCellBox* firstCell() const;
     TableCellBox* lastCell() const;

@@ -61,26 +61,7 @@ void TableBox::updateOverflowRect()
     for(auto caption : m_captions)
         addOverflowRect(caption, caption->x(), caption->y());
     for(auto section : m_sections) {
-        for(auto row : section->rows()) {
-            for(const auto& [col, cell] : row->cells()) {
-                auto cellBox = cell.box();
-                if(cell.inColOrRowSpan())
-                    continue;
-                Point offset(section->location() + row->location() + cellBox->location());
-                addOverflowRect(cellBox, offset.x, offset.y);
-                if(isBorderCollapsed()) {
-                    const auto& edges = cellBox->collapsedBorderEdges();
-                    auto topHalfWidth = edges.topEdge().width() / 2.f;
-                    auto bottomHalfWidth = edges.bottomEdge().width() / 2.f;
-                    auto leftHalfWidth = edges.leftEdge().width() / 2.f;
-                    auto rightHalfWidth = edges.rightEdge().width() / 2.f;
-
-                    Rect borderRect(offset, cellBox->size());
-                    borderRect.expand(topHalfWidth, rightHalfWidth, bottomHalfWidth, leftHalfWidth);
-                    addOverflowRect(borderRect.y, borderRect.bottom(), borderRect.x, borderRect.right());
-                }
-            }
-        }
+        addOverflowRect(section, section->x(), section->y());
     }
 }
 
@@ -404,6 +385,7 @@ void TableBox::layout(FragmentBuilder* fragmentainer)
             section->setY(sectionTop);
             section->setX(borderAndPaddingLeft());
             section->layoutRows(fragmentainer, headerHeight, footerHeight);
+            section->updateOverflowRect();
             if(fragmentainer) {
                 fragmentainer->leaveFragment(sectionTop);
             }
@@ -1104,6 +1086,14 @@ void TableSectionBox::addChild(Box* newChild)
     newRow->addChild(newChild);
 }
 
+void TableSectionBox::updateOverflowRect()
+{
+    BoxFrame::updateOverflowRect();
+    for(auto rowBox : m_rows) {
+        addOverflowRect(rowBox, rowBox->x(), rowBox->y());
+    }
+}
+
 std::optional<float> TableSectionBox::firstLineBaseline() const
 {
     if(m_rows.empty())
@@ -1278,6 +1268,7 @@ void TableSectionBox::layoutRows(FragmentBuilder* fragmentainer, float headerHei
             }
         }
 
+        rowBox->updateOverflowRect();
         rowTop += verticalSpacing + rowBox->height();
     }
 
@@ -1502,6 +1493,28 @@ void TableRowBox::addChild(Box* newChild)
     auto newCell = createAnonymous(Display::TableCell, style());
     appendChild(newCell);
     newCell->addChild(newChild);
+}
+
+void TableRowBox::updateOverflowRect()
+{
+    BoxFrame::updateOverflowRect();
+    for(const auto& [col, cell] : m_cells) {
+        auto cellBox = cell.box();
+        if(cell.inColOrRowSpan())
+            continue;
+        addOverflowRect(cellBox, cellBox->x(), cellBox->y());
+        if(table()->isBorderCollapsed()) {
+            const auto& edges = cellBox->collapsedBorderEdges();
+            auto topHalfWidth = edges.topEdge().width() / 2.f;
+            auto bottomHalfWidth = edges.bottomEdge().width() / 2.f;
+            auto leftHalfWidth = edges.leftEdge().width() / 2.f;
+            auto rightHalfWidth = edges.rightEdge().width() / 2.f;
+
+            Rect borderRect(cellBox->location(), cellBox->size());
+            borderRect.expand(topHalfWidth, rightHalfWidth, bottomHalfWidth, leftHalfWidth);
+            addOverflowRect(borderRect.y, borderRect.bottom(), borderRect.x, borderRect.right());
+        }
+    }
 }
 
 TableCellBox* TableRowBox::cellAt(uint32_t columnIndex) const
