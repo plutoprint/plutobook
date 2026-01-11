@@ -630,8 +630,13 @@ void FixedTableLayoutAlgorithm::build()
             if(!cell.inColOrRowSpan() && m_widths[col].isAuto()) {
                 auto cellBox = cell.box();
                 auto cellStyleWidth = cellBox->style()->width();
-                if(cellStyleWidth.isFixed())
-                    cellStyleWidth = Length(Length::Type::Fixed, cellBox->adjustBorderBoxWidth(cellStyleWidth.value()));
+                if(cellStyleWidth.isFixed()) {
+                    cellBox->updateHorizontalPaddings(nullptr);
+                    cellStyleWidth = Length(Length::Type::Fixed, cellBox->adjustBorderBoxWidth(cellStyleWidth.value()) / cellBox->colSpan());
+                } else if(cellStyleWidth.isPercent()) {
+                    cellStyleWidth = Length(Length::Type::Percent, cellStyleWidth.value() / cellBox->colSpan());
+                }
+
                 if(!cellStyleWidth.isZero()) {
                     for(size_t index = 0; index < cellBox->colSpan(); ++index) {
                         m_widths[col + index] = cellStyleWidth;
