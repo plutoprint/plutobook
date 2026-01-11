@@ -1176,25 +1176,6 @@ void TableSectionBox::distributeExcessHeightToRows(float distributableHeight)
     }
 }
 
-static void distributeSpanCellToRows(const TableCellBox* cellBox, std::span<TableRowBox*> allRows, float borderSpacing)
-{
-    auto cellMinHeight = cellBox->height();
-    auto cellStyleHeight = cellBox->style()->height();
-    if(cellStyleHeight.isFixed()) {
-        cellMinHeight = std::max(cellMinHeight, cellStyleHeight.value());
-    }
-
-    auto rows = allRows.subspan(cellBox->rowIndex(), cellBox->rowSpan());
-    for(auto rowBox : rows)
-        cellMinHeight -= rowBox->height();
-    cellMinHeight -= borderSpacing * (rows.size() - 1);
-    if(auto delta = std::max(0.f, cellMinHeight / rows.size())) {
-        for(auto rowBox : rows) {
-            rowBox->setHeight(delta + rowBox->height());
-        }
-    }
-}
-
 void TableSectionBox::layoutRows(FragmentBuilder* fragmentainer, float headerHeight, float footerHeight)
 {
     float rowTop = 0;
@@ -1280,6 +1261,24 @@ void TableSectionBox::layoutRows(FragmentBuilder* fragmentainer, float headerHei
     setHeight(rowTop - verticalSpacing);
 }
 
+static void distributeSpanCellToRows(TableCellBox* cellBox, std::span<TableRowBox*> allRows, float borderSpacing)
+{
+    auto cellMinHeight = cellBox->height();
+    auto cellStyleHeight = cellBox->style()->height();
+    if(cellStyleHeight.isFixed()) {
+        cellMinHeight = std::max(cellMinHeight, cellBox->adjustBorderBoxHeight(cellStyleHeight.value()));
+    }
+
+    auto rows = allRows.subspan(cellBox->rowIndex(), cellBox->rowSpan());
+    for(auto rowBox : rows)
+        cellMinHeight -= rowBox->height();
+    cellMinHeight -= borderSpacing * (rows.size() - 1);
+    if(cellMinHeight > 0.f) {
+        auto lastRow = rows.back();
+        lastRow->setHeight(cellMinHeight + lastRow->height());
+    }
+}
+
 void TableSectionBox::layout(FragmentBuilder* fragmentainer)
 {
     setWidth(table()->contentBoxWidth());
@@ -1287,6 +1286,9 @@ void TableSectionBox::layout(FragmentBuilder* fragmentainer)
     auto horizontalSpacing = table()->borderHorizontalSpacing();
     auto direction = table()->style()->direction();
     for(auto rowBox : m_rows) {
+        float cellMaxAscent = 0.f;
+        float cellMaxDescent = 0.f;
+        float cellMaxHeight = rowBox->maxFixedHeight();
         for(const auto& [col, cell] : rowBox->cells()) {
             auto cellBox = cell.box();
             if(cell.inColOrRowSpan())
@@ -1307,17 +1309,7 @@ void TableSectionBox::layout(FragmentBuilder* fragmentainer)
             cellBox->setOverrideWidth(width);
             cellBox->updatePaddingWidths(table());
             cellBox->layout(fragmentainer);
-        }
-    }
 
-    for(auto rowBox : m_rows) {
-        float cellMaxAscent = 0.f;
-        float cellMaxDescent = 0.f;
-        float cellMaxHeight = rowBox->maxFixedHeight();
-        for(const auto& [col, cell] : rowBox->cells()) {
-            auto cellBox = cell.box();
-            if(cell.inColOrRowSpan())
-                continue;
             if(cellBox->rowSpan() == 1)
                 cellMaxHeight = std::max(cellMaxHeight, cellBox->height());
             if(cellBox->isBaselineAligned()) {
@@ -1393,7 +1385,8 @@ void TableSectionBox::build()
             } else {
                 auto cellStyleHeight = cellBox->style()->height();
                 if(cellStyleHeight.isFixed()) {
-                    rowBox->setMaxFixedHeight(std::max(rowBox->maxFixedHeight(), cellStyleHeight.value()));
+                    cellBox->updateVerticalPaddings(nullptr);
+                    rowBox->setMaxFixedHeight(std::max(rowBox->maxFixedHeight(), cellBox->adjustBorderBoxHeight(cellStyleHeight.value())));
                 } else if(cellStyleHeight.isPercent()) {
                     rowBox->setMaxPercentHeight(std::max(rowBox->maxPercentHeight(), cellStyleHeight.value()));
                 }
