@@ -969,14 +969,14 @@ void AutoTableLayoutAlgorithm::computeIntrinsicWidths(float& minWidth, float& ma
                 if(cell.inColOrRowSpan())
                     continue;
                 cellBox->updateHorizontalPaddings(nullptr);
-                if(cellBox->colSpan() > 1)
-                    continue;
-                auto& columnWidth = m_columnWidths[col];
-                columnWidth.minWidth = std::max(columnWidth.minWidth, cellBox->minPreferredWidth());
-                if(columnWidth.maxFixedWidth > 0.f) {
-                    columnWidth.maxWidth = std::max(columnWidth.maxWidth, std::max(columnWidth.minWidth, columnWidth.maxFixedWidth));
-                } else {
-                    columnWidth.maxWidth = std::max(columnWidth.maxWidth, cellBox->maxPreferredWidth());
+                if(cellBox->colSpan() == 1) {
+                    auto& columnWidth = m_columnWidths[col];
+                    columnWidth.minWidth = std::max(columnWidth.minWidth, cellBox->minPreferredWidth());
+                    if(columnWidth.maxFixedWidth > 0.f) {
+                        columnWidth.maxWidth = std::max(columnWidth.maxWidth, std::max(columnWidth.minWidth, columnWidth.maxFixedWidth));
+                    } else {
+                        columnWidth.maxWidth = std::max(columnWidth.maxWidth, cellBox->maxPreferredWidth());
+                    }
                 }
             }
         }
