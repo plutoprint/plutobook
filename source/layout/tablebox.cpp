@@ -1263,12 +1263,7 @@ void TableSectionBox::layoutRows(FragmentBuilder* fragmentainer, float headerHei
 
 static void distributeSpanCellToRows(TableCellBox* cellBox, std::span<TableRowBox*> allRows, float borderSpacing)
 {
-    auto cellMinHeight = cellBox->height();
-    auto cellStyleHeight = cellBox->style()->height();
-    if(cellStyleHeight.isFixed()) {
-        cellMinHeight = std::max(cellMinHeight, cellBox->adjustBorderBoxHeight(cellStyleHeight.value()));
-    }
-
+    auto cellMinHeight = cellBox->heightForRowSizing();
     auto rows = allRows.subspan(cellBox->rowIndex(), cellBox->rowSpan());
     for(auto rowBox : rows)
         cellMinHeight -= rowBox->height();
@@ -1311,7 +1306,7 @@ void TableSectionBox::layout(FragmentBuilder* fragmentainer)
             cellBox->layout(fragmentainer);
 
             if(cellBox->rowSpan() == 1)
-                cellMaxHeight = std::max(cellMaxHeight, cellBox->height());
+                cellMaxHeight = std::max(cellMaxHeight, cellBox->heightForRowSizing());
             if(cellBox->isBaselineAligned()) {
                 if(cellBox->rowSpan() == 1) {
                     auto ascent = cellBox->cellBaselinePosition();
@@ -1385,8 +1380,7 @@ void TableSectionBox::build()
             } else {
                 auto cellStyleHeight = cellBox->style()->height();
                 if(cellStyleHeight.isFixed()) {
-                    cellBox->updateVerticalPaddings(nullptr);
-                    rowBox->setMaxFixedHeight(std::max(rowBox->maxFixedHeight(), cellBox->adjustBorderBoxHeight(cellStyleHeight.value())));
+                    rowBox->setMaxFixedHeight(std::max(rowBox->maxFixedHeight(), cellStyleHeight.value()));
                 } else if(cellStyleHeight.isPercent()) {
                     rowBox->setMaxPercentHeight(std::max(rowBox->maxPercentHeight(), cellStyleHeight.value()));
                 }
@@ -1886,6 +1880,14 @@ float TableCellBox::cellBaselinePosition() const
     if(auto baseline = firstLineBaseline())
         return baseline.value();
     return paddingTop() + borderTop() + contentBoxHeight();
+}
+
+float TableCellBox::heightForRowSizing() const
+{
+    auto cellStyleHeight = style()->height();
+    if(cellStyleHeight.isFixed())
+        return std::max(height(), adjustBorderBoxHeight(cellStyleHeight.value()));
+    return height();
 }
 
 float TableCellBox::computeVerticalAlignShift() const

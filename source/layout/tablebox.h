@@ -434,6 +434,7 @@ public:
 
     bool isBaselineAligned() const;
     float cellBaselinePosition() const;
+    float heightForRowSizing() const;
 
     void computeBorderWidths(float& borderTop, float& borderBottom, float& borderLeft, float& borderRight) const;
 
