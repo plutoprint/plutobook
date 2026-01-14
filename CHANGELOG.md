@@ -1,5 +1,22 @@
 # Changelog
 
+## PlutoBook 0.13.0 (2026-01-14)
+
+- Support repeating table headers and footers
+- Support column group background painting and border resolution
+- Support absolute and fixed positioning inside page margin boxes
+- Fix table row and cell height sizing
+- Fix table column and row span width and padding calculations
+- Fix collapsed table border resolution order for adjacent columns
+- Prevent page breaks inside table rows
+- Remove table padding for collapsed border
+- Relicense under the Mozilla Public License 2.0 (MPL-2.0)
+
+Backers and sponsors:
+
+- [Peter Nguyen](https://github.com/jupetern)
+- [Ashish Kulkarni](https://github.com/ashkulz)
+
 ## PlutoBook 0.12.0 (2025-12-23)
 
 - Add support for the `width` style attribute on `td`, `th`, `col`, and `colgroup` elements
