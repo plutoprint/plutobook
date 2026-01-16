@@ -404,6 +404,18 @@ void PageBox::layout(FragmentBuilder* fragmentainer)
     Rect bottomEdgeRect(leftWidth, m_pageHeight - bottomHeight, m_pageWidth - leftWidth - rightWidth, bottomHeight);
     Rect leftEdgeRect(0, topHeight, leftWidth, m_pageHeight - topHeight - bottomHeight);
 
+    const auto inv_scale = 1.f / m_pageScale;
+
+    topLeftCornerRect.scale(inv_scale);
+    topRightCornerRect.scale(inv_scale);
+    bottomRightCornerRect.scale(inv_scale);
+    bottomLeftCornerRect.scale(inv_scale);
+
+    topEdgeRect.scale(inv_scale);
+    rightEdgeRect.scale(inv_scale);
+    bottomEdgeRect.scale(inv_scale);
+    leftEdgeRect.scale(inv_scale);
+
     layoutCornerPageMargin(margins[PageMarginType::TopLeftCorner], topLeftCornerRect);
     layoutEdgePageMargins(margins[PageMarginType::TopLeft], margins[PageMarginType::TopCenter], margins[PageMarginType::TopRight], topEdgeRect, BoxSideTop);
 
