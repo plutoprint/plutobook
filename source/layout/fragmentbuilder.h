@@ -38,16 +38,16 @@ public:
     float applyFragmentBreakAfter(const BoxFrame* child, float offset);
     float applyFragmentBreakInside(const BoxFrame* child, float offset);
 
-    void enterFragment(float offset) { m_fragmentOffset += offset; }
-    void leaveFragment(float offset) { m_fragmentOffset -= offset; }
+    void enterFragment(float offset);
+    void leaveFragment(float offset);
 
-    float fragmentOffset() const { return m_fragmentOffset; }
+    float fragmentOffset() const;
 
     bool needsBreakBetween(BreakBetween between) const;
     bool needsBreakInside(BreakInside inside) const;
 
 private:
-    float m_fragmentOffset = 0;
+    int64_t m_fragmentOffset = 0;
 };
 
 } // namespace plutobook

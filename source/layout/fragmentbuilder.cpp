@@ -8,6 +8,8 @@
 
 #include "fragmentbuilder.h"
 
+#include <cmath>
+
 namespace plutobook {
 
 float FragmentBuilder::applyFragmentBreakBefore(const BoxFrame* child, float offset)
@@ -47,6 +49,23 @@ float FragmentBuilder::applyFragmentBreakInside(const BoxFrame* child, float off
     if(remainingHeight < childHeight && remainingHeight < fragmentHeight)
         return offset + remainingHeight;
     return offset;
+}
+
+constexpr auto kFragmentFixedScale = 1000.0;
+
+void FragmentBuilder::enterFragment(float offset)
+{
+    m_fragmentOffset += llround(offset * kFragmentFixedScale);
+}
+
+void FragmentBuilder::leaveFragment(float offset)
+{
+    m_fragmentOffset -= llround(offset * kFragmentFixedScale);
+}
+
+float FragmentBuilder::fragmentOffset() const
+{
+    return m_fragmentOffset / kFragmentFixedScale;
 }
 
 bool FragmentBuilder::needsBreakBetween(BreakBetween between) const
