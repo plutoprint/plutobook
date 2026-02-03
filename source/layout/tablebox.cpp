@@ -528,31 +528,6 @@ void TableBox::paintContents(const PaintInfo& info, const Point& offset, PaintPh
 
     auto shouldPaintCollapsedBorders = phase == PaintPhase::Decorations && m_collapsedBorderEdges && isBorderCollapsed();
     if(view()->currentPage()) {
-        if(auto header = headerSection()) {
-            const auto& rect = info.rect();
-            if(rect.y > offset.y + header->y()) {
-                Point headerOffset(offset.x, rect.y - header->y());
-                if(isBorderCollapsed())
-                    headerOffset.y += borderTop();
-                header->paint(info, headerOffset, phase);
-                if(shouldPaintCollapsedBorders) {
-                    for(const auto& edge : *m_collapsedBorderEdges) {
-                        header->paintCollapsedBorders(info, headerOffset, edge);
-                    }
-                }
-            }
-        }
-    }
-
-    if(shouldPaintCollapsedBorders) {
-        for(const auto& edge : *m_collapsedBorderEdges) {
-            for(auto section : m_sections | std::views::reverse) {
-                section->paintCollapsedBorders(info, offset, edge);
-            }
-        }
-    }
-
-    if(view()->currentPage()) {
         if(auto footer = footerSection()) {
             const auto& rect = info.rect();
             if(rect.bottom() < offset.y + footer->y()) {
@@ -575,6 +550,31 @@ void TableBox::paintContents(const PaintInfo& info, const Point& offset, PaintPh
                 if(shouldPaintCollapsedBorders) {
                     for(const auto& edge : *m_collapsedBorderEdges) {
                         footer->paintCollapsedBorders(info, footerOffset, edge);
+                    }
+                }
+            }
+        }
+    }
+
+    if(shouldPaintCollapsedBorders) {
+        for(const auto& edge : *m_collapsedBorderEdges) {
+            for(auto section : m_sections | std::views::reverse) {
+                section->paintCollapsedBorders(info, offset, edge);
+            }
+        }
+    }
+
+    if(view()->currentPage()) {
+        if(auto header = headerSection()) {
+            const auto& rect = info.rect();
+            if(rect.y > offset.y + header->y()) {
+                Point headerOffset(offset.x, rect.y - header->y());
+                if(isBorderCollapsed())
+                    headerOffset.y += borderTop();
+                header->paint(info, headerOffset, phase);
+                if(shouldPaintCollapsedBorders) {
+                    for(const auto& edge : *m_collapsedBorderEdges) {
+                        header->paintCollapsedBorders(info, headerOffset, edge);
                     }
                 }
             }
