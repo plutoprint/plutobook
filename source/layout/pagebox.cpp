@@ -645,8 +645,8 @@ void PageLayout::layout()
     auto& pages = m_document->pages();
     if(!pages.empty()) {
         const auto& pageBox = pages.front();
-        float contentWidth = pageBox->width() - pageBox->paddingLeft() - pageBox->paddingRight();
-        float contentHeight = pageBox->height() - pageBox->paddingTop() - pageBox->paddingBottom();
+        auto contentWidth = pageBox->width() - pageBox->paddingLeft() - pageBox->paddingRight();
+        auto contentHeight = pageBox->height() - pageBox->paddingTop() - pageBox->paddingBottom();
         m_document->setContainerSize(contentWidth / pageBox->pageScale(), contentHeight / pageBox->pageScale());
         m_document->box()->layout(m_document);
         return;

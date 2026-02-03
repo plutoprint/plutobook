@@ -50,7 +50,7 @@ public:
     Point location() const { return m_borderRect.origin(); }
     Size size() const { return m_borderRect.size(); }
 
-    void updatePosition();
+    void updateLayerPosition();
 
     void paint(GraphicsContext& context, const Rect& rect);
     void paintLayer(BoxLayer* rootLayer, GraphicsContext& context, const Rect& rect);

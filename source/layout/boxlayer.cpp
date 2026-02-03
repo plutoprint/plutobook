@@ -35,7 +35,7 @@ BoxLayer* BoxLayer::containingLayer() const
     return parentLayer;
 }
 
-void BoxLayer::updatePosition()
+void BoxLayer::updateLayerPosition()
 {
     m_borderRect = m_box->borderBoundingBox();
     if(m_box->isPositioned()) {
@@ -66,7 +66,7 @@ void BoxLayer::updatePosition()
     std::stable_sort(m_children.begin(), m_children.end(), compare_func);
     m_overflowRect = m_box->visualOverflowRect();
     for(auto child : m_children) {
-        child->updatePosition();
+        child->updateLayerPosition();
         if(!m_box->isOverflowHidden() && !child->box()->isFixedPositioned()
             && !child->box()->isMultiColumnFlowBox()) {
             auto overflowRect = child->transform().mapRect(child->overflowRect());
