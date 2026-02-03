@@ -442,7 +442,7 @@ void PageBox::paintContents(const PaintInfo& info, const Point& offset, PaintPha
     auto contentRect = document()->pageContentRectAt(m_pageIndex);
     if(phase == PaintPhase::Contents && !contentRect.isEmpty()) {
         info->save();
-        info->translate(offset.x, offset.y);
+        info->translate(offset.x + paddingLeft(), offset.y + paddingTop());
         info->scale(m_pageScale, m_pageScale);
         info->translate(-contentRect.x, -contentRect.y);
         info->clipRect(contentRect);
@@ -645,9 +645,9 @@ void PageLayout::layout()
     auto& pages = m_document->pages();
     if(!pages.empty()) {
         const auto& pageBox = pages.front();
-        const auto pageWidth = pageBox->width() / pageBox->pageScale();
-        const auto pageHeight = pageBox->height() / pageBox->pageScale();
-        m_document->setContainerSize(pageWidth, pageHeight);
+        float contentWidth = pageBox->width() - pageBox->paddingLeft() - pageBox->paddingRight();
+        float contentHeight = pageBox->height() - pageBox->paddingTop() - pageBox->paddingBottom();
+        m_document->setContainerSize(contentWidth / pageBox->pageScale(), contentHeight / pageBox->pageScale());
         m_document->box()->layout(m_document);
         return;
     }
@@ -673,17 +673,25 @@ void PageLayout::layout()
     auto marginBottom = marginBottomLength.isAuto() ? deviceMargins.bottom() / units::px : marginBottomLength.calcMin(pageHeight);
     auto marginLeft = marginLeftLength.isAuto() ? deviceMargins.left() / units::px : marginLeftLength.calcMin(pageWidth);
 
+    auto paddingTop = pageStyle->paddingTop().calcMin(pageHeight);
+    auto paddingRight = pageStyle->paddingRight().calcMin(pageHeight);
+    auto paddingBottom = pageStyle->paddingBottom().calcMin(pageHeight);
+    auto paddingLeft = pageStyle->paddingLeft().calcMin(pageHeight);
+
     auto width = std::max(0.f, pageWidth - marginLeft - marginRight);
     auto height = std::max(0.f, pageHeight - marginTop - marginBottom);
 
+    auto contentWidth = std::max(0.f, width - paddingLeft - paddingRight);
+    auto contentHeight = std::max(0.f, height - paddingTop - paddingBottom);
+
     auto pageScaleFactor = std::max(kMinPageScaleFactor, pageScale.value_or(1.f));
-    if(m_document->setContainerSize(width / pageScaleFactor, height / pageScaleFactor)) {
+    if(m_document->setContainerSize(contentWidth / pageScaleFactor, contentHeight / pageScaleFactor)) {
         box->layout(m_document);
     }
 
     if(!pageScale.has_value() && m_document->containerWidth() < m_document->width()) {
         pageScaleFactor = std::max(kMinPageScaleFactor, m_document->containerWidth() / m_document->width());
-        if(m_document->setContainerSize(width / pageScaleFactor, height / pageScaleFactor)) {
+        if(m_document->setContainerSize(contentWidth / pageScaleFactor, contentHeight / pageScaleFactor)) {
             box->layout(m_document);
         }
     }
@@ -704,6 +712,11 @@ void PageLayout::layout()
             pageBox->setMarginRight(marginRight);
             pageBox->setMarginBottom(marginBottom);
             pageBox->setMarginLeft(marginLeft);
+
+            pageBox->setPaddingTop(paddingTop);
+            pageBox->setPaddingRight(paddingRight);
+            pageBox->setPaddingBottom(paddingBottom);
+            pageBox->setPaddingLeft(paddingLeft);
 
             counters.update(pageBox.get());
             buildPageMargins(counters, pageBox.get());
