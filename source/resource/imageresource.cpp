@@ -417,6 +417,8 @@ Size SVGImage::size() const
     return m_containerSize;
 }
 
+SVGImage::~SVGImage() = default;
+
 SVGImage::SVGImage(std::unique_ptr<Heap> heap, std::unique_ptr<SVGDocument> document)
     : m_heap(std::move(heap)), m_document(std::move(document))
 {

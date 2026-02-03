@@ -104,6 +104,8 @@ public:
     Size intrinsicSize() const final;
     Size size() const final;
 
+    ~SVGImage() final;
+
 private:
     SVGImage(std::unique_ptr<Heap> heap, std::unique_ptr<SVGDocument> document);
     std::unique_ptr<Heap> m_heap;
