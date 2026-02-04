@@ -674,9 +674,9 @@ void PageLayout::layout()
     auto marginLeft = marginLeftLength.isAuto() ? deviceMargins.left() / units::px : marginLeftLength.calcMin(pageWidth);
 
     auto paddingTop = pageStyle->paddingTop().calcMin(pageHeight);
-    auto paddingRight = pageStyle->paddingRight().calcMin(pageHeight);
+    auto paddingRight = pageStyle->paddingRight().calcMin(pageWidth);
     auto paddingBottom = pageStyle->paddingBottom().calcMin(pageHeight);
-    auto paddingLeft = pageStyle->paddingLeft().calcMin(pageHeight);
+    auto paddingLeft = pageStyle->paddingLeft().calcMin(pageWidth);
 
     auto width = std::max(0.f, pageWidth - marginLeft - marginRight);
     auto height = std::max(0.f, pageHeight - marginTop - marginBottom);
