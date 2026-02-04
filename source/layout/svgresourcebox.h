@@ -99,7 +99,7 @@ public:
 
     bool isSVGResourcePaintServerBox() const final { return true; }
 
-    virtual void applyPaint(const SVGRenderState& state, float opacity) const = 0;
+    virtual bool applyPaint(const SVGRenderState& state, float opacity) const = 0;
 
     const char* name() const override { return "SVGResourcePaintServerBox"; }
 };
@@ -116,7 +116,7 @@ public:
     bool isSVGResourcePatternBox() const final { return true; }
 
     SVGPatternElement* element() const;
-    void applyPaint(const SVGRenderState& state, float opacity) const final;
+    bool applyPaint(const SVGRenderState& state, float opacity) const final;
     void build() final;
 
     const char* name() const final { return "SVGResourcePatternBox"; }
@@ -181,7 +181,7 @@ public:
 
     bool isSVGResourceLinearGradientBox() const final { return true; }
     SVGLinearGradientElement* element() const;
-    void applyPaint(const SVGRenderState& state, float opacity) const final;
+    bool applyPaint(const SVGRenderState& state, float opacity) const final;
     void build() final;
 
     const char* name() const final { return "SVGResourceLinearGradientBox"; }
@@ -207,7 +207,7 @@ public:
     bool isSVGResourceRadialGradientBox() const final { return true; }
 
     SVGRadialGradientElement* element() const;
-    void applyPaint(const SVGRenderState& state, float opacity) const final;
+    bool applyPaint(const SVGRenderState& state, float opacity) const final;
     void build() final;
 
     const char* name() const final { return "SVGResourceRadialGradientBox"; }

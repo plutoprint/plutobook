@@ -75,9 +75,7 @@ bool SVGRenderState::hasCycleReference(const Box* box) const
 
 void SVGPaintServer::applyPaint(const SVGRenderState& state) const
 {
-    if(m_painter) {
-        m_painter->applyPaint(state, m_opacity);
-    } else {
+    if(m_painter == nullptr || !m_painter->applyPaint(state, m_opacity)) {
         state->setColor(m_color.colorWithAlpha(m_opacity));
     }
 }
