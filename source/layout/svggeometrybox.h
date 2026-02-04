@@ -34,6 +34,27 @@ private:
 
 using SVGMarkerPositionList = std::vector<SVGMarkerPosition>;
 
+class SVGGeometryBox;
+
+class SVGMarker : public HeapMember {
+public:
+    static std::unique_ptr<SVGMarker> create(const SVGGeometryBox* box);
+
+    void updatePositions(const Path& path);
+    const SVGMarkerPositionList& positions() { return m_positions; }
+
+private:
+    SVGMarker(const SVGResourceMarkerBox* start, const SVGResourceMarkerBox* mid, const SVGResourceMarkerBox* end)
+        : m_start(start), m_mid(mid), m_end(end)
+    {}
+
+    SVGMarkerPositionList m_positions;
+
+    const SVGResourceMarkerBox* m_start;
+    const SVGResourceMarkerBox* m_mid;
+    const SVGResourceMarkerBox* m_end;
+};
+
 class SVGGeometryBox : public SVGBoxModel {
 public:
     SVGGeometryBox(SVGGeometryElement* element, const RefPtr<BoxStyle>& style);
@@ -54,15 +75,10 @@ public:
     const char* name() const override { return "SVGGeometryBox"; }
 
 protected:
-    void updateMarkerPositions();
-
     SVGPaintServer m_fill;
     SVGPaintServer m_stroke;
-    SVGMarkerPositionList m_markerPositions;
 
-    const SVGResourceMarkerBox* m_markerStart = nullptr;
-    const SVGResourceMarkerBox* m_markerMid = nullptr;
-    const SVGResourceMarkerBox* m_markerEnd = nullptr;
+    std::unique_ptr<SVGMarker> m_marker;
 
     mutable Rect m_fillBoundingBox = Rect::Invalid;
     mutable Rect m_strokeBoundingBox = Rect::Invalid;
