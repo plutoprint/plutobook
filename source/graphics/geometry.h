@@ -16,16 +16,16 @@
 
 namespace plutobook {
 
-constexpr auto kDefaultEpsilon = 1e-5f;
+constexpr auto kLayoutEpsilon = 1e-3f;
 
-constexpr bool isNearlyZero(float v)
+constexpr bool isNearlyZero(float v, float epsilon = kLayoutEpsilon)
 {
-    return std::abs(v) <= kDefaultEpsilon;
+    return std::abs(v) <= epsilon;
 }
 
-constexpr bool isNearlyEqual(float a, float b)
+constexpr bool isNearlyEqual(float a, float b, float epsilon = kLayoutEpsilon)
 {
-    return isNearlyZero(a - b);
+    return isNearlyZero(a - b, epsilon);
 }
 
 constexpr auto kPi = 3.14159265358979323846f;

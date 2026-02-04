@@ -467,7 +467,7 @@ void FlexibleBox::layout(FragmentBuilder* fragmentainer)
 
         auto begin = it;
         for(; it != end; ++it) {
-            if(isMultiLine() && it != begin && totalHypotheticalMainSize + it->targetMainMarginBoxSize() > lineBreakLength)
+            if(isMultiLine() && it != begin && totalHypotheticalMainSize + it->targetMainMarginBoxSize() > lineBreakLength + kLayoutEpsilon)
                 break;
             totalFlexGrow += it->flexGrow();
             totalFlexShrink += it->flexShrink();
