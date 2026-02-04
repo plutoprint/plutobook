@@ -240,6 +240,8 @@ private:
     UBiDi* m_ubidi;
 };
 
+constexpr auto kLineLayoutEpsilon = 0.001f;
+
 class FragmentBuilder;
 
 class LineBreaker {
@@ -286,8 +288,11 @@ private:
     void rewindOverflow(uint32_t newSize);
     void handleOverflow();
 
-    bool canFitOnLine() const { return m_currentWidth <= m_availableWidth; }
-    bool canFitOnLine(float extra) const { return extra + m_currentWidth <= m_availableWidth; }
+    float availableWidthToFit() const { return m_availableWidth + kLineLayoutEpsilon; }
+    float remainingAvailableWidth() const { return availableWidthToFit() - m_currentWidth; }
+
+    bool canFitOnLine() const { return m_currentWidth <= availableWidthToFit(); }
+    bool canFitOnLine(float extra) const { return extra + m_currentWidth <= availableWidthToFit(); }
     bool canBreakAfter(const LineItemRun& run) const { return m_autoWrap && m_breakIterator.isBreakable(run.endOffset); }
 
     static bool isBreakableSpace(UChar cc) { return cc == kSpaceCharacter || cc == kTabulationCharacter; }
