@@ -111,7 +111,7 @@ public:
     std::string getCounterText(int value, const GlobalString& listType);
     std::string getMarkerText(int value, const GlobalString& listType);
 
-    void parseStyle(const std::string_view& content, CSSStyleOrigin origin, Url baseUrl);
+    void parseStyle(std::string_view content, CSSStyleOrigin origin, Url baseUrl);
 
 private:
     void addRuleList(const CSSRuleList& rules);

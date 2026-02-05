@@ -121,8 +121,8 @@ public:
     void popGroup(float opacity, BlendMode blendMode = BlendMode::Normal);
     void applyMask(const ImageBuffer& maskImage);
 
-    void addLinkAnnotation(const std::string_view& dest, const std::string_view& uri, const Rect& rect);
-    void addLinkDestination(const std::string_view& name, const Point& location);
+    void addLinkAnnotation(std::string_view dest, std::string_view uri, const Rect& rect);
+    void addLinkDestination(std::string_view name, const Point& location);
 
     cairo_t* canvas() const { return m_canvas; }
 

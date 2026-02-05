@@ -1543,7 +1543,7 @@ bool HTMLTokenizer::consumeCharacterReference(std::string& output, bool inAttrib
     return true;
 }
 
-bool HTMLTokenizer::consumeString(const std::string_view& value, bool caseSensitive)
+bool HTMLTokenizer::consumeString(std::string_view value, bool caseSensitive)
 {
     if(startswith(m_input, value, caseSensitive)) {
         m_input.remove_prefix(value.size());

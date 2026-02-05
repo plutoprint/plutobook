@@ -17,11 +17,11 @@ namespace plutobook {
 class Url {
 public:
     Url() = default;
-    explicit Url(const std::string_view& input);
+    explicit Url(std::string_view input);
 
     Url complete(std::string_view input) const;
 
-    bool protocolIs(const std::string_view& protocol) const;
+    bool protocolIs(std::string_view protocol) const;
     bool isHierarchical() const { return m_schemeEnd < m_userBegin && m_value[m_schemeEnd + 1] == '/'; }
     bool isEmpty() const { return m_value.empty(); }
 
@@ -57,20 +57,20 @@ inline std::ostream& operator<<(std::ostream& o, const Url& in) { return o << in
 inline bool operator==(const Url& a, const Url& b) { return a.value() == b.value(); }
 inline bool operator!=(const Url& a, const Url& b) { return a.value() != b.value(); }
 
-inline bool operator==(const Url& a, const std::string_view& b) { return a.value() == b; }
-inline bool operator!=(const Url& a, const std::string_view& b) { return a.value() != b; }
+inline bool operator==(const Url& a, std::string_view b) { return a.value() == b; }
+inline bool operator!=(const Url& a, std::string_view b) { return a.value() != b; }
 
-inline bool operator==(const std::string_view& a, const Url& b) { return a == b.value(); }
-inline bool operator!=(const std::string_view& a, const Url& b) { return a != b.value(); }
+inline bool operator==(std::string_view a, const Url& b) { return a == b.value(); }
+inline bool operator!=(std::string_view a, const Url& b) { return a != b.value(); }
 
 inline bool operator<(const Url& a, const Url& b) { return a.value() < b.value(); }
 inline bool operator>(const Url& a, const Url& b) { return a.value() > b.value(); }
 
-inline bool operator<(const Url& a, const std::string_view& b) { return a.value() < b; }
-inline bool operator>(const Url& a, const std::string_view& b) { return a.value() > b; }
+inline bool operator<(const Url& a, std::string_view b) { return a.value() < b; }
+inline bool operator>(const Url& a, std::string_view b) { return a.value() > b; }
 
-inline bool operator<(const std::string_view& a, const Url& b) { return a < b.value(); }
-inline bool operator>(const std::string_view& a, const Url& b) { return a > b.value(); }
+inline bool operator<(std::string_view a, const Url& b) { return a < b.value(); }
+inline bool operator>(std::string_view a, const Url& b) { return a > b.value(); }
 
 } // namespace plutobook
 

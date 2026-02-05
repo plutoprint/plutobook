@@ -16,7 +16,7 @@ namespace plutobook {
 class GlobalString {
 public:
     GlobalString() = default;
-    explicit GlobalString(const std::string_view& value);
+    explicit GlobalString(std::string_view value);
 
     const char* data() const { return value().data(); }
     size_t size() const { return value().size(); }
@@ -35,7 +35,7 @@ public:
 
     GlobalString foldCase() const;
 
-    operator const std::string_view&() const { return value(); }
+    operator std::string_view() const { return value(); }
     operator const HeapString&() const { return value(); }
 
     bool operator==(const GlobalString& o) const { return m_entry == o.m_entry; }
@@ -63,17 +63,17 @@ inline std::ostream& operator<<(std::ostream& o, const GlobalString& in) { retur
 inline bool operator<(const GlobalString& a, const GlobalString& b) { return a.value() < b.value(); }
 inline bool operator>(const GlobalString& a, const GlobalString& b) { return a.value() > b.value(); }
 
-inline bool operator==(const GlobalString& a, const std::string_view& b) { return a.value() == b; }
-inline bool operator!=(const GlobalString& a, const std::string_view& b) { return a.value() != b; }
+inline bool operator==(const GlobalString& a, std::string_view b) { return a.value() == b; }
+inline bool operator!=(const GlobalString& a, std::string_view b) { return a.value() != b; }
 
-inline bool operator==(const std::string_view& a, const GlobalString& b) { return a == b.value(); }
-inline bool operator!=(const std::string_view& a, const GlobalString& b) { return a != b.value(); }
+inline bool operator==(std::string_view a, const GlobalString& b) { return a == b.value(); }
+inline bool operator!=(std::string_view a, const GlobalString& b) { return a != b.value(); }
 
-inline bool operator<(const GlobalString& a, const std::string_view& b) { return a.value() < b; }
-inline bool operator>(const GlobalString& a, const std::string_view& b) { return a.value() > b; }
+inline bool operator<(const GlobalString& a, std::string_view b) { return a.value() < b; }
+inline bool operator>(const GlobalString& a, std::string_view b) { return a.value() > b; }
 
-inline bool operator<(const std::string_view& a, const GlobalString& b) { return a < b.value(); }
-inline bool operator>(const std::string_view& a, const GlobalString& b) { return a > b.value(); }
+inline bool operator<(std::string_view a, const GlobalString& b) { return a < b.value(); }
+inline bool operator>(std::string_view a, const GlobalString& b) { return a > b.value(); }
 
 inline bool operator==(const GlobalString& a, const HeapString& b) { return a.value() == b; }
 inline bool operator!=(const GlobalString& a, const HeapString& b) { return a.value() != b; }

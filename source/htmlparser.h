@@ -106,7 +106,7 @@ class HTMLDocument;
 
 class HTMLParser {
 public:
-    HTMLParser(HTMLDocument* document, const std::string_view& content);
+    HTMLParser(HTMLDocument* document, std::string_view content);
 
     bool parse();
 
@@ -148,7 +148,7 @@ private:
     void insertHTMLElement(const HTMLTokenView& token);
     void insertHTMLFormattingElement(const HTMLTokenView& token);
     void insertForeignElement(const HTMLTokenView& token, const GlobalString& namespaceURI);
-    void insertTextNode(const std::string_view& data);
+    void insertTextNode(std::string_view data);
 
     enum class InsertionMode {
         Initial,

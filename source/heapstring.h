@@ -37,11 +37,11 @@ public:
     HeapString substring(size_t offset) const { return m_value.substr(offset); }
     HeapString substring(size_t offset, size_t count) const { return m_value.substr(offset, count); }
 
-    const std::string_view& value() const { return m_value; }
-    operator const std::string_view&() const { return m_value; }
+    std::string_view value() const { return m_value; }
+    operator std::string_view() const { return m_value; }
 
 private:
-    HeapString(const std::string_view& value) : m_value(value) {}
+    HeapString(std::string_view value) : m_value(value) {}
     std::string_view m_value;
     friend class Heap;
 };
@@ -54,17 +54,17 @@ inline bool operator!=(const HeapString& a, const HeapString& b) { return a.valu
 inline bool operator<(const HeapString& a, const HeapString& b) { return a.value() < b.value(); }
 inline bool operator>(const HeapString& a, const HeapString& b) { return a.value() > b.value(); }
 
-inline bool operator==(const HeapString& a, const std::string_view& b) { return a.value() == b; }
-inline bool operator!=(const HeapString& a, const std::string_view& b) { return a.value() != b; }
+inline bool operator==(const HeapString& a, std::string_view b) { return a.value() == b; }
+inline bool operator!=(const HeapString& a, std::string_view b) { return a.value() != b; }
 
-inline bool operator==(const std::string_view& a, const HeapString& b) { return a == b.value(); }
-inline bool operator!=(const std::string_view& a, const HeapString& b) { return a != b.value(); }
+inline bool operator==(std::string_view a, const HeapString& b) { return a == b.value(); }
+inline bool operator!=(std::string_view a, const HeapString& b) { return a != b.value(); }
 
-inline bool operator<(const HeapString& a, const std::string_view& b) { return a.value() < b; }
-inline bool operator>(const HeapString& a, const std::string_view& b) { return a.value() > b; }
+inline bool operator<(const HeapString& a, std::string_view b) { return a.value() < b; }
+inline bool operator>(const HeapString& a, std::string_view b) { return a.value() > b; }
 
-inline bool operator<(const std::string_view& a, const HeapString& b) { return a < b.value(); }
-inline bool operator>(const std::string_view& a, const HeapString& b) { return a > b.value(); }
+inline bool operator<(std::string_view a, const HeapString& b) { return a < b.value(); }
+inline bool operator>(std::string_view a, const HeapString& b) { return a > b.value(); }
 
 using HeapBase = std::pmr::monotonic_buffer_resource;
 
@@ -72,18 +72,18 @@ class Heap : public HeapBase {
 public:
     explicit Heap(size_t capacity) : HeapBase(capacity) {}
 
-    HeapString createString(const std::string_view& value);
-    HeapString concatenateString(const std::string_view& a, const std::string_view& b);
+    HeapString createString(std::string_view value);
+    HeapString concatenateString(std::string_view a, std::string_view b);
 };
 
-inline HeapString Heap::createString(const std::string_view& value)
+inline HeapString Heap::createString(std::string_view value)
 {
     auto content = static_cast<char*>(allocate(value.size(), alignof(char)));
     std::memcpy(content, value.data(), value.size());
     return HeapString({content, value.size()});
 }
 
-inline HeapString Heap::concatenateString(const std::string_view& a, const std::string_view& b)
+inline HeapString Heap::concatenateString(std::string_view a, std::string_view b)
 {
     auto content = static_cast<char*>(allocate(a.size() + b.size(), alignof(char)));
     std::memcpy(content, a.data(), a.size());

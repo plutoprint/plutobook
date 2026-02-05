@@ -19,7 +19,7 @@ TextBox::TextBox(Node* node, const RefPtr<BoxStyle>& style)
     setIsInline(true);
 }
 
-void TextBox::appendText(const std::string_view& text)
+void TextBox::appendText(std::string_view text)
 {
     m_text = heap()->concatenateString(m_text, text);
 }

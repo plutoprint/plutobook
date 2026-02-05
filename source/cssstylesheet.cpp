@@ -770,7 +770,7 @@ std::string CSSStyleSheet::getMarkerText(int value, const GlobalString& listType
     return representation;
 }
 
-void CSSStyleSheet::parseStyle(const std::string_view& content, CSSStyleOrigin origin, Url baseUrl)
+void CSSStyleSheet::parseStyle(std::string_view content, CSSStyleOrigin origin, Url baseUrl)
 {
     CSSParserContext context(m_document, origin, std::move(baseUrl));
     CSSParser parser(context, m_document->heap());

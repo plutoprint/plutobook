@@ -26,7 +26,7 @@ public:
 
     const HeapString& text() const { return m_text; }
     void setText(const HeapString& text) { m_text = text; }
-    void appendText(const std::string_view& text);
+    void appendText(std::string_view text);
 
     const TextLineBoxList& lines() const { return m_lines; }
     TextLineBoxList& lines() { return m_lines; }

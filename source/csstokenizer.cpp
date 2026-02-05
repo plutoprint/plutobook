@@ -20,7 +20,7 @@ constexpr bool isNonPrintable(char cc) { return (cc >= 0 && cc <= 0x8) || cc == 
 
 const CSSToken CSSTokenStream::eofToken(CSSToken::Type::EndOfFile);
 
-CSSTokenizer::CSSTokenizer(const std::string_view& input)
+CSSTokenizer::CSSTokenizer(std::string_view input)
     : m_input(input)
 {
     m_tokenList.reserve(input.length() / 3);

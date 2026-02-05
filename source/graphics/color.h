@@ -41,7 +41,7 @@ public:
     static const Color Black;
     static const Color White;
 
-    static std::optional<Color> named(const std::string_view& name);
+    static std::optional<Color> named(std::string_view name);
 
 private:
     uint32_t m_value{0};

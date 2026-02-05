@@ -22,7 +22,7 @@ CSSParser::CSSParser(const CSSParserContext& context, Heap* heap)
 {
 }
 
-CSSRuleList CSSParser::parseSheet(const std::string_view& content)
+CSSRuleList CSSParser::parseSheet(std::string_view content)
 {
     CSSRuleList rules(m_heap);
     CSSTokenizer tokenizer(content);
@@ -31,7 +31,7 @@ CSSRuleList CSSParser::parseSheet(const std::string_view& content)
     return rules;
 }
 
-CSSPropertyList CSSParser::parseStyle(const std::string_view& content)
+CSSPropertyList CSSParser::parseStyle(std::string_view content)
 {
     CSSPropertyList properties(m_heap);
     CSSTokenizer tokenizer(content);
@@ -40,7 +40,7 @@ CSSPropertyList CSSParser::parseStyle(const std::string_view& content)
     return properties;
 }
 
-CSSMediaQueryList CSSParser::parseMediaQueries(const std::string_view& content)
+CSSMediaQueryList CSSParser::parseMediaQueries(std::string_view content)
 {
     CSSMediaQueryList queries(m_heap);
     CSSTokenizer tokenizer(content);
@@ -69,7 +69,7 @@ struct CSSIdentEntry {
 
 using CSSIdentValueEntry = CSSIdentEntry<CSSValueID>;
 
-static bool identMatches(const char* name, int length, const std::string_view& ident)
+static bool identMatches(const char* name, int length, std::string_view ident)
 {
     if(length != ident.length())
         return false;
@@ -85,7 +85,7 @@ static bool identMatches(const char* name, int length, const std::string_view& i
 }
 
 template<typename T, unsigned int N>
-static std::optional<T> matchIdent(const CSSIdentEntry<T>(&table)[N], const std::string_view& ident)
+static std::optional<T> matchIdent(const CSSIdentEntry<T>(&table)[N], std::string_view ident)
 {
     for(const auto& entry : table) {
         if(identMatches(entry.name, entry.length, ident)) {
@@ -1171,7 +1171,7 @@ constexpr bool isCustomPropertyName(std::string_view name)
     return name.length() > 2 && name[0] == '-' && name[1] == '-';
 }
 
-static CSSPropertyID csspropertyid(const std::string_view& name)
+static CSSPropertyID csspropertyid(std::string_view name)
 {
     if(isCustomPropertyName(name))
         return CSSPropertyID::Custom;

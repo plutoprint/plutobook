@@ -30,7 +30,7 @@ class Document;
 class FontResource final : public Resource {
 public:
     static RefPtr<FontResource> create(Document* document, const Url& url);
-    static bool supportsFormat(const std::string_view& format);
+    static bool supportsFormat(std::string_view format);
     cairo_font_face_t* face() const { return m_face; }
     FcCharSet* charSet() const { return m_charSet; }
     Type type() const final { return Type::Font; }
@@ -201,7 +201,7 @@ private:
 class FontTag {
 public:
     constexpr explicit FontTag(uint32_t value) : m_value(value) {}
-    constexpr explicit FontTag(const std::string_view& tag)
+    constexpr explicit FontTag(std::string_view tag)
         : m_value((tag[0] << 24) | (tag[1] << 16) | (tag[2] << 8) | (tag[3]))
     {
         assert(tag.length() == 4);

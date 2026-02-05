@@ -50,14 +50,14 @@ RefPtr<ImageResource> ImageResource::create(Document* document, const Url& url)
     return adoptPtr(new (document->heap()) ImageResource(std::move(image)));
 }
 
-RefPtr<Image> ImageResource::decode(const char* data, size_t size, const std::string_view& mimeType, const std::string_view& textEncoding, const std::string_view& baseUrl, ResourceFetcher* fetcher)
+RefPtr<Image> ImageResource::decode(const char* data, size_t size, std::string_view mimeType, std::string_view textEncoding, std::string_view baseUrl, ResourceFetcher* fetcher)
 {
     if(equals(mimeType, "image/svg+xml", false))
         return SVGImage::create(TextResource::decode(data, size, mimeType, textEncoding), baseUrl, fetcher);
     return BitmapImage::create(data, size);
 }
 
-bool ImageResource::supportsMimeType(const std::string_view& mimeType)
+bool ImageResource::supportsMimeType(std::string_view mimeType)
 {
     return equals(mimeType, "image/jpeg", false)
         || equals(mimeType, "image/png", false)
@@ -301,7 +301,7 @@ BitmapImage::BitmapImage(cairo_surface_t* surface)
 {
 }
 
-RefPtr<SVGImage> SVGImage::create(const std::string_view& content, const std::string_view& baseUrl, ResourceFetcher* fetcher)
+RefPtr<SVGImage> SVGImage::create(std::string_view content, std::string_view baseUrl, ResourceFetcher* fetcher)
 {
     std::unique_ptr<Heap> heap(new Heap(1024 * 24));
     auto document = SVGDocument::create(nullptr, heap.get(), fetcher, ResourceLoader::completeUrl(baseUrl));

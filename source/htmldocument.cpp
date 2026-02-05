@@ -182,7 +182,7 @@ void HTMLElement::buildBox(Counters& counters, Box* parent)
     buildElementBox(counters, box);
 }
 
-static void addHTMLAttributeStyle(std::string& output, const std::string_view& name, const std::string_view& value)
+static void addHTMLAttributeStyle(std::string& output, std::string_view name, std::string_view value)
 {
     if(value.empty())
         return;
@@ -249,7 +249,7 @@ std::optional<unsigned> HTMLElement::parseNonNegativeIntegerAttribute(const Glob
     return parseIntegerAttribute<unsigned>(name);
 }
 
-static void addHTMLLengthAttributeStyle(std::string& output, const std::string_view& name, const std::string_view& value)
+static void addHTMLLengthAttributeStyle(std::string& output, std::string_view name, std::string_view value)
 {
     if(value.empty())
         return;
@@ -280,7 +280,7 @@ static void addHTMLLengthAttributeStyle(std::string& output, const std::string_v
     }
 }
 
-static void addHTMLLengthAttributeStyle(std::string& output, const std::string_view& name, int value)
+static void addHTMLLengthAttributeStyle(std::string& output, std::string_view name, int value)
 {
     output += name;
     output += ':';
@@ -292,7 +292,7 @@ static void addHTMLLengthAttributeStyle(std::string& output, const std::string_v
     }
 }
 
-static void addHTMLUrlAttributeStyle(std::string& output, const std::string_view& name, const std::string_view& value)
+static void addHTMLUrlAttributeStyle(std::string& output, std::string_view name, std::string_view value)
 {
     if(value.empty())
         return;
@@ -529,7 +529,7 @@ std::optional<int> HTMLLIElement::value() const
     return parseIntegerAttribute(valueAttr);
 }
 
-std::string_view listTypeAttributeToStyleName(const std::string_view& value)
+std::string_view listTypeAttributeToStyleName(std::string_view value)
 {
     if(value == "a")
         return "lower-alpha";
@@ -1042,7 +1042,7 @@ std::unique_ptr<HTMLDocument> HTMLDocument::create(Book* book, Heap* heap, Resou
     return std::unique_ptr<HTMLDocument>(new (heap) HTMLDocument(book, heap, fetcher, std::move(baseUrl)));
 }
 
-bool HTMLDocument::parse(const std::string_view& content)
+bool HTMLDocument::parse(std::string_view content)
 {
     return HTMLParser(this, content).parse();
 }

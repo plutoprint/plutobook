@@ -64,7 +64,7 @@ constexpr bool skipOptionalSpacesOrComma(std::string_view& input)
     return skipOptionalSpacesOrDelimiter(input, ',');
 }
 
-constexpr bool skipString(std::string_view& input, const std::string_view& value)
+constexpr bool skipString(std::string_view& input, std::string_view value)
 {
     if(input.size() >= value.size() && value == input.substr(0, value.size())) {
         input.remove_prefix(value.size());

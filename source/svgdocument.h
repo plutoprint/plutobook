@@ -34,9 +34,9 @@ public:
     SVGProperty* getProperty(const GlobalString& name) const;
     Size currentViewportSize() const;
 
-    SVGResourceContainerBox* getResourceById(const std::string_view& id) const;
-    SVGResourceClipperBox* getClipper(const std::string_view& id) const;
-    SVGResourceMaskerBox* getMasker(const std::string_view& id) const;
+    SVGResourceContainerBox* getResourceById(std::string_view id) const;
+    SVGResourceClipperBox* getClipper(std::string_view id) const;
+    SVGResourceMaskerBox* getMasker(std::string_view id) const;
     Box* createBox(const RefPtr<BoxStyle>& style) override { return nullptr; }
 
 private:
@@ -91,7 +91,7 @@ public:
     SVGGraphicsElement(Document* document, const GlobalString& tagName);
 
     const Transform& transform() const { return m_transform.value(); }
-    SVGResourcePaintServerBox* getPainter(const std::string_view& id) const;
+    SVGResourcePaintServerBox* getPainter(std::string_view id) const;
     SVGPaintServer getPaintServer(const Paint& paint, float opacity) const;
     StrokeData getStrokeData(const BoxStyle* style) const;
 
@@ -194,7 +194,7 @@ class SVGGeometryElement : public SVGGraphicsElement {
 public:
     SVGGeometryElement(Document* document, const GlobalString& tagName);
 
-    SVGResourceMarkerBox* getMarker(const std::string_view& id) const;
+    SVGResourceMarkerBox* getMarker(std::string_view id) const;
 };
 
 class SVGPathElement final : public SVGGeometryElement {

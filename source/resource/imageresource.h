@@ -24,8 +24,8 @@ class Document;
 class ImageResource final : public Resource {
 public:
     static RefPtr<ImageResource> create(Document* document, const Url& url);
-    static RefPtr<Image> decode(const char* data, size_t size, const std::string_view& mimeType, const std::string_view& textEncoding, const std::string_view& baseUrl, ResourceFetcher* fetcher);
-    static bool supportsMimeType(const std::string_view& mimeType);
+    static RefPtr<Image> decode(const char* data, size_t size, std::string_view mimeType, std::string_view textEncoding, std::string_view baseUrl, ResourceFetcher* fetcher);
+    static bool supportsMimeType(std::string_view mimeType);
     const RefPtr<Image>& image() const { return m_image; }
     Type type() const final { return Type::Image; }
 
@@ -92,7 +92,7 @@ class Heap;
 
 class SVGImage final : public Image {
 public:
-    static RefPtr<SVGImage> create(const std::string_view& content, const std::string_view& baseUrl, ResourceFetcher* fetcher);
+    static RefPtr<SVGImage> create(std::string_view content, std::string_view baseUrl, ResourceFetcher* fetcher);
 
     bool isSVGImage() const final { return true; }
 

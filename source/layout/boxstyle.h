@@ -955,7 +955,7 @@ public:
 
     const HeapString& getQuote(bool open, size_t depth) const;
 
-    CSSVariableData* getCustom(const std::string_view& name) const;
+    CSSVariableData* getCustom(std::string_view name) const;
     void setCustom(const GlobalString& name, RefPtr<CSSVariableData> value);
 
     CSSValue* get(CSSPropertyID id) const;

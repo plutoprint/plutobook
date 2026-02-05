@@ -85,7 +85,7 @@ RefPtr<FontResource> FontResource::create(Document* document, const Url& url)
     return adoptPtr(new (document->heap()) FontResource(face, FcFreeTypeCharSet(fontData->face(), nullptr)));
 }
 
-bool FontResource::supportsFormat(const std::string_view& format)
+bool FontResource::supportsFormat(std::string_view format)
 {
     return equals(format, "opentype", false)
         || equals(format, "opentype-variations", false)
@@ -594,7 +594,7 @@ static RefPtr<SimpleFontData> createFontDataFromPattern(FcPattern* pattern, cons
     return SimpleFontData::create(font, charSet, std::move(featureSettings));
 }
 
-constexpr bool isGenericFamilyName(const std::string_view& familyName)
+constexpr bool isGenericFamilyName(std::string_view familyName)
 {
     return equals(familyName, "sans", false)
         || equals(familyName, "sans-serif", false)

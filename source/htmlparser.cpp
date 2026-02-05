@@ -641,7 +641,7 @@ Element* HTMLFormattingElementList::closestElementInScope(const GlobalString& ta
     return nullptr;
 }
 
-HTMLParser::HTMLParser(HTMLDocument* document, const std::string_view& content)
+HTMLParser::HTMLParser(HTMLDocument* document, std::string_view content)
     : m_document(document), m_tokenizer(content, document->heap())
 {
 }
@@ -999,7 +999,7 @@ void HTMLParser::insertForeignElement(const HTMLTokenView& token, const GlobalSt
     }
 }
 
-void HTMLParser::insertTextNode(const std::string_view& data)
+void HTMLParser::insertTextNode(std::string_view data)
 {
     InsertionLocation location;
     location.parent = m_openElements.top();

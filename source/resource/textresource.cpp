@@ -22,7 +22,7 @@ RefPtr<TextResource> TextResource::create(Document* document, const Url& url)
     return adoptPtr(new (document->heap()) TextResource(decode(resource.content(), resource.contentLength(), resource.mimeType(), resource.textEncoding())));
 }
 
-std::string_view TextResource::decode(const char* data, size_t length, const std::string_view& mimeType, const std::string_view& textEncoding)
+std::string_view TextResource::decode(const char* data, size_t length, std::string_view mimeType, std::string_view textEncoding)
 {
     std::string_view output(data, length);
     if(length >= 3) {
@@ -39,7 +39,7 @@ std::string_view TextResource::decode(const char* data, size_t length, const std
     return output;
 }
 
-bool TextResource::isXMLMIMEType(const std::string_view& mimeType)
+bool TextResource::isXMLMIMEType(std::string_view mimeType)
 {
     if(equals(mimeType, "text/xml", false)
         || equals(mimeType, "application/xml", false)

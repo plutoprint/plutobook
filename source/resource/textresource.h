@@ -20,13 +20,13 @@ class Document;
 class TextResource final : public Resource {
 public:
     static RefPtr<TextResource> create(Document* document, const Url& url);
-    static std::string_view decode(const char* data, size_t length, const std::string_view& mimeType, const std::string_view& textEncoding);
-    static bool isXMLMIMEType(const std::string_view& mimeType);
+    static std::string_view decode(const char* data, size_t length, std::string_view mimeType, std::string_view textEncoding);
+    static bool isXMLMIMEType(std::string_view mimeType);
     const std::string& text() const { return m_text; }
     Type type() const final { return Type::Text; }
 
 private:
-    TextResource(const std::string_view& text) : m_text(text) {}
+    TextResource(std::string_view text) : m_text(text) {}
     std::string m_text;
 };
 

@@ -94,7 +94,7 @@ public:
 
     const HeapString& data() const { return m_data; }
     void setData(const HeapString& data) { m_data = data; }
-    void appendData(const std::string_view& data);
+    void appendData(std::string_view data);
 
     bool isHidden(const Box* parent) const;
 
@@ -338,7 +338,7 @@ public:
 
     const Url& baseUrl() const { return m_baseUrl; }
     void setBaseUrl(Url baseUrl) { m_baseUrl = std::move(baseUrl); }
-    Url completeUrl(const std::string_view& value) const { return m_baseUrl.complete(value); }
+    Url completeUrl(std::string_view value) const { return m_baseUrl.complete(value); }
 
     BoxView* box() const;
     float width() const;
@@ -352,7 +352,7 @@ public:
 
     bool setContainerSize(float containerWidth, float containerHeight);
 
-    TextNode* createTextNode(const std::string_view& value);
+    TextNode* createTextNode(std::string_view value);
     Element* createElement(const GlobalString& namespaceURI, const GlobalString& tagName);
 
     Element* rootElement() const { return m_rootElement; }
@@ -361,7 +361,7 @@ public:
     BoxStyle* rootStyle() const;
     BoxStyle* bodyStyle() const;
 
-    Element* getElementById(const std::string_view& id) const;
+    Element* getElementById(std::string_view id) const;
     void addElementById(const HeapString& id, Element* element);
     void removeElementById(const HeapString& id, Element* element);
 
@@ -373,16 +373,16 @@ public:
     HeapString getTargetCounterText(const HeapString& fragment, const GlobalString& name, const GlobalString& listStyle, const HeapString& separator);
     HeapString getCountersText(const CounterMap& counters, const GlobalString& name, const GlobalString& listStyle, const HeapString& separator);
 
-    void runJavaScript(const std::string_view& script);
+    void runJavaScript(std::string_view script);
 
-    void addAuthorStyleSheet(const std::string_view& content, Url baseUrl);
-    void addUserStyleSheet(const std::string_view& content);
+    void addAuthorStyleSheet(std::string_view content, Url baseUrl);
+    void addUserStyleSheet(std::string_view content);
 
     bool supportsMediaFeature(const CSSMediaFeature& feature) const;
     bool supportsMediaFeatures(const CSSMediaFeatureList& features) const;
     bool supportsMediaQuery(const CSSMediaQuery& query) const;
     bool supportsMediaQueries(const CSSMediaQueryList& queries) const;
-    bool supportsMedia(const std::string_view& type, const std::string_view& media) const;
+    bool supportsMedia(std::string_view type, std::string_view media) const;
 
     RefPtr<BoxStyle> styleForElement(Element* element, const BoxStyle* parentStyle) const;
     RefPtr<BoxStyle> pseudoStyleForElement(Element* element, PseudoType pseudoType, const BoxStyle* parentStyle) const;
@@ -400,7 +400,7 @@ public:
     RefPtr<ImageResource> fetchImageResource(const Url& url);
     RefPtr<FontResource> fetchFontResource(const Url& url);
 
-    virtual bool parse(const std::string_view& content) = 0;
+    virtual bool parse(std::string_view content) = 0;
 
     Node* cloneNode(bool deep) override;
     Box* createBox(const RefPtr<BoxStyle>& style) override;

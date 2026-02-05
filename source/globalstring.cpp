@@ -18,7 +18,7 @@ class GlobalStringTable {
 public:
     GlobalStringTable();
 
-    const HeapString* add(const std::string_view& value);
+    const HeapString* add(std::string_view value);
 
 private:
     using StringSet = std::pmr::set<HeapString, std::less<>>;
@@ -33,7 +33,7 @@ GlobalStringTable::GlobalStringTable()
 {
 }
 
-const HeapString* GlobalStringTable::add(const std::string_view& value)
+const HeapString* GlobalStringTable::add(std::string_view value)
 {
     std::lock_guard guard(m_mutex);
     auto lb = m_table.lower_bound(value);
@@ -48,7 +48,7 @@ GlobalStringTable* globalStringTable()
     return &table;
 }
 
-GlobalString::GlobalString(const std::string_view& value)
+GlobalString::GlobalString(std::string_view value)
     : m_entry(globalStringTable()->add(value))
 {
 }

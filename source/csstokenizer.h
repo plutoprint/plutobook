@@ -68,14 +68,14 @@ public:
     explicit CSSToken(Type type) : m_type(type) {}
     CSSToken(Type type, uint32_t delim) : m_type(type), m_delim(delim) {}
     CSSToken(Type type, uint32_t from, uint32_t to) : m_type(type), m_from(from), m_to(to) {}
-    CSSToken(Type type, const std::string_view& data) : m_type(type), m_data(data) {}
-    CSSToken(Type type, HashType hashType, const std::string_view& data) : m_type(type), m_hashType(hashType), m_data(data) {}
+    CSSToken(Type type, std::string_view data) : m_type(type), m_data(data) {}
+    CSSToken(Type type, HashType hashType, std::string_view data) : m_type(type), m_hashType(hashType), m_data(data) {}
 
     CSSToken(Type type, NumberType numberType, NumberSign numberSign, float number)
         : m_type(type), m_numberType(numberType), m_numberSign(numberSign), m_number(number)
     {}
 
-    CSSToken(Type type, NumberType numberType, NumberSign numberSign, float number, const std::string_view& unit)
+    CSSToken(Type type, NumberType numberType, NumberSign numberSign, float number, std::string_view unit)
         : m_type(type), m_numberType(numberType), m_numberSign(numberSign), m_number(number), m_data(unit)
     {}
 
@@ -88,7 +88,7 @@ public:
     int integer() const { return static_cast<int>(m_number); }
     uint32_t from() const { return m_from; }
     uint32_t to() const { return m_to; }
-    const std::string_view& data() const { return m_data; }
+    std::string_view data() const { return m_data; }
 
     static Type closeType(Type type) {
         switch(type) {
@@ -229,7 +229,7 @@ private:
 
 class CSSTokenizerInputStream {
 public:
-    explicit CSSTokenizerInputStream(const std::string_view& input)
+    explicit CSSTokenizerInputStream(std::string_view input)
         : m_data(input.data()), m_length(input.length())
     {}
 
@@ -278,7 +278,7 @@ private:
 
 class CSSTokenizer {
 public:
-    explicit CSSTokenizer(const std::string_view& input);
+    explicit CSSTokenizer(std::string_view input);
 
     CSSTokenStream tokenize();
 

@@ -17,9 +17,9 @@ class CSSParser {
 public:
     CSSParser(const CSSParserContext& context, Heap* heap);
 
-    CSSRuleList parseSheet(const std::string_view& content);
-    CSSPropertyList parseStyle(const std::string_view& content);
-    CSSMediaQueryList parseMediaQueries(const std::string_view& content);
+    CSSRuleList parseSheet(std::string_view content);
+    CSSPropertyList parseStyle(std::string_view content);
+    CSSMediaQueryList parseMediaQueries(std::string_view content);
 
     CSSPropertyList parsePropertyValue(CSSTokenStream input, CSSPropertyID id, bool important);
 

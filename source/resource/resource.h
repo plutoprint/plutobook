@@ -36,7 +36,7 @@ class ResourceFetcher;
 class ResourceLoader {
 public:
     static ResourceData loadUrl(const Url& url, ResourceFetcher* customFetcher = nullptr);
-    static Url completeUrl(const std::string_view& value);
+    static Url completeUrl(std::string_view value);
     static Url baseUrl();
 };
 

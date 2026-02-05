@@ -1122,7 +1122,7 @@ std::string CSSCounterStyle::generateFallbackRepresentation(int value) const
     return representation;
 }
 
-static size_t counterStyleSymbolLength(const std::string_view& value)
+static size_t counterStyleSymbolLength(std::string_view value)
 {
     UCharIterator it;
     uiter_setUTF8(&it, value.data(), value.length());

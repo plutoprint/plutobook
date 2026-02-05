@@ -16,7 +16,7 @@ namespace plutobook {
 
 class HTMLEntityParser {
 public:
-    HTMLEntityParser(const std::string_view& input, std::string& output, bool inAttributeValue)
+    HTMLEntityParser(std::string_view input, std::string& output, bool inAttributeValue)
         : m_input(input), m_output(output), m_inAttributeValue(inAttributeValue)
     {}
 

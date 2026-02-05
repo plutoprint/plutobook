@@ -33,7 +33,7 @@ void SVGElement::parseAttribute(const GlobalString& name, const HeapString& valu
     }
 }
 
-static void addSVGAttributeStyle(std::string& output, const std::string_view& name, const std::string_view& value)
+static void addSVGAttributeStyle(std::string& output, std::string_view name, std::string_view value)
 {
     if(value.empty())
         return;
@@ -140,7 +140,7 @@ Size SVGElement::currentViewportSize() const
     return parent->currentViewportSize();
 }
 
-SVGResourceContainerBox* SVGElement::getResourceById(const std::string_view& id) const
+SVGResourceContainerBox* SVGElement::getResourceById(std::string_view id) const
 {
     if(id.empty() || id.front() != '#')
         return nullptr;
@@ -150,12 +150,12 @@ SVGResourceContainerBox* SVGElement::getResourceById(const std::string_view& id)
     return to<SVGResourceContainerBox>(element->box());
 }
 
-SVGResourceClipperBox* SVGElement::getClipper(const std::string_view& id) const
+SVGResourceClipperBox* SVGElement::getClipper(std::string_view id) const
 {
     return to<SVGResourceClipperBox>(getResourceById(id));
 }
 
-SVGResourceMaskerBox* SVGElement::getMasker(const std::string_view& id) const
+SVGResourceMaskerBox* SVGElement::getMasker(std::string_view id) const
 {
     return to<SVGResourceMaskerBox>(getResourceById(id));
 }
@@ -166,7 +166,7 @@ SVGGraphicsElement::SVGGraphicsElement(Document* document, const GlobalString& t
     addProperty(transformAttr, m_transform);
 }
 
-SVGResourcePaintServerBox* SVGGraphicsElement::getPainter(const std::string_view& id) const
+SVGResourcePaintServerBox* SVGGraphicsElement::getPainter(std::string_view id) const
 {
     return to<SVGResourcePaintServerBox>(getResourceById(id));
 }
@@ -467,7 +467,7 @@ SVGGeometryElement::SVGGeometryElement(Document* document, const GlobalString& t
 {
 }
 
-SVGResourceMarkerBox* SVGGeometryElement::getMarker(const std::string_view& id) const
+SVGResourceMarkerBox* SVGGeometryElement::getMarker(std::string_view id) const
 {
     return to<SVGResourceMarkerBox>(getResourceById(id));
 }

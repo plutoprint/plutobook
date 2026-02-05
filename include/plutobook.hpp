@@ -1110,7 +1110,7 @@ public:
      * @param userScript An optional user-defined script to run after the document has loaded.
      * @return `true` on success, or `false` on failure.
      */
-    bool loadUrl(const std::string_view& url, const std::string_view& userStyle = {}, const std::string_view& userScript = {});
+    bool loadUrl(std::string_view url, std::string_view userStyle = {}, std::string_view userScript = {});
 
     /**
      * @brief Loads the document from the specified data.
@@ -1123,8 +1123,8 @@ public:
      * @param baseUrl The base URL for resolving relative URLs.
      * @return `true` on success, or `false` on failure.
      */
-    bool loadData(const char* data, size_t length, const std::string_view& mimeType = {}, const std::string_view& textEncoding = {},
-        const std::string_view& userStyle = {}, const std::string_view& userScript = {}, const std::string_view& baseUrl = {});
+    bool loadData(const char* data, size_t length, std::string_view mimeType = {}, std::string_view textEncoding = {},
+        std::string_view userStyle = {}, std::string_view userScript = {}, std::string_view baseUrl = {});
 
     /**
      * @brief Loads the document from the specified image data.
@@ -1137,8 +1137,8 @@ public:
      * @param baseUrl The base URL for resolving relative URLs.
      * @return `true` on success, or `false` on failure.
      */
-    bool loadImage(const char* data, size_t length, const std::string_view& mimeType = {}, const std::string_view& textEncoding = {},
-        const std::string_view& userStyle = {}, const std::string_view& userScript = {}, const std::string_view& baseUrl = {});
+    bool loadImage(const char* data, size_t length, std::string_view mimeType = {}, std::string_view textEncoding = {},
+        std::string_view userStyle = {}, std::string_view userScript = {}, std::string_view baseUrl = {});
 
     /**
      * @brief Loads the document from the specified XML data.
@@ -1148,7 +1148,7 @@ public:
      * @param baseUrl The base URL for resolving relative URLs.
      * @return `true` on success, or `false` on failure.
      */
-    bool loadXml(const std::string_view& content, const std::string_view& userStyle = {}, const std::string_view& userScript = {}, const std::string_view& baseUrl = {});
+    bool loadXml(std::string_view content, std::string_view userStyle = {}, std::string_view userScript = {}, std::string_view baseUrl = {});
 
     /**
      * @brief Loads the document from the specified HTML data.
@@ -1158,7 +1158,7 @@ public:
      * @param baseUrl The base URL for resolving relative URLs.
      * @return `true` on success, or `false` on failure.
      */
-    bool loadHtml(const std::string_view& content, const std::string_view& userStyle = {}, const std::string_view& userScript = {}, const std::string_view& baseUrl = {});
+    bool loadHtml(std::string_view content, std::string_view userStyle = {}, std::string_view userScript = {}, std::string_view baseUrl = {});
 
     /**
      * @brief Clears the content of the document.

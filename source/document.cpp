@@ -90,7 +90,7 @@ TextNode::TextNode(Document* document, const HeapString& data)
 {
 }
 
-void TextNode::appendData(const std::string_view& data)
+void TextNode::appendData(std::string_view data)
 {
     m_data = heap()->concatenateString(m_data, data);
 }
@@ -581,7 +581,7 @@ bool Document::setContainerSize(float containerWidth, float containerHeight)
     return true;
 }
 
-TextNode* Document::createTextNode(const std::string_view& value)
+TextNode* Document::createTextNode(std::string_view value)
 {
     return new (m_heap) TextNode(this, m_heap->createString(value));
 }
@@ -719,7 +719,7 @@ BoxStyle* Document::bodyStyle() const
     return nullptr;
 }
 
-Element* Document::getElementById(const std::string_view& id) const
+Element* Document::getElementById(std::string_view id) const
 {
     auto it = m_idCache.find(id);
     if(it == m_idCache.end())
@@ -798,16 +798,16 @@ HeapString Document::getCountersText(const CounterMap& counters, const GlobalStr
     return m_heap->createString(text);
 }
 
-void Document::runJavaScript(const std::string_view& script)
+void Document::runJavaScript(std::string_view script)
 {
 }
 
-void Document::addAuthorStyleSheet(const std::string_view& content, Url baseUrl)
+void Document::addAuthorStyleSheet(std::string_view content, Url baseUrl)
 {
     m_styleSheet.parseStyle(content, CSSStyleOrigin::Author, std::move(baseUrl));
 }
 
-void Document::addUserStyleSheet(const std::string_view& content)
+void Document::addUserStyleSheet(std::string_view content)
 {
     m_styleSheet.parseStyle(content, CSSStyleOrigin::User, m_baseUrl);
 }
@@ -878,7 +878,7 @@ bool Document::supportsMediaQueries(const CSSMediaQueryList& queries) const
     return false;
 }
 
-bool Document::supportsMedia(const std::string_view& type, const std::string_view& media) const
+bool Document::supportsMedia(std::string_view type, std::string_view media) const
 {
     if(m_book == nullptr || media.empty())
         return true;
