@@ -229,11 +229,6 @@ bool FontSelectionAlgorithm::isCandidateBetter(const FontSelectionDescription& c
     return weightDistance(currentCandidate.weight) < weightDistance(previousCandidate.weight);
 }
 
-RefPtr<FontData> LocalFontFace::getFontData(const FontDataDescription& description)
-{
-    return fontDataCache()->getFontData(m_family, description);
-}
-
 static std::string buildVariationSettings(const FontDataDescription& description, const FontVariationList& variations)
 {
     constexpr FontTag wghtTag("wght");
@@ -268,8 +263,23 @@ static std::string buildVariationSettings(const FontDataDescription& description
     return output;
 }
 
-RefPtr<FontData> RemoteFontFace::getFontData(const FontDataDescription& description)
+RefPtr<FontData> SimpleFontFace::getFontData(Document* document, const FontDataDescription& description)
 {
+    while(m_resource == nullptr && !m_sources.empty()) {
+        const auto& source = m_sources.front();
+        if(auto family = std::get_if<GlobalString>(&source)) {
+            return fontDataCache()->getFontData(*family, description);
+        }
+
+        const auto& url = std::get<Url>(source);
+        m_resource = document->fetchFontResource(url);
+        m_sources.pop_front();
+    }
+
+    if(m_resource == nullptr) {
+        return nullptr;
+    }
+
     const auto slopeAngle = -std::tan(description.request.slope * std::numbers::pi / 180.0);
 
     cairo_matrix_t ctm;
@@ -294,14 +304,14 @@ RefPtr<FontData> RemoteFontFace::getFontData(const FontDataDescription& descript
     return SimpleFontData::create(font, charSet, m_features);
 }
 
-RefPtr<FontData> SegmentedFontFace::getFontData(const FontDataDescription& description)
+RefPtr<FontData> SegmentedFontFace::getFontData(Document* document, const FontDataDescription& description)
 {
     auto& fontData = m_table[description];
     if(fontData != nullptr)
         return fontData;
     FontDataRangeList fonts;
     for(const auto& face : m_faces) {
-        if(auto font = face->getFontData(description)) {
+        if(auto font = face->getFontData(document, description)) {
             const auto& ranges = face->ranges();
             if(ranges.empty()) {
                 fonts.emplace_front(0, 0x10FFFF, std::move(font));

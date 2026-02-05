@@ -11,7 +11,9 @@
 
 #include "resource.h"
 #include "globalstring.h"
+#include "url.h"
 
+#include <variant>
 #include <vector>
 #include <forward_list>
 #include <map>
@@ -282,67 +284,40 @@ constexpr bool operator>(const FontDescription& a, const FontDescription& b)
 using UnicodeRange = std::pair<uint32_t, uint32_t>;
 using UnicodeRangeList = std::forward_list<UnicodeRange>;
 
+using FontFaceSource = std::variant<Url, GlobalString>;
+using FontFaceSourceList = std::forward_list<FontFaceSource>;
+
 class FontData;
 
-class FontFace : public RefCounted<FontFace> {
+class SimpleFontFace : public RefCounted<SimpleFontFace> {
 public:
-    virtual ~FontFace() = default;
-    virtual RefPtr<FontData> getFontData(const FontDataDescription& description) = 0;
+    static RefPtr<SimpleFontFace> create(FontFeatureList features, FontVariationList variations, UnicodeRangeList ranges, FontFaceSourceList sources);
+
+    RefPtr<FontData> getFontData(Document* document, const FontDataDescription& description);
 
     const FontFeatureList& features() const { return m_features; }
     const FontVariationList& variations() const { return m_variations; }
     const UnicodeRangeList& ranges() const { return m_ranges; }
+    const FontFaceSourceList& sources() const { return m_sources; }
 
 protected:
-    FontFace(FontFeatureList features, FontVariationList variations, UnicodeRangeList ranges)
+    SimpleFontFace(FontFeatureList features, FontVariationList variations, UnicodeRangeList ranges, FontFaceSourceList sources)
         : m_features(std::move(features))
         , m_variations(std::move(variations))
         , m_ranges(std::move(ranges))
+        , m_sources(std::move(sources))
     {}
 
     FontFeatureList m_features;
     FontVariationList m_variations;
     UnicodeRangeList m_ranges;
-};
-
-class LocalFontFace final : public FontFace {
-public:
-    static RefPtr<LocalFontFace> create(const GlobalString& family, FontFeatureList features, FontVariationList variations, UnicodeRangeList ranges);
-
-    RefPtr<FontData> getFontData(const FontDataDescription& description) final;
-
-private:
-    LocalFontFace(const GlobalString& family, FontFeatureList features, FontVariationList variations, UnicodeRangeList ranges)
-        : FontFace(std::move(features), std::move(variations), std::move(ranges))
-        , m_family(family)
-    {}
-
-    GlobalString m_family;
-};
-
-inline RefPtr<LocalFontFace> LocalFontFace::create(const GlobalString& family, FontFeatureList features, FontVariationList variations, UnicodeRangeList ranges)
-{
-    return adoptPtr(new LocalFontFace(family, std::move(features), std::move(variations), std::move(ranges)));
-}
-
-class RemoteFontFace final : public FontFace {
-public:
-    static RefPtr<RemoteFontFace> create(FontFeatureList features, FontVariationList variations, UnicodeRangeList ranges, RefPtr<FontResource> resource);
-
-    RefPtr<FontData> getFontData(const FontDataDescription& description) final;
-
-private:
-    RemoteFontFace(FontFeatureList features, FontVariationList variations, UnicodeRangeList ranges, RefPtr<FontResource> resource)
-        : FontFace(std::move(features), std::move(variations), std::move(ranges))
-        , m_resource(std::move(resource))
-    {}
-
+    FontFaceSourceList m_sources;
     RefPtr<FontResource> m_resource;
 };
 
-inline RefPtr<RemoteFontFace> RemoteFontFace::create(FontFeatureList features, FontVariationList variations, UnicodeRangeList ranges, RefPtr<FontResource> resource)
+inline RefPtr<SimpleFontFace> SimpleFontFace::create(FontFeatureList features, FontVariationList variations, UnicodeRangeList ranges, FontFaceSourceList sources)
 {
-    return adoptPtr(new RemoteFontFace(std::move(features), std::move(variations), std::move(ranges), std::move(resource)));
+    return adoptPtr(new SimpleFontFace(std::move(features), std::move(variations), std::move(ranges), std::move(sources)));
 }
 
 class SegmentedFontData;
@@ -352,13 +327,13 @@ public:
     static RefPtr<SegmentedFontFace> create(const FontSelectionDescription& description);
 
     const FontSelectionDescription& description() const { return m_description; }
-    RefPtr<FontData> getFontData(const FontDataDescription& description);
-    void add(RefPtr<FontFace> face) { m_faces.push_back(std::move(face)); }
+    RefPtr<FontData> getFontData(Document* document, const FontDataDescription& description);
+    void add(RefPtr<SimpleFontFace> face) { m_faces.push_back(std::move(face)); }
 
 private:
     SegmentedFontFace(const FontSelectionDescription& description) : m_description(description) {}
     FontSelectionDescription m_description;
-    std::vector<RefPtr<FontFace>> m_faces;
+    std::vector<RefPtr<SimpleFontFace>> m_faces;
     std::map<FontDataDescription, RefPtr<SegmentedFontData>> m_table;
 };
 

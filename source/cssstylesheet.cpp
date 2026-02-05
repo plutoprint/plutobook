@@ -18,39 +18,6 @@
 
 namespace plutobook {
 
-CSSFontFaceCache::CSSFontFaceCache(Heap* heap)
-    : m_table(heap)
-{
-}
-
-RefPtr<FontData> CSSFontFaceCache::get(const GlobalString& family, const FontDataDescription& description) const
-{
-    auto it = m_table.find(family);
-    if(it == m_table.end())
-        return fontDataCache()->getFontData(family, description);
-    FontSelectionAlgorithm algorithm(description.request);
-    for(const auto& item : it->second) {
-        algorithm.addCandidate(item.first);
-    }
-
-    RefPtr<SegmentedFontFace> face;
-    for(const auto& item : it->second) {
-        if(face == nullptr || algorithm.isCandidateBetter(item.first, face->description())) {
-            face = item.second;
-        }
-    }
-
-    return face->getFontData(description);
-}
-
-void CSSFontFaceCache::add(const GlobalString& family, const FontSelectionDescription& description, RefPtr<FontFace> face)
-{
-    auto& fontFace = m_table[family][description];
-    if(fontFace == nullptr)
-        fontFace = SegmentedFontFace::create(description);
-    fontFace->add(std::move(face));
-}
-
 class CSSPropertyData {
 public:
     CSSPropertyData(uint32_t specificity, uint32_t position, const CSSProperty& property)
@@ -696,7 +663,7 @@ CSSStyleSheet::CSSStyleSheet(Document* document)
     , m_universalRules(document->heap())
     , m_pageRules(document->heap())
     , m_counterStyleRules(document->heap())
-    , m_fontFaceCache(document->heap())
+    , m_fontFaces(document->heap())
 {
     if(document->book()) {
         addRuleList(userAgentRules());
@@ -739,7 +706,22 @@ RefPtr<BoxStyle> CSSStyleSheet::styleForPageMargin(const GlobalString& pageName,
 
 RefPtr<FontData> CSSStyleSheet::getFontData(const GlobalString& family, const FontDataDescription& description) const
 {
-    return m_fontFaceCache.get(family, description);
+    auto it = m_fontFaces.find(family);
+    if(it == m_fontFaces.end())
+        return fontDataCache()->getFontData(family, description);
+    FontSelectionAlgorithm algorithm(description.request);
+    for(const auto& item : it->second) {
+        algorithm.addCandidate(item.first);
+    }
+
+    RefPtr<SegmentedFontFace> face;
+    for(const auto& item : it->second) {
+        if(face == nullptr || algorithm.isCandidateBetter(item.first, face->description())) {
+            face = item.second;
+        }
+    }
+
+    return face->getFontData(m_document, description);
 }
 
 const CSSCounterStyle& CSSStyleSheet::getCounterStyle(const GlobalString& name)
@@ -932,7 +914,7 @@ public:
     GlobalString family() const;
     FontSelectionDescription description() const;
 
-    RefPtr<FontFace> build(Document* document) const;
+    RefPtr<SimpleFontFace> build(Document* document) const;
 
 private:
     RefPtr<CSSValue> m_src;
@@ -1101,43 +1083,53 @@ static const HeapString& convertStringOrCustomIdent(const CSSValue& value)
     return to<CSSCustomIdentValue>(value).value();
 }
 
-RefPtr<FontFace> CSSFontFaceBuilder::build(Document* document) const
+RefPtr<SimpleFontFace> CSSFontFaceBuilder::build(Document* document) const
 {
-    if(m_src == nullptr)
+    if(m_src == nullptr) {
         return nullptr;
+    }
+
+    FontFaceSourceList sources;
     for(const auto& value : to<CSSListValue>(*m_src)) {
         const auto& list = to<CSSListValue>(*value);
         if(auto function = to<CSSUnaryFunctionValue>(list.at(0))) {
             assert(function->id() == CSSFunctionID::Local);
             const auto& family = to<CSSCustomIdentValue>(*function->value());
-            if(!fontDataCache()->isFamilyAvailable(family.value()))
-                continue;
-            return LocalFontFace::create(family.value(), featureSettings(), variationSettings(), unicodeRanges());
-        }
-
-        const auto& url = to<CSSUrlValue>(*list.at(0));
-        if(list.size() == 2) {
-            const auto& function = to<CSSUnaryFunctionValue>(*list.at(1));
-            assert(function.id() == CSSFunctionID::Format);
-            const auto& format = convertStringOrCustomIdent(*function.value());
-            if(!FontResource::supportsFormat(format.value())) {
-                continue;
+            if(fontDataCache()->isFamilyAvailable(family.value())) {
+                sources.emplace_front(family.value());
+                break;
             }
-        }
+        } else {
+            const auto& url = to<CSSUrlValue>(*list.at(0));
+            if(list.size() == 2) {
+                const auto& function = to<CSSUnaryFunctionValue>(*list.at(1));
+                assert(function.id() == CSSFunctionID::Format);
+                const auto& format = convertStringOrCustomIdent(*function.value());
+                if(!FontResource::supportsFormat(format.value())) {
+                    continue;
+                }
+            }
 
-        if(auto fontResource = document->fetchFontResource(url.value())) {
-            return RemoteFontFace::create(featureSettings(), variationSettings(), unicodeRanges(), std::move(fontResource));
+            sources.emplace_front(url.value());
         }
     }
 
-    return nullptr;
+    sources.reverse();
+    if(sources.empty())
+        return nullptr;
+    return SimpleFontFace::create(featureSettings(), variationSettings(), unicodeRanges(), std::move(sources));
 }
 
 void CSSStyleSheet::addFontFaceRule(const RefPtr<CSSFontFaceRule>& rule)
 {
     CSSFontFaceBuilder builder(rule->properties());
     if(auto face = builder.build(m_document)) {
-        m_fontFaceCache.add(builder.family(), builder.description(), std::move(face));
+        const auto family = builder.family();
+        const auto description = builder.description();
+        auto& fontFace = m_fontFaces[family][description];
+        if(fontFace == nullptr)
+            fontFace = SegmentedFontFace::create(description);
+        fontFace->add(std::move(face));
     }
 }
 

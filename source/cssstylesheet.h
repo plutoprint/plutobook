@@ -71,23 +71,13 @@ const CSSRuleDataList* CSSRuleDataMap<T>::get(const T& name) const
 class HeapString;
 class GlobalString;
 
-class FontFace;
 class FontData;
 class SegmentedFontFace;
 
 struct FontDataDescription;
 struct FontSelectionDescription;
 
-class CSSFontFaceCache {
-public:
-    explicit CSSFontFaceCache(Heap* heap);
-
-    RefPtr<FontData> get(const GlobalString& family, const FontDataDescription& description) const;
-    void add(const GlobalString& family, const FontSelectionDescription& description, RefPtr<FontFace> face);
-
-private:
-    std::pmr::map<GlobalString, std::map<FontSelectionDescription, RefPtr<SegmentedFontFace>>> m_table;
-};
+using CSSFontFaceMap = std::pmr::map<GlobalString, std::map<FontSelectionDescription, RefPtr<SegmentedFontFace>>>;
 
 class BoxStyle;
 class Document;
@@ -135,7 +125,7 @@ private:
     CSSRuleDataList m_universalRules;
     CSSPageRuleDataList m_pageRules;
     CSSRuleList m_counterStyleRules;
-    CSSFontFaceCache m_fontFaceCache;
+    CSSFontFaceMap m_fontFaces;
     std::unique_ptr<CSSCounterStyleMap> m_counterStyleMap;
 };
 
