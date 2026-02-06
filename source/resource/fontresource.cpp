@@ -263,7 +263,7 @@ static std::string buildVariationSettings(const FontDataDescription& description
     return output;
 }
 
-RefPtr<FontData> SimpleFontFace::getFontData(Document* document, const FontDataDescription& description)
+RefPtr<FontData> SimpleFontFace::getFontData(Document* document, const FontDataDescription& description, bool syntheticOblique)
 {
     while(m_resource == nullptr && !m_sources.empty()) {
         const auto& source = m_sources.front();
@@ -280,7 +280,7 @@ RefPtr<FontData> SimpleFontFace::getFontData(Document* document, const FontDataD
         return nullptr;
     }
 
-    const auto slopeAngle = -std::tan(description.request.slope * std::numbers::pi / 180.0);
+    const auto slopeAngle = syntheticOblique ? -std::tan(description.request.slope * std::numbers::pi / 180.0) : 0.0;
 
     cairo_matrix_t ctm;
     cairo_matrix_init_identity(&ctm);
@@ -307,11 +307,17 @@ RefPtr<FontData> SimpleFontFace::getFontData(Document* document, const FontDataD
 RefPtr<FontData> SegmentedFontFace::getFontData(Document* document, const FontDataDescription& description)
 {
     auto& fontData = m_table[description];
-    if(fontData != nullptr)
+    if(fontData != nullptr) {
         return fontData;
+    }
+
+    const auto syntheticOblique = !m_description.slope
+        || description.request.slope < m_description.slope.maximum
+        || description.request.slope > m_description.slope.maximum;
+
     FontDataRangeList fonts;
     for(const auto& face : m_faces) {
-        if(auto font = face->getFontData(document, description)) {
+        if(auto font = face->getFontData(document, description, syntheticOblique)) {
             const auto& ranges = face->ranges();
             if(ranges.empty()) {
                 fonts.emplace_front(0, 0x10FFFF, std::move(font));

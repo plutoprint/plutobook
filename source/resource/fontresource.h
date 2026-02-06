@@ -292,7 +292,7 @@ class SimpleFontFace : public RefCounted<SimpleFontFace> {
 public:
     static RefPtr<SimpleFontFace> create(FontFeatureList features, FontVariationList variations, UnicodeRangeList ranges, FontFaceSourceList sources);
 
-    RefPtr<FontData> getFontData(Document* document, const FontDataDescription& description);
+    RefPtr<FontData> getFontData(Document* document, const FontDataDescription& description, bool syntheticOblique);
 
     const FontFeatureList& features() const { return m_features; }
     const FontVariationList& variations() const { return m_variations; }
