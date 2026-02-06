@@ -126,6 +126,7 @@ private:
     CSSPageRuleDataList m_pageRules;
     CSSRuleList m_counterStyleRules;
     CSSFontFaceMap m_fontFaces;
+
     std::unique_ptr<CSSCounterStyleMap> m_counterStyleMap;
 };
 

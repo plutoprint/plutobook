@@ -11,7 +11,6 @@
 
 #include "resource.h"
 #include "globalstring.h"
-#include "url.h"
 
 #include <variant>
 #include <vector>
@@ -300,7 +299,7 @@ public:
     const UnicodeRangeList& ranges() const { return m_ranges; }
     const FontFaceSourceList& sources() const { return m_sources; }
 
-protected:
+private:
     SimpleFontFace(FontFeatureList features, FontVariationList variations, UnicodeRangeList ranges, FontFaceSourceList sources)
         : m_features(std::move(features))
         , m_variations(std::move(variations))
@@ -434,8 +433,6 @@ inline RefPtr<SegmentedFontData> SegmentedFontData::create(FontDataRangeList fon
 {
     return adoptPtr(new SegmentedFontData(std::move(fonts)));
 }
-
-class FontDataSet;
 
 class FontDataCache {
 public:

@@ -11,6 +11,7 @@
 
 #include "pointer.h"
 #include "heapstring.h"
+#include "url.h"
 
 namespace plutobook {
 
@@ -29,7 +30,6 @@ protected:
     Resource() = default;
 };
 
-class Url;
 class ResourceData;
 class ResourceFetcher;
 
