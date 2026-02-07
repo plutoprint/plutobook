@@ -19,6 +19,7 @@
 #include <forward_list>
 #include <memory>
 #include <numbers>
+#include <array>
 #include <vector>
 #include <set>
 
@@ -1838,11 +1839,68 @@ struct is_a<CSSPageRule> {
 
 class Element;
 
+class SelectorFilter {
+public:
+    SelectorFilter();
+
+    void push(const Element* element);
+    void pop();
+
+private:
+    bool contains(unsigned hash) const { return isSet(hash) && isSet(hash >> 16); }
+
+    void add(unsigned hash);
+    void remove(unsigned hash);
+
+    bool isSet(unsigned key) const { return m_table[key & keyMask]; }
+
+    void set(unsigned key);
+    void unset(unsigned key);
+
+    static const unsigned keyBits = 12;
+    static const unsigned keyMask = (1 << keyBits) - 1;
+    static const unsigned maxCount = (1 << 8) - 1;
+
+    using HashVector = std::vector<unsigned>;
+
+    std::array<uint8_t, 1 << keyBits> m_table;
+    std::vector<HashVector> m_stack;
+
+    friend class CSSRuleData;
+};
+
+inline void SelectorFilter::add(unsigned hash)
+{
+    set(hash);
+    set(hash >> 16);
+}
+
+inline void SelectorFilter::remove(unsigned hash)
+{
+    unset(hash);
+    unset(hash >> 16);
+}
+
+inline void SelectorFilter::set(unsigned key)
+{
+    auto& value = m_table[key & keyMask];
+    if(value < maxCount) {
+        value++;
+    }
+}
+
+inline void SelectorFilter::unset(unsigned key)
+{
+    auto& value = m_table[key & keyMask];
+    assert(value > 0);
+    if(value < maxCount) {
+        value--;
+    }
+}
+
 class CSSRuleData {
 public:
-    CSSRuleData(const RefPtr<CSSStyleRule>& rule, const CSSSelector& selector, uint32_t specificity, uint32_t position)
-        : m_rule(rule), m_selector(&selector), m_specificity(specificity), m_position(position)
-    {}
+    CSSRuleData(const RefPtr<CSSStyleRule>& rule, const CSSSelector& selector, uint32_t specificity, uint32_t position);
 
     const RefPtr<CSSStyleRule>& rule() const { return m_rule; }
     const CSSSelector* selector() const { return m_selector; }
@@ -1850,7 +1908,7 @@ public:
     const uint32_t specificity() const { return m_specificity; }
     const uint32_t position() const { return m_position; }
 
-    bool match(const Element* element, PseudoType pseudoType) const;
+    bool match(const Element* element, PseudoType pseudoType, const SelectorFilter& selectorFilter) const;
 
 private:
     static bool matchSelector(const Element* element, PseudoType pseudoType, const CSSSelector& selector);
@@ -1902,6 +1960,7 @@ private:
     const CSSSelector* m_selector;
     uint32_t m_specificity;
     uint32_t m_position;
+    std::array<unsigned, 4> m_hashes;
 };
 
 class CSSPageRuleData {

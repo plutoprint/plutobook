@@ -75,7 +75,7 @@ public:
 
     virtual Node* cloneNode(bool deep) = 0;
     virtual Box* createBox(const RefPtr<BoxStyle>& style) = 0;
-    virtual void buildBox(Counters& counters, Box* parent) = 0;
+    virtual void buildBox(Counters& counters, SelectorFilter& selectorFilter, Box* parent) = 0;
     virtual void finishParsingDocument() {}
 
 private:
@@ -100,7 +100,7 @@ public:
 
     Node* cloneNode(bool deep) final;
     Box* createBox(const RefPtr<BoxStyle>& style) final;
-    void buildBox(Counters& counters, Box* parent) final;
+    void buildBox(Counters& counters, SelectorFilter& selectorFilter, Box* parent) final;
 
 private:
     HeapString m_data;
@@ -133,7 +133,7 @@ public:
 
     std::string textFromChildren() const;
 
-    void buildChildrenBox(Counters& counters, Box* parent);
+    void buildChildrenBox(Counters& counters, SelectorFilter& selectorFilter, Box* parent);
     void finishParsingDocument() override;
 
 private:
@@ -240,7 +240,8 @@ public:
 
     Node* cloneNode(bool deep) override;
     Box* createBox(const RefPtr<BoxStyle>& style) override;
-    void buildBox(Counters& counters, Box* parent) override;
+    void buildElementChildrenBox(Counters& counters, SelectorFilter& selectorFilter, Box* box);
+    void buildBox(Counters& counters, SelectorFilter& selectorFilter, Box* parent) override;
     void finishParsingDocument() override;
 
 private:
@@ -384,8 +385,8 @@ public:
     bool supportsMediaQueries(const CSSMediaQueryList& queries) const;
     bool supportsMedia(std::string_view type, std::string_view media) const;
 
-    RefPtr<BoxStyle> styleForElement(Element* element, const BoxStyle* parentStyle) const;
-    RefPtr<BoxStyle> pseudoStyleForElement(Element* element, PseudoType pseudoType, const BoxStyle* parentStyle) const;
+    RefPtr<BoxStyle> styleForElement(Element* element, const SelectorFilter& selectorFilter, const BoxStyle* parentStyle) const;
+    RefPtr<BoxStyle> pseudoStyleForElement(Element* element, PseudoType pseudoType, const SelectorFilter& selectorFilter, const BoxStyle* parentStyle) const;
 
     RefPtr<BoxStyle> styleForPage(const GlobalString& pageName, uint32_t pageIndex, PseudoType pseudoType) const;
     RefPtr<BoxStyle> styleForPageMargin(const GlobalString& pageName, uint32_t pageIndex, PageMarginType marginType, const BoxStyle* pageStyle) const;
@@ -404,7 +405,7 @@ public:
 
     Node* cloneNode(bool deep) override;
     Box* createBox(const RefPtr<BoxStyle>& style) override;
-    void buildBox(Counters& counters, Box* parent) override;
+    void buildBox(Counters& counters, SelectorFilter& selectorFilter, Box* parent) override;
     void finishParsingDocument() override;
 
     void serialize(std::ostream& o) const;

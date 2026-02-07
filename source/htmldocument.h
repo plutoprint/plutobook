@@ -23,10 +23,10 @@ public:
 
     bool isHTMLElement() const final { return true; }
 
-    void buildFirstLetterPseudoBox(Box* parent);
-    void buildPseudoBox(Counters& counters, Box* parent, PseudoType pseudoType);
-    void buildElementBox(Counters& counters, Box* box);
-    void buildBox(Counters& counters, Box* parent) override;
+    void buildFirstLetterPseudoBox(SelectorFilter& selectorFilter, Box* parent);
+    void buildPseudoBox(Counters& counters, SelectorFilter& selectorFilter, Box* parent, PseudoType pseudoType);
+    void buildElementBox(Counters& counters, SelectorFilter& selectorFilter, Box* box);
+    void buildBox(Counters& counters, SelectorFilter& selectorFilter, Box* parent) override;
 
     void collectAttributeStyle(std::string& output, const GlobalString& name, const HeapString& value) const override;
 

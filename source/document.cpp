@@ -132,7 +132,7 @@ Box* TextNode::createBox(const RefPtr<BoxStyle>& style)
     return box;
 }
 
-void TextNode::buildBox(Counters& counters, Box* parent)
+void TextNode::buildBox(Counters& counters, SelectorFilter& selectorFilter, Box* parent)
 {
     if(isHidden(parent))
         return;
@@ -255,11 +255,11 @@ std::string ContainerNode::textFromChildren() const
     return content;
 }
 
-void ContainerNode::buildChildrenBox(Counters& counters, Box* parent)
+void ContainerNode::buildChildrenBox(Counters& counters, SelectorFilter& selectorFilter, Box* parent)
 {
     auto child = m_firstChild;
     while(child) {
-        child->buildBox(counters, parent);
+        child->buildBox(counters, selectorFilter, parent);
         child = child->nextSibling();
     }
 }
@@ -491,16 +491,27 @@ Box* Element::createBox(const RefPtr<BoxStyle>& style)
     return Box::create(this, style);
 }
 
-void Element::buildBox(Counters& counters, Box* parent)
+void Element::buildElementChildrenBox(Counters& counters, SelectorFilter& selectorFilter, Box* box)
 {
-    auto style = document()->styleForElement(this, parent->style());
+    const auto filtering = firstChildElement();
+    if(filtering)
+        selectorFilter.push(this);
+    buildChildrenBox(counters, selectorFilter, box);
+    if(filtering) {
+        selectorFilter.pop();
+    }
+}
+
+void Element::buildBox(Counters& counters, SelectorFilter& selectorFilter, Box* parent)
+{
+    auto style = document()->styleForElement(this, selectorFilter, parent->style());
     if(style == nullptr || style->display() == Display::None)
         return;
     auto box = createBox(style);
     if(box == nullptr)
         return;
     parent->addChild(box);
-    buildChildrenBox(counters, box);
+    buildElementChildrenBox(counters, selectorFilter, box);
 }
 
 void Element::finishParsingDocument()
@@ -892,14 +903,14 @@ bool Document::supportsMedia(std::string_view type, std::string_view media) cons
     return false;
 }
 
-RefPtr<BoxStyle> Document::styleForElement(Element* element, const BoxStyle* parentStyle) const
+RefPtr<BoxStyle> Document::styleForElement(Element* element, const SelectorFilter& selectorFilter, const BoxStyle* parentStyle) const
 {
-    return m_styleSheet.styleForElement(element, parentStyle);
+    return m_styleSheet.styleForElement(element, selectorFilter, parentStyle);
 }
 
-RefPtr<BoxStyle> Document::pseudoStyleForElement(Element* element, PseudoType pseudoType, const BoxStyle* parentStyle) const
+RefPtr<BoxStyle> Document::pseudoStyleForElement(Element* element, PseudoType pseudoType, const SelectorFilter& selectorFilter, const BoxStyle* parentStyle) const
 {
-    return m_styleSheet.pseudoStyleForElement(element, pseudoType, parentStyle);
+    return m_styleSheet.pseudoStyleForElement(element, pseudoType, selectorFilter, parentStyle);
 }
 
 RefPtr<BoxStyle> Document::styleForPage(const GlobalString& pageName, uint32_t pageIndex, PseudoType pseudoType) const
@@ -979,7 +990,7 @@ void Document::serialize(std::ostream& o) const
     box()->serialize(o, 0);
 }
 
-void Document::buildBox(Counters& counters, Box* parent)
+void Document::buildBox(Counters& counters, SelectorFilter& selectorFilter, Box* parent)
 {
     auto rootStyle = BoxStyle::create(this, PseudoType::None, Display::Block);
     rootStyle->setPosition(Position::Absolute);
@@ -987,7 +998,7 @@ void Document::buildBox(Counters& counters, Box* parent)
 
     auto rootBox = createBox(rootStyle);
     counters.push();
-    buildChildrenBox(counters, rootBox);
+    buildChildrenBox(counters, selectorFilter, rootBox);
     counters.pop();
     rootBox->build();
 }
@@ -995,7 +1006,8 @@ void Document::buildBox(Counters& counters, Box* parent)
 void Document::build()
 {
     Counters counters(this, 0);
-    buildBox(counters, nullptr);
+    SelectorFilter selectorFilter;
+    buildBox(counters, selectorFilter, nullptr);
 }
 
 void Document::layout()

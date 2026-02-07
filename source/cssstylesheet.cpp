@@ -426,28 +426,31 @@ void StyleBuilder::buildStyle(BoxStyle* newStyle)
 
 class ElementStyleBuilder final : public StyleBuilder {
 public:
-    ElementStyleBuilder(Element* element, PseudoType pseudoType, const BoxStyle* parentStyle);
+    ElementStyleBuilder(Element* element, PseudoType pseudoType, const SelectorFilter& selectorFilter, const BoxStyle* parentStyle);
 
     void add(const CSSRuleDataList* rules);
+
     RefPtr<BoxStyle> build();
 
 private:
     Element* m_element;
+    const SelectorFilter& m_selectorFilter;
 };
 
-ElementStyleBuilder::ElementStyleBuilder(Element* element, PseudoType pseudoType, const BoxStyle* parentStyle)
+ElementStyleBuilder::ElementStyleBuilder(Element* element, PseudoType pseudoType, const SelectorFilter& selectorFilter, const BoxStyle* parentStyle)
     : StyleBuilder(parentStyle, pseudoType)
     , m_element(element)
+    , m_selectorFilter(selectorFilter)
 {
 }
 
 void ElementStyleBuilder::add(const CSSRuleDataList* rules)
 {
-    if(rules == nullptr)
-        return;
-    for(const auto& rule : *rules) {
-        if(rule.match(m_element, m_pseudoType)) {
-            merge(rule.specificity(), rule.position(), rule.properties());
+    if(rules) {
+        for(const auto& rule : *rules) {
+            if(rule.match(m_element, m_pseudoType, m_selectorFilter)) {
+                merge(rule.specificity(), rule.position(), rule.properties());
+            }
         }
     }
 }
@@ -670,9 +673,9 @@ CSSStyleSheet::CSSStyleSheet(Document* document)
     }
 }
 
-RefPtr<BoxStyle> CSSStyleSheet::styleForElement(Element* element, const BoxStyle* parentStyle) const
+RefPtr<BoxStyle> CSSStyleSheet::styleForElement(Element* element, const SelectorFilter& selectorFilter, const BoxStyle* parentStyle) const
 {
-    ElementStyleBuilder builder(element, PseudoType::None, parentStyle);
+    ElementStyleBuilder builder(element, PseudoType::None, selectorFilter, parentStyle);
     for(const auto& className : element->classNames())
         builder.add(m_classRules.get(className));
     for(const auto& attribute : element->attributes())
@@ -683,9 +686,9 @@ RefPtr<BoxStyle> CSSStyleSheet::styleForElement(Element* element, const BoxStyle
     return builder.build();
 }
 
-RefPtr<BoxStyle> CSSStyleSheet::pseudoStyleForElement(Element* element, PseudoType pseudoType, const BoxStyle* parentStyle) const
+RefPtr<BoxStyle> CSSStyleSheet::pseudoStyleForElement(Element* element, PseudoType pseudoType, const SelectorFilter& selectorFilter, const BoxStyle* parentStyle) const
 {
-    ElementStyleBuilder builder(element, pseudoType, parentStyle);
+    ElementStyleBuilder builder(element, pseudoType, selectorFilter, parentStyle);
     builder.add(m_pseudoRules.get(pseudoType));
     return builder.build();
 }

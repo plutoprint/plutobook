@@ -498,8 +498,86 @@ uint32_t CSSSimpleSelector::specificity() const
     }
 }
 
-bool CSSRuleData::match(const Element* element, PseudoType pseudoType) const
+SelectorFilter::SelectorFilter()
 {
+    m_table.fill(0);
+}
+
+static unsigned hashString(std::string_view value)
+{
+    return std::hash<std::string_view>()(value);
+}
+
+void SelectorFilter::push(const Element* element)
+{
+    HashVector hashes;
+    do {
+        if(!element->id().empty())
+            hashes.push_back(hashString(element->id()));
+        hashes.push_back(hashString(element->foldTagNameCase()));
+        for(const auto& className : element->classNames()) {
+            hashes.push_back(hashString(className));
+        }
+
+        element = element->parentElement();
+    } while(element && m_stack.empty());
+    for(auto hash : hashes)
+        add(hash);
+    m_stack.push_back(std::move(hashes));
+}
+
+void SelectorFilter::pop()
+{
+    for(auto hash : m_stack.back())
+        remove(hash);
+    m_stack.pop_back();
+}
+
+CSSRuleData::CSSRuleData(const RefPtr<CSSStyleRule>& rule, const CSSSelector& selector, uint32_t specificity, uint32_t position)
+    : m_rule(rule), m_selector(&selector), m_specificity(specificity), m_position(position)
+{
+    assert(!selector.empty());
+    auto it = selector.begin();
+    auto end = selector.end();
+
+    int index = 0;
+    do {
+        auto combinator = it->combinator();
+        ++it;
+        if(combinator == CSSComplexSelector::Combinator::Child
+            || combinator == CSSComplexSelector::Combinator::Descendant) {
+            for(const auto& sel : it->compoundSelector()) {
+                if(index == m_hashes.size())
+                    break;
+                switch(sel.matchType()) {
+                case CSSSimpleSelector::MatchType::Tag:
+                    m_hashes[index++] = hashString(sel.name());
+                    break;
+                case CSSSimpleSelector::MatchType::Id:
+                case CSSSimpleSelector::MatchType::Class:
+                    m_hashes[index++] = hashString(sel.value());
+                    break;
+                default:
+                    break;
+                }
+            }
+        }
+    } while(it != end);
+    if(index < m_hashes.size()) {
+        m_hashes[index] = 0;
+    }
+}
+
+bool CSSRuleData::match(const Element* element, PseudoType pseudoType, const SelectorFilter& selectorFilter) const
+{
+    for(auto hash : m_hashes) {
+        if(hash == 0)
+            break;
+        if(!selectorFilter.contains(hash)) {
+            return false;
+        }
+    }
+
     return matchSelector(element, pseudoType, *m_selector);
 }
 

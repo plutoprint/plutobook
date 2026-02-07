@@ -73,11 +73,11 @@ static size_t firstLetterTextLength(const HeapString& text)
     return textLength;
 }
 
-void HTMLElement::buildFirstLetterPseudoBox(Box* parent)
+void HTMLElement::buildFirstLetterPseudoBox(SelectorFilter& selectorFilter, Box* parent)
 {
     if(!parent->isBlockFlowBox())
         return;
-    auto style = document()->pseudoStyleForElement(this, PseudoType::FirstLetter, parent->style());
+    auto style = document()->pseudoStyleForElement(this, PseudoType::FirstLetter, selectorFilter, parent->style());
     if(style == nullptr || style->display() == Display::None)
         return;
     auto child = parent->firstChild();
@@ -123,11 +123,11 @@ void HTMLElement::buildFirstLetterPseudoBox(Box* parent)
     }
 }
 
-void HTMLElement::buildPseudoBox(Counters& counters, Box* parent, PseudoType pseudoType)
+void HTMLElement::buildPseudoBox(Counters& counters, SelectorFilter& selectorFilter, Box* parent, PseudoType pseudoType)
 {
     if(pseudoType == PseudoType::Marker && !parent->isListItemBox())
         return;
-    auto style = document()->pseudoStyleForElement(this, pseudoType, parent->style());
+    auto style = document()->pseudoStyleForElement(this, pseudoType, selectorFilter, parent->style());
     if(style == nullptr || style->display() == Display::None) {
         return;
     }
@@ -143,27 +143,27 @@ void HTMLElement::buildPseudoBox(Counters& counters, Box* parent, PseudoType pse
     parent->addChild(box);
     if(pseudoType == PseudoType::Before || pseudoType == PseudoType::After) {
         counters.update(box);
-        buildPseudoBox(counters, box, PseudoType::Marker);
+        buildPseudoBox(counters, selectorFilter, box, PseudoType::Marker);
     }
 
     ContentBoxBuilder(counters, this, box).build(*content);
 }
 
-void HTMLElement::buildElementBox(Counters& counters, Box* box)
+void HTMLElement::buildElementBox(Counters& counters, SelectorFilter& selectorFilter, Box* box)
 {
     counters.update(box);
     counters.push();
-    buildPseudoBox(counters, box, PseudoType::Marker);
-    buildPseudoBox(counters, box, PseudoType::Before);
-    buildChildrenBox(counters, box);
-    buildPseudoBox(counters, box, PseudoType::After);
-    buildFirstLetterPseudoBox(box);
+    buildPseudoBox(counters, selectorFilter, box, PseudoType::Marker);
+    buildPseudoBox(counters, selectorFilter, box, PseudoType::Before);
+    buildElementChildrenBox(counters, selectorFilter, box);
+    buildPseudoBox(counters, selectorFilter, box, PseudoType::After);
+    buildFirstLetterPseudoBox(selectorFilter, box);
     counters.pop();
 }
 
-void HTMLElement::buildBox(Counters& counters, Box* parent)
+void HTMLElement::buildBox(Counters& counters, SelectorFilter& selectorFilter, Box* parent)
 {
-    auto style = document()->styleForElement(this, parent->style());
+    auto style = document()->styleForElement(this, selectorFilter, parent->style());
     if(style == nullptr || style->display() == Display::None)
         return;
     if(style->position() == Position::Running) {
@@ -179,7 +179,7 @@ void HTMLElement::buildBox(Counters& counters, Box* parent)
     if(box == nullptr)
         return;
     parent->addChild(box);
-    buildElementBox(counters, box);
+    buildElementBox(counters, selectorFilter, box);
 }
 
 static void addHTMLAttributeStyle(std::string& output, std::string_view name, std::string_view value)
