@@ -51,7 +51,7 @@ float FragmentBuilder::applyFragmentBreakInside(const BoxFrame* child, float off
     return offset;
 }
 
-constexpr auto kFragmentFixedScale = 1000.0;
+constexpr double kFragmentFixedScale = 1000;
 
 void FragmentBuilder::enterFragment(float offset)
 {

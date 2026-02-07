@@ -40,8 +40,8 @@ class SVGMarker : public HeapMember {
 public:
     static std::unique_ptr<SVGMarker> create(const SVGGeometryBox* box);
 
-    void updatePositions(const Path& path);
     const SVGMarkerPositionList& positions() { return m_positions; }
+    void updatePositions(const Path& path);
 
 private:
     SVGMarker(const SVGResourceMarkerBox* start, const SVGResourceMarkerBox* mid, const SVGResourceMarkerBox* end)
