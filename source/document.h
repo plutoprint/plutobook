@@ -229,6 +229,9 @@ public:
     Element* previousSiblingElement() const;
     Element* nextSiblingElement() const;
 
+    bool hasID() const { return !m_id.empty(); }
+    bool hasClass() const { return !m_classNames.empty(); }
+
     void setIsCaseSensitive(bool value) { m_isCaseSensitive = value; }
     bool isCaseSensitive() const { return m_isCaseSensitive; }
 
@@ -237,6 +240,9 @@ public:
 
     void setIsLinkSource(bool value) { m_isLinkSource = value; }
     bool isLinkSource() const { return m_isLinkSource; }
+
+    void setHasElementChildren(bool value) { m_hasElementChildren = value; }
+    bool hasElementChildren() const { return m_hasElementChildren; }
 
     Node* cloneNode(bool deep) override;
     Box* createBox(const RefPtr<BoxStyle>& style) override;
@@ -254,6 +260,7 @@ private:
     bool m_isCaseSensitive{false};
     bool m_isLinkDestination{false};
     bool m_isLinkSource{false};
+    bool m_hasElementChildren{false};
 };
 
 template<>

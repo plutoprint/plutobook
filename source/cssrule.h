@@ -1863,7 +1863,7 @@ private:
 
     using HashVector = std::vector<unsigned>;
 
-    std::array<uint8_t, 1 << keyBits> m_table;
+    std::unique_ptr<uint8_t[]> m_table;
     std::vector<HashVector> m_stack;
 
     friend class CSSRuleData;

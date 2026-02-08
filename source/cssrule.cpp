@@ -499,8 +499,8 @@ uint32_t CSSSimpleSelector::specificity() const
 }
 
 SelectorFilter::SelectorFilter()
+    : m_table(new uint8_t[1 << keyBits]())
 {
-    m_table.fill(0);
 }
 
 static unsigned hashString(std::string_view value)
@@ -512,7 +512,7 @@ void SelectorFilter::push(const Element* element)
 {
     HashVector hashes;
     do {
-        if(!element->id().empty())
+        if(element->hasID())
             hashes.push_back(hashString(element->id()));
         hashes.push_back(hashString(element->foldTagNameCase()));
         for(const auto& className : element->classNames()) {
@@ -540,7 +540,7 @@ CSSRuleData::CSSRuleData(const RefPtr<CSSStyleRule>& rule, const CSSSelector& se
     auto it = selector.begin();
     auto end = selector.end();
 
-    int index = 0;
+    unsigned index = 0;
     do {
         auto combinator = it->combinator();
         ++it;
@@ -548,7 +548,7 @@ CSSRuleData::CSSRuleData(const RefPtr<CSSStyleRule>& rule, const CSSSelector& se
             || combinator == CSSComplexSelector::Combinator::Descendant) {
             for(const auto& sel : it->compoundSelector()) {
                 if(index == m_hashes.size())
-                    break;
+                    return;
                 switch(sel.matchType()) {
                 case CSSSimpleSelector::MatchType::Tag:
                     m_hashes[index++] = hashString(sel.name());
@@ -833,7 +833,7 @@ bool CSSRuleData::matchPseudoClassHasSelector(const Element* element, const CSSS
                 if(matchSelector(descendant, PseudoType::None, subSelector))
                     return true;
                 if((combinator == CSSComplexSelector::Combinator::Descendant || depth < maxDepth - 1)
-                    && descendant->firstChildElement()) {
+                    && descendant->hasElementChildren()) {
                     descendant = descendant->firstChildElement();
                     ++depth;
                     continue;

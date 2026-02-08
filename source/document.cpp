@@ -493,11 +493,10 @@ Box* Element::createBox(const RefPtr<BoxStyle>& style)
 
 void Element::buildElementChildrenBox(Counters& counters, SelectorFilter& selectorFilter, Box* box)
 {
-    const auto filtering = firstChildElement();
-    if(filtering)
+    if(m_hasElementChildren)
         selectorFilter.push(this);
     buildChildrenBox(counters, selectorFilter, box);
-    if(filtering) {
+    if(m_hasElementChildren) {
         selectorFilter.pop();
     }
 }
@@ -528,6 +527,13 @@ void Element::finishParsingDocument()
             }
         } else {
             setIsLinkSource(!completeUrl.isEmpty());
+        }
+    }
+
+    for(auto child = firstChild(); child; child = child->nextSibling()) {
+        if(child->isElementNode()) {
+            setHasElementChildren(true);
+            break;
         }
     }
 

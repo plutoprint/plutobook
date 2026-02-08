@@ -332,7 +332,7 @@ FontDescription FontDescriptionBuilder::build() const
 }
 
 class StyleBuilder {
-protected:
+public:
     StyleBuilder(const BoxStyle* parentStyle, PseudoType pseudoType)
         : m_parentStyle(parentStyle), m_pseudoType(pseudoType)
     {}
@@ -341,6 +341,7 @@ protected:
     void merge(uint32_t specificity, uint32_t position, const CSSPropertyList& properties);
     void buildStyle(BoxStyle* newStyle);
 
+protected:
     CSSPropertyDataList m_properties;
     const BoxStyle* m_parentStyle;
     PseudoType m_pseudoType;
@@ -429,7 +430,6 @@ public:
     ElementStyleBuilder(Element* element, PseudoType pseudoType, const SelectorFilter& selectorFilter, const BoxStyle* parentStyle);
 
     void add(const CSSRuleDataList* rules);
-
     RefPtr<BoxStyle> build();
 
 private:
