@@ -1416,12 +1416,17 @@ void TableSectionBox::build()
 
 void TableSectionBox::paintCollapsedBorders(const PaintInfo& info, const Point& offset, const TableCollapsedBorderEdge& currentEdge) const
 {
-    for(auto row : m_rows | std::views::reverse) {
-        Point adjustedOffset(offset + location() + row->location());
-        for(const auto& [col, cell] : row->cells()) {
+    Point adjustedOffset(offset + location());
+    if(!info.shouldPaintBox(this, adjustedOffset))
+        return;
+    for(auto rowBox : m_rows | std::views::reverse) {
+        Point rowOffset(adjustedOffset + rowBox->location());
+        if(!info.shouldPaintBox(rowBox, rowOffset))
+            continue;
+        for(const auto& [col, cell] : rowBox->cells()) {
             auto cellBox = cell.box();
             if(!cell.inColOrRowSpan()) {
-                cellBox->paintCollapsedBorders(info, adjustedOffset, currentEdge);
+                cellBox->paintCollapsedBorders(info, rowOffset, currentEdge);
             }
         }
     }
@@ -1429,37 +1434,42 @@ void TableSectionBox::paintCollapsedBorders(const PaintInfo& info, const Point& 
 
 void TableSectionBox::paint(const PaintInfo& info, const Point& offset, PaintPhase phase)
 {
+    Point adjustedOffset(offset + location());
+    if(!info.shouldPaintBox(this, adjustedOffset))
+        return;
     for(auto rowBox : m_rows) {
+        Point rowOffset(adjustedOffset + rowBox->location());
+        if(!info.shouldPaintBox(rowBox, rowOffset))
+            continue;
         if(phase == PaintPhase::Outlines && !rowBox->hasLayer() && rowBox->style()->visibility() == Visibility::Visible) {
-            rowBox->paintOutlines(info, offset + location() + rowBox->location());
+            rowBox->paintOutlines(info, rowOffset);
         }
 
         for(const auto& [col, cell] : rowBox->cells()) {
             auto cellBox = cell.box();
             if(cell.inColOrRowSpan() || (cellBox->emptyCells() == EmptyCells::Hide && !cellBox->firstChild()))
                 continue;
-            Point adjustedOffset(offset + location() + rowBox->location());
             if(phase == PaintPhase::Decorations) {
                 if(auto columnBox = table()->columnAt(col)) {
                     if(auto columnGroupBox = columnBox->columnGroup())
-                        cellBox->paintBackgroundBehindCell(info, adjustedOffset, columnGroupBox->style());
-                    cellBox->paintBackgroundBehindCell(info, adjustedOffset, columnBox->style());
+                        cellBox->paintBackgroundBehindCell(info, rowOffset, columnGroupBox->style());
+                    cellBox->paintBackgroundBehindCell(info, rowOffset, columnBox->style());
                 }
 
-                cellBox->paintBackgroundBehindCell(info, adjustedOffset, style());
+                cellBox->paintBackgroundBehindCell(info, rowOffset, style());
                 if(!rowBox->hasLayer()) {
-                    cellBox->paintBackgroundBehindCell(info, adjustedOffset, rowBox->style());
+                    cellBox->paintBackgroundBehindCell(info, rowOffset, rowBox->style());
                 }
             }
 
             if(!cellBox->hasLayer() && !rowBox->hasLayer()) {
-                cellBox->paint(info, adjustedOffset, phase);
+                cellBox->paint(info, rowOffset, phase);
             }
         }
     }
 
     if(phase == PaintPhase::Outlines && style()->visibility() == Visibility::Visible) {
-        paintOutlines(info, offset + location());
+        paintOutlines(info, adjustedOffset);
     }
 }
 
@@ -1494,6 +1504,17 @@ void TableRowBox::updateOverflowRect()
         auto cellBox = cell.box();
         if(!cell.inColOrRowSpan()) {
             addOverflowRect(cellBox, cellBox->x(), cellBox->y());
+            if(table()->isBorderCollapsed()) {
+                const auto& edges = cellBox->collapsedBorderEdges();
+                auto topHalfWidth = edges.topEdge().width() / 2.f;
+                auto bottomHalfWidth = edges.bottomEdge().width() / 2.f;
+                auto leftHalfWidth = edges.leftEdge().width() / 2.f;
+                auto rightHalfWidth = edges.rightEdge().width() / 2.f;
+
+                Rect overflowRect(cellBox->location(), cellBox->size());
+                overflowRect.expand(topHalfWidth, rightHalfWidth, bottomHalfWidth, leftHalfWidth);
+                addOverflowRect(overflowRect);
+            }
         }
     }
 }
@@ -1508,15 +1529,15 @@ TableCellBox* TableRowBox::cellAt(uint32_t columnIndex) const
 
 void TableRowBox::paint(const PaintInfo& info, const Point& offset, PaintPhase phase)
 {
+    Point adjustedOffset(offset + location());
     if(phase == PaintPhase::Outlines && style()->visibility() == Visibility::Visible) {
-        paintOutlines(info, offset + location());
+        paintOutlines(info, adjustedOffset);
     }
 
     for(const auto& [col, cell] : m_cells) {
         auto cellBox = cell.box();
         if(cell.inColOrRowSpan() || (cellBox->emptyCells() == EmptyCells::Hide && !cellBox->firstChild()))
             continue;
-        Point adjustedOffset(offset + location());
         if(phase == PaintPhase::Decorations)
             cellBox->paintBackgroundBehindCell(info, adjustedOffset, style());
         if(!cellBox->hasLayer()) {

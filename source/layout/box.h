@@ -24,6 +24,7 @@ enum class PaintPhase {
 };
 
 class GraphicsContext;
+class BoxFrame;
 
 class PaintInfo {
 public:
@@ -36,6 +37,8 @@ public:
 
     GraphicsContext& context() const { return m_context; }
     const Rect& rect() const { return m_rect; }
+
+    bool shouldPaintBox(const BoxFrame* box, const Point& offset) const;
 
 private:
     GraphicsContext& m_context;
@@ -572,6 +575,13 @@ inline Rect BoxFrame::borderBoundingBox() const
 inline Rect BoxFrame::paintBoundingBox() const
 {
     return borderBoundingBox();
+}
+
+inline bool PaintInfo::shouldPaintBox(const BoxFrame* box, const Point& offset) const
+{
+    auto overflowRect = box->visualOverflowRect();
+    overflowRect.translate(offset);
+    return overflowRect.intersects(m_rect);
 }
 
 } // namespace plutobook

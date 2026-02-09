@@ -544,13 +544,11 @@ void BlockBox::paintContents(const PaintInfo& info, const Point& offset, PaintPh
 
 void BlockBox::paint(const PaintInfo& info, const Point& offset, PaintPhase phase)
 {
-    auto overflowRect = visualOverflowRect();
-    overflowRect.translate(offset + location());
-    if(!overflowRect.intersects(info.rect())) {
+    Point adjustedOffset(offset + location());
+    if(!info.shouldPaintBox(this, adjustedOffset)) {
         return;
     }
 
-    Point adjustedOffset(offset + location());
     if(phase == PaintPhase::Decorations && style()->visibility() == Visibility::Visible)
         paintDecorations(info, adjustedOffset);
     paintContents(info, adjustedOffset, phase);

@@ -428,13 +428,11 @@ void ReplacedBox::paint(const PaintInfo& info, const Point& offset, PaintPhase p
         return;
     if(style()->visibility() != Visibility::Visible)
         return;
-    auto overflowRect = visualOverflowRect();
-    overflowRect.translate(offset + location());
-    if(!overflowRect.intersects(info.rect())) {
+    Point adjustedOffset(offset + location());
+    if(!info.shouldPaintBox(this, adjustedOffset)) {
         return;
     }
 
-    Point adjustedOffset(offset + location());
     if(phase == PaintPhase::Outlines) {
         paintOutlines(info, adjustedOffset);
     } else {
