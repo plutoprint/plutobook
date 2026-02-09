@@ -19,7 +19,6 @@
 #include <forward_list>
 #include <memory>
 #include <numbers>
-#include <array>
 #include <vector>
 #include <set>
 
@@ -1956,11 +1955,13 @@ private:
     static bool matchPseudoClassNthOfTypeSelector(const Element* element, const CSSSimpleSelector& selector);
     static bool matchPseudoClassNthLastOfTypeSelector(const Element* element, const CSSSimpleSelector& selector);
 
+    static const unsigned maxHashCount = 4;
+
     RefPtr<CSSStyleRule> m_rule;
     const CSSSelector* m_selector;
     uint32_t m_specificity;
     uint32_t m_position;
-    std::array<unsigned, 4> m_hashes;
+    unsigned m_hashes[maxHashCount];
 };
 
 class CSSPageRuleData {

@@ -547,7 +547,7 @@ CSSRuleData::CSSRuleData(const RefPtr<CSSStyleRule>& rule, const CSSSelector& se
         if(combinator == CSSComplexSelector::Combinator::Child
             || combinator == CSSComplexSelector::Combinator::Descendant) {
             for(const auto& sel : it->compoundSelector()) {
-                if(index == m_hashes.size())
+                if(index == maxHashCount)
                     return;
                 switch(sel.matchType()) {
                 case CSSSimpleSelector::MatchType::Tag:
@@ -563,7 +563,7 @@ CSSRuleData::CSSRuleData(const RefPtr<CSSStyleRule>& rule, const CSSSelector& se
             }
         }
     } while(it != end);
-    if(index < m_hashes.size()) {
+    if(index < maxHashCount) {
         m_hashes[index] = 0;
     }
 }
