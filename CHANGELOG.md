@@ -1,5 +1,22 @@
 # Changelog
 
+## PlutoBook 0.14.0 (2026-02-09)
+
+- Add selector filter for fast CSS selector rejection
+- Add lazy loading support for CSS `@font-face` fonts
+- Add support for padding in page boxes
+- Fix double slanting of remote CSS `@font-face` fonts
+- Fix fallback handling in SVG paint application
+- Fix rounding errors in fragment offsets, line, and flex layout
+- Apply page scale to page margin boxes
+- Reorder header and footer painting to fix collapsed border rendering
+- Revert change ensuring empty list items with outside markers generate boxes
+
+Backers and sponsors:
+
+- [Peter Nguyen](https://github.com/jupetern)
+- [Ashish Kulkarni](https://github.com/ashkulz)
+
 ## PlutoBook 0.13.0 (2026-01-14)
 
 - Support repeating table headers and footers
