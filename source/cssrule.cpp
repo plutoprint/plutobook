@@ -498,11 +498,6 @@ uint32_t CSSSimpleSelector::specificity() const
     }
 }
 
-SelectorFilter::SelectorFilter()
-    : m_table(new uint8_t[1 << keyBits]())
-{
-}
-
 static unsigned hashString(std::string_view value)
 {
     return std::hash<std::string_view>()(value);
@@ -521,6 +516,8 @@ void SelectorFilter::push(const Element* element)
 
         element = element->parentElement();
     } while(element && m_stack.empty());
+    if(m_stack.empty())
+        m_table = std::make_unique<uint8_t[]>(1 << keyBits);
     for(auto hash : hashes)
         add(hash);
     m_stack.push_back(std::move(hashes));

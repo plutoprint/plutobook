@@ -1840,7 +1840,7 @@ class Element;
 
 class SelectorFilter {
 public:
-    SelectorFilter();
+    SelectorFilter() = default;
 
     void push(const Element* element);
     void pop();
@@ -1851,7 +1851,7 @@ private:
     void add(unsigned hash);
     void remove(unsigned hash);
 
-    bool isSet(unsigned key) const { return m_table[key & keyMask]; }
+    bool isSet(unsigned key) const { return m_table && m_table[key & keyMask]; }
 
     void set(unsigned key);
     void unset(unsigned key);
