@@ -601,8 +601,8 @@ void HTMLTableElement::collectAdditionalCellAttributeStyle(std::string& output) 
     }
 
     if(m_border > 0 && m_rules == Rules::Unset) {
-        addHTMLAttributeStyle(output, "border-width", "inset");
-        addHTMLAttributeStyle(output, "border-style", "solid");
+        addHTMLAttributeStyle(output, "border-width", "thin");
+        addHTMLAttributeStyle(output, "border-style", "inset");
         addHTMLAttributeStyle(output, "border-color", "inherit");
     } else {
         switch(m_rules) {
