@@ -312,7 +312,7 @@ RefPtr<FontData> SegmentedFontFace::getFontData(Document* document, const FontDa
     }
 
     const auto syntheticOblique = !m_description.slope
-        || description.request.slope < m_description.slope.maximum
+        || description.request.slope < m_description.slope.minimum
         || description.request.slope > m_description.slope.maximum;
 
     FontDataRangeList fonts;
