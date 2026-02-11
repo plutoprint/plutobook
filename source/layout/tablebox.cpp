@@ -1511,9 +1511,9 @@ void TableRowBox::updateOverflowRect()
                 auto leftHalfWidth = edges.leftEdge().width() / 2.f;
                 auto rightHalfWidth = edges.rightEdge().width() / 2.f;
 
-                Rect overflowRect(cellBox->location(), cellBox->size());
-                overflowRect.expand(topHalfWidth, rightHalfWidth, bottomHalfWidth, leftHalfWidth);
-                addOverflowRect(overflowRect);
+                Rect borderRect(cellBox->location(), cellBox->size());
+                borderRect.expand(topHalfWidth, rightHalfWidth, bottomHalfWidth, leftHalfWidth);
+                addOverflowRect(borderRect);
             }
         }
     }
