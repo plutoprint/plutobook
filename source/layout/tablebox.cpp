@@ -1447,7 +1447,7 @@ void TableSectionBox::paint(const PaintInfo& info, const Point& offset, PaintPha
 
         for(const auto& [col, cell] : rowBox->cells()) {
             auto cellBox = cell.box();
-            if(cell.inColOrRowSpan() || (cellBox->emptyCells() == EmptyCells::Hide && !cellBox->firstChild()))
+            if(cell.inColOrRowSpan())
                 continue;
             if(phase == PaintPhase::Decorations) {
                 if(auto columnBox = table()->columnAt(col)) {
@@ -1536,7 +1536,7 @@ void TableRowBox::paint(const PaintInfo& info, const Point& offset, PaintPhase p
 
     for(const auto& [col, cell] : m_cells) {
         auto cellBox = cell.box();
-        if(cell.inColOrRowSpan() || (cellBox->emptyCells() == EmptyCells::Hide && !cellBox->firstChild()))
+        if(cell.inColOrRowSpan())
             continue;
         if(phase == PaintPhase::Decorations)
             cellBox->paintBackgroundBehindCell(info, adjustedOffset, style());
@@ -1957,11 +1957,14 @@ const TableCollapsedBorderEdges& TableCellBox::collapsedBorderEdges() const
 
 void TableCellBox::paintBackgroundBehindCell(const PaintInfo& info, const Point& offset, const BoxStyle* backgroundStyle) const
 {
-    if(style()->visibility() == Visibility::Visible) {
-        Point adjustedOffset(offset + location());
-        Rect borderRect(adjustedOffset, size());
-        paintBackgroundStyle(info, borderRect, backgroundStyle);
-    }
+    if(style()->visibility() != Visibility::Visible)
+        return;
+    const auto collapseBorders = table()->isBorderCollapsed();
+    if(!collapseBorders && style()->emptyCells() == EmptyCells::Hide && !firstChild())
+        return;
+    Point adjustedOffset(offset + location());
+    Rect borderRect(adjustedOffset, size());
+    paintBackgroundStyle(info, borderRect, backgroundStyle);
 }
 
 void TableCellBox::paintCollapsedBorders(const PaintInfo& info, const Point& offset, const TableCollapsedBorderEdge& currentEdge) const
@@ -2051,9 +2054,12 @@ void TableCellBox::paintCollapsedBorders(const PaintInfo& info, const Point& off
 
 void TableCellBox::paintDecorations(const PaintInfo& info, const Point& offset)
 {
+    const auto collapseBorders = table()->isBorderCollapsed();
+    if(!collapseBorders && style()->emptyCells() == EmptyCells::Hide && !firstChild())
+        return;
     Rect borderRect(offset, size());
     paintBackground(info, borderRect);
-    if(!table()->isBorderCollapsed()) {
+    if(!collapseBorders) {
         paintBorder(info, borderRect);
     }
 }

@@ -439,7 +439,6 @@ public:
     void computeBorderWidths(float& borderTop, float& borderBottom, float& borderLeft, float& borderRight) const;
 
     const TableCollapsedBorderEdges& collapsedBorderEdges() const;
-    EmptyCells emptyCells() const { return style()->emptyCells(); }
     uint32_t colSpan() const { return m_colSpan; }
     uint32_t rowSpan() const { return m_rowSpan; }
     uint32_t columnIndex() const { return m_columnIndex; }
