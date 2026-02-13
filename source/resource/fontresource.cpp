@@ -459,10 +459,13 @@ RefPtr<SimpleFontData> SimpleFontData::create(cairo_scaled_font_t* font, FcCharS
     return adoptPtr(new SimpleFontData(font, hbFont, charSet, info, std::move(features)));
 }
 
-const SimpleFontData* SimpleFontData::getFontData(uint32_t codepoint, bool preferColor) const
+const SimpleFontData* SimpleFontData::getFontData(uint32_t codepoint, GlyphPresentation presentation) const
 {
-    if(preferColor && !m_info.hasColor)
+    if((m_info.hasColor && presentation == GlyphPresentation::Outline)
+        || (!m_info.hasColor && presentation == GlyphPresentation::Color)) {
         return nullptr;
+    }
+
     if(FcCharSetHasChar(m_charSet, codepoint))
         return this;
     return nullptr;
@@ -475,17 +478,17 @@ SimpleFontData::~SimpleFontData()
     FcCharSetDestroy(m_charSet);
 }
 
-const SimpleFontData* FontDataRange::getFontData(uint32_t codepoint, bool preferColor) const
+const SimpleFontData* FontDataRange::getFontData(uint32_t codepoint, GlyphPresentation presentation) const
 {
     if(m_from <= codepoint && m_to >= codepoint)
-        return m_data->getFontData(codepoint, preferColor);
+        return m_data->getFontData(codepoint, presentation);
     return nullptr;
 }
 
-const SimpleFontData* SegmentedFontData::getFontData(uint32_t codepoint, bool preferColor) const
+const SimpleFontData* SegmentedFontData::getFontData(uint32_t codepoint, GlyphPresentation presentation) const
 {
     for(const auto& font : m_fonts) {
-        if(auto fontData = font.getFontData(codepoint, preferColor)) {
+        if(auto fontData = font.getFontData(codepoint, presentation)) {
             return fontData;
         }
     }
@@ -768,14 +771,15 @@ Heap* Font::heap() const
     return m_document->heap();
 }
 
-const SimpleFontData* Font::getFontData(uint32_t codepoint, bool preferColor)
+const SimpleFontData* Font::getFontData(uint32_t codepoint, GlyphPresentation presentation)
 {
     for(const auto& font : m_fonts) {
-        if(auto fontData = font->getFontData(codepoint, preferColor)) {
+        if(auto fontData = font->getFontData(codepoint, presentation)) {
             return fontData;
         }
     }
 
+    const auto preferColor = presentation == GlyphPresentation::Color;
     if(preferColor) {
         if(m_emojiFont == nullptr) {
             static const GlobalString emoji("emoji");
@@ -804,7 +808,7 @@ Font::Font(Document* document, const FontDescription& description)
     for(const auto& family : description.families) {
         if(auto font = document->getFontData(family, description.data)) {
             if(m_primaryFont == nullptr)
-                m_primaryFont = font->getFontData(' ', false);
+                m_primaryFont = font->getFontData(' ', GlyphPresentation::Outline);
             m_fonts.push_back(std::move(font));
         }
     }

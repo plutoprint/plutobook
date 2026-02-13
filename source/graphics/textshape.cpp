@@ -105,18 +105,47 @@ uint32_t TextShapeRun::offsetForPosition(float position, Direction direction) co
     return direction == Direction::Rtl ? 0 : m_length;
 }
 
+static GlyphPresentation resolveGlyphPresentation(FontVariantEmoji variantEmoji, uint32_t codepoint, const uint16_t* characters, int offset, int length)
+{
+    if(length > 1) {
+        auto lastCharacter = characters[offset + length - 1];
+        if(lastCharacter == kVariationSelector15Character)
+            return GlyphPresentation::Outline;
+        if(lastCharacter == kVariationSelector16Character) {
+            return GlyphPresentation::Color;
+        }
+    }
+
+    switch(variantEmoji) {
+    case FontVariantEmoji::Normal:
+        if(codepoint > 0xFF && u_hasBinaryProperty(codepoint, UCHAR_EMOJI_PRESENTATION))
+            return GlyphPresentation::Color;
+        break;
+    case FontVariantEmoji::Text:
+        return GlyphPresentation::Outline;
+    case FontVariantEmoji::Emoji:
+        if(u_hasBinaryProperty(codepoint, UCHAR_EMOJI))
+            return GlyphPresentation::Color;
+        break;
+    case FontVariantEmoji::Unicode:
+        if(u_hasBinaryProperty(codepoint, UCHAR_EMOJI)) {
+            if(u_hasBinaryProperty(codepoint, UCHAR_EMOJI_PRESENTATION))
+                return GlyphPresentation::Color;
+            return GlyphPresentation::Outline;
+        }
+    }
+
+    return GlyphPresentation::Auto;
+}
+
 constexpr int kMaxGlyphs = 1 << 16;
 constexpr int kMaxCharacters = kMaxGlyphs;
 
 #define HB_TO_FLT(v) (static_cast<float>(v) / (1 << 16))
 
-static bool isEmojiCodepoint(uint32_t codepoint, FontVariantEmoji variantEmoji)
-{
-    return variantEmoji != FontVariantEmoji::Text && codepoint > 0xFF && u_hasBinaryProperty(codepoint, UCHAR_EMOJI);
-}
-
 RefPtr<TextShape> TextShape::createForText(const UString& text, Direction direction, bool disableSpacing, const BoxStyle* style)
 {
+    assert(!text.isEmpty());
     const auto& font = style->font();
     auto fontFeatures = style->fontFeatures();
     auto fontVariantEmoji = style->fontVariantEmoji();
@@ -134,33 +163,40 @@ RefPtr<TextShape> TextShape::createForText(const UString& text, Direction direct
     TextShapeRunList textRuns(heap);
 
     CharacterBreakIterator iterator(text);
+    auto character = text.char32At(startIndex);
+    auto currentIndex = iterator.nextBreakOpportunity(startIndex, totalLength);
+    auto nextFontData = font->getFontData(character, resolveGlyphPresentation(fontVariantEmoji, character, textBuffer, startIndex, currentIndex));
     while(totalLength > 0) {
+        auto fontData = nextFontData;
         auto errorCode = U_ZERO_ERROR;
-        auto character = text.char32At(startIndex);
-        auto fontData = font->getFontData(character, isEmojiCodepoint(character, fontVariantEmoji));
         auto scriptCode = uscript_getScript(character, &errorCode);
         if(!fontData || U_FAILURE(errorCode))
             break;
-        auto nextIndex = iterator.nextBreakOpportunity(startIndex, totalLength);
+        auto numCharacters = currentIndex - startIndex;
         auto endIndex = startIndex + std::min(totalLength, kMaxCharacters);
-        for(; nextIndex < endIndex; nextIndex = iterator.nextBreakOpportunity(nextIndex, endIndex)) {
-            auto nextCharacter = text.char32At(nextIndex);
-            if(treatAsZeroWidthSpace(nextCharacter))
-                continue;
-            auto nextFontData = font->getFontData(nextCharacter, isEmojiCodepoint(nextCharacter, fontVariantEmoji));
-            auto nextScriptCode = uscript_getScript(nextCharacter, &errorCode);
-            if(fontData != nextFontData || U_FAILURE(errorCode))
-                break;
-            if(scriptCode == USCRIPT_INHERITED || scriptCode == USCRIPT_COMMON)
-                scriptCode = nextScriptCode;
-            if(scriptCode != nextScriptCode && nextScriptCode != USCRIPT_INHERITED && nextScriptCode != USCRIPT_COMMON
-                && !uscript_hasScript(nextCharacter, scriptCode)) {
-                break;
+        while(currentIndex < endIndex) {
+            auto clusterOffset = currentIndex;
+            character = text.char32At(currentIndex);
+            currentIndex = iterator.nextBreakOpportunity(clusterOffset, endIndex);
+
+            auto clusterLength = currentIndex - clusterOffset;
+            if(!treatAsZeroWidthSpace(character)) {
+                nextFontData = font->getFontData(character, resolveGlyphPresentation(fontVariantEmoji, character, textBuffer, clusterOffset, clusterLength));
+                auto nextScriptCode = uscript_getScript(character, &errorCode);
+                if(fontData != nextFontData || U_FAILURE(errorCode))
+                    break;
+                if(scriptCode == USCRIPT_INHERITED || scriptCode == USCRIPT_COMMON)
+                    scriptCode = nextScriptCode;
+                if(scriptCode != nextScriptCode && nextScriptCode != USCRIPT_INHERITED && nextScriptCode != USCRIPT_COMMON
+                    && !uscript_hasScript(character, scriptCode)) {
+                    break;
+                }
             }
+
+            numCharacters += clusterLength;
         }
 
-        assert(nextIndex > startIndex);
-        auto numCharacters = nextIndex - startIndex;
+        assert(numCharacters > 0);
         auto scriptName = uscript_getShortName(scriptCode);
         auto hbScript = hb_script_from_string(scriptName, -1);
 
@@ -237,7 +273,7 @@ RefPtr<TextShape> TextShape::createForTabs(const UString& text, Direction direct
     int totalLength = text.length();
 
     TextShapeRunList runs(heap);
-    if(auto fontData = font->getFontData(kSpaceCharacter, false)) {
+    if(auto fontData = font->getFontData(kSpaceCharacter, GlyphPresentation::Outline)) {
         auto tabWidth = style->tabWidth(fontData->spaceWidth());
         auto spaceGlyph = fontData->spaceGlyph();
         while(totalLength > 0) {
