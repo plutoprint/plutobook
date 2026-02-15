@@ -105,37 +105,40 @@ uint32_t TextShapeRun::offsetForPosition(float position, Direction direction) co
     return direction == Direction::Rtl ? 0 : m_length;
 }
 
-static GlyphPresentation resolveGlyphPresentation(FontVariantEmoji variantEmoji, uint32_t codepoint, const uint16_t* characters, int offset, int length)
+constexpr bool isVariationSelector(uint16_t character)
+{
+    return character >= 0xFE00 && character <= 0xFE0F;
+}
+
+static uint32_t resolveVariationSelector(FontVariantEmoji variantEmoji, uint32_t codepoint, const uint16_t* characters, int offset, int length)
 {
     if(length > 1) {
-        const auto lastCharacter = characters[offset + length - 1];
-        if(lastCharacter == kVariationSelector15Character)
-            return GlyphPresentation::Outline;
-        if(lastCharacter == kVariationSelector16Character) {
-            return GlyphPresentation::Color;
+        auto lastCharacter = characters[offset + length - 1];
+        if(isVariationSelector(lastCharacter)) {
+            return lastCharacter;
         }
     }
 
     switch(variantEmoji) {
     case FontVariantEmoji::Normal:
         if(codepoint > 0xFF && u_hasBinaryProperty(codepoint, UCHAR_EMOJI_PRESENTATION))
-            return GlyphPresentation::Color;
+            return kVariationSelector16Character;
         break;
     case FontVariantEmoji::Text:
-        return GlyphPresentation::Outline;
+        return kVariationSelector15Character;
     case FontVariantEmoji::Emoji:
         if(u_hasBinaryProperty(codepoint, UCHAR_EMOJI))
-            return GlyphPresentation::Color;
+            return kVariationSelector16Character;
         break;
     case FontVariantEmoji::Unicode:
         if(u_hasBinaryProperty(codepoint, UCHAR_EMOJI)) {
             if(u_hasBinaryProperty(codepoint, UCHAR_EMOJI_PRESENTATION))
-                return GlyphPresentation::Color;
-            return GlyphPresentation::Outline;
+                return kVariationSelector16Character;
+            return kVariationSelector15Character;
         }
     }
 
-    return GlyphPresentation::Auto;
+    return 0;
 }
 
 constexpr int kMaxGlyphs = 1 << 16;
@@ -165,7 +168,7 @@ RefPtr<TextShape> TextShape::createForText(const UString& text, Direction direct
     CharacterBreakIterator iterator(text);
     auto character = text.char32At(startIndex);
     auto currentIndex = iterator.nextBreakOpportunity(startIndex, totalLength);
-    auto nextFontData = font->getFontData(character, resolveGlyphPresentation(fontVariantEmoji, character, textBuffer, startIndex, currentIndex));
+    auto nextFontData = font->getFontData(character, resolveVariationSelector(fontVariantEmoji, character, textBuffer, startIndex, currentIndex));
     while(totalLength > 0) {
         auto fontData = nextFontData;
         auto errorCode = U_ZERO_ERROR;
@@ -181,7 +184,7 @@ RefPtr<TextShape> TextShape::createForText(const UString& text, Direction direct
 
             auto clusterLength = currentIndex - clusterOffset;
             if(!treatAsZeroWidthSpace(character)) {
-                nextFontData = font->getFontData(character, resolveGlyphPresentation(fontVariantEmoji, character, textBuffer, clusterOffset, clusterLength));
+                nextFontData = font->getFontData(character, resolveVariationSelector(fontVariantEmoji, character, textBuffer, clusterOffset, clusterLength));
                 auto nextScriptCode = uscript_getScript(character, &errorCode);
                 if(fontData != nextFontData || U_FAILURE(errorCode))
                     break;
@@ -273,7 +276,7 @@ RefPtr<TextShape> TextShape::createForTabs(const UString& text, Direction direct
     int totalLength = text.length();
 
     TextShapeRunList runs(heap);
-    if(auto fontData = font->getFontData(kSpaceCharacter, GlyphPresentation::Outline)) {
+    if(auto fontData = font->getFontData(kSpaceCharacter, 0)) {
         auto tabWidth = style->tabWidth(fontData->spaceWidth());
         auto spaceGlyph = fontData->spaceGlyph();
         while(totalLength > 0) {

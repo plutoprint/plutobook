@@ -343,16 +343,10 @@ inline RefPtr<SegmentedFontFace> SegmentedFontFace::create(const FontSelectionDe
 
 class SimpleFontData;
 
-enum class GlyphPresentation {
-    Auto,
-    Outline,
-    Color
-};
-
 class FontData : public RefCounted<FontData> {
 public:
     virtual ~FontData() = default;
-    virtual const SimpleFontData* getFontData(uint32_t codepoint, GlyphPresentation presentation) const = 0;
+    virtual const SimpleFontData* getFontData(uint32_t codepoint, uint32_t variationSelector) const = 0;
 
 protected:
     FontData() = default;
@@ -381,7 +375,7 @@ public:
     const FontDataInfo& info() const { return m_info; }
     const FontFeatureList& features() const { return m_features; }
 
-    const SimpleFontData* getFontData(uint32_t codepoint, GlyphPresentation presentation) const final;
+    const SimpleFontData* getFontData(uint32_t codepoint, uint32_t variationSelector) const final;
 
     float ascent() const { return m_info.ascent; }
     float descent() const { return m_info.descent; }
@@ -414,7 +408,7 @@ public:
         : m_from(from), m_to(to), m_data(std::move(data))
     {}
 
-    const SimpleFontData* getFontData(uint32_t codepoint, GlyphPresentation presentation) const;
+    const SimpleFontData* getFontData(uint32_t codepoint, uint32_t variationSelector) const;
 
 private:
     uint32_t m_from;
@@ -428,7 +422,7 @@ class SegmentedFontData final : public FontData {
 public:
     static RefPtr<SegmentedFontData> create(FontDataRangeList fonts);
 
-    const SimpleFontData* getFontData(uint32_t codepoint, GlyphPresentation presentation) const final;
+    const SimpleFontData* getFontData(uint32_t codepoint, uint32_t variationSelector) const final;
 
 private:
     SegmentedFontData(FontDataRangeList fonts) : m_fonts(std::move(fonts)) {}
@@ -443,7 +437,7 @@ inline RefPtr<SegmentedFontData> SegmentedFontData::create(FontDataRangeList fon
 class FontDataCache {
 public:
     RefPtr<SimpleFontData> getFontData(const GlobalString& family, const FontDataDescription& description);
-    RefPtr<SimpleFontData> getFontData(uint32_t codepoint, bool preferColor, const FontDataDescription& description);
+    RefPtr<SimpleFontData> getFontData(uint32_t codepoint, uint32_t variationSelector, const FontDataDescription& description);
 
     bool isFamilyAvailable(const GlobalString& family);
 
@@ -477,7 +471,7 @@ public:
     const FontFamilyList& family() const { return m_description.families; }
     const FontVariationList& variationSettings() const { return m_description.data.variations; }
 
-    const SimpleFontData* getFontData(uint32_t codepoint, GlyphPresentation presentation);
+    const SimpleFontData* getFontData(uint32_t codepoint, uint32_t variationSelector);
 
 private:
     Font(Document* document, const FontDescription& description);
