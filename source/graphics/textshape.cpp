@@ -241,7 +241,7 @@ RefPtr<TextShape> TextShape::createForText(const UString& text, Direction direct
             glyphData.yOffset = -HB_TO_FLT(glyphPosition.y_offset);
             glyphData.advance = HB_TO_FLT(glyphPosition.x_advance - glyphPosition.y_advance);
 
-            if(!disableSpacing) {
+            if(letterSpacing || wordSpacing) {
                 auto character = text.charAt(startIndex + glyphData.characterIndex);
                 if(letterSpacing && !treatAsZeroWidthSpace(character))
                     glyphData.advance += letterSpacing;
