@@ -108,7 +108,7 @@ uint32_t TextShapeRun::offsetForPosition(float position, Direction direction) co
 static GlyphPresentation resolveGlyphPresentation(FontVariantEmoji variantEmoji, uint32_t codepoint, const uint16_t* characters, int offset, int length)
 {
     if(length > 1) {
-        auto lastCharacter = characters[offset + length - 1];
+        const auto lastCharacter = characters[offset + length - 1];
         if(lastCharacter == kVariationSelector15Character)
             return GlyphPresentation::Outline;
         if(lastCharacter == kVariationSelector16Character) {
@@ -177,7 +177,7 @@ RefPtr<TextShape> TextShape::createForText(const UString& text, Direction direct
         while(currentIndex < endIndex) {
             auto clusterOffset = currentIndex;
             character = text.char32At(currentIndex);
-            currentIndex = iterator.nextBreakOpportunity(clusterOffset, endIndex);
+            currentIndex = iterator.nextBreakOpportunity(currentIndex, endIndex);
 
             auto clusterLength = currentIndex - clusterOffset;
             if(!treatAsZeroWidthSpace(character)) {
