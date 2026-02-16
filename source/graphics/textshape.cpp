@@ -113,7 +113,7 @@ constexpr bool isVariationSelector(uint16_t character)
 static uint32_t resolveVariationSelector(FontVariantEmoji variantEmoji, uint32_t codepoint, const uint16_t* characters, int offset, int length)
 {
     if(length > 1) {
-        auto lastCharacter = characters[offset + length - 1];
+        const auto lastCharacter = characters[offset + length - 1];
         if(isVariationSelector(lastCharacter)) {
             return lastCharacter;
         }
@@ -176,13 +176,13 @@ RefPtr<TextShape> TextShape::createForText(const UString& text, Direction direct
         if(!fontData || U_FAILURE(errorCode))
             break;
         auto numCharacters = currentIndex - startIndex;
-        auto endIndex = startIndex + std::min(totalLength, kMaxCharacters);
+        const auto endIndex = startIndex + totalLength;
         while(currentIndex < endIndex) {
-            auto clusterOffset = currentIndex;
+            const auto clusterOffset = currentIndex;
             character = text.char32At(currentIndex);
             currentIndex = iterator.nextBreakOpportunity(currentIndex, endIndex);
 
-            auto clusterLength = currentIndex - clusterOffset;
+            const auto clusterLength = currentIndex - clusterOffset;
             if(!treatAsZeroWidthSpace(character)) {
                 nextFontData = font->getFontData(character, resolveVariationSelector(fontVariantEmoji, character, textBuffer, clusterOffset, clusterLength));
                 auto nextScriptCode = uscript_getScript(character, &errorCode);
@@ -218,46 +218,51 @@ RefPtr<TextShape> TextShape::createForText(const UString& text, Direction direct
         addFeatures(fontFeatures);
         addFeatures(fontData->features());
 
-        hb_buffer_reset(hbBuffer);
-        hb_buffer_add_utf16(hbBuffer, textBuffer + startIndex, numCharacters, 0, numCharacters);
-        hb_buffer_set_direction(hbBuffer, hbDirection);
-        hb_buffer_set_script(hbBuffer, hbScript);
-        hb_shape(fontData->hbFont(), hbBuffer, hbFeatures.data(), hbFeatures.size());
+        while(numCharacters > 0) {
+            const auto itemLength = std::min(numCharacters, kMaxCharacters);
 
-        auto glyphInfos = hb_buffer_get_glyph_infos(hbBuffer, nullptr);
-        auto glyphPositions = hb_buffer_get_glyph_positions(hbBuffer, nullptr);
-        auto numGlyphs = hb_buffer_get_length(hbBuffer);
+            hb_buffer_reset(hbBuffer);
+            hb_buffer_add_utf16(hbBuffer, textBuffer + startIndex, itemLength, 0, itemLength);
+            hb_buffer_set_direction(hbBuffer, hbDirection);
+            hb_buffer_set_script(hbBuffer, hbScript);
+            hb_shape(fontData->hbFont(), hbBuffer, hbFeatures.data(), hbFeatures.size());
 
-        float width = 0.f;
-        TextShapeRunGlyphDataList glyphs(heap, numGlyphs);
-        for(size_t index = 0; index < numGlyphs; ++index) {
-            const auto& glyphInfo = glyphInfos[index];
-            const auto& glyphPosition = glyphPositions[index];
+            auto glyphInfos = hb_buffer_get_glyph_infos(hbBuffer, nullptr);
+            auto glyphPositions = hb_buffer_get_glyph_positions(hbBuffer, nullptr);
+            auto numGlyphs = hb_buffer_get_length(hbBuffer);
 
-            auto& glyphData = glyphs[index];
-            glyphData.glyphIndex = glyphInfo.codepoint;
-            glyphData.characterIndex = glyphInfo.cluster;
-            glyphData.xOffset = HB_TO_FLT(glyphPosition.x_offset);
-            glyphData.yOffset = -HB_TO_FLT(glyphPosition.y_offset);
-            glyphData.advance = HB_TO_FLT(glyphPosition.x_advance - glyphPosition.y_advance);
+            float width = 0.f;
+            TextShapeRunGlyphDataList glyphs(heap, numGlyphs);
+            for(size_t index = 0; index < numGlyphs; ++index) {
+                const auto& glyphInfo = glyphInfos[index];
+                const auto& glyphPosition = glyphPositions[index];
 
-            if(letterSpacing || wordSpacing) {
-                auto character = text.charAt(startIndex + glyphData.characterIndex);
-                if(letterSpacing && !treatAsZeroWidthSpace(character))
-                    glyphData.advance += letterSpacing;
-                if(wordSpacing && treatAsSpace(character)) {
-                    glyphData.advance += wordSpacing;
+                auto& glyphData = glyphs[index];
+                glyphData.glyphIndex = glyphInfo.codepoint;
+                glyphData.characterIndex = glyphInfo.cluster;
+                glyphData.xOffset = HB_TO_FLT(glyphPosition.x_offset);
+                glyphData.yOffset = -HB_TO_FLT(glyphPosition.y_offset);
+                glyphData.advance = HB_TO_FLT(glyphPosition.x_advance - glyphPosition.y_advance);
+
+                if(letterSpacing || wordSpacing) {
+                    auto character = text.charAt(startIndex + glyphData.characterIndex);
+                    if(letterSpacing && !treatAsZeroWidthSpace(character))
+                        glyphData.advance += letterSpacing;
+                    if(wordSpacing && treatAsSpace(character)) {
+                        glyphData.advance += wordSpacing;
+                    }
                 }
+
+                width += glyphData.advance;
             }
 
-            width += glyphData.advance;
+            auto textRun = TextShapeRun::create(heap, fontData, startIndex, itemLength, width, std::move(glyphs));
+            totalWidth += width;
+            startIndex += itemLength;
+            totalLength -= itemLength;
+            numCharacters -= itemLength;
+            textRuns.push_back(std::move(textRun));
         }
-
-        auto textRun = TextShapeRun::create(heap, fontData, startIndex, numCharacters, width, std::move(glyphs));
-        totalWidth += width;
-        startIndex += numCharacters;
-        totalLength -= numCharacters;
-        textRuns.push_back(std::move(textRun));
     }
 
     hb_buffer_destroy(hbBuffer);
