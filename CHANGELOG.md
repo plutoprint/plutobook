@@ -1,5 +1,18 @@
 # Changelog
 
+## PlutoBook 0.15.0 (2026-02-17)
+
+- Add support for emoji variation selectors
+- Fast skip painting off-screen table content
+- Fix synthetic oblique slope range check
+- Fix table cell border attribute mapping
+- Fix `empty-cells` painting in separate border model
+
+Backers and sponsors:
+
+- [Peter Nguyen](https://github.com/jupetern)
+- [Ashish Kulkarni](https://github.com/ashkulz)
+
 ## PlutoBook 0.14.0 (2026-02-09)
 
 - Add selector filter for fast CSS selector rejection
