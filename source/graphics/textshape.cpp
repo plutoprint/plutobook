@@ -158,7 +158,7 @@ RefPtr<TextShape> TextShape::createForText(const UString& text, Direction direct
 
     auto hbBuffer = hb_buffer_create();
     auto hbDirection = direction == Direction::Ltr ? HB_DIRECTION_LTR : HB_DIRECTION_RTL;
-    auto textBuffer = (const uint16_t*)(text.getBuffer());
+    auto textBuffer = reinterpret_cast<const uint16_t*>(text.getBuffer());
 
     float totalWidth = 0.f;
     int startIndex = 0;
