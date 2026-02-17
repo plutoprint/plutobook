@@ -16,8 +16,8 @@
 
 #include <unicode/uchar.h>
 #include <unicode/uscript.h>
+#include <hb-cplusplus.hh>
 #include <cairo-ft.h>
-#include <hb-ft.h>
 
 namespace plutobook {
 
@@ -156,7 +156,7 @@ RefPtr<TextShape> TextShape::createForText(const UString& text, Direction direct
     auto wordSpacing = disableSpacing ? 0 : style->wordSpacing();
     auto heap = style->heap();
 
-    auto hbBuffer = hb_buffer_create();
+    static thread_local hb::unique_ptr<hb_buffer_t> hbBuffer(hb_buffer_create());
     auto hbDirection = direction == Direction::Ltr ? HB_DIRECTION_LTR : HB_DIRECTION_RTL;
     auto textBuffer = reinterpret_cast<const uint16_t*>(text.getBuffer());
 
@@ -265,7 +265,6 @@ RefPtr<TextShape> TextShape::createForText(const UString& text, Direction direct
         }
     }
 
-    hb_buffer_destroy(hbBuffer);
     if(direction == Direction::Rtl)
         std::reverse(textRuns.begin(), textRuns.end());
     return adoptPtr(new (heap) TextShape(text, direction, totalWidth, std::move(textRuns)));
