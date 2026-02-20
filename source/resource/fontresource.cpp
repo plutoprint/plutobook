@@ -771,7 +771,7 @@ Heap* Font::heap() const
     return m_document->heap();
 }
 
-const SimpleFontData* Font::getFontData(uint32_t codepoint, uint32_t variationSelector)
+const SimpleFontData* Font::getFontData(uint32_t codepoint, uint32_t variationSelector) const
 {
     for(const auto& font : m_fonts) {
         if(auto fontData = font->getFontData(codepoint, variationSelector)) {
@@ -779,23 +779,13 @@ const SimpleFontData* Font::getFontData(uint32_t codepoint, uint32_t variationSe
         }
     }
 
-    if(variationSelector == kEmojiVariationSelector) {
-        if(m_emojiFont == nullptr) {
-            static const GlobalString emoji("emoji");
-            if(auto fontData = fontDataCache()->getFontData(emoji, m_description.data)) {
-                m_emojiFont = fontData.get();
-                m_fonts.push_back(std::move(fontData));
-            }
-        }
-
-        return m_emojiFont;
-    }
-
     if(auto fontData = fontDataCache()->getFontData(codepoint, variationSelector, m_description.data)) {
         m_fonts.push_back(fontData);
         return fontData.get();
     }
 
+    if(variationSelector == kEmojiVariationSelector)
+        return getFontData(codepoint, kNoneVariationSelector);
     return m_primaryFont;
 }
 

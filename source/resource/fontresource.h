@@ -475,15 +475,14 @@ public:
     const FontFamilyList& family() const { return m_description.families; }
     const FontVariationList& variationSettings() const { return m_description.data.variations; }
 
-    const SimpleFontData* getFontData(uint32_t codepoint, uint32_t variationSelector);
+    const SimpleFontData* getFontData(uint32_t codepoint, uint32_t variationSelector) const;
 
 private:
     Font(Document* document, const FontDescription& description);
     Document* m_document;
     FontDescription m_description;
-    FontDataList m_fonts;
+    mutable FontDataList m_fonts;
     const SimpleFontData* m_primaryFont{nullptr};
-    const SimpleFontData* m_emojiFont{nullptr};
 };
 
 } // namespace plutobook
