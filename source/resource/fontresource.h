@@ -341,6 +341,10 @@ inline RefPtr<SegmentedFontFace> SegmentedFontFace::create(const FontSelectionDe
     return adoptPtr(new SegmentedFontFace(description));
 }
 
+constexpr uint32_t kNoneVariationSelector = 0x0000;
+constexpr uint32_t kTextVariationSelector = 0xFE0E;
+constexpr uint32_t kEmojiVariationSelector = 0xFE0F;
+
 class SimpleFontData;
 
 class FontData : public RefCounted<FontData> {

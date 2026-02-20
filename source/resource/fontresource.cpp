@@ -459,9 +459,6 @@ RefPtr<SimpleFontData> SimpleFontData::create(cairo_scaled_font_t* font, FcCharS
     return adoptPtr(new SimpleFontData(font, hbFont, charSet, info, std::move(features)));
 }
 
-constexpr uint32_t kTextVariationSelector = 0xFE0E;
-constexpr uint32_t kEmojiVariationSelector = 0xFE0F;
-
 const SimpleFontData* SimpleFontData::getFontData(uint32_t codepoint, uint32_t variationSelector) const
 {
     if((m_info.hasColor && variationSelector == kTextVariationSelector)
@@ -810,7 +807,7 @@ Font::Font(Document* document, const FontDescription& description)
     for(const auto& family : description.families) {
         if(auto font = document->getFontData(family, description.data)) {
             if(m_primaryFont == nullptr)
-                m_primaryFont = font->getFontData(' ', 0);
+                m_primaryFont = font->getFontData(' ', kNoneVariationSelector);
             m_fonts.push_back(std::move(font));
         }
     }

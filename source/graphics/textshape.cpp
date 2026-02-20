@@ -122,23 +122,23 @@ static uint32_t resolveVariationSelector(FontVariantEmoji variantEmoji, uint32_t
     switch(variantEmoji) {
     case FontVariantEmoji::Normal:
         if(codepoint > 0xFF && u_hasBinaryProperty(codepoint, UCHAR_EMOJI_PRESENTATION))
-            return kVariationSelector16Character;
+            return kEmojiVariationSelector;
         break;
     case FontVariantEmoji::Text:
-        return kVariationSelector15Character;
+        return kTextVariationSelector;
     case FontVariantEmoji::Emoji:
         if(u_hasBinaryProperty(codepoint, UCHAR_EMOJI))
-            return kVariationSelector16Character;
+            return kEmojiVariationSelector;
         break;
     case FontVariantEmoji::Unicode:
         if(u_hasBinaryProperty(codepoint, UCHAR_EMOJI)) {
             if(u_hasBinaryProperty(codepoint, UCHAR_EMOJI_PRESENTATION))
-                return kVariationSelector16Character;
-            return kVariationSelector15Character;
+                return kEmojiVariationSelector;
+            return kTextVariationSelector;
         }
     }
 
-    return 0;
+    return kNoneVariationSelector;
 }
 
 constexpr int kMaxGlyphs = 1 << 16;
@@ -280,7 +280,7 @@ RefPtr<TextShape> TextShape::createForTabs(const UString& text, Direction direct
     int totalLength = text.length();
 
     TextShapeRunList runs(heap);
-    if(auto fontData = font->getFontData(kSpaceCharacter, 0)) {
+    if(auto fontData = font->getFontData(kSpaceCharacter, kNoneVariationSelector)) {
         auto tabWidth = style->tabWidth(fontData->spaceWidth());
         auto spaceGlyph = fontData->spaceGlyph();
         while(totalLength > 0) {
