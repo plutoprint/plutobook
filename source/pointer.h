@@ -195,18 +195,6 @@ inline void swap(RefPtr<T>& a, RefPtr<T>& b)
     a.swap(b);
 }
 
-template<typename T, typename U>
-inline bool operator==(const RefPtr<T>& a, const U* b)
-{
-    return a.get() == b;
-}
-
-template<typename T, typename U>
-inline bool operator==(const T* a, const RefPtr<U>& b)
-{
-    return a == b.get();
-}
-
 template<typename T>
 inline bool operator==(const RefPtr<T>& a, std::nullptr_t)
 {
@@ -217,18 +205,6 @@ template<typename T>
 inline bool operator==(std::nullptr_t, const RefPtr<T>& a)
 {
     return nullptr == a.get();
-}
-
-template<typename T, typename U>
-inline bool operator!=(const RefPtr<T>& a, const U* b)
-{
-    return a.get() != b;
-}
-
-template<typename T, typename U>
-inline bool operator!=(const T* a, const RefPtr<U>& b)
-{
-    return a != b.get();
 }
 
 template<typename T>
