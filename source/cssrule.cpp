@@ -1180,10 +1180,8 @@ std::string CSSCounterStyle::generateInitialRepresentation(int value) const
         assert(false);
     }
 
-    for(auto index : indexes) {
+    for(auto index : indexes)
         representation += counterStyleSymbol(*m_symbols->at(index));
-    }
-
     return representation;
 }
 
@@ -1328,9 +1326,9 @@ const GlobalString& CSSCounterStyle::extendsName() const
 
 const GlobalString& CSSCounterStyle::fallbackName() const
 {
-    static const GlobalString defaultFallback("decimal");
     if(m_fallback)
         return m_fallback->value();
+    static const GlobalString defaultFallback("decimal");
     return defaultFallback;
 }
 
@@ -1350,9 +1348,9 @@ const HeapString& CSSCounterStyle::prefix() const
 
 const HeapString& CSSCounterStyle::suffix() const
 {
-    static const GlobalString defaultSuffix(". ");
     if(m_suffix)
         return counterStyleSymbol(*m_suffix);
+    static const GlobalString defaultSuffix(". ");
     return defaultSuffix;
 }
 
@@ -1373,11 +1371,8 @@ void CSSCounterStyle::extend(const CSSCounterStyle& extended)
 
 CSSCounterStyle& CSSCounterStyle::defaultStyle()
 {
-    static CSSCounterStyle* defaultStyle = []() {
-        const GlobalString decimal("decimal");
-        return userAgentCounterStyleMap()->findCounterStyle(decimal);
-    }();
-
+    static CSSCounterStyle* defaultStyle = userAgentCounterStyleMap()->findCounterStyle("decimal"_glo);
+    assert(defaultStyle && defaultStyle == defaultStyle->fallbackStyle());
     return *defaultStyle;
 }
 
