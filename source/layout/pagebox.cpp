@@ -682,9 +682,8 @@ void PageLayout::layout()
     auto contentHeight = std::max(0.f, height - paddingTop - paddingBottom);
 
     auto pageScaleFactor = std::max(kMinPageScaleFactor, pageScale.value_or(1.f));
-    if(m_document->setContainerSize(contentWidth / pageScaleFactor, contentHeight / pageScaleFactor)) {
-        m_document->box()->layout(m_document);
-    }
+    m_document->setContainerSize(contentWidth / pageScaleFactor, contentHeight / pageScaleFactor);
+    m_document->box()->layout(m_document);
 
     if(!pageScale.has_value() && m_document->width() > m_document->containerWidth()) {
         pageScaleFactor = std::max(kMinPageScaleFactor, m_document->containerWidth() / m_document->width());
