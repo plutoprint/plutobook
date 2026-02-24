@@ -579,9 +579,7 @@ inline Rect BoxFrame::paintBoundingBox() const
 
 inline bool PaintInfo::shouldPaintBox(const BoxFrame* box, const Point& offset) const
 {
-    auto overflowRect = box->visualOverflowRect();
-    overflowRect.translate(offset);
-    return overflowRect.intersects(m_rect);
+    return box->visualOverflowRect().translated(offset).intersects(m_rect);
 }
 
 } // namespace plutobook

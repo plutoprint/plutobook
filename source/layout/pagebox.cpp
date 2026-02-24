@@ -652,11 +652,8 @@ void PageLayout::layout()
         return;
     }
 
-    auto book = m_document->book();
-    auto box = m_document->box();
-
     auto pageStyle = m_document->styleForPage(emptyGlo, 0, PseudoType::FirstPage);
-    auto pageSize = pageStyle->getPageSize(book->pageSize());
+    auto pageSize = pageStyle->getPageSize(m_document->book()->pageSize());
     auto pageScale = pageStyle->pageScale();
 
     auto pageWidth = pageStyle->width().calc(pageSize.width() / units::px);
@@ -667,7 +664,7 @@ void PageLayout::layout()
     auto marginTopLength = pageStyle->marginTop();
     auto marginBottomLength = pageStyle->marginBottom();
 
-    const auto& deviceMargins = book->pageMargins();
+    const auto& deviceMargins = m_document->book()->pageMargins();
     auto marginTop = marginTopLength.isAuto() ? deviceMargins.top() / units::px : marginTopLength.calcMin(pageHeight);
     auto marginRight = marginRightLength.isAuto() ? deviceMargins.right() / units::px : marginRightLength.calcMin(pageWidth);
     auto marginBottom = marginBottomLength.isAuto() ? deviceMargins.bottom() / units::px : marginBottomLength.calcMin(pageHeight);
@@ -686,17 +683,17 @@ void PageLayout::layout()
 
     auto pageScaleFactor = std::max(kMinPageScaleFactor, pageScale.value_or(1.f));
     if(m_document->setContainerSize(contentWidth / pageScaleFactor, contentHeight / pageScaleFactor)) {
-        box->layout(m_document);
+        m_document->box()->layout(m_document);
     }
 
-    if(!pageScale.has_value() && m_document->containerWidth() < m_document->width()) {
+    if(!pageScale.has_value() && m_document->width() > m_document->containerWidth()) {
         pageScaleFactor = std::max(kMinPageScaleFactor, m_document->containerWidth() / m_document->width());
         if(m_document->setContainerSize(contentWidth / pageScaleFactor, contentHeight / pageScaleFactor)) {
-            box->layout(m_document);
+            m_document->box()->layout(m_document);
         }
     }
 
-    if(m_document->containerHeight() > 0.f) {
+    if(m_document->containerHeight()) {
         Counters counters(m_document, std::ceil(m_document->height() / m_document->containerHeight()));
         for(uint32_t pageIndex = 0; pageIndex < counters.pageCount(); ++pageIndex) {
             if(pageIndex > 0) pageStyle = m_document->styleForPage(emptyGlo, pageIndex, pagePseudoType(pageIndex));
