@@ -7,7 +7,6 @@
  */
 
 #include "pagebox.h"
-#include "boxview.h"
 #include "contentbox.h"
 #include "counters.h"
 #include "document.h"
@@ -648,7 +647,7 @@ void PageLayout::layout()
         auto contentWidth = pageBox->width() - pageBox->paddingLeft() - pageBox->paddingRight();
         auto contentHeight = pageBox->height() - pageBox->paddingTop() - pageBox->paddingBottom();
         m_document->setContainerSize(contentWidth / pageBox->pageScale(), contentHeight / pageBox->pageScale());
-        m_document->box()->layout(m_document);
+        m_document->layout(this);
         return;
     }
 
@@ -683,12 +682,12 @@ void PageLayout::layout()
 
     auto pageScaleFactor = std::max(kMinPageScaleFactor, pageScale.value_or(1.f));
     m_document->setContainerSize(contentWidth / pageScaleFactor, contentHeight / pageScaleFactor);
-    m_document->box()->layout(m_document);
+    m_document->layout(this);
 
     if(!pageScale.has_value() && m_document->width() > m_document->containerWidth()) {
         pageScaleFactor = std::max(kMinPageScaleFactor, m_document->containerWidth() / m_document->width());
         if(m_document->setContainerSize(contentWidth / pageScaleFactor, contentHeight / pageScaleFactor)) {
-            m_document->box()->layout(m_document);
+            m_document->layout(this);
         }
     }
 
@@ -765,6 +764,23 @@ void PageLayout::buildPageMargins(const Counters& counters, PageBox* pageBox)
     buildPageMargin(counters, pageBox, PageMarginType::LeftBottom);
     buildPageMargin(counters, pageBox, PageMarginType::LeftMiddle);
     buildPageMargin(counters, pageBox, PageMarginType::LeftTop);
+}
+
+float PageLayout::fragmentHeightForOffset(float offset) const
+{
+    return m_document->containerHeight();
+}
+
+float PageLayout::fragmentRemainingHeightForOffset(float offset, FragmentBoundaryRule rule) const
+{
+    offset += fragmentOffset();
+    auto containerHeight = m_document->containerHeight();
+    assert(containerHeight > 0.f);
+
+    auto remainingHeight = containerHeight - std::fmod(offset, containerHeight);
+    if(rule == AssociateWithFormerFragment)
+        remainingHeight = std::fmod(remainingHeight, containerHeight);
+    return remainingHeight;
 }
 
 } // namespace plutobook

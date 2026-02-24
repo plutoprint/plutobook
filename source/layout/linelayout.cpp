@@ -7,6 +7,7 @@
  */
 
 #include "linelayout.h"
+#include "fragmentbuilder.h"
 #include "linebox.h"
 #include "textbox.h"
 #include "inlinebox.h"

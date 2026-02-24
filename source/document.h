@@ -10,7 +10,6 @@
 #define PLUTOBOOK_DOCUMENT_H
 
 #include "cssstylesheet.h"
-#include "fragmentbuilder.h"
 #include "globalstring.h"
 #include "heapstring.h"
 #include "url.h"
@@ -326,13 +325,14 @@ class Size;
 class Rect;
 
 class Book;
+class FragmentBuilder;
 class PageSize;
 class PageMargins;
 class PageBox;
 
 using PageBoxList = std::pmr::vector<std::unique_ptr<PageBox>>;
 
-class Document : public ContainerNode, public FragmentBuilder {
+class Document : public ContainerNode {
 public:
     Document(Book* book, Heap* heap, ResourceFetcher* fetcher, Url baseUrl);
     ~Document() override;
@@ -418,7 +418,7 @@ public:
     void serialize(std::ostream& o) const;
 
     void build();
-    void layout();
+    void layout(FragmentBuilder* fragmentainer);
     void paginate();
 
     void render(GraphicsContext& context, const Rect& rect);
@@ -429,11 +429,6 @@ public:
     void renderPage(GraphicsContext& context, uint32_t pageIndex);
     PageSize pageSizeAt(uint32_t pageIndex) const;
     uint32_t pageCount() const;
-
-    FragmentType fragmentType() const final { return FragmentType::Page; }
-
-    float fragmentHeightForOffset(float offset) const final;
-    float fragmentRemainingHeightForOffset(float offset, FragmentBoundaryRule rule) const final;
 
     Rect pageContentRectAt(uint32_t pageIndex) const;
 

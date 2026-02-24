@@ -7,6 +7,7 @@
  */
 
 #include "formcontrolbox.h"
+#include "fragmentbuilder.h"
 #include "htmldocument.h"
 #include "boxlayer.h"
 

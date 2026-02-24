@@ -10,6 +10,7 @@
 #define PLUTOBOOK_PAGEBOX_H
 
 #include "globalstring.h"
+#include "fragmentbuilder.h"
 #include "blockbox.h"
 
 namespace plutobook {
@@ -134,7 +135,7 @@ struct is_a<PageMarginBox> {
 
 class Counters;
 
-class PageLayout {
+class PageLayout final : public FragmentBuilder {
 public:
     explicit PageLayout(Document* document);
 
@@ -143,6 +144,11 @@ public:
 private:
     void buildPageMargin(const Counters& counters, PageBox* pageBox, PageMarginType marginType);
     void buildPageMargins(const Counters& counters, PageBox* pageBox);
+
+    FragmentType fragmentType() const final { return FragmentType::Page; }
+
+    float fragmentHeightForOffset(float offset) const final;
+    float fragmentRemainingHeightForOffset(float offset, FragmentBoundaryRule rule) const final;
 
     Document* m_document;
 };

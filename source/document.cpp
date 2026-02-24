@@ -1016,9 +1016,9 @@ void Document::build()
     buildBox(counters, selectorFilter, nullptr);
 }
 
-void Document::layout()
+void Document::layout(FragmentBuilder* fragmentainer)
 {
-    box()->layout(nullptr);
+    box()->layout(fragmentainer);
 }
 
 void Document::paginate()
@@ -1051,20 +1051,6 @@ PageSize Document::pageSizeAt(uint32_t pageIndex) const
 uint32_t Document::pageCount() const
 {
     return m_pages.size();
-}
-
-float Document::fragmentHeightForOffset(float offset) const
-{
-    return m_containerHeight;
-}
-
-float Document::fragmentRemainingHeightForOffset(float offset, FragmentBoundaryRule rule) const
-{
-    offset += fragmentOffset();
-    auto remainingHeight = m_containerHeight - std::fmod(offset, m_containerHeight);
-    if(rule == AssociateWithFormerFragment)
-        remainingHeight = std::fmod(remainingHeight, m_containerHeight);
-    return remainingHeight;
 }
 
 Rect Document::pageContentRectAt(uint32_t pageIndex) const

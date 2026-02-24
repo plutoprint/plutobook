@@ -382,7 +382,7 @@ void SVGImage::setContainerSize(const Size& size)
 {
     m_containerSize = size;
     if(m_document->setContainerSize(size.w, size.h)) {
-        m_document->layout();
+        m_document->layout(nullptr);
     }
 }
 
