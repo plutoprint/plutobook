@@ -774,12 +774,12 @@ float PageLayout::fragmentHeightForOffset(float offset) const
 float PageLayout::fragmentRemainingHeightForOffset(float offset, FragmentBoundaryRule rule) const
 {
     offset += fragmentOffset();
-    auto containerHeight = m_document->containerHeight();
-    assert(containerHeight > 0.f);
+    auto pageHeight = fragmentHeightForOffset(offset);
+    assert(pageHeight > 0.f);
 
-    auto remainingHeight = containerHeight - std::fmod(offset, containerHeight);
+    auto remainingHeight = pageHeight - std::fmod(offset, pageHeight);
     if(rule == AssociateWithFormerFragment)
-        remainingHeight = std::fmod(remainingHeight, containerHeight);
+        remainingHeight = std::fmod(remainingHeight, pageHeight);
     return remainingHeight;
 }
 
