@@ -917,7 +917,7 @@ public:
     GlobalString family() const;
     FontSelectionDescription description() const;
 
-    RefPtr<SimpleFontFace> build(Document* document) const;
+    RefPtr<SimpleFontFace> build() const;
 
 private:
     RefPtr<CSSValue> m_src;
@@ -1086,7 +1086,7 @@ static const HeapString& convertStringOrCustomIdent(const CSSValue& value)
     return to<CSSCustomIdentValue>(value).value();
 }
 
-RefPtr<SimpleFontFace> CSSFontFaceBuilder::build(Document* document) const
+RefPtr<SimpleFontFace> CSSFontFaceBuilder::build() const
 {
     if(m_src == nullptr) {
         return nullptr;
@@ -1126,7 +1126,7 @@ RefPtr<SimpleFontFace> CSSFontFaceBuilder::build(Document* document) const
 void CSSStyleSheet::addFontFaceRule(const RefPtr<CSSFontFaceRule>& rule)
 {
     CSSFontFaceBuilder builder(rule->properties());
-    if(auto face = builder.build(m_document)) {
+    if(auto face = builder.build()) {
         const auto family = builder.family();
         const auto description = builder.description();
         auto& fontFace = m_fontFaces[family][description];
