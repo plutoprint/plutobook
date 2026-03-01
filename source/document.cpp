@@ -23,7 +23,7 @@
 #include "plutobook.hpp"
 
 #include <cmath>
-#include <iostream>
+#include <cstdio>
 
 namespace plutobook {
 
@@ -1070,7 +1070,7 @@ RefPtr<ResourceType> Document::fetchResource(const Url& url)
     if(!url.protocolIs("data"))
         m_resourceCache.emplace(url, resource);
     if(resource == nullptr)
-        std::cerr << "WARNING: " << plutobook_get_error_message() << std::endl;
+        fprintf(stderr, "WARNING: %s\n", plutobook_get_error_message());
     return resource;
 }
 
