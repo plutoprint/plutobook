@@ -527,7 +527,7 @@ void TableBox::paintContents(const PaintInfo& info, const Point& offset, PaintPh
     }
 
     auto shouldPaintCollapsedBorders = phase == PaintPhase::Decorations && m_collapsedBorderEdges && isBorderCollapsed();
-    if(view()->currentPage()) {
+    if(view()->isPrinting()) {
         if(auto footer = footerSection()) {
             const auto& rect = info.rect();
             if(rect.bottom() < offset.y + footer->y()) {
@@ -564,7 +564,7 @@ void TableBox::paintContents(const PaintInfo& info, const Point& offset, PaintPh
         }
     }
 
-    if(view()->currentPage()) {
+    if(view()->isPrinting()) {
         if(auto header = headerSection()) {
             const auto& rect = info.rect();
             if(rect.y > offset.y + header->y()) {
