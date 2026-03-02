@@ -1,7 +1,12 @@
-tools_dep = declare_dependency(
-    dependencies: plutobook_dep,
-    sources: ['argparser.cpp']
+argparser_lib = static_library('argparser',
+    sources: ['argparser.cpp'],
+    dependencies: plutobook_dep
 )
 
-executable('html2pdf', 'html2pdf.cpp', dependencies: tools_dep, install: true)
-executable('html2png', 'html2png.cpp', dependencies: tools_dep, install: true)
+argparser_dep = declare_dependency(
+    link_with: argparser_lib,
+    dependencies: plutobook_dep
+)
+
+executable('html2pdf', 'html2pdf.cpp', dependencies: argparser_dep, install: true)
+executable('html2png', 'html2png.cpp', dependencies: argparser_dep, install: true)
