@@ -9,7 +9,7 @@
 #include "plutobook.hpp"
 #include "argparser.h"
 
-#include <iostream>
+#include <cstdio>
 
 using namespace plutobook;
 
@@ -187,16 +187,11 @@ int main(int argc, char* argv[])
     book.setKeywords(keywords);
     book.setCreator(creator);
 
-    if(!book.loadUrl(input, user_style, user_script)) {
-        std::cerr << "ERROR: " << plutobook_get_error_message() << std::endl;
-        return 2;
+    if(book.loadUrl(input, user_style, user_script)
+        && book.writeToPdf(output, page_start, page_end, page_step)) {
+        return 0;
     }
 
-    if(!book.writeToPdf(output, page_start, page_end, page_step)) {
-        std::cerr << "ERROR: " << plutobook_get_error_message() << std::endl;
-        return 3;
-    }
-
-    std::cout << "Generated PDF file: " << output << std::endl;
-    return 0;
+    fprintf(stderr, "ERROR: %s\n", plutobook_get_error_message());
+    return 1;
 }

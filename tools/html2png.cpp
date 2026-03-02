@@ -9,7 +9,7 @@
 #include "plutobook.hpp"
 #include "argparser.h"
 
-#include <iostream>
+#include <cstdio>
 
 using namespace plutobook;
 
@@ -46,16 +46,11 @@ int main(int argc, char* argv[])
 
     PageSize size(viewport_width, viewport_height);
     Book book(size, PageMargins::None, MediaType::Screen);
-    if(!book.loadUrl(input, user_style, user_script)) {
-        std::cerr << "ERROR: " << plutobook_get_error_message() << std::endl;
-        return 2;
+    if(book.loadUrl(input, user_style, user_script)
+        && book.writeToPng(output, width / units::px, height / units::px)) {
+        return 0;
     }
 
-    if(!book.writeToPng(output, width / units::px, height / units::px)) {
-        std::cerr << "ERROR: " << plutobook_get_error_message() << std::endl;
-        return 3;
-    }
-
-    std::cout << "Generated PNG file: " << output << std::endl;
-    return 0;
+    fprintf(stderr, "ERROR: %s\n", plutobook_get_error_message());
+    return 1;
 }
