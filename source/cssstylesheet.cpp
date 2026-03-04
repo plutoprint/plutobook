@@ -767,34 +767,34 @@ void CSSStyleSheet::addRuleList(const CSSRuleList& rules)
     for(const auto& rule : rules) {
         switch(rule->type()) {
         case CSSRuleType::Style:
-            addStyleRule(to<CSSStyleRule>(rule));
+            addStyleRule(to<CSSStyleRule>(*rule));
             break;
         case CSSRuleType::Import:
-            addImportRule(to<CSSImportRule>(rule));
+            addImportRule(to<CSSImportRule>(*rule));
             break;
         case CSSRuleType::Page:
-            addPageRule(to<CSSPageRule>(rule));
+            addPageRule(to<CSSPageRule>(*rule));
             break;
         case CSSRuleType::FontFace:
-            addFontFaceRule(to<CSSFontFaceRule>(rule));
+            addFontFaceRule(to<CSSFontFaceRule>(*rule));
             break;
         case CSSRuleType::CounterStyle:
-            addCounterStyleRule(to<CSSCounterStyleRule>(rule));
+            addCounterStyleRule(to<CSSCounterStyleRule>(*rule));
             break;
         case CSSRuleType::Media:
-            addMediaRule(to<CSSMediaRule>(rule));
+            addMediaRule(to<CSSMediaRule>(*rule));
             break;
         default:
             break;
         }
 
-        m_position += 1;
+        m_ruleCount += 1;
     }
 }
 
-void CSSStyleSheet::addStyleRule(const RefPtr<CSSStyleRule>& rule)
+void CSSStyleSheet::addStyleRule(CSSStyleRule& rule)
 {
-    for(const auto& selector : rule->selectors()) {
+    for(const auto& selector : rule.selectors()) {
         uint32_t specificity = 0;
         for(const auto& complexSelector : selector) {
             for(const auto& simpleSelector : complexSelector.compoundSelector()) {
@@ -840,7 +840,7 @@ void CSSStyleSheet::addStyleRule(const RefPtr<CSSStyleRule>& rule)
             }
         }
 
-        CSSRuleData ruleData(rule, selector, specificity, m_position);
+        CSSRuleData ruleData(rule, selector, specificity, m_ruleCount);
         if(pseudoType > PseudoType::None) {
             m_pseudoRules.add(pseudoType, std::move(ruleData));
         } else if(!idName.empty()) {
@@ -857,23 +857,23 @@ void CSSStyleSheet::addStyleRule(const RefPtr<CSSStyleRule>& rule)
     }
 }
 
-void CSSStyleSheet::addImportRule(const RefPtr<CSSImportRule>& rule)
+void CSSStyleSheet::addImportRule(CSSImportRule& rule)
 {
     constexpr auto kMaxImportDepth = 256;
-    if(m_importDepth < kMaxImportDepth && m_document->supportsMediaQueries(rule->queries())) {
-        if(auto resource = m_document->fetchTextResource(rule->href())) {
+    if(m_importDepth < kMaxImportDepth && m_document->supportsMediaQueries(rule.queries())) {
+        if(auto resource = m_document->fetchTextResource(rule.href())) {
             m_importDepth++;
-            parseStyle(resource->text(), rule->origin(), rule->href());
+            parseStyle(resource->text(), rule.origin(), rule.href());
             m_importDepth--;
         }
     }
 }
 
-void CSSStyleSheet::addPageRule(const RefPtr<CSSPageRule>& rule)
+void CSSStyleSheet::addPageRule(CSSPageRule& rule)
 {
-    const auto& selectors = rule->selectors();
+    const auto& selectors = rule.selectors();
     if(selectors.empty()) {
-        m_pageRules.emplace_back(rule, nullptr, 0, m_position);
+        m_pageRules.emplace_back(rule, nullptr, 0, m_ruleCount);
         return;
     }
 
@@ -898,7 +898,7 @@ void CSSStyleSheet::addPageRule(const RefPtr<CSSPageRule>& rule)
             }
         }
 
-        m_pageRules.emplace_back(rule, &selector, specificity, m_position);
+        m_pageRules.emplace_back(rule, &selector, specificity, m_ruleCount);
     }
 }
 
@@ -1123,9 +1123,9 @@ RefPtr<SimpleFontFace> CSSFontFaceBuilder::build() const
     return SimpleFontFace::create(featureSettings(), variationSettings(), unicodeRanges(), std::move(sources));
 }
 
-void CSSStyleSheet::addFontFaceRule(const RefPtr<CSSFontFaceRule>& rule)
+void CSSStyleSheet::addFontFaceRule(CSSFontFaceRule& rule)
 {
-    CSSFontFaceBuilder builder(rule->properties());
+    CSSFontFaceBuilder builder(rule.properties());
     if(auto face = builder.build()) {
         const auto family = builder.family();
         const auto description = builder.description();
@@ -1136,16 +1136,16 @@ void CSSStyleSheet::addFontFaceRule(const RefPtr<CSSFontFaceRule>& rule)
     }
 }
 
-void CSSStyleSheet::addCounterStyleRule(const RefPtr<CSSCounterStyleRule>& rule)
+void CSSStyleSheet::addCounterStyleRule(CSSCounterStyleRule& rule)
 {
     assert(m_counterStyleMap == nullptr);
     m_counterStyleRules.push_back(rule);
 }
 
-void CSSStyleSheet::addMediaRule(const RefPtr<CSSMediaRule>& rule)
+void CSSStyleSheet::addMediaRule(CSSMediaRule& rule)
 {
-    if(m_document->supportsMediaQueries(rule->queries())) {
-        addRuleList(rule->rules());
+    if(m_document->supportsMediaQueries(rule.queries())) {
+        addRuleList(rule.rules());
     }
 }
 

@@ -109,15 +109,15 @@ public:
 
 private:
     void addRuleList(const CSSRuleList& rules);
-    void addStyleRule(const RefPtr<CSSStyleRule>& rule);
-    void addImportRule(const RefPtr<CSSImportRule>& rule);
-    void addPageRule(const RefPtr<CSSPageRule>& rule);
-    void addFontFaceRule(const RefPtr<CSSFontFaceRule>& rule);
-    void addCounterStyleRule(const RefPtr<CSSCounterStyleRule>& rule);
-    void addMediaRule(const RefPtr<CSSMediaRule>& rule);
+    void addStyleRule(CSSStyleRule& rule);
+    void addImportRule(CSSImportRule& rule);
+    void addPageRule(CSSPageRule& rule);
+    void addFontFaceRule(CSSFontFaceRule& rule);
+    void addCounterStyleRule(CSSCounterStyleRule& rule);
+    void addMediaRule(CSSMediaRule& rule);
 
     Document* m_document;
-    uint32_t m_position{0};
+    uint32_t m_ruleCount{0};
     uint32_t m_importDepth{0};
 
     CSSRuleDataMap<HeapString> m_idRules;
