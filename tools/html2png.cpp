@@ -18,14 +18,14 @@ int main(int argc, char* argv[])
     const char* input = "";
     const char* output = "";
 
-    const char* user_style = "";
-    const char* user_script = "";
-
     float viewport_width = 1280 * units::px;
     float viewport_height = 720 * units::px;
 
     float width = -1;
     float height = -1;
+
+    const char* user_style = "";
+    const char* user_script = "";
 
     ArgDesc args[] = {
         {"input", ArgType::String, &input, nullptr, "Specify the input HTML filename or URL"},

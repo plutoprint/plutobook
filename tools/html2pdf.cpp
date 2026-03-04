@@ -95,9 +95,6 @@ int main(int argc, char* argv[])
     const char* input = "";
     const char* output = "";
 
-    const char* user_style = "";
-    const char* user_script = "";
-
     PageSizeType size = PageSizeType::A4;
     MediaType media = MediaType::Print;
     Orientation orientation = Orientation::None;
@@ -115,6 +112,9 @@ int main(int argc, char* argv[])
     int page_end = kMaxPageCount;
     int page_step = 1;
 
+    const char* user_style = "";
+    const char* user_script = "";
+
     const char* title = "";
     const char* subject = "";
     const char* author = "";
@@ -126,13 +126,13 @@ int main(int argc, char* argv[])
         {"output", ArgType::String, &output, nullptr, "Specify the output PDF filename"},
 
         {"--size", ArgType::Choice, &size, size_func, "Specify the page size (eg. A4)"},
-        {"--margin", ArgType::Length, &margin, nullptr, "Specify the page margin (eg. 72pt)"},
         {"--media", ArgType::Choice, &media, media_func, "Specify the media type (eg. print, screen)"},
         {"--orientation", ArgType::Choice, &orientation, orientation_func, "Specify the page orientation (eg. portrait, landscape)"},
 
         {"--width", ArgType::Length, &width, nullptr, "Specify the page width (eg. 210mm)"},
         {"--height", ArgType::Length, &height, nullptr, "Specify the page height (eg. 297mm)"},
 
+        {"--margin", ArgType::Length, &margin, nullptr, "Specify the page margin (eg. 72pt)"},
         {"--margin-top", ArgType::Length, &margin_top, nullptr, "Specify the page margin top (eg. 72pt)"},
         {"--margin-right", ArgType::Length, &margin_right, nullptr, "Specify the page margin right (eg. 72pt)"},
         {"--margin-bottom", ArgType::Length, &margin_bottom, nullptr, "Specify the page margin bottom (eg. 72pt)"},
