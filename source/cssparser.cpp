@@ -2586,26 +2586,26 @@ static bool consumeAngleComponent(CSSTokenStream& input, float& component)
 
     component = input->number();
     if(input->type() == CSSToken::Type::Dimension) {
-        static const CSSIdentEntry<CSSAngleValue::Unit> table[] = {
-            {"deg", CSSAngleValue::Unit::Degrees},
-            {"rad", CSSAngleValue::Unit::Radians},
-            {"grad", CSSAngleValue::Unit::Gradians},
-            {"turn", CSSAngleValue::Unit::Turns}
+        static const CSSIdentEntry<CSSAngleValue::Units> table[] = {
+            {"deg", CSSAngleValue::Units::Degrees},
+            {"rad", CSSAngleValue::Units::Radians},
+            {"grad", CSSAngleValue::Units::Gradians},
+            {"turn", CSSAngleValue::Units::Turns}
         };
 
         auto unitType = matchIdent(table, input->data());
         if(unitType == std::nullopt)
             return false;
         switch(unitType.value()) {
-        case CSSAngleValue::Unit::Degrees:
+        case CSSAngleValue::Units::Degrees:
             break;
-        case CSSAngleValue::Unit::Radians:
+        case CSSAngleValue::Units::Radians:
             component = component * 180.0 / std::numbers::pi;
             break;
-        case CSSAngleValue::Unit::Gradians:
+        case CSSAngleValue::Units::Gradians:
             component = component * 360.0 / 400.0;
             break;
-        case CSSAngleValue::Unit::Turns:
+        case CSSAngleValue::Units::Turns:
             component = component * 360.0;
             break;
         }
@@ -3609,11 +3609,11 @@ RefPtr<CSSValue> CSSParser::consumeAngle(CSSTokenStream& input)
 {
     if(input->type() != CSSToken::Type::Dimension)
         return nullptr;
-    static const CSSIdentEntry<CSSAngleValue::Unit> table[] = {
-        {"deg", CSSAngleValue::Unit::Degrees},
-        {"rad", CSSAngleValue::Unit::Radians},
-        {"grad", CSSAngleValue::Unit::Gradians},
-        {"turn", CSSAngleValue::Unit::Turns}
+    static const CSSIdentEntry<CSSAngleValue::Units> table[] = {
+        {"deg", CSSAngleValue::Units::Degrees},
+        {"rad", CSSAngleValue::Units::Radians},
+        {"grad", CSSAngleValue::Units::Gradians},
+        {"turn", CSSAngleValue::Units::Turns}
     };
 
     auto unitType = matchIdent(table, input->data());

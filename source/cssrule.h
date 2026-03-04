@@ -803,40 +803,40 @@ struct is_a<CSSPercentValue> {
 
 class CSSAngleValue final : public CSSValue {
 public:
-    enum class Unit {
+    enum class Units {
         Degrees,
         Radians,
         Gradians,
         Turns
     };
 
-    static RefPtr<CSSAngleValue> create(Heap* heap, float value, Unit unit);
+    static RefPtr<CSSAngleValue> create(Heap* heap, float value, Units units);
 
     float value() const { return m_value; }
-    Unit unit() const { return m_unit; }
+    Units units() const { return m_units; }
     CSSValueType type() const final { return CSSValueType::Angle; }
 
     float valueInDegrees() const;
 
 private:
-    CSSAngleValue(float value, Unit unit)
-        : m_value(value), m_unit(unit)
+    CSSAngleValue(float value, Units units)
+        : m_value(value), m_units(units)
     {}
 
     float m_value;
-    Unit m_unit;
+    Units m_units;
 };
 
 inline float CSSAngleValue::valueInDegrees() const
 {
-    switch(m_unit) {
-    case CSSAngleValue::Unit::Degrees:
+    switch(m_units) {
+    case CSSAngleValue::Units::Degrees:
         return m_value;
-    case CSSAngleValue::Unit::Radians:
+    case CSSAngleValue::Units::Radians:
         return m_value * 180.0 / std::numbers::pi;
-    case CSSAngleValue::Unit::Gradians:
+    case CSSAngleValue::Units::Gradians:
         return m_value * 360.0 / 400.0;
-    case CSSAngleValue::Unit::Turns:
+    case CSSAngleValue::Units::Turns:
         return m_value * 360.0;
     default:
         assert(false);
@@ -845,9 +845,9 @@ inline float CSSAngleValue::valueInDegrees() const
     return 0.0;
 }
 
-inline RefPtr<CSSAngleValue> CSSAngleValue::create(Heap* heap, float value, Unit unit)
+inline RefPtr<CSSAngleValue> CSSAngleValue::create(Heap* heap, float value, Units units)
 {
-    return adoptPtr(new (heap) CSSAngleValue(value, unit));
+    return adoptPtr(new (heap) CSSAngleValue(value, units));
 }
 
 template<>
