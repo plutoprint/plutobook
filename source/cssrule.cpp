@@ -217,12 +217,11 @@ public:
     CSSIdentValue* identValue(CSSValueID id) const;
 
 private:
-    using CSSIdentValueList = std::pmr::vector<CSSIdentValue*>;
     Heap m_heap;
     CSSInitialValue* m_initialValue;
     CSSInheritValue* m_inheritValue;
     CSSUnsetValue* m_unsetValue;
-    CSSIdentValueList m_identValues;
+    std::pmr::vector<CSSIdentValue*> m_identValues;
 };
 
 CSSValuePool::CSSValuePool()

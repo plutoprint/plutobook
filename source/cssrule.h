@@ -617,8 +617,8 @@ public:
 
 private:
     CSSIdentValue(CSSValueID value) : m_value(value) {}
-    friend class CSSValuePool;
     CSSValueID m_value;
+    friend class CSSValuePool;
 };
 
 template<>
