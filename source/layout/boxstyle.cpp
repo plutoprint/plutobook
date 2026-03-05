@@ -2311,30 +2311,38 @@ float BoxStyle::viewportMax() const
 
 RefPtr<CSSValue> BoxStyle::resolveLength(const RefPtr<CSSValue>& value) const
 {
-    if(is<CSSLengthValue>(value)) {
-        const auto& length = to<CSSLengthValue>(*value);
-        switch(length.units()) {
-        case CSSLengthUnits::None:
-        case CSSLengthUnits::Pixels:
-        case CSSLengthUnits::Points:
-        case CSSLengthUnits::Picas:
-        case CSSLengthUnits::Centimeters:
-        case CSSLengthUnits::Millimeters:
-        case CSSLengthUnits::Inches:
-            return value;
-        case CSSLengthUnits::ViewportWidth:
-        case CSSLengthUnits::ViewportHeight:
-        case CSSLengthUnits::ViewportMin:
-        case CSSLengthUnits::ViewportMax:
-        case CSSLengthUnits::Ems:
-        case CSSLengthUnits::Exs:
-        case CSSLengthUnits::Chs:
-        case CSSLengthUnits::Rems:
-            break;
-        }
+    const auto& length = to<CSSLengthValue>(*value);
+    switch(length.units()) {
+    case CSSLengthUnits::None:
+    case CSSLengthUnits::Pixels:
+    case CSSLengthUnits::Points:
+    case CSSLengthUnits::Picas:
+    case CSSLengthUnits::Centimeters:
+    case CSSLengthUnits::Millimeters:
+    case CSSLengthUnits::Inches:
+        return value;
+    case CSSLengthUnits::ViewportWidth:
+    case CSSLengthUnits::ViewportHeight:
+    case CSSLengthUnits::ViewportMin:
+    case CSSLengthUnits::ViewportMax:
+    case CSSLengthUnits::Ems:
+    case CSSLengthUnits::Exs:
+    case CSSLengthUnits::Chs:
+    case CSSLengthUnits::Rems:
+        break;
     }
 
-    return CSSLengthValue::create(heap(), convertLengthValue(*value));
+    const CSSLengthResolver resolver(document(), font());
+    return CSSLengthValue::create(heap(), resolver.resolveLength(length));
+}
+
+RefPtr<CSSValue> BoxStyle::resolveCalc(const RefPtr<CSSValue>& value) const
+{
+    const auto& calc = to<CSSCalcValue>(*value);
+    const CSSLengthResolver resolver(document(), font());
+    if(auto result = calc.resolve(resolver))
+        return CSSLengthValue::create(heap(), result->value, result->units);
+    return nullptr;
 }
 
 float BoxStyle::convertLengthValue(const CSSValue& value) const

@@ -959,7 +959,7 @@ public:
     const CSSCalcList& values() const { return m_values; }
     CSSValueType type() const final { return CSSValueType::Calc; }
 
-    float resolve(const CSSLengthResolver& resolver) const;
+    std::optional<CSSCalc> resolve(const CSSLengthResolver& resolver) const;
 
 private:
     CSSCalcValue(bool negative, bool unitless, CSSCalcList values)

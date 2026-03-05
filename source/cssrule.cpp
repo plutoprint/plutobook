@@ -28,7 +28,9 @@ float CSSLengthResolver::resolveLength(const CSSValue& value) const
 {
     if(is<CSSLengthValue>(value))
         return resolveLength(to<CSSLengthValue>(value));
-    return to<CSSCalcValue>(value).resolve(*this);
+    if(auto result = to<CSSCalcValue>(value).resolve(*this))
+        return result->value;
+    return 0.f;
 }
 
 float CSSLengthResolver::resolveLength(const CSSLengthValue& length) const
@@ -138,7 +140,7 @@ float CSSLengthResolver::viewportMax() const
     return 0.f;
 }
 
-float CSSCalcValue::resolve(const CSSLengthResolver& resolver) const
+std::optional<CSSCalc> CSSCalcValue::resolve(const CSSLengthResolver& resolver) const
 {
     std::vector<CSSCalc> stack;
     for(const auto& item : m_values) {
@@ -151,7 +153,7 @@ float CSSCalcValue::resolve(const CSSLengthResolver& resolver) const
             }
         } else {
             if(stack.size() < 2)
-                return 0;
+                return std::nullopt;
             auto right = stack.back();
             stack.pop_back();
             auto left = stack.back();
@@ -160,32 +162,32 @@ float CSSCalcValue::resolve(const CSSLengthResolver& resolver) const
             switch(item.op) {
             case CSSCalcOperator::Add:
                 if(right.units != left.units)
-                    return 0;
+                    return std::nullopt;
                 stack.emplace_back(left.value + right.value, right.units);
                 break;
             case CSSCalcOperator::Sub:
                 if(right.units != left.units)
-                    return 0;
+                    return std::nullopt;
                 stack.emplace_back(left.value - right.value, right.units);
                 break;
             case CSSCalcOperator::Mul:
                 if(right.units == CSSLengthUnits::Pixels && left.units == CSSLengthUnits::Pixels)
-                    return 0;
+                    return std::nullopt;
                 stack.emplace_back(left.value * right.value, std::max(left.units, right.units));
                 break;
             case CSSCalcOperator::Div:
                 if(right.units == CSSLengthUnits::Pixels || right.value == 0)
-                    return 0;
+                    return std::nullopt;
                 stack.emplace_back(left.value / right.value, left.units);
                 break;
             case CSSCalcOperator::Min:
                 if(right.units != left.units)
-                    return 0;
+                    return std::nullopt;
                 stack.emplace_back(std::min(left.value, right.value), right.units);
                 break;
             case CSSCalcOperator::Max:
                 if(right.units != left.units)
-                    return 0;
+                    return std::nullopt;
                 stack.emplace_back(std::max(left.value, right.value), right.units);
                 break;
             default:
@@ -197,13 +199,13 @@ float CSSCalcValue::resolve(const CSSLengthResolver& resolver) const
     if(stack.size() == 1) {
         const auto& result = stack.back();
         if(result.value < 0 && !m_negative)
-            return 0;
+            return std::nullopt;
         if(result.units == CSSLengthUnits::None && !m_unitless)
-            return 0;
-        return result.value;
+            return std::nullopt;
+        return result;
     }
 
-    return 0;
+    return std::nullopt;
 }
 
 class CSSValuePool {

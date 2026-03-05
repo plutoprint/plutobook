@@ -419,7 +419,11 @@ void StyleBuilder::buildStyle(BoxStyle* newStyle)
 
         if(is<CSSInheritValue>(*value) && !(value = m_parentStyle->get(id)))
             continue;
-        if(is<CSSLengthValue>(*value) || is<CSSCalcValue>(*value))
+        if(is<CSSCalcValue>(*value) && !(value = newStyle->resolveCalc(value))) {
+            continue;
+        }
+
+        if(is<CSSLengthValue>(*value))
             value = newStyle->resolveLength(value);
         newStyle->set(id, std::move(value));
     }

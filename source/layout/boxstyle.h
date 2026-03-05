@@ -976,6 +976,7 @@ public:
     float viewportMax() const;
 
     RefPtr<CSSValue> resolveLength(const RefPtr<CSSValue>& value) const;
+    RefPtr<CSSValue> resolveCalc(const RefPtr<CSSValue>& value) const;
 
     float convertLengthValue(const CSSValue& value) const;
     float convertLineWidth(const CSSValue& value) const;
