@@ -1448,7 +1448,7 @@ bool CSSParser::consumeDeclaraction(CSSTokenStream& input, CSSPropertyList& prop
     if(id == CSSPropertyID::Custom) {
         if(ruleType == CSSRuleType::FontFace || ruleType == CSSRuleType::CounterStyle)
             return false;
-        auto custom = CSSCustomPropertyValue::create(m_heap, GlobalString(name), CSSVariableData::create(m_heap, value));
+        auto custom = CSSCustomPropertyValue::create(m_heap, m_heap->createString(name), CSSVariableData::create(m_heap, value));
         addProperty(properties, id, important, std::move(custom));
         return true;
     }

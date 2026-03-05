@@ -329,12 +329,12 @@ bool CSSVariableData::resolveVar(CSSTokenStream input, const BoxStyle* style, CS
     return data->resolve(style, tokens, references);
 }
 
-RefPtr<CSSCustomPropertyValue> CSSCustomPropertyValue::create(Heap* heap, const GlobalString& name, RefPtr<CSSVariableData> value)
+RefPtr<CSSCustomPropertyValue> CSSCustomPropertyValue::create(Heap* heap, const HeapString& name, RefPtr<CSSVariableData> value)
 {
     return adoptPtr(new (heap) CSSCustomPropertyValue(name, std::move(value)));
 }
 
-CSSCustomPropertyValue::CSSCustomPropertyValue(const GlobalString& name, RefPtr<CSSVariableData> value)
+CSSCustomPropertyValue::CSSCustomPropertyValue(const HeapString& name, RefPtr<CSSVariableData> value)
     : m_name(name), m_value(std::move(value))
 {
 }

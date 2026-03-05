@@ -1659,7 +1659,7 @@ CSSVariableData* BoxStyle::getCustom(std::string_view name) const
     return it->second.get();
 }
 
-void BoxStyle::setCustom(const GlobalString& name, RefPtr<CSSVariableData> value)
+void BoxStyle::setCustom(const HeapString& name, RefPtr<CSSVariableData> value)
 {
     m_customProperties.insert_or_assign(name, std::move(value));
 }

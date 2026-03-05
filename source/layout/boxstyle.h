@@ -666,7 +666,7 @@ class CSSValue;
 class CSSVariableData;
 
 using CSSPropertyMap = std::pmr::unordered_map<CSSPropertyID, RefPtr<CSSValue>>;
-using CSSCustomPropertyMap = std::pmr::map<GlobalString, RefPtr<CSSVariableData>, std::less<>>;
+using CSSCustomPropertyMap = std::pmr::map<HeapString, RefPtr<CSSVariableData>, std::less<>>;
 
 enum class PseudoType : uint8_t {
     None,
@@ -956,7 +956,7 @@ public:
     const HeapString& getQuote(bool open, size_t depth) const;
 
     CSSVariableData* getCustom(std::string_view name) const;
-    void setCustom(const GlobalString& name, RefPtr<CSSVariableData> value);
+    void setCustom(const HeapString& name, RefPtr<CSSVariableData> value);
 
     CSSValue* get(CSSPropertyID id) const;
     void set(CSSPropertyID id, RefPtr<CSSValue> value);

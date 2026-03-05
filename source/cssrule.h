@@ -672,15 +672,15 @@ private:
 
 class CSSCustomPropertyValue final : public CSSValue {
 public:
-    static RefPtr<CSSCustomPropertyValue> create(Heap* heap, const GlobalString& name, RefPtr<CSSVariableData> value);
+    static RefPtr<CSSCustomPropertyValue> create(Heap* heap, const HeapString& name, RefPtr<CSSVariableData> value);
 
-    const GlobalString& name() const { return m_name; }
+    const HeapString& name() const { return m_name; }
     const RefPtr<CSSVariableData>& value() const { return m_value; }
     CSSValueType type() const final { return CSSValueType::CustomProperty; }
 
 private:
-    CSSCustomPropertyValue(const GlobalString& name, RefPtr<CSSVariableData> value);
-    GlobalString m_name;
+    CSSCustomPropertyValue(const HeapString& name, RefPtr<CSSVariableData> value);
+    HeapString m_name;
     RefPtr<CSSVariableData> m_value;
 };
 
