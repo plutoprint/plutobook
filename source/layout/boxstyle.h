@@ -819,6 +819,7 @@ public:
     OverflowWrap overflowWrap() const { return m_overflowWrap; }
     FontVariantEmoji fontVariantEmoji() const;
     Hyphens hyphens() const;
+    GlobalString lang() const;
     Length textIndent() const;
     float letterSpacing() const;
     float wordSpacing() const;

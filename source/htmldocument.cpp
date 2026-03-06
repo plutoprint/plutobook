@@ -198,6 +198,8 @@ void HTMLElement::collectAttributeStyle(std::string& output, const GlobalString&
         addHTMLAttributeStyle(output, "display", "none");
     } else if(name == alignAttr) {
         addHTMLAttributeStyle(output, "text-align", value);
+    } else if(name == langAttr) {
+        addHTMLAttributeStyle(output, "-pluto-lang", value);
     } else {
         Element::collectAttributeStyle(output, name, value);
     }

@@ -106,6 +106,7 @@ private:
     RefPtr<CSSValue> consumeString(CSSTokenStream& input);
     RefPtr<CSSValue> consumeCustomIdent(CSSTokenStream& input);
     RefPtr<CSSValue> consumeStringOrCustomIdent(CSSTokenStream& input);
+    RefPtr<CSSValue> consumeCustomIdentOrAuto(CSSTokenStream& input);
     RefPtr<CSSValue> consumeAttr(CSSTokenStream& input);
     RefPtr<CSSValue> consumeLocalUrl(CSSTokenStream& input);
     RefPtr<CSSValue> consumeLocalUrlOrAttr(CSSTokenStream& input);
@@ -129,7 +130,6 @@ private:
     RefPtr<CSSValue> consumeContentTargetCounter(CSSTokenStream& input, bool counters);
     RefPtr<CSSValue> consumeContentQrCode(CSSTokenStream& input);
     RefPtr<CSSValue> consumeCounter(CSSTokenStream& input, bool increment);
-    RefPtr<CSSValue> consumePage(CSSTokenStream& input);
     RefPtr<CSSValue> consumeOrientation(CSSTokenStream& input);
     RefPtr<CSSValue> consumeSize(CSSTokenStream& input);
     RefPtr<CSSValue> consumeFontSize(CSSTokenStream& input);

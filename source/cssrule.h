@@ -428,6 +428,7 @@ enum class CSSPropertyID : uint16_t {
     Height,
     Hyphens,
     JustifyContent,
+    Lang,
     Left,
     LetterSpacing,
     LineHeight,

@@ -1179,6 +1179,7 @@ static CSSPropertyID csspropertyid(std::string_view name)
         std::string_view name;
         CSSPropertyID value;
     } table[] = {
+        {"-pluto-lang", CSSPropertyID::Lang},
         {"-pluto-page-scale", CSSPropertyID::PageScale},
         {"additive-symbols", CSSPropertyID::AdditiveSymbols},
         {"align-content", CSSPropertyID::AlignContent},
@@ -2338,6 +2339,13 @@ RefPtr<CSSValue> CSSParser::consumeStringOrCustomIdent(CSSTokenStream& input)
     return consumeCustomIdent(input);
 }
 
+RefPtr<CSSValue> CSSParser::consumeCustomIdentOrAuto(CSSTokenStream& input)
+{
+    if(auto value = consumeAuto(input))
+        return value;
+    return consumeCustomIdent(input);
+}
+
 RefPtr<CSSValue> CSSParser::consumeAttr(CSSTokenStream& input)
 {
     if(input->type() != CSSToken::Type::Function || !identMatches("attr", 4, input->data()))
@@ -2957,13 +2965,6 @@ RefPtr<CSSValue> CSSParser::consumeCounter(CSSTokenStream& input, bool increment
         values.push_back(CSSPairValue::create(m_heap, name, value));
     } while(!input.empty());
     return CSSListValue::create(m_heap, std::move(values));
-}
-
-RefPtr<CSSValue> CSSParser::consumePage(CSSTokenStream& input)
-{
-    if(auto value = consumeAuto(input))
-        return value;
-    return consumeCustomIdent(input);
 }
 
 RefPtr<CSSValue> CSSParser::consumeSize(CSSTokenStream& input)
@@ -3858,7 +3859,8 @@ RefPtr<CSSValue> CSSParser::consumeLonghand(CSSTokenStream& input, CSSPropertyID
     case CSSPropertyID::Size:
         return consumeSize(input);
     case CSSPropertyID::Page:
-        return consumePage(input);
+    case CSSPropertyID::Lang:
+        return consumeCustomIdentOrAuto(input);
     case CSSPropertyID::FontWeight:
         return consumeFontWeight(input);
     case CSSPropertyID::FontStretch:

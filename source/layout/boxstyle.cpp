@@ -11,6 +11,7 @@
 #include "document.h"
 #include "imageresource.h"
 #include "fontresource.h"
+#include "stringutils.h"
 #include "geometry.h"
 
 #include "plutobook.hpp"
@@ -814,6 +815,16 @@ Hyphens BoxStyle::hyphens() const
     }
 
     return Hyphens::Manual;
+}
+
+GlobalString BoxStyle::lang() const
+{
+    auto value = get(CSSPropertyID::Lang);
+    if(value == nullptr)
+        return emptyGlo;
+    if(value->id() == CSSValueID::Auto)
+        return emptyGlo;
+    return convertCustomIdent(*value);
 }
 
 Length BoxStyle::textIndent() const
@@ -1628,16 +1639,105 @@ bool BoxStyle::hasColumns() const
     return columnCount() || columnWidth();
 }
 
+static const HeapString& getDefaultQuote(bool open, size_t depth)
+{
+    if(depth) {
+        static const GlobalString openQuote("\u2018");
+        static const GlobalString closeQuote("\u2019");
+
+        return open ? openQuote : closeQuote;
+    }
+
+    static const GlobalString openQuote("\u201C");
+    static const GlobalString closeQuote("\u201D");
+
+    return open ? openQuote : closeQuote;
+}
+
+static const HeapString& getLangQuote(bool open, size_t depth, std::string_view lang)
+{
+    if(lang.empty())
+        return getDefaultQuote(open, depth);
+    static const struct {
+        std::string_view name;
+        GlobalString open1;
+        GlobalString close1;
+        GlobalString open2;
+        GlobalString close2;
+    } quotes[] = {
+        {"af",      "\u201C"_glo, "\u201D"_glo, "\u2018"_glo, "\u2019"_glo},
+        {"agq",     "\u201E"_glo, "\u201D"_glo, "\u201A"_glo, "\u2019"_glo},
+        {"ak",      "\u201C"_glo, "\u201D"_glo, "\u2018"_glo, "\u2019"_glo},
+        {"am",      "\u00AB"_glo, "\u00BB"_glo, "\u2039"_glo, "\u203A"_glo},
+        {"ar",      "\u201D"_glo, "\u201C"_glo, "\u2019"_glo, "\u2018"_glo},
+        {"asa",     "\u201C"_glo, "\u201D"_glo, "\u2018"_glo, "\u2019"_glo},
+        {"az-cyrl", "\u00AB"_glo, "\u00BB"_glo, "\u2039"_glo, "\u203A"_glo},
+        {"bas",     "\u00AB"_glo, "\u00BB"_glo, "\u201E"_glo, "\u201C"_glo},
+        {"bem",     "\u201C"_glo, "\u201D"_glo, "\u2018"_glo, "\u2019"_glo},
+        {"bez",     "\u201C"_glo, "\u201D"_glo, "\u2018"_glo, "\u2019"_glo},
+        {"bg",      "\u201E"_glo, "\u201C"_glo, "\u201A"_glo, "\u2018"_glo},
+        {"bm",      "\u00AB"_glo, "\u00BB"_glo, "\u201C"_glo, "\u201D"_glo},
+        {"bn",      "\u201C"_glo, "\u201D"_glo, "\u2018"_glo, "\u2019"_glo},
+        {"br",      "\u00AB"_glo, "\u00BB"_glo, "\u2039"_glo, "\u203A"_glo},
+        {"brx",     "\u201C"_glo, "\u201D"_glo, "\u2018"_glo, "\u2019"_glo},
+        {"bs-cyrl", "\u201E"_glo, "\u201C"_glo, "\u201A"_glo, "\u2018"_glo},
+        {"ca",      "\u201C"_glo, "\u201D"_glo, "\u00AB"_glo, "\u00BB"_glo},
+        {"cs",      "\u201E"_glo, "\u201C"_glo, "\u201A"_glo, "\u2018"_glo},
+        {"da",      "\u201C"_glo, "\u201D"_glo, "\u2018"_glo, "\u2019"_glo},
+        {"de",      "\u201E"_glo, "\u201C"_glo, "\u201A"_glo, "\u2018"_glo},
+        {"de-ch",   "\u00AB"_glo, "\u00BB"_glo, "\u2039"_glo, "\u203A"_glo},
+        {"el",      "\u00AB"_glo, "\u00BB"_glo, "\u201C"_glo, "\u201D"_glo},
+        {"en",      "\u201C"_glo, "\u201D"_glo, "\u2018"_glo, "\u2019"_glo},
+        {"en-gb",   "\u201C"_glo, "\u201D"_glo, "\u2018"_glo, "\u2019"_glo},
+        {"es",      "\u201C"_glo, "\u201D"_glo, "\u00AB"_glo, "\u00BB"_glo},
+        {"et",      "\u201E"_glo, "\u201C"_glo, "\u201A"_glo, "\u2018"_glo},
+        {"eu",      "\u201C"_glo, "\u201D"_glo, "\u00AB"_glo, "\u00BB"_glo},
+        {"fa",      "\u00AB"_glo, "\u00BB"_glo, "\u2039"_glo, "\u203A"_glo},
+        {"fi",      "\u201D"_glo, "\u201D"_glo, "\u2019"_glo, "\u2019"_glo},
+        {"fr",      "\u00AB"_glo, "\u00BB"_glo, "\u00AB"_glo, "\u00BB"_glo},
+        {"fr-ca",   "\u00AB"_glo, "\u00BB"_glo, "\u2039"_glo, "\u203A"_glo},
+        {"fr-ch",   "\u00AB"_glo, "\u00BB"_glo, "\u2039"_glo, "\u203A"_glo},
+        {"he",      "\u0022"_glo, "\u0022"_glo, "\u0027"_glo, "\u0027"_glo},
+        {"hu",      "\u201E"_glo, "\u201D"_glo, "\u00BB"_glo, "\u00AB"_glo},
+        {"it",      "\u00AB"_glo, "\u00BB"_glo, "\u201C"_glo, "\u201D"_glo},
+        {"ja",      "\u300C"_glo, "\u300D"_glo, "\u300E"_glo, "\u300F"_glo},
+        {"lt",      "\u201E"_glo, "\u201C"_glo, "\u201E"_glo, "\u201C"_glo},
+        {"nb",      "\u00AB"_glo, "\u00BB"_glo, "\u2018"_glo, "\u2019"_glo},
+        {"pl",      "\u201E"_glo, "\u201D"_glo, "\u00AB"_glo, "\u00BB"_glo},
+        {"pt",      "\u201C"_glo, "\u201D"_glo, "\u2018"_glo, "\u2019"_glo},
+        {"pt-pt",   "\u00AB"_glo, "\u00BB"_glo, "\u201C"_glo, "\u201D"_glo},
+        {"ro",      "\u201E"_glo, "\u201D"_glo, "\u00AB"_glo, "\u00BB"_glo},
+        {"ru",      "\u00AB"_glo, "\u00BB"_glo, "\u201E"_glo, "\u201C"_glo},
+        {"sk",      "\u201E"_glo, "\u201C"_glo, "\u201A"_glo, "\u2018"_glo},
+        {"sl",      "\u201E"_glo, "\u201C"_glo, "\u201A"_glo, "\u2018"_glo},
+        {"sv",      "\u201D"_glo, "\u201D"_glo, "\u2019"_glo, "\u2019"_glo},
+        {"tr",      "\u201C"_glo, "\u201D"_glo, "\u2018"_glo, "\u2019"_glo},
+        {"uk",      "\u00AB"_glo, "\u00BB"_glo, "\u201E"_glo, "\u201C"_glo},
+        {"ur",      "\u201D"_glo, "\u201C"_glo, "\u2019"_glo, "\u2018"_glo},
+        {"vi",      "\u201C"_glo, "\u201D"_glo, "\u2018"_glo, "\u2019"_glo},
+        {"zh",      "\u201C"_glo, "\u201D"_glo, "\u2018"_glo, "\u2019"_glo},
+        {"zh-hant", "\u300C"_glo, "\u300D"_glo, "\u300E"_glo, "\u300F"_glo},
+    };
+
+    for(const auto& quote : quotes) {
+        if(dashequals(quote.name, lang, false)) {
+            if(depth) return open ? quote.open2 : quote.close2;
+            return open ? quote.open1 : quote.close1;
+        }
+    }
+
+    return getDefaultQuote(open, depth);
+}
+
 const HeapString& BoxStyle::getQuote(bool open, size_t depth) const
 {
-    static const GlobalString defaultQuote("\"");
     auto value = get(CSSPropertyID::Quotes);
     if(value == nullptr)
-        return defaultQuote;
+        return getLangQuote(open, depth, lang());
     if(auto ident = to<CSSIdentValue>(value)) {
         switch(ident->value()) {
         case CSSValueID::Auto:
-            return defaultQuote;
+            return getLangQuote(open, depth, lang());
         case CSSValueID::None:
             return emptyGlo;
         default:
@@ -1897,6 +1997,7 @@ void BoxStyle::inheritFrom(const BoxStyle* parentStyle)
         case CSSPropertyID::FontVariationSettings:
         case CSSPropertyID::FontWeight:
         case CSSPropertyID::Hyphens:
+        case CSSPropertyID::Lang:
         case CSSPropertyID::LetterSpacing:
         case CSSPropertyID::LineHeight:
         case CSSPropertyID::ListStyleImage:
