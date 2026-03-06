@@ -1889,8 +1889,8 @@ void BoxStyle::inheritFrom(const BoxStyle* parentStyle)
         case CSSPropertyID::FontStretch:
         case CSSPropertyID::FontStyle:
         case CSSPropertyID::FontVariantCaps:
-        case CSSPropertyID::FontVariantEmoji:
         case CSSPropertyID::FontVariantEastAsian:
+        case CSSPropertyID::FontVariantEmoji:
         case CSSPropertyID::FontVariantLigatures:
         case CSSPropertyID::FontVariantNumeric:
         case CSSPropertyID::FontVariantPosition:
