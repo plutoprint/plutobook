@@ -646,6 +646,7 @@ class RoundedRect;
 class Rect;
 class Transform;
 class GlobalString;
+class LocaleData;
 class FontTag;
 class Font;
 class Image;
@@ -718,6 +719,9 @@ public:
 
     const FontFamilyList& fontFamily() const;
     const FontVariationList& fontVariationSettings() const;
+    const GlobalString& lang() const;
+
+    const LocaleData* locale() const;
 
     void setDisplay(Display display) { m_display = display; }
     void setPosition(Position position) { m_position = position; }
@@ -819,7 +823,6 @@ public:
     OverflowWrap overflowWrap() const { return m_overflowWrap; }
     FontVariantEmoji fontVariantEmoji() const;
     Hyphens hyphens() const;
-    GlobalString lang() const;
     Length textIndent() const;
     float letterSpacing() const;
     float wordSpacing() const;

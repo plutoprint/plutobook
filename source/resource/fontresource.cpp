@@ -8,6 +8,7 @@
 
 #include "fontresource.h"
 #include "document.h"
+#include "localedata.h"
 #include "stringutils.h"
 
 #include "plutobook.hpp"
@@ -650,11 +651,20 @@ constexpr bool isGenericFamilyName(std::string_view familyName)
 static FcPattern* createFontPattern(const FontDataDescription& description)
 {
     auto pattern = FcPatternCreate();
+
     FcPatternAddDouble(pattern, FC_PIXEL_SIZE, description.size);
     FcPatternAddInteger(pattern, FC_WEIGHT, fcWeight(description.request.weight));
     FcPatternAddInteger(pattern, FC_WIDTH, fcWidth(description.request.width));
     FcPatternAddInteger(pattern, FC_SLANT, fcSlant(description.request.slope));
     FcPatternAddBool(pattern, FC_SCALABLE, FcTrue);
+    if(!description.lang.isEmpty()) {
+        std::string lang(description.lang.value());
+        FcLangSet* langSet = FcLangSetCreate();
+        FcLangSetAdd(langSet, (FcChar8*)(lang.data()));
+        FcPatternAddLangSet(pattern, FC_LANG, langSet);
+        FcLangSetDestroy(langSet);
+    }
+
     return pattern;
 }
 
@@ -831,6 +841,7 @@ Font::Font(Document* document, const FontDescription& description)
     , m_description(description)
     , m_fonts(document->heap())
 {
+    m_locale = LocaleData::get(m_description.data.lang);
     for(const auto& family : description.families) {
         if(auto font = document->getFontData(family, description.data)) {
             if(m_primaryFont == nullptr)

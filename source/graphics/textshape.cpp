@@ -166,7 +166,7 @@ RefPtr<TextShape> TextShape::createForText(const UString& text, Direction direct
     auto wordSpacing = disableSpacing ? 0 : style->wordSpacing();
     auto heap = style->heap();
 
-    static thread_local hb::unique_ptr<hb_buffer_t> hbBuffer(hb_buffer_create());
+    thread_local hb::unique_ptr<hb_buffer_t> hbBuffer(hb_buffer_create());
     auto hbDirection = direction == Direction::Ltr ? HB_DIRECTION_LTR : HB_DIRECTION_RTL;
     auto textBuffer = reinterpret_cast<const uint16_t*>(text.getBuffer());
 
@@ -175,7 +175,7 @@ RefPtr<TextShape> TextShape::createForText(const UString& text, Direction direct
     int totalLength = text.length();
     TextShapeRunList textRuns(heap);
 
-    CharacterBreakIterator iterator(text);
+    CharacterBreakIterator iterator(text, font->locale());
     auto character = text.char32At(startIndex);
     auto currentIndex = iterator.nextBreakOpportunity(startIndex, totalLength);
     auto nextFontData = resolveFontData(font, nullptr, character, textBuffer + startIndex, currentIndex, fontVariantEmoji);

@@ -66,6 +66,7 @@ public:
     FontSelectionValue stretch() const;
     FontSelectionValue style() const;
     FontVariationList variationSettings() const;
+    GlobalString lang() const;
 
     FontDescription build() const;
 
@@ -77,6 +78,7 @@ private:
     RefPtr<CSSValue> m_stretch;
     RefPtr<CSSValue> m_style;
     RefPtr<CSSValue> m_variationSettings;
+    RefPtr<CSSValue> m_lang;
 };
 
 FontDescriptionBuilder::FontDescriptionBuilder(const BoxStyle* parentStyle, const CSSPropertyDataList& properties)
@@ -107,6 +109,9 @@ FontDescriptionBuilder::FontDescriptionBuilder(const BoxStyle* parentStyle, cons
             break;
         case CSSPropertyID::FontVariationSettings:
             m_variationSettings = property.value();
+            break;
+        case CSSPropertyID::Lang:
+            m_lang = property.value();
             break;
         default:
             break;
@@ -319,6 +324,20 @@ FontVariationList FontDescriptionBuilder::variationSettings() const
     return variationSettings;
 }
 
+GlobalString FontDescriptionBuilder::lang() const
+{
+    if(m_lang == nullptr)
+        return m_parentStyle->lang();
+    if(is<CSSInitialValue>(*m_lang))
+        return emptyGlo;
+    if(auto ident = to<CSSIdentValue>(m_lang)) {
+        assert(ident->value() == CSSValueID::Auto);
+        return emptyGlo;
+    }
+
+    return to<CSSCustomIdentValue>(*m_lang).value();
+}
+
 FontDescription FontDescriptionBuilder::build() const
 {
     FontDescription description;
@@ -328,6 +347,7 @@ FontDescription FontDescriptionBuilder::build() const
     description.data.request.width = stretch();
     description.data.request.slope = style();
     description.data.variations = variationSettings();
+    description.data.lang = lang();
     return description;
 }
 
@@ -404,6 +424,7 @@ void StyleBuilder::buildStyle(BoxStyle* newStyle)
         case CSSPropertyID::FontStretch:
         case CSSPropertyID::FontStyle:
         case CSSPropertyID::FontVariationSettings:
+        case CSSPropertyID::Lang:
             continue;
         default:
             break;

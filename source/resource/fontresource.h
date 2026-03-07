@@ -199,16 +199,17 @@ struct FontDataDescription {
     FontSelectionValue size = kMediumFontSize;
     FontSelectionRequest request;
     FontVariationList variations;
+    GlobalString lang;
 };
 
 constexpr bool operator==(const FontDataDescription& a, const FontDataDescription& b)
 {
-    return std::tie(a.size, a.request, a.variations) == std::tie(b.size, b.request, b.variations);
+    return std::tie(a.size, a.request, a.variations, a.lang) == std::tie(b.size, b.request, b.variations, b.lang);
 }
 
 constexpr bool operator<(const FontDataDescription& a, const FontDataDescription& b)
 {
-    return std::tie(a.size, a.request, a.variations) < std::tie(b.size, b.request, b.variations);
+    return std::tie(a.size, a.request, a.variations, a.lang) < std::tie(b.size, b.request, b.variations, b.lang);
 }
 
 using FontFamilyList = std::forward_list<GlobalString>;
@@ -409,6 +410,8 @@ private:
 
 FontDataCache* fontDataCache();
 
+class LocaleData;
+
 class Font : public HeapMember, public RefCounted<Font> {
 public:
     static RefPtr<Font> create(Document* document, const FontDescription& description);
@@ -416,8 +419,9 @@ public:
     Heap* heap() const;
     Document* document() const { return m_document; }
     const FontDescription& description() const { return m_description; }
-    const FontDataList& fonts() const { return m_fonts; }
+    const LocaleData* locale() const { return m_locale; }
     const SimpleFontData* primaryFont() const { return m_primaryFont; }
+    const FontDataList& fonts() const { return m_fonts; }
 
     float size() const { return m_description.data.size; }
     float weight() const { return m_description.data.request.weight; }
@@ -426,6 +430,7 @@ public:
 
     const FontFamilyList& family() const { return m_description.families; }
     const FontVariationList& variationSettings() const { return m_description.data.variations; }
+    const GlobalString& lang() const { return m_description.data.lang; }
 
     const SimpleFontData* getFontData(const uint16_t* characters, int length, EmojiPolicy emojiPolicy) const;
 
@@ -433,8 +438,9 @@ private:
     Font(Document* document, const FontDescription& description);
     Document* m_document;
     FontDescription m_description;
-    mutable FontDataList m_fonts;
+    const LocaleData* m_locale{nullptr};
     const SimpleFontData* m_primaryFont{nullptr};
+    mutable FontDataList m_fonts;
 };
 
 } // namespace plutobook

@@ -8,14 +8,12 @@
 
 #include "textbreakiterator.h"
 #include "stringutils.h"
-
-#include <cassert>
-#include <memory>
+#include "localedata.h"
 
 namespace plutobook {
 
-CharacterBreakIterator::CharacterBreakIterator(const UString& text)
-    : m_iterator(getIterator())
+CharacterBreakIterator::CharacterBreakIterator(const UString& text, const LocaleData* locale)
+    : m_iterator(locale->characterIterator())
 {
     m_iterator->setText(text);
 }
@@ -28,17 +26,8 @@ int CharacterBreakIterator::nextBreakOpportunity(int offset, int end) const
     return position;
 }
 
-icu::BreakIterator* CharacterBreakIterator::getIterator()
-{
-    UErrorCode status = U_ZERO_ERROR;
-    thread_local std::unique_ptr<icu::BreakIterator> iterator(
-        icu::BreakIterator::createCharacterInstance(icu::Locale::getDefault(), status));
-    assert(iterator && U_SUCCESS(status));
-    return iterator.get();
-}
-
-LineBreakIterator::LineBreakIterator(const UString& text)
-    : m_text(text)
+LineBreakIterator::LineBreakIterator(const UString& text, const LocaleData* locale)
+    : m_text(text), m_locale(locale)
 {
 }
 
@@ -132,7 +121,7 @@ uint32_t LineBreakIterator::nextBreakOpportunity(uint32_t pos, uint32_t end) con
             return i;
         if(needsLineBreakIterator(ch) || needsLineBreakIterator(lastCh)) {
             if(m_iterator == nullptr) {
-                m_iterator = getIterator();
+                m_iterator = m_locale->lineIterator();
                 m_iterator->setText(m_text);
             }
 
@@ -173,15 +162,6 @@ bool LineBreakIterator::isBreakable(uint32_t pos) const
     auto end = std::min<int>(pos + 1, m_text.length());
     auto nextBreak = nextBreakOpportunity(pos, end);
     return pos == nextBreak;
-}
-
-icu::BreakIterator* LineBreakIterator::getIterator()
-{
-    UErrorCode status = U_ZERO_ERROR;
-    thread_local std::unique_ptr<icu::BreakIterator> iterator(
-        icu::BreakIterator::createLineInstance(icu::Locale::getDefault(), status));
-    assert(iterator && U_SUCCESS(status));
-    return iterator.get();
 }
 
 } // namespace plutobook

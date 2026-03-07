@@ -585,7 +585,7 @@ void BidiParagraph::reorderVisual(const std::vector<UBiDiLevel>& levels, std::ve
 
 LineBreaker::LineBreaker(BlockFlowBox* block, FragmentBuilder* fragmentainer, LineItemsData& data)
     : m_block(block), m_fragmentainer(fragmentainer)
-    , m_data(data), m_breakIterator(data.text)
+    , m_data(data), m_breakIterator(data.text, block->style()->locale())
     , m_lineHeight(block->style()->lineHeight())
 {
     setCurrentStyle(m_block->style());
@@ -1513,11 +1513,12 @@ void LineLayout::updateOverflowRect()
 
 void LineLayout::computeIntrinsicWidths(float& minWidth, float& maxWidth) const
 {
-    LineBreakIterator breakIterator(m_data.text);
     auto currentStyle = m_block->style();
     auto indentLength = currentStyle->textIndent();
     auto indentWidth = indentLength.calcMin(0);
     auto floating = Float::None;
+
+    LineBreakIterator breakIterator(m_data.text, currentStyle->locale());
 
     float inlineMinWidth = 0.f;
     float inlineMaxWidth = 0.f;

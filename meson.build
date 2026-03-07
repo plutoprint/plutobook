@@ -11,10 +11,17 @@ expat_dep = dependency('expat',
     fallback: ['expat', 'expat_dep']
 )
 
-icu_dep = dependency('icu-uc',
+icu_required_version = '>=57.0'
+icuuc_dep = dependency('icu-uc',
     required: true,
-    version: '>=57.0',
+    version: icu_required_version,
     fallback: ['icu', 'icuuc_dep']
+)
+
+icui18n_dep = dependency('icu-i18n',
+    required: true,
+    version: icu_required_version,
+    fallback: ['icu', 'icui18n_dep']
 )
 
 freetype_dep = dependency('freetype2',
@@ -78,7 +85,8 @@ cairo_dep = dependency('cairo',
 
 plutobook_deps = [
     expat_dep,
-    icu_dep,
+    icuuc_dep,
+    icui18n_dep,
     freetype_dep,
     fontconfig_dep,
     harfbuzz_dep,
@@ -194,6 +202,7 @@ plutobook_sources = [
     'source/htmlentityparser.cpp',
     'source/htmlparser.cpp',
     'source/htmltokenizer.cpp',
+    'source/localedata.cpp',
     'source/plutobook.cc',
     'source/plutobook.cpp',
     'source/svgdocument.cpp',
