@@ -39,7 +39,6 @@ public:
     operator const HeapString&() const { return value(); }
 
     bool operator==(const GlobalString& o) const { return m_entry == o.m_entry; }
-    bool operator!=(const GlobalString& o) const { return m_entry != o.m_entry; }
 
     const HeapString& value() const;
 
@@ -60,32 +59,16 @@ inline GlobalString operator""_glo(const char* data, size_t length)
 
 inline std::ostream& operator<<(std::ostream& o, const GlobalString& in) { return o << in.value(); }
 
-inline bool operator<(const GlobalString& a, const GlobalString& b) { return a.value() < b.value(); }
-inline bool operator>(const GlobalString& a, const GlobalString& b) { return a.value() > b.value(); }
-
 inline bool operator==(const GlobalString& a, std::string_view b) { return a.value() == b; }
-inline bool operator!=(const GlobalString& a, std::string_view b) { return a.value() != b; }
-
 inline bool operator==(std::string_view a, const GlobalString& b) { return a == b.value(); }
-inline bool operator!=(std::string_view a, const GlobalString& b) { return a != b.value(); }
-
-inline bool operator<(const GlobalString& a, std::string_view b) { return a.value() < b; }
-inline bool operator>(const GlobalString& a, std::string_view b) { return a.value() > b; }
-
-inline bool operator<(std::string_view a, const GlobalString& b) { return a < b.value(); }
-inline bool operator>(std::string_view a, const GlobalString& b) { return a > b.value(); }
-
 inline bool operator==(const GlobalString& a, const HeapString& b) { return a.value() == b; }
-inline bool operator!=(const GlobalString& a, const HeapString& b) { return a.value() != b; }
-
 inline bool operator==(const HeapString& a, const GlobalString& b) { return a == b.value(); }
-inline bool operator!=(const HeapString& a, const GlobalString& b) { return a != b.value(); }
 
+inline bool operator<(const GlobalString& a, const GlobalString& b) { return a.value() < b.value(); }
+inline bool operator<(const GlobalString& a, std::string_view b) { return a.value() < b; }
+inline bool operator<(std::string_view a, const GlobalString& b) { return a < b.value(); }
 inline bool operator<(const GlobalString& a, const HeapString& b) { return a.value() < b; }
-inline bool operator>(const GlobalString& a, const HeapString& b) { return a.value() > b; }
-
 inline bool operator<(const HeapString& a, const GlobalString& b) { return a < b.value(); }
-inline bool operator>(const HeapString& a, const GlobalString& b) { return a > b.value(); }
 
 extern const GlobalString nullGlo;
 extern const GlobalString emptyGlo;

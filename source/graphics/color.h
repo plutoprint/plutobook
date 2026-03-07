@@ -59,29 +59,9 @@ constexpr bool operator==(const Color& a, const Color& b)
     return a.value() == b.value();
 }
 
-constexpr bool operator!=(const Color& a, const Color& b)
-{
-    return a.value() != b.value();
-}
-
 constexpr bool operator<(const Color& a, const Color& b)
 {
     return a.value() < b.value();
-}
-
-constexpr bool operator>(const Color& a, const Color& b)
-{
-    return a.value() > b.value();
-}
-
-constexpr bool operator<=(const Color& a, const Color& b)
-{
-    return a.value() <= b.value();
-}
-
-constexpr bool operator>=(const Color& a, const Color& b)
-{
-    return a.value() >= b.value();
 }
 
 } // namespace plutobook

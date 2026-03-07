@@ -92,19 +92,9 @@ constexpr bool operator==(const FontSelectionRequest& a, const FontSelectionRequ
     return std::tie(a.weight, a.width, a.slope) == std::tie(b.weight, b.width, b.slope);
 }
 
-constexpr bool operator!=(const FontSelectionRequest& a, const FontSelectionRequest& b)
-{
-    return std::tie(a.weight, a.width, a.slope) != std::tie(b.weight, b.width, b.slope);
-}
-
 constexpr bool operator<(const FontSelectionRequest& a, const FontSelectionRequest& b)
 {
     return std::tie(a.weight, a.width, a.slope) < std::tie(b.weight, b.width, b.slope);
-}
-
-constexpr bool operator>(const FontSelectionRequest& a, const FontSelectionRequest& b)
-{
-    return std::tie(a.weight, a.width, a.slope) > std::tie(b.weight, b.width, b.slope);
 }
 
 struct FontSelectionRange {
@@ -130,19 +120,9 @@ constexpr bool operator==(const FontSelectionRange& a, const FontSelectionRange&
     return std::tie(a.minimum, a.maximum) == std::tie(b.minimum, b.maximum);
 }
 
-constexpr bool operator!=(const FontSelectionRange& a, const FontSelectionRange& b)
-{
-    return std::tie(a.minimum, a.maximum) != std::tie(b.minimum, b.maximum);
-}
-
 constexpr bool operator<(const FontSelectionRange& a, const FontSelectionRange& b)
 {
     return std::tie(a.minimum, a.maximum) < std::tie(b.minimum, b.maximum);
-}
-
-constexpr bool operator>(const FontSelectionRange& a, const FontSelectionRange& b)
-{
-    return std::tie(a.minimum, a.maximum) > std::tie(b.minimum, b.maximum);
 }
 
 struct FontSelectionDescription {
@@ -165,19 +145,9 @@ constexpr bool operator==(const FontSelectionDescription& a, const FontSelection
     return std::tie(a.weight, a.width, a.slope) == std::tie(b.weight, b.width, b.slope);
 }
 
-constexpr bool operator!=(const FontSelectionDescription& a, const FontSelectionDescription& b)
-{
-    return std::tie(a.weight, a.width, a.slope) != std::tie(b.weight, b.width, b.slope);
-}
-
 constexpr bool operator<(const FontSelectionDescription& a, const FontSelectionDescription& b)
 {
     return std::tie(a.weight, a.width, a.slope) < std::tie(b.weight, b.width, b.slope);
-}
-
-constexpr bool operator>(const FontSelectionDescription& a, const FontSelectionDescription& b)
-{
-    return std::tie(a.weight, a.width, a.slope) > std::tie(b.weight, b.width, b.slope);
 }
 
 class FontSelectionAlgorithm {
@@ -215,9 +185,7 @@ private:
 };
 
 constexpr bool operator==(const FontTag& a, const FontTag& b) { return a.value() == b.value(); }
-constexpr bool operator!=(const FontTag& a, const FontTag& b) { return a.value() != b.value(); }
 constexpr bool operator<(const FontTag& a, const FontTag& b) { return a.value() < b.value(); }
-constexpr bool operator>(const FontTag& a, const FontTag& b) { return a.value() > b.value(); }
 
 using FontFeature = std::pair<FontTag, int>;
 using FontVariation = std::pair<FontTag, float>;
@@ -238,19 +206,9 @@ constexpr bool operator==(const FontDataDescription& a, const FontDataDescriptio
     return std::tie(a.size, a.request, a.variations) == std::tie(b.size, b.request, b.variations);
 }
 
-constexpr bool operator!=(const FontDataDescription& a, const FontDataDescription& b)
-{
-    return std::tie(a.size, a.request, a.variations) != std::tie(b.size, b.request, b.variations);
-}
-
 constexpr bool operator<(const FontDataDescription& a, const FontDataDescription& b)
 {
     return std::tie(a.size, a.request, a.variations) < std::tie(b.size, b.request, b.variations);
-}
-
-constexpr bool operator>(const FontDataDescription& a, const FontDataDescription& b)
-{
-    return std::tie(a.size, a.request, a.variations) > std::tie(b.size, b.request, b.variations);
 }
 
 using FontFamilyList = std::forward_list<GlobalString>;
@@ -265,19 +223,9 @@ constexpr bool operator==(const FontDescription& a, const FontDescription& b)
     return std::tie(a.families, a.data) == std::tie(b.families, b.data);
 }
 
-constexpr bool operator!=(const FontDescription& a, const FontDescription& b)
-{
-    return std::tie(a.families, a.data) != std::tie(b.families, b.data);
-}
-
 constexpr bool operator<(const FontDescription& a, const FontDescription& b)
 {
     return std::tie(a.families, a.data) < std::tie(b.families, b.data);
-}
-
-constexpr bool operator>(const FontDescription& a, const FontDescription& b)
-{
-    return std::tie(a.families, a.data) > std::tie(b.families, b.data);
 }
 
 using UnicodeRange = std::pair<uint32_t, uint32_t>;

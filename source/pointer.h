@@ -152,28 +152,8 @@ public:
     }
 
     template<typename U>
-    bool operator!=(const RefPtr<U>& o) const {
-        return m_ptr != o.get();
-    }
-
-    template<typename U>
     bool operator<(const RefPtr<U>& o) const {
         return m_ptr < o.get();
-    }
-
-    template<typename U>
-    bool operator>(const RefPtr<U>& o) const {
-        return m_ptr > o.get();
-    }
-
-    template<typename U>
-    bool operator<=(const RefPtr<U>& o) const {
-        return m_ptr <= o.get();
-    }
-
-    template<typename U>
-    bool operator>=(const RefPtr<U>& o) const {
-        return m_ptr >= o.get();
     }
 
     friend RefPtr<T> adoptPtr<T>(T*);
@@ -205,18 +185,6 @@ template<typename T>
 inline bool operator==(std::nullptr_t, const RefPtr<T>& a)
 {
     return nullptr == a.get();
-}
-
-template<typename T>
-inline bool operator!=(const RefPtr<T>& a, std::nullptr_t)
-{
-    return a.get() != nullptr;
-}
-
-template<typename T>
-inline bool operator!=(std::nullptr_t, const RefPtr<T>& a)
-{
-    return nullptr != a.get();
 }
 
 template<typename T>

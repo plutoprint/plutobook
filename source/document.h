@@ -180,7 +180,6 @@ private:
 };
 
 inline bool operator==(const Attribute& a, const Attribute& b) { return a.name() == b.name() && a.value() == b.value(); }
-inline bool operator!=(const Attribute& a, const Attribute& b) { return a.name() != b.name() || a.value() != b.value(); }
 
 using AttributeList = std::pmr::forward_list<Attribute>;
 using ClassNameList = std::pmr::forward_list<HeapString>;

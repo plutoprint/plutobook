@@ -55,22 +55,12 @@ inline std::string_view Url::componentString(size_t begin, size_t end) const
 inline std::ostream& operator<<(std::ostream& o, const Url& in) { return o << in.value(); }
 
 inline bool operator==(const Url& a, const Url& b) { return a.value() == b.value(); }
-inline bool operator!=(const Url& a, const Url& b) { return a.value() != b.value(); }
-
 inline bool operator==(const Url& a, std::string_view b) { return a.value() == b; }
-inline bool operator!=(const Url& a, std::string_view b) { return a.value() != b; }
-
 inline bool operator==(std::string_view a, const Url& b) { return a == b.value(); }
-inline bool operator!=(std::string_view a, const Url& b) { return a != b.value(); }
 
 inline bool operator<(const Url& a, const Url& b) { return a.value() < b.value(); }
-inline bool operator>(const Url& a, const Url& b) { return a.value() > b.value(); }
-
 inline bool operator<(const Url& a, std::string_view b) { return a.value() < b; }
-inline bool operator>(const Url& a, std::string_view b) { return a.value() > b; }
-
 inline bool operator<(std::string_view a, const Url& b) { return a < b.value(); }
-inline bool operator>(std::string_view a, const Url& b) { return a > b.value(); }
 
 } // namespace plutobook
 
