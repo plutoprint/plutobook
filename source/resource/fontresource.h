@@ -341,16 +341,20 @@ inline RefPtr<SegmentedFontFace> SegmentedFontFace::create(const FontSelectionDe
     return adoptPtr(new SegmentedFontFace(description));
 }
 
-constexpr uint32_t kNoneVariationSelector = 0x0000;
-constexpr uint32_t kTextVariationSelector = 0xFE0E;
-constexpr uint32_t kEmojiVariationSelector = 0xFE0F;
+enum class EmojiPolicy : uint8_t {
+    NoPreference,
+    RequireText,
+    RequireEmoji,
+};
 
 class SimpleFontData;
 
 class FontData : public RefCounted<FontData> {
 public:
     virtual ~FontData() = default;
-    virtual const SimpleFontData* getFontData(uint32_t codepoint, uint32_t variationSelector) const = 0;
+    virtual const SimpleFontData* fontDataForCharacter(uint32_t codepoint, EmojiPolicy emojiPolicy) const = 0;
+
+    const SimpleFontData* getFontData(const uint16_t* characters, int length, EmojiPolicy emojiPolicy) const;
 
 protected:
     FontData() = default;
@@ -379,7 +383,7 @@ public:
     const FontDataInfo& info() const { return m_info; }
     const FontFeatureList& features() const { return m_features; }
 
-    const SimpleFontData* getFontData(uint32_t codepoint, uint32_t variationSelector) const final;
+    const SimpleFontData* fontDataForCharacter(uint32_t codepoint, EmojiPolicy emojiPolicy) const final;
 
     float ascent() const { return m_info.ascent; }
     float descent() const { return m_info.descent; }
@@ -412,7 +416,7 @@ public:
         : m_from(from), m_to(to), m_data(std::move(data))
     {}
 
-    const SimpleFontData* getFontData(uint32_t codepoint, uint32_t variationSelector) const;
+    const SimpleFontData* fontDataForCharacter(uint32_t codepoint, EmojiPolicy emojiPolicy) const;
 
 private:
     uint32_t m_from;
@@ -426,7 +430,7 @@ class SegmentedFontData final : public FontData {
 public:
     static RefPtr<SegmentedFontData> create(FontDataRangeList fonts);
 
-    const SimpleFontData* getFontData(uint32_t codepoint, uint32_t variationSelector) const final;
+    const SimpleFontData* fontDataForCharacter(uint32_t codepoint, EmojiPolicy emojiPolicy) const final;
 
 private:
     SegmentedFontData(FontDataRangeList fonts) : m_fonts(std::move(fonts)) {}
@@ -441,7 +445,7 @@ inline RefPtr<SegmentedFontData> SegmentedFontData::create(FontDataRangeList fon
 class FontDataCache {
 public:
     RefPtr<SimpleFontData> getFontData(const GlobalString& family, const FontDataDescription& description);
-    RefPtr<SimpleFontData> getFontData(uint32_t codepoint, uint32_t variationSelector, const FontDataDescription& description);
+    RefPtr<SimpleFontData> getFontData(const uint16_t* characters, int length, EmojiPolicy emojiPolicy, const FontDataDescription& description);
 
     bool isFamilyAvailable(const GlobalString& family);
 
@@ -475,7 +479,7 @@ public:
     const FontFamilyList& family() const { return m_description.families; }
     const FontVariationList& variationSettings() const { return m_description.data.variations; }
 
-    const SimpleFontData* getFontData(uint32_t codepoint, uint32_t variationSelector) const;
+    const SimpleFontData* getFontData(const uint16_t* characters, int length, EmojiPolicy emojiPolicy) const;
 
 private:
     Font(Document* document, const FontDescription& description);

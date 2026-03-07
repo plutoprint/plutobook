@@ -15,6 +15,8 @@
 #include <fontconfig/fontconfig.h>
 #include <fontconfig/fcfreetype.h>
 
+#include <unicode/uchar.h>
+
 #include <cairo-ft.h>
 #include <hb-ft.h>
 
@@ -334,6 +336,27 @@ RefPtr<FontData> SegmentedFontFace::getFontData(Document* document, const FontDa
     return fontData;
 }
 
+const SimpleFontData* FontData::getFontData(const uint16_t* characters, int length, EmojiPolicy emojiPolicy) const
+{
+    int i = 0;
+    uint32_t codepoint;
+    U16_NEXT(characters, i, length, codepoint);
+
+    if(auto fontData = fontDataForCharacter(codepoint, emojiPolicy)) {
+        while(i < length) {
+            U16_NEXT(characters, i, length, codepoint);
+            if(!u_hasBinaryProperty(codepoint, UCHAR_DEFAULT_IGNORABLE_CODE_POINT)
+                && !fontData->fontDataForCharacter(codepoint, emojiPolicy)) {
+                return nullptr;
+            }
+        }
+
+        return fontData;
+    }
+
+    return nullptr;
+}
+
 #define FLT_TO_HB(v) static_cast<hb_position_t>((v) * (1 << 16))
 
 RefPtr<SimpleFontData> SimpleFontData::create(cairo_scaled_font_t* font, FcCharSet* charSet, FontFeatureList features)
@@ -459,10 +482,10 @@ RefPtr<SimpleFontData> SimpleFontData::create(cairo_scaled_font_t* font, FcCharS
     return adoptPtr(new SimpleFontData(font, hbFont, charSet, info, std::move(features)));
 }
 
-const SimpleFontData* SimpleFontData::getFontData(uint32_t codepoint, uint32_t variationSelector) const
+const SimpleFontData* SimpleFontData::fontDataForCharacter(uint32_t codepoint, EmojiPolicy emojiPolicy) const
 {
-    if((m_info.hasColor && variationSelector == kTextVariationSelector)
-        || (!m_info.hasColor && variationSelector == kEmojiVariationSelector)) {
+    if((m_info.hasColor && emojiPolicy == EmojiPolicy::RequireText)
+        || (!m_info.hasColor && emojiPolicy == EmojiPolicy::RequireEmoji)) {
         return nullptr;
     }
 
@@ -478,17 +501,17 @@ SimpleFontData::~SimpleFontData()
     FcCharSetDestroy(m_charSet);
 }
 
-const SimpleFontData* FontDataRange::getFontData(uint32_t codepoint, uint32_t variationSelector) const
+const SimpleFontData* FontDataRange::fontDataForCharacter(uint32_t codepoint, EmojiPolicy emojiPolicy) const
 {
     if(m_from <= codepoint && m_to >= codepoint)
-        return m_data->getFontData(codepoint, variationSelector);
+        return m_data->fontDataForCharacter(codepoint, emojiPolicy);
     return nullptr;
 }
 
-const SimpleFontData* SegmentedFontData::getFontData(uint32_t codepoint, uint32_t variationSelector) const
+const SimpleFontData* SegmentedFontData::fontDataForCharacter(uint32_t codepoint, EmojiPolicy emojiPolicy) const
 {
     for(const auto& font : m_fonts) {
-        if(auto fontData = font.getFontData(codepoint, variationSelector)) {
+        if(auto fontData = font.fontDataForCharacter(codepoint, emojiPolicy)) {
             return fontData;
         }
     }
@@ -624,17 +647,23 @@ constexpr bool isGenericFamilyName(std::string_view familyName)
         || equals(familyName, "emoji", false);
 }
 
-static RefPtr<SimpleFontData> createFontData(FcConfig* config, const GlobalString& family, const FontDataDescription& description)
+static FcPattern* createFontPattern(const FontDataDescription& description)
 {
     auto pattern = FcPatternCreate();
     FcPatternAddDouble(pattern, FC_PIXEL_SIZE, description.size);
     FcPatternAddInteger(pattern, FC_WEIGHT, fcWeight(description.request.weight));
     FcPatternAddInteger(pattern, FC_WIDTH, fcWidth(description.request.width));
     FcPatternAddInteger(pattern, FC_SLANT, fcSlant(description.request.slope));
+    FcPatternAddBool(pattern, FC_SCALABLE, FcTrue);
+    return pattern;
+}
+
+static RefPtr<SimpleFontData> createFontData(FcConfig* config, const GlobalString& family, const FontDataDescription& description)
+{
+    auto pattern = createFontPattern(description);
 
     std::string familyName(family.value());
     FcPatternAddString(pattern, FC_FAMILY, (FcChar8*)(familyName.data()));
-    FcPatternAddBool(pattern, FC_SCALABLE, FcTrue);
     if(equalsIgnoringCase(familyName, "emoji")) {
         FcPatternAddBool(pattern, FC_COLOR, FcTrue);
     }
@@ -679,22 +708,30 @@ RefPtr<SimpleFontData> FontDataCache::getFontData(const GlobalString& family, co
     return fontData;
 }
 
-RefPtr<SimpleFontData> FontDataCache::getFontData(uint32_t codepoint, uint32_t variationSelector, const FontDataDescription& description)
+RefPtr<SimpleFontData> FontDataCache::getFontData(const uint16_t* characters, int length, EmojiPolicy emojiPolicy, const FontDataDescription& description)
 {
-    std::lock_guard guard(m_mutex);
-    auto pattern = FcPatternCreate();
     auto charSet = FcCharSetCreate();
 
+    int i = 0;
+    uint32_t codepoint;
+    U16_NEXT(characters, i, length, codepoint);
+
     FcCharSetAddChar(charSet, codepoint);
+    while(i < length) {
+        U16_NEXT(characters, i, length, codepoint);
+        if(!u_hasBinaryProperty(codepoint, UCHAR_DEFAULT_IGNORABLE_CODE_POINT)) {
+            FcCharSetAddChar(charSet, codepoint);
+        }
+    }
+
+    auto pattern = createFontPattern(description);
+
     FcPatternAddCharSet(pattern, FC_CHARSET, charSet);
-    FcPatternAddDouble(pattern, FC_PIXEL_SIZE, description.size);
-    FcPatternAddInteger(pattern, FC_WEIGHT, fcWeight(description.request.weight));
-    FcPatternAddInteger(pattern, FC_WIDTH, fcWidth(description.request.width));
-    FcPatternAddInteger(pattern, FC_SLANT, fcSlant(description.request.slope));
-    FcPatternAddBool(pattern, FC_SCALABLE, FcTrue);
-    if(variationSelector == kEmojiVariationSelector) {
+    if(emojiPolicy == EmojiPolicy::RequireEmoji) {
         FcPatternAddBool(pattern, FC_COLOR, FcTrue);
     }
+
+    std::lock_guard guard(m_mutex);
 
     FcConfigSubstitute(m_config, pattern, FcMatchPattern);
     FcDefaultSubstitute(pattern);
@@ -706,7 +743,7 @@ RefPtr<SimpleFontData> FontDataCache::getFontData(uint32_t codepoint, uint32_t v
         int matchCharSetIndex = 0;
         FcCharSet* matchCharSet = nullptr;
         while(FcPatternGetCharSet(matchPattern, FC_CHARSET, matchCharSetIndex, &matchCharSet) == FcResultMatch) {
-            if(FcCharSetHasChar(matchCharSet, codepoint)) {
+            if(FcCharSetIsSubset(charSet, matchCharSet)) {
                 matchResult = FcResultMatch;
                 break;
             }
@@ -771,21 +808,21 @@ Heap* Font::heap() const
     return m_document->heap();
 }
 
-const SimpleFontData* Font::getFontData(uint32_t codepoint, uint32_t variationSelector) const
+const SimpleFontData* Font::getFontData(const uint16_t* characters, int length, EmojiPolicy emojiPolicy) const
 {
     for(const auto& font : m_fonts) {
-        if(auto fontData = font->getFontData(codepoint, variationSelector)) {
+        if(auto fontData = font->getFontData(characters, length, emojiPolicy)) {
             return fontData;
         }
     }
 
-    if(auto fontData = fontDataCache()->getFontData(codepoint, variationSelector, m_description.data)) {
+    if(auto fontData = fontDataCache()->getFontData(characters, length, emojiPolicy, m_description.data)) {
         m_fonts.push_back(fontData);
         return fontData.get();
     }
 
-    if(variationSelector == kEmojiVariationSelector)
-        return getFontData(codepoint, kNoneVariationSelector);
+    if(emojiPolicy == EmojiPolicy::RequireEmoji)
+        return getFontData(characters, length, EmojiPolicy::NoPreference);
     return m_primaryFont;
 }
 
@@ -797,7 +834,7 @@ Font::Font(Document* document, const FontDescription& description)
     for(const auto& family : description.families) {
         if(auto font = document->getFontData(family, description.data)) {
             if(m_primaryFont == nullptr)
-                m_primaryFont = font->getFontData(' ', kNoneVariationSelector);
+                m_primaryFont = font->fontDataForCharacter(' ', EmojiPolicy::RequireText);
             m_fonts.push_back(std::move(font));
         }
     }
