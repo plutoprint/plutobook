@@ -138,17 +138,9 @@ static EmojiPolicy resolveEmojiPolicy(FontVariantEmoji variantEmoji, uint32_t co
     return EmojiPolicy::NoPreference;
 }
 
-static const SimpleFontData* resolveFontData(const Font* font, const FontData* currentFontData, uint32_t codepoint,
-    const uint16_t* characters, int length, FontVariantEmoji variantEmoji)
+static const SimpleFontData* resolveFontData(const Font* font, uint32_t codepoint, const uint16_t* characters, int length, FontVariantEmoji variantEmoji)
 {
-    auto emojiPolicy = resolveEmojiPolicy(variantEmoji, codepoint, characters, length);
-    if(currentFontData) {
-        if(auto fontData = currentFontData->getFontData(characters, length, emojiPolicy)) {
-            return fontData;
-        }
-    }
-
-    return font->getFontData(characters, length, emojiPolicy);
+    return font->getFontData(characters, length, resolveEmojiPolicy(variantEmoji, codepoint, characters, length));
 }
 
 constexpr int kMaxGlyphs = 1 << 16;
@@ -178,7 +170,7 @@ RefPtr<TextShape> TextShape::createForText(const UString& text, Direction direct
     CharacterBreakIterator iterator(text, font->locale());
     auto character = text.char32At(startIndex);
     auto currentIndex = iterator.nextBreakOpportunity(startIndex, totalLength);
-    auto nextFontData = resolveFontData(font, nullptr, character, textBuffer + startIndex, currentIndex, fontVariantEmoji);
+    auto nextFontData = resolveFontData(font, character, textBuffer + startIndex, currentIndex, fontVariantEmoji);
     while(totalLength > 0) {
         auto fontData = nextFontData;
         auto errorCode = U_ZERO_ERROR;
@@ -194,7 +186,7 @@ RefPtr<TextShape> TextShape::createForText(const UString& text, Direction direct
 
             const auto clusterLength = currentIndex - clusterOffset;
             if(!treatAsZeroWidthSpace(character)) {
-                nextFontData = resolveFontData(font, fontData, character, textBuffer + clusterOffset, clusterLength, fontVariantEmoji);
+                nextFontData = resolveFontData(font, character, textBuffer + clusterOffset, clusterLength, fontVariantEmoji);
                 auto nextScriptCode = uscript_getScript(character, &errorCode);
                 if(fontData != nextFontData || U_FAILURE(errorCode))
                     break;
