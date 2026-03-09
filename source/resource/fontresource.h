@@ -293,7 +293,7 @@ inline RefPtr<SegmentedFontFace> SegmentedFontFace::create(const FontSelectionDe
 enum class EmojiPolicy : uint8_t {
     NoPreference,
     RequireText,
-    RequireEmoji,
+    RequireEmoji
 };
 
 class SimpleFontData;
