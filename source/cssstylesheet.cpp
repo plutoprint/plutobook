@@ -736,7 +736,7 @@ RefPtr<FontData> CSSStyleSheet::getFontData(const GlobalString& family, const Fo
 {
     auto it = m_fontFaces.find(family);
     if(it == m_fontFaces.end())
-        return fontDataCache()->getFontData(family, description);
+        return fontDataCache()->fontDataForFamily(family, description);
     FontSelectionAlgorithm algorithm(description.request);
     for(const auto& item : it->second) {
         algorithm.addCandidate(item.first);

@@ -303,7 +303,7 @@ public:
     virtual ~FontData() = default;
     virtual const SimpleFontData* fontDataForCharacter(uint32_t codepoint, EmojiPolicy emojiPolicy) const = 0;
 
-    const SimpleFontData* getFontData(const uint16_t* characters, int length, EmojiPolicy emojiPolicy) const;
+    const SimpleFontData* fontDataForCharacters(const uint16_t* characters, int length, EmojiPolicy emojiPolicy) const;
 
 protected:
     FontData() = default;
@@ -393,8 +393,8 @@ inline RefPtr<SegmentedFontData> SegmentedFontData::create(FontDataRangeList fon
 
 class FontDataCache {
 public:
-    RefPtr<SimpleFontData> getFontData(const GlobalString& family, const FontDataDescription& description);
-    RefPtr<SimpleFontData> getFontData(const uint16_t* characters, int length, EmojiPolicy emojiPolicy, const FontDataDescription& description);
+    RefPtr<SimpleFontData> fontDataForFamily(const GlobalString& family, const FontDataDescription& description);
+    RefPtr<SimpleFontData> fontDataForCharacters(const uint16_t* characters, int length, EmojiPolicy emojiPolicy, const FontDataDescription& description);
 
     bool isFamilyAvailable(const GlobalString& family);
 
@@ -432,7 +432,7 @@ public:
     const FontVariationList& variationSettings() const { return m_description.data.variations; }
     const GlobalString& lang() const { return m_description.data.lang; }
 
-    const SimpleFontData* getFontData(const uint16_t* characters, int length, EmojiPolicy emojiPolicy) const;
+    const SimpleFontData* fontDataForCharacters(const uint16_t* characters, int length, EmojiPolicy emojiPolicy) const;
 
 private:
     Font(Document* document, const FontDescription& description);

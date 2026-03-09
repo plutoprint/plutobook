@@ -271,7 +271,7 @@ RefPtr<FontData> SimpleFontFace::getFontData(Document* document, const FontDataD
     while(m_resource == nullptr && !m_sources.empty()) {
         const auto& source = m_sources.front();
         if(auto family = std::get_if<GlobalString>(&source)) {
-            return fontDataCache()->getFontData(*family, description);
+            return fontDataCache()->fontDataForFamily(*family, description);
         }
 
         const auto& url = std::get<Url>(source);
@@ -337,7 +337,7 @@ RefPtr<FontData> SegmentedFontFace::getFontData(Document* document, const FontDa
     return fontData;
 }
 
-const SimpleFontData* FontData::getFontData(const uint16_t* characters, int length, EmojiPolicy emojiPolicy) const
+const SimpleFontData* FontData::fontDataForCharacters(const uint16_t* characters, int length, EmojiPolicy emojiPolicy) const
 {
     int i = 0;
     uint32_t codepoint;
@@ -709,7 +709,7 @@ static RefPtr<SimpleFontData> createFontData(FcConfig* config, const GlobalStrin
     return nullptr;
 }
 
-RefPtr<SimpleFontData> FontDataCache::getFontData(const GlobalString& family, const FontDataDescription& description)
+RefPtr<SimpleFontData> FontDataCache::fontDataForFamily(const GlobalString& family, const FontDataDescription& description)
 {
     std::lock_guard guard(m_mutex);
     auto& fontData = m_table[family][description];
@@ -718,7 +718,7 @@ RefPtr<SimpleFontData> FontDataCache::getFontData(const GlobalString& family, co
     return fontData;
 }
 
-RefPtr<SimpleFontData> FontDataCache::getFontData(const uint16_t* characters, int length, EmojiPolicy emojiPolicy, const FontDataDescription& description)
+RefPtr<SimpleFontData> FontDataCache::fontDataForCharacters(const uint16_t* characters, int length, EmojiPolicy emojiPolicy, const FontDataDescription& description)
 {
     auto charSet = FcCharSetCreate();
 
@@ -818,21 +818,21 @@ Heap* Font::heap() const
     return m_document->heap();
 }
 
-const SimpleFontData* Font::getFontData(const uint16_t* characters, int length, EmojiPolicy emojiPolicy) const
+const SimpleFontData* Font::fontDataForCharacters(const uint16_t* characters, int length, EmojiPolicy emojiPolicy) const
 {
     for(const auto& font : m_fonts) {
-        if(auto fontData = font->getFontData(characters, length, emojiPolicy)) {
+        if(auto fontData = font->fontDataForCharacters(characters, length, emojiPolicy)) {
             return fontData;
         }
     }
 
-    if(auto fontData = fontDataCache()->getFontData(characters, length, emojiPolicy, m_description.data)) {
+    if(auto fontData = fontDataCache()->fontDataForCharacters(characters, length, emojiPolicy, m_description.data)) {
         m_fonts.push_back(fontData);
         return fontData.get();
     }
 
     if(emojiPolicy == EmojiPolicy::RequireEmoji)
-        return getFontData(characters, length, EmojiPolicy::NoPreference);
+        return fontDataForCharacters(characters, length, EmojiPolicy::NoPreference);
     return m_primaryFont;
 }
 
@@ -852,7 +852,7 @@ Font::Font(Document* document, const FontDescription& description)
 
     if(m_primaryFont == nullptr) {
         static const GlobalString serif("serif");
-        if(auto fontData = fontDataCache()->getFontData(serif, description.data)) {
+        if(auto fontData = fontDataCache()->fontDataForFamily(serif, description.data)) {
             m_primaryFont = fontData.get();
             m_fonts.push_back(std::move(fontData));
         }

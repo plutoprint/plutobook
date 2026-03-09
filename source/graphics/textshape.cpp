@@ -140,7 +140,7 @@ static EmojiPolicy resolveEmojiPolicy(FontVariantEmoji variantEmoji, uint32_t co
 
 static const SimpleFontData* resolveFontData(const Font* font, uint32_t codepoint, const uint16_t* characters, int length, FontVariantEmoji variantEmoji)
 {
-    return font->getFontData(characters, length, resolveEmojiPolicy(variantEmoji, codepoint, characters, length));
+    return font->fontDataForCharacters(characters, length, resolveEmojiPolicy(variantEmoji, codepoint, characters, length));
 }
 
 constexpr int kMaxGlyphs = 1 << 16;
