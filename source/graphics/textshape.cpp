@@ -152,6 +152,7 @@ RefPtr<TextShape> TextShape::createForText(const UString& text, Direction direct
 {
     assert(!text.isEmpty());
     const Font* font = style->font();
+    const auto& lang = font->lang();
     auto fontFeatures = style->fontFeatures();
     auto fontVariantEmoji = style->fontVariantEmoji();
     auto letterSpacing = disableSpacing ? 0 : style->letterSpacing();
@@ -160,6 +161,7 @@ RefPtr<TextShape> TextShape::createForText(const UString& text, Direction direct
 
     thread_local hb::unique_ptr<hb_buffer_t> hbBuffer(hb_buffer_create());
     auto hbDirection = direction == Direction::Ltr ? HB_DIRECTION_LTR : HB_DIRECTION_RTL;
+    auto hbLanguage = hb_language_from_string(lang.data(), lang.size());
     auto textBuffer = reinterpret_cast<const uint16_t*>(text.getBuffer());
 
     float totalWidth = 0.f;
@@ -229,6 +231,7 @@ RefPtr<TextShape> TextShape::createForText(const UString& text, Direction direct
             hb_buffer_reset(hbBuffer);
             hb_buffer_add_utf16(hbBuffer, textBuffer + startIndex, itemLength, 0, itemLength);
             hb_buffer_set_direction(hbBuffer, hbDirection);
+            hb_buffer_set_language(hbBuffer, hbLanguage);
             hb_buffer_set_script(hbBuffer, hbScript);
             hb_shape(fontData->hbFont(), hbBuffer, hbFeatures.data(), hbFeatures.size());
 
