@@ -169,32 +169,35 @@ RefPtr<TextShape> TextShape::createForText(const UString& text, Direction direct
 
     CharacterBreakIterator iterator(text, font->locale());
     auto character = text.char32At(startIndex);
-    auto currentIndex = iterator.nextBreakOpportunity(startIndex, totalLength);
-    auto nextFontData = resolveFontData(font, character, textBuffer + startIndex, currentIndex, fontVariantEmoji);
+    auto nextIndex = iterator.nextBreakOpportunity(startIndex, totalLength);
+    auto nextFontData = resolveFontData(font, character, textBuffer + startIndex, nextIndex, fontVariantEmoji);
+
+    UErrorCode errorCode = U_ZERO_ERROR;
+    auto nextScriptCode = uscript_getScript(character, &errorCode);
     while(totalLength > 0) {
         auto fontData = nextFontData;
-        auto errorCode = U_ZERO_ERROR;
-        auto scriptCode = uscript_getScript(character, &errorCode);
+        auto scriptCode = nextScriptCode;
         if(!fontData || U_FAILURE(errorCode))
             break;
-        auto numCharacters = currentIndex - startIndex;
+        auto numCharacters = nextIndex - startIndex;
         const auto endIndex = startIndex + totalLength;
-        while(currentIndex < endIndex) {
-            const auto clusterOffset = currentIndex;
-            character = text.char32At(currentIndex);
-            currentIndex = iterator.nextBreakOpportunity(currentIndex, endIndex);
+        while(nextIndex < endIndex) {
+            const auto clusterOffset = nextIndex;
+            character = text.char32At(clusterOffset);
+            nextIndex = iterator.nextBreakOpportunity(clusterOffset, endIndex);
 
-            const auto clusterLength = currentIndex - clusterOffset;
+            const auto clusterLength = nextIndex - clusterOffset;
             if(!treatAsZeroWidthSpace(character)) {
                 nextFontData = resolveFontData(font, character, textBuffer + clusterOffset, clusterLength, fontVariantEmoji);
-                auto nextScriptCode = uscript_getScript(character, &errorCode);
+                nextScriptCode = uscript_getScript(character, &errorCode);
                 if(fontData != nextFontData || U_FAILURE(errorCode))
                     break;
-                if(scriptCode == USCRIPT_INHERITED || scriptCode == USCRIPT_COMMON)
-                    scriptCode = nextScriptCode;
-                if(scriptCode != nextScriptCode && nextScriptCode != USCRIPT_INHERITED && nextScriptCode != USCRIPT_COMMON
-                    && !uscript_hasScript(character, scriptCode)) {
-                    break;
+                if(nextScriptCode != USCRIPT_INHERITED && nextScriptCode != USCRIPT_COMMON) {
+                    if(scriptCode == USCRIPT_INHERITED || scriptCode == USCRIPT_COMMON) {
+                        scriptCode = nextScriptCode;
+                    } else if(scriptCode != nextScriptCode && !uscript_hasScript(character, scriptCode)) {
+                        break;
+                    }
                 }
             }
 
