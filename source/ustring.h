@@ -178,7 +178,7 @@ constexpr UChar kPrivateUseFirstCharacter = 0xE000;
 constexpr UChar kPrivateUseLastCharacter = 0xF8FF;
 constexpr UChar32 kMaxCodepoint = 0x10ffff;
 
-constexpr bool treatAsZeroWidthSpace(UChar cc)
+constexpr bool treatAsZeroWidthSpace(UChar32 cc)
 {
     return cc == kFormFeedCharacter || cc == kCarriageReturnCharacter
         || cc == kSoftHyphenCharacter || cc == kZeroWidthSpaceCharacter
@@ -188,7 +188,7 @@ constexpr bool treatAsZeroWidthSpace(UChar cc)
         || (cc >= kLeftToRightEmbedCharacter && cc <= kRightToLeftOverrideCharacter);
 }
 
-constexpr bool treatAsSpace(UChar cc)
+constexpr bool treatAsSpace(UChar32 cc)
 {
     return cc == kSpaceCharacter || cc == kTabulationCharacter
         || cc == kNewlineCharacter || cc == kNoBreakSpaceCharacter;
