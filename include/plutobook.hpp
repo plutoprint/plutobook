@@ -20,15 +20,15 @@ namespace plutobook {
 
 /**
  * This constant defines an index that is guaranteed to be greater than any valid page count.
- * It is typically used as a sentinel value to represent an unbounded upper limit or the maximum possible value,
- * indicating that no specific upper bound is set.
+ * It is typically used as a sentinel value to represent an unbounded upper limit or the
+ * maximum possible value, indicating that no specific upper bound is set.
  */
 constexpr uint32_t kMaxPageCount = PLUTOBOOK_MAX_PAGE_COUNT;
 
 /**
  * This constant defines an index that is guaranteed to be less than any valid page count.
- * It is typically used as a sentinel value to represent an unbounded lower limit or the minimum possible value,
- * indicating that no specific lower bound is set.
+ * It is typically used as a sentinel value to represent an unbounded lower limit or the
+ * minimum possible value, indicating that no specific lower bound is set.
  */
 constexpr uint32_t kMinPageCount = PLUTOBOOK_MIN_PAGE_COUNT;
 
@@ -272,7 +272,9 @@ public:
      *
      * @return A `plutobook_page_margins_t` object with the same margin values.
      */
-    constexpr operator plutobook_page_margins_t() const { return PLUTOBOOK_MAKE_PAGE_MARGINS(m_top, m_right, m_bottom, m_left); }
+    constexpr operator plutobook_page_margins_t() const {
+        return PLUTOBOOK_MAKE_PAGE_MARGINS(m_top, m_right, m_bottom, m_left);
+    }
 
     /**
      * @brief Represents page margins with zero dimensions on all sides.
@@ -356,7 +358,8 @@ public:
     ResourceData() : m_data(nullptr) {}
 
     /**
-     * @brief Constructs a `ResourceData` object by adopting a bare pointer to the resource without modifying the reference count.
+     * @brief Constructs a `ResourceData` object by adopting a bare pointer to the resource without
+     * modifying the reference count.
      *
      * @param data A bare pointer to a `plutobook_resource_data_t` object.
      */
@@ -373,9 +376,11 @@ public:
     ResourceData(const char* content, size_t contentLength, const std::string& mimeType, const std::string& textEncoding);
 
     /**
-     * @brief Constructs a ResourceData object using the provided content "as is", and uses the provided callback to clean up the resource when it is no longer needed.
+     * @brief Constructs a ResourceData object using the provided content "as is", and uses the
+     * provided callback to clean up the resource when it is no longer needed.
      *
-     * This method does not copy the content. It takes ownership and ensures cleanup via the specified callback.
+     * This method does not copy the content. It takes ownership and ensures cleanup via the
+     * specified callback.
      *
      * @param content The content of the resource.
      * @param contentLength The length of the content in bytes.
@@ -384,13 +389,16 @@ public:
      * @param destroyCallback A callback function that is called when the resource is destroyed.
      * @param closure A pointer to user-defined data that is passed to the destroy callback.
      */
-    ResourceData(const char* content, size_t contentLength, const std::string& mimeType, const std::string& textEncoding, plutobook_resource_destroy_callback_t destroyCallback, void* closure);
+    ResourceData(const char* content, size_t contentLength, const std::string& mimeType, const std::string& textEncoding,
+        plutobook_resource_destroy_callback_t destroyCallback, void* closure);
 
     /**
-     * @brief Constructs a ResourceData object by transferring ownership from another `ResourceData` object.
+     * @brief Constructs a ResourceData object by transferring ownership from another
+     * `ResourceData` object.
      *
-     * The move constructor releases the underlying resource from the provided `ResourceData` object and takes ownership of it,
-     * effectively leaving the original object in a null state.
+     * The move constructor releases the underlying resource from the provided `ResourceData`
+     * object and takes ownership of it, effectively leaving the original object in a null
+     * state.
      *
      * @param resource A `ResourceData` object.
      */
@@ -1148,7 +1156,8 @@ public:
      * @param baseUrl The base URL for resolving relative URLs.
      * @return `true` on success, or `false` on failure.
      */
-    bool loadXml(std::string_view content, std::string_view userStyle = {}, std::string_view userScript = {}, std::string_view baseUrl = {});
+    bool loadXml(std::string_view content, std::string_view userStyle = {},
+        std::string_view userScript = {}, std::string_view baseUrl = {});
 
     /**
      * @brief Loads the document from the specified HTML data.
@@ -1158,7 +1167,8 @@ public:
      * @param baseUrl The base URL for resolving relative URLs.
      * @return `true` on success, or `false` on failure.
      */
-    bool loadHtml(std::string_view content, std::string_view userStyle = {}, std::string_view userScript = {}, std::string_view baseUrl = {});
+    bool loadHtml(std::string_view content, std::string_view userStyle = {},
+        std::string_view userScript = {}, std::string_view baseUrl = {});
 
     /**
      * @brief Clears the content of the document.
@@ -1242,7 +1252,8 @@ public:
      * @param pageStep The increment used to advance through pages in the range.
      * @return `true` on success, or `false` on failure.
      */
-    bool writeToPdf(const std::string& filename, uint32_t pageStart = kMinPageCount, uint32_t pageEnd = kMaxPageCount, int pageStep = 1) const;
+    bool writeToPdf(const std::string& filename, uint32_t pageStart = kMinPageCount,
+        uint32_t pageEnd = kMaxPageCount, int pageStep = 1) const;
 
     /**
      * @brief Writes the entire document to a PDF stream using a callback function.
@@ -1252,7 +1263,8 @@ public:
      * @param pageStep The increment used to advance through pages in the range.
      * @return `true` on success, or `false` on failure.
      */
-    bool writeToPdf(OutputStream& output, uint32_t pageStart = kMinPageCount, uint32_t pageEnd = kMaxPageCount, int pageStep = 1) const;
+    bool writeToPdf(OutputStream& output, uint32_t pageStart = kMinPageCount,
+        uint32_t pageEnd = kMaxPageCount, int pageStep = 1) const;
 
     /**
      * @brief Writes the entire document to a PDF stream using a callback function.
@@ -1263,7 +1275,8 @@ public:
      * @param pageStep The increment used to advance through pages in the range.
      * @return `true` on success, or `false` on failure.
      */
-    bool writeToPdf(plutobook_stream_write_callback_t callback, void* closure, uint32_t pageStart = kMinPageCount, uint32_t pageEnd = kMaxPageCount, int pageStep = 1) const;
+    bool writeToPdf(plutobook_stream_write_callback_t callback, void* closure,
+        uint32_t pageStart = kMinPageCount, uint32_t pageEnd = kMaxPageCount, int pageStep = 1) const;
 
     /**
      * @brief Writes the entire document to a PNG image file.

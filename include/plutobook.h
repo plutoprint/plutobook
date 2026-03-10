@@ -373,7 +373,8 @@ PLUTOBOOK_API plutobook_canvas_t* plutobook_image_canvas_create(int width, int h
  * @param format The image format used for the canvas.
  * @return A pointer to a newly created `plutobook_canvas_t` object, or `NULL` on failure.
  */
-PLUTOBOOK_API plutobook_canvas_t* plutobook_image_canvas_create_for_data(unsigned char* data, int width, int height, int stride, plutobook_image_format_t format);
+PLUTOBOOK_API plutobook_canvas_t* plutobook_image_canvas_create_for_data(
+    unsigned char* data, int width, int height, int stride, plutobook_image_format_t format);
 
 /**
  * @brief Retrieves the image data from the canvas.
@@ -432,7 +433,8 @@ PLUTOBOOK_API bool plutobook_image_canvas_write_to_png(const plutobook_canvas_t*
  * @param closure A user-defined closure passed to the callback.
  * @return `true` on success, or `false` on failure.
  */
-PLUTOBOOK_API bool plutobook_image_canvas_write_to_png_stream(const plutobook_canvas_t* canvas, plutobook_stream_write_callback_t callback, void* closure);
+PLUTOBOOK_API bool plutobook_image_canvas_write_to_png_stream(const plutobook_canvas_t* canvas,
+    plutobook_stream_write_callback_t callback, void* closure);
 
 /**
  * @brief Defines different metadata fields for a PDF document.
@@ -464,7 +466,8 @@ PLUTOBOOK_API plutobook_canvas_t* plutobook_pdf_canvas_create(const char* filena
  * @param size The page size for the PDF.
  * @return A pointer to a newly created `plutobook_canvas_t` object, or `NULL` on failure.
  */
-PLUTOBOOK_API plutobook_canvas_t* plutobook_pdf_canvas_create_for_stream(plutobook_stream_write_callback_t callback, void* closure, plutobook_page_size_t size);
+PLUTOBOOK_API plutobook_canvas_t* plutobook_pdf_canvas_create_for_stream(
+    plutobook_stream_write_callback_t callback, void* closure, plutobook_page_size_t size);
 
 /**
  * @brief Sets the metadata of the PDF document.
@@ -518,10 +521,12 @@ typedef struct _plutobook_resource_data plutobook_resource_data_t;
  * @param text_encoding The text encoding used for the content.
  * @return A pointer to a newly created `plutobook_resource_data_t` object, or `NULL` on failure.
  */
-PLUTOBOOK_API plutobook_resource_data_t* plutobook_resource_data_create(const char* content, unsigned int content_length, const char* mime_type, const char* text_encoding);
+PLUTOBOOK_API plutobook_resource_data_t* plutobook_resource_data_create(const char* content, unsigned int content_length,
+    const char* mime_type, const char* text_encoding);
 
 /**
- * @brief Creates a new `plutobook_resource_data_t` object using the provided content "as is", and uses the `destroy_callback` to free the resource when it's no longer needed.
+ * @brief Creates a new `plutobook_resource_data_t` object using the provided content "as is", and uses the
+ * `destroy_callback` to free the resource when it's no longer needed.
  *
  * @param content The content of the resource.
  * @param content_length The length of the content in bytes.
@@ -531,7 +536,8 @@ PLUTOBOOK_API plutobook_resource_data_t* plutobook_resource_data_create(const ch
  * @param closure A user-defined pointer that will be passed to the `destroy_callback` when called.
  * @return A pointer to a newly created `plutobook_resource_data_t` object, or `NULL` on failure.
  */
-PLUTOBOOK_API plutobook_resource_data_t* plutobook_resource_data_create_without_copy(const char* content, unsigned int content_length, const char* mime_type, const char* text_encoding, plutobook_resource_destroy_callback_t destroy_callback, void* closure);
+PLUTOBOOK_API plutobook_resource_data_t* plutobook_resource_data_create_without_copy(const char* content, unsigned int content_length,
+    const char* mime_type, const char* text_encoding, plutobook_resource_destroy_callback_t destroy_callback, void* closure);
 
 /**
  * @brief Increases the reference count of a resource data object.
@@ -596,7 +602,8 @@ PLUTOBOOK_API const char* plutobook_resource_data_get_text_encoding(const plutob
 /**
  * @brief Defines a callback type for fetching resource data from a URL.
  *
- * The callback should return a pointer to a `plutobook_resource_data_t` object, which contains the content fetched from the given URL.
+ * The callback should return a pointer to a `plutobook_resource_data_t` object, which contains the
+ * content fetched from the given URL.
  *
  * @param closure A user-defined pointer that will be passed to the callback (can be used for custom state or data).
  * @param url The URL of the resource to fetch.
@@ -607,10 +614,12 @@ typedef plutobook_resource_data_t* (*plutobook_resource_fetch_callback_t)(void* 
 /**
  * @brief Fetches resource data from a given URL using the default resource fetcher.
  *
- * This function uses a predefined mechanism to fetch resource data from the specified URL and return it as a `plutobook_resource_data_t` object.
+ * This function uses a predefined mechanism to fetch resource data from the specified URL and return
+ * it as a `plutobook_resource_data_t` object.
  *
  * @param url The URL of the resource to fetch.
- * @return A pointer to a `plutobook_resource_data_t` object containing the fetched content, or `NULL` if the fetch operation fails.
+ * @return A pointer to a `plutobook_resource_data_t` object containing the fetched content, or `NULL`
+ * if the fetch operation fails.
  */
 PLUTOBOOK_API plutobook_resource_data_t* plutobook_fetch_url(const char* url);
 
@@ -832,7 +841,8 @@ PLUTOBOOK_API bool plutobook_load_url(plutobook_t* book, const char* url, const 
  * @param base_url The base URL for resolving relative URLs.
  * @return `true` on success, or `false` on failure.
  */
-PLUTOBOOK_API bool plutobook_load_data(plutobook_t* book, const char* data, unsigned int length, const char* mime_type, const char* text_encoding, const char* user_style, const char* user_script, const char* base_url);
+PLUTOBOOK_API bool plutobook_load_data(plutobook_t* book, const char* data, unsigned int length,
+    const char* mime_type, const char* text_encoding, const char* user_style, const char* user_script, const char* base_url);
 
 /**
  * @brief Loads the document from the specified image data.
@@ -847,7 +857,8 @@ PLUTOBOOK_API bool plutobook_load_data(plutobook_t* book, const char* data, unsi
  * @param base_url The base URL for resolving relative URLs.
  * @return `true` on success, or `false` on failure.
  */
-PLUTOBOOK_API bool plutobook_load_image(plutobook_t* book, const char* data, unsigned int length, const char* mime_type, const char* text_encoding, const char* user_style, const char* user_script, const char* base_url);
+PLUTOBOOK_API bool plutobook_load_image(plutobook_t* book, const char* data, unsigned int length,
+    const char* mime_type, const char* text_encoding, const char* user_style, const char* user_script, const char* base_url);
 
 /**
  * @brief Loads the document from the specified XML data.
@@ -860,7 +871,8 @@ PLUTOBOOK_API bool plutobook_load_image(plutobook_t* book, const char* data, uns
  * @param base_url The base URL for resolving relative URLs.
  * @return `true` on success, or `false` on failure.
  */
-PLUTOBOOK_API bool plutobook_load_xml(plutobook_t* book, const char* data, int length, const char* user_style, const char* user_script, const char* base_url);
+PLUTOBOOK_API bool plutobook_load_xml(plutobook_t* book, const char* data, int length,
+    const char* user_style, const char* user_script, const char* base_url);
 
 /**
  * @brief Loads the document from the specified HTML data.
@@ -873,7 +885,8 @@ PLUTOBOOK_API bool plutobook_load_xml(plutobook_t* book, const char* data, int l
  * @param base_url The base URL for resolving relative URLs.
  * @return `true` on success, or `false` on failure.
  */
-PLUTOBOOK_API bool plutobook_load_html(plutobook_t* book, const char* data, int length, const char* user_style, const char* user_script, const char* base_url);
+PLUTOBOOK_API bool plutobook_load_html(plutobook_t* book, const char* data, int length,
+    const char* user_style, const char* user_script, const char* base_url);
 
 /**
  * @brief Renders the specified page to the given canvas.
@@ -919,7 +932,8 @@ PLUTOBOOK_API void plutobook_render_document_cairo(const plutobook_t* book, cair
  * @param width The width of the rectangle to render.
  * @param height The height of the rectangle to render.
  */
-PLUTOBOOK_API void plutobook_render_document_rect(const plutobook_t* book, plutobook_canvas_t* canvas, float x, float y, float width, float height);
+PLUTOBOOK_API void plutobook_render_document_rect(const plutobook_t* book, plutobook_canvas_t* canvas,
+    float x, float y, float width, float height);
 
 /**
  * @brief Renders a specific rectangular portion of the document to the given cairo context.
@@ -931,7 +945,8 @@ PLUTOBOOK_API void plutobook_render_document_rect(const plutobook_t* book, pluto
  * @param width The width of the rectangle to render.
  * @param height The height of the rectangle to render.
  */
-PLUTOBOOK_API void plutobook_render_document_rect_cairo(const plutobook_t* book, cairo_t* context, float x, float y, float width, float height);
+PLUTOBOOK_API void plutobook_render_document_rect_cairo(const plutobook_t* book, cairo_t* context,
+    float x, float y, float width, float height);
 
 /**
  * @brief Writes the entire document to a PDF file.
@@ -952,7 +967,8 @@ PLUTOBOOK_API bool plutobook_write_to_pdf(const plutobook_t* book, const char* f
  * @param page_step The increment used to advance through the pages in the range.
  * @return `true` on success, or `false` on failure.
  */
-PLUTOBOOK_API bool plutobook_write_to_pdf_range(const plutobook_t* book, const char* filename, unsigned int page_start, unsigned int page_end, int page_step);
+PLUTOBOOK_API bool plutobook_write_to_pdf_range(const plutobook_t* book, const char* filename,
+    unsigned int page_start, unsigned int page_end, int page_step);
 
 /**
  * @brief Writes the entire document to a PDF stream using a callback function.
@@ -975,7 +991,8 @@ PLUTOBOOK_API bool plutobook_write_to_pdf_stream(const plutobook_t* book, plutob
  * @param page_step The increment used to advance through the pages in the range.
  * @return `true` on success, or `false` on failure.
  */
-PLUTOBOOK_API bool plutobook_write_to_pdf_stream_range(const plutobook_t* book, plutobook_stream_write_callback_t callback, void* closure, unsigned int page_start, unsigned int page_end, int page_step);
+PLUTOBOOK_API bool plutobook_write_to_pdf_stream_range(const plutobook_t* book,
+    plutobook_stream_write_callback_t callback, void* closure, unsigned int page_start, unsigned int page_end, int page_step);
 
 /**
  * @brief Writes the entire document to a PNG image file.
@@ -998,7 +1015,8 @@ PLUTOBOOK_API bool plutobook_write_to_png(const plutobook_t* book, const char* f
  * @param height The desired height in pixels, or -1 to auto-scale based on the document size.
  * @return `true` on success, or `false` on failure.
  */
-PLUTOBOOK_API bool plutobook_write_to_png_stream(const plutobook_t* book, plutobook_stream_write_callback_t callback, void* closure, int width, int height);
+PLUTOBOOK_API bool plutobook_write_to_png_stream(const plutobook_t* book,
+    plutobook_stream_write_callback_t callback, void* closure, int width, int height);
 
 /**
  * @brief Sets a custom resource fetcher callback for the document.
@@ -1007,7 +1025,8 @@ PLUTOBOOK_API bool plutobook_write_to_png_stream(const plutobook_t* book, plutob
  * @param callback A function pointer to the custom resource fetch callback.
  * @param closure A pointer to user-defined data to pass to the callback function.
  */
-PLUTOBOOK_API void plutobook_set_custom_resource_fetcher(plutobook_t* book, plutobook_resource_fetch_callback_t callback, void* closure);
+PLUTOBOOK_API void plutobook_set_custom_resource_fetcher(plutobook_t* book,
+    plutobook_resource_fetch_callback_t callback, void* closure);
 
 /**
  * @brief Gets the custom resource fetcher callback set for the document.
