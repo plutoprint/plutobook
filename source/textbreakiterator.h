@@ -34,9 +34,8 @@ public:
     uint32_t nextBreakOpportunity(uint32_t pos) const { return nextBreakOpportunity(pos, m_text.length()); }
     uint32_t nextBreakOpportunity(uint32_t pos, uint32_t end) const;
     uint32_t previousBreakOpportunity(uint32_t offset, uint32_t start = 0) const;
-    bool isBreakable(uint32_t pos) const;
 
-    static bool isBreakableSpace(UChar cc) { return cc == kSpaceCharacter || cc == kTabulationCharacter || cc == kNewlineCharacter; }
+    bool isBreakable(uint32_t pos) const;
 
 private:
     const UString m_text;

@@ -720,12 +720,11 @@ RefPtr<SimpleFontData> FontDataCache::fontDataForFamily(const GlobalString& fami
 
 RefPtr<SimpleFontData> FontDataCache::fontDataForCharacters(const uint16_t* characters, int length, EmojiPolicy emojiPolicy, const FontDataDescription& description)
 {
-    auto charSet = FcCharSetCreate();
-
     int i = 0;
     uint32_t codepoint;
     U16_NEXT(characters, i, length, codepoint);
 
+    auto charSet = FcCharSetCreate();
     FcCharSetAddChar(charSet, codepoint);
     while(i < length) {
         U16_NEXT(characters, i, length, codepoint);
@@ -735,7 +734,6 @@ RefPtr<SimpleFontData> FontDataCache::fontDataForCharacters(const uint16_t* char
     }
 
     auto pattern = createFontPattern(description);
-
     FcPatternAddCharSet(pattern, FC_CHARSET, charSet);
     if(emojiPolicy == EmojiPolicy::RequireEmoji) {
         FcPatternAddBool(pattern, FC_COLOR, FcTrue);

@@ -109,6 +109,11 @@ inline bool needsLineBreakIterator(UChar ch)
     return ch > kAsciiLineBreakTableLastChar && ch != kNoBreakSpaceCharacter;
 }
 
+inline bool isBreakableSpace(UChar cc)
+{
+    return cc == kSpaceCharacter || cc == kTabulationCharacter || cc == kNewlineCharacter;
+}
+
 uint32_t LineBreakIterator::nextBreakOpportunity(uint32_t pos, uint32_t end) const
 {
     UChar lastLastCh = pos > 1 ? m_text[pos - 2] : 0;
