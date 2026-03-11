@@ -105,31 +105,36 @@ uint32_t TextShapeRun::offsetForPosition(float position, Direction direction) co
     return direction == Direction::Rtl ? 0 : m_length;
 }
 
-static EmojiPolicy resolveEmojiPolicy(FontVariantEmoji variantEmoji, uint32_t codepoint, const uint16_t* characters, int length)
+static EmojiPolicy resolveEmojiPolicy(FontVariantEmoji variantEmoji, const uint16_t* characters, int length)
 {
-    if(length > 1) {
-        const auto lastCharacter = characters[length - 1];
-        if(lastCharacter == kVariationSelector15Character)
+    int i = 0;
+    uint32_t baseCharacter;
+    U16_NEXT(characters, i, length, baseCharacter);
+
+    if(i < length) {
+        uint32_t nextCharacter;
+        U16_NEXT(characters, i, length, nextCharacter);
+        if(nextCharacter == kVariationSelector15Character)
             return EmojiPolicy::RequireText;
-        if(lastCharacter == kVariationSelector16Character) {
+        if(nextCharacter == kVariationSelector16Character) {
             return EmojiPolicy::RequireEmoji;
         }
     }
 
     switch(variantEmoji) {
     case FontVariantEmoji::Normal:
-        if(codepoint > 0xFF && u_hasBinaryProperty(codepoint, UCHAR_EMOJI_PRESENTATION))
+        if(baseCharacter > 0xFF && u_hasBinaryProperty(baseCharacter, UCHAR_EMOJI_PRESENTATION))
             return EmojiPolicy::RequireEmoji;
         break;
     case FontVariantEmoji::Text:
         return EmojiPolicy::RequireText;
     case FontVariantEmoji::Emoji:
-        if(u_hasBinaryProperty(codepoint, UCHAR_EMOJI))
+        if(u_hasBinaryProperty(baseCharacter, UCHAR_EMOJI))
             return EmojiPolicy::RequireEmoji;
         break;
     case FontVariantEmoji::Unicode:
-        if(u_hasBinaryProperty(codepoint, UCHAR_EMOJI)) {
-            if(u_hasBinaryProperty(codepoint, UCHAR_EMOJI_PRESENTATION))
+        if(u_hasBinaryProperty(baseCharacter, UCHAR_EMOJI)) {
+            if(u_hasBinaryProperty(baseCharacter, UCHAR_EMOJI_PRESENTATION))
                 return EmojiPolicy::RequireEmoji;
             return EmojiPolicy::RequireText;
         }
@@ -138,9 +143,9 @@ static EmojiPolicy resolveEmojiPolicy(FontVariantEmoji variantEmoji, uint32_t co
     return EmojiPolicy::NoPreference;
 }
 
-static const SimpleFontData* resolveFontData(const Font* font, uint32_t codepoint, const uint16_t* characters, int length, FontVariantEmoji variantEmoji)
+static const SimpleFontData* resolveFontData(const Font* font, const uint16_t* characters, int length, FontVariantEmoji variantEmoji)
 {
-    return font->fontDataForCharacters(characters, length, resolveEmojiPolicy(variantEmoji, codepoint, characters, length));
+    return font->fontDataForCharacters(characters, length, resolveEmojiPolicy(variantEmoji, characters, length));
 }
 
 constexpr int kMaxGlyphs = 1 << 16;
@@ -172,7 +177,7 @@ RefPtr<TextShape> TextShape::createForText(const UString& text, Direction direct
     CharacterBreakIterator iterator(text, font->locale());
     auto character = text.char32At(startIndex);
     auto nextIndex = iterator.nextBreakOpportunity(startIndex, totalLength);
-    auto nextFontData = resolveFontData(font, character, textBuffer + startIndex, nextIndex, fontVariantEmoji);
+    auto nextFontData = resolveFontData(font, textBuffer + startIndex, nextIndex, fontVariantEmoji);
 
     UErrorCode errorCode = U_ZERO_ERROR;
     auto nextScriptCode = uscript_getScript(character, &errorCode);
@@ -190,7 +195,7 @@ RefPtr<TextShape> TextShape::createForText(const UString& text, Direction direct
 
             const auto clusterLength = nextIndex - clusterOffset;
             if(!treatAsZeroWidthSpace(character)) {
-                nextFontData = resolveFontData(font, character, textBuffer + clusterOffset, clusterLength, fontVariantEmoji);
+                nextFontData = resolveFontData(font, textBuffer + clusterOffset, clusterLength, fontVariantEmoji);
                 nextScriptCode = uscript_getScript(character, &errorCode);
                 if(fontData != nextFontData || U_FAILURE(errorCode))
                     break;
