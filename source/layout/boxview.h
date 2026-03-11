@@ -20,6 +20,7 @@ public:
     BoxView(Document* document, const RefPtr<BoxStyle>& style);
 
     bool isBoxView() const final { return true; }
+    bool avoidsFloats() const final { return true; }
     bool requiresLayer() const final { return true; }
     BoxStyle* backgroundStyle() const { return m_backgroundStyle; }
     Rect backgroundRect() const;

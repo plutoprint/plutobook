@@ -568,7 +568,7 @@ BlockFlowBox::~BlockFlowBox() = default;
 bool BlockFlowBox::avoidsFloats() const
 {
     return isInline() || isFloating() || isPositioned() || isOverflowHidden()
-        || hasColumnFlowBox() || isRootBox() || isFlexItem();
+        || hasColumnFlowBox() || isRootBox() || isFlexItem() || isBodyBox();
 }
 
 void BlockFlowBox::addChild(Box* newChild)
