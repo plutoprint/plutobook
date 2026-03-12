@@ -998,7 +998,7 @@ void Document::serialize(std::ostream& o) const
 
 void Document::buildBox(Counters& counters, SelectorFilter& selectorFilter, Box* parent)
 {
-    auto rootStyle = BoxStyle::create(this, PseudoType::None, Display::Block);
+    auto rootStyle = BoxStyle::create(this, nullptr, PseudoType::None, Display::Block);
     rootStyle->setPosition(Position::Absolute);
     rootStyle->setFontDescription(FontDescription());
 

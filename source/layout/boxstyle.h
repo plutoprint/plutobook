@@ -13,6 +13,7 @@
 #include "heapstring.h"
 #include "color.h"
 
+#include <memory>
 #include <optional>
 #include <forward_list>
 #include <unordered_map>
@@ -686,7 +687,6 @@ struct FontDescription;
 
 class BoxStyle : public HeapMember, public RefCounted<BoxStyle> {
 public:
-    static RefPtr<BoxStyle> create(Node* node, PseudoType pseudoType, Display display);
     static RefPtr<BoxStyle> create(Node* node, const BoxStyle* parentStyle, PseudoType pseudoType, Display display);
     static RefPtr<BoxStyle> create(const BoxStyle* parentStyle, PseudoType pseudoType, Display display);
     static RefPtr<BoxStyle> create(const BoxStyle* parentStyle, Display display);
@@ -696,9 +696,10 @@ public:
     Book* book() const;
 
     Node* node() const { return m_node; }
+    const BoxStyle* parentStyle() const { return m_parentStyle; }
     PseudoType pseudoType() const { return m_pseudoType; }
     const CSSPropertyMap& properties() const { return m_properties; }
-    const CSSCustomPropertyMap& customProperties() const { return m_customProperties; }
+    const CSSCustomPropertyMap* customProperties() const { return m_customProperties.get(); }
 
     const RefPtr<Font>& font() const { return m_font; }
     void setFont(RefPtr<Font> font);
@@ -966,8 +967,6 @@ public:
     void set(CSSPropertyID id, RefPtr<CSSValue> value);
     void reset(CSSPropertyID id);
 
-    void inheritFrom(const BoxStyle* parentStyle);
-
     float exFontSize() const;
     float chFontSize() const;
     float remFontSize() const;
@@ -1041,10 +1040,11 @@ public:
     ~BoxStyle();
 
 private:
-    BoxStyle(Node* node, PseudoType pseudoType, Display display);
+    BoxStyle(Node* node, const BoxStyle* parentStyle, PseudoType pseudoType, Display display);
     Node* m_node;
+    const BoxStyle* m_parentStyle;
     CSSPropertyMap m_properties;
-    CSSCustomPropertyMap m_customProperties;
+    std::unique_ptr<CSSCustomPropertyMap> m_customProperties;
     RefPtr<Font> m_font;
     PseudoType m_pseudoType;
     Display m_display;

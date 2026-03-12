@@ -26,16 +26,9 @@ const Length Length::FitContent(Length::Type::FitContent);
 const Length Length::ZeroFixed(Length::Type::Fixed);
 const Length Length::ZeroPercent(Length::Type::Percent);
 
-RefPtr<BoxStyle> BoxStyle::create(Node* node, PseudoType pseudoType, Display display)
-{
-    return adoptPtr(new (node->heap()) BoxStyle(node, pseudoType, display));
-}
-
 RefPtr<BoxStyle> BoxStyle::create(Node* node, const BoxStyle* parentStyle, PseudoType pseudoType, Display display)
 {
-    auto newStyle = create(node, pseudoType, display);
-    newStyle->inheritFrom(parentStyle);
-    return newStyle;
+    return adoptPtr(new (node->heap()) BoxStyle(node, parentStyle, pseudoType, display));
 }
 
 RefPtr<BoxStyle> BoxStyle::create(const BoxStyle* parentStyle, PseudoType pseudoType, Display display)
@@ -1663,15 +1656,23 @@ const HeapString& BoxStyle::getQuote(bool open, size_t depth) const
 
 CSSVariableData* BoxStyle::getCustom(std::string_view name) const
 {
-    auto it = m_customProperties.find(name);
-    if(it == m_customProperties.end())
-        return nullptr;
-    return it->second.get();
+    for(auto style = this; style; style = style->parentStyle()) {
+        if(auto properties = style->customProperties()) {
+            auto it = properties->find(name);
+            if(it != properties->end()) {
+                return it->second.get();
+            }
+        }
+    }
+
+    return nullptr;
 }
 
 void BoxStyle::setCustom(const HeapString& name, RefPtr<CSSVariableData> value)
 {
-    m_customProperties.insert_or_assign(name, std::move(value));
+    if(m_customProperties == nullptr)
+        m_customProperties = std::make_unique<CSSCustomPropertyMap>(heap());
+    m_customProperties->insert_or_assign(name, std::move(value));
 }
 
 void BoxStyle::set(CSSPropertyID id, RefPtr<CSSValue> value)
@@ -1860,95 +1861,6 @@ void BoxStyle::reset(CSSPropertyID id)
     }
 
     m_properties.erase(id);
-}
-
-void BoxStyle::inheritFrom(const BoxStyle* parentStyle)
-{
-    m_font = parentStyle->font();
-    m_direction = parentStyle->direction();
-    m_visibility = parentStyle->visibility();
-    m_writingMode = parentStyle->writingMode();
-    m_textOrientation = parentStyle->textOrientation();
-    m_textAlign = parentStyle->textAlign();
-    m_whiteSpace = parentStyle->whiteSpace();
-    m_wordBreak = parentStyle->wordBreak();
-    m_overflowWrap = parentStyle->overflowWrap();
-    m_fillRule = parentStyle->fillRule();
-    m_clipRule = parentStyle->clipRule();
-    m_captionSide = parentStyle->captionSide();
-    m_emptyCells = parentStyle->emptyCells();
-    m_borderCollapse = parentStyle->borderCollapse();
-    m_color = parentStyle->color();
-    m_customProperties = parentStyle->customProperties();
-    for(const auto& [id, value] : parentStyle->properties()) {
-        switch(id) {
-        case CSSPropertyID::BorderCollapse:
-        case CSSPropertyID::CaptionSide:
-        case CSSPropertyID::ClipRule:
-        case CSSPropertyID::Color:
-        case CSSPropertyID::Direction:
-        case CSSPropertyID::DominantBaseline:
-        case CSSPropertyID::EmptyCells:
-        case CSSPropertyID::Fill:
-        case CSSPropertyID::FillOpacity:
-        case CSSPropertyID::FillRule:
-        case CSSPropertyID::FontFamily:
-        case CSSPropertyID::FontFeatureSettings:
-        case CSSPropertyID::FontKerning:
-        case CSSPropertyID::FontSize:
-        case CSSPropertyID::FontStretch:
-        case CSSPropertyID::FontStyle:
-        case CSSPropertyID::FontVariantCaps:
-        case CSSPropertyID::FontVariantEastAsian:
-        case CSSPropertyID::FontVariantEmoji:
-        case CSSPropertyID::FontVariantLigatures:
-        case CSSPropertyID::FontVariantNumeric:
-        case CSSPropertyID::FontVariantPosition:
-        case CSSPropertyID::FontVariationSettings:
-        case CSSPropertyID::FontWeight:
-        case CSSPropertyID::Hyphens:
-        case CSSPropertyID::Lang:
-        case CSSPropertyID::LetterSpacing:
-        case CSSPropertyID::LineHeight:
-        case CSSPropertyID::ListStyleImage:
-        case CSSPropertyID::ListStylePosition:
-        case CSSPropertyID::ListStyleType:
-        case CSSPropertyID::MarkerEnd:
-        case CSSPropertyID::MarkerMid:
-        case CSSPropertyID::MarkerStart:
-        case CSSPropertyID::Orphans:
-        case CSSPropertyID::OverflowWrap:
-        case CSSPropertyID::PaintOrder:
-        case CSSPropertyID::Quotes:
-        case CSSPropertyID::Stroke:
-        case CSSPropertyID::StrokeDasharray:
-        case CSSPropertyID::StrokeDashoffset:
-        case CSSPropertyID::StrokeLinecap:
-        case CSSPropertyID::StrokeLinejoin:
-        case CSSPropertyID::StrokeMiterlimit:
-        case CSSPropertyID::StrokeOpacity:
-        case CSSPropertyID::StrokeWidth:
-        case CSSPropertyID::TabSize:
-        case CSSPropertyID::TextAlign:
-        case CSSPropertyID::TextAnchor:
-        case CSSPropertyID::TextDecorationColor:
-        case CSSPropertyID::TextDecorationLine:
-        case CSSPropertyID::TextDecorationStyle:
-        case CSSPropertyID::TextIndent:
-        case CSSPropertyID::TextOrientation:
-        case CSSPropertyID::TextTransform:
-        case CSSPropertyID::Visibility:
-        case CSSPropertyID::WhiteSpace:
-        case CSSPropertyID::Widows:
-        case CSSPropertyID::WordBreak:
-        case CSSPropertyID::WordSpacing:
-        case CSSPropertyID::WritingMode:
-            m_properties.insert_or_assign(id, value);
-            break;
-        default:
-            break;
-        }
-    }
 }
 
 float BoxStyle::exFontSize() const
@@ -3232,11 +3144,96 @@ HeapString BoxStyle::convertLocalUrlOrNone(const CSSValue& value)
 
 BoxStyle::~BoxStyle() = default;
 
-BoxStyle::BoxStyle(Node* node, PseudoType pseudoType, Display display)
-    : m_node(node), m_properties(node->heap())
-    , m_customProperties(node->heap())
+BoxStyle::BoxStyle(Node* node, const BoxStyle* parentStyle, PseudoType pseudoType, Display display)
+    : m_node(node), m_parentStyle(parentStyle), m_properties(node->heap())
     , m_pseudoType(pseudoType), m_display(display)
 {
+    if(parentStyle) {
+        m_font = parentStyle->font();
+        m_direction = parentStyle->direction();
+        m_visibility = parentStyle->visibility();
+        m_writingMode = parentStyle->writingMode();
+        m_textOrientation = parentStyle->textOrientation();
+        m_textAlign = parentStyle->textAlign();
+        m_whiteSpace = parentStyle->whiteSpace();
+        m_wordBreak = parentStyle->wordBreak();
+        m_overflowWrap = parentStyle->overflowWrap();
+        m_fillRule = parentStyle->fillRule();
+        m_clipRule = parentStyle->clipRule();
+        m_captionSide = parentStyle->captionSide();
+        m_emptyCells = parentStyle->emptyCells();
+        m_borderCollapse = parentStyle->borderCollapse();
+        m_color = parentStyle->color();
+        for(const auto& [id, value] : parentStyle->properties()) {
+            switch(id) {
+            case CSSPropertyID::BorderCollapse:
+            case CSSPropertyID::CaptionSide:
+            case CSSPropertyID::ClipRule:
+            case CSSPropertyID::Color:
+            case CSSPropertyID::Direction:
+            case CSSPropertyID::DominantBaseline:
+            case CSSPropertyID::EmptyCells:
+            case CSSPropertyID::Fill:
+            case CSSPropertyID::FillOpacity:
+            case CSSPropertyID::FillRule:
+            case CSSPropertyID::FontFamily:
+            case CSSPropertyID::FontFeatureSettings:
+            case CSSPropertyID::FontKerning:
+            case CSSPropertyID::FontSize:
+            case CSSPropertyID::FontStretch:
+            case CSSPropertyID::FontStyle:
+            case CSSPropertyID::FontVariantCaps:
+            case CSSPropertyID::FontVariantEastAsian:
+            case CSSPropertyID::FontVariantEmoji:
+            case CSSPropertyID::FontVariantLigatures:
+            case CSSPropertyID::FontVariantNumeric:
+            case CSSPropertyID::FontVariantPosition:
+            case CSSPropertyID::FontVariationSettings:
+            case CSSPropertyID::FontWeight:
+            case CSSPropertyID::Hyphens:
+            case CSSPropertyID::Lang:
+            case CSSPropertyID::LetterSpacing:
+            case CSSPropertyID::LineHeight:
+            case CSSPropertyID::ListStyleImage:
+            case CSSPropertyID::ListStylePosition:
+            case CSSPropertyID::ListStyleType:
+            case CSSPropertyID::MarkerEnd:
+            case CSSPropertyID::MarkerMid:
+            case CSSPropertyID::MarkerStart:
+            case CSSPropertyID::Orphans:
+            case CSSPropertyID::OverflowWrap:
+            case CSSPropertyID::PaintOrder:
+            case CSSPropertyID::Quotes:
+            case CSSPropertyID::Stroke:
+            case CSSPropertyID::StrokeDasharray:
+            case CSSPropertyID::StrokeDashoffset:
+            case CSSPropertyID::StrokeLinecap:
+            case CSSPropertyID::StrokeLinejoin:
+            case CSSPropertyID::StrokeMiterlimit:
+            case CSSPropertyID::StrokeOpacity:
+            case CSSPropertyID::StrokeWidth:
+            case CSSPropertyID::TabSize:
+            case CSSPropertyID::TextAlign:
+            case CSSPropertyID::TextAnchor:
+            case CSSPropertyID::TextDecorationColor:
+            case CSSPropertyID::TextDecorationLine:
+            case CSSPropertyID::TextDecorationStyle:
+            case CSSPropertyID::TextIndent:
+            case CSSPropertyID::TextOrientation:
+            case CSSPropertyID::TextTransform:
+            case CSSPropertyID::Visibility:
+            case CSSPropertyID::WhiteSpace:
+            case CSSPropertyID::Widows:
+            case CSSPropertyID::WordBreak:
+            case CSSPropertyID::WordSpacing:
+            case CSSPropertyID::WritingMode:
+                m_properties.insert_or_assign(id, value);
+                break;
+            default:
+                break;
+            }
+        }
+    }
 }
 
 } // namespace plutobook
