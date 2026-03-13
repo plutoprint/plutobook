@@ -148,6 +148,15 @@ const LocaleData* BoxStyle::locale() const
     return m_font->locale();
 }
 
+float BoxStyle::lineHeightValue() const
+{
+    if(m_lineHeight.isAuto())
+        return fontLineSpacing();
+    if(m_lineHeight.isPercent())
+        return m_lineHeight.calcMin(fontSize());
+    return m_lineHeight.value();
+}
+
 Length BoxStyle::left() const
 {
     auto value = get(CSSPropertyID::Left);
@@ -844,19 +853,6 @@ float BoxStyle::wordSpacing() const
     return convertSpacing(*value);
 }
 
-float BoxStyle::lineHeight() const
-{
-    auto value = get(CSSPropertyID::LineHeight);
-    if(value == nullptr || value->id() == CSSValueID::Normal)
-        return fontLineSpacing();
-    if(auto percent = to<CSSPercentValue>(value))
-        return percent->value() * fontSize() / 100.f;
-    const auto& length = to<CSSLengthValue>(*value);
-    if(length.units() == CSSLengthUnits::None)
-        return length.value() * fontSize();
-    return convertLengthValue(length);
-}
-
 float BoxStyle::tabWidth(float spaceWidth) const
 {
     auto value = get(CSSPropertyID::TabSize);
@@ -1498,22 +1494,6 @@ BaselineShift BoxStyle::baselineShift() const
     return BaselineShift(BaselineShiftType::Length, convertLengthOrPercent(*value));
 }
 
-bool BoxStyle::isOriginalDisplayBlockType() const
-{
-    auto value = get(CSSPropertyID::Display);
-    if(value == nullptr)
-        return false;
-    return isDisplayBlockType(convertDisplay(*value));
-}
-
-bool BoxStyle::isOriginalDisplayInlineType() const
-{
-    auto value = get(CSSPropertyID::Display);
-    if(value == nullptr)
-        return true;
-    return isDisplayInlineType(convertDisplay(*value));
-}
-
 Point BoxStyle::getTransformOrigin(float width, float height) const
 {
     auto value = get(CSSPropertyID::TransformOrigin);
@@ -1610,12 +1590,6 @@ bool BoxStyle::hasContent() const
     return value && value->id() != CSSValueID::None;
 }
 
-bool BoxStyle::hasLineHeight() const
-{
-    auto value = get(CSSPropertyID::LineHeight);
-    return value && value->id() != CSSValueID::Normal;
-}
-
 bool BoxStyle::hasStroke() const
 {
     auto value = get(CSSPropertyID::Stroke);
@@ -1679,10 +1653,12 @@ void BoxStyle::set(CSSPropertyID id, RefPtr<CSSValue> value)
 {
     switch(id) {
     case CSSPropertyID::Display:
-        m_display = convertDisplay(*value);
+        m_display = m_originalDisplay = convertDisplay(*value);
         break;
     case CSSPropertyID::Position:
         m_position = convertPosition(*value);
+        if(m_position == Position::Running)
+            m_properties.insert_or_assign(id, std::move(value));
         break;
     case CSSPropertyID::Float:
         m_floating = convertFloat(*value);
@@ -1692,6 +1668,11 @@ void BoxStyle::set(CSSPropertyID id, RefPtr<CSSValue> value)
         break;
     case CSSPropertyID::VerticalAlign:
         m_verticalAlignType = convertVerticalAlignType(*value);
+        if(m_verticalAlignType == VerticalAlignType::Length)
+            m_properties.insert_or_assign(id, std::move(value));
+        break;
+    case CSSPropertyID::LineHeight:
+        m_lineHeight = convertLineHeight(*value);
         break;
     case CSSPropertyID::Direction:
         m_direction = convertDirection(*value);
@@ -1763,17 +1744,16 @@ void BoxStyle::set(CSSPropertyID id, RefPtr<CSSValue> value)
         m_color = convertColor(*value);
         break;
     default:
+        m_properties.insert_or_assign(id, std::move(value));
         break;
     }
-
-    m_properties.insert_or_assign(id, std::move(value));
 }
 
 void BoxStyle::reset(CSSPropertyID id)
 {
     switch(id) {
     case CSSPropertyID::Display:
-        m_display = Display::Inline;
+        m_display = m_originalDisplay = Display::Inline;
         break;
     case CSSPropertyID::Position:
         m_position = Position::Static;
@@ -1786,6 +1766,9 @@ void BoxStyle::reset(CSSPropertyID id)
         break;
     case CSSPropertyID::VerticalAlign:
         m_verticalAlignType = VerticalAlignType::Baseline;
+        break;
+    case CSSPropertyID::LineHeight:
+        m_lineHeight = Length::Auto;
         break;
     case CSSPropertyID::Direction:
         m_direction = Direction::Ltr;
@@ -1841,7 +1824,7 @@ void BoxStyle::reset(CSSPropertyID id)
     case CSSPropertyID::BreakAfter:
     case CSSPropertyID::ColumnBreakAfter:
     case CSSPropertyID::PageBreakAfter:
-        m_breakBefore = BreakBetween::Auto;
+        m_breakAfter = BreakBetween::Auto;
         break;
     case CSSPropertyID::BreakBefore:
     case CSSPropertyID::ColumnBreakBefore:
@@ -1861,6 +1844,103 @@ void BoxStyle::reset(CSSPropertyID id)
     }
 
     m_properties.erase(id);
+}
+
+void BoxStyle::inherit(CSSPropertyID id)
+{
+    if(auto value = m_parentStyle->get(id))
+        m_properties.insert_or_assign(id, value);
+    switch(id) {
+    case CSSPropertyID::Display:
+        m_display = m_originalDisplay = m_parentStyle->display();
+        break;
+    case CSSPropertyID::Position:
+        m_position = m_parentStyle->position();
+        break;
+    case CSSPropertyID::Float:
+        m_floating = m_parentStyle->floating();
+        break;
+    case CSSPropertyID::Clear:
+        m_clear = m_parentStyle->clear();
+        break;
+    case CSSPropertyID::VerticalAlign:
+        m_verticalAlignType = m_parentStyle->verticalAlignType();
+        break;
+    case CSSPropertyID::LineHeight:
+        m_lineHeight = m_parentStyle->lineHeight();
+        break;
+    case CSSPropertyID::Direction:
+        m_direction = m_parentStyle->direction();
+        break;
+    case CSSPropertyID::UnicodeBidi:
+        m_unicodeBidi = m_parentStyle->unicodeBidi();
+        break;
+    case CSSPropertyID::Visibility:
+        m_visibility = m_parentStyle->visibility();
+        break;
+    case CSSPropertyID::BoxSizing:
+        m_boxSizing = m_parentStyle->boxSizing();
+        break;
+    case CSSPropertyID::MixBlendMode:
+        m_blendMode = m_parentStyle->blendMode();
+        break;
+    case CSSPropertyID::MaskType:
+        m_maskType = m_parentStyle->maskType();
+        break;
+    case CSSPropertyID::WritingMode:
+        m_writingMode = m_parentStyle->writingMode();
+        break;
+    case CSSPropertyID::TextOrientation:
+        m_textOrientation = m_parentStyle->textOrientation();
+        break;
+    case CSSPropertyID::TextAlign:
+        m_textAlign = m_parentStyle->textAlign();
+        break;
+    case CSSPropertyID::WhiteSpace:
+        m_whiteSpace = m_parentStyle->whiteSpace();
+        break;
+    case CSSPropertyID::WordBreak:
+        m_wordBreak = m_parentStyle->wordBreak();
+        break;
+    case CSSPropertyID::OverflowWrap:
+        m_overflowWrap = m_parentStyle->overflowWrap();
+        break;
+    case CSSPropertyID::FillRule:
+        m_fillRule = m_parentStyle->fillRule();
+        break;
+    case CSSPropertyID::ClipRule:
+        m_clipRule = m_parentStyle->clipRule();
+        break;
+    case CSSPropertyID::CaptionSide:
+        m_captionSide = m_parentStyle->captionSide();
+        break;
+    case CSSPropertyID::EmptyCells:
+        m_emptyCells = m_parentStyle->emptyCells();
+        break;
+    case CSSPropertyID::BorderCollapse:
+        m_borderCollapse = m_parentStyle->borderCollapse();
+        break;
+    case CSSPropertyID::BreakAfter:
+    case CSSPropertyID::ColumnBreakAfter:
+    case CSSPropertyID::PageBreakAfter:
+        m_breakAfter = m_parentStyle->breakAfter();
+        break;
+    case CSSPropertyID::BreakBefore:
+    case CSSPropertyID::ColumnBreakBefore:
+    case CSSPropertyID::PageBreakBefore:
+        m_breakBefore = m_parentStyle->breakBefore();
+        break;
+    case CSSPropertyID::BreakInside:
+    case CSSPropertyID::ColumnBreakInside:
+    case CSSPropertyID::PageBreakInside:
+        m_breakInside = m_parentStyle->breakInside();
+        break;
+    case CSSPropertyID::Color:
+        m_color = m_parentStyle->color();
+        break;
+    default:
+        break;
+    }
 }
 
 float BoxStyle::exFontSize() const
@@ -2393,6 +2473,25 @@ Length BoxStyle::convertWidthOrHeightLength(const CSSValue& value) const
     }
 
     return convertLengthOrPercent(value);
+}
+
+Length BoxStyle::convertLineHeight(const CSSValue& value) const
+{
+    if(is<CSSIdentValue>(value)) {
+        const auto& ident = to<CSSIdentValue>(value);
+        assert(ident.value() == CSSValueID::Normal);
+        return Length::Auto;
+    }
+
+    if(is<CSSPercentValue>(value)) {
+        const auto& percent = to<CSSPercentValue>(value);
+        return Length(Length::Type::Fixed, percent.value() * fontSize() / 100.f);
+    }
+
+    const auto& length = to<CSSLengthValue>(value);
+    if(length.units() == CSSLengthUnits::None)
+        return Length(Length::Type::Percent, length.value() * 100.f);
+    return Length(Length::Type::Fixed, convertLengthValue(length));
 }
 
 Length BoxStyle::convertPositionComponent(CSSValueID min, CSSValueID max, const CSSValue& value) const
@@ -3164,6 +3263,7 @@ BoxStyle::BoxStyle(Node* node, const BoxStyle* parentStyle, PseudoType pseudoTyp
         m_emptyCells = parentStyle->emptyCells();
         m_borderCollapse = parentStyle->borderCollapse();
         m_color = parentStyle->color();
+        m_lineHeight =  parentStyle->lineHeight();
         for(const auto& [id, value] : parentStyle->properties()) {
             switch(id) {
             case CSSPropertyID::BorderCollapse:

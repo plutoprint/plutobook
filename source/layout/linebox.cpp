@@ -92,7 +92,7 @@ float LineBox::verticalAlignPosition() const
         verticalPosition -= lineHeight() / 2.f;
         verticalPosition += baselinePosition();
     } else if(verticalAlign.type() == VerticalAlignType::Length) {
-        verticalPosition -= verticalAlign.length().calc(style()->lineHeight());
+        verticalPosition -= verticalAlign.length().calc(style()->lineHeightValue());
     }
 
     return verticalPosition;
@@ -284,7 +284,7 @@ std::unique_ptr<FlowLineBox> FlowLineBox::create(BoxModel* box)
 
 float FlowLineBox::lineHeight() const
 {
-    return box()->style()->lineHeight();
+    return box()->style()->lineHeightValue();
 }
 
 float FlowLineBox::baselinePosition() const

@@ -438,12 +438,13 @@ void StyleBuilder::buildStyle(BoxStyle* newStyle)
             continue;
         }
 
-        if(is<CSSInheritValue>(*value) && !(value = m_parentStyle->get(id)))
-            continue;
-        if(is<CSSCalcValue>(*value) && !(value = newStyle->resolveCalc(value))) {
+        if(is<CSSInheritValue>(*value)) {
+            newStyle->inherit(id);
             continue;
         }
 
+        if(is<CSSCalcValue>(*value) && !(value = newStyle->resolveCalc(value)))
+            continue;
         if(is<CSSLengthValue>(*value))
             value = newStyle->resolveLength(value);
         newStyle->set(id, std::move(value));

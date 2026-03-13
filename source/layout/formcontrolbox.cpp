@@ -38,7 +38,7 @@ void TextInputBox::computeIntrinsicWidths(float& minWidth, float& maxWidth) cons
 
 void TextInputBox::computeHeight(float& y, float& height, float& marginTop, float& marginBottom) const
 {
-    height = m_rows * style()->lineHeight() + borderAndPaddingHeight();
+    height = m_rows * style()->lineHeightValue() + borderAndPaddingHeight();
     BlockFlowBox::computeHeight(y, height, marginTop, marginBottom);
 }
 

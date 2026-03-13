@@ -733,6 +733,7 @@ public:
     void setVerticalAlignType(VerticalAlignType verticalAlignType) { m_verticalAlignType = verticalAlignType; }
 
     Display display() const { return m_display; }
+    Display originalDisplay() const { return m_originalDisplay; }
     Position position() const { return m_position; }
     Float floating() const { return m_floating; }
     Clear clear() const { return m_clear; }
@@ -741,6 +742,9 @@ public:
     UnicodeBidi unicodeBidi() const { return m_unicodeBidi; }
     Visibility visibility() const { return m_visibility; }
     const Color& color() const { return m_color; }
+    const Length& lineHeight() const { return m_lineHeight; }
+
+    float lineHeightValue() const;
 
     Length left() const;
     Length right() const;
@@ -827,7 +831,6 @@ public:
     Length textIndent() const;
     float letterSpacing() const;
     float wordSpacing() const;
-    float lineHeight() const;
 
     float tabWidth(float spaceWidth) const;
 
@@ -914,11 +917,12 @@ public:
     static bool isDisplayBlockType(Display display);
     static bool isDisplayInlineType(Display display);
 
-    bool isOriginalDisplayBlockType() const;
-    bool isOriginalDisplayInlineType() const;
+    bool isOriginalDisplayBlockType() const { return isDisplayBlockType(m_originalDisplay); }
+    bool isOriginalDisplayInlineType() const { return isDisplayInlineType(m_originalDisplay); }
 
     bool isDisplayBlockType() const { return isDisplayBlockType(m_display); }
     bool isDisplayInlineType() const { return isDisplayInlineType(m_display); }
+
     bool isDisplayFlex() const { return m_display == Display::Flex || m_display == Display::InlineFlex; }
 
     bool isFloating() const { return m_floating == Float::Left || m_floating == Float::Right; }
@@ -950,13 +954,13 @@ public:
 
     bool hasTransform() const;
     bool hasContent() const;
-    bool hasLineHeight() const;
     bool hasStroke() const;
     bool hasBackground() const;
     bool hasColumns() const;
 
     bool hasOpacity() const { return opacity() < 1.0f; }
     bool hasBlendMode() const { return m_blendMode > BlendMode::Normal; }
+    bool hasLineHeight() const { return !m_lineHeight.isAuto(); }
 
     const HeapString& getQuote(bool open, size_t depth) const;
 
@@ -965,7 +969,9 @@ public:
 
     CSSValue* get(CSSPropertyID id) const;
     void set(CSSPropertyID id, RefPtr<CSSValue> value);
+
     void reset(CSSPropertyID id);
+    void inherit(CSSPropertyID id);
 
     float exFontSize() const;
     float chFontSize() const;
@@ -992,6 +998,7 @@ public:
     Length convertLengthOrPercentOrAuto(const CSSValue& value) const;
     Length convertLengthOrPercentOrNone(const CSSValue& value) const;
     Length convertWidthOrHeightLength(const CSSValue& value) const;
+    Length convertLineHeight(const CSSValue& value) const;
     Length convertPositionComponent(CSSValueID min, CSSValueID max, const CSSValue& value) const;
     LengthPoint convertPositionCoordinate(const CSSValue& value) const;
     LengthSize convertBorderRadius(const CSSValue& value) const;
@@ -1048,6 +1055,7 @@ private:
     RefPtr<Font> m_font;
     PseudoType m_pseudoType;
     Display m_display;
+    Display m_originalDisplay{Display::Inline};
     Position m_position{Position::Static};
     Float m_floating{Float::None};
     Clear m_clear{Clear::None};
@@ -1073,6 +1081,7 @@ private:
     BreakBetween m_breakBefore{BreakBetween::Auto};
     BreakInside m_breakInside{BreakInside::Auto};
     Color m_color{Color::Black};
+    Length m_lineHeight{Length::Auto};
 };
 
 inline bool BoxStyle::isDisplayBlockType(Display display)
