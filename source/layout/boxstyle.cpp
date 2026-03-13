@@ -1651,102 +1651,106 @@ void BoxStyle::setCustom(const HeapString& name, RefPtr<CSSVariableData> value)
 
 void BoxStyle::set(CSSPropertyID id, RefPtr<CSSValue> value)
 {
+    if(apply(id, *value)) {
+        m_properties.insert_or_assign(id, std::move(value));
+    }
+}
+
+bool BoxStyle::apply(CSSPropertyID id, const CSSValue& value)
+{
     switch(id) {
     case CSSPropertyID::Display:
-        m_display = m_originalDisplay = convertDisplay(*value);
+        m_display = m_originalDisplay = convertDisplay(value);
         break;
     case CSSPropertyID::Position:
-        m_position = convertPosition(*value);
-        if(m_position == Position::Running)
-            m_properties.insert_or_assign(id, std::move(value));
-        break;
+        m_position = convertPosition(value);
+        return m_position == Position::Running;
     case CSSPropertyID::Float:
-        m_floating = convertFloat(*value);
+        m_floating = convertFloat(value);
         break;
     case CSSPropertyID::Clear:
-        m_clear = convertClear(*value);
+        m_clear = convertClear(value);
         break;
     case CSSPropertyID::VerticalAlign:
-        m_verticalAlignType = convertVerticalAlignType(*value);
-        if(m_verticalAlignType == VerticalAlignType::Length)
-            m_properties.insert_or_assign(id, std::move(value));
-        break;
+        m_verticalAlignType = convertVerticalAlignType(value);
+        return m_verticalAlignType == VerticalAlignType::Length;
     case CSSPropertyID::LineHeight:
-        m_lineHeight = convertLineHeight(*value);
+        m_lineHeight = convertLineHeight(value);
         break;
     case CSSPropertyID::Direction:
-        m_direction = convertDirection(*value);
+        m_direction = convertDirection(value);
         break;
     case CSSPropertyID::UnicodeBidi:
-        m_unicodeBidi = convertUnicodeBidi(*value);
+        m_unicodeBidi = convertUnicodeBidi(value);
         break;
     case CSSPropertyID::Visibility:
-        m_visibility = convertVisibility(*value);
+        m_visibility = convertVisibility(value);
         break;
     case CSSPropertyID::BoxSizing:
-        m_boxSizing = convertBoxSizing(*value);
+        m_boxSizing = convertBoxSizing(value);
         break;
     case CSSPropertyID::MixBlendMode:
-        m_blendMode = convertBlendMode(*value);
+        m_blendMode = convertBlendMode(value);
         break;
     case CSSPropertyID::MaskType:
-        m_maskType = convertMaskType(*value);
+        m_maskType = convertMaskType(value);
         break;
     case CSSPropertyID::WritingMode:
-        m_writingMode = convertWritingMode(*value);
+        m_writingMode = convertWritingMode(value);
         break;
     case CSSPropertyID::TextOrientation:
-        m_textOrientation = convertTextOrientation(*value);
+        m_textOrientation = convertTextOrientation(value);
         break;
     case CSSPropertyID::TextAlign:
-        m_textAlign = convertTextAlign(*value);
+        m_textAlign = convertTextAlign(value);
         break;
     case CSSPropertyID::WhiteSpace:
-        m_whiteSpace = convertWhiteSpace(*value);
+        m_whiteSpace = convertWhiteSpace(value);
         break;
     case CSSPropertyID::WordBreak:
-        m_wordBreak = convertWordBreak(*value);
+        m_wordBreak = convertWordBreak(value);
         break;
     case CSSPropertyID::OverflowWrap:
-        m_overflowWrap = convertOverflowWrap(*value);
+        m_overflowWrap = convertOverflowWrap(value);
         break;
     case CSSPropertyID::FillRule:
-        m_fillRule = convertFillRule(*value);
+        m_fillRule = convertFillRule(value);
         break;
     case CSSPropertyID::ClipRule:
-        m_clipRule = convertFillRule(*value);
+        m_clipRule = convertFillRule(value);
         break;
     case CSSPropertyID::CaptionSide:
-        m_captionSide = convertCaptionSide(*value);
+        m_captionSide = convertCaptionSide(value);
         break;
     case CSSPropertyID::EmptyCells:
-        m_emptyCells = convertEmptyCells(*value);
+        m_emptyCells = convertEmptyCells(value);
         break;
     case CSSPropertyID::BorderCollapse:
-        m_borderCollapse = convertBorderCollapse(*value);
+        m_borderCollapse = convertBorderCollapse(value);
         break;
     case CSSPropertyID::BreakAfter:
     case CSSPropertyID::ColumnBreakAfter:
     case CSSPropertyID::PageBreakAfter:
-        m_breakAfter = convertBreakBetween(*value);
+        m_breakAfter = convertBreakBetween(value);
         break;
     case CSSPropertyID::BreakBefore:
     case CSSPropertyID::ColumnBreakBefore:
     case CSSPropertyID::PageBreakBefore:
-        m_breakBefore = convertBreakBetween(*value);
+        m_breakBefore = convertBreakBetween(value);
         break;
     case CSSPropertyID::BreakInside:
     case CSSPropertyID::ColumnBreakInside:
     case CSSPropertyID::PageBreakInside:
-        m_breakInside = convertBreakInside(*value);
+        m_breakInside = convertBreakInside(value);
         break;
     case CSSPropertyID::Color:
-        m_color = convertColor(*value);
+        m_color = convertColor(value);
         break;
     default:
-        m_properties.insert_or_assign(id, std::move(value));
-        break;
+        return true;
     }
+
+    return false;
 }
 
 void BoxStyle::reset(CSSPropertyID id)
