@@ -301,38 +301,6 @@ Length BoxStyle::paddingBottom() const
     return convertLengthOrPercent(*value);
 }
 
-LineStyle BoxStyle::borderLeftStyle() const
-{
-    auto value = get(CSSPropertyID::BorderLeftStyle);
-    if(value == nullptr)
-        return LineStyle::None;
-    return convertLineStyle(*value);
-}
-
-LineStyle BoxStyle::borderRightStyle() const
-{
-    auto value = get(CSSPropertyID::BorderRightStyle);
-    if(value == nullptr)
-        return LineStyle::None;
-    return convertLineStyle(*value);
-}
-
-LineStyle BoxStyle::borderTopStyle() const
-{
-    auto value = get(CSSPropertyID::BorderTopStyle);
-    if(value == nullptr)
-        return LineStyle::None;
-    return convertLineStyle(*value);
-}
-
-LineStyle BoxStyle::borderBottomStyle() const
-{
-    auto value = get(CSSPropertyID::BorderBottomStyle);
-    if(value == nullptr)
-        return LineStyle::None;
-    return convertLineStyle(*value);
-}
-
 Color BoxStyle::borderLeftColor() const
 {
     auto value = get(CSSPropertyID::BorderLeftColor);
@@ -463,24 +431,6 @@ RoundedRect BoxStyle::getBorderRoundedRect(const Rect& borderRect, bool includeL
     return RoundedRect(borderRect, borderRadii);
 }
 
-ListStylePosition BoxStyle::listStylePosition() const
-{
-    auto value = get(CSSPropertyID::ListStylePosition);
-    if(value == nullptr)
-        return ListStylePosition::Outside;
-    const auto& ident = to<CSSIdentValue>(*value);
-    switch(ident.value()) {
-    case CSSValueID::Inside:
-        return ListStylePosition::Inside;
-    case CSSValueID::Outside:
-        return ListStylePosition::Outside;
-    default:
-        assert(false);
-    }
-
-    return ListStylePosition::Outside;
-}
-
 RefPtr<Image> BoxStyle::listStyleImage() const
 {
     auto value = get(CSSPropertyID::ListStyleImage);
@@ -503,64 +453,6 @@ Color BoxStyle::backgroundColor() const
     if(value == nullptr)
         return Color::Transparent;
     return convertColor(*value);
-}
-
-BackgroundRepeat BoxStyle::backgroundRepeat() const
-{
-    auto value = get(CSSPropertyID::BackgroundRepeat);
-    if(value == nullptr)
-        return BackgroundRepeat::Repeat;
-    const auto& ident = to<CSSIdentValue>(*value);
-    switch(ident.value()) {
-    case CSSValueID::Repeat:
-        return BackgroundRepeat::Repeat;
-    case CSSValueID::RepeatX:
-        return BackgroundRepeat::RepeatX;
-    case CSSValueID::RepeatY:
-        return BackgroundRepeat::RepeatY;
-    case CSSValueID::NoRepeat:
-        return BackgroundRepeat::NoRepeat;
-    default:
-        assert(false);
-    }
-
-    return BackgroundRepeat::Repeat;
-}
-
-BackgroundBox BoxStyle::backgroundOrigin() const
-{
-    auto value = get(CSSPropertyID::BackgroundOrigin);
-    if(value == nullptr)
-        return BackgroundBox::PaddingBox;
-    return convertBackgroundBox(*value);
-}
-
-BackgroundBox BoxStyle::backgroundClip() const
-{
-    auto value = get(CSSPropertyID::BackgroundClip);
-    if(value == nullptr)
-        return BackgroundBox::BorderBox;
-    return convertBackgroundBox(*value);
-}
-
-BackgroundAttachment BoxStyle::backgroundAttachment() const
-{
-    auto value = get(CSSPropertyID::BackgroundAttachment);
-    if(value == nullptr)
-        return BackgroundAttachment::Scroll;
-    const auto& ident = to<CSSIdentValue>(*value);
-    switch(ident.value()) {
-    case CSSValueID::Scroll:
-        return BackgroundAttachment::Scroll;
-    case CSSValueID::Fixed:
-        return BackgroundAttachment::Fixed;
-    case CSSValueID::Local:
-        return BackgroundAttachment::Local;
-    default:
-        assert(false);
-    }
-
-    return BackgroundAttachment::Scroll;
 }
 
 BackgroundSize BoxStyle::backgroundSize() const
@@ -593,54 +485,12 @@ LengthPoint BoxStyle::backgroundPosition() const
     return convertPositionCoordinate(*value);
 }
 
-ObjectFit BoxStyle::objectFit() const
-{
-    auto value = get(CSSPropertyID::ObjectFit);
-    if(value == nullptr)
-        return ObjectFit::Fill;
-    const auto& ident = to<CSSIdentValue>(*value);
-    switch(ident.value()) {
-    case CSSValueID::Fill:
-        return ObjectFit::Fill;
-    case CSSValueID::Contain:
-        return ObjectFit::Contain;
-    case CSSValueID::Cover:
-        return ObjectFit::Cover;
-    case CSSValueID::None:
-        return ObjectFit::None;
-    case CSSValueID::ScaleDown:
-        return ObjectFit::ScaleDown;
-    default:
-        assert(false);
-    }
-
-    return ObjectFit::Fill;
-}
-
 LengthPoint BoxStyle::objectPosition() const
 {
     auto value = get(CSSPropertyID::ObjectPosition);
     if(value == nullptr)
         return LengthPoint(Length(Length::Type::Percent, 50.f));
     return convertPositionCoordinate(*value);
-}
-
-TableLayout BoxStyle::tableLayout() const
-{
-    auto value = get(CSSPropertyID::TableLayout);
-    if(value == nullptr)
-        return TableLayout::Auto;
-    const auto& ident = to<CSSIdentValue>(*value);
-    switch(ident.value()) {
-    case CSSValueID::Auto:
-        return TableLayout::Auto;
-    case CSSValueID::Fixed:
-        return TableLayout::Fixed;
-    default:
-        assert(false);
-    }
-
-    return TableLayout::Auto;
 }
 
 float BoxStyle::borderHorizontalSpacing() const
@@ -657,66 +507,6 @@ float BoxStyle::borderVerticalSpacing() const
     if(value == nullptr)
         return 0.0;
     return convertLengthValue(*value);
-}
-
-TextAnchor BoxStyle::textAnchor() const
-{
-    auto value = get(CSSPropertyID::TextAnchor);
-    if(value == nullptr)
-        return TextAnchor::Start;
-    const auto& ident = to<CSSIdentValue>(*value);
-    switch(ident.value()) {
-    case CSSValueID::Start:
-        return TextAnchor::Start;
-    case CSSValueID::Middle:
-        return TextAnchor::Middle;
-    case CSSValueID::End:
-        return TextAnchor::End;
-    default:
-        assert(false);
-    }
-
-    return TextAnchor::Start;
-}
-
-TextTransform BoxStyle::textTransform() const
-{
-    auto value = get(CSSPropertyID::TextTransform);
-    if(value == nullptr)
-        return TextTransform::None;
-    const auto& ident = to<CSSIdentValue>(*value);
-    switch(ident.value()) {
-    case CSSValueID::None:
-        return TextTransform::None;
-    case CSSValueID::Capitalize:
-        return TextTransform::Capitalize;
-    case CSSValueID::Uppercase:
-        return TextTransform::Uppercase;
-    case CSSValueID::Lowercase:
-        return TextTransform::Lowercase;
-    default:
-        assert(false);
-    }
-
-    return TextTransform::None;
-}
-
-TextOverflow BoxStyle::textOverflow() const
-{
-    auto value = get(CSSPropertyID::TextOverflow);
-    if(value == nullptr)
-        return TextOverflow::Clip;
-    const auto& ident = to<CSSIdentValue>(*value);
-    switch(ident.value()) {
-    case CSSValueID::Clip:
-        return TextOverflow::Clip;
-    case CSSValueID::Ellipsis:
-        return TextOverflow::Ellipsis;
-    default:
-        assert(false);
-    }
-
-    return TextOverflow::Clip;
 }
 
 constexpr TextDecorationLine operator|(TextDecorationLine a, TextDecorationLine b)
@@ -787,48 +577,6 @@ Color BoxStyle::textDecorationColor() const
     return convertColor(*value);
 }
 
-FontVariantEmoji BoxStyle::fontVariantEmoji() const
-{
-    auto value = get(CSSPropertyID::FontVariantEmoji);
-    if(value == nullptr)
-        return FontVariantEmoji::Normal;
-    const auto& ident = to<CSSIdentValue>(*value);
-    switch(ident.value()) {
-    case CSSValueID::Normal:
-        return FontVariantEmoji::Normal;
-    case CSSValueID::Unicode:
-        return FontVariantEmoji::Unicode;
-    case CSSValueID::Emoji:
-        return FontVariantEmoji::Emoji;
-    case CSSValueID::Text:
-        return FontVariantEmoji::Text;
-    default:
-        assert(false);
-    }
-
-    return FontVariantEmoji::Normal;
-}
-
-Hyphens BoxStyle::hyphens() const
-{
-    auto value = get(CSSPropertyID::Hyphens);
-    if(value == nullptr)
-        return Hyphens::Manual;
-    const auto& ident = to<CSSIdentValue>(*value);
-    switch(ident.value()) {
-    case CSSValueID::None:
-        return Hyphens::None;
-    case CSSValueID::Auto:
-        return Hyphens::Auto;
-    case CSSValueID::Manual:
-        return Hyphens::Manual;
-    default:
-        assert(false);
-    }
-
-    return Hyphens::Manual;
-}
-
 Length BoxStyle::textIndent() const
 {
     auto value = get(CSSPropertyID::TextIndent);
@@ -862,32 +610,6 @@ float BoxStyle::tabWidth(float spaceWidth) const
     if(length.units() == CSSLengthUnits::None)
         return spaceWidth * length.value();
     return convertLengthValue(length);
-}
-
-Overflow BoxStyle::overflow() const
-{
-    auto value = get(CSSPropertyID::Overflow);
-    if(value == nullptr) {
-        if(m_node->isSVGElement())
-            return Overflow::Hidden;
-        return Overflow::Visible;
-    }
-
-    const auto& ident = to<CSSIdentValue>(*value);
-    switch(ident.value()) {
-    case CSSValueID::Auto:
-        return Overflow::Auto;
-    case CSSValueID::Visible:
-        return Overflow::Visible;
-    case CSSValueID::Hidden:
-        return Overflow::Hidden;
-    case CSSValueID::Scroll:
-        return Overflow::Scroll;
-    default:
-        assert(false);
-    }
-
-    return Overflow::Visible;
 }
 
 std::optional<int> BoxStyle::zIndex() const
@@ -951,80 +673,6 @@ int BoxStyle::order() const
     return convertInteger(*value);
 }
 
-FlexDirection BoxStyle::flexDirection() const
-{
-    auto value = get(CSSPropertyID::FlexDirection);
-    if(value == nullptr)
-        return FlexDirection::Row;
-    const auto& ident = to<CSSIdentValue>(*value);
-    switch(ident.value()) {
-    case CSSValueID::Row:
-        return FlexDirection::Row;
-    case CSSValueID::RowReverse:
-        return FlexDirection::RowReverse;
-    case CSSValueID::Column:
-        return FlexDirection::Column;
-    case CSSValueID::ColumnReverse:
-        return FlexDirection::ColumnReverse;
-    default:
-        assert(false);
-    }
-
-    return FlexDirection::Row;
-}
-
-FlexWrap BoxStyle::flexWrap() const
-{
-    auto value = get(CSSPropertyID::FlexWrap);
-    if(value == nullptr)
-        return FlexWrap::Nowrap;
-    const auto& ident = to<CSSIdentValue>(*value);
-    switch(ident.value()) {
-    case CSSValueID::Nowrap:
-        return FlexWrap::Nowrap;
-    case CSSValueID::Wrap:
-        return FlexWrap::Wrap;
-    case CSSValueID::WrapReverse:
-        return FlexWrap::WrapReverse;
-    default:
-        assert(false);
-    }
-
-    return FlexWrap::Nowrap;
-}
-
-AlignContent BoxStyle::justifyContent() const
-{
-    auto value = get(CSSPropertyID::JustifyContent);
-    if(value == nullptr)
-        return AlignContent::FlexStart;
-    return convertAlignContent(*value);
-}
-
-AlignContent BoxStyle::alignContent() const
-{
-    auto value = get(CSSPropertyID::AlignContent);
-    if(value == nullptr)
-        return AlignContent::Stretch;
-    return convertAlignContent(*value);
-}
-
-AlignItem BoxStyle::alignItems() const
-{
-    auto value = get(CSSPropertyID::AlignItems);
-    if(value == nullptr)
-        return AlignItem::Stretch;
-    return convertAlignItem(*value);
-}
-
-AlignItem BoxStyle::alignSelf() const
-{
-    auto value = get(CSSPropertyID::AlignSelf);
-    if(value == nullptr)
-        return AlignItem::Auto;
-    return convertAlignItem(*value);
-}
-
 float BoxStyle::outlineOffset() const
 {
     auto value = get(CSSPropertyID::OutlineOffset);
@@ -1047,14 +695,6 @@ float BoxStyle::outlineWidth() const
     if(value == nullptr)
         return 3.0;
     return convertLineWidth(*value);
-}
-
-LineStyle BoxStyle::outlineStyle() const
-{
-    auto value = get(CSSPropertyID::OutlineStyle);
-    if(value == nullptr)
-        return LineStyle::None;
-    return convertLineStyle(*value);
 }
 
 BorderEdge BoxStyle::getOutlineEdge() const
@@ -1086,56 +726,12 @@ Color BoxStyle::columnRuleColor() const
     return convertColor(*value);
 }
 
-LineStyle BoxStyle::columnRuleStyle() const
-{
-    auto value = get(CSSPropertyID::ColumnRuleStyle);
-    if(value == nullptr)
-        return LineStyle::None;
-    return convertLineStyle(*value);
-}
-
 float BoxStyle::columnRuleWidth() const
 {
     auto value = get(CSSPropertyID::ColumnRuleWidth);
     if(value == nullptr)
         return 3.0;
     return convertLineWidth(*value);
-}
-
-ColumnSpan BoxStyle::columnSpan() const
-{
-    auto value = get(CSSPropertyID::ColumnSpan);
-    if(value == nullptr)
-        return ColumnSpan::None;
-    const auto& ident = to<CSSIdentValue>(*value);
-    switch(ident.value()) {
-    case CSSValueID::None:
-        return ColumnSpan::None;
-    case CSSValueID::All:
-        return ColumnSpan::All;
-    default:
-        assert(false);
-    }
-
-    return ColumnSpan::None;
-}
-
-ColumnFill BoxStyle::columnFill() const
-{
-    auto value = get(CSSPropertyID::ColumnFill);
-    if(value == nullptr)
-        return ColumnFill::Balance;
-    const auto& ident = to<CSSIdentValue>(*value);
-    switch(ident.value()) {
-    case CSSValueID::Auto:
-        return ColumnFill::Auto;
-    case CSSValueID::Balance:
-        return ColumnFill::Balance;
-    default:
-        assert(false);
-    }
-
-    return ColumnFill::Balance;
 }
 
 std::optional<float> BoxStyle::rowGap() const
@@ -1317,46 +913,6 @@ LengthList BoxStyle::strokeDasharray() const
     return dashes;
 }
 
-LineCap BoxStyle::strokeLinecap() const
-{
-    auto value = get(CSSPropertyID::StrokeLinecap);
-    if(value == nullptr)
-        return LineCap::Butt;
-    const auto& ident = to<CSSIdentValue>(*value);
-    switch(ident.value()) {
-    case CSSValueID::Butt:
-        return LineCap::Butt;
-    case CSSValueID::Round:
-        return LineCap::Round;
-    case CSSValueID::Square:
-        return LineCap::Square;
-    default:
-        assert(false);
-    }
-
-    return LineCap::Butt;
-}
-
-LineJoin BoxStyle::strokeLinejoin() const
-{
-    auto value = get(CSSPropertyID::StrokeLinejoin);
-    if(value == nullptr)
-        return LineJoin::Miter;
-    const auto& ident = to<CSSIdentValue>(*value);
-    switch(ident.value()) {
-    case CSSValueID::Miter:
-        return LineJoin::Miter;
-    case CSSValueID::Round:
-        return LineJoin::Round;
-    case CSSValueID::Bevel:
-        return LineJoin::Bevel;
-    default:
-        assert(false);
-    }
-
-    return LineJoin::Miter;
-}
-
 HeapString BoxStyle::mask() const
 {
     auto value = get(CSSPropertyID::Mask);
@@ -1395,82 +951,6 @@ HeapString BoxStyle::markerEnd() const
     if(value == nullptr)
         return emptyGlo;
     return convertLocalUrlOrNone(*value);
-}
-
-AlignmentBaseline BoxStyle::alignmentBaseline() const
-{
-    auto value = get(CSSPropertyID::AlignmentBaseline);
-    if(value == nullptr)
-        return AlignmentBaseline::Baseline;
-    const auto& ident = to<CSSIdentValue>(*value);
-    switch(ident.value()) {
-    case CSSValueID::Auto:
-        return AlignmentBaseline::Auto;
-    case CSSValueID::Baseline:
-        return AlignmentBaseline::Baseline;
-    case CSSValueID::BeforeEdge:
-        return AlignmentBaseline::BeforeEdge;
-    case CSSValueID::TextBeforeEdge:
-        return AlignmentBaseline::TextBeforeEdge;
-    case CSSValueID::Middle:
-        return AlignmentBaseline::Middle;
-    case CSSValueID::Central:
-        return AlignmentBaseline::Central;
-    case CSSValueID::AfterEdge:
-        return AlignmentBaseline::AfterEdge;
-    case CSSValueID::TextAfterEdge:
-        return AlignmentBaseline::TextAfterEdge;
-    case CSSValueID::Ideographic:
-        return AlignmentBaseline::Ideographic;
-    case CSSValueID::Alphabetic:
-        return AlignmentBaseline::Alphabetic;
-    case CSSValueID::Hanging:
-        return AlignmentBaseline::Hanging;
-    case CSSValueID::Mathematical:
-        return AlignmentBaseline::Mathematical;
-    default:
-        assert(false);
-    }
-
-    return AlignmentBaseline::Auto;
-}
-
-DominantBaseline BoxStyle::dominantBaseline() const
-{
-    auto value = get(CSSPropertyID::DominantBaseline);
-    if(value == nullptr)
-        return DominantBaseline::Auto;
-    const auto& ident = to<CSSIdentValue>(*value);
-    switch(ident.value()) {
-    case CSSValueID::Auto:
-        return DominantBaseline::Auto;
-    case CSSValueID::UseScript:
-        return DominantBaseline::UseScript;
-    case CSSValueID::NoChange:
-        return DominantBaseline::NoChange;
-    case CSSValueID::ResetSize:
-        return DominantBaseline::ResetSize;
-    case CSSValueID::Ideographic:
-        return DominantBaseline::Ideographic;
-    case CSSValueID::Alphabetic:
-        return DominantBaseline::Alphabetic;
-    case CSSValueID::Hanging:
-        return DominantBaseline::Hanging;
-    case CSSValueID::Mathematical:
-        return DominantBaseline::Mathematical;
-    case CSSValueID::Central:
-        return DominantBaseline::Central;
-    case CSSValueID::Middle:
-        return DominantBaseline::Middle;
-    case CSSValueID::TextAfterEdge:
-        return DominantBaseline::TextAfterEdge;
-    case CSSValueID::TextBeforeEdge:
-        return DominantBaseline::TextBeforeEdge;
-    default:
-        assert(false);
-    }
-
-    return DominantBaseline::Auto;
 }
 
 BaselineShift BoxStyle::baselineShift() const
@@ -1674,9 +1154,6 @@ bool BoxStyle::apply(CSSPropertyID id, const CSSValue& value)
     case CSSPropertyID::VerticalAlign:
         m_verticalAlignType = convertVerticalAlignType(value);
         return m_verticalAlignType == VerticalAlignType::Length;
-    case CSSPropertyID::LineHeight:
-        m_lineHeight = convertLineHeight(value);
-        break;
     case CSSPropertyID::Direction:
         m_direction = convertDirection(value);
         break;
@@ -1686,14 +1163,53 @@ bool BoxStyle::apply(CSSPropertyID id, const CSSValue& value)
     case CSSPropertyID::Visibility:
         m_visibility = convertVisibility(value);
         break;
-    case CSSPropertyID::BoxSizing:
-        m_boxSizing = convertBoxSizing(value);
+    case CSSPropertyID::Color:
+        m_color = convertColor(value);
         break;
-    case CSSPropertyID::MixBlendMode:
-        m_blendMode = convertBlendMode(value);
+    case CSSPropertyID::LineHeight:
+        m_lineHeight = convertLineHeight(value);
         break;
-    case CSSPropertyID::MaskType:
-        m_maskType = convertMaskType(value);
+    case CSSPropertyID::BorderLeftStyle:
+        m_borderLeftStyle = convertLineStyle(value);
+        break;
+    case CSSPropertyID::BorderRightStyle:
+        m_borderRightStyle = convertLineStyle(value);
+        break;
+    case CSSPropertyID::BorderTopStyle:
+        m_borderTopStyle = convertLineStyle(value);
+        break;
+    case CSSPropertyID::BorderBottomStyle:
+        m_borderBottomStyle = convertLineStyle(value);
+        break;
+    case CSSPropertyID::ListStylePosition:
+        m_listStylePosition = convertListStylePosition(value);
+        break;
+    case CSSPropertyID::BackgroundRepeat:
+        m_backgroundRepeat = convertBackgroundRepeat(value);
+        break;
+    case CSSPropertyID::BackgroundOrigin:
+        m_backgroundOrigin = convertBackgroundBox(value);
+        break;
+    case CSSPropertyID::BackgroundClip:
+        m_backgroundClip = convertBackgroundBox(value);
+        break;
+    case CSSPropertyID::BackgroundAttachment:
+        m_backgroundAttachment = convertBackgroundAttachment(value);
+        break;
+    case CSSPropertyID::ObjectFit:
+        m_objectFit = convertObjectFit(value);
+        break;
+    case CSSPropertyID::TableLayout:
+        m_tableLayout = convertTableLayout(value);
+        break;
+    case CSSPropertyID::CaptionSide:
+        m_captionSide = convertCaptionSide(value);
+        break;
+    case CSSPropertyID::EmptyCells:
+        m_emptyCells = convertEmptyCells(value);
+        break;
+    case CSSPropertyID::BorderCollapse:
+        m_borderCollapse = convertBorderCollapse(value);
         break;
     case CSSPropertyID::WritingMode:
         m_writingMode = convertWritingMode(value);
@@ -1704,6 +1220,15 @@ bool BoxStyle::apply(CSSPropertyID id, const CSSValue& value)
     case CSSPropertyID::TextAlign:
         m_textAlign = convertTextAlign(value);
         break;
+    case CSSPropertyID::TextAnchor:
+        m_textAnchor = convertTextAnchor(value);
+        break;
+    case CSSPropertyID::TextTransform:
+        m_textTransform = convertTextTransform(value);
+        break;
+    case CSSPropertyID::TextOverflow:
+        m_textOverflow = convertTextOverflow(value);
+        break;
     case CSSPropertyID::WhiteSpace:
         m_whiteSpace = convertWhiteSpace(value);
         break;
@@ -1713,20 +1238,53 @@ bool BoxStyle::apply(CSSPropertyID id, const CSSValue& value)
     case CSSPropertyID::OverflowWrap:
         m_overflowWrap = convertOverflowWrap(value);
         break;
-    case CSSPropertyID::FillRule:
-        m_fillRule = convertFillRule(value);
+    case CSSPropertyID::FontVariantEmoji:
+        m_fontVariantEmoji = convertFontVariantEmoji(value);
         break;
-    case CSSPropertyID::ClipRule:
-        m_clipRule = convertFillRule(value);
+    case CSSPropertyID::Hyphens:
+        m_hyphens = convertHyphens(value);
         break;
-    case CSSPropertyID::CaptionSide:
-        m_captionSide = convertCaptionSide(value);
+    case CSSPropertyID::BoxSizing:
+        m_boxSizing = convertBoxSizing(value);
         break;
-    case CSSPropertyID::EmptyCells:
-        m_emptyCells = convertEmptyCells(value);
+    case CSSPropertyID::MixBlendMode:
+        m_blendMode = convertBlendMode(value);
         break;
-    case CSSPropertyID::BorderCollapse:
-        m_borderCollapse = convertBorderCollapse(value);
+    case CSSPropertyID::MaskType:
+        m_maskType = convertMaskType(value);
+        break;
+    case CSSPropertyID::Overflow:
+        m_overflow = convertOverflow(value);
+        break;
+    case CSSPropertyID::FlexDirection:
+        m_flexDirection = convertFlexDirection(value);
+        break;
+    case CSSPropertyID::FlexWrap:
+        m_flexWrap = convertFlexWrap(value);
+        break;
+    case CSSPropertyID::JustifyContent:
+        m_justifyContent = convertAlignContent(value);
+        break;
+    case CSSPropertyID::AlignContent:
+        m_alignContent = convertAlignContent(value);
+        break;
+    case CSSPropertyID::AlignItems:
+        m_alignItems = convertAlignItem(value);
+        break;
+    case CSSPropertyID::AlignSelf:
+        m_alignSelf = convertAlignItem(value);
+        break;
+    case CSSPropertyID::OutlineStyle:
+        m_outlineStyle = convertLineStyle(value);
+        break;
+    case CSSPropertyID::ColumnRuleStyle:
+        m_columnRuleStyle = convertLineStyle(value);
+        break;
+    case CSSPropertyID::ColumnSpan:
+        m_columnSpan = convertColumnSpan(value);
+        break;
+    case CSSPropertyID::ColumnFill:
+        m_columnFill = convertColumnFill(value);
         break;
     case CSSPropertyID::BreakAfter:
     case CSSPropertyID::ColumnBreakAfter:
@@ -1743,8 +1301,23 @@ bool BoxStyle::apply(CSSPropertyID id, const CSSValue& value)
     case CSSPropertyID::PageBreakInside:
         m_breakInside = convertBreakInside(value);
         break;
-    case CSSPropertyID::Color:
-        m_color = convertColor(value);
+    case CSSPropertyID::StrokeLinecap:
+        m_strokeLinecap = convertLineCap(value);
+        break;
+    case CSSPropertyID::StrokeLinejoin:
+        m_strokeLinejoin = convertLineJoin(value);
+        break;
+    case CSSPropertyID::FillRule:
+        m_fillRule = convertFillRule(value);
+        break;
+    case CSSPropertyID::ClipRule:
+        m_clipRule = convertFillRule(value);
+        break;
+    case CSSPropertyID::AlignmentBaseline:
+        m_alignmentBaseline = convertAlignmentBaseline(value);
+        break;
+    case CSSPropertyID::DominantBaseline:
+        m_dominantBaseline = convertDominantBaseline(value);
         break;
     default:
         return true;
@@ -1771,9 +1344,6 @@ void BoxStyle::reset(CSSPropertyID id)
     case CSSPropertyID::VerticalAlign:
         m_verticalAlignType = VerticalAlignType::Baseline;
         break;
-    case CSSPropertyID::LineHeight:
-        m_lineHeight = Length::Auto;
-        break;
     case CSSPropertyID::Direction:
         m_direction = Direction::Ltr;
         break;
@@ -1783,14 +1353,53 @@ void BoxStyle::reset(CSSPropertyID id)
     case CSSPropertyID::Visibility:
         m_visibility = Visibility::Visible;
         break;
-    case CSSPropertyID::BoxSizing:
-        m_boxSizing = BoxSizing::ContentBox;
+    case CSSPropertyID::Color:
+        m_color = Color::Black;
         break;
-    case CSSPropertyID::MixBlendMode:
-        m_blendMode = BlendMode::Normal;
+    case CSSPropertyID::LineHeight:
+        m_lineHeight = Length::Auto;
         break;
-    case CSSPropertyID::MaskType:
-        m_maskType = MaskType::Luminance;
+    case CSSPropertyID::BorderLeftStyle:
+        m_borderLeftStyle = LineStyle::None;
+        break;
+    case CSSPropertyID::BorderRightStyle:
+        m_borderRightStyle = LineStyle::None;
+        break;
+    case CSSPropertyID::BorderTopStyle:
+        m_borderTopStyle = LineStyle::None;
+        break;
+    case CSSPropertyID::BorderBottomStyle:
+        m_borderBottomStyle = LineStyle::None;
+        break;
+    case CSSPropertyID::ListStylePosition:
+        m_listStylePosition = ListStylePosition::Outside;
+        break;
+    case CSSPropertyID::BackgroundRepeat:
+        m_backgroundRepeat = BackgroundRepeat::Repeat;
+        break;
+    case CSSPropertyID::BackgroundOrigin:
+        m_backgroundOrigin = BackgroundBox::PaddingBox;
+        break;
+    case CSSPropertyID::BackgroundClip:
+        m_backgroundClip = BackgroundBox::BorderBox;
+        break;
+    case CSSPropertyID::BackgroundAttachment:
+        m_backgroundAttachment = BackgroundAttachment::Scroll;
+        break;
+    case CSSPropertyID::ObjectFit:
+        m_objectFit = ObjectFit::Fill;
+        break;
+    case CSSPropertyID::TableLayout:
+        m_tableLayout = TableLayout::Auto;
+        break;
+    case CSSPropertyID::CaptionSide:
+        m_captionSide = CaptionSide::Top;
+        break;
+    case CSSPropertyID::EmptyCells:
+        m_emptyCells = EmptyCells::Show;
+        break;
+    case CSSPropertyID::BorderCollapse:
+        m_borderCollapse = BorderCollapse::Separate;
         break;
     case CSSPropertyID::WritingMode:
         m_writingMode = WritingMode::HorizontalTb;
@@ -1799,7 +1408,16 @@ void BoxStyle::reset(CSSPropertyID id)
         m_textOrientation = TextOrientation::Mixed;
         break;
     case CSSPropertyID::TextAlign:
-        m_textAlign = TextAlign::Left;
+        m_textAlign = TextAlign::Start;
+        break;
+    case CSSPropertyID::TextAnchor:
+        m_textAnchor = TextAnchor::Start;
+        break;
+    case CSSPropertyID::TextTransform:
+        m_textTransform = TextTransform::None;
+        break;
+    case CSSPropertyID::TextOverflow:
+        m_textOverflow = TextOverflow::Clip;
         break;
     case CSSPropertyID::WhiteSpace:
         m_whiteSpace = WhiteSpace::Normal;
@@ -1810,20 +1428,53 @@ void BoxStyle::reset(CSSPropertyID id)
     case CSSPropertyID::OverflowWrap:
         m_overflowWrap = OverflowWrap::Normal;
         break;
-    case CSSPropertyID::FillRule:
-        m_fillRule = FillRule::NonZero;
+    case CSSPropertyID::FontVariantEmoji:
+        m_fontVariantEmoji = FontVariantEmoji::Normal;
         break;
-    case CSSPropertyID::ClipRule:
-        m_clipRule = FillRule::NonZero;
+    case CSSPropertyID::Hyphens:
+        m_hyphens = Hyphens::Manual;
         break;
-    case CSSPropertyID::CaptionSide:
-        m_captionSide = CaptionSide::Top;
+    case CSSPropertyID::BoxSizing:
+        m_boxSizing = BoxSizing::ContentBox;
         break;
-    case CSSPropertyID::EmptyCells:
-        m_emptyCells = EmptyCells::Show;
+    case CSSPropertyID::MixBlendMode:
+        m_blendMode = BlendMode::Normal;
         break;
-    case CSSPropertyID::BorderCollapse:
-        m_borderCollapse = BorderCollapse::Separate;
+    case CSSPropertyID::MaskType:
+        m_maskType = MaskType::Luminance;
+        break;
+    case CSSPropertyID::Overflow:
+        m_overflow = Overflow::Visible;
+        break;
+    case CSSPropertyID::FlexDirection:
+        m_flexDirection = FlexDirection::Row;
+        break;
+    case CSSPropertyID::FlexWrap:
+        m_flexWrap = FlexWrap::Nowrap;
+        break;
+    case CSSPropertyID::JustifyContent:
+        m_justifyContent = AlignContent::FlexStart;
+        break;
+    case CSSPropertyID::AlignContent:
+        m_alignContent = AlignContent::Stretch;
+        break;
+    case CSSPropertyID::AlignItems:
+        m_alignItems = AlignItem::Stretch;
+        break;
+    case CSSPropertyID::AlignSelf:
+        m_alignSelf = AlignItem::Auto;
+        break;
+    case CSSPropertyID::OutlineStyle:
+        m_outlineStyle = LineStyle::None;
+        break;
+    case CSSPropertyID::ColumnRuleStyle:
+        m_columnRuleStyle = LineStyle::None;
+        break;
+    case CSSPropertyID::ColumnSpan:
+        m_columnSpan = ColumnSpan::None;
+        break;
+    case CSSPropertyID::ColumnFill:
+        m_columnFill = ColumnFill::Balance;
         break;
     case CSSPropertyID::BreakAfter:
     case CSSPropertyID::ColumnBreakAfter:
@@ -1840,8 +1491,23 @@ void BoxStyle::reset(CSSPropertyID id)
     case CSSPropertyID::PageBreakInside:
         m_breakInside = BreakInside::Auto;
         break;
-    case CSSPropertyID::Color:
-        m_color = Color::Black;
+    case CSSPropertyID::StrokeLinecap:
+        m_strokeLinecap = LineCap::Butt;
+        break;
+    case CSSPropertyID::StrokeLinejoin:
+        m_strokeLinejoin = LineJoin::Miter;
+        break;
+    case CSSPropertyID::FillRule:
+        m_fillRule = FillRule::NonZero;
+        break;
+    case CSSPropertyID::ClipRule:
+        m_clipRule = FillRule::NonZero;
+        break;
+    case CSSPropertyID::AlignmentBaseline:
+        m_alignmentBaseline = AlignmentBaseline::Baseline;
+        break;
+    case CSSPropertyID::DominantBaseline:
+        m_dominantBaseline = DominantBaseline::Auto;
         break;
     default:
         break;
@@ -1870,9 +1536,6 @@ void BoxStyle::inherit(CSSPropertyID id)
     case CSSPropertyID::VerticalAlign:
         m_verticalAlignType = m_parentStyle->verticalAlignType();
         break;
-    case CSSPropertyID::LineHeight:
-        m_lineHeight = m_parentStyle->lineHeight();
-        break;
     case CSSPropertyID::Direction:
         m_direction = m_parentStyle->direction();
         break;
@@ -1882,14 +1545,53 @@ void BoxStyle::inherit(CSSPropertyID id)
     case CSSPropertyID::Visibility:
         m_visibility = m_parentStyle->visibility();
         break;
-    case CSSPropertyID::BoxSizing:
-        m_boxSizing = m_parentStyle->boxSizing();
+    case CSSPropertyID::Color:
+        m_color = m_parentStyle->color();
         break;
-    case CSSPropertyID::MixBlendMode:
-        m_blendMode = m_parentStyle->blendMode();
+    case CSSPropertyID::LineHeight:
+        m_lineHeight = m_parentStyle->lineHeight();
         break;
-    case CSSPropertyID::MaskType:
-        m_maskType = m_parentStyle->maskType();
+    case CSSPropertyID::BorderLeftStyle:
+        m_borderLeftStyle = m_parentStyle->borderLeftStyle();
+        break;
+    case CSSPropertyID::BorderRightStyle:
+        m_borderRightStyle = m_parentStyle->borderRightStyle();
+        break;
+    case CSSPropertyID::BorderTopStyle:
+        m_borderTopStyle = m_parentStyle->borderTopStyle();
+        break;
+    case CSSPropertyID::BorderBottomStyle:
+        m_borderBottomStyle = m_parentStyle->borderBottomStyle();
+        break;
+    case CSSPropertyID::ListStylePosition:
+        m_listStylePosition = m_parentStyle->listStylePosition();
+        break;
+    case CSSPropertyID::BackgroundRepeat:
+        m_backgroundRepeat = m_parentStyle->backgroundRepeat();
+        break;
+    case CSSPropertyID::BackgroundOrigin:
+        m_backgroundOrigin = m_parentStyle->backgroundOrigin();
+        break;
+    case CSSPropertyID::BackgroundClip:
+        m_backgroundClip = m_parentStyle->backgroundClip();
+        break;
+    case CSSPropertyID::BackgroundAttachment:
+        m_backgroundAttachment = m_parentStyle->backgroundAttachment();
+        break;
+    case CSSPropertyID::ObjectFit:
+        m_objectFit = m_parentStyle->objectFit();
+        break;
+    case CSSPropertyID::TableLayout:
+        m_tableLayout = m_parentStyle->tableLayout();
+        break;
+    case CSSPropertyID::CaptionSide:
+        m_captionSide = m_parentStyle->captionSide();
+        break;
+    case CSSPropertyID::EmptyCells:
+        m_emptyCells = m_parentStyle->emptyCells();
+        break;
+    case CSSPropertyID::BorderCollapse:
+        m_borderCollapse = m_parentStyle->borderCollapse();
         break;
     case CSSPropertyID::WritingMode:
         m_writingMode = m_parentStyle->writingMode();
@@ -1900,6 +1602,15 @@ void BoxStyle::inherit(CSSPropertyID id)
     case CSSPropertyID::TextAlign:
         m_textAlign = m_parentStyle->textAlign();
         break;
+    case CSSPropertyID::TextAnchor:
+        m_textAnchor = m_parentStyle->textAnchor();
+        break;
+    case CSSPropertyID::TextTransform:
+        m_textTransform = m_parentStyle->textTransform();
+        break;
+    case CSSPropertyID::TextOverflow:
+        m_textOverflow = m_parentStyle->textOverflow();
+        break;
     case CSSPropertyID::WhiteSpace:
         m_whiteSpace = m_parentStyle->whiteSpace();
         break;
@@ -1909,20 +1620,53 @@ void BoxStyle::inherit(CSSPropertyID id)
     case CSSPropertyID::OverflowWrap:
         m_overflowWrap = m_parentStyle->overflowWrap();
         break;
-    case CSSPropertyID::FillRule:
-        m_fillRule = m_parentStyle->fillRule();
+    case CSSPropertyID::FontVariantEmoji:
+        m_fontVariantEmoji = m_parentStyle->fontVariantEmoji();
         break;
-    case CSSPropertyID::ClipRule:
-        m_clipRule = m_parentStyle->clipRule();
+    case CSSPropertyID::Hyphens:
+        m_hyphens = m_parentStyle->hyphens();
         break;
-    case CSSPropertyID::CaptionSide:
-        m_captionSide = m_parentStyle->captionSide();
+    case CSSPropertyID::BoxSizing:
+        m_boxSizing = m_parentStyle->boxSizing();
         break;
-    case CSSPropertyID::EmptyCells:
-        m_emptyCells = m_parentStyle->emptyCells();
+    case CSSPropertyID::MixBlendMode:
+        m_blendMode = m_parentStyle->blendMode();
         break;
-    case CSSPropertyID::BorderCollapse:
-        m_borderCollapse = m_parentStyle->borderCollapse();
+    case CSSPropertyID::MaskType:
+        m_maskType = m_parentStyle->maskType();
+        break;
+    case CSSPropertyID::Overflow:
+        m_overflow = m_parentStyle->overflow();
+        break;
+    case CSSPropertyID::FlexDirection:
+        m_flexDirection = m_parentStyle->flexDirection();
+        break;
+    case CSSPropertyID::FlexWrap:
+        m_flexWrap = m_parentStyle->flexWrap();
+        break;
+    case CSSPropertyID::JustifyContent:
+        m_justifyContent = m_parentStyle->justifyContent();
+        break;
+    case CSSPropertyID::AlignContent:
+        m_alignContent = m_parentStyle->alignContent();
+        break;
+    case CSSPropertyID::AlignItems:
+        m_alignItems = m_parentStyle->alignItems();
+        break;
+    case CSSPropertyID::AlignSelf:
+        m_alignSelf = m_parentStyle->alignSelf();
+        break;
+    case CSSPropertyID::OutlineStyle:
+        m_outlineStyle = m_parentStyle->outlineStyle();
+        break;
+    case CSSPropertyID::ColumnRuleStyle:
+        m_columnRuleStyle = m_parentStyle->columnRuleStyle();
+        break;
+    case CSSPropertyID::ColumnSpan:
+        m_columnSpan = m_parentStyle->columnSpan();
+        break;
+    case CSSPropertyID::ColumnFill:
+        m_columnFill = m_parentStyle->columnFill();
         break;
     case CSSPropertyID::BreakAfter:
     case CSSPropertyID::ColumnBreakAfter:
@@ -1939,8 +1683,23 @@ void BoxStyle::inherit(CSSPropertyID id)
     case CSSPropertyID::PageBreakInside:
         m_breakInside = m_parentStyle->breakInside();
         break;
-    case CSSPropertyID::Color:
-        m_color = m_parentStyle->color();
+    case CSSPropertyID::StrokeLinecap:
+        m_strokeLinecap = m_parentStyle->strokeLinecap();
+        break;
+    case CSSPropertyID::StrokeLinejoin:
+        m_strokeLinejoin = m_parentStyle->strokeLinejoin();
+        break;
+    case CSSPropertyID::FillRule:
+        m_fillRule = m_parentStyle->fillRule();
+        break;
+    case CSSPropertyID::ClipRule:
+        m_clipRule = m_parentStyle->clipRule();
+        break;
+    case CSSPropertyID::AlignmentBaseline:
+        m_alignmentBaseline = m_parentStyle->alignmentBaseline();
+        break;
+    case CSSPropertyID::DominantBaseline:
+        m_dominantBaseline = m_parentStyle->dominantBaseline();
         break;
     default:
         break;
@@ -2801,6 +2560,40 @@ LineStyle BoxStyle::convertLineStyle(const CSSValue& value)
     return LineStyle::None;
 }
 
+ListStylePosition BoxStyle::convertListStylePosition(const CSSValue& value)
+{
+    const auto& ident = to<CSSIdentValue>(value);
+    switch(ident.value()) {
+    case CSSValueID::Inside:
+        return ListStylePosition::Inside;
+    case CSSValueID::Outside:
+        return ListStylePosition::Outside;
+    default:
+        assert(false);
+    }
+
+    return ListStylePosition::Outside;
+}
+
+BackgroundRepeat BoxStyle::convertBackgroundRepeat(const CSSValue& value)
+{
+    const auto& ident = to<CSSIdentValue>(value);
+    switch(ident.value()) {
+    case CSSValueID::Repeat:
+        return BackgroundRepeat::Repeat;
+    case CSSValueID::RepeatX:
+        return BackgroundRepeat::RepeatX;
+    case CSSValueID::RepeatY:
+        return BackgroundRepeat::RepeatY;
+    case CSSValueID::NoRepeat:
+        return BackgroundRepeat::NoRepeat;
+    default:
+        assert(false);
+    }
+
+    return BackgroundRepeat::Repeat;
+}
+
 BackgroundBox BoxStyle::convertBackgroundBox(const CSSValue& value)
 {
     const auto& ident = to<CSSIdentValue>(value);
@@ -2816,6 +2609,104 @@ BackgroundBox BoxStyle::convertBackgroundBox(const CSSValue& value)
     }
 
     return BackgroundBox::BorderBox;
+}
+
+BackgroundAttachment BoxStyle::convertBackgroundAttachment(const CSSValue& value)
+{
+    const auto& ident = to<CSSIdentValue>(value);
+    switch(ident.value()) {
+    case CSSValueID::Scroll:
+        return BackgroundAttachment::Scroll;
+    case CSSValueID::Fixed:
+        return BackgroundAttachment::Fixed;
+    case CSSValueID::Local:
+        return BackgroundAttachment::Local;
+    default:
+        assert(false);
+    }
+
+    return BackgroundAttachment::Scroll;
+}
+
+ObjectFit BoxStyle::convertObjectFit(const CSSValue& value)
+{
+    const auto& ident = to<CSSIdentValue>(value);
+    switch(ident.value()) {
+    case CSSValueID::Fill:
+        return ObjectFit::Fill;
+    case CSSValueID::Contain:
+        return ObjectFit::Contain;
+    case CSSValueID::Cover:
+        return ObjectFit::Cover;
+    case CSSValueID::None:
+        return ObjectFit::None;
+    case CSSValueID::ScaleDown:
+        return ObjectFit::ScaleDown;
+    default:
+        assert(false);
+    }
+
+    return ObjectFit::Fill;
+}
+
+TableLayout BoxStyle::convertTableLayout(const CSSValue& value)
+{
+    const auto& ident = to<CSSIdentValue>(value);
+    switch(ident.value()) {
+    case CSSValueID::Auto:
+        return TableLayout::Auto;
+    case CSSValueID::Fixed:
+        return TableLayout::Fixed;
+    default:
+        assert(false);
+    }
+
+    return TableLayout::Auto;
+}
+
+CaptionSide BoxStyle::convertCaptionSide(const CSSValue& value)
+{
+    const auto& ident = to<CSSIdentValue>(value);
+    switch(ident.value()) {
+    case CSSValueID::Top:
+        return CaptionSide::Top;
+    case CSSValueID::Bottom:
+        return CaptionSide::Bottom;
+    default:
+        assert(false);
+    }
+
+    return CaptionSide::Top;
+}
+
+EmptyCells BoxStyle::convertEmptyCells(const CSSValue& value)
+{
+    const auto& ident = to<CSSIdentValue>(value);
+    switch(ident.value()) {
+    case CSSValueID::Show:
+        return EmptyCells::Show;
+    case CSSValueID::Hide:
+        return EmptyCells::Hide;
+    default:
+        assert(false);
+    }
+
+    return EmptyCells::Show;
+}
+
+BorderCollapse BoxStyle::convertBorderCollapse(const CSSValue& value)
+{
+    const auto& ident = to<CSSIdentValue>(value);
+    switch(ident.value()) {
+    case CSSValueID::Separate:
+        return BorderCollapse::Separate;
+    case CSSValueID::Collapse:
+        return BorderCollapse::Collapse;
+    default:
+        assert(false);
+    }
+
+    return BorderCollapse::Separate;
 }
 
 WritingMode BoxStyle::convertWritingMode(const CSSValue& value)
@@ -2873,6 +2764,57 @@ TextAlign BoxStyle::convertTextAlign(const CSSValue& value)
     return TextAlign::Left;
 }
 
+TextAnchor BoxStyle::convertTextAnchor(const CSSValue& value)
+{
+    const auto& ident = to<CSSIdentValue>(value);
+    switch(ident.value()) {
+    case CSSValueID::Start:
+        return TextAnchor::Start;
+    case CSSValueID::Middle:
+        return TextAnchor::Middle;
+    case CSSValueID::End:
+        return TextAnchor::End;
+    default:
+        assert(false);
+    }
+
+    return TextAnchor::Start;
+}
+
+TextTransform BoxStyle::convertTextTransform(const CSSValue& value)
+{
+    const auto& ident = to<CSSIdentValue>(value);
+    switch(ident.value()) {
+    case CSSValueID::None:
+        return TextTransform::None;
+    case CSSValueID::Capitalize:
+        return TextTransform::Capitalize;
+    case CSSValueID::Uppercase:
+        return TextTransform::Uppercase;
+    case CSSValueID::Lowercase:
+        return TextTransform::Lowercase;
+    default:
+        assert(false);
+    }
+
+    return TextTransform::None;
+}
+
+TextOverflow BoxStyle::convertTextOverflow(const CSSValue& value)
+{
+    const auto& ident = to<CSSIdentValue>(value);
+    switch(ident.value()) {
+    case CSSValueID::Clip:
+        return TextOverflow::Clip;
+    case CSSValueID::Ellipsis:
+        return TextOverflow::Ellipsis;
+    default:
+        assert(false);
+    }
+
+    return TextOverflow::Clip;
+}
+
 WhiteSpace BoxStyle::convertWhiteSpace(const CSSValue& value)
 {
     const auto& ident = to<CSSIdentValue>(value);
@@ -2928,6 +2870,42 @@ OverflowWrap BoxStyle::convertOverflowWrap(const CSSValue& value)
     }
 
     return OverflowWrap::Normal;
+}
+
+FontVariantEmoji BoxStyle::convertFontVariantEmoji(const CSSValue& value)
+{
+    const auto& ident = to<CSSIdentValue>(value);
+    switch(ident.value()) {
+    case CSSValueID::Normal:
+        return FontVariantEmoji::Normal;
+    case CSSValueID::Unicode:
+        return FontVariantEmoji::Unicode;
+    case CSSValueID::Emoji:
+        return FontVariantEmoji::Emoji;
+    case CSSValueID::Text:
+        return FontVariantEmoji::Text;
+    default:
+        assert(false);
+    }
+
+    return FontVariantEmoji::Normal;
+}
+
+Hyphens BoxStyle::convertHyphens(const CSSValue& value)
+{
+    const auto& ident = to<CSSIdentValue>(value);
+    switch(ident.value()) {
+    case CSSValueID::None:
+        return Hyphens::None;
+    case CSSValueID::Auto:
+        return Hyphens::Auto;
+    case CSSValueID::Manual:
+        return Hyphens::Manual;
+    default:
+        assert(false);
+    }
+
+    return Hyphens::Manual;
 }
 
 BoxSizing BoxStyle::convertBoxSizing(const CSSValue& value)
@@ -3003,6 +2981,61 @@ MaskType BoxStyle::convertMaskType(const CSSValue& value)
     return MaskType::Luminance;
 }
 
+Overflow BoxStyle::convertOverflow(const CSSValue& value)
+{
+    const auto& ident = to<CSSIdentValue>(value);
+    switch(ident.value()) {
+    case CSSValueID::Auto:
+        return Overflow::Auto;
+    case CSSValueID::Visible:
+        return Overflow::Visible;
+    case CSSValueID::Hidden:
+        return Overflow::Hidden;
+    case CSSValueID::Scroll:
+        return Overflow::Scroll;
+    default:
+        assert(false);
+    }
+
+    return Overflow::Visible;
+}
+
+FlexDirection BoxStyle::convertFlexDirection(const CSSValue& value)
+{
+    const auto& ident = to<CSSIdentValue>(value);
+    switch(ident.value()) {
+    case CSSValueID::Row:
+        return FlexDirection::Row;
+    case CSSValueID::RowReverse:
+        return FlexDirection::RowReverse;
+    case CSSValueID::Column:
+        return FlexDirection::Column;
+    case CSSValueID::ColumnReverse:
+        return FlexDirection::ColumnReverse;
+    default:
+        assert(false);
+    }
+
+    return FlexDirection::Row;
+}
+
+FlexWrap BoxStyle::convertFlexWrap(const CSSValue& value)
+{
+    const auto& ident = to<CSSIdentValue>(value);
+    switch(ident.value()) {
+    case CSSValueID::Nowrap:
+        return FlexWrap::Nowrap;
+    case CSSValueID::Wrap:
+        return FlexWrap::Wrap;
+    case CSSValueID::WrapReverse:
+        return FlexWrap::WrapReverse;
+    default:
+        assert(false);
+    }
+
+    return FlexWrap::Nowrap;
+}
+
 AlignContent BoxStyle::convertAlignContent(const CSSValue& value)
 {
     const auto& ident = to<CSSIdentValue>(value);
@@ -3051,64 +3084,34 @@ AlignItem BoxStyle::convertAlignItem(const CSSValue& value)
     return AlignItem::Auto;
 }
 
-FillRule BoxStyle::convertFillRule(const CSSValue& value)
+ColumnSpan BoxStyle::convertColumnSpan(const CSSValue& value)
 {
     const auto& ident = to<CSSIdentValue>(value);
     switch(ident.value()) {
-    case CSSValueID::Nonzero:
-        return FillRule::NonZero;
-    case CSSValueID::Evenodd:
-        return FillRule::EvenOdd;
+    case CSSValueID::None:
+        return ColumnSpan::None;
+    case CSSValueID::All:
+        return ColumnSpan::All;
     default:
         assert(false);
     }
 
-    return FillRule::NonZero;
+    return ColumnSpan::None;
 }
 
-CaptionSide BoxStyle::convertCaptionSide(const CSSValue& value)
+ColumnFill BoxStyle::convertColumnFill(const CSSValue& value)
 {
     const auto& ident = to<CSSIdentValue>(value);
     switch(ident.value()) {
-    case CSSValueID::Top:
-        return CaptionSide::Top;
-    case CSSValueID::Bottom:
-        return CaptionSide::Bottom;
+    case CSSValueID::Auto:
+        return ColumnFill::Auto;
+    case CSSValueID::Balance:
+        return ColumnFill::Balance;
     default:
         assert(false);
     }
 
-    return CaptionSide::Top;
-}
-
-EmptyCells BoxStyle::convertEmptyCells(const CSSValue& value)
-{
-    const auto& ident = to<CSSIdentValue>(value);
-    switch(ident.value()) {
-    case CSSValueID::Show:
-        return EmptyCells::Show;
-    case CSSValueID::Hide:
-        return EmptyCells::Hide;
-    default:
-        assert(false);
-    }
-
-    return EmptyCells::Show;
-}
-
-BorderCollapse BoxStyle::convertBorderCollapse(const CSSValue& value)
-{
-    const auto& ident = to<CSSIdentValue>(value);
-    switch(ident.value()) {
-    case CSSValueID::Separate:
-        return BorderCollapse::Separate;
-    case CSSValueID::Collapse:
-        return BorderCollapse::Collapse;
-    default:
-        assert(false);
-    }
-
-    return BorderCollapse::Separate;
+    return ColumnFill::Balance;
 }
 
 BreakBetween BoxStyle::convertBreakBetween(const CSSValue& value)
@@ -3159,6 +3162,125 @@ BreakInside BoxStyle::convertBreakInside(const CSSValue& value)
     }
 
     return BreakInside::Auto;
+}
+
+LineCap BoxStyle::convertLineCap(const CSSValue& value)
+{
+    const auto& ident = to<CSSIdentValue>(value);
+    switch(ident.value()) {
+    case CSSValueID::Butt:
+        return LineCap::Butt;
+    case CSSValueID::Round:
+        return LineCap::Round;
+    case CSSValueID::Square:
+        return LineCap::Square;
+    default:
+        assert(false);
+    }
+
+    return LineCap::Butt;
+}
+
+LineJoin BoxStyle::convertLineJoin(const CSSValue& value)
+{
+    const auto& ident = to<CSSIdentValue>(value);
+    switch(ident.value()) {
+    case CSSValueID::Miter:
+        return LineJoin::Miter;
+    case CSSValueID::Round:
+        return LineJoin::Round;
+    case CSSValueID::Bevel:
+        return LineJoin::Bevel;
+    default:
+        assert(false);
+    }
+
+    return LineJoin::Miter;
+}
+
+FillRule BoxStyle::convertFillRule(const CSSValue& value)
+{
+    const auto& ident = to<CSSIdentValue>(value);
+    switch(ident.value()) {
+    case CSSValueID::Nonzero:
+        return FillRule::NonZero;
+    case CSSValueID::Evenodd:
+        return FillRule::EvenOdd;
+    default:
+        assert(false);
+    }
+
+    return FillRule::NonZero;
+}
+
+AlignmentBaseline BoxStyle::convertAlignmentBaseline(const CSSValue& value)
+{
+    const auto& ident = to<CSSIdentValue>(value);
+    switch(ident.value()) {
+    case CSSValueID::Auto:
+        return AlignmentBaseline::Auto;
+    case CSSValueID::Baseline:
+        return AlignmentBaseline::Baseline;
+    case CSSValueID::BeforeEdge:
+        return AlignmentBaseline::BeforeEdge;
+    case CSSValueID::TextBeforeEdge:
+        return AlignmentBaseline::TextBeforeEdge;
+    case CSSValueID::Middle:
+        return AlignmentBaseline::Middle;
+    case CSSValueID::Central:
+        return AlignmentBaseline::Central;
+    case CSSValueID::AfterEdge:
+        return AlignmentBaseline::AfterEdge;
+    case CSSValueID::TextAfterEdge:
+        return AlignmentBaseline::TextAfterEdge;
+    case CSSValueID::Ideographic:
+        return AlignmentBaseline::Ideographic;
+    case CSSValueID::Alphabetic:
+        return AlignmentBaseline::Alphabetic;
+    case CSSValueID::Hanging:
+        return AlignmentBaseline::Hanging;
+    case CSSValueID::Mathematical:
+        return AlignmentBaseline::Mathematical;
+    default:
+        assert(false);
+    }
+
+    return AlignmentBaseline::Auto;
+}
+
+DominantBaseline BoxStyle::convertDominantBaseline(const CSSValue& value)
+{
+    const auto& ident = to<CSSIdentValue>(value);
+    switch(ident.value()) {
+    case CSSValueID::Auto:
+        return DominantBaseline::Auto;
+    case CSSValueID::UseScript:
+        return DominantBaseline::UseScript;
+    case CSSValueID::NoChange:
+        return DominantBaseline::NoChange;
+    case CSSValueID::ResetSize:
+        return DominantBaseline::ResetSize;
+    case CSSValueID::Ideographic:
+        return DominantBaseline::Ideographic;
+    case CSSValueID::Alphabetic:
+        return DominantBaseline::Alphabetic;
+    case CSSValueID::Hanging:
+        return DominantBaseline::Hanging;
+    case CSSValueID::Mathematical:
+        return DominantBaseline::Mathematical;
+    case CSSValueID::Central:
+        return DominantBaseline::Central;
+    case CSSValueID::Middle:
+        return DominantBaseline::Middle;
+    case CSSValueID::TextAfterEdge:
+        return DominantBaseline::TextAfterEdge;
+    case CSSValueID::TextBeforeEdge:
+        return DominantBaseline::TextBeforeEdge;
+    default:
+        assert(false);
+    }
+
+    return DominantBaseline::Auto;
 }
 
 PageSize BoxStyle::convertPageSize(const CSSValue& value)
@@ -3251,23 +3373,33 @@ BoxStyle::BoxStyle(Node* node, const BoxStyle* parentStyle, PseudoType pseudoTyp
     : m_node(node), m_parentStyle(parentStyle), m_properties(node->heap())
     , m_pseudoType(pseudoType), m_display(display)
 {
+    if(node->isSVGElement())
+        m_overflow = Overflow::Hidden;
     if(parentStyle) {
         m_font = parentStyle->font();
+        m_borderCollapse = parentStyle->borderCollapse();
+        m_captionSide = parentStyle->captionSide();
+        m_clipRule = parentStyle->clipRule();
+        m_color = parentStyle->color();
         m_direction = parentStyle->direction();
-        m_visibility = parentStyle->visibility();
-        m_writingMode = parentStyle->writingMode();
-        m_textOrientation = parentStyle->textOrientation();
+        m_dominantBaseline = parentStyle->dominantBaseline();
+        m_emptyCells = parentStyle->emptyCells();
+        m_fillRule = parentStyle->fillRule();
+        m_fontVariantEmoji = parentStyle->fontVariantEmoji();
+        m_hyphens = parentStyle->hyphens();
+        m_lineHeight = parentStyle->lineHeight();
+        m_listStylePosition = parentStyle->listStylePosition();
+        m_overflowWrap = parentStyle->overflowWrap();
+        m_strokeLinecap = parentStyle->strokeLinecap();
+        m_strokeLinejoin = parentStyle->strokeLinejoin();
         m_textAlign = parentStyle->textAlign();
+        m_textAnchor = parentStyle->textAnchor();
+        m_textOrientation = parentStyle->textOrientation();
+        m_textTransform = parentStyle->textTransform();
+        m_visibility = parentStyle->visibility();
         m_whiteSpace = parentStyle->whiteSpace();
         m_wordBreak = parentStyle->wordBreak();
-        m_overflowWrap = parentStyle->overflowWrap();
-        m_fillRule = parentStyle->fillRule();
-        m_clipRule = parentStyle->clipRule();
-        m_captionSide = parentStyle->captionSide();
-        m_emptyCells = parentStyle->emptyCells();
-        m_borderCollapse = parentStyle->borderCollapse();
-        m_color = parentStyle->color();
-        m_lineHeight =  parentStyle->lineHeight();
+        m_writingMode = parentStyle->writingMode();
         for(const auto& [id, value] : parentStyle->properties()) {
             switch(id) {
             case CSSPropertyID::BorderCollapse:

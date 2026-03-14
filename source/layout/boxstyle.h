@@ -767,10 +767,10 @@ public:
     Length paddingTop() const;
     Length paddingBottom() const;
 
-    LineStyle borderLeftStyle() const;
-    LineStyle borderRightStyle() const;
-    LineStyle borderTopStyle() const;
-    LineStyle borderBottomStyle() const;
+    LineStyle borderLeftStyle() const { return m_borderLeftStyle; }
+    LineStyle borderRightStyle() const { return m_borderRightStyle; }
+    LineStyle borderTopStyle() const { return m_borderTopStyle; }
+    LineStyle borderBottomStyle() const { return m_borderBottomStyle; }
 
     Color borderLeftColor() const;
     Color borderRightColor() const;
@@ -791,22 +791,22 @@ public:
 
     RoundedRect getBorderRoundedRect(const Rect& borderRect, bool includeLeftEdge, bool includeRightEdge) const;
 
-    ListStylePosition listStylePosition() const;
+    ListStylePosition listStylePosition() const { return m_listStylePosition; }
     RefPtr<Image> listStyleImage() const;
 
     RefPtr<Image> backgroundImage() const;
     Color backgroundColor() const;
-    BackgroundRepeat backgroundRepeat() const;
-    BackgroundBox backgroundOrigin() const;
-    BackgroundBox backgroundClip() const;
-    BackgroundAttachment backgroundAttachment() const;
+    BackgroundRepeat backgroundRepeat() const { return m_backgroundRepeat; }
+    BackgroundBox backgroundOrigin() const { return m_backgroundOrigin; }
+    BackgroundBox backgroundClip() const { return m_backgroundClip; }
+    BackgroundAttachment backgroundAttachment() const { return m_backgroundAttachment; }
     BackgroundSize backgroundSize() const;
     LengthPoint backgroundPosition() const;
 
-    ObjectFit objectFit() const;
+    ObjectFit objectFit() const { return m_objectFit; }
     LengthPoint objectPosition() const;
 
-    TableLayout tableLayout() const;
+    TableLayout tableLayout() const { return m_tableLayout; }
     CaptionSide captionSide() const { return m_captionSide; }
     EmptyCells emptyCells() const { return m_emptyCells; }
     BorderCollapse borderCollapse() const { return m_borderCollapse; }
@@ -817,17 +817,17 @@ public:
     TextOrientation textOrientation() const { return m_textOrientation; }
 
     TextAlign textAlign() const { return m_textAlign; }
-    TextAnchor textAnchor() const;
-    TextTransform textTransform() const;
-    TextOverflow textOverflow() const;
+    TextAnchor textAnchor() const { return m_textAnchor; }
+    TextTransform textTransform() const { return m_textTransform; }
+    TextOverflow textOverflow() const { return m_textOverflow; }
     TextDecorationLine textDecorationLine() const;
     TextDecorationStyle textDecorationStyle() const;
     Color textDecorationColor() const;
     WhiteSpace whiteSpace() const { return m_whiteSpace; }
     WordBreak wordBreak() const { return m_wordBreak; }
     OverflowWrap overflowWrap() const { return m_overflowWrap; }
-    FontVariantEmoji fontVariantEmoji() const;
-    Hyphens hyphens() const;
+    FontVariantEmoji fontVariantEmoji() const { return m_fontVariantEmoji; }
+    Hyphens hyphens() const { return m_hyphens; }
     Length textIndent() const;
     float letterSpacing() const;
     float wordSpacing() const;
@@ -837,7 +837,7 @@ public:
     BoxSizing boxSizing() const { return m_boxSizing; }
     BlendMode blendMode() const { return m_blendMode; }
     MaskType maskType() const { return m_maskType; }
-    Overflow overflow() const;
+    Overflow overflow() const { return m_overflow; }
     std::optional<int> zIndex() const;
     VerticalAlign verticalAlign() const;
     LengthBox clip() const;
@@ -846,17 +846,17 @@ public:
     float flexGrow() const;
     float flexShrink() const;
     int order() const;
-    FlexDirection flexDirection() const;
-    FlexWrap flexWrap() const;
-    AlignContent justifyContent() const;
-    AlignContent alignContent() const;
-    AlignItem alignItems() const;
-    AlignItem alignSelf() const;
+    FlexDirection flexDirection() const { return m_flexDirection; }
+    FlexWrap flexWrap() const { return m_flexWrap; }
+    AlignContent justifyContent() const { return m_justifyContent; }
+    AlignContent alignContent() const { return m_alignContent; }
+    AlignItem alignItems() const { return m_alignItems; }
+    AlignItem alignSelf() const { return m_alignSelf; }
 
     float outlineOffset() const;
     Color outlineColor() const;
     float outlineWidth() const;
-    LineStyle outlineStyle() const;
+    LineStyle outlineStyle() const { return m_outlineStyle; }
 
     BorderEdge getOutlineEdge() const;
 
@@ -864,11 +864,11 @@ public:
     int orphans() const;
 
     Color columnRuleColor() const;
-    LineStyle columnRuleStyle() const;
+    LineStyle columnRuleStyle() const { return m_columnRuleStyle; }
     float columnRuleWidth() const;
 
-    ColumnSpan columnSpan() const;
-    ColumnFill columnFill() const;
+    ColumnSpan columnSpan() const { return m_columnSpan; }
+    ColumnFill columnFill() const { return m_columnFill; }
 
     std::optional<float> rowGap() const;
     std::optional<float> columnGap() const;
@@ -898,8 +898,8 @@ public:
     Length strokeDashoffset() const;
     LengthList strokeDasharray() const;
 
-    LineCap strokeLinecap() const;
-    LineJoin strokeLinejoin() const;
+    LineCap strokeLinecap() const { return m_strokeLinecap; }
+    LineJoin strokeLinejoin() const { return m_strokeLinejoin; }
 
     FillRule fillRule() const { return m_fillRule; }
     FillRule clipRule() const { return m_clipRule; }
@@ -910,8 +910,8 @@ public:
     HeapString markerMid() const;
     HeapString markerEnd() const;
 
-    AlignmentBaseline alignmentBaseline() const;
-    DominantBaseline dominantBaseline() const;
+    AlignmentBaseline alignmentBaseline() const { return m_alignmentBaseline; }
+    DominantBaseline dominantBaseline() const { return m_dominantBaseline; }
     BaselineShift baselineShift() const;
 
     static bool isDisplayBlockType(Display display);
@@ -1018,24 +1018,43 @@ public:
     static UnicodeBidi convertUnicodeBidi(const CSSValue& value);
     static Visibility convertVisibility(const CSSValue& value);
     static LineStyle convertLineStyle(const CSSValue& value);
+    static ListStylePosition convertListStylePosition(const CSSValue& value);
+    static BackgroundRepeat convertBackgroundRepeat(const CSSValue& value);
     static BackgroundBox convertBackgroundBox(const CSSValue& value);
-    static WritingMode convertWritingMode(const CSSValue& value);
-    static TextOrientation convertTextOrientation(const CSSValue& value);
-    static TextAlign convertTextAlign(const CSSValue& value);
-    static WhiteSpace convertWhiteSpace(const CSSValue& value);
-    static WordBreak convertWordBreak(const CSSValue& value);
-    static OverflowWrap convertOverflowWrap(const CSSValue& value);
-    static BoxSizing convertBoxSizing(const CSSValue& value);
-    static BlendMode convertBlendMode(const CSSValue& value);
-    static MaskType convertMaskType(const CSSValue& value);
-    static AlignContent convertAlignContent(const CSSValue& value);
-    static AlignItem convertAlignItem(const CSSValue& value);
-    static FillRule convertFillRule(const CSSValue& value);
+    static BackgroundAttachment convertBackgroundAttachment(const CSSValue& value);
+    static ObjectFit convertObjectFit(const CSSValue& value);
+    static TableLayout convertTableLayout(const CSSValue& value);
     static CaptionSide convertCaptionSide(const CSSValue& value);
     static EmptyCells convertEmptyCells(const CSSValue& value);
     static BorderCollapse convertBorderCollapse(const CSSValue& value);
+    static WritingMode convertWritingMode(const CSSValue& value);
+    static TextOrientation convertTextOrientation(const CSSValue& value);
+    static TextAlign convertTextAlign(const CSSValue& value);
+    static TextAnchor convertTextAnchor(const CSSValue& value);
+    static TextTransform convertTextTransform(const CSSValue& value);
+    static TextOverflow convertTextOverflow(const CSSValue& value);
+    static WhiteSpace convertWhiteSpace(const CSSValue& value);
+    static WordBreak convertWordBreak(const CSSValue& value);
+    static OverflowWrap convertOverflowWrap(const CSSValue& value);
+    static FontVariantEmoji convertFontVariantEmoji(const CSSValue& value);
+    static Hyphens convertHyphens(const CSSValue& value);
+    static BoxSizing convertBoxSizing(const CSSValue& value);
+    static BlendMode convertBlendMode(const CSSValue& value);
+    static MaskType convertMaskType(const CSSValue& value);
+    static Overflow convertOverflow(const CSSValue& value);
+    static FlexDirection convertFlexDirection(const CSSValue& value);
+    static FlexWrap convertFlexWrap(const CSSValue& value);
+    static AlignContent convertAlignContent(const CSSValue& value);
+    static AlignItem convertAlignItem(const CSSValue& value);
+    static ColumnSpan convertColumnSpan(const CSSValue& value);
+    static ColumnFill convertColumnFill(const CSSValue& value);
     static BreakBetween convertBreakBetween(const CSSValue& value);
     static BreakInside convertBreakInside(const CSSValue& value);
+    static LineCap convertLineCap(const CSSValue& value);
+    static LineJoin convertLineJoin(const CSSValue& value);
+    static FillRule convertFillRule(const CSSValue& value);
+    static AlignmentBaseline convertAlignmentBaseline(const CSSValue& value);
+    static DominantBaseline convertDominantBaseline(const CSSValue& value);
     static PageSize convertPageSize(const CSSValue& value);
     static int convertInteger(const CSSValue& value);
     static std::optional<int> convertIntegerOrAuto(const CSSValue& value);
@@ -1055,13 +1074,13 @@ private:
     CSSPropertyMap m_properties;
     std::unique_ptr<CSSCustomPropertyMap> m_customProperties;
     RefPtr<Font> m_font;
+    VerticalAlignType m_verticalAlignType : 4 {VerticalAlignType::Baseline};
     PseudoType m_pseudoType : 4;
     Display m_display : 5;
     Display m_originalDisplay : 5 {Display::Inline};
     Position m_position : 3 {Position::Static};
     Float m_floating : 2 {Float::None};
     Clear m_clear : 2 {Clear::None};
-    VerticalAlignType m_verticalAlignType : 4 {VerticalAlignType::Baseline};
     Direction m_direction : 1 {Direction::Ltr};
     UnicodeBidi m_unicodeBidi : 3 {UnicodeBidi::Normal};
     Visibility m_visibility : 2 {Visibility::Visible};
@@ -1082,6 +1101,47 @@ private:
     BreakBetween m_breakAfter : 4 {BreakBetween::Auto};
     BreakBetween m_breakBefore : 4 {BreakBetween::Auto};
     BreakInside m_breakInside : 2 {BreakInside::Auto};
+
+    LineStyle m_borderLeftStyle : 4 {LineStyle::None};
+    LineStyle m_borderRightStyle : 4 {LineStyle::None};
+    LineStyle m_borderTopStyle : 4 {LineStyle::None};
+    LineStyle m_borderBottomStyle : 4 {LineStyle::None};
+    LineStyle m_outlineStyle : 4 {LineStyle::None};
+    LineStyle m_columnRuleStyle : 4 {LineStyle::None};
+
+    ListStylePosition m_listStylePosition : 1 {ListStylePosition::Outside};
+    BackgroundRepeat m_backgroundRepeat : 2 {BackgroundRepeat::Repeat};
+    BackgroundBox m_backgroundOrigin : 2 {BackgroundBox::PaddingBox};
+    BackgroundBox m_backgroundClip : 2 {BackgroundBox::BorderBox};
+    BackgroundAttachment m_backgroundAttachment : 2 {BackgroundAttachment::Scroll};
+
+    ObjectFit m_objectFit : 3 {ObjectFit::Fill};
+    TableLayout m_tableLayout : 1 {TableLayout::Auto};
+
+    TextAnchor m_textAnchor : 2 {TextAnchor::Start};
+    TextTransform m_textTransform : 2 {TextTransform::None};
+    TextOverflow m_textOverflow : 1 {TextOverflow::Clip};
+
+    FontVariantEmoji m_fontVariantEmoji : 2 {FontVariantEmoji::Normal};
+    Hyphens m_hyphens : 2 {Hyphens::Manual};
+    Overflow m_overflow : 2 {Overflow::Visible};
+
+    FlexDirection m_flexDirection : 2 {FlexDirection::Row};
+    FlexWrap m_flexWrap : 2 {FlexWrap::Nowrap};
+    AlignContent m_justifyContent : 3 {AlignContent::FlexStart};
+    AlignContent m_alignContent : 3 {AlignContent::Stretch};
+    AlignItem m_alignItems : 3 {AlignItem::Stretch};
+    AlignItem m_alignSelf : 3 {AlignItem::Auto};
+
+    ColumnSpan m_columnSpan : 1 {ColumnSpan::None};
+    ColumnFill m_columnFill : 1 {ColumnFill::Balance};
+
+    LineCap m_strokeLinecap : 2 {LineCap::Butt};
+    LineJoin m_strokeLinejoin : 2 {LineJoin::Miter};
+
+    AlignmentBaseline m_alignmentBaseline : 4 {AlignmentBaseline::Baseline};
+    DominantBaseline m_dominantBaseline : 4 {DominantBaseline::Auto};
+
     Color m_color{Color::Black};
     Length m_lineHeight{Length::Auto};
 };
