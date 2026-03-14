@@ -935,16 +935,16 @@ public:
     bool isVerticalWritingMode() const { return m_writingMode != WritingMode::HorizontalTb; }
     bool isUprightTextOrientation() const { return m_textOrientation == TextOrientation::Upright; }
 
-    bool isOverflowHidden() const { return overflow() != Overflow::Visible; }
-    bool isVisibilityHidden() const { return visibility() != Visibility::Visible; }
+    bool isOverflowHidden() const { return m_overflow != Overflow::Visible; }
+    bool isVisibilityHidden() const { return m_visibility != Visibility::Visible; }
 
     static bool autoWrap(WhiteSpace ws) { return ws != WhiteSpace::Nowrap && ws != WhiteSpace::Pre; }
     static bool preserveNewline(WhiteSpace ws) { return ws != WhiteSpace::Normal && ws != WhiteSpace::Nowrap; }
     static bool collapseWhiteSpace(WhiteSpace ws) { return ws != WhiteSpace::Pre && ws != WhiteSpace::PreWrap; }
 
-    bool autoWrap() const { return autoWrap(whiteSpace()); }
-    bool preserveNewline() const { return preserveNewline(whiteSpace()); }
-    bool collapseWhiteSpace() const { return collapseWhiteSpace(whiteSpace()); }
+    bool autoWrap() const { return autoWrap(m_whiteSpace); }
+    bool preserveNewline() const { return preserveNewline(m_whiteSpace); }
+    bool collapseWhiteSpace() const { return collapseWhiteSpace(m_whiteSpace); }
 
     bool breakAnywhere() const { return m_overflowWrap == OverflowWrap::Anywhere || m_wordBreak == WordBreak::BreakAll; }
     bool breakWord() const { return m_wordBreak == WordBreak::BreakWord || m_overflowWrap == OverflowWrap::BreakWord; }
