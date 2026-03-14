@@ -1076,7 +1076,8 @@ private:
     RefPtr<Font> m_font;
 
     Display m_display : 5;
-    Display m_originalDisplay : 5 {Display::Inline};
+    Display m_originalDisplay : 5;
+
     PseudoType m_pseudoType : 4;
     BlendMode m_blendMode : 4 {BlendMode::Normal};
     BreakBetween m_breakAfter : 4 {BreakBetween::Auto};

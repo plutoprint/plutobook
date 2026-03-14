@@ -3371,7 +3371,7 @@ BoxStyle::~BoxStyle() = default;
 
 BoxStyle::BoxStyle(Node* node, const BoxStyle* parentStyle, PseudoType pseudoType, Display display)
     : m_node(node), m_parentStyle(parentStyle), m_properties(node->heap())
-    , m_display(display), m_pseudoType(pseudoType)
+    , m_display(display), m_originalDisplay(display), m_pseudoType(pseudoType)
 {
     if(node->isSVGElement())
         m_overflow = Overflow::Hidden;
