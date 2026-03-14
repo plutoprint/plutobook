@@ -1074,73 +1074,68 @@ private:
     CSSPropertyMap m_properties;
     std::unique_ptr<CSSCustomPropertyMap> m_customProperties;
     RefPtr<Font> m_font;
-    VerticalAlignType m_verticalAlignType : 4 {VerticalAlignType::Baseline};
-    PseudoType m_pseudoType : 4;
+
     Display m_display : 5;
     Display m_originalDisplay : 5 {Display::Inline};
-    Position m_position : 3 {Position::Static};
-    Float m_floating : 2 {Float::None};
-    Clear m_clear : 2 {Clear::None};
-    Direction m_direction : 1 {Direction::Ltr};
-    UnicodeBidi m_unicodeBidi : 3 {UnicodeBidi::Normal};
-    Visibility m_visibility : 2 {Visibility::Visible};
-    BoxSizing m_boxSizing : 1 {BoxSizing::ContentBox};
+    PseudoType m_pseudoType : 4;
     BlendMode m_blendMode : 4 {BlendMode::Normal};
-    MaskType m_maskType : 1 {MaskType::Luminance};
-    WritingMode m_writingMode : 2 {WritingMode::HorizontalTb};
-    TextOrientation m_textOrientation : 1 {TextOrientation::Mixed};
-    TextAlign m_textAlign : 3 {TextAlign::Start};
-    WhiteSpace m_whiteSpace : 3 {WhiteSpace::Normal};
-    WordBreak m_wordBreak : 2 {WordBreak::Normal};
-    OverflowWrap m_overflowWrap : 2 {OverflowWrap::Normal};
-    FillRule m_fillRule : 1 {FillRule::NonZero};
-    FillRule m_clipRule : 1 {FillRule::NonZero};
-    CaptionSide m_captionSide : 1 {CaptionSide::Top};
-    EmptyCells m_emptyCells : 1 {EmptyCells::Show};
-    BorderCollapse m_borderCollapse : 1 {BorderCollapse::Separate};
     BreakBetween m_breakAfter : 4 {BreakBetween::Auto};
     BreakBetween m_breakBefore : 4 {BreakBetween::Auto};
-    BreakInside m_breakInside : 2 {BreakInside::Auto};
-
     LineStyle m_borderLeftStyle : 4 {LineStyle::None};
     LineStyle m_borderRightStyle : 4 {LineStyle::None};
     LineStyle m_borderTopStyle : 4 {LineStyle::None};
     LineStyle m_borderBottomStyle : 4 {LineStyle::None};
     LineStyle m_outlineStyle : 4 {LineStyle::None};
     LineStyle m_columnRuleStyle : 4 {LineStyle::None};
+    VerticalAlignType m_verticalAlignType : 4 {VerticalAlignType::Baseline};
+    AlignmentBaseline m_alignmentBaseline : 4 {AlignmentBaseline::Baseline};
+    DominantBaseline m_dominantBaseline : 4 {DominantBaseline::Auto};
 
-    ListStylePosition m_listStylePosition : 1 {ListStylePosition::Outside};
-    BackgroundRepeat m_backgroundRepeat : 2 {BackgroundRepeat::Repeat};
-    BackgroundBox m_backgroundOrigin : 2 {BackgroundBox::PaddingBox};
-    BackgroundBox m_backgroundClip : 2 {BackgroundBox::BorderBox};
-    BackgroundAttachment m_backgroundAttachment : 2 {BackgroundAttachment::Scroll};
-
+    Position m_position : 3 {Position::Static};
     ObjectFit m_objectFit : 3 {ObjectFit::Fill};
-    TableLayout m_tableLayout : 1 {TableLayout::Auto};
-
-    TextAnchor m_textAnchor : 2 {TextAnchor::Start};
-    TextTransform m_textTransform : 2 {TextTransform::None};
-    TextOverflow m_textOverflow : 1 {TextOverflow::Clip};
-
-    FontVariantEmoji m_fontVariantEmoji : 2 {FontVariantEmoji::Normal};
-    Hyphens m_hyphens : 2 {Hyphens::Manual};
-    Overflow m_overflow : 2 {Overflow::Visible};
-
-    FlexDirection m_flexDirection : 2 {FlexDirection::Row};
-    FlexWrap m_flexWrap : 2 {FlexWrap::Nowrap};
+    UnicodeBidi m_unicodeBidi : 3 {UnicodeBidi::Normal};
+    WhiteSpace m_whiteSpace : 3 {WhiteSpace::Normal};
+    TextAlign m_textAlign : 3 {TextAlign::Start};
     AlignContent m_justifyContent : 3 {AlignContent::FlexStart};
     AlignContent m_alignContent : 3 {AlignContent::Stretch};
     AlignItem m_alignItems : 3 {AlignItem::Stretch};
     AlignItem m_alignSelf : 3 {AlignItem::Auto};
 
-    ColumnSpan m_columnSpan : 1 {ColumnSpan::None};
-    ColumnFill m_columnFill : 1 {ColumnFill::Balance};
-
+    Float m_floating : 2 {Float::None};
+    Clear m_clear : 2 {Clear::None};
+    Overflow m_overflow : 2 {Overflow::Visible};
+    Visibility m_visibility : 2 {Visibility::Visible};
+    BreakInside m_breakInside : 2 {BreakInside::Auto};
+    WritingMode m_writingMode : 2 {WritingMode::HorizontalTb};
+    WordBreak m_wordBreak : 2 {WordBreak::Normal};
+    OverflowWrap m_overflowWrap : 2 {OverflowWrap::Normal};
+    TextAnchor m_textAnchor : 2 {TextAnchor::Start};
+    TextTransform m_textTransform : 2 {TextTransform::None};
+    FontVariantEmoji m_fontVariantEmoji : 2 {FontVariantEmoji::Normal};
+    Hyphens m_hyphens : 2 {Hyphens::Manual};
+    FlexDirection m_flexDirection : 2 {FlexDirection::Row};
+    FlexWrap m_flexWrap : 2 {FlexWrap::Nowrap};
     LineCap m_strokeLinecap : 2 {LineCap::Butt};
     LineJoin m_strokeLinejoin : 2 {LineJoin::Miter};
+    BackgroundRepeat m_backgroundRepeat : 2 {BackgroundRepeat::Repeat};
+    BackgroundBox m_backgroundOrigin : 2 {BackgroundBox::PaddingBox};
+    BackgroundBox m_backgroundClip : 2 {BackgroundBox::BorderBox};
+    BackgroundAttachment m_backgroundAttachment : 2 {BackgroundAttachment::Scroll};
 
-    AlignmentBaseline m_alignmentBaseline : 4 {AlignmentBaseline::Baseline};
-    DominantBaseline m_dominantBaseline : 4 {DominantBaseline::Auto};
+    Direction m_direction : 1 {Direction::Ltr};
+    BoxSizing m_boxSizing : 1 {BoxSizing::ContentBox};
+    MaskType m_maskType : 1 {MaskType::Luminance};
+    ListStylePosition m_listStylePosition : 1 {ListStylePosition::Outside};
+    TextOverflow m_textOverflow : 1 {TextOverflow::Clip};
+    TextOrientation m_textOrientation : 1 {TextOrientation::Mixed};
+    TableLayout m_tableLayout : 1 {TableLayout::Auto};
+    CaptionSide m_captionSide : 1 {CaptionSide::Top};
+    EmptyCells m_emptyCells : 1 {EmptyCells::Show};
+    BorderCollapse m_borderCollapse : 1 {BorderCollapse::Separate};
+    FillRule m_fillRule : 1 {FillRule::NonZero};
+    FillRule m_clipRule : 1 {FillRule::NonZero};
+    ColumnSpan m_columnSpan : 1 {ColumnSpan::None};
+    ColumnFill m_columnFill : 1 {ColumnFill::Balance};
 
     Color m_color{Color::Black};
     Length m_lineHeight{Length::Auto};
