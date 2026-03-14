@@ -119,16 +119,9 @@ public:
     float borderAndPaddingBefore() const;
     float borderAndPaddingAfter() const;
 
-    FlexDirection flexDirection() const { return m_flexDirection; }
-    FlexWrap flexWrap() const { return m_flexWrap; }
-    AlignContent justifyContent() const { return m_justifyContent; }
-    AlignContent alignContent() const { return m_alignContent; }
-
-    bool isHorizontalFlow() const { return m_flexDirection == FlexDirection::Row || m_flexDirection == FlexDirection::RowReverse; }
-    bool isVerticalFlow() const { return m_flexDirection == FlexDirection::Column || m_flexDirection == FlexDirection::ColumnReverse; }
-    bool isMultiLine() const { return m_flexWrap == FlexWrap::Wrap || m_flexWrap == FlexWrap::WrapReverse; }
-
-    const FlexItemList& items() { return m_items; }
+    bool isHorizontalFlow() const;
+    bool isVerticalFlow() const;
+    bool isMultiLine() const;
 
     void layout(FragmentBuilder* fragmentainer) final;
     void build() final;
@@ -138,12 +131,7 @@ public:
     const char* name() const final { return "FlexibleBox"; }
 
 private:
-    FlexDirection m_flexDirection;
-    FlexWrap m_flexWrap;
-    AlignContent m_justifyContent;
-    AlignContent m_alignContent;
     FlexItemList m_items;
-
     float m_gapBetweenItems = 0;
     float m_gapBetweenLines = 0;
 };
@@ -160,7 +148,7 @@ inline FlexibleBox* FlexItem::flexBox() const
 
 inline FlexDirection FlexItem::flexDirection() const
 {
-    return flexBox()->flexDirection();
+    return flexBox()->style()->flexDirection();
 }
 
 inline Direction FlexItem::direction() const

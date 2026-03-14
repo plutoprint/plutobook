@@ -220,10 +220,6 @@ float FlexItem::marginAfter() const
 
 FlexibleBox::FlexibleBox(Node* node, const RefPtr<BoxStyle>& style)
     : BlockBox(node, style)
-    , m_flexDirection(style->flexDirection())
-    , m_flexWrap(style->flexWrap())
-    , m_justifyContent(style->justifyContent())
-    , m_alignContent(style->alignContent())
     , m_items(style->heap())
 {
 }
@@ -360,7 +356,7 @@ float FlexibleBox::availableCrossSize() const
 
 float FlexibleBox::borderAndPaddingStart() const
 {
-    switch(m_flexDirection) {
+    switch(style()->flexDirection()) {
     case FlexDirection::Row:
         return borderStart() + paddingStart();
     case FlexDirection::RowReverse:
@@ -378,7 +374,7 @@ float FlexibleBox::borderAndPaddingStart() const
 
 float FlexibleBox::borderAndPaddingEnd() const
 {
-    switch(m_flexDirection) {
+    switch(style()->flexDirection()) {
     case FlexDirection::Row:
         return borderEnd() + paddingEnd();
     case FlexDirection::RowReverse:
@@ -406,6 +402,39 @@ float FlexibleBox::borderAndPaddingAfter() const
     if(isHorizontalFlow())
         return borderBottom() + paddingBottom();
     return borderEnd() + paddingEnd();
+}
+
+bool FlexibleBox::isHorizontalFlow() const
+{
+    switch(style()->flexDirection()) {
+    case FlexDirection::Row:
+    case FlexDirection::RowReverse:
+        return true;
+    default:
+        return false;
+    }
+}
+
+bool FlexibleBox::isVerticalFlow() const
+{
+    switch(style()->flexDirection()) {
+    case FlexDirection::Column:
+    case FlexDirection::ColumnReverse:
+        return true;
+    default:
+        return false;
+    }
+}
+
+bool FlexibleBox::isMultiLine() const
+{
+    switch(style()->flexWrap()) {
+    case FlexWrap::Wrap:
+    case FlexWrap::WrapReverse:
+        return true;
+    default:
+        return false;
+    }
 }
 
 using FlexItemSpan = std::span<FlexItem>;
@@ -453,6 +482,10 @@ void FlexibleBox::layout(FragmentBuilder* fragmentainer)
     }
 
     const auto lineBreakLength = computeMainContentSize(maxHypotheticalMainSize);
+    const auto flexDirection = style()->flexDirection();
+    const auto flexWrap = style()->flexWrap();
+    const auto justifyContent = style()->justifyContent();
+    const auto alignContent = style()->alignContent();
 
     auto it = m_items.begin();
     auto end = m_items.end();
@@ -586,7 +619,7 @@ void FlexibleBox::layout(FragmentBuilder* fragmentainer)
         }
 
         auto mainOffset = borderAndPaddingStart();
-        switch(m_justifyContent) {
+        switch(justifyContent) {
         case AlignContent::FlexEnd:
             mainOffset += availableSpace;
             break;
@@ -635,7 +668,7 @@ void FlexibleBox::layout(FragmentBuilder* fragmentainer)
             }
 
             mainOffset += item.marginStart();
-            switch(m_flexDirection) {
+            switch(flexDirection) {
             case FlexDirection::Row:
                 child->setX(mainOffset);
                 break;
@@ -655,7 +688,7 @@ void FlexibleBox::layout(FragmentBuilder* fragmentainer)
             if(i != items.size() - 1) {
                 mainOffset += m_gapBetweenItems;
                 if(availableSpace > 0 && items.size() > 1) {
-                    switch(m_justifyContent) {
+                    switch(justifyContent) {
                     case AlignContent::SpaceAround:
                         mainOffset += availableSpace / items.size();
                         break;
@@ -723,7 +756,7 @@ void FlexibleBox::layout(FragmentBuilder* fragmentainer)
         availableSpace -= m_gapBetweenLines * (lines.size() - 1);
 
         float lineOffset = 0;
-        switch(m_alignContent) {
+        switch(alignContent) {
         case AlignContent::FlexEnd:
             lineOffset += availableSpace;
             break;
@@ -753,7 +786,7 @@ void FlexibleBox::layout(FragmentBuilder* fragmentainer)
                 }
             }
 
-            if(m_alignContent == AlignContent::Stretch && availableSpace > 0) {
+            if(alignContent == AlignContent::Stretch && availableSpace > 0) {
                 auto lineSize = availableSpace / lines.size();
                 line.setCrossSize(lineSize + line.crossSize());
                 lineOffset += lineSize;
@@ -762,7 +795,7 @@ void FlexibleBox::layout(FragmentBuilder* fragmentainer)
             if(lines.size() > 1) {
                 lineOffset += m_gapBetweenLines;
                 if(availableSpace > 0) {
-                    switch(m_alignContent) {
+                    switch(alignContent) {
                     case AlignContent::SpaceAround:
                         lineOffset += availableSpace / lines.size();
                         break;
@@ -852,7 +885,7 @@ void FlexibleBox::layout(FragmentBuilder* fragmentainer)
 
             if(align == AlignItem::Stretch || (align == AlignItem::Baseline && !isHorizontalFlow()))
                 align = AlignItem::FlexStart;
-            if(m_flexWrap == FlexWrap::WrapReverse) {
+            if(flexWrap == FlexWrap::WrapReverse) {
                 if(align == AlignItem::FlexStart) {
                     align = AlignItem::FlexEnd;
                 } else if(align == AlignItem::FlexEnd) {
@@ -878,7 +911,7 @@ void FlexibleBox::layout(FragmentBuilder* fragmentainer)
         }
     }
 
-    if(m_flexWrap == FlexWrap::WrapReverse) {
+    if(flexWrap == FlexWrap::WrapReverse) {
         auto availableSpace = availableCrossSize();
         for(const auto& line : lines) {
             auto originalOffset = line.crossOffset() - borderAndPaddingBefore();
