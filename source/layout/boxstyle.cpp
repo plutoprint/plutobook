@@ -2087,19 +2087,9 @@ RefPtr<CSSValue> BoxStyle::resolveLength(const RefPtr<CSSValue>& value) const
     case CSSLengthUnits::Millimeters:
     case CSSLengthUnits::Inches:
         return value;
-    case CSSLengthUnits::ViewportWidth:
-    case CSSLengthUnits::ViewportHeight:
-    case CSSLengthUnits::ViewportMin:
-    case CSSLengthUnits::ViewportMax:
-    case CSSLengthUnits::Ems:
-    case CSSLengthUnits::Exs:
-    case CSSLengthUnits::Chs:
-    case CSSLengthUnits::Rems:
-        break;
+    default:
+        return CSSLengthValue::create(heap(), convertLengthValue(length));
     }
-
-    const CSSLengthResolver resolver(document(), font());
-    return CSSLengthValue::create(heap(), resolver.resolveLength(length));
 }
 
 RefPtr<CSSValue> BoxStyle::resolveCalc(const RefPtr<CSSValue>& value) const
