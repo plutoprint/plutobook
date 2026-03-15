@@ -3392,67 +3392,37 @@ BoxStyle::BoxStyle(Node* node, const BoxStyle* parentStyle, PseudoType pseudoTyp
         m_writingMode = parentStyle->writingMode();
         for(const auto& [id, value] : parentStyle->properties()) {
             switch(id) {
-            case CSSPropertyID::BorderCollapse:
-            case CSSPropertyID::CaptionSide:
-            case CSSPropertyID::ClipRule:
-            case CSSPropertyID::Color:
-            case CSSPropertyID::Direction:
-            case CSSPropertyID::DominantBaseline:
-            case CSSPropertyID::EmptyCells:
             case CSSPropertyID::Fill:
             case CSSPropertyID::FillOpacity:
-            case CSSPropertyID::FillRule:
-            case CSSPropertyID::FontFamily:
             case CSSPropertyID::FontFeatureSettings:
             case CSSPropertyID::FontKerning:
-            case CSSPropertyID::FontSize:
-            case CSSPropertyID::FontStretch:
-            case CSSPropertyID::FontStyle:
             case CSSPropertyID::FontVariantCaps:
             case CSSPropertyID::FontVariantEastAsian:
-            case CSSPropertyID::FontVariantEmoji:
             case CSSPropertyID::FontVariantLigatures:
             case CSSPropertyID::FontVariantNumeric:
             case CSSPropertyID::FontVariantPosition:
-            case CSSPropertyID::FontVariationSettings:
-            case CSSPropertyID::FontWeight:
-            case CSSPropertyID::Hyphens:
-            case CSSPropertyID::Lang:
             case CSSPropertyID::LetterSpacing:
-            case CSSPropertyID::LineHeight:
             case CSSPropertyID::ListStyleImage:
-            case CSSPropertyID::ListStylePosition:
             case CSSPropertyID::ListStyleType:
             case CSSPropertyID::MarkerEnd:
             case CSSPropertyID::MarkerMid:
             case CSSPropertyID::MarkerStart:
             case CSSPropertyID::Orphans:
-            case CSSPropertyID::OverflowWrap:
             case CSSPropertyID::PaintOrder:
             case CSSPropertyID::Quotes:
             case CSSPropertyID::Stroke:
             case CSSPropertyID::StrokeDasharray:
             case CSSPropertyID::StrokeDashoffset:
-            case CSSPropertyID::StrokeLinecap:
-            case CSSPropertyID::StrokeLinejoin:
             case CSSPropertyID::StrokeMiterlimit:
             case CSSPropertyID::StrokeOpacity:
             case CSSPropertyID::StrokeWidth:
             case CSSPropertyID::TabSize:
-            case CSSPropertyID::TextAlign:
-            case CSSPropertyID::TextAnchor:
             case CSSPropertyID::TextDecorationColor:
             case CSSPropertyID::TextDecorationLine:
             case CSSPropertyID::TextDecorationStyle:
             case CSSPropertyID::TextIndent:
-            case CSSPropertyID::TextOrientation:
-            case CSSPropertyID::TextTransform:
-            case CSSPropertyID::Visibility:
-            case CSSPropertyID::WhiteSpace:
             case CSSPropertyID::Widows:
-            case CSSPropertyID::WordBreak:
             case CSSPropertyID::WordSpacing:
-            case CSSPropertyID::WritingMode:
                 m_properties.insert_or_assign(id, value);
                 break;
             default:
