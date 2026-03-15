@@ -16,7 +16,8 @@
 
 namespace plutobook {
 
-using SVGPropertyMap = std::pmr::map<GlobalString, SVGProperty*>;
+using SVGPropertyEntry = std::pair<GlobalString, SVGProperty*>;
+using SVGPropertyList = std::pmr::forward_list<SVGPropertyEntry>;
 
 class SVGResourceContainerBox;
 class SVGResourceClipperBox;
@@ -40,7 +41,7 @@ public:
     Box* createBox(const RefPtr<BoxStyle>& style) override { return nullptr; }
 
 private:
-    SVGPropertyMap m_properties;
+    SVGPropertyList m_properties;
 };
 
 template<>

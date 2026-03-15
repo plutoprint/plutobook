@@ -103,15 +103,18 @@ void SVGElement::collectAttributeStyle(std::string& output, const GlobalString& 
 
 void SVGElement::addProperty(const GlobalString& name, SVGProperty& value)
 {
-    m_properties.emplace(name, &value);
+    m_properties.emplace_front(name, &value);
 }
 
 SVGProperty* SVGElement::getProperty(const GlobalString& name) const
 {
-    auto it = m_properties.find(name);
-    if(it == m_properties.end())
-        return nullptr;
-    return it->second;
+    for(const auto& entry : m_properties) {
+        if(entry.first == name) {
+            return entry.second;
+        }
+    }
+
+    return nullptr;
 }
 
 Size SVGElement::currentViewportSize() const
