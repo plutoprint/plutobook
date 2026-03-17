@@ -3706,14 +3706,12 @@ RefPtr<CSSValue> CSSParser::consumeTransformValue(CSSTokenStream& input)
     }
 
     case CSSFunctionID::Matrix: {
-        int count = 6;
-        while(count > 0) {
+        for(int i = 0; i < 6; ++i) {
             auto value = consumeNumber(block, true);
             if(value == nullptr)
                 return nullptr;
-            count -= 1;
-            if(count > 0 && block->type() == CSSToken::Type::Comma)
-                block.consumeIncludingWhitespace();
+            if(i < 5 && !block.consumeCommaIncludingWhitespace())
+                return nullptr;
             values.push_back(std::move(value));
         }
 
