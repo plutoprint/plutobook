@@ -42,10 +42,6 @@ public:
     bool isSVGRootNode() const;
     bool isOfType(const GlobalString& namespaceURI, const GlobalString& tagName) const;
 
-    bool inHTMLDocument() const;
-    bool inSVGDocument() const;
-    bool inXMLDocument() const;
-
     const GlobalString& namespaceURI() const;
     const GlobalString& tagName() const;
 
@@ -455,10 +451,6 @@ inline bool Node::isRootNode() const
 {
     return this == m_document->rootElement();
 }
-
-inline bool Node::inHTMLDocument() const { return m_document->isHTMLDocument(); }
-inline bool Node::inSVGDocument() const  { return m_document->isSVGDocument(); }
-inline bool Node::inXMLDocument() const  { return m_document->isXMLDocument(); }
 
 inline Heap* Node::heap() const
 {

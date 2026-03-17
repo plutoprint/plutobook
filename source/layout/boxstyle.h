@@ -970,7 +970,7 @@ public:
     CSSValue* get(CSSPropertyID id) const;
     void set(CSSPropertyID id, RefPtr<CSSValue> value);
 
-    bool apply(CSSPropertyID id, const CSSValue& value);
+    bool setValue(CSSPropertyID id, const CSSValue& value);
 
     void reset(CSSPropertyID id);
     void inherit(CSSPropertyID id);

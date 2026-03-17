@@ -1083,7 +1083,6 @@ public:
     static RefPtr<CSSImageValue> create(Heap* heap, Url value);
 
     const Url& value() const { return m_value; }
-    const RefPtr<Image>& image() const { return m_image; }
     const RefPtr<Image>& fetch(Document* document) const;
     CSSValueType type() const final { return CSSValueType::Image; }
 

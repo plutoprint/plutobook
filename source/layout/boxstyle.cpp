@@ -902,14 +902,13 @@ Length BoxStyle::strokeDashoffset() const
 LengthList BoxStyle::strokeDasharray() const
 {
     auto value = get(CSSPropertyID::StrokeDasharray);
-    if(value == nullptr || value->id() == CSSValueID::None)
+    if(value == nullptr || value->id() == CSSValueID::None) {
         return LengthList();
-
-    LengthList dashes;
-    for(const auto& dash : to<CSSListValue>(*value)) {
-        dashes.push_back(convertLengthOrPercent(*dash));
     }
 
+    LengthList dashes;
+    for(const auto& dash : to<CSSListValue>(*value))
+        dashes.push_back(convertLengthOrPercent(*dash));
     return dashes;
 }
 
@@ -1131,12 +1130,12 @@ void BoxStyle::setCustom(const HeapString& name, RefPtr<CSSVariableData> value)
 
 void BoxStyle::set(CSSPropertyID id, RefPtr<CSSValue> value)
 {
-    if(apply(id, *value)) {
+    if(setValue(id, *value)) {
         m_properties.insert_or_assign(id, std::move(value));
     }
 }
 
-bool BoxStyle::apply(CSSPropertyID id, const CSSValue& value)
+bool BoxStyle::setValue(CSSPropertyID id, const CSSValue& value)
 {
     switch(id) {
     case CSSPropertyID::Display:
@@ -2222,7 +2221,7 @@ Length BoxStyle::convertWidthOrHeightLength(const CSSValue& value) const
             return Length::FitContent;
         default:
             assert(false);
-        };
+        }
     }
 
     return convertLengthOrPercent(value);
