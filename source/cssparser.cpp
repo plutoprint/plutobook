@@ -3411,20 +3411,22 @@ RefPtr<CSSValue> CSSParser::consumeClip(CSSTokenStream& input)
     auto block = input.consumeBlock();
     block.consumeWhitespace();
     auto top = consumeLengthOrPercentOrAuto(block, true, false);
-    if(top == nullptr)
+    if(top == nullptr) {
         return nullptr;
-    if(block->type() == CSSToken::Type::Comma)
-        block.consumeIncludingWhitespace();
+    }
+
+    auto requiresComma = block.consumeCommaIncludingWhitespace();
+
     auto right = consumeLengthOrPercentOrAuto(block, true, false);
     if(right == nullptr)
         return nullptr;
-    if(block->type() == CSSToken::Type::Comma)
-        block.consumeIncludingWhitespace();
+    if(requiresComma && !block.consumeCommaIncludingWhitespace())
+        return nullptr;
     auto bottom = consumeLengthOrPercentOrAuto(block, true, false);
     if(bottom == nullptr)
         return nullptr;
-    if(block->type() == CSSToken::Type::Comma)
-        block.consumeIncludingWhitespace();
+    if(requiresComma && !block.consumeCommaIncludingWhitespace())
+        return nullptr;
     auto left = consumeLengthOrPercentOrAuto(block, true, false);
     if(left == nullptr || !block.empty())
         return nullptr;
