@@ -3658,8 +3658,7 @@ RefPtr<CSSValue> CSSParser::consumeTransformValue(CSSTokenStream& input)
         if(value == nullptr)
             return nullptr;
         values.push_back(std::move(value));
-        if(id.value() == CSSFunctionID::Skew && block->type() == CSSToken::Type::Comma) {
-            block.consumeIncludingWhitespace();
+        if(id.value() == CSSFunctionID::Skew && block.consumeCommaIncludingWhitespace()) {
             auto value = consumeAngle(block);
             if(value == nullptr)
                 return nullptr;
@@ -3676,8 +3675,7 @@ RefPtr<CSSValue> CSSParser::consumeTransformValue(CSSTokenStream& input)
         if(value == nullptr)
             return nullptr;
         values.push_back(std::move(value));
-        if(id.value() == CSSFunctionID::Scale && block->type() == CSSToken::Type::Comma) {
-            block.consumeIncludingWhitespace();
+        if(id.value() == CSSFunctionID::Scale && block.consumeCommaIncludingWhitespace()) {
             auto value = consumeNumberOrPercent(block, true);
             if(value == nullptr)
                 return nullptr;
@@ -3694,8 +3692,7 @@ RefPtr<CSSValue> CSSParser::consumeTransformValue(CSSTokenStream& input)
         if(value == nullptr)
             return nullptr;
         values.push_back(std::move(value));
-        if(id.value() == CSSFunctionID::Translate && block->type() == CSSToken::Type::Comma) {
-            block.consumeIncludingWhitespace();
+        if(id.value() == CSSFunctionID::Translate && block.consumeCommaIncludingWhitespace()) {
             auto value = consumeLengthOrPercent(block, true, false);
             if(value == nullptr)
                 return nullptr;
