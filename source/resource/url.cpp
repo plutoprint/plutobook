@@ -329,8 +329,8 @@ Url::Url(std::string_view input)
     int portBegin = 0;
     int portEnd = 0;
 
-    bool hierarchical = peek(schemeEnd + 1) == '/';
-    if(hierarchical && peek(schemeEnd + 2) == '/') {
+    m_hierarchical = peek(schemeEnd + 1) == '/';
+    if(m_hierarchical && peek(schemeEnd + 2) == '/') {
         userBegin = schemeEnd + 3;
         userEnd = userBegin;
 
@@ -471,7 +471,7 @@ Url::Url(std::string_view input)
         m_portEnd = m_hostEnd;
     }
 
-    if(pathBegin == pathEnd && hierarchical && (isHttp || isHttps || isFile))
+    if(pathBegin == pathEnd && m_hierarchical && (isHttp || isHttps || isFile))
         m_value += '/';
     auto append = [&](int begin, int end) {
         constexpr char hexdigits[] = "0123456789ABCDEF";
@@ -487,7 +487,7 @@ Url::Url(std::string_view input)
         }
     };
 
-    if(!hierarchical) {
+    if(!m_hierarchical) {
         append(pathBegin, pathEnd);
     } else {
         auto begin = m_value.length();
@@ -538,15 +538,6 @@ Url::Url(std::string_view input)
         m_value.erase(out, end - out);
     }
 
-    if(!hierarchical) {
-        m_baseEnd = m_portEnd;
-    } else {
-        m_baseEnd = m_value.length();
-        while(m_baseEnd > m_portEnd && m_value[m_baseEnd - 1] != '/') {
-            --m_baseEnd;
-        }
-    }
-
     m_pathEnd = m_value.length();
     append(queryBegin, queryEnd);
     m_queryEnd = m_value.length();
@@ -595,14 +586,14 @@ Url Url::complete(std::string_view input) const
         if(it != end && *it == ':') {
             auto length = it - input.begin();
             ++it;
-            if(it == end || *it == '/' || !isHierarchical() || !protocolIs(input.substr(0, length)))
+            if(it == end || *it == '/' || !m_hierarchical || !protocolIs(input.substr(0, length)))
                 return Url(input);
             input.remove_prefix(length + 1);
         }
     }
 
     std::string relative(input);
-    if(!isHierarchical()) {
+    if(!m_hierarchical) {
         if(!relative.empty() && relative.front() == '#')
             return Url(m_value.substr(0, m_queryEnd) + relative);
         return Url();
@@ -620,7 +611,9 @@ Url Url::complete(std::string_view input) const
         return Url(m_value.substr(0, m_portEnd) + relative);
     }
 
-    auto value = m_value.substr(0, m_baseEnd);
+    auto value = m_value.substr(0, m_pathEnd);
+    while(m_portEnd < value.length() && value.back() != '/')
+        value.pop_back();
     if(m_portEnd == value.length())
         value += '/';
     return Url(value + relative);
