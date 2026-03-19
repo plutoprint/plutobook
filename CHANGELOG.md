@@ -1,5 +1,23 @@
 # Changelog
 
+## PlutoBook 0.16.0 (2026-03-19)
+
+- Add full CSS `:lang()` locale support
+- Add language-specific default quotes
+- Fix `calc()` not preserving unitless results
+- Fix font fallback for grapheme clusters
+- Fix emoji variation selector detection
+- Fallback to monochrome when color glyphs are unavailable
+- Force layout during pagination to fix mismatched layouts
+- Include query component in base URL resolution
+- Enforce strict parsing for CSS `matrix()` and `rect()`
+- Reduce memory usage by avoiding redundant CSS property storage
+
+Backers and sponsors:
+
+- [Sveltware Solutions](https://github.com/sveltware)
+- [Ashish Kulkarni](https://github.com/ashkulz)
+
 ## PlutoBook 0.15.0 (2026-02-17)
 
 - Add support for emoji variation selectors
