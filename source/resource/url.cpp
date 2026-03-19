@@ -296,13 +296,13 @@ Url::Url(std::string_view input)
         return;
     auto inputData = input.data();
     auto inputLength = input.length();
-    auto peek = [&](int index) {
+    auto peek = [&](unsigned index) {
         if(index < inputLength)
             return inputData[index];
         return char(0);
     };
 
-    int schemeEnd = 1;
+    unsigned schemeEnd = 1;
     while(isSchemeChar(peek(schemeEnd)))
         ++schemeEnd;
     if(peek(schemeEnd) != ':') {
@@ -320,21 +320,21 @@ Url::Url(std::string_view input)
         isFile = true;
     }
 
-    int userBegin = 0;
-    int userEnd = 0;
-    int passwordBegin = 0;
-    int passwordEnd = 0;
-    int hostBegin = 0;
-    int hostEnd = 0;
-    int portBegin = 0;
-    int portEnd = 0;
+    unsigned userBegin = 0;
+    unsigned userEnd = 0;
+    unsigned passwordBegin = 0;
+    unsigned passwordEnd = 0;
+    unsigned hostBegin = 0;
+    unsigned hostEnd = 0;
+    unsigned portBegin = 0;
+    unsigned portEnd = 0;
 
     m_hierarchical = peek(schemeEnd + 1) == '/';
     if(m_hierarchical && peek(schemeEnd + 2) == '/') {
         userBegin = schemeEnd + 3;
         userEnd = userBegin;
 
-        int colon = 0;
+        unsigned colon = 0;
         while(isUserInfoChar(peek(userEnd))) {
             if(colon == 0 && peek(userEnd) == ':')
                 colon = userEnd;
@@ -411,20 +411,20 @@ Url::Url(std::string_view input)
         portEnd = portBegin;
     }
 
-    int pathBegin = portEnd;
-    int pathEnd = pathBegin;
+    unsigned pathBegin = portEnd;
+    unsigned pathEnd = pathBegin;
     while(pathEnd < inputLength && inputData[pathEnd] != '?' && inputData[pathEnd] != '#')
         ++pathEnd;
-    int queryBegin = pathEnd;
-    int queryEnd = queryBegin;
+    unsigned queryBegin = pathEnd;
+    unsigned queryEnd = queryBegin;
     if(peek(queryBegin) == '?') {
         do {
             ++queryEnd;
         } while(queryEnd < inputLength && inputData[queryEnd] != '#');
     }
 
-    int fragmentBegin = queryEnd;
-    int fragmentEnd = fragmentBegin;
+    unsigned fragmentBegin = queryEnd;
+    unsigned fragmentEnd = fragmentBegin;
     if(peek(fragmentBegin) == '#') {
         ++fragmentBegin;
         fragmentEnd = fragmentBegin;
@@ -434,7 +434,7 @@ Url::Url(std::string_view input)
     }
 
     m_value.reserve(fragmentEnd);
-    for(int i = 0; i < schemeEnd; ++i)
+    for(unsigned i = 0; i < schemeEnd; ++i)
         m_value += toLower(inputData[i]);
     m_schemeEnd = m_value.length();
     m_value += ':';
@@ -454,7 +454,7 @@ Url::Url(std::string_view input)
         m_passwordEnd = m_value.length();
         if(m_userBegin != m_passwordEnd)
             m_value += '@';
-        for(int i = hostBegin; i < hostEnd; ++i)
+        for(unsigned i = hostBegin; i < hostEnd; ++i)
             m_value += toLower(inputData[i]);
         m_hostEnd = m_value.length();
         if(hostEnd != portBegin) {
@@ -473,9 +473,9 @@ Url::Url(std::string_view input)
 
     if(pathBegin == pathEnd && m_hierarchical && (isHttp || isHttps || isFile))
         m_value += '/';
-    auto append = [&](int begin, int end) {
+    auto append = [&](unsigned begin, unsigned end) {
         constexpr char hexdigits[] = "0123456789ABCDEF";
-        for(int i = begin; i < end; ++i) {
+        for(unsigned i = begin; i < end; ++i) {
             const uint8_t cc = inputData[i];
             if(cc == '%' || cc == '?' || !isBadChar(cc)) {
                 m_value.push_back(cc);
@@ -495,7 +495,7 @@ Url::Url(std::string_view input)
         auto end = m_value.length();
 
         auto in = begin;
-        auto peek = [&](int index) {
+        auto peek = [&](unsigned index) {
             index += in;
             if(index < end)
                 return m_value[index];
