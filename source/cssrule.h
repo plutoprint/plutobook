@@ -869,9 +869,13 @@ enum class CSSLengthUnits : uint8_t {
     ViewportMin,
     ViewportMax,
     Ems,
+    Rems,
     Exs,
+    Rexs,
     Chs,
-    Rems
+    Rchs,
+    Lhs,
+    Rlhs
 };
 
 class CSSLengthValue final : public CSSValue {
@@ -914,12 +918,20 @@ public:
 
 private:
     float emFontSize() const;
-    float exFontSize() const;
-    float chFontSize() const;
     float remFontSize() const;
+
+    float exFontSize() const;
+    float rexFontSize() const;
+
+    float chFontSize() const;
+    float rchFontSize() const;
+
+    float lineHeight() const;
+    float rootLineHeight() const;
 
     float viewportWidth() const;
     float viewportHeight() const;
+
     float viewportMin() const;
     float viewportMax() const;
 

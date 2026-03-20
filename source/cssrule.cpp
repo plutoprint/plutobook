@@ -70,12 +70,20 @@ float CSSLengthResolver::resolveLength(float value, CSSLengthUnits units) const
         return value * viewportMax() / 100.f;
     case CSSLengthUnits::Ems:
         return value * emFontSize();
-    case CSSLengthUnits::Exs:
-        return value * exFontSize();
-    case CSSLengthUnits::Chs:
-        return value * chFontSize();
     case CSSLengthUnits::Rems:
         return value * remFontSize();
+    case CSSLengthUnits::Exs:
+        return value * exFontSize();
+    case CSSLengthUnits::Rexs:
+        return value * rexFontSize();
+    case CSSLengthUnits::Chs:
+        return value * chFontSize();
+    case CSSLengthUnits::Rchs:
+        return value * rchFontSize();
+    case CSSLengthUnits::Lhs:
+        return value * lineHeight();
+    case CSSLengthUnits::Rlhs:
+        return value * rootLineHeight();
     default:
         assert(false);
     }
@@ -90,11 +98,25 @@ float CSSLengthResolver::emFontSize() const
     return m_style->fontSize();
 }
 
+float CSSLengthResolver::remFontSize() const
+{
+    if(auto style = m_document->rootStyle())
+        return style->fontSize();
+    return emFontSize();
+}
+
 float CSSLengthResolver::exFontSize() const
 {
     if(m_style == nullptr)
         return kMediumFontSize / 2.f;
     return m_style->exFontSize();
+}
+
+float CSSLengthResolver::rexFontSize() const
+{
+    if(auto style = m_document->rootStyle())
+        return style->exFontSize();
+    return exFontSize();
 }
 
 float CSSLengthResolver::chFontSize() const
@@ -104,11 +126,25 @@ float CSSLengthResolver::chFontSize() const
     return m_style->chFontSize();
 }
 
-float CSSLengthResolver::remFontSize() const
+float CSSLengthResolver::rchFontSize() const
 {
     if(auto style = m_document->rootStyle())
-        return style->fontSize();
-    return emFontSize();
+        return style->chFontSize();
+    return chFontSize();
+}
+
+float CSSLengthResolver::lineHeight() const
+{
+    if(m_style == nullptr)
+        return 0.f;
+    return m_style->lineHeightValue();
+}
+
+float CSSLengthResolver::rootLineHeight() const
+{
+    if(auto style = m_document->rootStyle())
+        return style->lineHeightValue();
+    return lineHeight();
 }
 
 float CSSLengthResolver::viewportWidth() const

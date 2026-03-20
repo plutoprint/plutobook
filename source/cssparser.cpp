@@ -2065,9 +2065,13 @@ static std::optional<CSSLengthUnits> matchUnitType(std::string_view name)
         {"vmin", CSSLengthUnits::ViewportMin},
         {"vmax", CSSLengthUnits::ViewportMax},
         {"em", CSSLengthUnits::Ems},
+        {"rem", CSSLengthUnits::Rems},
         {"ex", CSSLengthUnits::Exs},
+        {"rex", CSSLengthUnits::Rexs},
         {"ch", CSSLengthUnits::Chs},
-        {"rem", CSSLengthUnits::Rems}
+        {"rch", CSSLengthUnits::Rchs},
+        {"lh", CSSLengthUnits::Lhs},
+        {"rlh", CSSLengthUnits::Rlhs}
     };
 
     return matchIdent(table, name);
