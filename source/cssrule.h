@@ -861,9 +861,9 @@ enum class CSSLengthUnits : uint8_t {
     Pixels,
     Points,
     Picas,
+    Inches,
     Centimeters,
     Millimeters,
-    Inches,
     ViewportWidth,
     ViewportHeight,
     ViewportMin,
@@ -901,12 +901,12 @@ struct is_a<CSSLengthValue> {
     static bool check(const CSSValue& value) { return value.type() == CSSValueType::Length; }
 };
 
-class Font;
 class Document;
 
 class CSSLengthResolver {
 public:
-    CSSLengthResolver(const Document* document, const Font* font);
+    explicit CSSLengthResolver(const BoxStyle* style);
+    explicit CSSLengthResolver(const Document* document);
 
     float resolveLength(const CSSValue& value) const;
     float resolveLength(const CSSLengthValue& length) const;
@@ -923,8 +923,8 @@ private:
     float viewportMin() const;
     float viewportMax() const;
 
+    const BoxStyle* m_style;
     const Document* m_document;
-    const Font* m_font;
 };
 
 enum class CSSCalcOperator : uint8_t {

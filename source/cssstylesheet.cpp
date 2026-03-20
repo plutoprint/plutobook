@@ -415,8 +415,7 @@ void StyleBuilder::buildStyle(BoxStyle* newStyle)
     newStyle->setFontDescription(fontDescription());
 
     for(const auto& property : m_properties) {
-        const auto id = property.id();
-        switch(id) {
+        switch(property.id()) {
         case CSSPropertyID::Custom:
         case CSSPropertyID::FontFamily:
         case CSSPropertyID::FontSize:
@@ -425,29 +424,11 @@ void StyleBuilder::buildStyle(BoxStyle* newStyle)
         case CSSPropertyID::FontStyle:
         case CSSPropertyID::FontVariationSettings:
         case CSSPropertyID::Lang:
-            continue;
+            break;
         default:
+            newStyle->set(property.id(), property.value());
             break;
         }
-
-        auto value = property.value();
-        if(is<CSSUnsetValue>(*value) || is<CSSVariableReferenceValue>(*value))
-            continue;
-        if(is<CSSInitialValue>(*value)) {
-            newStyle->reset(id);
-            continue;
-        }
-
-        if(is<CSSInheritValue>(*value)) {
-            newStyle->inherit(id);
-            continue;
-        }
-
-        if(is<CSSCalcValue>(*value) && !(value = newStyle->resolveCalc(value)))
-            continue;
-        if(is<CSSLengthValue>(*value))
-            value = newStyle->resolveLength(value);
-        newStyle->set(id, std::move(value));
     }
 }
 

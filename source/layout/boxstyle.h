@@ -700,9 +700,7 @@ public:
     PseudoType pseudoType() const { return m_pseudoType; }
     const CSSPropertyMap& properties() const { return m_properties; }
     const CSSCustomPropertyMap* customProperties() const { return m_customProperties.get(); }
-
-    const RefPtr<Font>& font() const { return m_font; }
-    void setFont(RefPtr<Font> font);
+    Font* font() const { return m_font.get(); }
 
     float fontAscent() const;
     float fontDescent() const;
@@ -970,7 +968,7 @@ public:
     CSSValue* get(CSSPropertyID id) const;
     void set(CSSPropertyID id, RefPtr<CSSValue> value);
 
-    bool setValue(CSSPropertyID id, const CSSValue& value);
+    bool apply(CSSPropertyID id, const CSSValue& value);
 
     void reset(CSSPropertyID id);
     void inherit(CSSPropertyID id);

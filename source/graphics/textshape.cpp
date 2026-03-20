@@ -156,7 +156,7 @@ constexpr int kMaxCharacters = kMaxGlyphs;
 RefPtr<TextShape> TextShape::createForText(const UString& text, Direction direction, bool disableSpacing, const BoxStyle* style)
 {
     assert(!text.isEmpty());
-    const Font* font = style->font();
+    const auto* font = style->font();
     const auto& lang = font->lang();
     auto fontFeatures = style->fontFeatures();
     auto fontVariantEmoji = style->fontVariantEmoji();

@@ -19,8 +19,13 @@
 
 namespace plutobook {
 
-CSSLengthResolver::CSSLengthResolver(const Document* document, const Font* font)
-    : m_document(document), m_font(font)
+CSSLengthResolver::CSSLengthResolver(const Document* document)
+    : m_style(nullptr), m_document(document)
+{
+}
+
+CSSLengthResolver::CSSLengthResolver(const BoxStyle* style)
+    : m_style(style), m_document(style->document())
 {
 }
 
@@ -45,24 +50,16 @@ float CSSLengthResolver::resolveLength(float value, CSSLengthUnits units) const
     case CSSLengthUnits::None:
     case CSSLengthUnits::Pixels:
         return value;
+    case CSSLengthUnits::Points:
+        return value * dpi / 72.f;
+    case CSSLengthUnits::Picas:
+        return value * dpi / 6.f;
     case CSSLengthUnits::Inches:
         return value * dpi;
     case CSSLengthUnits::Centimeters:
         return value * dpi / 2.54f;
     case CSSLengthUnits::Millimeters:
         return value * dpi / 25.4f;
-    case CSSLengthUnits::Points:
-        return value * dpi / 72.f;
-    case CSSLengthUnits::Picas:
-        return value * dpi / 6.f;
-    case CSSLengthUnits::Ems:
-        return value * emFontSize();
-    case CSSLengthUnits::Exs:
-        return value * exFontSize();
-    case CSSLengthUnits::Rems:
-        return value * remFontSize();
-    case CSSLengthUnits::Chs:
-        return value * chFontSize();
     case CSSLengthUnits::ViewportWidth:
         return value * viewportWidth() / 100.f;
     case CSSLengthUnits::ViewportHeight:
@@ -71,6 +68,14 @@ float CSSLengthResolver::resolveLength(float value, CSSLengthUnits units) const
         return value * viewportMin() / 100.f;
     case CSSLengthUnits::ViewportMax:
         return value * viewportMax() / 100.f;
+    case CSSLengthUnits::Ems:
+        return value * emFontSize();
+    case CSSLengthUnits::Exs:
+        return value * exFontSize();
+    case CSSLengthUnits::Chs:
+        return value * chFontSize();
+    case CSSLengthUnits::Rems:
+        return value * remFontSize();
     default:
         assert(false);
     }
@@ -80,64 +85,50 @@ float CSSLengthResolver::resolveLength(float value, CSSLengthUnits units) const
 
 float CSSLengthResolver::emFontSize() const
 {
-    if(m_font == nullptr)
+    if(m_style == nullptr)
         return kMediumFontSize;
-    return m_font->size();
+    return m_style->fontSize();
 }
 
 float CSSLengthResolver::exFontSize() const
 {
-    if(m_font == nullptr)
+    if(m_style == nullptr)
         return kMediumFontSize / 2.f;
-    if(auto fontData = m_font->primaryFont())
-        return fontData->xHeight();
-    return m_font->size() / 2.f;
+    return m_style->exFontSize();
 }
 
 float CSSLengthResolver::chFontSize() const
 {
-    if(m_font == nullptr)
+    if(m_style == nullptr)
         return kMediumFontSize / 2.f;
-    if(auto fontData = m_font->primaryFont())
-        return fontData->zeroWidth();
-    return m_font->size() / 2.f;
+    return m_style->chFontSize();
 }
 
 float CSSLengthResolver::remFontSize() const
 {
-    if(m_document == nullptr)
-        return kMediumFontSize;
     if(auto style = m_document->rootStyle())
         return style->fontSize();
-    return kMediumFontSize;
+    return emFontSize();
 }
 
 float CSSLengthResolver::viewportWidth() const
 {
-    if(m_document)
-        return m_document->viewportWidth();
-    return 0.f;
+    return m_document->viewportWidth();
 }
 
 float CSSLengthResolver::viewportHeight() const
 {
-    if(m_document)
-        return m_document->viewportHeight();
-    return 0.f;
+    return m_document->viewportHeight();
 }
 
 float CSSLengthResolver::viewportMin() const
 {
-    if(m_document)
-        return std::min(m_document->viewportWidth(), m_document->viewportHeight());
-    return 0.f;
+    return std::min(m_document->viewportWidth(), m_document->viewportHeight());
 }
 
 float CSSLengthResolver::viewportMax() const
 {
-    if(m_document)
-        return std::max(m_document->viewportWidth(), m_document->viewportHeight());
-    return 0.f;
+    return std::max(m_document->viewportWidth(), m_document->viewportHeight());
 }
 
 std::optional<CSSCalc> CSSCalcValue::resolve(const CSSLengthResolver& resolver) const
@@ -378,8 +369,8 @@ RefPtr<CSSImageValue> CSSImageValue::create(Heap* heap, Url value)
 const RefPtr<Image>& CSSImageValue::fetch(Document* document) const
 {
     if(m_image == nullptr) {
-        if(auto imageResource = document->fetchImageResource(m_value)) {
-            m_image = imageResource->image();
+        if(auto resource = document->fetchImageResource(m_value)) {
+            m_image = resource->image();
         }
     }
 

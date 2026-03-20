@@ -56,11 +56,6 @@ Book* BoxStyle::book() const
     return document()->book();
 }
 
-void BoxStyle::setFont(RefPtr<Font> font)
-{
-    m_font = std::move(font);
-}
-
 float BoxStyle::fontAscent() const
 {
     if(auto fontData = m_font->primaryFont())
@@ -1130,12 +1125,30 @@ void BoxStyle::setCustom(const HeapString& name, RefPtr<CSSVariableData> value)
 
 void BoxStyle::set(CSSPropertyID id, RefPtr<CSSValue> value)
 {
-    if(setValue(id, *value)) {
+    switch(value->type()) {
+    case CSSValueType::Initial:
+        return reset(id);
+    case CSSValueType::Inherit:
+        return inherit(id);
+    case CSSValueType::Unset:
+    case CSSValueType::VariableReference:
+        return;
+    case CSSValueType::Length:
+        value = resolveLength(value);
+        break;
+    case CSSValueType::Calc:
+        value = resolveCalc(value);
+        break;
+    default:
+        break;
+    }
+
+    if(value && apply(id, *value)) {
         m_properties.insert_or_assign(id, std::move(value));
     }
 }
 
-bool BoxStyle::setValue(CSSPropertyID id, const CSSValue& value)
+bool BoxStyle::apply(CSSPropertyID id, const CSSValue& value)
 {
     switch(id) {
     case CSSPropertyID::Display:
@@ -2082,9 +2095,9 @@ RefPtr<CSSValue> BoxStyle::resolveLength(const RefPtr<CSSValue>& value) const
     case CSSLengthUnits::Pixels:
     case CSSLengthUnits::Points:
     case CSSLengthUnits::Picas:
+    case CSSLengthUnits::Inches:
     case CSSLengthUnits::Centimeters:
     case CSSLengthUnits::Millimeters:
-    case CSSLengthUnits::Inches:
         return value;
     default:
         return CSSLengthValue::create(heap(), convertLengthValue(length));
@@ -2093,16 +2106,15 @@ RefPtr<CSSValue> BoxStyle::resolveLength(const RefPtr<CSSValue>& value) const
 
 RefPtr<CSSValue> BoxStyle::resolveCalc(const RefPtr<CSSValue>& value) const
 {
-    const auto& calc = to<CSSCalcValue>(*value);
-    const CSSLengthResolver resolver(document(), font());
-    if(auto result = calc.resolve(resolver))
+    const CSSLengthResolver resolver(this);
+    if(auto result = to<CSSCalcValue>(*value).resolve(resolver))
         return CSSLengthValue::create(heap(), result->value, result->units);
     return nullptr;
 }
 
 float BoxStyle::convertLengthValue(const CSSValue& value) const
 {
-    return CSSLengthResolver(document(), font()).resolveLength(value);
+    return CSSLengthResolver(this).resolveLength(value);
 }
 
 float BoxStyle::convertLineWidth(const CSSValue& value) const
