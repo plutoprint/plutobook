@@ -121,9 +121,7 @@ enum class SVGLengthType : uint8_t {
     Millimeters,
     Inches,
     Points,
-    Picas,
-    Rems,
-    Chs
+    Picas
 };
 
 enum class SVGLengthDirection : uint8_t {

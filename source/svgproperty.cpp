@@ -252,9 +252,7 @@ bool SVGLength::parse(std::string_view input)
         {"mm", SVGLengthType::Millimeters},
         {"in", SVGLengthType::Inches},
         {"pt", SVGLengthType::Points},
-        {"pc", SVGLengthType::Picas},
-        {"rem", SVGLengthType::Rems},
-        {"ch", SVGLengthType::Chs}
+        {"pc", SVGLengthType::Picas}
     };
 
     for(const auto& entry : entries) {
@@ -293,12 +291,12 @@ float SVGLengthContext::valueForLength(const SVGLength& length) const
     case SVGLengthType::Number:
     case SVGLengthType::Pixels:
         return length.value();
-    case SVGLengthType::Inches:
-        return length.value() * dpi;
     case SVGLengthType::Centimeters:
         return length.value() * dpi / 2.54f;
     case SVGLengthType::Millimeters:
         return length.value() * dpi / 25.4f;
+    case SVGLengthType::Inches:
+        return length.value() * dpi;
     case SVGLengthType::Points:
         return length.value() * dpi / 72.f;
     case SVGLengthType::Picas:
@@ -313,10 +311,6 @@ float SVGLengthContext::valueForLength(const SVGLength& length) const
             return length.value() * style->fontSize();
         case SVGLengthType::Exs:
             return length.value() * style->exFontSize();
-        case SVGLengthType::Rems:
-            return length.value() * style->remFontSize();
-        case SVGLengthType::Chs:
-            return length.value() * style->chFontSize();
         default:
             assert(false);
         }
