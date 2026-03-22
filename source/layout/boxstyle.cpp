@@ -117,6 +117,13 @@ float BoxStyle::chFontSize() const
     return fontSize() / 2.f;
 }
 
+float BoxStyle::capFontSize() const
+{
+    if(auto fontData = m_font->primaryFont())
+        return fontData->capHeight();
+    return 0.f;
+}
+
 float BoxStyle::fontSize() const
 {
     return m_font->size();

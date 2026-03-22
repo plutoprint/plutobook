@@ -370,6 +370,7 @@ RefPtr<SimpleFontData> SimpleFontData::create(cairo_scaled_font_t* font, FcCharS
 
     auto zeroGlyph = FcFreeTypeCharIndex(ftFace, '0');
     auto spaceGlyph = FcFreeTypeCharIndex(ftFace, ' ');
+    auto capGlyph = FcFreeTypeCharIndex(ftFace, 'T');
     auto xGlyph = FcFreeTypeCharIndex(ftFace, 'x');
     auto glyph_extents = [font](unsigned long index) {
         cairo_glyph_t glyph = { index, 0, 0 };
@@ -386,6 +387,7 @@ RefPtr<SimpleFontData> SimpleFontData::create(cairo_scaled_font_t* font, FcCharS
     info.descent = font_extents.descent;
     info.lineGap = font_extents.height - font_extents.ascent - font_extents.descent;
     info.xHeight = glyph_extents(xGlyph).height;
+    info.capHeight = glyph_extents(capGlyph).height;
     info.spaceWidth = glyph_extents(spaceGlyph).x_advance;
     info.zeroWidth = glyph_extents(zeroGlyph).x_advance;
     info.zeroGlyph = zeroGlyph;

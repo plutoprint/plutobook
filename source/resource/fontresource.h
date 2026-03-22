@@ -316,6 +316,7 @@ struct FontDataInfo {
     float descent;
     float lineGap;
     float xHeight;
+    float capHeight;
     float zeroWidth;
     float spaceWidth;
     uint16_t zeroGlyph;
@@ -339,6 +340,7 @@ public:
     float descent() const { return m_info.descent; }
     float height() const { return m_info.ascent + m_info.descent; }
     float xHeight() const { return m_info.xHeight; }
+    float capHeight() const { return m_info.capHeight; }
     float lineGap() const { return m_info.lineGap; }
     float lineSpacing() const { return m_info.ascent + m_info.descent + m_info.lineGap; }
     float zeroWidth() const { return m_info.zeroWidth; }

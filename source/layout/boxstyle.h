@@ -713,6 +713,7 @@ public:
 
     float exFontSize() const;
     float chFontSize() const;
+    float capFontSize() const;
 
     float fontSize() const;
     float fontWeight() const;

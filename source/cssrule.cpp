@@ -80,6 +80,10 @@ float CSSLengthResolver::resolveLength(float value, CSSLengthUnits units) const
         return value * chFontSize();
     case CSSLengthUnits::Rchs:
         return value * rchFontSize();
+    case CSSLengthUnits::Caps:
+        return value * capFontSize();
+    case CSSLengthUnits::Rcaps:
+        return value * rcapFontSize();
     case CSSLengthUnits::Lhs:
         return value * lineHeight();
     case CSSLengthUnits::Rlhs:
@@ -131,6 +135,20 @@ float CSSLengthResolver::rchFontSize() const
     if(auto style = m_document->rootStyle())
         return style->chFontSize();
     return chFontSize();
+}
+
+float CSSLengthResolver::capFontSize() const
+{
+    if(m_style)
+        return m_style->capFontSize();
+    return 0.f;
+}
+
+float CSSLengthResolver::rcapFontSize() const
+{
+    if(auto style = m_document->rootStyle())
+        return style->capFontSize();
+    return capFontSize();
 }
 
 float CSSLengthResolver::lineHeight() const

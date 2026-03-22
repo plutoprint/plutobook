@@ -874,6 +874,8 @@ enum class CSSLengthUnits : uint8_t {
     Rexs,
     Chs,
     Rchs,
+    Caps,
+    Rcaps,
     Lhs,
     Rlhs
 };
@@ -925,6 +927,9 @@ private:
 
     float chFontSize() const;
     float rchFontSize() const;
+
+    float capFontSize() const;
+    float rcapFontSize() const;
 
     float lineHeight() const;
     float rootLineHeight() const;
