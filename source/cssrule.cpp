@@ -80,6 +80,10 @@ float CSSLengthResolver::resolveLength(float value, CSSLengthUnits units) const
         return value * chFontSize();
     case CSSLengthUnits::Rchs:
         return value * rchFontSize();
+    case CSSLengthUnits::Ics:
+        return value * icFontSize();
+    case CSSLengthUnits::Rics:
+        return value * ricFontSize();
     case CSSLengthUnits::Caps:
         return value * capFontSize();
     case CSSLengthUnits::Rcaps:
@@ -134,6 +138,20 @@ float CSSLengthResolver::rchFontSize() const
 {
     if(auto style = m_document->rootStyle())
         return style->chFontSize();
+    return 0.f;
+}
+
+float CSSLengthResolver::icFontSize() const
+{
+    if(m_style)
+        return m_style->icFontSize();
+    return 0.f;
+}
+
+float CSSLengthResolver::ricFontSize() const
+{
+    if(auto style = m_document->rootStyle())
+        return style->icFontSize();
     return 0.f;
 }
 

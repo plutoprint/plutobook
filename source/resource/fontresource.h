@@ -319,8 +319,10 @@ struct FontDataInfo {
     float capHeight;
     float zeroWidth;
     float spaceWidth;
+    float ideogramWidth;
     uint16_t zeroGlyph;
     uint16_t spaceGlyph;
+    uint16_t ideogramGlyph;
     bool hasKerning;
     bool hasColor;
 };
@@ -345,6 +347,7 @@ public:
     float lineSpacing() const { return m_info.ascent + m_info.descent + m_info.lineGap; }
     float zeroWidth() const { return m_info.zeroWidth; }
     float spaceWidth() const { return m_info.spaceWidth; }
+    float ideogramWidth() const { return m_info.ideogramWidth; }
     uint16_t zeroGlyph() const { return m_info.zeroGlyph; }
     uint16_t spaceGlyph() const { return m_info.spaceGlyph; }
 

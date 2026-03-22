@@ -2070,6 +2070,8 @@ static std::optional<CSSLengthUnits> matchUnitType(std::string_view name)
         {"rex", CSSLengthUnits::Rexs},
         {"ch", CSSLengthUnits::Chs},
         {"rch", CSSLengthUnits::Rchs},
+        {"ic", CSSLengthUnits::Ics},
+        {"ric", CSSLengthUnits::Rics},
         {"cap", CSSLengthUnits::Caps},
         {"rcap", CSSLengthUnits::Rcaps},
         {"lh", CSSLengthUnits::Lhs},

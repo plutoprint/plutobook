@@ -136,6 +136,17 @@ float BoxStyle::chFontSize() const
     return fontSize() / 2.f;
 }
 
+float BoxStyle::icFontSize() const
+{
+    if(auto fontData = m_font->primaryFont()) {
+        if(auto icSize = fontData->ideogramWidth()) {
+            return icSize;
+        }
+    }
+
+    return fontSize();
+}
+
 float BoxStyle::fontSize() const
 {
     return m_font->size();

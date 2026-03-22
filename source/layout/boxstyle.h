@@ -714,6 +714,7 @@ public:
     float exFontSize() const;
     float capFontSize() const;
     float chFontSize() const;
+    float icFontSize() const;
 
     float fontSize() const;
     float fontWeight() const;
