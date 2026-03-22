@@ -320,6 +320,7 @@ struct FontDataInfo {
     float spaceWidth;
     uint16_t zeroGlyph;
     uint16_t spaceGlyph;
+    bool hasKerning;
     bool hasColor;
 };
 
@@ -327,8 +328,8 @@ class SimpleFontData final : public FontData {
 public:
     static RefPtr<SimpleFontData> create(cairo_scaled_font_t* font, FcCharSet* charSet, FontFeatureList features);
 
-    hb_font_t* hbFont() const { return m_hbFont; }
     cairo_scaled_font_t* font() const { return m_font; }
+    hb_font_t* hbFont() const { return m_hbFont; }
     const FontDataInfo& info() const { return m_info; }
     const FontFeatureList& features() const { return m_features; }
 

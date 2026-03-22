@@ -390,6 +390,7 @@ RefPtr<SimpleFontData> SimpleFontData::create(cairo_scaled_font_t* font, FcCharS
     info.zeroWidth = glyph_extents(zeroGlyph).x_advance;
     info.zeroGlyph = zeroGlyph;
     info.spaceGlyph = spaceGlyph;
+    info.hasKerning = FT_HAS_KERNING(ftFace);
     info.hasColor = FT_HAS_COLOR(ftFace);
 
     auto hbFace = hb_ft_face_create_referenced(ftFace);

@@ -702,14 +702,17 @@ public:
     const CSSCustomPropertyMap* customProperties() const { return m_customProperties.get(); }
     Font* font() const { return m_font.get(); }
 
+    const FontDescription& fontDescription() const;
+    void setFontDescription(const FontDescription& description);
+
     float fontAscent() const;
     float fontDescent() const;
     float fontHeight() const;
     float fontLineGap() const;
     float fontLineSpacing() const;
 
-    const FontDescription& fontDescription() const;
-    void setFontDescription(const FontDescription& description);
+    float exFontSize() const;
+    float chFontSize() const;
 
     float fontSize() const;
     float fontWeight() const;
@@ -973,16 +976,7 @@ public:
     void reset(CSSPropertyID id);
     void inherit(CSSPropertyID id);
 
-    float exFontSize() const;
-    float chFontSize() const;
-    float remFontSize() const;
-
     FontFeatureList fontFeatures() const;
-
-    float viewportWidth() const;
-    float viewportHeight() const;
-    float viewportMin() const;
-    float viewportMax() const;
 
     RefPtr<CSSValue> resolveLength(const RefPtr<CSSValue>& value) const;
     RefPtr<CSSValue> resolveCalc(const RefPtr<CSSValue>& value) const;

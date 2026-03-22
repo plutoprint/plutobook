@@ -93,9 +93,9 @@ float CSSLengthResolver::resolveLength(float value, CSSLengthUnits units) const
 
 float CSSLengthResolver::emFontSize() const
 {
-    if(m_style == nullptr)
-        return kMediumFontSize;
-    return m_style->fontSize();
+    if(m_style)
+        return m_style->fontSize();
+    return kMediumFontSize;
 }
 
 float CSSLengthResolver::remFontSize() const
@@ -107,9 +107,9 @@ float CSSLengthResolver::remFontSize() const
 
 float CSSLengthResolver::exFontSize() const
 {
-    if(m_style == nullptr)
-        return kMediumFontSize / 2.f;
-    return m_style->exFontSize();
+    if(m_style)
+        return m_style->exFontSize();
+    return kMediumFontSize / 2.f;
 }
 
 float CSSLengthResolver::rexFontSize() const
@@ -121,9 +121,9 @@ float CSSLengthResolver::rexFontSize() const
 
 float CSSLengthResolver::chFontSize() const
 {
-    if(m_style == nullptr)
-        return kMediumFontSize / 2.f;
-    return m_style->chFontSize();
+    if(m_style)
+        return m_style->chFontSize();
+    return kMediumFontSize / 2.f;
 }
 
 float CSSLengthResolver::rchFontSize() const
@@ -135,9 +135,9 @@ float CSSLengthResolver::rchFontSize() const
 
 float CSSLengthResolver::lineHeight() const
 {
-    if(m_style == nullptr)
-        return 0.f;
-    return m_style->lineHeightValue();
+    if(m_style)
+        return m_style->lineHeightValue();
+    return 0.f;
 }
 
 float CSSLengthResolver::rootLineHeight() const

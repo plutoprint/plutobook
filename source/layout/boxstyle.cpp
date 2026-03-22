@@ -56,6 +56,18 @@ Book* BoxStyle::book() const
     return document()->book();
 }
 
+const FontDescription& BoxStyle::fontDescription() const
+{
+    return m_font->description();
+}
+
+void BoxStyle::setFontDescription(const FontDescription& description)
+{
+    if(!m_font || description != m_font->description()) {
+        m_font = document()->createFont(description);
+    }
+}
+
 float BoxStyle::fontAscent() const
 {
     if(auto fontData = m_font->primaryFont())
@@ -91,16 +103,18 @@ float BoxStyle::fontLineSpacing() const
     return 0.f;
 }
 
-const FontDescription& BoxStyle::fontDescription() const
+float BoxStyle::exFontSize() const
 {
-    return m_font->description();
+    if(auto fontData = m_font->primaryFont())
+        return fontData->xHeight();
+    return fontSize() / 2.f;
 }
 
-void BoxStyle::setFontDescription(const FontDescription& description)
+float BoxStyle::chFontSize() const
 {
-    if(m_font && description == m_font->description())
-        return;
-    m_font = document()->createFont(description);
+    if(auto fontData = m_font->primaryFont())
+        return fontData->zeroWidth();
+    return fontSize() / 2.f;
 }
 
 float BoxStyle::fontSize() const
@@ -1718,27 +1732,6 @@ void BoxStyle::inherit(CSSPropertyID id)
     }
 }
 
-float BoxStyle::exFontSize() const
-{
-    if(auto fontData = m_font->primaryFont())
-        return fontData->xHeight();
-    return fontSize() / 2.f;
-}
-
-float BoxStyle::chFontSize() const
-{
-    if(auto fontData = m_font->primaryFont())
-        return fontData->zeroWidth();
-    return fontSize() / 2.f;
-}
-
-float BoxStyle::remFontSize() const
-{
-    if(auto style = document()->rootStyle())
-        return style->fontSize();
-    return kMediumFontSize;
-}
-
 class FontFeaturesBuilder {
 public:
     explicit FontFeaturesBuilder(const CSSPropertyMap& properties);
@@ -2065,26 +2058,6 @@ void FontFeaturesBuilder::buildFeatureSettings(FontFeatureList& features) const
 FontFeatureList BoxStyle::fontFeatures() const
 {
     return FontFeaturesBuilder(properties()).build();
-}
-
-float BoxStyle::viewportWidth() const
-{
-    return document()->viewportWidth();
-}
-
-float BoxStyle::viewportHeight() const
-{
-    return document()->viewportHeight();
-}
-
-float BoxStyle::viewportMin() const
-{
-    return std::min(document()->viewportWidth(), document()->viewportHeight());
-}
-
-float BoxStyle::viewportMax() const
-{
-    return std::max(document()->viewportWidth(), document()->viewportHeight());
 }
 
 RefPtr<CSSValue> BoxStyle::resolveLength(const RefPtr<CSSValue>& value) const
