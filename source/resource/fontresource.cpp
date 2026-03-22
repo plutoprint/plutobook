@@ -374,8 +374,8 @@ RefPtr<SimpleFontData> SimpleFontData::create(cairo_scaled_font_t* font, FcCharS
     auto xGlyph = FcFreeTypeCharIndex(ftFace, 'x');
     auto glyph_extents = [font](unsigned long index) {
         cairo_glyph_t glyph = { index, 0, 0 };
-        cairo_text_extents_t extents;
-        cairo_scaled_font_glyph_extents(font, &glyph, 1, &extents);
+        cairo_text_extents_t extents = {0};
+        if(index) cairo_scaled_font_glyph_extents(font, &glyph, 1, &extents);
         return extents;
     };
 

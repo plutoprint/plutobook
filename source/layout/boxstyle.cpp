@@ -105,23 +105,35 @@ float BoxStyle::fontLineSpacing() const
 
 float BoxStyle::exFontSize() const
 {
-    if(auto fontData = m_font->primaryFont())
-        return fontData->xHeight();
-    return fontSize() / 2.f;
-}
+    if(auto fontData = m_font->primaryFont()) {
+        if(auto exSize = fontData->xHeight()) {
+            return exSize;
+        }
+    }
 
-float BoxStyle::chFontSize() const
-{
-    if(auto fontData = m_font->primaryFont())
-        return fontData->zeroWidth();
     return fontSize() / 2.f;
 }
 
 float BoxStyle::capFontSize() const
 {
-    if(auto fontData = m_font->primaryFont())
-        return fontData->capHeight();
+    if(auto fontData = m_font->primaryFont()) {
+        if(auto capSize = fontData->capHeight()) {
+            return capSize;
+        }
+    }
+
     return 0.f;
+}
+
+float BoxStyle::chFontSize() const
+{
+    if(auto fontData = m_font->primaryFont()) {
+        if(auto chSize = fontData->zeroWidth()) {
+            return chSize;
+        }
+    }
+
+    return fontSize() / 2.f;
 }
 
 float BoxStyle::fontSize() const

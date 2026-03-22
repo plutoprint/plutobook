@@ -99,42 +99,42 @@ float CSSLengthResolver::emFontSize() const
 {
     if(m_style)
         return m_style->fontSize();
-    return kMediumFontSize;
+    return 0.f;
 }
 
 float CSSLengthResolver::remFontSize() const
 {
     if(auto style = m_document->rootStyle())
         return style->fontSize();
-    return emFontSize();
+    return 0.f;
 }
 
 float CSSLengthResolver::exFontSize() const
 {
     if(m_style)
         return m_style->exFontSize();
-    return kMediumFontSize / 2.f;
+    return 0.f;
 }
 
 float CSSLengthResolver::rexFontSize() const
 {
     if(auto style = m_document->rootStyle())
         return style->exFontSize();
-    return exFontSize();
+    return 0.f;
 }
 
 float CSSLengthResolver::chFontSize() const
 {
     if(m_style)
         return m_style->chFontSize();
-    return kMediumFontSize / 2.f;
+    return 0.f;
 }
 
 float CSSLengthResolver::rchFontSize() const
 {
     if(auto style = m_document->rootStyle())
         return style->chFontSize();
-    return chFontSize();
+    return 0.f;
 }
 
 float CSSLengthResolver::capFontSize() const
@@ -148,7 +148,7 @@ float CSSLengthResolver::rcapFontSize() const
 {
     if(auto style = m_document->rootStyle())
         return style->capFontSize();
-    return capFontSize();
+    return 0.f;
 }
 
 float CSSLengthResolver::lineHeight() const
@@ -162,7 +162,7 @@ float CSSLengthResolver::rootLineHeight() const
 {
     if(auto style = m_document->rootStyle())
         return style->lineHeightValue();
-    return lineHeight();
+    return 0.f;
 }
 
 float CSSLengthResolver::viewportWidth() const
