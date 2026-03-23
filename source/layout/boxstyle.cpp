@@ -122,7 +122,7 @@ float BoxStyle::capFontSize() const
         }
     }
 
-    return 0.f;
+    return fontAscent();
 }
 
 float BoxStyle::chFontSize() const
