@@ -849,7 +849,7 @@ Font::Font(Document* document, const FontDescription& description)
     for(const auto& family : description.families) {
         if(auto font = document->getFontData(family, description.data)) {
             if(m_primaryFont == nullptr)
-                m_primaryFont = font->fontDataForCharacter(' ', EmojiPolicy::RequireText);
+                m_primaryFont = font->fontDataForCharacter(' ', EmojiPolicy::NoPreference);
             m_fonts.push_back(std::move(font));
         }
     }
