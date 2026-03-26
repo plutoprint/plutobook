@@ -428,8 +428,6 @@ void StyleBuilder::buildStyle(BoxStyle* newStyle)
     for(const auto& property : m_properties) {
         switch(property.id()) {
         case CSSPropertyID::Custom:
-        case CSSPropertyID::Color:
-        case CSSPropertyID::LineHeight:
         case CSSPropertyID::FontFamily:
         case CSSPropertyID::FontSize:
         case CSSPropertyID::FontWeight:
@@ -437,6 +435,8 @@ void StyleBuilder::buildStyle(BoxStyle* newStyle)
         case CSSPropertyID::FontStyle:
         case CSSPropertyID::FontVariationSettings:
         case CSSPropertyID::Lang:
+        case CSSPropertyID::Color:
+        case CSSPropertyID::LineHeight:
             break;
         default:
             newStyle->set(property.id(), property.value());

@@ -285,7 +285,7 @@ RefPtr<TextShape> TextShape::createForText(const UString& text, Direction direct
 
 RefPtr<TextShape> TextShape::createForTabs(const UString& text, Direction direction, const BoxStyle* style)
 {
-    const auto& font = style->font();
+    auto font = style->font();
     auto heap = style->heap();
 
     float totalWidth = 0.f;

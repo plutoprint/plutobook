@@ -106,8 +106,8 @@ float BoxStyle::fontLineSpacing() const
 float BoxStyle::exFontSize() const
 {
     if(auto fontData = m_font->primaryFont()) {
-        if(auto exSize = fontData->xHeight()) {
-            return exSize;
+        if(auto xHeight = fontData->xHeight()) {
+            return xHeight;
         }
     }
 
@@ -117,8 +117,8 @@ float BoxStyle::exFontSize() const
 float BoxStyle::capFontSize() const
 {
     if(auto fontData = m_font->primaryFont()) {
-        if(auto capSize = fontData->capHeight()) {
-            return capSize;
+        if(auto capHeight = fontData->capHeight()) {
+            return capHeight;
         }
     }
 
@@ -128,8 +128,8 @@ float BoxStyle::capFontSize() const
 float BoxStyle::chFontSize() const
 {
     if(auto fontData = m_font->primaryFont()) {
-        if(auto chSize = fontData->zeroWidth()) {
-            return chSize;
+        if(auto zeroWidth = fontData->zeroWidth()) {
+            return zeroWidth;
         }
     }
 
@@ -139,8 +139,8 @@ float BoxStyle::chFontSize() const
 float BoxStyle::icFontSize() const
 {
     if(auto fontData = m_font->primaryFont()) {
-        if(auto icSize = fontData->ideogramWidth()) {
-            return icSize;
+        if(auto ideogramWidth = fontData->ideogramWidth()) {
+            return ideogramWidth;
         }
     }
 
