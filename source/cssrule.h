@@ -1537,13 +1537,21 @@ public:
     };
 
     CSSComplexSelector(Combinator combinator, CSSCompoundSelector compoundSelector)
-        : m_combinator(combinator), m_compoundSelector(std::move(compoundSelector))
-    {}
+        : m_specificity(0), m_combinator(combinator)
+        , m_compoundSelector(std::move(compoundSelector))
+    {
+        assert(!m_compoundSelector.empty());
+        for(const auto& simpleSelector : m_compoundSelector) {
+            m_specificity += simpleSelector.specificity();
+        }
+    }
 
+    uint32_t specificity() const { return m_specificity; }
     Combinator combinator() const { return m_combinator; }
     const CSSCompoundSelector& compoundSelector() const { return m_compoundSelector; }
 
 private:
+    uint32_t m_specificity;
     Combinator m_combinator;
     CSSCompoundSelector m_compoundSelector;
 };

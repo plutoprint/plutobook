@@ -545,12 +545,8 @@ uint32_t CSSSimpleSelector::specificity() const
         uint32_t maxSpecificity = 0;
         for(const auto& subSelector : m_subSelectors) {
             uint32_t specificity = 0x0;
-            for(const auto& complexSelector : subSelector) {
-                for(const auto& simpleSelector : complexSelector.compoundSelector()) {
-                    specificity += simpleSelector.specificity();
-                }
-            }
-
+            for(const auto& complexSelector : subSelector)
+                specificity += complexSelector.specificity();
             maxSpecificity = std::max(specificity, maxSpecificity);
         }
 

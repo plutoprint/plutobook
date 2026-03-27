@@ -817,9 +817,7 @@ void CSSStyleSheet::addStyleRule(CSSStyleRule& rule)
     for(const auto& selector : rule.selectors()) {
         uint32_t specificity = 0;
         for(const auto& complexSelector : selector) {
-            for(const auto& simpleSelector : complexSelector.compoundSelector()) {
-                specificity += simpleSelector.specificity();
-            }
+            specificity += complexSelector.specificity();
         }
 
         HeapString idName;
