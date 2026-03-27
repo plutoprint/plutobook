@@ -289,7 +289,7 @@ void SVGTextFragmentsBuilder::handleTextItem(const LineItem& item)
         }
 
         fragment.width = fragment.shape.width();
-        fragment.height = style->fontLineSpacing();
+        fragment.height = style->fontLineHeight();
         if(isVerticalText) {
             m_y += isUprightText ? fragment.height : fragment.width;
         } else {

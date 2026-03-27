@@ -89,17 +89,10 @@ float BoxStyle::fontHeight() const
     return 0.f;
 }
 
-float BoxStyle::fontLineGap() const
+float BoxStyle::fontLineHeight() const
 {
     if(auto fontData = m_font->primaryFont())
-        return fontData->lineGap();
-    return 0.f;
-}
-
-float BoxStyle::fontLineSpacing() const
-{
-    if(auto fontData = m_font->primaryFont())
-        return fontData->lineSpacing();
+        return fontData->lineHeight();
     return 0.f;
 }
 
@@ -190,7 +183,7 @@ const LocaleData* BoxStyle::locale() const
 float BoxStyle::lineHeightValue() const
 {
     if(m_lineHeight.isAuto())
-        return fontLineSpacing();
+        return fontLineHeight();
     if(m_lineHeight.isPercent())
         return m_lineHeight.calcMin(fontSize());
     return m_lineHeight.value();

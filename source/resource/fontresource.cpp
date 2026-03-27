@@ -384,9 +384,9 @@ RefPtr<SimpleFontData> SimpleFontData::create(cairo_scaled_font_t* font, FcCharS
     cairo_scaled_font_extents(font, &font_extents);
 
     FontDataInfo info;
-    info.ascent = font_extents.ascent;
-    info.descent = font_extents.descent;
-    info.lineGap = font_extents.height - font_extents.ascent - font_extents.descent;
+    info.ascent = round(font_extents.ascent);
+    info.descent = round(font_extents.descent);
+    info.lineHeight = round(font_extents.height);
     info.xHeight = glyph_extents(xGlyph).height;
     info.capHeight = glyph_extents(capGlyph).height;
     info.spaceWidth = glyph_extents(spaceGlyph).x_advance;

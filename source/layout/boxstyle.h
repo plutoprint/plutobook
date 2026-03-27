@@ -708,8 +708,7 @@ public:
     float fontAscent() const;
     float fontDescent() const;
     float fontHeight() const;
-    float fontLineGap() const;
-    float fontLineSpacing() const;
+    float fontLineHeight() const;
 
     float exFontSize() const;
     float capFontSize() const;

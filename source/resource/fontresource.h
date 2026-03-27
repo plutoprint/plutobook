@@ -314,7 +314,7 @@ using FontDataList = std::pmr::vector<RefPtr<FontData>>;
 struct FontDataInfo {
     float ascent;
     float descent;
-    float lineGap;
+    float lineHeight;
     float xHeight;
     float capHeight;
     float zeroWidth;
@@ -341,10 +341,9 @@ public:
     float ascent() const { return m_info.ascent; }
     float descent() const { return m_info.descent; }
     float height() const { return m_info.ascent + m_info.descent; }
+    float lineHeight() const { return m_info.lineHeight; }
     float xHeight() const { return m_info.xHeight; }
     float capHeight() const { return m_info.capHeight; }
-    float lineGap() const { return m_info.lineGap; }
-    float lineSpacing() const { return m_info.ascent + m_info.descent + m_info.lineGap; }
     float zeroWidth() const { return m_info.zeroWidth; }
     float spaceWidth() const { return m_info.spaceWidth; }
     float ideogramWidth() const { return m_info.ideogramWidth; }
