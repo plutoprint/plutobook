@@ -784,7 +784,7 @@ public:
     float borderTopWidth() const;
     float borderBottomWidth() const;
 
-    void getBorderEdgeInfo(BorderEdge edges[], bool includeLeftEdge, bool includeRightEdge) const;
+    void getBorderEdgeInfo(std::array<BorderEdge, 4>& edges, bool includeLeftEdge, bool includeRightEdge) const;
 
     LengthSize borderTopLeftRadius() const;
     LengthSize borderTopRightRadius() const;

@@ -202,7 +202,7 @@ void BorderPainter::paintBoxSide(GraphicsContext& context, BoxSide side, LineSty
     }
 }
 
-static RectOutsets edgeOutsets(const BorderEdge edges[4], float scale)
+static RectOutsets edgeOutsets(const std::array<BorderEdge, 4>& edges, float scale)
 {
     auto topWidth = edges[BoxSideTop].width() * scale;
     auto rightWidth = edges[BoxSideRight].width() * scale;

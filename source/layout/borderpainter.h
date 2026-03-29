@@ -43,7 +43,7 @@ private:
     void paintBoxSide(GraphicsContext& context, BoxSide side, LineStyle style, const Color& color, float thickness, const Path& path) const;
     void clipBoxSide(GraphicsContext& context, BoxSide side) const;
 
-    BorderEdge m_edges[4];
+    std::array<BorderEdge, 4> m_edges;
 
     BorderEdgeFlags m_visibleEdgeSet{0};
     unsigned m_visibleEdgeCount{0};

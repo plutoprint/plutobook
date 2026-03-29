@@ -397,7 +397,7 @@ float BoxStyle::borderBottomWidth() const
     return convertLineWidth(*value);
 }
 
-void BoxStyle::getBorderEdgeInfo(BorderEdge edges[], bool includeLeftEdge, bool includeRightEdge) const
+void BoxStyle::getBorderEdgeInfo(std::array<BorderEdge, 4>& edges, bool includeLeftEdge, bool includeRightEdge) const
 {
     edges[BoxSideTop] = BorderEdge(borderTopWidth(), borderTopColor(), borderTopStyle());
     if(includeRightEdge) {
