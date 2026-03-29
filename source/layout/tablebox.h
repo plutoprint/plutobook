@@ -362,9 +362,8 @@ enum class TableCollapsedBorderSource : uint8_t {
 class TableCollapsedBorderEdge {
 public:
     TableCollapsedBorderEdge() = default;
-    TableCollapsedBorderEdge(TableCollapsedBorderSource source, LineStyle style, float width, const Color& color)
-        : m_source(source), m_style(style)
-        , m_width(style > LineStyle::Hidden ? width : 0.f), m_color(color)
+    TableCollapsedBorderEdge(TableCollapsedBorderSource source, LineStyle style, float width = 0, const Color& color = Color())
+        : m_source(source), m_style(style), m_width(width), m_color(color)
     {}
 
     TableCollapsedBorderSource source() const { return m_source; }

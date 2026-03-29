@@ -768,16 +768,20 @@ void BoxModel::updatePaddingWidths(const BlockBox* container)
 void BoxModel::computeBorderWidths(float& borderTop, float& borderBottom, float& borderLeft, float& borderRight) const
 {
     assert(!isBorderCollapsed());
-    auto calc = [](LineStyle style, float width) {
-        if(style > LineStyle::Hidden)
-            return width;
-        return 0.f;
-    };
+    borderTop = 0.f;
+    borderBottom = 0.f;
+    borderLeft = 0.f;
+    borderRight = 0.f;
 
-    borderTop = calc(style()->borderTopStyle(), style()->borderTopWidth());
-    borderBottom = calc(style()->borderBottomStyle(), style()->borderBottomWidth());
-    borderLeft = calc(style()->borderLeftStyle(), style()->borderLeftWidth());
-    borderRight = calc(style()->borderRightStyle(), style()->borderRightWidth());
+    if(style()->borderTopStyle() > LineStyle::Hidden)
+        borderTop = style()->borderTopWidth();
+    if(style()->borderBottomStyle() > LineStyle::Hidden)
+        borderBottom = style()->borderBottomWidth();
+    if(style()->borderLeftStyle() > LineStyle::Hidden)
+        borderLeft = style()->borderLeftWidth();
+    if(style()->borderRightStyle() > LineStyle::Hidden) {
+        borderRight = style()->borderRightWidth();
+    }
 }
 
 float BoxModel::borderTop() const

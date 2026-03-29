@@ -399,14 +399,21 @@ float BoxStyle::borderBottomWidth() const
 
 void BoxStyle::getBorderEdgeInfo(std::array<BorderEdge, 4>& edges, bool includeLeftEdge, bool includeRightEdge) const
 {
-    edges[BoxSideTop] = BorderEdge(borderTopWidth(), borderTopColor(), borderTopStyle());
-    if(includeRightEdge) {
-        edges[BoxSideRight] = BorderEdge(borderRightWidth(), borderRightColor(), borderRightStyle());
+    edges[BoxSideTop] = BorderEdge();
+    edges[BoxSideRight] = BorderEdge();
+    edges[BoxSideBottom] = BorderEdge();
+    edges[BoxSideLeft] = BorderEdge();
+
+    if(m_borderTopStyle > LineStyle::Hidden)
+        edges[BoxSideTop] = BorderEdge(m_borderTopStyle, borderTopWidth(), borderTopColor());
+    if(includeRightEdge && m_borderRightStyle > LineStyle::Hidden) {
+        edges[BoxSideRight] = BorderEdge(m_borderRightStyle, borderRightWidth(), borderRightColor());
     }
 
-    edges[BoxSideBottom] = BorderEdge(borderBottomWidth(), borderBottomColor(), borderBottomStyle());
-    if(includeLeftEdge) {
-        edges[BoxSideLeft] = BorderEdge(borderLeftWidth(), borderLeftColor(), borderLeftStyle());
+    if(m_borderBottomStyle > LineStyle::Hidden)
+        edges[BoxSideBottom] = BorderEdge(m_borderBottomStyle, borderBottomWidth(), borderBottomColor());
+    if(includeLeftEdge && m_borderLeftStyle > LineStyle::Hidden) {
+        edges[BoxSideLeft] = BorderEdge(m_borderLeftStyle, borderLeftWidth(), borderLeftColor());
     }
 }
 
@@ -731,7 +738,9 @@ float BoxStyle::outlineWidth() const
 
 BorderEdge BoxStyle::getOutlineEdge() const
 {
-    return BorderEdge(outlineWidth(), outlineColor(), outlineStyle());
+    if(m_outlineStyle > LineStyle::Hidden)
+        return BorderEdge(m_outlineStyle, outlineWidth(), outlineColor());
+    return BorderEdge();
 }
 
 int BoxStyle::widows() const

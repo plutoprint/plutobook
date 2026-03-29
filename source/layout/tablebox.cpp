@@ -1600,22 +1600,34 @@ TableCollapsedBorderEdge TableCollapsedBorderEdges::chooseEdge(const TableCollap
 
 TableCollapsedBorderEdge TableCollapsedBorderEdges::getTopEdge(TableCollapsedBorderSource source, const BoxStyle* style)
 {
-    return TableCollapsedBorderEdge(source, style->borderTopStyle(), style->borderTopWidth(), style->borderTopColor());
+    const auto borderTopStyle = style->borderTopStyle();
+    if(borderTopStyle > LineStyle::Hidden)
+        return TableCollapsedBorderEdge(source, borderTopStyle, style->borderTopWidth(), style->borderTopColor());
+    return TableCollapsedBorderEdge(source, borderTopStyle);
 }
 
 TableCollapsedBorderEdge TableCollapsedBorderEdges::getBottomEdge(TableCollapsedBorderSource source, const BoxStyle* style)
 {
-    return TableCollapsedBorderEdge(source, style->borderBottomStyle(), style->borderBottomWidth(), style->borderBottomColor());
+    const auto borderBottomStyle = style->borderBottomStyle();
+    if(borderBottomStyle > LineStyle::Hidden)
+        return TableCollapsedBorderEdge(source, borderBottomStyle, style->borderBottomWidth(), style->borderBottomColor());
+    return TableCollapsedBorderEdge(source, borderBottomStyle);
 }
 
 TableCollapsedBorderEdge TableCollapsedBorderEdges::getLeftEdge(TableCollapsedBorderSource source, const BoxStyle* style)
 {
-    return TableCollapsedBorderEdge(source, style->borderLeftStyle(), style->borderLeftWidth(), style->borderLeftColor());
+    const auto borderLeftStyle = style->borderLeftStyle();
+    if(borderLeftStyle > LineStyle::Hidden)
+        return TableCollapsedBorderEdge(source, borderLeftStyle, style->borderLeftWidth(), style->borderLeftColor());
+    return TableCollapsedBorderEdge(source, borderLeftStyle);
 }
 
 TableCollapsedBorderEdge TableCollapsedBorderEdges::getRightEdge(TableCollapsedBorderSource source, const BoxStyle* style)
 {
-    return TableCollapsedBorderEdge(source, style->borderRightStyle(), style->borderRightWidth(), style->borderRightColor());
+    const auto borderRightStyle = style->borderRightStyle();
+    if(borderRightStyle > LineStyle::Hidden)
+        return TableCollapsedBorderEdge(source, borderRightStyle, style->borderRightWidth(), style->borderRightColor());
+    return TableCollapsedBorderEdge(source, borderRightStyle);
 }
 
 TableCollapsedBorderEdge TableCollapsedBorderEdges::calcTopEdge(const TableCellBox* cellBox)

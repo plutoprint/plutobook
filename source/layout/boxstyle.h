@@ -546,22 +546,20 @@ enum BoxSide {
 class BorderEdge {
 public:
     BorderEdge() = default;
-    BorderEdge(float width, const Color& color, LineStyle style)
-        : m_width(style > LineStyle::Hidden ? width : 0.f)
-        , m_color(color), m_style(style)
-    {
-    }
+    BorderEdge(LineStyle style, float width, const Color& color)
+        : m_style(style), m_width(width), m_color(color)
+    {}
 
-    bool isRenderable() const { return m_width > 0 && m_style > LineStyle::Hidden && m_color.alpha() > 0; }
+    bool isRenderable() const { return m_style > LineStyle::Hidden && m_width > 0 && m_color.alpha() > 0; }
 
+    LineStyle style() const { return m_style; }
     float width() const { return m_width; }
     const Color& color() const { return m_color; }
-    LineStyle style() const { return m_style; }
 
 private:
+    LineStyle m_style{LineStyle::Hidden};
     float m_width{0};
     Color m_color;
-    LineStyle m_style{LineStyle::Hidden};
 };
 
 enum class AlignmentBaseline : uint8_t {
