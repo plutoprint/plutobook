@@ -989,7 +989,6 @@ public:
     Length convertLength(const CSSValue& value) const;
     Length convertLengthOrPercent(const CSSValue& value) const;
     Length convertLengthOrPercentOrAuto(const CSSValue& value) const;
-    Length convertLengthOrPercentOrNone(const CSSValue& value) const;
     Length convertWidthOrHeightLength(const CSSValue& value) const;
     Length convertLineHeight(const CSSValue& value) const;
     Length convertPositionComponent(CSSValueID min, CSSValueID max, const CSSValue& value) const;

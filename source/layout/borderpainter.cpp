@@ -242,15 +242,15 @@ BorderPainter::BorderPainter(BorderPainterType type, const Rect& borderRect, con
         }
     }
 
-    if(m_visibleEdgeCount == 0)
-        return;
-    m_outer = style->getBorderRoundedRect(borderRect, includeLeftEdge, includeRightEdge);
-    if(type == BorderPainterType::Outline) {
-        m_outer += RectOutsets(style->outlineWidth() + style->outlineOffset());
-    }
+    if(m_visibleEdgeCount) {
+        m_outer = style->getBorderRoundedRect(borderRect, includeLeftEdge, includeRightEdge);
+        if(type == BorderPainterType::Outline) {
+            m_outer += RectOutsets(style->outlineWidth() + style->outlineOffset());
+        }
 
-    m_inner = m_outer - edgeOutsets(m_edges, 1.f);
-    m_isRounded = m_outer.isRounded();
+        m_inner = m_outer - edgeOutsets(m_edges, 1.f);
+        m_isRounded = m_outer.isRounded();
+    }
 }
 
 void BorderPainter::paint(const PaintInfo& info) const

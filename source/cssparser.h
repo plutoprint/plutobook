@@ -97,7 +97,6 @@ private:
     RefPtr<CSSValue> consumeLengthOrAuto(CSSTokenStream& input, bool negative, bool unitless);
     RefPtr<CSSValue> consumeLengthOrNormal(CSSTokenStream& input, bool negative, bool unitless);
     RefPtr<CSSValue> consumeLengthOrPercentOrAuto(CSSTokenStream& input, bool negative, bool unitless);
-    RefPtr<CSSValue> consumeLengthOrPercentOrNone(CSSTokenStream& input, bool negative, bool unitless);
     RefPtr<CSSValue> consumeLengthOrPercentOrNormal(CSSTokenStream& input, bool negative, bool unitless);
     RefPtr<CSSValue> consumeWidthOrHeight(CSSTokenStream& input, bool unitless);
     RefPtr<CSSValue> consumeWidthOrHeightOrAuto(CSSTokenStream& input, bool unitless);

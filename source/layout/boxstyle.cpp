@@ -2210,17 +2210,6 @@ Length BoxStyle::convertLengthOrPercentOrAuto(const CSSValue& value) const
     return convertLengthOrPercent(value);
 }
 
-Length BoxStyle::convertLengthOrPercentOrNone(const CSSValue& value) const
-{
-    if(is<CSSIdentValue>(value)) {
-        const auto& ident = to<CSSIdentValue>(value);
-        assert(ident.value() == CSSValueID::None);
-        return Length::None;
-    }
-
-    return convertLengthOrPercent(value);
-}
-
 Length BoxStyle::convertWidthOrHeightLength(const CSSValue& value) const
 {
     if(is<CSSIdentValue>(value)) {

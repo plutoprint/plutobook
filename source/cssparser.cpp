@@ -2277,13 +2277,6 @@ RefPtr<CSSValue> CSSParser::consumeLengthOrPercentOrAuto(CSSTokenStream& input, 
     return consumeLengthOrPercent(input, negative, unitless);
 }
 
-RefPtr<CSSValue> CSSParser::consumeLengthOrPercentOrNone(CSSTokenStream& input, bool negative, bool unitless)
-{
-    if(auto value = consumeNone(input))
-        return value;
-    return consumeLengthOrPercent(input, negative, unitless);
-}
-
 RefPtr<CSSValue> CSSParser::consumeLengthOrPercentOrNormal(CSSTokenStream& input, bool negative, bool unitless)
 {
     if(auto value = consumeNormal(input))
