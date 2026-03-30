@@ -1482,34 +1482,7 @@ void CSSParser::consumeDeclaractionList(CSSTokenStream& input, CSSPropertyList& 
 void CSSParser::addProperty(CSSPropertyList& properties, CSSPropertyID id, bool important, RefPtr<CSSValue> value)
 {
     if(value == nullptr) {
-        switch(id) {
-        case CSSPropertyID::FontStyle:
-        case CSSPropertyID::FontWeight:
-        case CSSPropertyID::FontStretch:
-        case CSSPropertyID::FontVariantCaps:
-        case CSSPropertyID::FontVariantEmoji:
-        case CSSPropertyID::FontVariantEastAsian:
-        case CSSPropertyID::FontVariantLigatures:
-        case CSSPropertyID::FontVariantNumeric:
-        case CSSPropertyID::FontVariantPosition:
-        case CSSPropertyID::LineHeight:
-            value = CSSIdentValue::create(CSSValueID::Normal);
-            break;
-        case CSSPropertyID::ColumnWidth:
-        case CSSPropertyID::ColumnCount:
-            value = CSSIdentValue::create(CSSValueID::Auto);
-            break;
-        case CSSPropertyID::FlexGrow:
-        case CSSPropertyID::FlexShrink:
-            value = CSSNumberValue::create(m_heap, 1.0);
-            break;
-        case CSSPropertyID::FlexBasis:
-            value = CSSPercentValue::create(m_heap, 0.0);
-            break;
-        default:
-            value = CSSInitialValue::create();
-            break;
-        }
+        value = CSSInitialValue::create();
     }
 
     properties.emplace_back(id, m_context.origin(), important, std::move(value));
@@ -4584,6 +4557,14 @@ bool CSSParser::consumeFlex(CSSTokenStream& input, CSSPropertyList& properties, 
         }
 
         break;
+    }
+
+    if(grow == nullptr)
+        grow = CSSNumberValue::create(m_heap, 1.0);
+    if(shrink == nullptr)
+        shrink = CSSNumberValue::create(m_heap, 1.0);
+    if(basis == nullptr) {
+        basis = CSSPercentValue::create(m_heap, 0.0);
     }
 
     if(!input.empty())
