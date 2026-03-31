@@ -427,6 +427,7 @@ enum class CSSPropertyID : uint16_t {
     Gap,
     Height,
     Hyphens,
+    Inset,
     JustifyContent,
     Lang,
     Left,

@@ -1124,6 +1124,7 @@ bool CSSParser::consumeDescriptor(CSSTokenStream& input, CSSPropertyList& proper
     case CSSPropertyID::Outline:
     case CSSPropertyID::TextDecoration:
         return consumeShorthand(input, properties, id, important);
+    case CSSPropertyID::Inset:
     case CSSPropertyID::Margin:
     case CSSPropertyID::Padding:
     case CSSPropertyID::BorderColor:
@@ -1290,6 +1291,7 @@ static CSSPropertyID csspropertyid(std::string_view name)
         {"gap", CSSPropertyID::Gap},
         {"height", CSSPropertyID::Height},
         {"hyphens", CSSPropertyID::Hyphens},
+        {"inset", CSSPropertyID::Inset},
         {"justify-content", CSSPropertyID::JustifyContent},
         {"left", CSSPropertyID::Left},
         {"letter-spacing", CSSPropertyID::LetterSpacing},
@@ -1618,6 +1620,17 @@ CSSShorthand CSSShorthand::longhand(CSSPropertyID id)
             CSSPropertyID::MarginRight,
             CSSPropertyID::MarginBottom,
             CSSPropertyID::MarginLeft
+        };
+
+        return CSSShorthand(data, std::size(data));
+    }
+
+    case CSSPropertyID::Inset: {
+        static const CSSPropertyID data[] = {
+            CSSPropertyID::Top,
+            CSSPropertyID::Right,
+            CSSPropertyID::Bottom,
+            CSSPropertyID::Left
         };
 
         return CSSShorthand(data, std::size(data));
