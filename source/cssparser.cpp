@@ -2507,12 +2507,7 @@ static bool consumeAlphaDelimiter(CSSTokenStream& input, bool requiresComma)
 {
     if(requiresComma)
         return input.consumeCommaIncludingWhitespace();
-    if(input->type() == CSSToken::Type::Delim && input->delim() == '/') {
-        input.consumeIncludingWhitespace();
-        return true;
-    }
-
-    return false;
+    return input.consumeSlashIncludingWhitespace();
 }
 
 RefPtr<CSSValue> CSSParser::consumeRgb(CSSTokenStream& input)
@@ -4587,8 +4582,7 @@ bool CSSParser::consumeBackground(CSSTokenStream& input, CSSPropertyList& proper
     RefPtr<CSSValue> size;
     while(!input.empty()) {
         if(position == nullptr && (position = consumePositionCoordinate(input))) {
-            if(input->type() == CSSToken::Type::Delim && input->delim() == '/') {
-                input.consumeIncludingWhitespace();
+            if(input.consumeSlashIncludingWhitespace()) {
                 if(size == nullptr && (size = consumeBackgroundSize(input)))
                     continue;
                 return false;
@@ -4711,8 +4705,7 @@ bool CSSParser::consumeFont(CSSTokenStream& input, CSSPropertyList& properties, 
     if(size == nullptr || input.empty())
         return false;
     addProperty(properties, CSSPropertyID::FontSize, important, std::move(size));
-    if(input->type() == CSSToken::Type::Delim && input->delim() == '/') {
-        input.consumeIncludingWhitespace();
+    if(input.consumeSlashIncludingWhitespace()) {
         auto value = consumeLengthOrPercentOrNormal(input, false, true);
         if(value == nullptr)
             return false;
@@ -4835,8 +4828,7 @@ bool CSSParser::consumeBorderRadius(CSSTokenStream& input, CSSPropertyList& prop
     completesides(horizontal);
 
     RefPtr<CSSValue> vertical[4];
-    if(input->type() == CSSToken::Type::Delim && input->delim() == '/') {
-        input.consumeIncludingWhitespace();
+    if(input.consumeSlashIncludingWhitespace()) {
         for(auto& side : vertical) {
             if(input->type() == CSSToken::Type::EndOfFile)
                 break;

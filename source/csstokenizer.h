@@ -161,6 +161,15 @@ public:
         return false;
     }
 
+    bool consumeSlashIncludingWhitespace() {
+        if(m_begin < m_end && m_begin->type() == CSSToken::Type::Delim && m_begin->delim() == '/') {
+            consumeIncludingWhitespace();
+            return true;
+        }
+
+        return false;
+    }
+
     void consumeComponent() {
         assert(m_begin < m_end);
         switch(m_begin->type()) {
