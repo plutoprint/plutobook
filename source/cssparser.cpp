@@ -2730,7 +2730,7 @@ RefPtr<CSSValue> CSSParser::consumePaint(CSSTokenStream& input)
         second = consumeColor(input);
     if(second == nullptr)
         return first;
-    return CSSPairValue::create(m_heap, first, second);
+    return CSSPairValue::create(m_heap, std::move(first), std::move(second));
 }
 
 RefPtr<CSSValue> CSSParser::consumeListStyleType(CSSTokenStream& input)
@@ -2759,7 +2759,7 @@ RefPtr<CSSValue> CSSParser::consumeQuotes(CSSTokenStream& input)
         auto second = consumeString(input);
         if(second == nullptr)
             return nullptr;
-        values.push_back(CSSPairValue::create(m_heap, first, second));
+        values.push_back(CSSPairValue::create(m_heap, std::move(first), std::move(second)));
     } while(!input.empty());
     return CSSListValue::create(m_heap, std::move(values));
 }
@@ -2936,7 +2936,7 @@ RefPtr<CSSValue> CSSParser::consumeCounter(CSSTokenStream& input, bool increment
         auto value = consumeInteger(input, true);
         if(value == nullptr)
             value = CSSIntegerValue::create(m_heap, increment ? 1 : 0);
-        values.push_back(CSSPairValue::create(m_heap, name, value));
+        values.push_back(CSSPairValue::create(m_heap, std::move(name), std::move(value)));
     } while(!input.empty());
     return CSSListValue::create(m_heap, std::move(values));
 }
@@ -2949,7 +2949,7 @@ RefPtr<CSSValue> CSSParser::consumeSize(CSSTokenStream& input)
         auto height = consumeLength(input, false, false);
         if(height == nullptr)
             height = width;
-        return CSSPairValue::create(m_heap, width, height);
+        return CSSPairValue::create(m_heap, std::move(width), std::move(height));
     }
 
     RefPtr<CSSValue> size;
@@ -2981,7 +2981,7 @@ RefPtr<CSSValue> CSSParser::consumeSize(CSSTokenStream& input)
         return orientation;
     if(orientation == nullptr)
         return size;
-    return CSSPairValue::create(m_heap, size, orientation);
+    return CSSPairValue::create(m_heap, std::move(size), std::move(orientation));
 }
 
 RefPtr<CSSValue> CSSParser::consumeOrientation(CSSTokenStream& input)
@@ -3037,7 +3037,7 @@ RefPtr<CSSValue> CSSParser::consumeFontStyle(CSSTokenStream& input)
         return nullptr;
     if(ident->value() == CSSValueID::Oblique) {
         if(auto angle = consumeAngle(input)) {
-            return CSSPairValue::create(m_heap, ident, angle);
+            return CSSPairValue::create(m_heap, std::move(ident), std::move(angle));
         }
     }
 
@@ -3371,7 +3371,7 @@ RefPtr<CSSValue> CSSParser::consumeBorderRadiusValue(CSSTokenStream& input)
     auto second = consumeLengthOrPercent(input, false, false);
     if(second == nullptr)
         second = first;
-    return CSSPairValue::create(m_heap, first, second);
+    return CSSPairValue::create(m_heap, std::move(first), std::move(second));
 }
 
 RefPtr<CSSValue> CSSParser::consumeClip(CSSTokenStream& input)
@@ -3404,7 +3404,7 @@ RefPtr<CSSValue> CSSParser::consumeClip(CSSTokenStream& input)
     auto left = consumeLengthOrPercentOrAuto(block, true, false);
     if(left == nullptr || !block.empty())
         return nullptr;
-    return CSSRectValue::create(m_heap, top, right, bottom, left);
+    return CSSRectValue::create(m_heap, std::move(top), std::move(right), std::move(bottom), std::move(left));
 }
 
 RefPtr<CSSValue> CSSParser::consumeDashList(CSSTokenStream& input)
@@ -3561,7 +3561,7 @@ RefPtr<CSSValue> CSSParser::consumePositionCoordinate(CSSTokenStream& input)
         first = CSSIdentValue::create(CSSValueID::Center);
     if(second == nullptr)
         second = CSSIdentValue::create(CSSValueID::Center);
-    return CSSPairValue::create(m_heap, first, second);
+    return CSSPairValue::create(m_heap, std::move(first), std::move(second));
 }
 
 RefPtr<CSSValue> CSSParser::consumeBackgroundSize(CSSTokenStream& input)
@@ -3579,7 +3579,7 @@ RefPtr<CSSValue> CSSParser::consumeBackgroundSize(CSSTokenStream& input)
     auto second = consumeLengthOrPercentOrAuto(input, false, false);
     if(second == nullptr)
         second = CSSIdentValue::create(CSSValueID::Auto);
-    return CSSPairValue::create(m_heap, first, second);
+    return CSSPairValue::create(m_heap, std::move(first), std::move(second));
 }
 
 RefPtr<CSSValue> CSSParser::consumeAngle(CSSTokenStream& input)
@@ -4778,9 +4778,9 @@ bool CSSParser::consumeFontVariant(CSSTokenStream& input, CSSPropertyList& prope
     addProperty(properties, CSSPropertyID::FontVariantEmoji, important, std::move(emoji));
     addProperty(properties, CSSPropertyID::FontVariantPosition, important, std::move(position));
     auto addListProperty = [&](CSSPropertyID id, CSSValueList&& values) {
-        if(values.empty())
-            addProperty(properties, id, important, CSSIdentValue::create(CSSValueID::Normal));
-        else {
+        if(values.empty()) {
+            addProperty(properties, id, important, nullptr);
+        } else {
             addProperty(properties, id, important, CSSListValue::create(m_heap, std::move(values)));
         }
     };
@@ -4822,7 +4822,7 @@ bool CSSParser::consumeBorderRadius(CSSTokenStream& input, CSSPropertyList& prop
 
     RefPtr<CSSValue> horizontal[4];
     for(auto& side : horizontal) {
-        if(input.empty() || input->type() == CSSToken::Type::Delim)
+        if(input->type() == CSSToken::Type::EndOfFile || input->type() == CSSToken::Type::Delim)
             break;
         auto value = consumeLengthOrPercent(input, false, false);
         if(value == nullptr)
@@ -4858,10 +4858,10 @@ bool CSSParser::consumeBorderRadius(CSSTokenStream& input, CSSPropertyList& prop
         return false;
     }
 
-    auto tl = CSSPairValue::create(m_heap, horizontal[0], vertical[0]);
-    auto tr = CSSPairValue::create(m_heap, horizontal[1], vertical[1]);
-    auto br = CSSPairValue::create(m_heap, horizontal[2], vertical[2]);
-    auto bl = CSSPairValue::create(m_heap, horizontal[3], vertical[3]);
+    auto tl = CSSPairValue::create(m_heap, std::move(horizontal[0]), std::move(vertical[0]));
+    auto tr = CSSPairValue::create(m_heap, std::move(horizontal[1]), std::move(vertical[1]));
+    auto br = CSSPairValue::create(m_heap, std::move(horizontal[2]), std::move(vertical[2]));
+    auto bl = CSSPairValue::create(m_heap, std::move(horizontal[3]), std::move(vertical[3]));
 
     addProperty(properties, CSSPropertyID::BorderTopLeftRadius, important, std::move(tl));
     addProperty(properties, CSSPropertyID::BorderTopRightRadius, important, std::move(tr));
@@ -4938,7 +4938,7 @@ bool CSSParser::consumeShorthand(CSSTokenStream& input, CSSPropertyList& propert
 {
     RefPtr<CSSValue> values[6];
     auto longhand = CSSShorthand::longhand(id);
-    assert(longhand.length() <= sizeof(values));
+    assert(longhand.length() <= std::size(values));
     while(!input.empty()) {
         bool consumed = false;
         for(size_t i = 0; i < longhand.length(); ++i) {
@@ -5016,7 +5016,7 @@ RefPtr<CSSValue> CSSParser::consumeFontFaceWeight(CSSTokenStream& input)
     auto endWeight = consumeNumber(input, false);
     if(endWeight == nullptr)
         endWeight = startWeight;
-    return CSSPairValue::create(m_heap, startWeight, endWeight);
+    return CSSPairValue::create(m_heap, std::move(startWeight), std::move(endWeight));
 }
 
 RefPtr<CSSValue> CSSParser::consumeFontFaceStyle(CSSTokenStream& input)
@@ -5049,7 +5049,7 @@ RefPtr<CSSValue> CSSParser::consumeFontFaceStretch(CSSTokenStream& input)
     auto endPercent = consumePercent(input, false);
     if(endPercent == nullptr)
         endPercent = startPercent;
-    return CSSPairValue::create(m_heap, startPercent, endPercent);
+    return CSSPairValue::create(m_heap, std::move(startPercent), std::move(endPercent));
 }
 
 RefPtr<CSSValue> CSSParser::consumeFontFaceUnicodeRange(CSSTokenStream& input)
@@ -5094,14 +5094,14 @@ RefPtr<CSSValue> CSSParser::consumeCounterStyleSystem(CSSTokenStream& input)
         auto fixed = consumeInteger(input, true);
         if(fixed == nullptr)
             fixed = CSSIntegerValue::create(m_heap, 1);
-        return CSSPairValue::create(m_heap, ident, fixed);
+        return CSSPairValue::create(m_heap, std::move(ident), std::move(fixed));
     }
 
     if(ident->value() == CSSValueID::Extends) {
         auto extends = consumeCounterStyleName(input);
         if(extends == nullptr)
             return nullptr;
-        return CSSPairValue::create(m_heap, ident, extends);
+        return CSSPairValue::create(m_heap, std::move(ident), std::move(extends));
     }
 
     return ident;
@@ -5113,7 +5113,7 @@ RefPtr<CSSValue> CSSParser::consumeCounterStyleNegative(CSSTokenStream& input)
     if(prepend == nullptr)
         return nullptr;
     if(auto append = consumeCounterStyleSymbol(input))
-        return CSSPairValue::create(m_heap, prepend, append);
+        return CSSPairValue::create(m_heap, std::move(prepend), std::move(append));
     return prepend;
 }
 
@@ -5143,7 +5143,7 @@ RefPtr<CSSValue> CSSParser::consumeCounterStyleRange(CSSTokenStream& input)
         auto upperBound = consumeCounterStyleRangeBound(input);
         if(upperBound == nullptr)
             return nullptr;
-        values.push_back(CSSPairValue::create(m_heap, lowerBound, upperBound));
+        values.push_back(CSSPairValue::create(m_heap, std::move(lowerBound), std::move(upperBound)));
     } while(input.consumeCommaIncludingWhitespace());
     return CSSListValue::create(m_heap, std::move(values));
 }
@@ -5160,7 +5160,7 @@ RefPtr<CSSValue> CSSParser::consumeCounterStylePad(CSSTokenStream& input)
         return nullptr;
     }
 
-    return CSSPairValue::create(m_heap, integer, symbol);
+    return CSSPairValue::create(m_heap, std::move(integer), std::move(symbol));
 }
 
 RefPtr<CSSValue> CSSParser::consumeCounterStyleSymbols(CSSTokenStream& input)
