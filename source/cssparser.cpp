@@ -1088,25 +1088,8 @@ static RefPtr<CSSValue> consumeWideKeyword(CSSTokenStream& input)
     return nullptr;
 }
 
-static bool containsVariableReferences(CSSTokenStream input)
-{
-    while(!input.empty()) {
-        if(input->type() == CSSToken::Type::Function && identMatches("var", 3, input->data()))
-            return true;
-        input.consumeIncludingWhitespace();
-    }
-
-    return false;
-}
-
 bool CSSParser::consumeDescriptor(CSSTokenStream& input, CSSPropertyList& properties, CSSPropertyID id, bool important)
 {
-    if(containsVariableReferences(input)) {
-        auto variable = CSSVariableReferenceValue::create(m_heap, m_context, id, important, CSSVariableData::create(m_heap, input));
-        addProperty(properties, id, important, std::move(variable));
-        return true;
-    }
-
     if(auto value = consumeWideKeyword(input)) {
         if(!input.empty())
             return false;
@@ -1409,6 +1392,17 @@ static CSSPropertyID csspropertyid(std::string_view name)
     return CSSPropertyID::Unknown;
 }
 
+static bool containsVariableReferences(CSSTokenStream input)
+{
+    while(!input.empty()) {
+        if(input->type() == CSSToken::Type::Function && identMatches("var", 3, input->data()))
+            return true;
+        input.consumeIncludingWhitespace();
+    }
+
+    return false;
+}
+
 bool CSSParser::consumeDeclaraction(CSSTokenStream& input, CSSPropertyList& properties, CSSRuleType ruleType)
 {
     auto begin = input.begin();
@@ -1453,6 +1447,14 @@ bool CSSParser::consumeDeclaraction(CSSTokenStream& input, CSSPropertyList& prop
             return false;
         auto custom = CSSCustomPropertyValue::create(m_heap, m_heap->createString(name), CSSVariableData::create(m_heap, value));
         addProperty(properties, id, important, std::move(custom));
+        return true;
+    }
+
+    if(containsVariableReferences(value)) {
+        if(ruleType == CSSRuleType::FontFace || ruleType == CSSRuleType::CounterStyle)
+            return false;
+        auto variable = CSSVariableReferenceValue::create(m_heap, m_context, id, important, CSSVariableData::create(m_heap, value));
+        addProperty(properties, id, important, std::move(variable));
         return true;
     }
 
