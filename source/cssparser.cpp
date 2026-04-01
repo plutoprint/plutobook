@@ -4862,6 +4862,8 @@ bool CSSParser::consumeBorderRadius(CSSTokenStream& input, CSSPropertyList& prop
         return false;
     }
 
+    if(!input.empty())
+        return false;
     auto tl = CSSPairValue::create(m_heap, std::move(horizontal[0]), std::move(vertical[0]));
     auto tr = CSSPairValue::create(m_heap, std::move(horizontal[1]), std::move(vertical[1]));
     auto br = CSSPairValue::create(m_heap, std::move(horizontal[2]), std::move(vertical[2]));
@@ -4896,11 +4898,11 @@ bool CSSParser::consume2Shorthand(CSSTokenStream& input, CSSPropertyList& proper
     auto second = consumeLonghand(input, longhand.at(1));
     if(second == nullptr) {
         addProperty(properties, longhand.at(1), important, first);
-        return true;
+        return input.empty();
     }
 
     addProperty(properties, longhand.at(1), important, second);
-    return true;
+    return input.empty();
 }
 
 bool CSSParser::consume4Shorthand(CSSTokenStream& input, CSSPropertyList& properties, CSSPropertyID id, bool important)
@@ -4916,7 +4918,7 @@ bool CSSParser::consume4Shorthand(CSSTokenStream& input, CSSPropertyList& proper
         addProperty(properties, longhand.at(1), important, top);
         addProperty(properties, longhand.at(2), important, top);
         addProperty(properties, longhand.at(3), important, top);
-        return true;
+        return input.empty();
     }
 
     addProperty(properties, longhand.at(1), important, right);
@@ -4924,18 +4926,18 @@ bool CSSParser::consume4Shorthand(CSSTokenStream& input, CSSPropertyList& proper
     if(bottom == nullptr) {
         addProperty(properties, longhand.at(2), important, top);
         addProperty(properties, longhand.at(3), important, right);
-        return true;
+        return input.empty();
     }
 
     addProperty(properties, longhand.at(2), important, bottom);
     auto left = consumeLonghand(input, longhand.at(3));
     if(left == nullptr) {
         addProperty(properties, longhand.at(3), important, right);
-        return true;
+        return input.empty();
     }
 
     addProperty(properties, longhand.at(3), important, left);
-    return true;
+    return input.empty();
 }
 
 bool CSSParser::consumeShorthand(CSSTokenStream& input, CSSPropertyList& properties, CSSPropertyID id, bool important)
