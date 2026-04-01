@@ -1799,8 +1799,7 @@ void CSSParser::addExpandedProperty(CSSPropertyList& properties, CSSPropertyID i
 
     size_t index = 0;
     do {
-        addProperty(properties, longhand.at(index), important, value);
-        index += 1;
+        addProperty(properties, longhand.at(index++), important, value);
     } while(index < longhand.length());
 }
 
