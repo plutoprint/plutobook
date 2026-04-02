@@ -4711,29 +4711,26 @@ bool CSSParser::consumeFont(CSSTokenStream& input, CSSPropertyList& properties, 
         break;
     }
 
-    if(input.empty())
-        return false;
-    addProperty(properties, CSSPropertyID::FontStyle, important, std::move(style));
-    addProperty(properties, CSSPropertyID::FontWeight, important, std::move(weight));
-    addProperty(properties, CSSPropertyID::FontVariantCaps, important, std::move(variant));
-    addProperty(properties, CSSPropertyID::FontStretch, important, std::move(stretch));
-
     auto size = consumeFontSize(input);
-    if(size == nullptr || input.empty())
+    if(size == nullptr) {
         return false;
-    addProperty(properties, CSSPropertyID::FontSize, important, std::move(size));
-    if(input.consumeSlashIncludingWhitespace()) {
-        auto value = consumeLengthOrPercentOrNormal(input, false, true);
-        if(value == nullptr)
-            return false;
-        addProperty(properties, CSSPropertyID::LineHeight, important, std::move(value));
-    } else {
-        addProperty(properties, CSSPropertyID::LineHeight, important, nullptr);
+    }
+
+    RefPtr<CSSValue> lineHeight;
+    if(input.consumeSlashIncludingWhitespace()
+        && !(lineHeight = consumeLengthOrPercentOrNormal(input, false, true))) {
+        return false;
     }
 
     auto family = consumeFontFamily(input);
     if(family == nullptr || !input.empty())
         return false;
+    addProperty(properties, CSSPropertyID::FontStyle, important, std::move(style));
+    addProperty(properties, CSSPropertyID::FontWeight, important, std::move(weight));
+    addProperty(properties, CSSPropertyID::FontVariantCaps, important, std::move(variant));
+    addProperty(properties, CSSPropertyID::FontStretch, important, std::move(stretch));
+    addProperty(properties, CSSPropertyID::FontSize, important, std::move(size));
+    addProperty(properties, CSSPropertyID::LineHeight, important, std::move(lineHeight));
     addProperty(properties, CSSPropertyID::FontFamily, important, std::move(family));
     return true;
 }
