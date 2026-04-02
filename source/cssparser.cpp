@@ -2565,6 +2565,7 @@ RefPtr<CSSValue> CSSParser::consumeRgb(CSSTokenStream& input)
         return nullptr;
     input.consumeWhitespace();
     guard.release();
+
     return CSSColorValue::create(m_heap, Color(red, green, blue, alpha));
 }
 
@@ -2665,9 +2666,10 @@ RefPtr<CSSValue> CSSParser::consumeHsl(CSSTokenStream& input)
     input.consumeWhitespace();
     guard.release();
 
-    auto r = computeHslComponent(h, s, l, 0);
-    auto g = computeHslComponent(h, s, l, 8);
-    auto b = computeHslComponent(h, s, l, 4);
+    const auto r = computeHslComponent(h, s, l, 0);
+    const auto g = computeHslComponent(h, s, l, 8);
+    const auto b = computeHslComponent(h, s, l, 4);
+
     return CSSColorValue::create(m_heap, Color(r, g, b, alpha));
 }
 
@@ -2715,15 +2717,16 @@ RefPtr<CSSValue> CSSParser::consumeHwb(CSSTokenStream& input)
         black /= sum;
     }
 
-    int components[3] = { 0, 8, 4 };
-    for(auto& component : components) {
-        auto channel = computeHslComponent(hue, 1.0f, 0.5f, component);
-        component = std::lroundf(channel * (1 - white - black) + (white * 255));
+    int channels[3] = { 0, 8, 4 };
+    for(auto& channel : channels) {
+        auto component = computeHslComponent(hue, 1.0f, 0.5f, channel);
+        channel = std::lroundf(component * (1 - white - black) + (white * 255));
     }
 
-    const auto r = components[0];
-    const auto g = components[1];
-    const auto b = components[2];
+    const auto r = channels[0];
+    const auto g = channels[1];
+    const auto b = channels[2];
+
     return CSSColorValue::create(m_heap, Color(r, g, b, alpha));
 }
 
