@@ -2635,7 +2635,7 @@ RefPtr<CSSValue> CSSParser::consumeHsl(CSSTokenStream& input)
     auto block = input.consumeBlock();
     block.consumeWhitespace();
 
-    float h, s, l, a = 1.f;
+    float h, s, l;
     if(!consumeAngleComponent(block, h)) {
         return nullptr;
     }
