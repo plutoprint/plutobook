@@ -777,6 +777,8 @@ std::string CSSStyleSheet::getMarkerText(int value, const GlobalString& listType
 
 void CSSStyleSheet::parseStyle(std::string_view content, CSSStyleOrigin origin, Url baseUrl)
 {
+    if(content.empty())
+        return;
     CSSParserContext context(m_document, origin, std::move(baseUrl));
     CSSParser parser(context, m_document->heap());
     addRuleList(parser.parseSheet(content));
