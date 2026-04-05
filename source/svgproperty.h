@@ -25,7 +25,6 @@ public:
 class SVGString final : public SVGProperty {
 public:
     SVGString() = default;
-    explicit SVGString(const std::string& value) : m_value(value) {}
 
     const std::string& value() const { return m_value; }
     bool parse(std::string_view input) final;
@@ -98,9 +97,6 @@ public:
     };
 
     SVGAngle() = default;
-    SVGAngle(float value, OrientType orientType)
-        : m_value(value), m_orientType(orientType)
-    {}
 
     float value() const { return m_value; }
     OrientType orientType() const { return m_orientType; }
@@ -196,7 +192,6 @@ private:
 class SVGNumber : public SVGProperty {
 public:
     SVGNumber() = default;
-    explicit SVGNumber(float value) : m_value(value) {}
 
     float value() const { return m_value; }
     bool parse(std::string_view input) override;
@@ -208,7 +203,6 @@ protected:
 class SVGNumberPercentage final : public SVGNumber {
 public:
     SVGNumberPercentage() = default;
-    explicit SVGNumberPercentage(float value) : SVGNumber(value) {}
 
     bool parse(std::string_view input) final;
 };
@@ -227,7 +221,6 @@ private:
 class SVGPath final : public SVGProperty {
 public:
     SVGPath() = default;
-    explicit SVGPath(const Path& value) : m_value(value) {}
 
     const Path& value() const { return m_value; }
     bool parse(std::string_view input) final;
@@ -239,7 +232,6 @@ private:
 class SVGPoint final : public SVGProperty {
 public:
     SVGPoint() = default;
-    explicit SVGPoint(const Point& value) : m_value(value) {}
 
     const Point& value() const { return m_value; }
     bool parse(std::string_view input) final;
@@ -262,7 +254,6 @@ private:
 class SVGRect final : public SVGProperty {
 public:
     SVGRect() = default;
-    explicit SVGRect(const Rect& value) : m_value(value) {}
 
     const Rect& value() const { return m_value; }
     bool parse(std::string_view input) final;
@@ -274,7 +265,6 @@ private:
 class SVGTransform final : public SVGProperty {
 public:
     SVGTransform() = default;
-    explicit SVGTransform(const Transform& value) : m_value(value) {}
 
     const Transform& value() const { return m_value; }
     bool parse(std::string_view input) final;
@@ -304,9 +294,6 @@ public:
     };
 
     SVGPreserveAspectRatio() = default;
-    SVGPreserveAspectRatio(AlignType alignType, MeetOrSlice meetOrSlice)
-        : m_alignType(alignType), m_meetOrSlice(meetOrSlice)
-    {}
 
     AlignType alignType() const { return m_alignType; }
     MeetOrSlice meetOrSlice() const { return m_meetOrSlice; }
