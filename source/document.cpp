@@ -387,8 +387,7 @@ void Element::parseAttribute(const GlobalString& name, const HeapString& value)
         m_id = value;
     } else if(name == classAttr) {
         m_classNames.clear();
-        if(value.empty())
-            return;
+
         size_t begin = 0;
         while(true) {
             while(begin < value.size() && isSpace(value[begin]))
