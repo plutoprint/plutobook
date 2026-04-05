@@ -140,6 +140,7 @@ static bool parseNumber(std::string_view& input, T& output)
 
 bool SVGString::parse(std::string_view input)
 {
+    skipLeadingAndTrailingSpaces(input);
     m_value.assign(input);
     return true;
 }
