@@ -4608,7 +4608,7 @@ bool CSSParser::consumeBackground(CSSTokenStream& input, CSSPropertyList& proper
             continue;
         }
 
-        if(image == nullptr && (image = consumeImage(input)))
+        if(image == nullptr && (image = consumeImageOrNone(input)))
             continue;
         if(repeat == nullptr && (repeat = consumeLonghand(input, CSSPropertyID::BackgroundRepeat)))
             continue;
