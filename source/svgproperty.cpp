@@ -328,9 +328,8 @@ float SVGLengthContext::valueForLength(const Length& length, SVGLengthDirection 
         return length.value() / 100.f;
     }
 
-    if(length.isFixed())
-        return length.value();
-    return 0.f;
+    assert(length.isFixed());
+    return length.value();
 }
 
 float SVGLengthContext::viewportDimension(SVGLengthDirection direction) const
