@@ -896,16 +896,16 @@ bool Document::supportsMediaQueries(const CSSMediaQueryList& queries) const
 
 bool Document::supportsMedia(std::string_view type, std::string_view media) const
 {
-    if(m_book == nullptr || media.empty())
-        return true;
-    if(type.empty() || equals(type, "text/css", isXMLDocument())) {
+    if(!type.empty() && !equals(type, "text/css", isXMLDocument()))
+        return false;
+    if(m_book && !media.empty()) {
         CSSParserContext context(this, CSSStyleOrigin::Author, m_baseUrl);
         CSSParser parser(context, m_heap);
         CSSMediaQueryList queries(parser.parseMediaQueries(media));
         return supportsMediaQueries(queries);
     }
 
-    return false;
+    return true;
 }
 
 RefPtr<BoxStyle> Document::styleForElement(Element* element, const SelectorFilter& selectorFilter, const BoxStyle* parentStyle) const
