@@ -155,6 +155,7 @@ private:
     RefPtr<CSSValue> consumeVerticalAlign(CSSTokenStream& input);
     RefPtr<CSSValue> consumeBaselineShift(CSSTokenStream& input);
     RefPtr<CSSValue> consumeTextDecorationLine(CSSTokenStream& input);
+    RefPtr<CSSValue> consumePositionComponent(CSSTokenStream& input);
     RefPtr<CSSValue> consumePositionCoordinate(CSSTokenStream& input);
     RefPtr<CSSValue> consumeBackgroundSize(CSSTokenStream& input);
     RefPtr<CSSValue> consumeAngle(CSSTokenStream& input);

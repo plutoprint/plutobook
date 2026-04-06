@@ -3534,45 +3534,55 @@ RefPtr<CSSValue> CSSParser::consumeTextDecorationLine(CSSTokenStream& input)
     return CSSListValue::create(m_heap, std::move(values));
 }
 
+RefPtr<CSSValue> CSSParser::consumePositionComponent(CSSTokenStream& input)
+{
+    static const CSSIdentValueEntry table[] = {
+        {"left", CSSValueID::Left},
+        {"right", CSSValueID::Right},
+        {"top", CSSValueID::Top},
+        {"bottom", CSSValueID::Bottom},
+        {"center", CSSValueID::Center}
+    };
+
+    if(auto value = consumeIdent(input, table))
+        return value;
+    return consumeLengthOrPercent(input, true, false);
+}
+
 RefPtr<CSSValue> CSSParser::consumePositionCoordinate(CSSTokenStream& input)
 {
-    RefPtr<CSSValue> first;
-    RefPtr<CSSValue> second;
-    for(int index = 0; index < 2; ++index) {
-        if(first == nullptr && (first = consumeLengthOrPercent(input, true, false)))
-            continue;
-        if(second == nullptr && (second = consumeLengthOrPercent(input, true, false)))
-            continue;
-        static const CSSIdentValueEntry table[] = {
-            {"left", CSSValueID::Left},
-            {"right", CSSValueID::Right},
-            {"center", CSSValueID::Center}
-        };
-
-        if(first == nullptr && (first = consumeIdent(input, table))) {
-            continue;
-        }
-        {
-            static const CSSIdentValueEntry table[] = {
-                {"top", CSSValueID::Top},
-                {"bottom", CSSValueID::Bottom},
-                {"center", CSSValueID::Center}
-            };
-
-            if(second == nullptr && (second = consumeIdent(input, table))) {
-                continue;
-            }
-        }
-
-        break;
+    CSSTokenStreamGuard guard(input);
+    auto first = consumePositionComponent(input);
+    if(first == nullptr)
+        return nullptr;
+    auto second = consumePositionComponent(input);
+    if(second == nullptr) {
+        second = CSSIdentValue::create(CSSValueID::Center);
     }
 
-    if(first == nullptr && second == nullptr)
-        return nullptr;
-    if(first == nullptr)
-        first = CSSIdentValue::create(CSSValueID::Center);
-    if(second == nullptr)
-        second = CSSIdentValue::create(CSSValueID::Center);
+    if(first->id() == CSSValueID::Top || first->id() == CSSValueID::Bottom) {
+        switch(second->id()) {
+        case CSSValueID::Left:
+        case CSSValueID::Right:
+        case CSSValueID::Center:
+            std::swap(first, second);
+            break;
+        default:
+            return nullptr;
+        }
+    } else if(second->id() == CSSValueID::Left || second->id() == CSSValueID::Right) {
+        switch(first->id()) {
+        case CSSValueID::Top:
+        case CSSValueID::Bottom:
+        case CSSValueID::Center:
+            std::swap(first, second);
+            break;
+        default:
+            return nullptr;
+        }
+    }
+
+    guard.release();
     return CSSPairValue::create(m_heap, std::move(first), std::move(second));
 }
 
