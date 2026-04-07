@@ -3824,12 +3824,11 @@ RefPtr<CSSValue> CSSParser::consumeLonghand(CSSTokenStream& input, CSSPropertyID
     case CSSPropertyID::Height:
     case CSSPropertyID::MinWidth:
     case CSSPropertyID::MinHeight:
+    case CSSPropertyID::FlexBasis:
         return consumeWidthOrHeightOrAuto(input, false);
     case CSSPropertyID::MaxWidth:
     case CSSPropertyID::MaxHeight:
         return consumeWidthOrHeightOrNone(input, false);
-    case CSSPropertyID::FlexBasis:
-        return consumeWidthOrHeightOrAuto(input, false);
     case CSSPropertyID::Fill:
     case CSSPropertyID::Stroke:
         return consumePaint(input);
