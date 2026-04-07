@@ -901,8 +901,7 @@ bool Document::supportsMedia(std::string_view type, std::string_view media) cons
     if(m_book && !media.empty()) {
         CSSParserContext context(this, CSSStyleOrigin::Author, m_baseUrl);
         CSSParser parser(context, m_heap);
-        CSSMediaQueryList queries(parser.parseMediaQueries(media));
-        return supportsMediaQueries(queries);
+        return supportsMediaQueries(parser.parseMediaQueries(media));
     }
 
     return true;

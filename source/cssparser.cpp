@@ -191,30 +191,37 @@ bool CSSParser::consumeMediaQuery(CSSTokenStream& input, CSSMediaQueryList& quer
 {
     auto restrictor = consumeMediaRestrictor(input);
     auto type = consumeMediaType(input);
-    if(restrictor != CSSMediaQuery::Restrictor::None && type == CSSMediaQuery::Type::None)
-        return false;
-    CSSMediaFeatureList features(m_heap);
-    if(type != CSSMediaQuery::Type::None && consumeIdentIncludingWhitespace(input, "and", 3) && !consumeMediaFeatures(input, features))
-        return false;
-    if(type == CSSMediaQuery::Type::None && !consumeMediaFeatures(input, features)) {
+    if(restrictor == CSSMediaQuery::Restrictor::Only && type == CSSMediaQuery::Type::None) {
         return false;
     }
 
+    CSSMediaFeatureList features(m_heap);
+    if(type == CSSMediaQuery::Type::None && !consumeMediaFeatures(input, features))
+        return false;
+    if(type != CSSMediaQuery::Type::None && consumeIdentIncludingWhitespace(input, "and", 3)
+        && !consumeMediaFeatures(input, features)) {
+        return false;
+    }
+
+    if(!input.empty())
+        return false;
     queries.emplace_front(type, restrictor, std::move(features));
     return true;
 }
 
-bool CSSParser::consumeMediaQueries(CSSTokenStream& input, CSSMediaQueryList& queries)
+void CSSParser::consumeMediaQueries(CSSTokenStream& input, CSSMediaQueryList& queries)
 {
     input.consumeWhitespace();
     if(!input.empty()) {
         do {
-            if(!consumeMediaQuery(input, queries))
-                return false;
+            auto begin = input.begin();
+            while(!input.empty() && input->type() != CSSToken::Type::Comma)
+                input.consumeComponent();
+            CSSTokenStream block(begin, input.begin());
+            if(!consumeMediaQuery(block, queries))
+                queries.emplace_front(CSSMediaQuery::Type::All, CSSMediaQuery::Restrictor::Not, CSSMediaFeatureList());
         } while(input.consumeCommaIncludingWhitespace());
     }
-
-    return true;
 }
 
 RefPtr<CSSRule> CSSParser::consumeRule(CSSTokenStream& input)
@@ -322,8 +329,7 @@ RefPtr<CSSImportRule> CSSParser::consumeImportRule(CSSTokenStream& input)
     if(token == nullptr)
         return nullptr;
     CSSMediaQueryList queries(m_heap);
-    if(!consumeMediaQueries(input, queries))
-        return nullptr;
+    consumeMediaQueries(input, queries);
     return CSSImportRule::create(m_heap, m_context.origin(), m_context.completeUrl(token->data()), std::move(queries));
 }
 
@@ -352,8 +358,8 @@ RefPtr<CSSNamespaceRule> CSSParser::consumeNamespaceRule(CSSTokenStream& input)
 RefPtr<CSSMediaRule> CSSParser::consumeMediaRule(CSSTokenStream& prelude, CSSTokenStream& block)
 {
     CSSMediaQueryList queries(m_heap);
-    if(!consumeMediaQueries(prelude, queries))
-        return nullptr;
+    consumeMediaQueries(prelude, queries);
+
     CSSRuleList rules(m_heap);
     consumeRuleList(block, rules);
     return CSSMediaRule::create(m_heap, std::move(queries), std::move(rules));

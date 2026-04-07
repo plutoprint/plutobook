@@ -27,7 +27,7 @@ private:
     bool consumeMediaFeature(CSSTokenStream& input, CSSMediaFeatureList& features);
     bool consumeMediaFeatures(CSSTokenStream& input, CSSMediaFeatureList& features);
     bool consumeMediaQuery(CSSTokenStream& input, CSSMediaQueryList& queries);
-    bool consumeMediaQueries(CSSTokenStream& input, CSSMediaQueryList& queries);
+    void consumeMediaQueries(CSSTokenStream& input, CSSMediaQueryList& queries);
 
     RefPtr<CSSRule> consumeRule(CSSTokenStream& input);
     RefPtr<CSSRule> consumeAtRule(CSSTokenStream& input);
