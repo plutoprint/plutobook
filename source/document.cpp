@@ -830,8 +830,8 @@ void Document::addUserStyleSheet(std::string_view content)
 
 bool Document::supportsMediaFeature(const CSSMediaFeature& feature) const
 {
-    const auto viewportWidth = m_book->viewportWidth();
-    const auto viewportHeight = m_book->viewportHeight();
+    const auto viewportWidth = std::lround(m_book->viewportWidth());
+    const auto viewportHeight = std::lround(m_book->viewportHeight());
     if(feature.id() == CSSPropertyID::Orientation) {
         const auto& orientation = to<CSSIdentValue>(*feature.value());
         if(orientation.value() == CSSValueID::Portrait)
@@ -840,7 +840,7 @@ bool Document::supportsMediaFeature(const CSSMediaFeature& feature) const
         return viewportWidth > viewportHeight;
     }
 
-    const auto value = CSSLengthResolver(this).resolveLength(*feature.value());
+    const auto value = std::lround(CSSLengthResolver(this).resolveLength(*feature.value()));
     if(feature.id() == CSSPropertyID::Width)
         return viewportWidth == value;
     if(feature.id() == CSSPropertyID::MinWidth)
