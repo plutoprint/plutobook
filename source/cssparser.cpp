@@ -189,23 +189,32 @@ bool CSSParser::consumeMediaFeatures(CSSTokenStream& input, CSSMediaFeatureList&
 
 bool CSSParser::consumeMediaQuery(CSSTokenStream& input, CSSMediaQueryList& queries)
 {
-    auto restrictor = consumeMediaRestrictor(input);
-    auto type = consumeMediaType(input);
-    if(restrictor == CSSMediaQuery::Restrictor::Only && type == CSSMediaQuery::Type::None) {
-        return false;
-    }
+    auto begin = input.begin();
+    while(!input.empty() && input->type() != CSSToken::Type::Comma)
+        input.consumeComponent();
+    CSSTokenStream block(begin, input.begin());
+
+    auto restrictor = consumeMediaRestrictor(block);
+    auto type = consumeMediaType(block);
 
     CSSMediaFeatureList features(m_heap);
-    if(type == CSSMediaQuery::Type::None && !consumeMediaFeatures(input, features))
-        return false;
-    if(type != CSSMediaQuery::Type::None && consumeIdentIncludingWhitespace(input, "and", 3)
-        && !consumeMediaFeatures(input, features)) {
-        return false;
+    if(type == CSSMediaQuery::Type::None) {
+        if(restrictor == CSSMediaQuery::Restrictor::Only)
+            return false;
+        if(!consumeMediaFeatures(block, features)) {
+            return false;
+        }
+    } else {
+        if(consumeIdentIncludingWhitespace(block, "and", 3)) {
+            if(!consumeMediaFeatures(block, features)) {
+                return false;
+            }
+        }
     }
 
-    if(!input.empty())
+    if(!block.empty())
         return false;
-    queries.emplace_front(type, restrictor, std::move(features));
+    queries.emplace_front(restrictor, type, std::move(features));
     return true;
 }
 
@@ -214,12 +223,8 @@ void CSSParser::consumeMediaQueries(CSSTokenStream& input, CSSMediaQueryList& qu
     input.consumeWhitespace();
     if(!input.empty()) {
         do {
-            auto begin = input.begin();
-            while(!input.empty() && input->type() != CSSToken::Type::Comma)
-                input.consumeComponent();
-            CSSTokenStream block(begin, input.begin());
-            if(!consumeMediaQuery(block, queries))
-                queries.emplace_front(CSSMediaQuery::Type::All, CSSMediaQuery::Restrictor::Not, CSSMediaFeatureList());
+            if(!consumeMediaQuery(input, queries))
+                queries.emplace_front(CSSMediaQuery::Restrictor::Not, CSSMediaQuery::Type::All);
         } while(input.consumeCommaIncludingWhitespace());
     }
 }

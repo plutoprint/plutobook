@@ -1623,6 +1623,12 @@ using CSSMediaFeatureList = std::pmr::forward_list<CSSMediaFeature>;
 
 class CSSMediaQuery {
 public:
+    enum class Restrictor {
+        None,
+        Only,
+        Not
+    };
+
     enum class Type {
         None,
         All,
@@ -1630,23 +1636,17 @@ public:
         Screen
     };
 
-    enum class Restrictor {
-        None,
-        Only,
-        Not
-    };
-
-    CSSMediaQuery(Type type, Restrictor restrictor, CSSMediaFeatureList features)
-        : m_type(type), m_restrictor(restrictor), m_features(std::move(features))
+    CSSMediaQuery(Restrictor restrictor, Type type, CSSMediaFeatureList features = CSSMediaFeatureList())
+        : m_restrictor(restrictor), m_type(type), m_features(std::move(features))
     {}
 
-    Type type() const { return m_type; }
     Restrictor restrictor() const { return m_restrictor; }
+    Type type() const { return m_type; }
     const CSSMediaFeatureList& features() const { return m_features; }
 
 private:
-    Type m_type;
     Restrictor m_restrictor;
+    Type m_type;
     CSSMediaFeatureList m_features;
 };
 
