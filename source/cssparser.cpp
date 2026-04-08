@@ -303,14 +303,16 @@ static const CSSToken* consumeUrlToken(CSSTokenStream& input)
         CSSTokenStreamGuard guard(input);
         auto block = input.consumeBlock();
         block.consumeWhitespace();
+        if(block->type() == CSSToken::Type::BadString)
+            return nullptr;
+        assert(block->type() == CSSToken::Type::String);
         auto token = block.begin();
         block.consumeIncludingWhitespace();
-        if(token->type() == CSSToken::Type::BadString || !block.empty())
-            return nullptr;
-        assert(token->type() == CSSToken::Type::String);
-        input.consumeWhitespace();
-        guard.release();
-        return token;
+        if(block.empty()) {
+            input.consumeWhitespace();
+            guard.release();
+            return token;
+        }
     }
 
     return nullptr;
