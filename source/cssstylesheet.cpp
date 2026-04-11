@@ -418,6 +418,8 @@ void StyleBuilder::buildStyle(BoxStyle* newStyle)
         switch(property.id()) {
         case CSSPropertyID::Color:
         case CSSPropertyID::LineHeight:
+        case CSSPropertyID::Direction:
+        case CSSPropertyID::WritingMode:
             newStyle->set(property.id(), property.value());
             break;
         default:
@@ -437,6 +439,8 @@ void StyleBuilder::buildStyle(BoxStyle* newStyle)
         case CSSPropertyID::Lang:
         case CSSPropertyID::Color:
         case CSSPropertyID::LineHeight:
+        case CSSPropertyID::Direction:
+        case CSSPropertyID::WritingMode:
             break;
         default:
             newStyle->set(property.id(), property.value());
