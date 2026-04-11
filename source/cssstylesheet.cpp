@@ -362,9 +362,9 @@ public:
     void buildStyle(BoxStyle* newStyle);
 
 protected:
-    CSSPropertyDataList m_properties;
     const BoxStyle* m_parentStyle;
     PseudoType m_pseudoType;
+    CSSPropertyDataList m_properties;
 };
 
 FontDescription StyleBuilder::fontDescription() const

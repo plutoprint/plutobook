@@ -584,8 +584,8 @@ void BidiParagraph::reorderVisual(const std::vector<UBiDiLevel>& levels, std::ve
 }
 
 LineBreaker::LineBreaker(BlockFlowBox* block, FragmentBuilder* fragmentainer, LineItemsData& data)
-    : m_block(block), m_fragmentainer(fragmentainer)
-    , m_data(data), m_breakIterator(data.text, block->style()->locale())
+    : m_block(block), m_fragmentainer(fragmentainer), m_data(data)
+    , m_breakIterator(data.text, block->style()->locale())
     , m_lineHeight(block->style()->lineHeightValue())
 {
     setCurrentStyle(m_block->style());
