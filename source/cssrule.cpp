@@ -271,39 +271,41 @@ std::optional<CSSCalc> CSSCalcValue::resolve(const CSSLengthResolver& resolver) 
     return std::nullopt;
 }
 
+using CSSIdentValueList = std::pmr::vector<RefPtr<CSSIdentValue>>;
+
 class CSSValuePool {
 public:
     CSSValuePool();
 
-    CSSInitialValue* initialValue() const { return m_initialValue; }
-    CSSInheritValue* inheritValue() const { return m_inheritValue; }
-    CSSUnsetValue* unsetValue() const { return m_unsetValue; }
+    RefPtr<CSSInitialValue> initialValue() const { return m_initialValue; }
+    RefPtr<CSSInheritValue> inheritValue() const { return m_inheritValue; }
+    RefPtr<CSSUnsetValue> unsetValue() const { return m_unsetValue; }
 
-    CSSIdentValue* identValue(CSSValueID id) const;
+    RefPtr<CSSIdentValue> identValue(CSSValueID id) const;
 
 private:
     Heap m_heap;
-    CSSInitialValue* m_initialValue;
-    CSSInheritValue* m_inheritValue;
-    CSSUnsetValue* m_unsetValue;
-    std::pmr::vector<CSSIdentValue*> m_identValues;
+    RefPtr<CSSInitialValue> m_initialValue;
+    RefPtr<CSSInheritValue> m_inheritValue;
+    RefPtr<CSSUnsetValue> m_unsetValue;
+    CSSIdentValueList m_identValues;
 };
 
 CSSValuePool::CSSValuePool()
     : m_heap(1024 * 8)
-    , m_initialValue(new (&m_heap) CSSInitialValue)
-    , m_inheritValue(new (&m_heap) CSSInheritValue)
-    , m_unsetValue(new (&m_heap) CSSUnsetValue)
+    , m_initialValue(adoptPtr(new (&m_heap) CSSInitialValue))
+    , m_inheritValue(adoptPtr(new (&m_heap) CSSInheritValue))
+    , m_unsetValue(adoptPtr(new (&m_heap) CSSUnsetValue))
     , m_identValues(kNumCSSValueIDs, &m_heap)
 {
     assert(CSSValueID::Unknown == static_cast<CSSValueID>(0));
     for(int i = 1; i < kNumCSSValueIDs; ++i) {
         const auto id = static_cast<CSSValueID>(i);
-        m_identValues[i] = new (&m_heap) CSSIdentValue(id);
+        m_identValues[i] = adoptPtr(new (&m_heap) CSSIdentValue(id));
     }
 }
 
-CSSIdentValue* CSSValuePool::identValue(CSSValueID id) const
+RefPtr<CSSIdentValue> CSSValuePool::identValue(CSSValueID id) const
 {
     return m_identValues[static_cast<int>(id)];
 }
