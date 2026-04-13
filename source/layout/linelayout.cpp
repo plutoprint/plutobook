@@ -1498,7 +1498,7 @@ void LineLayout::updateWidth()
     auto blockWidth = m_block->width();
     m_block->updateWidth();
     if(m_block->containsFloats()
-        || blockWidth != m_block->width()) {
+        || !isNearlyEqual(blockWidth, m_block->width())) {
         m_lines.clear();
     }
 }
