@@ -1,5 +1,22 @@
 # Changelog
 
+## PlutoBook 0.17.0 (2026-04-14)
+
+- Add support for `inset` shorthand property
+- Add support for `lh`, `rlh`, `cap`, `rcap`, `ic`, `ric`, `rex`, and `rch` units
+- Allow flexible emoji selection for primary font
+- Allow `none` in background shorthand parsing
+- Reject invalid CSS value types
+- Reject trailing tokens in `border-radius` shorthand parsing
+- Defer font shorthand property emission until full parsing succeeds
+- Improve media query parsing, error recovery, and feature comparison
+- Remove unnecessary whitespace from SVG string properties
+
+Backers and sponsors:
+
+- [Sveltware Solutions](https://github.com/sveltware)
+- [Ashish Kulkarni](https://github.com/ashkulz)
+
 ## PlutoBook 0.16.0 (2026-03-19)
 
 - Add full CSS `:lang()` locale support
