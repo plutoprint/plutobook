@@ -689,7 +689,6 @@ CSSStyleSheet::CSSStyleSheet(Document* document)
     , m_pseudoRules(document->heap())
     , m_universalRules(document->heap())
     , m_pageRules(document->heap())
-    , m_counterStyleRules(document->heap())
     , m_fontFaces(document->heap())
 {
     if(document->book()) {
@@ -756,9 +755,9 @@ RefPtr<FontData> CSSStyleSheet::getFontData(const GlobalString& family, const Fo
 const CSSCounterStyle& CSSStyleSheet::getCounterStyle(const GlobalString& name)
 {
     auto counterStyleMap = userAgentCounterStyleMap();
-    if(!m_counterStyleRules.empty()) {
+    if(m_counterStyleRules) {
         if(m_counterStyleMap == nullptr)
-            m_counterStyleMap = CSSCounterStyleMap::create(m_document->heap(), m_counterStyleRules, counterStyleMap);
+            m_counterStyleMap = CSSCounterStyleMap::create(m_document->heap(), *m_counterStyleRules, counterStyleMap);
         counterStyleMap = m_counterStyleMap.get();
     }
 
@@ -1165,7 +1164,9 @@ void CSSStyleSheet::addFontFaceRule(CSSFontFaceRule& rule)
 void CSSStyleSheet::addCounterStyleRule(CSSCounterStyleRule& rule)
 {
     assert(m_counterStyleMap == nullptr);
-    m_counterStyleRules.push_back(rule);
+    if(m_counterStyleRules == nullptr)
+        m_counterStyleRules = std::make_unique<CSSRuleList>(m_document->heap());
+    m_counterStyleRules->push_back(rule);
 }
 
 void CSSStyleSheet::addMediaRule(CSSMediaRule& rule)

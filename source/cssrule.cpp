@@ -1507,8 +1507,7 @@ CSSCounterStyleMap::CSSCounterStyleMap(Heap* heap, const CSSRuleList& rules, con
     : m_parent(parent), m_counterStyles(heap)
 {
     for(const auto& rule : rules) {
-        auto& counterStyleRule = to<CSSCounterStyleRule>(*rule);
-        auto counterStyle = CSSCounterStyle::create(heap, counterStyleRule);
+        auto counterStyle = CSSCounterStyle::create(heap, to<CSSCounterStyleRule>(*rule));
         m_counterStyles.emplace(counterStyle->name(), std::move(counterStyle));
     }
 
