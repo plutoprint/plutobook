@@ -697,6 +697,8 @@ CSSStyleSheet::CSSStyleSheet(Document* document)
     }
 }
 
+CSSStyleSheet::~CSSStyleSheet() = default;
+
 RefPtr<BoxStyle> CSSStyleSheet::styleForElement(Element* element, const SelectorFilter& selectorFilter, const BoxStyle* parentStyle) const
 {
     ElementStyleBuilder builder(element, PseudoType::None, selectorFilter, parentStyle);

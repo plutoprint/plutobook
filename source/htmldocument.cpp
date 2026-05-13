@@ -168,9 +168,9 @@ void HTMLElement::buildBox(Counters& counters, SelectorFilter& selectorFilter, B
         return;
     if(style->position() == Position::Running) {
         const auto* value = style->get(CSSPropertyID::Position);
-        const auto& position = to<CSSUnaryFunctionValue>(*value);
-        assert(position.id() == CSSFunctionID::Running);
-        const auto& name = to<CSSCustomIdentValue>(*position.value());
+        const auto* position = to<CSSUnaryFunctionValue>(value);
+        assert(position && position->id() == CSSFunctionID::Running);
+        const auto& name = to<CSSCustomIdentValue>(*position->value());
         document()->addRunningStyle(name.value(), std::move(style));
         return;
     }

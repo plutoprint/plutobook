@@ -11,7 +11,6 @@
 
 #include "pointer.h"
 
-#include <memory_resource>
 #include <vector>
 #include <memory>
 #include <map>
@@ -92,6 +91,7 @@ class SelectorFilter;
 class CSSStyleSheet {
 public:
     explicit CSSStyleSheet(Document* document);
+    ~CSSStyleSheet();
 
     RefPtr<BoxStyle> styleForElement(Element* element, const SelectorFilter& selectorFilter, const BoxStyle* parentStyle) const;
     RefPtr<BoxStyle> pseudoStyleForElement(Element* element, PseudoType pseudoType, const SelectorFilter& selectorFilter, const BoxStyle* parentStyle) const;

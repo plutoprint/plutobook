@@ -491,7 +491,7 @@ SVGShapeElement::SVGShapeElement(Document* document, const GlobalString& tagName
 {
 }
 
-Box* SVGShapeElement::createBox(const RefPtr<BoxStyle> &style)
+Box* SVGShapeElement::createBox(const RefPtr<BoxStyle>& style)
 {
     return new (heap()) SVGShapeBox(this, style);
 }

@@ -106,8 +106,8 @@ void ContentBoxBuilder::addElement(const CSSValue& value)
 {
     if(!m_box->isPageMarginBox())
         return;
-    const auto& name = to<CSSCustomIdentValue>(value).value();
-    auto style = m_style->document()->getRunningStyle(name);
+    const auto& name = to<CSSCustomIdentValue>(value);
+    auto style = m_style->document()->getRunningStyle(name.value());
     if(style == nullptr)
         return;
     auto element = to<HTMLElement>(style->node());

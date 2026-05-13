@@ -288,7 +288,6 @@ inline const GlobalString& Node::tagName() const
     return emptyGlo;
 }
 
-
 class CSSMediaQuery;
 class CSSMediaFeature;
 
@@ -376,10 +375,10 @@ public:
     HeapString getTargetCounterText(const HeapString& fragment, const GlobalString& name, const GlobalString& listStyle, const HeapString& separator);
     HeapString getCountersText(const CounterMap& counters, const GlobalString& name, const GlobalString& listStyle, const HeapString& separator);
 
-    void runJavaScript(std::string_view script);
-
     void addAuthorStyleSheet(std::string_view content, Url baseUrl);
     void addUserStyleSheet(std::string_view content);
+
+    void runJavaScript(std::string_view script);
 
     bool supportsMediaFeature(const CSSMediaFeature& feature) const;
     bool supportsMediaFeatures(const CSSMediaFeatureList& features) const;
@@ -430,6 +429,8 @@ public:
 private:
     template<typename ResourceType>
     RefPtr<ResourceType> fetchResource(const Url& url);
+    float m_containerWidth{0};
+    float m_containerHeight{0};
     Element* m_rootElement{nullptr};
     Book* m_book;
     Heap* m_heap;
@@ -442,9 +443,6 @@ private:
     DocumentCounterMap m_counterCache;
     DocumentRunningStyleMap m_runningStyles;
     CSSStyleSheet m_styleSheet;
-
-    float m_containerWidth{0};
-    float m_containerHeight{0};
 };
 
 inline bool Node::isRootNode() const

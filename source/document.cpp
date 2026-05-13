@@ -814,10 +814,6 @@ HeapString Document::getCountersText(const CounterMap& counters, const GlobalStr
     return m_heap->createString(text);
 }
 
-void Document::runJavaScript(std::string_view script)
-{
-}
-
 void Document::addAuthorStyleSheet(std::string_view content, Url baseUrl)
 {
     m_styleSheet.parseStyle(content, CSSStyleOrigin::Author, std::move(baseUrl));
@@ -826,6 +822,10 @@ void Document::addAuthorStyleSheet(std::string_view content, Url baseUrl)
 void Document::addUserStyleSheet(std::string_view content)
 {
     m_styleSheet.parseStyle(content, CSSStyleOrigin::User, m_baseUrl);
+}
+
+void Document::runJavaScript(std::string_view script)
+{
 }
 
 bool Document::supportsMediaFeature(const CSSMediaFeature& feature) const
