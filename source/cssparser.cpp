@@ -2826,7 +2826,7 @@ RefPtr<CSSValue> CSSParser::consumeContent(CSSTokenStream& input)
             else if(identMatches("target-counter", 14, name))
                 value = consumeContentTargetCounter(block, false);
             else if(identMatches("target-counters", 15, name))
-                value = consumeContentTargetCounter(block, false);
+                value = consumeContentTargetCounter(block, true);
             else if(identMatches("-pluto-qrcode", 13, name))
                 value = consumeContentQrCode(block);
             input.consumeWhitespace();
