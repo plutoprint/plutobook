@@ -10,6 +10,7 @@
 
 #include <cfloat>
 #include <cmath>
+#include <functional>
 
 namespace plutobook {
 
@@ -314,6 +315,130 @@ void Path::addRect(const Rect& rect)
     lineTo(x2, y2);
     lineTo(x1, y2);
     close();
+}
+
+struct CubicBezier {
+    float x1; float y1;
+    float x2; float y2;
+    float x3; float y3;
+    float x4; float y4;
+    void split(CubicBezier& first, CubicBezier& second) const {
+        float c = (x2 + x3) * 0.5f;
+        first.x2 = (x1 + x2) * 0.5f;
+        second.x3 = (x3 + x4) * 0.5f;
+        first.x1 = x1;
+        second.x4 = x4;
+        first.x3 = (first.x2 + c) * 0.5f;
+        second.x2 = (second.x3 + c) * 0.5f;
+        first.x4 = second.x1 = (first.x3 + second.x2) * 0.5f;
+
+        c = (y2 + y3) * 0.5f;
+        first.y2 = (y1 + y2) * 0.5f;
+        second.y3 = (y3 + y4) * 0.5f;
+        first.y1 = y1;
+        second.y4 = y4;
+        first.y3 = (first.y2 + c) * 0.5f;
+        second.y2 = (second.y3 + c) * 0.5f;
+        first.y4 = second.y1 = (first.y3 + second.y2) * 0.5f;
+    }
+};
+
+using TraverseCallback = std::function<bool(const Point& p1, const Point& p2)>;
+
+static void traversePath(const Path& path, const TraverseCallback& callback)
+{
+    Point currentPoint;
+    std::array<Point, 3> points;
+    std::array<CubicBezier, 32> beziers;
+
+    const float threshold = 0.25f;
+
+    PathIterator it(path);
+    while(!it.isDone()) {
+        switch(it.currentSegment(points)) {
+        case PathCommand::MoveTo:
+            currentPoint = points.front();
+            break;
+        case PathCommand::LineTo:
+        case PathCommand::Close:
+            if(!callback(currentPoint, points.front()))
+                return;
+            currentPoint = points.front();
+            break;
+        case PathCommand::CubicTo:
+            beziers[0].x1 = currentPoint.x;
+            beziers[0].y1 = currentPoint.y;
+            beziers[0].x2 = points[0].x;
+            beziers[0].y2 = points[0].y;
+            beziers[0].x3 = points[1].x;
+            beziers[0].y3 = points[1].y;
+            beziers[0].x4 = points[2].x;
+            beziers[0].y4 = points[2].y;
+
+            int i = 0;
+            while(i >= 0) {
+                auto& b = beziers[i];
+                float y4y1 = b.y4 - b.y1;
+                float x4x1 = b.x4 - b.x1;
+                float l = fabsf(x4x1) + fabsf(y4y1);
+                float d;
+                if(l > 1.f) {
+                    d = fabsf((x4x1)*(b.y1 - b.y2) - (y4y1)*(b.x1 - b.x2)) + fabsf((x4x1)*(b.y1 - b.y3) - (y4y1)*(b.x1 - b.x3));
+                } else {
+                    d = fabsf(b.x1 - b.x2) + fabsf(b.y1 - b.y2) + fabsf(b.x1 - b.x3) + fabsf(b.y1 - b.y3);
+                    l = 1.f;
+                }
+
+                if(d < threshold*l || i == beziers.size() - 1) {
+                    const Point p(b.x4, b.y4);
+                    if(!callback(currentPoint, p))
+                        return;
+                    currentPoint = p;
+                    --i;
+                } else {
+                    b.split(beziers[i + 1], b);
+                    ++i;
+                }
+            }
+
+            currentPoint = points[2];
+            break;
+        }
+
+        it.next();
+    }
+}
+
+float Path::length() const
+{
+    float totalLength = 0;
+    traversePath(*this, [&](const Point& p1, const Point& p2) {
+        totalLength += hypotf(p2.x - p1.x, p2.y - p1.y);
+        return true;
+    });
+
+    return totalLength;
+}
+
+PointAndTangent Path::pointAndNormalAtLength(float length) const
+{
+    float totalLength = 0;
+    PointAndTangent position;
+    traversePath(*this, [&](const Point& p1, const Point& p2) {
+        totalLength += hypotf(p2.x - p1.x, p2.y - p1.y);
+        if(totalLength < length)
+            return true;
+        const auto slope = p2 - p1;
+        const auto angle = atan2f(slope.y, slope.x);
+        const auto offset = length - totalLength;
+
+        position.first.x = p2.x + (offset * cosf(angle));
+        position.first.y = p2.y + (offset * sinf(angle));
+        position.second = rad2deg(angle);
+        return false;
+    });
+
+    return position;
 }
 
 Rect Path::boundingRect() const

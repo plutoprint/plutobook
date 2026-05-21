@@ -473,6 +473,8 @@ enum class PathCommand : uint8_t {
     Close
 };
 
+using PointAndTangent = std::pair<Point, float>;
+
 class Path {
 public:
     Path() = default;
@@ -487,6 +489,8 @@ public:
     void addRoundedRect(const Rect& rect, const RectRadii& radii);
     void addRect(const Rect& rect);
 
+    float length() const;
+    PointAndTangent pointAndNormalAtLength(float length) const;
     Rect boundingRect() const;
 
     Path& transform(const Transform& transform);
