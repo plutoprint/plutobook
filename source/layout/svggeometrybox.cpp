@@ -163,13 +163,11 @@ void SVGGeometryBox::render(const SVGRenderState& state) const
         newState->setColor(Color::White);
         newState->fillPath(path(), style()->clipRule());
     } else {
-        if(m_fill.isRenderable()) {
-            m_fill.applyPaint(newState);
+        if(m_fill.applyPaint(newState)) {
             newState->fillPath(path(), style()->fillRule());
         }
 
-        if(m_stroke.isRenderable()) {
-            m_stroke.applyPaint(newState);
+        if(m_stroke.applyPaint(newState)) {
             newState->strokePath(path(), element()->getStrokeData(style()));
         }
 

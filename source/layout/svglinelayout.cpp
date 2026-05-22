@@ -123,21 +123,12 @@ static float calculateTextChunkLength(SVGTextFragmentIterator begin, SVGTextFrag
     return chunkLength;
 }
 
-static const SVGTextContentElement* elementForTextItem(const LineItem& item)
-{
-    const auto* box = item.box();
-    assert(box && box->isSVGInlineTextBox());
-    const auto* parent = box->parentBox();
-    assert(parent->isSVGTextBox() || parent->isSVGTSpanBox());
-    return static_cast<SVGTextContentElement*>(parent->node());
-}
-
 static void handleTextChunk(SVGTextFragmentIterator begin, SVGTextFragmentIterator end)
 {
     const SVGTextFragment* textFragment = nullptr;
     for(auto it = begin; it != end; ++it) {
         const SVGTextFragment& fragment = *it;
-        if(fragment.item.type() == LineItem::Type::NormalText) {
+        if(fragment.element) {
             textFragment = &fragment;
             break;
         }
@@ -145,13 +136,11 @@ static void handleTextChunk(SVGTextFragmentIterator begin, SVGTextFragmentIterat
 
     if(textFragment == nullptr)
         return;
-    const auto* element = elementForTextItem(textFragment->item);
-    const auto* style = element->style();
+    const auto* style = textFragment->element->style();
     const auto isVerticalText = style->isVerticalWritingMode();
-
-    if(element->hasAttribute(textLengthAttr)) {
-        SVGLengthContext lengthContext(element);
-        auto textLength = lengthContext.valueForLength(element->textLength());
+    if(textFragment->element->hasAttribute(textLengthAttr)) {
+        SVGLengthContext lengthContext(textFragment->element);
+        auto textLength = lengthContext.valueForLength(textFragment->element->textLength());
         auto chunkLength = calculateTextChunkLength(begin, end, isVerticalText);
         if(textLength > 0.f && chunkLength > 0.f) {
             size_t numCharacters = 0;
@@ -160,7 +149,7 @@ static void handleTextChunk(SVGTextFragmentIterator begin, SVGTextFragmentIterat
                 numCharacters += fragment.shape.length();
             }
 
-            if(element->lengthAdjust() == SVGLengthAdjustSpacingAndGlyphs) {
+            if(textFragment->element->lengthAdjust() == SVGLengthAdjustSpacingAndGlyphs) {
                 auto textLengthScale = textLength / chunkLength;
                 auto lengthAdjustTransform = Transform::makeTranslate(textFragment->x, textFragment->y);
                 if(isVerticalText) {
@@ -175,7 +164,7 @@ static void handleTextChunk(SVGTextFragmentIterator begin, SVGTextFragmentIterat
                     fragment.lengthAdjustTransform = lengthAdjustTransform;
                 }
             } else if(numCharacters > 1) {
-                assert(element->lengthAdjust() == SVGLengthAdjustSpacing);
+                assert(textFragment->element->lengthAdjust() == SVGLengthAdjustSpacing);
                 size_t characterOffset = 0;
                 auto textLengthShift = (textLength - chunkLength) / (numCharacters - 1);
                 for(auto it = begin; it != end; ++it) {
@@ -294,7 +283,7 @@ static float calculateBaselineOffset(const Box* box)
 
     auto baselineShift = calculateBaselineShift(style);
     auto parent = box->parentBox();
-    while(parent && (parent->isSVGTSpanBox() || parent->isSVGTextBox())) {
+    while(parent && (parent->isSVGInlineBox() || parent->isSVGTextBox())) {
         baselineShift += calculateBaselineShift(parent->style());
         parent = parent->parentBox();
     }
@@ -326,6 +315,15 @@ static float calculateBaselineOffset(const Box* box)
     }
 
     return baselineShift;
+}
+
+static const SVGTextContentElement* elementForTextItem(const LineItem& item)
+{
+    const auto* box = item.box();
+    assert(box && box->isSVGInlineTextBox());
+    const auto* parent = box->parentBox();
+    assert(parent->isSVGInlineBox() || parent->isSVGTextBox());
+    return static_cast<SVGTextContentElement*>(parent->node());
 }
 
 void SVGTextFragmentsBuilder::handleTextItem(const LineItem& item)
@@ -371,7 +369,7 @@ void SVGTextFragmentsBuilder::handleTextItem(const LineItem& item)
     auto lastCharacter = 0u;
     auto lastAngle = 0.f;
 
-    SVGTextFragment fragment(item);
+    SVGTextFragment fragment(element);
     while(textOffset < item.endOffset()) {
         SVGCharacterPosition position;
         if(m_positions.contains(m_characterOffset)) {
@@ -443,7 +441,7 @@ void SVGTextFragmentsBuilder::handleBidiControl(const LineItem& item)
         m_x = position.x.value_or(m_x) + position.dx.value_or(0);
         m_y = position.y.value_or(m_y) + position.dy.value_or(0);
         if(position.x || position.y) {
-            SVGTextFragment fragment(item);
+            SVGTextFragment fragment(nullptr);
             fragment.startsNewTextChunk = true;
             fragment.x = m_x;
             fragment.y = m_y;
@@ -461,16 +459,21 @@ SVGLineLayout::SVGLineLayout(SVGTextBox* block)
 {
 }
 
-Rect SVGLineLayout::boundingRect() const
+Rect SVGLineLayout::boundingRect(bool includeStroke) const
 {
     Rect boundingRect = Rect::Invalid;
     for(const auto& fragment : m_fragments) {
-        if(fragment.item.type() == LineItem::Type::BidiControl)
+        if(fragment.element == nullptr)
             continue;
-        assert(fragment.item.type() == LineItem::Type::NormalText);
-        auto style = fragment.item.box()->style();
+        auto style = fragment.element->style();
         auto fragmentRect = Rect(fragment.x, fragment.y - style->fontAscent(), fragment.width, style->fontHeight());
         auto fragmentTranform = Transform::makeRotate(fragment.angle, fragment.x, fragment.y) * fragment.lengthAdjustTransform;
+        if(includeStroke && style->hasStroke()) {
+            SVGLengthContext lengthContext(fragment.element);
+            auto strokeWidth = lengthContext.valueForLength(style->strokeWidth());
+            fragmentRect.inflate(strokeWidth / 2.f);
+        }
+
         boundingRect.unite(fragmentTranform.mapRect(fragmentRect));
     }
 
@@ -513,28 +516,45 @@ static void paintTextDecorations(GraphicsContext& context, const Point& offset, 
     }
 }
 
+static void paintTextFragment(const SVGRenderState& state, const SVGTextFragment& fragment, const SVGPaintServer& fill, const SVGPaintServer& stroke)
+{
+    const auto* style = fragment.element->style();
+
+    auto transform = Transform::makeRotate(fragment.angle, fragment.x, fragment.y) * fragment.lengthAdjustTransform;
+    Point offset(fragment.x, fragment.y - style->fontAscent());
+    Point origin(fragment.x, fragment.y);
+
+    state->save();
+    state->addTransform(transform);
+
+    if(state.mode() == SVGRenderMode::Clipping) {
+        state->setColor(Color::White);
+        fragment.shape.draw(*state, origin, 0.f, nullptr);
+    } else {
+        if(fill.applyPaint(state)) {
+            fragment.shape.draw(*state, origin, 0.f, nullptr);
+            paintTextDecorations(*state, offset, fragment.width, style);
+        }
+
+        if(stroke.applyPaint(state)) {
+            auto strokeData = fragment.element->getStrokeData(style);
+            fragment.shape.draw(*state, origin, 0.f, &strokeData);
+        }
+    }
+
+    state->restore();
+}
+
 void SVGLineLayout::render(const SVGRenderState& state) const
 {
     for(const auto& fragment : m_fragments) {
-        if(fragment.item.type() == LineItem::Type::BidiControl)
+        if(fragment.element == nullptr)
             continue;
-        assert(fragment.item.type() == LineItem::Type::NormalText);
-        auto style = fragment.item.box()->style();
-        auto transform = Transform::makeRotate(fragment.angle, fragment.x, fragment.y) * fragment.lengthAdjustTransform;
-        Point offset(fragment.x, fragment.y - style->fontAscent());
-        Point origin(fragment.x, fragment.y);
-
-        state->save();
-        state->addTransform(transform);
-
-        auto parent = fragment.item.box()->parentBox();
-        if(state.mode() == SVGRenderMode::Painting && parent->isSVGTSpanBox()) {
-            to<SVGTSpanBox>(*parent).fill().applyPaint(state);
+        if(auto box = to<SVGInlineBox>(fragment.element->box())) {
+            paintTextFragment(state, fragment, box->fill(), box->stroke());
+        } else {
+            paintTextFragment(state, fragment, m_block->fill(), m_block->stroke());
         }
-
-        fragment.shape.draw(*state, origin, 0.f);
-        paintTextDecorations(*state, offset, fragment.width, style);
-        state->restore();
     }
 }
 

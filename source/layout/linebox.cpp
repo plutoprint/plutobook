@@ -207,7 +207,7 @@ void TextLineBox::paint(const PaintInfo& info, const Point& offset, PaintPhase p
 
     info->setColor(style()->color());
     for(int i = 0; i < repeatCount; ++i) {
-        origin.x += m_shape.draw(*info, origin, m_expansion);
+        origin.x += m_shape.draw(*info, origin, m_expansion, nullptr);
     }
 
     paintTextDecorations(*info, adjustedOffset, m_width, style());

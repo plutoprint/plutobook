@@ -27,7 +27,6 @@ struct SVGCharacterPosition {
 
 using SVGCharacterPositions = std::map<uint32_t, SVGCharacterPosition>;
 
-class SVGTextBox;
 class SVGTextPositioningElement;
 
 struct SVGTextPosition {
@@ -59,9 +58,11 @@ private:
     uint32_t m_itemIndex = 0;
 };
 
+class SVGTextContentElement;
+
 struct SVGTextFragment {
-    explicit SVGTextFragment(const LineItem& item) : item(item) {}
-    const LineItem& item;
+    explicit SVGTextFragment(const SVGTextContentElement* element) : element(element) {}
+    const SVGTextContentElement* element;
     TextShapeView shape;
     Transform lengthAdjustTransform;
     bool startsNewTextChunk = false;
@@ -91,14 +92,14 @@ private:
     float m_y = 0;
 };
 
-class Rect;
+class SVGTextBox;
 class SVGRenderState;
 
 class SVGLineLayout {
 public:
     explicit SVGLineLayout(SVGTextBox* block);
 
-    Rect boundingRect() const;
+    Rect boundingRect(bool includeStroke) const;
     void render(const SVGRenderState& state) const;
     void layout();
     void build();

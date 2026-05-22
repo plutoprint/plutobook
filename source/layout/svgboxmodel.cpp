@@ -73,11 +73,13 @@ bool SVGRenderState::hasCycleReference(const Box* box) const
     return false;
 }
 
-void SVGPaintServer::applyPaint(const SVGRenderState& state) const
+bool SVGPaintServer::applyPaint(const SVGRenderState& state) const
 {
-    if(m_painter == nullptr || !m_painter->applyPaint(state, m_opacity)) {
-        state->setColor(m_color.colorWithAlpha(m_opacity));
-    }
+    if(!isRenderable())
+        return false;
+    if(m_painter) return m_painter->applyPaint(state, m_opacity);
+    state->setColor(m_color.colorWithAlpha(m_opacity));
+    return true;
 }
 
 SVGBoxModel::SVGBoxModel(SVGElement* element, const RefPtr<BoxStyle>& style)

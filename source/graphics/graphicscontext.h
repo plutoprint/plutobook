@@ -69,6 +69,8 @@ public:
     void setLineJoin(LineJoin lineJoin) { m_lineJoin = lineJoin; }
     LineJoin lineJoin() const { return m_lineJoin; }
 
+    void apply(cairo_t* cr) const;
+
 private:
     float m_lineWidth;
     float m_miterLimit{10.f};

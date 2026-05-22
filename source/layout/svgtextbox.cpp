@@ -16,16 +16,22 @@ SVGInlineTextBox::SVGInlineTextBox(TextNode* node, const RefPtr<BoxStyle>& style
     setIsInline(true);
 }
 
-SVGTSpanBox::SVGTSpanBox(SVGTSpanElement* element, const RefPtr<BoxStyle>& style)
+SVGInlineBox::SVGInlineBox(SVGTextContentElement* element, const RefPtr<BoxStyle>& style)
     : Box(element, style)
 {
     setIsInline(true);
 }
 
-void SVGTSpanBox::build()
+void SVGInlineBox::build()
 {
     m_fill = element()->getPaintServer(style()->fill(), style()->fillOpacity());
+    m_stroke = element()->getPaintServer(style()->stroke(), style()->strokeOpacity());
     Box::build();
+}
+
+SVGTSpanBox::SVGTSpanBox(SVGTSpanElement* element, const RefPtr<BoxStyle>& style)
+    : SVGInlineBox(element, style)
+{
 }
 
 SVGTextBox::SVGTextBox(SVGTextElement* element, const RefPtr<BoxStyle>& style)
@@ -37,8 +43,15 @@ SVGTextBox::SVGTextBox(SVGTextElement* element, const RefPtr<BoxStyle>& style)
 Rect SVGTextBox::fillBoundingBox() const
 {
     if(!m_fillBoundingBox.isValid())
-        m_fillBoundingBox = m_lineLayout.boundingRect();
+        m_fillBoundingBox = m_lineLayout.boundingRect(false);
     return m_fillBoundingBox;
+}
+
+Rect SVGTextBox::strokeBoundingBox() const
+{
+    if(!m_strokeBoundingBox.isValid())
+        m_strokeBoundingBox = m_lineLayout.boundingRect(true);
+    return m_strokeBoundingBox;
 }
 
 void SVGTextBox::render(const SVGRenderState& state) const
@@ -47,18 +60,13 @@ void SVGTextBox::render(const SVGRenderState& state) const
         return;
     SVGBlendInfo blendInfo(m_clipper, m_masker, style());
     SVGRenderState newState(blendInfo, this, state, element()->transform());
-    if(newState.mode() == SVGRenderMode::Clipping) {
-        newState->setColor(Color::White);
-    } else {
-        m_fill.applyPaint(newState);
-    }
-
     m_lineLayout.render(newState);
 }
 
 void SVGTextBox::layout()
 {
     m_fillBoundingBox = Rect::Invalid;
+    m_strokeBoundingBox = Rect::Invalid;
     m_lineLayout.layout();
     SVGBoxModel::layout();
 }
@@ -66,6 +74,7 @@ void SVGTextBox::layout()
 void SVGTextBox::build()
 {
     m_fill = element()->getPaintServer(style()->fill(), style()->fillOpacity());
+    m_stroke = element()->getPaintServer(style()->stroke(), style()->strokeOpacity());
     m_lineLayout.build();
     SVGBoxModel::build();
 }

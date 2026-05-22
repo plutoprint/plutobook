@@ -128,6 +128,7 @@ public:
     virtual bool isTextInputBox() const { return false; }
     virtual bool isSelectBox() const { return false; }
     virtual bool isSVGInlineTextBox() const { return false; }
+    virtual bool isSVGInlineBox() const { return false; }
     virtual bool isSVGTSpanBox() const { return false; }
     virtual bool isSVGTextBox() const { return false; }
     virtual bool isSVGBoxModel() const { return false; }

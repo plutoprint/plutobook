@@ -16,6 +16,41 @@
 
 namespace plutobook {
 
+void StrokeData::apply(cairo_t* cr) const
+{
+    cairo_set_line_width(cr, m_lineWidth);
+    cairo_set_miter_limit(cr, m_miterLimit);
+    cairo_set_dash(cr, m_dashArray.data(), m_dashArray.size(), m_dashOffset);
+    switch(m_lineCap) {
+    case LineCap::Butt:
+        cairo_set_line_cap(cr, CAIRO_LINE_CAP_BUTT);
+        break;
+    case LineCap::Round:
+        cairo_set_line_cap(cr, CAIRO_LINE_CAP_ROUND);
+        break;
+    case LineCap::Square:
+        cairo_set_line_cap(cr, CAIRO_LINE_CAP_SQUARE);
+        break;
+    }
+
+    switch(m_lineJoin) {
+    case LineJoin::Miter:
+        cairo_set_line_join(cr, CAIRO_LINE_JOIN_MITER);
+        break;
+    case LineJoin::Round:
+        cairo_set_line_join(cr, CAIRO_LINE_JOIN_ROUND);
+        break;
+    case LineJoin::Bevel:
+        cairo_set_line_join(cr, CAIRO_LINE_JOIN_BEVEL);
+        break;
+    }
+}
+
+static void set_cairo_stroke_data(cairo_t* cr, const StrokeData& strokeData)
+{
+    strokeData.apply(cr);
+}
+
 constexpr cairo_fill_rule_t to_cairo_fill_rule(FillRule fillRule)
 {
     return fillRule == FillRule::NonZero ? CAIRO_FILL_RULE_WINDING : CAIRO_FILL_RULE_EVEN_ODD;
@@ -66,37 +101,6 @@ static cairo_matrix_t to_cairo_matrix(const Transform& transform)
     cairo_matrix_t matrix;
     cairo_matrix_init(&matrix, transform.a, transform.b, transform.c, transform.d, transform.e, transform.f);
     return matrix;
-}
-
-static void set_cairo_stroke_data(cairo_t* cr, const StrokeData& strokeData)
-{
-    const auto& dashes = strokeData.dashArray();
-    cairo_set_line_width(cr, strokeData.lineWidth());
-    cairo_set_miter_limit(cr, strokeData.miterLimit());
-    cairo_set_dash(cr, dashes.data(), dashes.size(), strokeData.dashOffset());
-    switch(strokeData.lineCap()) {
-    case LineCap::Butt:
-        cairo_set_line_cap(cr, CAIRO_LINE_CAP_BUTT);
-        break;
-    case LineCap::Round:
-        cairo_set_line_cap(cr, CAIRO_LINE_CAP_ROUND);
-        break;
-    case LineCap::Square:
-        cairo_set_line_cap(cr, CAIRO_LINE_CAP_SQUARE);
-        break;
-    }
-
-    switch(strokeData.lineJoin()) {
-    case LineJoin::Miter:
-        cairo_set_line_join(cr, CAIRO_LINE_JOIN_MITER);
-        break;
-    case LineJoin::Round:
-        cairo_set_line_join(cr, CAIRO_LINE_JOIN_ROUND);
-        break;
-    case LineJoin::Bevel:
-        cairo_set_line_join(cr, CAIRO_LINE_JOIN_BEVEL);
-        break;
-    }
 }
 
 static void set_cairo_path(cairo_t* cr, const Path& path)

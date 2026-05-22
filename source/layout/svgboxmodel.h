@@ -90,7 +90,7 @@ public:
     const Color& color() const { return  m_color; }
     float opacity() const { return m_opacity; }
 
-    void applyPaint(const SVGRenderState& state) const;
+    bool applyPaint(const SVGRenderState& state) const;
 
 private:
     const SVGResourcePaintServerBox* m_painter{nullptr};

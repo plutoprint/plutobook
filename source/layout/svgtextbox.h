@@ -36,19 +36,42 @@ inline TextNode* SVGInlineTextBox::node() const
     return static_cast<TextNode*>(Box::node());
 }
 
-class SVGTSpanBox final : public Box {
+class SVGInlineBox : public Box {
+public:
+    SVGInlineBox(SVGTextContentElement* element, const RefPtr<BoxStyle>& style);
+
+    bool isSVGInlineBox() const final { return true; }
+    SVGTextContentElement* element() const;
+    void build() final;
+
+    const SVGPaintServer& fill() const { return m_fill; }
+    const SVGPaintServer& stroke() const { return m_stroke; }
+
+    const char* name() const override { return "SVGInlineBox"; }
+
+private:
+    SVGPaintServer m_fill;
+    SVGPaintServer m_stroke;
+};
+
+template<>
+struct is_a<SVGInlineBox> {
+    static bool check(const Box& box) { return box.isSVGInlineBox(); }
+};
+
+inline SVGTextContentElement* SVGInlineBox::element() const
+{
+    return static_cast<SVGTextContentElement*>(node());
+}
+
+class SVGTSpanBox final : public SVGInlineBox {
 public:
     SVGTSpanBox(SVGTSpanElement* element, const RefPtr<BoxStyle>& style);
 
     bool isSVGTSpanBox() const final { return true; }
     SVGTSpanElement* element() const;
-    const SVGPaintServer& fill() const { return m_fill; }
-    void build() final;
 
     const char* name() const final { return "SVGTSpanBox"; }
-
-private:
-    SVGPaintServer m_fill;
 };
 
 template<>
@@ -66,21 +89,25 @@ public:
     SVGTextBox(SVGTextElement* element, const RefPtr<BoxStyle>& style);
 
     bool isSVGTextBox() const final { return true; }
-
     SVGTextElement* element() const;
     Transform localTransform() const final { return element()->transform(); }
     Rect fillBoundingBox() const final;
-    Rect strokeBoundingBox() const final { return fillBoundingBox(); }
+    Rect strokeBoundingBox() const final;
     void render(const SVGRenderState& state) const final;
     void layout() final;
     void build() final;
+
+    const SVGPaintServer& fill() const { return m_fill; }
+    const SVGPaintServer& stroke() const { return m_stroke; }
 
     const char* name() const final { return "SVGTextBox"; }
 
 private:
     SVGPaintServer m_fill;
+    SVGPaintServer m_stroke;
     SVGLineLayout m_lineLayout;
     mutable Rect m_fillBoundingBox = Rect::Invalid;
+    mutable Rect m_strokeBoundingBox = Rect::Invalid;
 };
 
 template<>

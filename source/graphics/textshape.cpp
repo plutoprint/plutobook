@@ -465,7 +465,7 @@ float TextShapeView::width(float expansion) const
     return width;
 }
 
-float TextShapeView::draw(GraphicsContext& context, const Point& origin, float expansion) const
+float TextShapeView::draw(GraphicsContext& context, const Point& origin, float expansion, const StrokeData* stroke) const
 {
     if(m_startOffset == m_endOffset)
         return 0.f;
@@ -503,8 +503,18 @@ float TextShapeView::draw(GraphicsContext& context, const Point& origin, float e
         }
 
         cairo_set_scaled_font(canvas, run->fontData()->font());
-        cairo_show_glyphs(canvas, glyphBuffer, numGlyphs);
+        if(stroke) {
+            cairo_glyph_path(canvas, glyphBuffer, numGlyphs);
+        } else {
+            cairo_show_glyphs(canvas, glyphBuffer, numGlyphs);
+        }
+
         cairo_glyph_free(glyphBuffer);
+    }
+
+    if(stroke) {
+        stroke->apply(canvas);
+        cairo_stroke(canvas);
     }
 
     return offset.x - origin.x;
