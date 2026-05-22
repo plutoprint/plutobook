@@ -345,7 +345,7 @@ struct CubicBezier {
 
 using TraverseCallback = std::function<bool(const Point& p1, const Point& p2)>;
 
-static void traversePath(const Path& path, const TraverseCallback& callback)
+static void flattenPath(const Path& path, const TraverseCallback& callback)
 {
     Point currentPoint;
     std::array<Point, 3> points;
@@ -412,7 +412,7 @@ static void traversePath(const Path& path, const TraverseCallback& callback)
 float Path::length() const
 {
     float totalLength = 0;
-    traversePath(*this, [&](const Point& p1, const Point& p2) {
+    flattenPath(*this, [&](const Point& p1, const Point& p2) {
         totalLength += hypotf(p2.x - p1.x, p2.y - p1.y);
         return true;
     });
@@ -424,7 +424,7 @@ PointAndTangent Path::pointAndNormalAtLength(float length) const
 {
     float totalLength = 0;
     PointAndTangent position;
-    traversePath(*this, [&](const Point& p1, const Point& p2) {
+    flattenPath(*this, [&](const Point& p1, const Point& p2) {
         totalLength += hypotf(p2.x - p1.x, p2.y - p1.y);
         if(totalLength < length)
             return true;
