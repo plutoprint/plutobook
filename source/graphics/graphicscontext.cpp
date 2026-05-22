@@ -16,39 +16,34 @@
 
 namespace plutobook {
 
-void StrokeData::apply(cairo_t* cr) const
+void StrokeData::apply(cairo_t* canvas) const
 {
-    cairo_set_line_width(cr, m_lineWidth);
-    cairo_set_miter_limit(cr, m_miterLimit);
-    cairo_set_dash(cr, m_dashArray.data(), m_dashArray.size(), m_dashOffset);
+    cairo_set_line_width(canvas, m_lineWidth);
+    cairo_set_miter_limit(canvas, m_miterLimit);
+    cairo_set_dash(canvas, m_dashArray.data(), m_dashArray.size(), m_dashOffset);
     switch(m_lineCap) {
     case LineCap::Butt:
-        cairo_set_line_cap(cr, CAIRO_LINE_CAP_BUTT);
+        cairo_set_line_cap(canvas, CAIRO_LINE_CAP_BUTT);
         break;
     case LineCap::Round:
-        cairo_set_line_cap(cr, CAIRO_LINE_CAP_ROUND);
+        cairo_set_line_cap(canvas, CAIRO_LINE_CAP_ROUND);
         break;
     case LineCap::Square:
-        cairo_set_line_cap(cr, CAIRO_LINE_CAP_SQUARE);
+        cairo_set_line_cap(canvas, CAIRO_LINE_CAP_SQUARE);
         break;
     }
 
     switch(m_lineJoin) {
     case LineJoin::Miter:
-        cairo_set_line_join(cr, CAIRO_LINE_JOIN_MITER);
+        cairo_set_line_join(canvas, CAIRO_LINE_JOIN_MITER);
         break;
     case LineJoin::Round:
-        cairo_set_line_join(cr, CAIRO_LINE_JOIN_ROUND);
+        cairo_set_line_join(canvas, CAIRO_LINE_JOIN_ROUND);
         break;
     case LineJoin::Bevel:
-        cairo_set_line_join(cr, CAIRO_LINE_JOIN_BEVEL);
+        cairo_set_line_join(canvas, CAIRO_LINE_JOIN_BEVEL);
         break;
     }
-}
-
-static void set_cairo_stroke_data(cairo_t* cr, const StrokeData& strokeData)
-{
-    strokeData.apply(cr);
 }
 
 constexpr cairo_fill_rule_t to_cairo_fill_rule(FillRule fillRule)
@@ -103,23 +98,28 @@ static cairo_matrix_t to_cairo_matrix(const Transform& transform)
     return matrix;
 }
 
-static void set_cairo_path(cairo_t* cr, const Path& path)
+static void set_cairo_stroke_data(cairo_t* canvas, const StrokeData& strokeData)
+{
+    strokeData.apply(canvas);
+}
+
+static void set_cairo_path(cairo_t* canvas, const Path& path)
 {
     PathIterator it(path);
     std::array<Point, 3> p;
     while(!it.isDone()) {
         switch(it.currentSegment(p)) {
         case PathCommand::MoveTo:
-            cairo_move_to(cr, p[0].x, p[0].y);
+            cairo_move_to(canvas, p[0].x, p[0].y);
             break;
         case PathCommand::LineTo:
-            cairo_line_to(cr, p[0].x, p[0].y);
+            cairo_line_to(canvas, p[0].x, p[0].y);
             break;
         case PathCommand::CubicTo:
-            cairo_curve_to(cr, p[0].x, p[0].y, p[1].x, p[1].y, p[2].x, p[2].y);
+            cairo_curve_to(canvas, p[0].x, p[0].y, p[1].x, p[1].y, p[2].x, p[2].y);
             break;
         case PathCommand::Close:
-            cairo_close_path(cr);
+            cairo_close_path(canvas);
             break;
         }
 

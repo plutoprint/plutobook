@@ -529,16 +529,17 @@ static void paintTextFragment(const SVGRenderState& state, const SVGTextFragment
 
     if(state.mode() == SVGRenderMode::Clipping) {
         state->setColor(Color::White);
-        fragment.shape.draw(*state, origin, 0.f, nullptr);
+        fragment.shape.draw(*state, origin, 0.f, false);
     } else {
         if(fill.applyPaint(state)) {
-            fragment.shape.draw(*state, origin, 0.f, nullptr);
+            fragment.shape.draw(*state, origin, 0.f, false);
             paintTextDecorations(*state, offset, fragment.width, style);
         }
 
         if(stroke.applyPaint(state)) {
             auto strokeData = fragment.element->getStrokeData(style);
-            fragment.shape.draw(*state, origin, 0.f, &strokeData);
+            strokeData.apply(state->canvas());
+            fragment.shape.draw(*state, origin, 0.f, true);
         }
     }
 

@@ -69,7 +69,7 @@ public:
     void setLineJoin(LineJoin lineJoin) { m_lineJoin = lineJoin; }
     LineJoin lineJoin() const { return m_lineJoin; }
 
-    void apply(cairo_t* cr) const;
+    void apply(cairo_t* canvas) const;
 
 private:
     float m_lineWidth;

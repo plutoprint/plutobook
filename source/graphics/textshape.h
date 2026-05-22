@@ -120,7 +120,7 @@ public:
     uint32_t expansionOpportunityCount() const;
     void maxAscentAndDescent(float& maxAscent, float& maxDescent) const;
     float width(float expansion = 0.f) const;
-    float draw(GraphicsContext& context, const Point& origin, float expansion, const StrokeData* stroke) const;
+    float draw(GraphicsContext& context, const Point& origin, float expansion, bool stroke) const;
 
 private:
     RefPtr<TextShape> m_shape;
