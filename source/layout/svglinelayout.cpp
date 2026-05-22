@@ -482,20 +482,12 @@ Rect SVGLineLayout::boundingRect(bool includeStroke) const
     return boundingRect;
 }
 
-static void paintTextDecoration(GraphicsContext& context, const Point& origin, float width, float thickness)
+static void paintSVGTextDecoration(GraphicsContext& context, const Point& origin, float width, float thickness)
 {
-    float x1 = origin.x;
-    float y1 = origin.y;
-    float x2 = origin.x + width;
-    float y2 = origin.y;
-
-    Path path;
-    path.moveTo(x1, y1);
-    path.lineTo(x2, y2);
-    context.strokePath(path, StrokeData(thickness));
+    context.fillRect(Rect(origin, Size(width, thickness)));
 }
 
-static void paintTextDecorations(GraphicsContext& context, const Point& offset, float width, const BoxStyle* style)
+static void paintSVGTextDecorations(GraphicsContext& context, const Point& offset, float width, const BoxStyle* style)
 {
     auto decorations = style->textDecorationLine();
     if(decorations == TextDecorationLine::None)
@@ -505,14 +497,14 @@ static void paintTextDecorations(GraphicsContext& context, const Point& offset, 
     if(decorations & TextDecorationLine::Underline) {
         auto gap = std::max(1.f, std::ceil(thickness / 2.f));
         Point origin(offset.x, offset.y + baseline + gap);
-        paintTextDecoration(context, origin, width, thickness);
+        paintSVGTextDecoration(context, origin, width, thickness);
     }
 
     if(decorations & TextDecorationLine::Overline)
-        paintTextDecoration(context, offset, width, thickness);
+        paintSVGTextDecoration(context, offset, width, thickness);
     if(decorations & TextDecorationLine::LineThrough) {
         Point origin(offset.x, offset.y + 2.f * baseline / 3.f);
-        paintTextDecoration(context, origin, width, thickness);
+        paintSVGTextDecoration(context, origin, width, thickness);
     }
 }
 
@@ -533,7 +525,7 @@ static void paintTextFragment(const SVGRenderState& state, const SVGTextFragment
     } else {
         if(fill.applyPaint(state)) {
             fragment.shape.draw(*state, origin, 0.f, false);
-            paintTextDecorations(*state, offset, fragment.width, style);
+            paintSVGTextDecorations(*state, offset, fragment.width, style);
         }
 
         if(stroke.applyPaint(state)) {
