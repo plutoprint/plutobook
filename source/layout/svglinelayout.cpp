@@ -511,7 +511,8 @@ static void paintSVGTextDecorations(GraphicsContext& context, const Point& offse
 static void paintTextFragment(const SVGRenderState& state, const SVGTextFragment& fragment, const SVGPaintServer& fill, const SVGPaintServer& stroke)
 {
     const auto* style = fragment.element->style();
-
+    if(style->visibility() != Visibility::Visible)
+        return;
     auto transform = Transform::makeRotate(fragment.angle, fragment.x, fragment.y) * fragment.lengthAdjustTransform;
     Point offset(fragment.x, fragment.y - style->fontAscent());
     Point origin(fragment.x, fragment.y);
