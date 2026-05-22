@@ -78,6 +78,14 @@ enum SVGSpreadMethodType {
 template<>
 const SVGEnumerationEntries& getEnumerationEntries<SVGSpreadMethodType>();
 
+enum SVGLengthAdjustType {
+    SVGLengthAdjustSpacing,
+    SVGLengthAdjustSpacingAndGlyphs
+};
+
+template<>
+const SVGEnumerationEntries& getEnumerationEntries<SVGLengthAdjustType>();
+
 template<typename Enum>
 class SVGEnumeration final : public SVGEnumerationBase {
 public:

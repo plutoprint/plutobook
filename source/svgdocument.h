@@ -305,7 +305,19 @@ private:
     SVGPointList m_points;
 };
 
-class SVGTextPositioningElement : public SVGGraphicsElement {
+class SVGTextContentElement : public SVGGraphicsElement {
+public:
+    SVGTextContentElement(Document* document, const GlobalString& tagName);
+
+    const SVGLength& textLength() const { return m_textLength; }
+    const SVGLengthAdjustType lengthAdjust() const { return m_lengthAdjust.value(); }
+
+private:
+    SVGLength m_textLength;
+    SVGEnumeration<SVGLengthAdjustType> m_lengthAdjust;
+};
+
+class SVGTextPositioningElement : public SVGTextContentElement {
 public:
     SVGTextPositioningElement(Document* document, const GlobalString& tagName);
 

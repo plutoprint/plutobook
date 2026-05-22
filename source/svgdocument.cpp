@@ -640,8 +640,17 @@ Rect SVGPolyElement::getPath(Path& path) const
     return path.boundingRect();
 }
 
-SVGTextPositioningElement::SVGTextPositioningElement(Document* document, const GlobalString& tagName)
+SVGTextContentElement::SVGTextContentElement(Document* document, const GlobalString& tagName)
     : SVGGraphicsElement(document, tagName)
+    , m_textLength(SVGLengthDirection::Horizontal, SVGLengthNegativeValuesMode::Forbid)
+    , m_lengthAdjust(SVGLengthAdjustType::SVGLengthAdjustSpacing)
+{
+    addProperty(textLengthAttr, m_textLength);
+    addProperty(lengthAdjustAttr, m_lengthAdjust);
+}
+
+SVGTextPositioningElement::SVGTextPositioningElement(Document* document, const GlobalString& tagName)
+    : SVGTextContentElement(document, tagName)
     , m_x(SVGLengthDirection::Horizontal, SVGLengthNegativeValuesMode::Allow)
     , m_y(SVGLengthDirection::Vertical, SVGLengthNegativeValuesMode::Allow)
     , m_dx(SVGLengthDirection::Horizontal, SVGLengthNegativeValuesMode::Allow)

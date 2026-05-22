@@ -192,6 +192,17 @@ const SVGEnumerationEntries& getEnumerationEntries<SVGSpreadMethodType>()
     return entries;
 }
 
+template<>
+const SVGEnumerationEntries& getEnumerationEntries<SVGLengthAdjustType>()
+{
+    static const SVGEnumerationEntries entries = {
+        {SVGLengthAdjustSpacing, "spacing"},
+        {SVGLengthAdjustSpacingAndGlyphs, "spacingAndGlyphs"}
+    };
+
+    return entries;
+}
+
 bool SVGAngle::parse(std::string_view input)
 {
     skipLeadingAndTrailingSpaces(input);

@@ -10,6 +10,7 @@
 #define SVGLINELAYOUT_H
 
 #include "linelayout.h"
+#include "geometry.h"
 
 #include <optional>
 #include <map>
@@ -34,9 +35,9 @@ struct SVGTextPosition {
         : element(element), startOffset(startOffset), endOffset(endOffset)
     {}
 
-    SVGTextPositioningElement* element = nullptr;
-    uint32_t startOffset = 0;
-    uint32_t endOffset = 0;
+    SVGTextPositioningElement* element;
+    uint32_t startOffset;
+    uint32_t endOffset;
 };
 
 using SVGTextPositionList = std::vector<SVGTextPosition>;
@@ -62,6 +63,7 @@ struct SVGTextFragment {
     explicit SVGTextFragment(const LineItem& item) : item(item) {}
     const LineItem& item;
     TextShapeView shape;
+    Transform lengthAdjustTransform;
     bool startsNewTextChunk = false;
     float x = 0;
     float y = 0;
