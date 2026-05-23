@@ -120,7 +120,7 @@ Rect SVGResourceClipperBox::clipBoundingBox(const Box* box) const
 {
     auto clipBoundingBox = paintBoundingBox();
     if(element()->clipPathUnits() == SVGUnitsTypeObjectBoundingBox) {
-        const auto& bbox = box->fillBoundingBox();
+        const auto bbox = box->fillBoundingBox();
         clipBoundingBox.x = clipBoundingBox.x * bbox.w + bbox.x;
         clipBoundingBox.y = clipBoundingBox.y * bbox.h + bbox.y;
         clipBoundingBox.w = clipBoundingBox.w * bbox.w;
@@ -134,7 +134,7 @@ void SVGResourceClipperBox::applyClipPath(const SVGRenderState& state) const
 {
     auto transform = element()->transform();
     if(element()->clipPathUnits() == SVGUnitsTypeObjectBoundingBox) {
-        const auto& bbox = state.fillBoundingBox();
+        const auto bbox = state.fillBoundingBox();
         transform.translate(bbox.x, bbox.y);
         transform.scale(bbox.w, bbox.h);
     }
@@ -172,7 +172,7 @@ void SVGResourceClipperBox::applyClipMask(const SVGRenderState& state) const
     context.addTransform(state.currentTransform());
     context.addTransform(element()->transform());
     if(element()->clipPathUnits() == SVGUnitsTypeObjectBoundingBox) {
-        const auto& bbox = state.fillBoundingBox();
+        const auto bbox = state.fillBoundingBox();
         context.translate(bbox.x, bbox.y);
         context.scale(bbox.w, bbox.h);
     }
@@ -194,7 +194,7 @@ Rect SVGResourceMaskerBox::maskBoundingBox(const Box* box) const
 {
     auto maskBoundingBox = paintBoundingBox();
     if(element()->maskContentUnits() == SVGUnitsTypeObjectBoundingBox) {
-        const auto& bbox = box->fillBoundingBox();
+        const auto bbox = box->fillBoundingBox();
         maskBoundingBox.x = maskBoundingBox.x * bbox.w + bbox.x;
         maskBoundingBox.y = maskBoundingBox.y * bbox.h + bbox.y;
         maskBoundingBox.w = maskBoundingBox.w * bbox.w;
@@ -210,7 +210,7 @@ Rect SVGResourceMaskerBox::maskBoundingBox(const Box* box) const
     };
 
     if(element()->maskUnits() == SVGUnitsTypeObjectBoundingBox) {
-        const auto& bbox = box->fillBoundingBox();
+        const auto bbox = box->fillBoundingBox();
         maskRect.x = maskRect.x * bbox.w + bbox.x;
         maskRect.y = maskRect.y * bbox.h + bbox.y;
         maskRect.w = maskRect.w * bbox.w;
@@ -233,7 +233,7 @@ void SVGResourceMaskerBox::applyMask(const SVGRenderState& state) const
     };
 
     if(element()->maskUnits() == SVGUnitsTypeObjectBoundingBox) {
-        const auto& bbox = state.fillBoundingBox();
+        const auto bbox = state.fillBoundingBox();
         maskRect.x = maskRect.x * bbox.w + bbox.x;
         maskRect.y = maskRect.y * bbox.h + bbox.y;
         maskRect.w = maskRect.w * bbox.w;
@@ -245,7 +245,7 @@ void SVGResourceMaskerBox::applyMask(const SVGRenderState& state) const
     context.addTransform(state.currentTransform());
     context.clipRect(maskRect);
     if(element()->maskContentUnits() == SVGUnitsTypeObjectBoundingBox) {
-        const auto& bbox = state.fillBoundingBox();
+        const auto bbox = state.fillBoundingBox();
         context.translate(bbox.x, bbox.y);
         context.scale(bbox.w, bbox.h);
     }
@@ -292,7 +292,7 @@ bool SVGResourcePatternBox::applyPaint(const SVGRenderState& state, float opacit
     };
 
     if(m_attributes.patternUnits() == SVGUnitsTypeObjectBoundingBox) {
-        const auto& bbox = state.fillBoundingBox();
+        const auto bbox = state.fillBoundingBox();
         patternRect.x = patternRect.x * bbox.w + bbox.x;
         patternRect.y = patternRect.y * bbox.h + bbox.y;
         patternRect.w = patternRect.w * bbox.w;
@@ -307,7 +307,7 @@ bool SVGResourcePatternBox::applyPaint(const SVGRenderState& state, float opacit
     if(m_attributes.viewBox().isValid()) {
         context.addTransform(m_attributes.preserveAspectRatio().getTransform(m_attributes.viewBox(), patternRect.size()));
     } else if(m_attributes.patternContentUnits() == SVGUnitsTypeObjectBoundingBox) {
-        const auto& bbox = state.fillBoundingBox();
+        const auto bbox = state.fillBoundingBox();
         context.scale(bbox.w, bbox.h);
     }
     {
@@ -402,7 +402,7 @@ bool SVGResourceLinearGradientBox::applyPaint(const SVGRenderState& state, float
     auto spreadMethod = toSpreadMethod(m_attributes.spreadMethod());
     auto gradientTransform = m_attributes.gradientTransform();
     if(m_attributes.gradientUnits() == SVGUnitsTypeObjectBoundingBox) {
-        const auto& bbox = state.fillBoundingBox();
+        const auto bbox = state.fillBoundingBox();
         gradientTransform.postMultiply(Transform(bbox.w, 0, 0, bbox.h, bbox.x, bbox.y));
     }
 
@@ -446,7 +446,7 @@ bool SVGResourceRadialGradientBox::applyPaint(const SVGRenderState& state, float
     auto spreadMethod = toSpreadMethod(m_attributes.spreadMethod());
     auto gradientTransform = m_attributes.gradientTransform();
     if(m_attributes.gradientUnits() == SVGUnitsTypeObjectBoundingBox) {
-        const auto& bbox = state.fillBoundingBox();
+        const auto bbox = state.fillBoundingBox();
         gradientTransform.postMultiply(Transform(bbox.w, 0, 0, bbox.h, bbox.x, bbox.y));
     }
 
