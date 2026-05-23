@@ -531,7 +531,7 @@ static void paintTextFragment(const SVGRenderState& state, const SVGTextFragment
 
         if(stroke.applyPaint(state)) {
             auto strokeData = fragment.element->getStrokeData(style);
-            strokeData.apply(state->canvas());
+            strokeData.apply(state.context());
             fragment.shape.draw(*state, origin, 0.f, true);
         }
     }

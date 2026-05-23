@@ -16,12 +16,13 @@
 
 namespace plutobook {
 
-void StrokeData::apply(cairo_t* canvas) const
+static void set_cairo_stroke_data(cairo_t* canvas, const StrokeData& strokeData)
 {
-    cairo_set_line_width(canvas, m_lineWidth);
-    cairo_set_miter_limit(canvas, m_miterLimit);
-    cairo_set_dash(canvas, m_dashArray.data(), m_dashArray.size(), m_dashOffset);
-    switch(m_lineCap) {
+    const auto& dashes = strokeData.dashArray();
+    cairo_set_line_width(canvas, strokeData.lineWidth());
+    cairo_set_miter_limit(canvas, strokeData.miterLimit());
+    cairo_set_dash(canvas, dashes.data(), dashes.size(), strokeData.dashOffset());
+    switch(strokeData.lineCap()) {
     case LineCap::Butt:
         cairo_set_line_cap(canvas, CAIRO_LINE_CAP_BUTT);
         break;
@@ -33,7 +34,7 @@ void StrokeData::apply(cairo_t* canvas) const
         break;
     }
 
-    switch(m_lineJoin) {
+    switch(strokeData.lineJoin()) {
     case LineJoin::Miter:
         cairo_set_line_join(canvas, CAIRO_LINE_JOIN_MITER);
         break;
@@ -44,6 +45,12 @@ void StrokeData::apply(cairo_t* canvas) const
         cairo_set_line_join(canvas, CAIRO_LINE_JOIN_BEVEL);
         break;
     }
+}
+
+void StrokeData::apply(GraphicsContext& context) const
+{
+    auto canvas = context.canvas();
+    set_cairo_stroke_data(canvas, *this);
 }
 
 constexpr cairo_fill_rule_t to_cairo_fill_rule(FillRule fillRule)
@@ -96,11 +103,6 @@ static cairo_matrix_t to_cairo_matrix(const Transform& transform)
     cairo_matrix_t matrix;
     cairo_matrix_init(&matrix, transform.a, transform.b, transform.c, transform.d, transform.e, transform.f);
     return matrix;
-}
-
-static void set_cairo_stroke_data(cairo_t* canvas, const StrokeData& strokeData)
-{
-    strokeData.apply(canvas);
 }
 
 static void set_cairo_path(cairo_t* canvas, const Path& path)

@@ -47,6 +47,8 @@ enum class SpreadMethod {
 
 using DashArray = std::vector<double>;
 
+class GraphicsContext;
+
 class StrokeData {
 public:
     explicit StrokeData(float lineWidth = 1.f) : m_lineWidth(lineWidth) {}
@@ -69,7 +71,7 @@ public:
     void setLineJoin(LineJoin lineJoin) { m_lineJoin = lineJoin; }
     LineJoin lineJoin() const { return m_lineJoin; }
 
-    void apply(cairo_t* canvas) const;
+    void apply(GraphicsContext& context) const;
 
 private:
     float m_lineWidth;
