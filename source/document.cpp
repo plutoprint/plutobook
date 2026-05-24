@@ -677,6 +677,8 @@ Element* Document::createElement(const GlobalString& namespaceURI, const GlobalS
             return new (m_heap) SVGPathElement(this);
         if(tagName == tspanTag)
             return new (m_heap) SVGTSpanElement(this);
+        if(tagName == textPathTag)
+            return new (m_heap) SVGTextPathElement(this);
         if(tagName == textTag)
             return new (m_heap) SVGTextElement(this);
         if(tagName == markerTag)

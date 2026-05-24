@@ -34,6 +34,22 @@ SVGTSpanBox::SVGTSpanBox(SVGTSpanElement* element, const RefPtr<BoxStyle>& style
 {
 }
 
+SVGTextPathBox::SVGTextPathBox(SVGTextPathElement* element, const RefPtr<BoxStyle>& style)
+    : SVGInlineBox(element, style)
+{
+}
+
+Path SVGTextPathBox::textPath() const
+{
+    auto targetElement = element()->getTargetElement(document());
+    if(targetElement && targetElement->tagName() == pathTag) {
+        auto pathElement = static_cast<SVGPathElement*>(targetElement);
+        return pathElement->path().transformed(pathElement->transform());
+    }
+
+    return Path();
+}
+
 SVGTextBox::SVGTextBox(SVGTextElement* element, const RefPtr<BoxStyle>& style)
     : SVGBoxModel(element, style)
     , m_lineLayout(this)

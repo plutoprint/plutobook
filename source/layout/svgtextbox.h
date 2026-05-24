@@ -84,6 +84,27 @@ inline SVGTSpanElement* SVGTSpanBox::element() const
     return static_cast<SVGTSpanElement*>(node());
 }
 
+class SVGTextPathBox final : public SVGInlineBox {
+public:
+    SVGTextPathBox(SVGTextPathElement* element, const RefPtr<BoxStyle>& style);
+
+    bool isSVGTextPathBox() const final { return true; }
+    SVGTextPathElement* element() const;
+    Path textPath() const;
+
+    const char* name() const final { return "SVGTextPathBox"; }
+};
+
+template<>
+struct is_a<SVGTextPathBox> {
+    static bool check(const Box& box) { return box.isSVGTextPathBox(); }
+};
+
+inline SVGTextPathElement* SVGTextPathBox::element() const
+{
+    return static_cast<SVGTextPathElement*>(node());
+}
+
 class SVGTextBox final : public SVGBoxModel {
 public:
     SVGTextBox(SVGTextElement* element, const RefPtr<BoxStyle>& style);

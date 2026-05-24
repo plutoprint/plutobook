@@ -130,6 +130,7 @@ public:
     virtual bool isSVGInlineTextBox() const { return false; }
     virtual bool isSVGInlineBox() const { return false; }
     virtual bool isSVGTSpanBox() const { return false; }
+    virtual bool isSVGTextPathBox() const { return false; }
     virtual bool isSVGTextBox() const { return false; }
     virtual bool isSVGBoxModel() const { return false; }
     virtual bool isSVGRootBox() const { return false; }

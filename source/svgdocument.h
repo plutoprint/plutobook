@@ -342,6 +342,17 @@ public:
     Box* createBox(const RefPtr<BoxStyle>& style) final;
 };
 
+class SVGTextPathElement final : public SVGTextContentElement, public SVGURIReference {
+public:
+    SVGTextPathElement(Document* document);
+
+    const SVGLength& startOffset() const { return m_startOffset; }
+    Box* createBox(const RefPtr<BoxStyle>& style) final;
+
+private:
+    SVGLength m_startOffset;
+};
+
 class SVGTextElement final : public SVGTextPositioningElement {
 public:
     SVGTextElement(Document* document);

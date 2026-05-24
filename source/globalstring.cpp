@@ -310,6 +310,7 @@ const GlobalString spanAttr("span");
 const GlobalString spreadMethodAttr("spreadMethod");
 const GlobalString srcAttr("src");
 const GlobalString startAttr("start");
+const GlobalString startOffsetAttr("startOffset");
 const GlobalString styleAttr("style");
 const GlobalString textAttr("text");
 const GlobalString textLengthAttr("textLength");

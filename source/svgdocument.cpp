@@ -673,6 +673,19 @@ Box* SVGTSpanElement::createBox(const RefPtr<BoxStyle>& style)
     return new (heap()) SVGTSpanBox(this, style);
 }
 
+SVGTextPathElement::SVGTextPathElement(Document* document)
+    : SVGTextContentElement(document, textPathTag)
+    , SVGURIReference(this)
+    , m_startOffset(SVGLengthDirection::Horizontal, SVGLengthNegativeValuesMode::Allow)
+{
+    addProperty(startOffsetAttr, m_startOffset);
+}
+
+Box* SVGTextPathElement::createBox(const RefPtr<BoxStyle>& style)
+{
+    return new (heap()) SVGTextPathBox(this, style);
+}
+
 SVGTextElement::SVGTextElement(Document* document)
     : SVGTextPositioningElement(document, textTag)
 {

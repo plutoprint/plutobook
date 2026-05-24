@@ -290,6 +290,7 @@ extern const GlobalString spanAttr;
 extern const GlobalString spreadMethodAttr;
 extern const GlobalString srcAttr;
 extern const GlobalString startAttr;
+extern const GlobalString startOffsetAttr;
 extern const GlobalString styleAttr;
 extern const GlobalString textAttr;
 extern const GlobalString textLengthAttr;

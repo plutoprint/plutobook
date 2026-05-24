@@ -27,17 +27,22 @@ void SVGLineItemsBuilder::appendText(Box* box, const HeapString& data)
 void SVGLineItemsBuilder::enterInline(Box* box)
 {
     LineItemsBuilder::enterInline(box);
-    auto element = to<SVGTSpanBox>(*box).element();
-    m_textPositions.emplace_back(element, m_data.text.length(), m_data.text.length());
-    m_itemIndex = m_textPositions.size();
+    if(box->isSVGTSpanBox()) {
+        auto element = to<SVGTSpanBox>(*box).element();
+        m_textPositions.emplace_back(element, m_data.text.length(), m_data.text.length());
+        m_itemIndex = m_textPositions.size();
+    }
 }
 
 void SVGLineItemsBuilder::exitInline(Box* box)
 {
-    auto element = to<SVGTSpanBox>(*box).element();
-    auto& position = m_textPositions[--m_itemIndex];
-    assert(position.element == element);
-    position.endOffset = m_data.text.length();
+    if(box->isSVGTSpanBox()) {
+        auto element = to<SVGTSpanBox>(*box).element();
+        auto& position = m_textPositions[--m_itemIndex];
+        assert(position.element == element);
+        position.endOffset = m_data.text.length();
+    }
+
     LineItemsBuilder::exitInline(box);
 }
 
@@ -126,9 +131,9 @@ static float calculateTextChunkLength(SVGTextFragmentIterator begin, SVGTextFrag
 static void handleTextChunk(SVGTextFragmentIterator begin, SVGTextFragmentIterator end)
 {
     const SVGTextFragment* textFragment = nullptr;
-    for(auto it = begin; it != end; ++it) {
-        const SVGTextFragment& fragment = *it;
-        if(fragment.element) {
+    for(; begin != end; ++begin) {
+        const SVGTextFragment& fragment = *begin;
+        if(!fragment.inTextPath && fragment.element) {
             textFragment = &fragment;
             break;
         }
@@ -198,10 +203,11 @@ static void handleTextChunk(SVGTextFragmentIterator begin, SVGTextFragmentIterat
 void SVGTextFragmentsBuilder::layout()
 {
     for(const auto& item : m_data.items) {
-        if(item.type() == LineItem::Type::InlineStart
-            || item.type() == LineItem::Type::InlineEnd)
-            continue;
-        if(item.type() == LineItem::Type::NormalText) {
+        if(item.type() == LineItem::Type::InlineStart) {
+            handleInlineStart(item);
+        } else if(item.type() == LineItem::Type::InlineEnd) {
+            handleInlineEnd(item);
+        } else if(item.type() == LineItem::Type::NormalText) {
             handleTextItem(item);
         } else if(item.type() == LineItem::Type::BidiControl) {
             handleBidiControl(item);
@@ -224,6 +230,51 @@ void SVGTextFragmentsBuilder::layout()
     }
 
     handleTextChunk(begin, it);
+}
+
+void SVGTextFragmentsBuilder::handleInlineStart(const LineItem& item)
+{
+    auto box = to<SVGTextPathBox>(item.box());
+    if(box == nullptr)
+        return;
+    m_textPath = box->textPath();
+    m_textPathLength = m_textPath.length();
+
+    const auto& startOffset = box->element()->startOffset();
+    if(startOffset.type() == SVGLengthType::Percentage) {
+        m_textPathStartOffset = m_textPathLength * (startOffset.value() / 100.f);
+    } else {
+        m_textPathStartOffset = startOffset.value();
+    }
+
+    const auto* style = box->style();
+    if(needsTextAnchorAdjustment(style)) {
+        float chunkLength = 0;
+        const auto* it = &item + 1;
+        while(box != it->box()) {
+            if(it->type() == LineItem::Type::NormalText) {
+                const auto& shape = it->shapeText(m_data);
+                chunkLength += shape->width();
+            }
+
+            ++it;
+        }
+
+        m_textPathStartOffset += calculateTextAnchorOffset(style, chunkLength);
+    }
+
+    m_textPathCurrentOffset = m_textPathStartOffset;
+}
+
+void SVGTextFragmentsBuilder::handleInlineEnd(const LineItem& item)
+{
+    auto box = to<SVGTextPathBox>(item.box());
+    if(box == nullptr)
+        return;
+    m_textPath.clear();
+    m_textPathLength = 0.f;
+    m_textPathStartOffset = 0.f;
+    m_textPathCurrentOffset = 0.f;
 }
 
 static float calculateBaselineShift(const BoxStyle* style)
@@ -337,6 +388,7 @@ void SVGTextFragmentsBuilder::handleTextItem(const LineItem& item)
     const auto lineHeight = style->fontLineHeight();
     const auto isVerticalText = style->isVerticalWritingMode();
     const auto isUprightText = style->isUprightTextOrientation();
+    const auto isTextOnPath = !m_textPath.isEmpty();
 
     auto recordTextFragment = [&](SVGTextFragment& fragment, uint32_t startOffset, uint32_t endOffset) {
         assert(endOffset > startOffset && (startOffset >= item.startOffset() && startOffset <= item.endOffset()));
@@ -346,11 +398,17 @@ void SVGTextFragmentsBuilder::handleTextItem(const LineItem& item)
             fragment.shape = TextShapeView(shape, item.endOffset() - endOffset, item.endOffset() - startOffset);
         }
 
+        fragment.inTextPath = isTextOnPath;
         fragment.width = fragment.shape.width();
         fragment.height = lineHeight;
         if(isVerticalText) {
-            m_y += isUprightText ? fragment.height : fragment.width;
+            auto advance = isUprightText ? fragment.height : fragment.width;
+            if(isTextOnPath)
+                m_textPathCurrentOffset += advance;
+            m_y += advance;
         } else {
+            if(isTextOnPath)
+                m_textPathCurrentOffset += fragment.width;
             m_x += fragment.width;
         }
 
@@ -381,7 +439,7 @@ void SVGTextFragmentsBuilder::handleTextItem(const LineItem& item)
         auto dx = position.dx.value_or(0);
         auto dy = position.dy.value_or(0);
 
-        auto shouldStartNewFragment = needsTextLengthSpacing || isVerticalText || applySpacingToNextCharacter
+        auto shouldStartNewFragment = needsTextLengthSpacing || isTextOnPath || isVerticalText || applySpacingToNextCharacter
             || position.x || position.y || dx || dy || angle || angle != lastAngle;
         if(shouldStartNewFragment && didStartTextFragment) {
             recordTextFragment(fragment, startOffset, textOffset);
@@ -391,8 +449,28 @@ void SVGTextFragmentsBuilder::handleTextItem(const LineItem& item)
 
         auto startsNewTextChunk = (position.x || position.y) && textOffset == item.startOffset();
         if(startsNewTextChunk || shouldStartNewFragment || !didStartTextFragment) {
-            m_x = dx + position.x.value_or(m_x);
-            m_y = dy + position.y.value_or(m_y);
+            if(isTextOnPath) {
+                if(isVerticalText) {
+                    if(position.y)
+                        m_textPathCurrentOffset = m_textPathStartOffset + position.y.value();
+                    m_textPathCurrentOffset += dy;
+                } else {
+                    if(position.x)
+                        m_textPathCurrentOffset = m_textPathStartOffset + position.x.value();
+                    m_textPathCurrentOffset += dx;
+                }
+
+                if(m_textPathCurrentOffset > m_textPathLength)
+                    return;
+                auto pointAndAngle = m_textPath.pointAndNormalAtLength(m_textPathCurrentOffset);
+                m_x = pointAndAngle.first.x;
+                m_y = pointAndAngle.first.y;
+                angle += pointAndAngle.second;
+            } else {
+                m_x = dx + position.x.value_or(m_x);
+                m_y = dy + position.y.value_or(m_y);
+            }
+
             fragment.x = isVerticalText ? m_x + baselineOffset : m_x;
             fragment.y = isVerticalText ? m_y : m_y - baselineOffset;
             fragment.angle = angle;
@@ -400,7 +478,7 @@ void SVGTextFragmentsBuilder::handleTextItem(const LineItem& item)
                 if(isUprightText) {
                     fragment.y += style->fontHeight();
                 } else {
-                    fragment.angle += 90.f;
+                    fragment.angle += isTextOnPath ? -90.f : 90.f;
                 }
             }
 
@@ -417,6 +495,7 @@ void SVGTextFragmentsBuilder::handleTextItem(const LineItem& item)
 
         if(spacing) {
             applySpacingToNextCharacter = true;
+            m_textPathCurrentOffset += spacing;
             if(isVerticalText) {
                 m_y += spacing;
             } else {
@@ -602,8 +681,8 @@ void SVGLineLayout::layout()
 {
     auto element = to<SVGTextBox>(*m_block).element();
     SVGTextPosition wholePosition(element, 0, m_data.text.length());
-    SVGCharacterPositions characterPositions;
 
+    SVGCharacterPositions characterPositions;
     fillCharacterPositions(wholePosition, characterPositions);
     for(const auto& position : m_textPositions) {
         fillCharacterPositions(position, characterPositions);
@@ -620,7 +699,7 @@ void SVGLineLayout::build()
     while(child) {
         if(auto box = to<SVGInlineTextBox>(child)) {
             builder.appendText(box, box->text());
-        } else if(auto box = to<SVGTSpanBox>(child)) {
+        } else if(auto box = to<SVGInlineBox>(child)) {
             builder.enterInline(box);
             if(child->firstChild()) {
                 child = child->firstChild();
@@ -642,7 +721,7 @@ void SVGLineLayout::build()
                 break;
             }
 
-            assert(child->isSVGTSpanBox());
+            assert(child->isSVGInlineBox());
             builder.exitInline(child);
         }
     }

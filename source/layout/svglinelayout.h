@@ -66,6 +66,7 @@ struct SVGTextFragment {
     TextShapeView shape;
     Transform lengthAdjustTransform;
     bool startsNewTextChunk = false;
+    bool inTextPath = false;
     float x = 0;
     float y = 0;
     float width = 0;
@@ -82,11 +83,17 @@ public:
     void layout();
 
 private:
+    void handleInlineStart(const LineItem& item);
+    void handleInlineEnd(const LineItem& item);
     void handleTextItem(const LineItem& item);
     void handleBidiControl(const LineItem& item);
     SVGTextFragmentList& m_fragments;
     const LineItemsData& m_data;
     const SVGCharacterPositions& m_positions;
+    Path m_textPath;
+    float m_textPathLength = 0;
+    float m_textPathStartOffset = 0;
+    float m_textPathCurrentOffset = 0;
     uint32_t m_characterOffset = 0;
     float m_x = 0;
     float m_y = 0;
