@@ -323,16 +323,19 @@ static AlignmentBaseline resolveDominantBaseline(const BoxStyle* style)
     return AlignmentBaseline::Auto;
 }
 
-static float calculateBaselineOffset(const BoxStyle* style)
+static float calculateBaselineOffset(const Box* box)
 {
+    const auto* style = box->style();
     auto baseline = style->alignmentBaseline();
     if(baseline == AlignmentBaseline::Auto || baseline == AlignmentBaseline::Baseline) {
         baseline = resolveDominantBaseline(style);
     }
 
+    const auto* parent = box->parentBox();
     auto baselineShift = calculateBaselineShift(style);
-    for(auto parent = style->parentStyle(); parent; parent = parent->parentStyle()) {
-        baselineShift += calculateBaselineShift(parent);
+    while(parent->isSVGInlineBox() || parent->isSVGTextBox()) {
+        baselineShift += calculateBaselineShift(parent->style());
+        parent = parent->parentBox();
     }
 
     switch(baseline) {
@@ -415,7 +418,7 @@ void SVGTextFragmentsBuilder::handleTextItem(const LineItem& item)
     auto letterSpacing = style->letterSpacing();
     auto wordSpacing = style->wordSpacing();
 
-    auto baselineOffset = calculateBaselineOffset(style);
+    auto baselineOffset = calculateBaselineOffset(element->box());
     auto startOffset = item.startOffset();
     auto textOffset = item.startOffset();
     auto didStartTextFragment = false;
