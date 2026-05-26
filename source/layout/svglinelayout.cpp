@@ -437,6 +437,18 @@ void SVGTextFragmentsBuilder::handleTextItem(const LineItem& item)
         auto angle = position.rotate.value_or(0);
         auto dx = position.dx.value_or(0);
         auto dy = position.dy.value_or(0);
+        if(!isTextOnPath) {
+            m_dx = dx;
+            m_dy = dy;
+        } else {
+            if(isVerticalText) {
+                m_dx += dx;
+                m_dy = dy;
+            } else {
+                m_dx = dx;
+                m_dy += dy;
+            }
+        }
 
         auto shouldStartNewFragment = needsTextLengthSpacing || isTextOnPath || isVerticalText || applySpacingToNextCharacter
             || position.x || position.y || dx || dy || angle || angle != lastAngle;
@@ -448,31 +460,41 @@ void SVGTextFragmentsBuilder::handleTextItem(const LineItem& item)
 
         auto startsNewTextChunk = (position.x || position.y) && textOffset == item.startOffset();
         if(startsNewTextChunk || shouldStartNewFragment || !didStartTextFragment) {
+            fragment.xShift = 0;
+            fragment.yShift = 0;
+            fragment.angle = angle;
+
             if(isTextOnPath) {
                 if(isVerticalText) {
-                    if(position.y)
+                    fragment.xShift += m_dx + baselineOffset;
+                    if(position.y.has_value())
                         m_textPathCurrentOffset = m_textPathStartOffset + position.y.value();
-                    m_textPathCurrentOffset += dy;
+                    m_textPathCurrentOffset += m_dy;
+                    m_dy = 0;
                 } else {
-                    if(position.x)
+                    fragment.yShift += m_dy - baselineOffset;
+                    if(position.x.has_value())
                         m_textPathCurrentOffset = m_textPathStartOffset + position.x.value();
-                    m_textPathCurrentOffset += dx;
+                    m_textPathCurrentOffset += m_dx;
+                    m_dx = 0;
                 }
 
                 if(m_textPathCurrentOffset > m_textPathLength)
                     return;
                 auto pointAndAngle = m_textPath.pointAndNormalAtLength(m_textPathCurrentOffset);
-                m_x = pointAndAngle.first.x;
-                m_y = pointAndAngle.first.y;
-                angle += pointAndAngle.second;
+                fragment.x = m_x = pointAndAngle.first.x;
+                fragment.y = m_y = pointAndAngle.first.y;
+                fragment.angle += pointAndAngle.second;
             } else {
-                m_x = dx + position.x.value_or(m_x);
-                m_y = dy + position.y.value_or(m_y);
+                fragment.x = m_x = m_dx + position.x.value_or(m_x);
+                fragment.y = m_y = m_dy + position.y.value_or(m_y);
+                if(isVerticalText) {
+                    fragment.x += baselineOffset;
+                } else {
+                    fragment.y -= baselineOffset;
+                }
             }
 
-            fragment.x = isVerticalText ? m_x + baselineOffset : m_x;
-            fragment.y = isVerticalText ? m_y : m_y - baselineOffset;
-            fragment.angle = angle;
             if(isVerticalText) {
                 if(isUprightText) {
                     fragment.y += style->fontHeight();
@@ -544,7 +566,8 @@ Rect SVGLineLayout::boundingRect(bool includeStroke) const
         if(fragment.element == nullptr)
             continue;
         auto style = fragment.element->style();
-        auto fragmentRect = Rect(fragment.x, fragment.y - style->fontAscent(), fragment.width, style->fontHeight());
+        auto origin = Point(fragment.x + fragment.xShift, fragment.y + fragment.yShift);
+        auto fragmentRect = Rect(origin.x, origin.y - style->fontAscent(), fragment.width, style->fontHeight());
         auto fragmentTranform = Transform::makeRotate(fragment.angle, fragment.x, fragment.y) * fragment.lengthAdjustTransform;
         if(includeStroke && style->hasStroke()) {
             SVGLengthContext lengthContext(fragment.element);
@@ -560,12 +583,12 @@ Rect SVGLineLayout::boundingRect(bool includeStroke) const
     return boundingRect;
 }
 
-static void paintSVGTextDecoration(GraphicsContext& context, const Point& origin, float width, float thickness)
+static void paintSVGTextDecoration(GraphicsContext& context, const Point& offset, float width, float thickness)
 {
-    context.fillRect(Rect(origin, Size(width, thickness)));
+    context.fillRect(Rect(offset, Size(width, thickness)));
 }
 
-static void paintSVGTextDecorations(GraphicsContext& context, const Point& offset, float width, const BoxStyle* style)
+static void paintSVGTextDecorations(GraphicsContext& context, const Point& origin, float width, const BoxStyle* style)
 {
     auto decorations = style->textDecorationLine();
     if(decorations == TextDecorationLine::None)
@@ -574,15 +597,18 @@ static void paintSVGTextDecorations(GraphicsContext& context, const Point& offse
     auto thickness = style->fontSize() / 16.f;
     if(decorations & TextDecorationLine::Underline) {
         auto gap = std::max(1.f, std::ceil(thickness / 2.f));
-        Point origin(offset.x, offset.y + baseline + gap);
-        paintSVGTextDecoration(context, origin, width, thickness);
+        Point offset(origin.x, origin.y + gap);
+        paintSVGTextDecoration(context, offset, width, thickness);
     }
 
-    if(decorations & TextDecorationLine::Overline)
+    if(decorations & TextDecorationLine::Overline) {
+        Point offset(origin.x, origin.y - baseline);
         paintSVGTextDecoration(context, offset, width, thickness);
+    }
+
     if(decorations & TextDecorationLine::LineThrough) {
-        Point origin(offset.x, offset.y + 2.f * baseline / 3.f);
-        paintSVGTextDecoration(context, origin, width, thickness);
+        Point offset(origin.x, origin.y - baseline / 3.f);
+        paintSVGTextDecoration(context, offset, width, thickness);
     }
 }
 
@@ -591,9 +617,8 @@ static void paintTextFragment(const SVGRenderState& state, const SVGTextFragment
     const auto* style = fragment.element->style();
     if(style->visibility() != Visibility::Visible)
         return;
+    auto origin = Point(fragment.x + fragment.xShift, fragment.y + fragment.yShift);
     auto transform = Transform::makeRotate(fragment.angle, fragment.x, fragment.y) * fragment.lengthAdjustTransform;
-    Point offset(fragment.x, fragment.y - style->fontAscent());
-    Point origin(fragment.x, fragment.y);
 
     state->save();
     state->addTransform(transform);
@@ -604,7 +629,7 @@ static void paintTextFragment(const SVGRenderState& state, const SVGTextFragment
     } else {
         if(fill.applyPaint(state)) {
             fragment.shape.draw(*state, origin, 0.f, false);
-            paintSVGTextDecorations(*state, offset, fragment.width, style);
+            paintSVGTextDecorations(*state, origin, fragment.width, style);
         }
 
         if(stroke.applyPaint(state)) {

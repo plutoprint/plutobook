@@ -62,16 +62,22 @@ class SVGTextContentElement;
 
 struct SVGTextFragment {
     explicit SVGTextFragment(const SVGTextContentElement* element) : element(element) {}
+
     const SVGTextContentElement* element;
     TextShapeView shape;
     Transform lengthAdjustTransform;
+
     bool startsNewTextChunk = false;
     bool inTextPath = false;
+
     float x = 0;
     float y = 0;
     float width = 0;
     float height = 0;
     float angle = 0;
+
+    float xShift = 0;
+    float yShift = 0;
 };
 
 using SVGTextFragmentList = std::pmr::vector<SVGTextFragment>;
@@ -95,6 +101,8 @@ private:
     float m_textPathStartOffset = 0;
     float m_textPathCurrentOffset = 0;
     uint32_t m_characterOffset = 0;
+    float m_dx = 0;
+    float m_dy = 0;
     float m_x = 0;
     float m_y = 0;
 };
