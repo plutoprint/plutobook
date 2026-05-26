@@ -289,9 +289,8 @@ static float calculateBaselineShift(const BoxStyle* style)
     return baselineShift.length().calc(style->fontSize());
 }
 
-static AlignmentBaseline resolveDominantBaseline(const Box* box)
+static AlignmentBaseline resolveDominantBaseline(const BoxStyle* style)
 {
-    const auto* style = box->style();
     switch(style->dominantBaseline()) {
     case DominantBaseline::Auto:
         if(style->isVerticalWritingMode())
@@ -300,7 +299,7 @@ static AlignmentBaseline resolveDominantBaseline(const Box* box)
     case DominantBaseline::UseScript:
     case DominantBaseline::NoChange:
     case DominantBaseline::ResetSize:
-        return resolveDominantBaseline(box->parentBox());
+        return resolveDominantBaseline(style->parentStyle());
     case DominantBaseline::Ideographic:
         return AlignmentBaseline::Ideographic;
     case DominantBaseline::Alphabetic:
@@ -324,19 +323,16 @@ static AlignmentBaseline resolveDominantBaseline(const Box* box)
     return AlignmentBaseline::Auto;
 }
 
-static float calculateBaselineOffset(const Box* box)
+static float calculateBaselineOffset(const BoxStyle* style)
 {
-    const auto* style = box->style();
     auto baseline = style->alignmentBaseline();
     if(baseline == AlignmentBaseline::Auto || baseline == AlignmentBaseline::Baseline) {
-        baseline = resolveDominantBaseline(box);
+        baseline = resolveDominantBaseline(style);
     }
 
     auto baselineShift = calculateBaselineShift(style);
-    auto parent = box->parentBox();
-    while(parent && (parent->isSVGInlineBox() || parent->isSVGTextBox())) {
-        baselineShift += calculateBaselineShift(parent->style());
-        parent = parent->parentBox();
+    for(auto parent = style->parentStyle(); parent; parent = parent->parentStyle()) {
+        baselineShift += calculateBaselineShift(parent);
     }
 
     switch(baseline) {
@@ -419,7 +415,7 @@ void SVGTextFragmentsBuilder::handleTextItem(const LineItem& item)
     auto letterSpacing = style->letterSpacing();
     auto wordSpacing = style->wordSpacing();
 
-    auto baselineOffset = calculateBaselineOffset(item.box());
+    auto baselineOffset = calculateBaselineOffset(style);
     auto startOffset = item.startOffset();
     auto textOffset = item.startOffset();
     auto didStartTextFragment = false;
