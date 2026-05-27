@@ -133,7 +133,7 @@ static void handleTextChunk(SVGTextFragmentIterator begin, SVGTextFragmentIterat
     const SVGTextFragment* textFragment = nullptr;
     for(; begin != end; ++begin) {
         const SVGTextFragment& fragment = *begin;
-        if(!fragment.inTextPath && fragment.element) {
+        if(fragment.element && !fragment.inTextPath) {
             textFragment = &fragment;
             break;
         }
@@ -326,16 +326,17 @@ static AlignmentBaseline resolveDominantBaseline(const BoxStyle* style)
 static float calculateBaselineOffset(const Box* box)
 {
     const auto* style = box->style();
-    auto baseline = style->alignmentBaseline();
-    if(baseline == AlignmentBaseline::Auto || baseline == AlignmentBaseline::Baseline) {
-        baseline = resolveDominantBaseline(style);
-    }
-
     const auto* parent = box->parentBox();
+
     auto baselineShift = calculateBaselineShift(style);
     while(parent->isSVGInlineBox() || parent->isSVGTextBox()) {
         baselineShift += calculateBaselineShift(parent->style());
         parent = parent->parentBox();
+    }
+
+    auto baseline = style->alignmentBaseline();
+    if(baseline == AlignmentBaseline::Auto || baseline == AlignmentBaseline::Baseline) {
+        baseline = resolveDominantBaseline(style);
     }
 
     switch(baseline) {
@@ -663,11 +664,11 @@ static void fillCharacterPositions(const SVGTextPosition& position, SVGCharacter
     const auto& dyList = position.element->dy().values();
     const auto& rotateList = position.element->rotate().values();
 
-    auto xListSize = xList.size();
-    auto yListSize = yList.size();
-    auto dxListSize = dxList.size();
-    auto dyListSize = dyList.size();
-    auto rotateListSize = rotateList.size();
+    const auto xListSize = xList.size();
+    const auto yListSize = yList.size();
+    const auto dxListSize = dxList.size();
+    const auto dyListSize = dyList.size();
+    const auto rotateListSize = rotateList.size();
     if(!xListSize && !yListSize && !dxListSize && !dyListSize && !rotateListSize) {
         return;
     }
