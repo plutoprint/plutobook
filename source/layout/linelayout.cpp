@@ -127,7 +127,22 @@ void LineItemsBuilder::exitBlock(Box* box)
     exitBidi(nullptr);
     removeTrailingCollapsibleSpaceIfExists();
 
-    thread_local BidiParagraph bidi;
+    if(!m_data.isBidiEnabled) {
+        for(int i = 0; i < m_data.text.length(); i++) {
+            const auto cc = m_data.text[i];
+            if(cc >= 0x0590 && cc != kZeroWidthSpaceCharacter &&
+                (cc < 0x2010 || cc > 0x2029) &&
+                (cc < 0x206A || cc > 0xD7FF) &&
+                (cc < 0xFF00 || cc > 0xFFFF)) {
+                m_data.isBidiEnabled = true;
+                break;
+            }
+        }
+    }
+
+    if(!m_data.isBidiEnabled)
+        return;
+    BidiParagraph bidi;
     if(!bidi.setParagraph(m_data.text, box->style()->direction())) {
         m_data.isBidiEnabled = false;
         return;
@@ -160,14 +175,13 @@ void LineItemsBuilder::exitBlock(Box* box)
 
         startOffset = endOffset;
     }
-
-    m_data.isBidiEnabled = true;
 }
 
 void LineItemsBuilder::enterBidi(Box* box, UChar enter, UChar exit)
 {
     appendOpaqueItem(LineItem::Type::BidiControl, nullptr, enter);
     m_bidiControls.push_back({box, enter, exit});
+    m_data.isBidiEnabled = true;
 }
 
 void LineItemsBuilder::enterBidi(Box* box, Direction direction, UChar enterLtr, UChar enterRtl, UChar exit)
