@@ -192,8 +192,8 @@ void SVGGeometryBox::layout()
 
 void SVGGeometryBox::build()
 {
-    m_fill = element()->getPaintServer(style()->fill(), style()->fillOpacity());
-    m_stroke = element()->getPaintServer(style()->stroke(), style()->strokeOpacity());
+    m_fill = element()->getFillPaintServer(style());
+    m_stroke = element()->getStrokePaintServer(style());
     m_marker = SVGMarker::create(this);
     SVGBoxModel::build();
 }

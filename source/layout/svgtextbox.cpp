@@ -24,8 +24,8 @@ SVGInlineBox::SVGInlineBox(SVGTextContentElement* element, const RefPtr<BoxStyle
 
 void SVGInlineBox::build()
 {
-    m_fill = element()->getPaintServer(style()->fill(), style()->fillOpacity());
-    m_stroke = element()->getPaintServer(style()->stroke(), style()->strokeOpacity());
+    m_fill = element()->getFillPaintServer(style());
+    m_stroke = element()->getStrokePaintServer(style());
     Box::build();
 }
 
@@ -89,8 +89,8 @@ void SVGTextBox::layout()
 
 void SVGTextBox::build()
 {
-    m_fill = element()->getPaintServer(style()->fill(), style()->fillOpacity());
-    m_stroke = element()->getPaintServer(style()->stroke(), style()->strokeOpacity());
+    m_fill = element()->getFillPaintServer(style());
+    m_stroke = element()->getStrokePaintServer(style());
     m_lineLayout.build();
     SVGBoxModel::build();
 }

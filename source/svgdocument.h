@@ -94,6 +94,8 @@ public:
     const Transform& transform() const { return m_transform.value(); }
     SVGResourcePaintServerBox* getPainter(std::string_view id) const;
     SVGPaintServer getPaintServer(const Paint& paint, float opacity) const;
+    SVGPaintServer getFillPaintServer(const BoxStyle* style) const;
+    SVGPaintServer getStrokePaintServer(const BoxStyle* style) const;
     StrokeData getStrokeData(const BoxStyle* style) const;
 
 private:

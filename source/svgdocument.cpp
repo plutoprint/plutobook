@@ -179,6 +179,16 @@ SVGPaintServer SVGGraphicsElement::getPaintServer(const Paint& paint, float opac
     return SVGPaintServer(getPainter(paint.uri()), paint.color(), opacity);
 }
 
+SVGPaintServer SVGGraphicsElement::getFillPaintServer(const BoxStyle* style) const
+{
+    return getPaintServer(style->fill(), style->fillOpacity());
+}
+
+SVGPaintServer SVGGraphicsElement::getStrokePaintServer(const BoxStyle* style) const
+{
+    return getPaintServer(style->stroke(), style->strokeOpacity());
+}
+
 StrokeData SVGGraphicsElement::getStrokeData(const BoxStyle* style) const
 {
     SVGLengthContext lengthContext(this);
