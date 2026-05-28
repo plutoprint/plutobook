@@ -133,7 +133,7 @@ static void handleTextChunk(SVGTextFragmentIterator begin, SVGTextFragmentIterat
     const SVGTextFragment* textFragment = nullptr;
     for(; begin != end; ++begin) {
         const SVGTextFragment& fragment = *begin;
-        if(fragment.element && !fragment.inTextPath) {
+        if(!fragment.inTextPath) {
             textFragment = &fragment;
             break;
         }
@@ -209,10 +209,8 @@ void SVGTextFragmentsBuilder::layout()
             handleInlineEnd(item);
         } else if(item.type() == LineItem::Type::NormalText) {
             handleTextItem(item);
-        } else if(item.type() == LineItem::Type::BidiControl) {
-            handleBidiControl(item);
         } else {
-            assert(false);
+            assert(item.type() == LineItem::Type::BidiControl);
         }
     }
 
@@ -534,25 +532,6 @@ void SVGTextFragmentsBuilder::handleTextItem(const LineItem& item)
     recordTextFragment(fragment, startOffset, textOffset);
 }
 
-void SVGTextFragmentsBuilder::handleBidiControl(const LineItem& item)
-{
-    assert(item.length() == 1);
-    if(m_positions.contains(m_characterOffset)) {
-        const auto& position = m_positions.at(m_characterOffset);
-        m_x = position.x.value_or(m_x) + position.dx.value_or(0);
-        m_y = position.y.value_or(m_y) + position.dy.value_or(0);
-        if(position.x || position.y) {
-            SVGTextFragment fragment(nullptr);
-            fragment.startsNewTextChunk = true;
-            fragment.x = m_x;
-            fragment.y = m_y;
-            m_fragments.push_back(fragment);
-        }
-    }
-
-    m_characterOffset += item.length();
-}
-
 SVGLineLayout::SVGLineLayout(SVGTextBox* block)
     : m_block(block)
     , m_fragments(block->heap())
@@ -564,8 +543,6 @@ Rect SVGLineLayout::boundingRect(bool includeStroke) const
 {
     Rect boundingRect = Rect::Invalid;
     for(const auto& fragment : m_fragments) {
-        if(fragment.element == nullptr)
-            continue;
         auto style = fragment.element->style();
         auto origin = Point(fragment.x + fragment.xShift, fragment.y + fragment.yShift);
         auto fragmentRect = Rect(origin.x, origin.y - style->fontAscent(), fragment.width, style->fontHeight());
@@ -646,8 +623,6 @@ static void paintTextFragment(const SVGRenderState& state, const SVGTextFragment
 void SVGLineLayout::render(const SVGRenderState& state) const
 {
     for(const auto& fragment : m_fragments) {
-        if(fragment.element == nullptr)
-            continue;
         if(auto box = to<SVGInlineBox>(fragment.element->box())) {
             paintTextFragment(state, fragment, box->fill(), box->stroke());
         } else {

@@ -92,14 +92,16 @@ private:
     void handleInlineStart(const LineItem& item);
     void handleInlineEnd(const LineItem& item);
     void handleTextItem(const LineItem& item);
-    void handleBidiControl(const LineItem& item);
+
     SVGTextFragmentList& m_fragments;
     const LineItemsData& m_data;
     const SVGCharacterPositions& m_positions;
+
     Path m_textPath;
     float m_textPathLength = 0;
     float m_textPathStartOffset = 0;
     float m_textPathCurrentOffset = 0;
+
     uint32_t m_characterOffset = 0;
     float m_dx = 0;
     float m_dy = 0;
