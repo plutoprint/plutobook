@@ -252,7 +252,7 @@ void SVGTextFragmentsBuilder::handleInlineStart(const LineItem& item)
         float chunkLength = 0;
         const auto* it = &item + 1;
         while(box != it->box()) {
-            if(it->type() == LineItem::Type::NormalText) {
+            if(it->type() == LineItem::Type::NormalText && it->length()) {
                 const auto& shape = it->shapeText(m_data);
                 chunkLength += shape->width();
             }
