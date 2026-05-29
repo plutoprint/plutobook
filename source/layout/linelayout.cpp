@@ -235,64 +235,63 @@ LineItem& LineItemsBuilder::appendTextItem(LineItem::Type type, Box* box, const 
     return appendItem(type, box, offset, offset + text.length());
 }
 
+static LineItem* lastItemToCollapseWith(LineItemsData& data)
+{
+    for(auto& item : data.items | std::views::reverse) {
+        if(item.collapseType() != LineItem::CollapseType::OpaqueToCollapsing) {
+            return &item;
+        }
+    }
+
+    return nullptr;
+}
+
 void LineItemsBuilder::removeTrailingCollapsibleSpaceIfExists()
 {
-    for(int index = m_data.items.size() - 1; index >= 0; --index) {
-        const auto& item = m_data.items[index];
-        if(item.collapseType() == LineItem::CollapseType::OpaqueToCollapsing)
-            continue;
-        if(item.collapseType() == LineItem::CollapseType::Collapsible) {
-            removeTrailingCollapsibleSpace(index);
+    if(auto item = lastItemToCollapseWith(m_data)) {
+        if(item->collapseType() == LineItem::CollapseType::Collapsible) {
+            removeTrailingCollapsibleSpace(item);
         }
-
-        break;
     }
 }
 
 void LineItemsBuilder::restoreTrailingCollapsibleSpaceIfRemoved()
 {
-    for(int index = m_data.items.size() - 1; index >= 0; --index) {
-        const auto& item = m_data.items[index];
-        if(item.collapseType() == LineItem::CollapseType::OpaqueToCollapsing)
-            continue;
-        if(item.collapseType() == LineItem::CollapseType::Collapsed) {
-            restoreTrailingCollapsibleSpace(index);
+    if(auto item = lastItemToCollapseWith(m_data)) {
+        if(item->collapseType() == LineItem::CollapseType::Collapsed) {
+            restoreTrailingCollapsibleSpace(item);
         }
-
-        break;
     }
 }
 
-void LineItemsBuilder::removeTrailingCollapsibleSpace(int index)
+void LineItemsBuilder::removeTrailingCollapsibleSpace(LineItem* item)
 {
-    auto& item = m_data.items.at(index);
-    assert(item.collapseType() == LineItem::CollapseType::Collapsible);
-    if(item.type() == LineItem::Type::HardBreakOpportunity)
+    assert(item->collapseType() == LineItem::CollapseType::Collapsible);
+    if(item->type() == LineItem::Type::HardBreakOpportunity)
         return;
-    auto offset = item.endOffset() - 1;
+    auto offset = item->endOffset() - 1;
     assert(m_data.text[offset] == kSpaceCharacter);
     m_data.text.remove(offset, 1);
-    item.setEndOffset(offset);
-    item.setCollapseType(LineItem::CollapseType::Collapsed);
-    for(++index; index < m_data.items.size(); ++index) {
-        auto& item = m_data.items[index];
-        item.setStartOffset(item.startOffset() - 1);
-        item.setEndOffset(item.endOffset() - 1);
+    item->setEndOffset(offset);
+    item->setCollapseType(LineItem::CollapseType::Collapsed);
+    const auto* end = m_data.items.data() + m_data.items.size();
+    for(++item; item != end; ++item) {
+        item->setStartOffset(item->startOffset() - 1);
+        item->setEndOffset(item->endOffset() - 1);
     }
 }
 
-void LineItemsBuilder::restoreTrailingCollapsibleSpace(int index)
+void LineItemsBuilder::restoreTrailingCollapsibleSpace(LineItem* item)
 {
-    auto& item = m_data.items.at(index);
-    assert(item.collapseType() == LineItem::CollapseType::Collapsed);
-    auto offset = item.endOffset();
+    assert(item->collapseType() == LineItem::CollapseType::Collapsed);
+    auto offset = item->endOffset();
     m_data.text.insert(offset, kSpaceCharacter);
-    item.setEndOffset(offset + 1);
-    item.setCollapseType(LineItem::CollapseType::Collapsible);
-    for(++index; index < m_data.items.size(); ++index) {
-        auto& item = m_data.items[index];
-        item.setStartOffset(item.startOffset() + 1);
-        item.setEndOffset(item.endOffset() + 1);
+    item->setEndOffset(offset + 1);
+    item->setCollapseType(LineItem::CollapseType::Collapsible);
+    const auto* end = m_data.items.data() + m_data.items.size();
+    for(++item; item != end; ++item) {
+        item->setStartOffset(item->startOffset() + 1);
+        item->setEndOffset(item->endOffset() + 1);
     }
 }
 
@@ -368,7 +367,14 @@ void LineItemsBuilder::appendTextCollapseWhitespace(Box* box, const UString& tex
     auto index = 0;
 
     auto cc = text.charAt(index);
-    if(isCollapsibleSpaceCharacter(cc)) {
+    if(!isCollapsibleSpaceCharacter(cc)) {
+        if(auto item = lastItemToCollapseWith(m_data)) {
+            if(item->collapseType() == LineItem::CollapseType::Collapsible && item->hasCollapsibleNewline()
+                && shouldRemoveNewline(m_data.text, item->endOffset() - 1, text.charAt(index))) {
+                removeTrailingCollapsibleSpace(item);
+            }
+        }
+    } else {
         if(cc == kNewlineCharacter)
             hasNewline = true;
         for(++index; index < text.length(); ++index) {
@@ -382,40 +388,19 @@ void LineItemsBuilder::appendTextCollapseWhitespace(Box* box, const UString& tex
 
         if(index == text.length())
             collapseType = LineItem::CollapseType::Collapsible;
-        for(int itemIndex = m_data.items.size() - 1; itemIndex >= 0; --itemIndex) {
-            const auto& item = m_data.items[itemIndex];
-            if(item.collapseType() == LineItem::CollapseType::OpaqueToCollapsing)
-                continue;
-            if(item.collapseType() == LineItem::CollapseType::NotCollapsible) {
+        if(auto item = lastItemToCollapseWith(m_data)) {
+            if(item->collapseType() == LineItem::CollapseType::NotCollapsible) {
                 insertSpace = true;
-                break;
-            }
-
-            assert(item.collapseType() == LineItem::CollapseType::Collapsible);
-            if(item.type() == LineItem::Type::NormalText && (hasNewline || item.hasCollapsibleNewline())
-                && shouldRemoveNewline(m_data.text, item.endOffset() - 1, text.charAt(index))) {
-                removeTrailingCollapsibleSpace(itemIndex);
-                hasNewline = false;
             } else {
-                auto itemStyle = item.box()->style();
-                if(box->style()->autoWrap() && !itemStyle->autoWrap() && !item.isBreakOpportunity()) {
+                assert(item->collapseType() == LineItem::CollapseType::Collapsible);
+                if(item->type() == LineItem::Type::NormalText && (hasNewline || item->hasCollapsibleNewline())
+                    && shouldRemoveNewline(m_data.text, item->endOffset() - 1, text.charAt(index))) {
+                    removeTrailingCollapsibleSpace(item);
+                    hasNewline = false;
+                } else if(box->style()->autoWrap() && !item->box()->style()->autoWrap() && !item->isBreakOpportunity()) {
                     appendOpaqueItem(LineItem::Type::SoftBreakOpportunity, box, kZeroWidthSpaceCharacter);
                 }
             }
-
-            break;
-        }
-    } else {
-        for(int itemIndex = m_data.items.size() - 1; itemIndex >= 0; --itemIndex) {
-            const auto& item = m_data.items[itemIndex];
-            if(item.collapseType() == LineItem::CollapseType::OpaqueToCollapsing)
-                continue;
-            if(item.collapseType() == LineItem::CollapseType::Collapsible && item.hasCollapsibleNewline()
-                && shouldRemoveNewline(m_data.text, item.endOffset() - 1, text.charAt(index))) {
-                removeTrailingCollapsibleSpace(itemIndex);
-            }
-
-            break;
         }
     }
 

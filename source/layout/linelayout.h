@@ -128,8 +128,8 @@ protected:
     void removeTrailingCollapsibleSpaceIfExists();
     void restoreTrailingCollapsibleSpaceIfRemoved();
 
-    void removeTrailingCollapsibleSpace(int index);
-    void restoreTrailingCollapsibleSpace(int index);
+    void removeTrailingCollapsibleSpace(LineItem* item);
+    void restoreTrailingCollapsibleSpace(LineItem* item);
 
     bool shouldInsertBreakOpportunityAfterLeadingPreservedSpaces(Box* box, const UString& text, int start) const;
     int insertBreakOpportunityAfterLeadingPreservedSpaces(Box* box, const UString& text, int start);
