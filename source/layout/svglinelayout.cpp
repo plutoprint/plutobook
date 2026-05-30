@@ -64,8 +64,6 @@ SVGTextFragmentsBuilder::SVGTextFragmentsBuilder(SVGTextFragmentList& fragments,
 
 static bool needsTextAnchorAdjustment(const BoxStyle* style)
 {
-    if(style == nullptr)
-        return false;
     auto direction = style->direction();
     switch(style->textAnchor()) {
     case TextAnchor::Start:
@@ -209,8 +207,6 @@ void SVGTextFragmentsBuilder::layout()
             handleInlineEnd(item);
         } else if(item.type() == LineItem::Type::NormalText) {
             handleTextItem(item);
-        } else {
-            assert(item.type() == LineItem::Type::BidiControl);
         }
     }
 
@@ -469,13 +465,11 @@ void SVGTextFragmentsBuilder::handleTextItem(const LineItem& item)
                     if(position.y.has_value())
                         m_textPathCurrentOffset = m_textPathStartOffset + position.y.value();
                     m_textPathCurrentOffset += m_dy;
-                    m_dy = 0;
                 } else {
                     fragment.yShift += m_dy - baselineOffset;
                     if(position.x.has_value())
                         m_textPathCurrentOffset = m_textPathStartOffset + position.x.value();
                     m_textPathCurrentOffset += m_dx;
-                    m_dx = 0;
                 }
 
                 if(m_textPathCurrentOffset > m_textPathLength)
