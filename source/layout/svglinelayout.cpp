@@ -740,4 +740,36 @@ void SVGLineLayout::build()
     }
 }
 
+void SVGLineLayout::serialize(std::ostream& o, int indent) const
+{
+    for(const auto& fragment : m_fragments) {
+        for(int i = 0; i < indent; i++) {
+            o << ' ';
+        }
+
+        o << "<SVGTextFragment";
+        o << ':' << fragment.element->tagName();
+        if(fragment.element->hasID())
+            o << '#' << fragment.element->id();
+        o << " rect=\'";
+        o << fragment.x + fragment.xShift;
+        o << ' ';
+        o << fragment.y + fragment.yShift;
+        o << ' ';
+        o << fragment.width;
+        o << ' ';
+        o << fragment.height;
+        o << '\'';
+        if(fragment.angle) {
+            o << " angle=\'";
+            o << fragment.angle;
+            o << '\'';
+        }
+
+        o << '>';
+        fragment.shape.serialize(o);
+        o << "</SVGTextFragment>\n";
+    }
+}
+
 } // namespace plutobook

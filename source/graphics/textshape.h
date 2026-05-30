@@ -122,6 +122,8 @@ public:
     float width(float expansion = 0.f) const;
     float draw(GraphicsContext& context, const Point& origin, float expansion, bool stroke) const;
 
+    void serialize(std::ostream& o) const;
+
 private:
     RefPtr<TextShape> m_shape;
     uint32_t m_startOffset{0};

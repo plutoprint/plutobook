@@ -516,4 +516,33 @@ float TextShapeView::draw(GraphicsContext& context, const Point& origin, float e
     return offset.x - origin.x;
 }
 
+void TextShapeView::serialize(std::ostream& o) const
+{
+    if(m_shape == nullptr)
+        return;
+    const auto& text = m_shape->text();
+    auto offset = m_startOffset;
+    while(offset < m_endOffset) {
+        uint32_t ch;
+        U16_NEXT(text, offset, m_endOffset, ch);
+        if(ch == '&') {
+            o << "&amp;";
+        } else if(ch == '<') {
+            o << "&lt;";
+        } else if(ch == '>') {
+            o << "&gt;";
+        } else if(ch == '"') {
+            o << "&quot;";
+        } else if(ch == '\'') {
+            o << "&apos;";
+        } else if(ch >= 32 && ch < 127) {
+            o << static_cast<char>(ch);
+        } else {
+            auto f = o.flags();
+            o << "&#x" << std::hex << std::uppercase << ch << ';';
+            o.flags(f);
+        }
+    }
+}
+
 } // namespace plutobook

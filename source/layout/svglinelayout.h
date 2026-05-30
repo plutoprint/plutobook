@@ -121,6 +121,8 @@ public:
     void layout();
     void build();
 
+    void serialize(std::ostream& o, int indent) const;
+
 private:
     SVGTextBox* m_block;
     SVGTextPositionList m_textPositions;

@@ -215,12 +215,9 @@ void TextLineBox::paint(const PaintInfo& info, const Point& offset, PaintPhase p
 
 void TextLineBox::serialize(std::ostream& o, int indent) const
 {
-    std::string data;
-    m_shape.text().toUTF8String(data);
-
-    Box::serializeStart(o, indent, data.empty(), m_box, this);
-    o << data;
-    Box::serializeEnd(o, indent, data.empty(), m_box, this);
+    Box::serializeStart(o, indent, !m_shape.length(), m_box, this);
+    m_shape.serialize(o);
+    Box::serializeEnd(o, indent, !m_shape.length(), m_box, this);
 }
 
 TextLineBox::~TextLineBox() = default;

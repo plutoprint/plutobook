@@ -121,6 +121,8 @@ public:
     const SVGPaintServer& fill() const { return m_fill; }
     const SVGPaintServer& stroke() const { return m_stroke; }
 
+    void serializeChildren(std::ostream& o, int indent) const final;
+
     const char* name() const final { return "SVGTextBox"; }
 
 private:

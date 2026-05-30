@@ -95,4 +95,9 @@ void SVGTextBox::build()
     SVGBoxModel::build();
 }
 
+void SVGTextBox::serializeChildren(std::ostream& o, int indent) const
+{
+    m_lineLayout.serialize(o, indent);
+}
+
 } // namespace plutobook
