@@ -2511,11 +2511,9 @@ bool HTMLEntityParser::handleHex(char cc)
 
 void HTMLEntityParser::append(uint32_t cp)
 {
-    if(cp == 0 || cp >= 0x10FFFF || (cp >= 0xD800 && cp <= 0xDFFF)) {
-        appendCodepoint(m_output, 0xFFFD);
-    } else {
-        appendCodepoint(m_output, cp);
-    }
+    if(cp == 0 || cp >= 0x10FFFF || (cp >= 0xD800 && cp <= 0xDFFF))
+        cp = 0xFFFD;
+    m_output += toUtf8(cp);
 }
 
 } // namespace plutobook

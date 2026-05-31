@@ -139,7 +139,7 @@ std::string_view CSSTokenizer::consumeName()
             output += cc;
             m_input.advance();
         } else if(isEscapeSequence()) {
-            appendCodepoint(output, consumeEscape());
+            output += toUtf8(consumeEscape());
         } else {
             break;
         }
@@ -223,7 +223,7 @@ CSSToken CSSTokenizer::consumeStringToken()
                     m_input.advance();
                 m_input.advance(2);
             } else {
-                appendCodepoint(output, consumeEscape());
+                output += toUtf8(consumeEscape());
             }
         } else {
             output += cc;
@@ -408,7 +408,7 @@ CSSToken CSSTokenizer::consumeUrlToken()
 
         if(cc == '\\') {
             if(isEscapeSequence()) {
-                appendCodepoint(output, consumeEscape());
+                output += toUtf8(consumeEscape());
                 continue;
             }
 

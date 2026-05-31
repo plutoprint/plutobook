@@ -205,6 +205,7 @@ plutobook_sources = [
     'source/localedata.cpp',
     'source/plutobook.cc',
     'source/plutobook.cpp',
+    'source/stringutils.cpp',
     'source/svgdocument.cpp',
     'source/svgproperty.cpp',
     'source/textbreakiterator.cpp',

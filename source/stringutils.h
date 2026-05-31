@@ -10,7 +10,6 @@
 #define PLUTOBOOK_STRINGUTILS_H
 
 #include <string>
-#include <cstdio>
 #include <cstdint>
 
 namespace plutobook {
@@ -171,51 +170,9 @@ constexpr void stripLeadingAndTrailingSpaces(std::string_view& input)
     stripTrailingSpaces(input);
 }
 
-static std::string toString(int value)
-{
-    char buffer[16];
-    std::snprintf(buffer, sizeof(buffer), "%d", value);
-    return buffer;
-}
-
-static std::string toString(float value)
-{
-    char buffer[32];
-    std::snprintf(buffer, sizeof(buffer), "%g", value);
-    return buffer;
-}
-
-static void appendCodepoint(std::string& output, uint32_t cp)
-{
-    char c[5] = {0, 0, 0, 0, 0};
-    if(cp < 0x80) {
-        c[1] = 0;
-        c[0] = cp;
-    } else if(cp < 0x800) {
-        c[2] = 0;
-        c[1] = (cp & 0x3F) | 0x80;
-        cp >>= 6;
-        c[0] = cp | 0xC0;
-    } else if(cp < 0x10000) {
-        c[3] = 0;
-        c[2] = (cp & 0x3F) | 0x80;
-        cp >>= 6;
-        c[1] = (cp & 0x3F) | 0x80;
-        cp >>= 6;
-        c[0] = cp | 0xE0;
-    } else if(cp < 0x110000) {
-        c[4] = 0;
-        c[3] = (cp & 0x3F) | 0x80;
-        cp >>= 6;
-        c[2] = (cp & 0x3F) | 0x80;
-        cp >>= 6;
-        c[1] = (cp & 0x3F) | 0x80;
-        cp >>= 6;
-        c[0] = cp | 0xF0;
-    }
-
-    output.append(c);
-}
+std::string toString(int value);
+std::string toString(float value);
+std::string toUtf8(uint32_t codepoint);
 
 } // namespace plutobook
 
