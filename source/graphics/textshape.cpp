@@ -376,9 +376,9 @@ TextShape::TextShape(const UString& text, Direction direction, float width, Text
 
 UString TextShapeView::text() const
 {
-    if(m_shape)
-        return m_shape->text().tempSubString(m_startOffset, length());
-    return UString();
+    if(m_startOffset == m_endOffset)
+        return UString();
+    return m_shape->text().tempSubStringBetween(m_startOffset, m_endOffset);
 }
 
 uint32_t TextShapeView::expansionOpportunityCount() const
@@ -518,7 +518,7 @@ float TextShapeView::draw(GraphicsContext& context, const Point& origin, float e
 
 void TextShapeView::serialize(std::ostream& o) const
 {
-    if(m_shape == nullptr)
+    if(m_startOffset == m_endOffset)
         return;
     const auto& text = m_shape->text();
     auto offset = m_startOffset;
