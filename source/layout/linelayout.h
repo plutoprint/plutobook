@@ -282,8 +282,9 @@ private:
     void handleBidiControl(const LineItem& item);
 
     void handleText(const LineItem& item, const RefPtr<TextShape>& shape);
-    void breakText(LineItemRun& run, const LineItem& item, const RefPtr<TextShape>& shape, float availableWidth);
     void handleTrailingSpaces(const LineItem& item, const RefPtr<TextShape>& shape);
+
+    void breakText(LineItemRun& run, const RefPtr<TextShape>& shape, float availableWidth);
 
     void rewindOverflow(uint32_t newSize);
     void handleOverflow();

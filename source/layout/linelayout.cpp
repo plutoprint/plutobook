@@ -1104,53 +1104,13 @@ void LineBreaker::handleText(const LineItem& item, const RefPtr<TextShape>& shap
         return;
     }
 
-    breakText(run, item, shape, remainingAvailableWidth());
+    breakText(run, shape, remainingAvailableWidth());
     moveToNextOf(run);
     m_currentWidth += run.width;
     if(!canFitOnLine()) {
         handleOverflow();
     } else if(run.endOffset < item.endOffset()) {
         handleTrailingSpaces(item, shape);
-    }
-}
-
-constexpr float flipRtl(float value, Direction direction)
-{
-    return direction == Direction::Ltr ? value : -value;
-}
-
-void LineBreaker::breakText(LineItemRun& run, const LineItem& item, const RefPtr<TextShape>& shape, float availableWidth)
-{
-    assert(run.startOffset >= item.startOffset() && run.startOffset < item.endOffset());
-    auto startPosition = shape->positionForOffset(run.startOffset - item.startOffset());
-    auto endPosition = startPosition + flipRtl(availableWidth, shape->direction());
-
-    auto style = item.box()->style();
-    auto breakOffset = item.startOffset() + shape->offsetForPosition(endPosition);
-    auto mayBreakInside = true;
-    if(style->breakAnywhere()) {
-        breakOffset = std::max(breakOffset, run.startOffset + 1);
-    } else if(breakOffset < item.endOffset()) {
-        auto breakOpportunity = m_breakIterator.previousBreakOpportunity(breakOffset, run.startOffset);
-        if(breakOpportunity <= run.startOffset) {
-            breakOffset = std::max(breakOffset, run.startOffset + 1);
-            breakOpportunity = style->breakWord() ? breakOffset : m_breakIterator.nextBreakOpportunity(breakOffset, item.endOffset());
-            mayBreakInside = false;
-        }
-
-        breakOffset = std::min(breakOpportunity, item.endOffset());
-    }
-
-    assert(breakOffset > run.startOffset);
-    run.shape = TextShapeView(shape, run.startOffset - item.startOffset(), breakOffset - item.startOffset());
-    run.width = run.shape.width();
-    run.endOffset = breakOffset;
-    run.mayBreakInside = mayBreakInside;
-    if(breakOffset < item.endOffset()) {
-        run.canBreakAfter = true;
-    } else {
-        assert(breakOffset == item.endOffset());
-        run.canBreakAfter = m_breakIterator.isBreakable(item.endOffset());
     }
 }
 
@@ -1199,6 +1159,46 @@ void LineBreaker::handleTrailingSpaces(const LineItem& item, const RefPtr<TextSh
 
     m_state = LineBreakState::Trailing;
     m_itemIndex += 1;
+}
+
+constexpr float flipRtl(float value, Direction direction)
+{
+    return direction == Direction::Ltr ? value : -value;
+}
+
+void LineBreaker::breakText(LineItemRun& run, const RefPtr<TextShape>& shape, float availableWidth)
+{
+    assert(run.startOffset >= run->startOffset() && run.startOffset < run->endOffset());
+    auto startPosition = shape->positionForOffset(run.startOffset - run->startOffset());
+    auto endPosition = startPosition + flipRtl(availableWidth, shape->direction());
+
+    auto style = run->box()->style();
+    auto breakOffset = run->startOffset() + shape->offsetForPosition(endPosition);
+    auto mayBreakInside = true;
+    if(style->breakAnywhere()) {
+        breakOffset = std::max(breakOffset, run.startOffset + 1);
+    } else if(breakOffset < run->endOffset()) {
+        auto breakOpportunity = m_breakIterator.previousBreakOpportunity(breakOffset, run.startOffset);
+        if(breakOpportunity <= run.startOffset) {
+            breakOffset = std::max(breakOffset, run.startOffset + 1);
+            breakOpportunity = style->breakWord() ? breakOffset : m_breakIterator.nextBreakOpportunity(breakOffset, run->endOffset());
+            mayBreakInside = false;
+        }
+
+        breakOffset = std::min(breakOpportunity, run->endOffset());
+    }
+
+    assert(breakOffset > run.startOffset);
+    run.shape = TextShapeView(shape, run.startOffset - run->startOffset(), breakOffset - run->startOffset());
+    run.width = run.shape.width();
+    run.endOffset = breakOffset;
+    run.mayBreakInside = mayBreakInside;
+    if(breakOffset < run->endOffset()) {
+        run.canBreakAfter = true;
+    } else {
+        assert(breakOffset == run->endOffset());
+        run.canBreakAfter = m_breakIterator.isBreakable(run->endOffset());
+    }
 }
 
 void LineBreaker::rewindOverflow(uint32_t newSize)
@@ -1265,7 +1265,7 @@ void LineBreaker::handleOverflow()
         if(run->type() == LineItem::Type::NormalText && widthToRewind < 0.f && run.mayBreakInside) {
             const auto& shape = run->shapeText(m_data);
             auto itemAvailableWidth = std::min(-widthToRewind, run.width - 1);
-            breakText(run, *run, shape, itemAvailableWidth);
+            breakText(run, shape, itemAvailableWidth);
             if(run.width <= itemAvailableWidth) {
                 assert(run.canBreakAfter && run.endOffset < run->endOffset());
                 auto itemEndIndex = index + 1;
