@@ -26,7 +26,7 @@ constexpr bool isHexLower(uint8_t cc) { return (cc >= 'a' && cc <= 'f'); }
 constexpr bool isHexAlpha(uint8_t cc) { return isHexUpper(cc) || isHexLower(cc); }
 constexpr bool isHexDigit(uint8_t cc) { return isDigit(cc) || isHexAlpha(cc); }
 
-constexpr int toHexDigit(uint8_t cc)
+constexpr uint8_t toHexDigit(uint8_t cc)
 {
     if(isDigit(cc))
         return cc - '0';
@@ -37,7 +37,7 @@ constexpr int toHexDigit(uint8_t cc)
     return 0;
 }
 
-constexpr int toHexByte(uint8_t a, uint8_t b)
+constexpr uint8_t toHexByte(uint8_t a, uint8_t b)
 {
     return toHexDigit(a) << 4 | toHexDigit(b);
 }
