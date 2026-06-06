@@ -207,8 +207,8 @@ public:
 
     virtual void build();
 
-    static void serializeStart(std::ostream& o, int indent, bool selfClosing, const Box* box, const LineBox* line);
-    static void serializeEnd(std::ostream& o, int indent, bool selfClosing, const Box* box, const LineBox* line);
+    static void serializeStartTag(std::ostream& o, int indent, bool selfClosing, const Box* box, const LineBox* line);
+    static void serializeEndTag(std::ostream& o, int indent, bool selfClosing, const Box* box, const LineBox* line);
 
     void serialize(std::ostream& o, int indent) const;
     virtual void serializeChildren(std::ostream& o, int indent) const;

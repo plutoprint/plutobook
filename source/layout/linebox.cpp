@@ -215,9 +215,9 @@ void TextLineBox::paint(const PaintInfo& info, const Point& offset, PaintPhase p
 
 void TextLineBox::serialize(std::ostream& o, int indent) const
 {
-    Box::serializeStart(o, indent, !m_shape.length(), m_box, this);
+    Box::serializeStartTag(o, indent, !m_shape.length(), m_box, this);
     m_shape.serialize(o);
-    Box::serializeEnd(o, indent, !m_shape.length(), m_box, this);
+    Box::serializeEndTag(o, indent, !m_shape.length(), m_box, this);
 }
 
 TextLineBox::~TextLineBox() = default;
@@ -264,9 +264,9 @@ void ReplacedLineBox::paint(const PaintInfo& info, const Point& offset, PaintPha
 
 void ReplacedLineBox::serialize(std::ostream& o, int indent) const
 {
-    Box::serializeStart(o, indent, false, m_box, this);
+    Box::serializeStartTag(o, indent, false, m_box, this);
     m_box->serialize(o, indent + 1);
-    Box::serializeEnd(o, indent, false, m_box, this);
+    Box::serializeEndTag(o, indent, false, m_box, this);
 }
 
 ReplacedLineBox::ReplacedLineBox(BoxFrame* box)
@@ -637,10 +637,10 @@ void FlowLineBox::paint(const PaintInfo& info, const Point& offset, PaintPhase p
 
 void FlowLineBox::serialize(std::ostream& o, int indent) const
 {
-    Box::serializeStart(o, indent, m_children.empty(), m_box, this);
+    Box::serializeStartTag(o, indent, m_children.empty(), m_box, this);
     for(auto child : m_children)
         child->serialize(o, indent + 1);
-    Box::serializeEnd(o, indent, m_children.empty(), m_box, this);
+    Box::serializeEndTag(o, indent, m_children.empty(), m_box, this);
 }
 
 FlowLineBox::FlowLineBox(BoxModel* box)

@@ -314,7 +314,7 @@ static void writeNewline(std::ostream& o)
     o << '\n';
 }
 
-void Box::serializeStart(std::ostream& o, int indent, bool selfClosing, const Box* box, const LineBox* line)
+void Box::serializeStartTag(std::ostream& o, int indent, bool selfClosing, const Box* box, const LineBox* line)
 {
     writeIndent(o, indent);
 
@@ -374,7 +374,7 @@ void Box::serializeStart(std::ostream& o, int indent, bool selfClosing, const Bo
     }
 }
 
-void Box::serializeEnd(std::ostream& o, int indent, bool selfClosing, const Box* box, const LineBox* line)
+void Box::serializeEndTag(std::ostream& o, int indent, bool selfClosing, const Box* box, const LineBox* line)
 {
     if(selfClosing) {
         writeNewline(o);
@@ -390,9 +390,9 @@ void Box::serializeEnd(std::ostream& o, int indent, bool selfClosing, const Box*
 
 void Box::serialize(std::ostream& o, int indent) const
 {
-    serializeStart(o, indent, !m_firstChild, this, nullptr);
+    serializeStartTag(o, indent, !m_firstChild, this, nullptr);
     serializeChildren(o, indent + 2);
-    serializeEnd(o, indent, !m_firstChild, this, nullptr);
+    serializeEndTag(o, indent, !m_firstChild, this, nullptr);
 }
 
 void Box::serializeChildren(std::ostream& o, int indent) const
