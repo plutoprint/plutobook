@@ -316,11 +316,15 @@ static void writeNewline(std::ostream& o)
 
 void Box::serializeStart(std::ostream& o, int indent, bool selfClosing, const Box* box, const LineBox* line)
 {
-    auto name = line ? line->name() : box->name();
     writeIndent(o, indent);
-    o << '<' << name;
-    auto element = to<Element>(box->node());
-    if(element == nullptr) {
+
+    o << '<' << (line ? line->name() : box->name());
+    if(auto element = to<Element>(box->node())) {
+        o << ':' << element->tagName();
+        if(element->hasID()) {
+            o << '#' << element->id();
+        }
+    } else {
         switch(box->style()->pseudoType()) {
         case PseudoType::Before:
             o << "::before";
@@ -336,12 +340,6 @@ void Box::serializeStart(std::ostream& o, int indent, bool selfClosing, const Bo
             break;
         default:
             break;
-        }
-    } else {
-        o << ':' << element->tagName();
-        const auto& id = element->id();
-        if(!id.empty()) {
-            o << '#' << id;
         }
     }
 
