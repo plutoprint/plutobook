@@ -209,8 +209,9 @@ template<typename T = int>
 static std::optional<T> parseHTMLInteger(std::string_view input)
 {
     constexpr auto isSigned = std::numeric_limits<T>::is_signed;
-    stripLeadingAndTrailingSpaces(input);
+
     bool isNegative = false;
+    stripLeadingAndTrailingSpaces(input);
     if(!input.empty() && input.front() == '+')
         input.remove_prefix(1);
     else if(!input.empty() && isSigned && input.front() == '-') {
