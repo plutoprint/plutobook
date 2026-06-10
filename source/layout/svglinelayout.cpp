@@ -395,14 +395,13 @@ void SVGTextFragmentsBuilder::handleTextItem(const LineItem& item)
         fragment.inTextPath = isTextOnPath;
         fragment.width = fragment.shape.width();
         fragment.height = lineHeight;
+        if(isTextOnPath) {
+            m_textPathCurrentOffset += (isVerticalText && !isUprightText) ? fragment.height : fragment.width;
+        }
+
         if(isVerticalText) {
-            auto advance = isUprightText ? fragment.height : fragment.width;
-            if(isTextOnPath)
-                m_textPathCurrentOffset += advance;
-            m_y += advance;
+            m_y += isUprightText ? fragment.height : fragment.width;
         } else {
-            if(isTextOnPath)
-                m_textPathCurrentOffset += fragment.width;
             m_x += fragment.width;
         }
 
