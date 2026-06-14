@@ -67,8 +67,8 @@ struct SVGTextFragment {
     TextShapeView shape;
     Transform lengthAdjustTransform;
 
-    bool startsNewTextChunk = false;
     bool inTextPath = false;
+    bool startsNewTextChunk = false;
 
     float x = 0;
     float y = 0;

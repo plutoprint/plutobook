@@ -244,14 +244,12 @@ void SVGTextFragmentsBuilder::handleInlineStart(const LineItem& item)
     const auto* style = box->style();
     if(needsTextAnchorAdjustment(style)) {
         float chunkLength = 0;
-        const auto* it = &item + 1;
-        while(box != it->box()) {
+        const auto* it = &item;
+        for(++it; box != it->box(); ++it) {
             if(it->type() == LineItem::Type::NormalText && it->length()) {
                 const auto& shape = it->shapeText(m_data);
                 chunkLength += shape->width();
             }
-
-            ++it;
         }
 
         m_textPathStartOffset += calculateTextAnchorOffset(style, chunkLength);
@@ -392,7 +390,6 @@ void SVGTextFragmentsBuilder::handleTextItem(const LineItem& item)
             fragment.shape = TextShapeView(shape, item.endOffset() - endOffset, item.endOffset() - startOffset);
         }
 
-        fragment.inTextPath = isTextOnPath;
         fragment.width = fragment.shape.width();
         fragment.height = lineHeight;
         if(isTextOnPath) {
@@ -495,6 +492,7 @@ void SVGTextFragmentsBuilder::handleTextItem(const LineItem& item)
                 }
             }
 
+            fragment.inTextPath = isTextOnPath;
             fragment.startsNewTextChunk = startsNewTextChunk;
             didStartTextFragment = true;
         }
@@ -518,6 +516,7 @@ void SVGTextFragmentsBuilder::handleTextItem(const LineItem& item)
 
         lastAngle = angle;
         lastCharacter = currentCharacter;
+
         ++textOffset;
         ++m_characterOffset;
     }
