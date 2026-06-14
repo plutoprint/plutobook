@@ -520,8 +520,9 @@ public:
 private:
     mutable Point m_startPoint;
     const std::vector<PathCommand>& m_commands;
-    const Point* m_points{nullptr};
-    size_t m_index{0};
+    const std::vector<Point>& m_points;
+    size_t m_commandsIndex{0};
+    size_t m_pointsIndex{0};
 };
 
 } // namespace plutobook
