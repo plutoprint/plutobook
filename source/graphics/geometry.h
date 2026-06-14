@@ -504,6 +504,7 @@ public:
     void clear();
 
 private:
+    void reserve(size_t commands, size_t points);
     std::vector<PathCommand> m_commands;
     std::vector<Point> m_points;
 };

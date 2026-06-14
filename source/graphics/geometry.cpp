@@ -250,6 +250,8 @@ void Path::addEllipse(float cx, float cy, float rx, float ry)
     auto cpx = rx * kappa;
     auto cpy = ry * kappa;
 
+    reserve(6, 13);
+
     moveTo(cx, y1);
     cubicTo(cx + cpx, y1, x2, cy - cpy, x2, cy);
     cubicTo(x2, cy + cpy, cx + cpx, y2, cx, y2);
@@ -270,12 +272,14 @@ void Path::addRoundedRect(const Rect& rect, const RectRadii& radii)
         return;
     }
 
+    constexpr auto ccp = 0.447715f;
+
     auto x1 = rect.x;
     auto x2 = rect.x + rect.w;
     auto y1 = rect.y;
     auto y2 = rect.y + rect.h;
 
-    constexpr auto ccp = 0.447715f;
+    reserve(10, 17);
 
     moveTo(x1 + radii.tl.w, y1);
     lineTo(x2 - radii.tr.w, y1);
@@ -309,6 +313,8 @@ void Path::addRect(const Rect& rect)
     auto x2 = rect.x + rect.w;
     auto y1 = rect.y;
     auto y2 = rect.y + rect.h;
+
+    reserve(5, 4);
 
     moveTo(x1, y1);
     lineTo(x2, y1);
@@ -348,6 +354,7 @@ using TraverseCallback = std::function<bool(const Point& p1, const Point& p2)>;
 static void flattenPath(const Path& path, const TraverseCallback& callback)
 {
     Point currentPoint;
+
     std::array<Point, 3> points;
     std::array<CubicBezier, 32> beziers;
 
@@ -469,6 +476,12 @@ Path& Path::transform(const Transform& transform)
 Path Path::transformed(const Transform& transform) const
 {
     return Path(*this).transform(transform);
+}
+
+void Path::reserve(size_t commands, size_t points)
+{
+    m_commands.reserve(commands + m_commands.size());
+    m_points.reserve(points + m_points.size());
 }
 
 PathIterator::PathIterator(const Path& path)
