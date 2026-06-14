@@ -351,7 +351,7 @@ static void flattenPath(const Path& path, const TraverseCallback& callback)
     std::array<Point, 3> points;
     std::array<CubicBezier, 32> beziers;
 
-    const float threshold = 0.25f;
+    const float threshold = 0.5f;
 
     PathIterator it(path);
     while(!it.isDone()) {
