@@ -478,6 +478,12 @@ Path Path::transformed(const Transform& transform) const
     return Path(*this).transform(transform);
 }
 
+void Path::clear()
+{
+    m_commands.clear();
+    m_points.clear();
+}
+
 void Path::reserve(size_t commands, size_t points)
 {
     m_commands.reserve(commands + m_commands.size());

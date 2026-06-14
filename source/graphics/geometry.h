@@ -509,12 +509,6 @@ private:
     std::vector<Point> m_points;
 };
 
-inline void Path::clear()
-{
-    m_commands.clear();
-    m_points.clear();
-}
-
 class PathIterator {
 public:
     explicit PathIterator(const Path& path);
