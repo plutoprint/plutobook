@@ -498,18 +498,18 @@ PathIterator::PathIterator(const Path& path)
 
 PathCommand PathIterator::currentSegment(std::array<Point, 3>& points) const
 {
-    auto command = m_commands[m_commandsIndex];
+    auto command = m_commands[m_commandIndex];
     switch(command) {
     case PathCommand::MoveTo:
-        points[0] = m_startPoint = m_points[m_pointsIndex];
+        points[0] = m_startPoint = m_points[m_pointIndex];
         break;
     case PathCommand::LineTo:
-        points[0] = m_points[m_pointsIndex];
+        points[0] = m_points[m_pointIndex];
         break;
     case PathCommand::CubicTo:
-        points[0] = m_points[m_pointsIndex + 0];
-        points[1] = m_points[m_pointsIndex + 1];
-        points[2] = m_points[m_pointsIndex + 2];
+        points[0] = m_points[m_pointIndex + 0];
+        points[1] = m_points[m_pointIndex + 1];
+        points[2] = m_points[m_pointIndex + 2];
         break;
     case PathCommand::Close:
         points[0] = m_startPoint;
@@ -521,24 +521,24 @@ PathCommand PathIterator::currentSegment(std::array<Point, 3>& points) const
 
 bool PathIterator::isDone() const
 {
-    return (m_commandsIndex >= m_commands.size());
+    return (m_commandIndex >= m_commands.size());
 }
 
 void PathIterator::next()
 {
-    switch(m_commands[m_commandsIndex]) {
+    switch(m_commands[m_commandIndex]) {
     case PathCommand::MoveTo:
     case PathCommand::LineTo:
-        m_pointsIndex += 1;
+        m_pointIndex += 1;
         break;
     case PathCommand::CubicTo:
-        m_pointsIndex += 3;
+        m_pointIndex += 3;
         break;
     default:
         break;
     }
 
-    m_commandsIndex += 1;
+    m_commandIndex += 1;
 }
 
 } // namespace plutobook
