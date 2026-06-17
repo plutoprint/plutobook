@@ -21,6 +21,8 @@
 #include <cairo-ft.h>
 #include <hb-ft.h>
 
+#include FT_MULTIPLE_MASTERS_H
+
 #include <numbers>
 #include <cmath>
 
@@ -406,28 +408,20 @@ RefPtr<SimpleFontData> SimpleFontData::create(cairo_scaled_font_t* font, FcCharS
     cairo_scaled_font_get_scale_matrix(font, &scale_matrix);
     hb_font_set_scale(hbFont, FLT_TO_HB(scale_matrix.xx), FLT_TO_HB(scale_matrix.yy));
 
-    cairo_font_options_t* font_options = cairo_font_options_create();
-    cairo_scaled_font_get_font_options(font, font_options);
+    if(FT_MM_Var* ftMMVar; !FT_Get_MM_Var(ftFace, &ftMMVar)) {
+        std::vector<FT_Fixed> coords(ftMMVar->num_axis);
+        if(!FT_Get_Var_Design_Coordinates(ftFace, coords.size(), coords.data())) {
+            std::vector<hb_variation_t> variations(coords.size());
+            for(FT_UInt i = 0; i < ftMMVar->num_axis; ++i) {
+                variations[i].tag = ftMMVar->axis[i].tag;
+                variations[i].value = coords[i] / 65536.f;
+            }
 
-    std::vector<hb_variation_t> settings;
-    std::string_view variations(cairo_font_options_get_variations(font_options));
-    while(!variations.empty()) {
-        auto delim_index = variations.find(',');
-        auto variation = variations.substr(0, delim_index);
-
-        hb_variation_t setting;
-        if(hb_variation_from_string(variation.data(), variation.size(), &setting)) {
-            settings.push_back(setting);
+            hb_font_set_variations(hbFont, variations.data(), variations.size());
         }
 
-        variations.remove_prefix(variation.size());
-        if(delim_index != std::string_view::npos) {
-            variations.remove_prefix(1);
-        }
+        FT_Done_MM_Var(ftFace->glyph->library, ftMMVar);
     }
-
-    hb_font_set_variations(hbFont, settings.data(), settings.size());
-    cairo_font_options_destroy(font_options);
 
     static hb_font_funcs_t* hbFunctions = []() {
         auto nominal_glyph_func = [](hb_font_t*, void* context, hb_codepoint_t unicode, hb_codepoint_t* glyph, void*) -> hb_bool_t {
