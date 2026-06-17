@@ -365,6 +365,7 @@ RefPtr<SimpleFontData> SimpleFontData::create(cairo_scaled_font_t* font, FcCharS
     auto ftFace = cairo_ft_scaled_font_lock_face(font);
     if(ftFace == nullptr) {
         cairo_scaled_font_destroy(font);
+        FcCharSetDestroy(charSet);
         return nullptr;
     }
 
