@@ -7,7 +7,7 @@
  */
 
 #include "boxstyle.h"
-#include "cssrule.h"
+#include "cssproperty.h"
 #include "document.h"
 #include "imageresource.h"
 #include "fontresource.h"

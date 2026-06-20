@@ -7,9 +7,9 @@
  */
 
 #include "counters.h"
+#include "cssproperty.h"
 #include "htmldocument.h"
 #include "box.h"
-#include "cssrule.h"
 
 namespace plutobook {
 

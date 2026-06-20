@@ -8,7 +8,7 @@
 
 #include "htmldocument.h"
 #include "htmlparser.h"
-#include "cssrule.h"
+#include "cssproperty.h"
 #include "counters.h"
 #include "textbox.h"
 #include "contentbox.h"

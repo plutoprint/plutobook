@@ -397,9 +397,9 @@ void StyleBuilder::merge(uint32_t specificity, uint32_t position, const CSSPrope
 
 static CSSPropertyID resolveToPhysicalProperty(CSSPropertyID id, int index)
 {
-    auto longhand = CSSShorthand::longhand(id);
-    assert(longhand.length() == 4);
-    return longhand.at(index);
+    auto longhand = CSSProperty::shorthand(id);
+    assert(longhand.size() == 4);
+    return longhand[index];
 }
 
 static CSSPropertyID resolveDirectionAwareProperty(CSSPropertyID id, WritingDirection direction)
