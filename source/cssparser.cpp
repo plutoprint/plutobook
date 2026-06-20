@@ -1507,19 +1507,22 @@ void CSSParser::addProperty(CSSPropertyList& properties, CSSPropertyID id, bool 
 
 class CSSShorthand {
 public:
-    static CSSShorthand longhand(CSSPropertyID id);
+    CSSShorthand() = default;
 
     CSSPropertyID at(size_t index) const { return m_data[index]; }
     size_t length() const { return m_length; }
     bool empty() const { return m_length == 0; }
 
+    static CSSShorthand longhand(CSSPropertyID id);
+
 private:
-    CSSShorthand(const CSSPropertyID* data, size_t length)
-        : m_data(data), m_length(length)
+    template<size_t N>
+    explicit CSSShorthand(const CSSPropertyID(&data)[N])
+        : m_data(data), m_length(N)
     {}
 
-    const CSSPropertyID* m_data;
-    size_t m_length;
+    const CSSPropertyID* m_data = nullptr;
+    size_t m_length = 0;
 };
 
 CSSShorthand CSSShorthand::longhand(CSSPropertyID id)
@@ -1533,7 +1536,7 @@ CSSShorthand CSSShorthand::longhand(CSSPropertyID id)
             CSSPropertyID::BorderLeftColor
         };
 
-        return CSSShorthand(data, std::size(data));
+        return CSSShorthand(data);
     }
 
     case CSSPropertyID::BorderStyle: {
@@ -1544,7 +1547,7 @@ CSSShorthand CSSShorthand::longhand(CSSPropertyID id)
             CSSPropertyID::BorderLeftStyle
         };
 
-        return CSSShorthand(data, std::size(data));
+        return CSSShorthand(data);
     }
 
     case CSSPropertyID::BorderWidth: {
@@ -1555,7 +1558,7 @@ CSSShorthand CSSShorthand::longhand(CSSPropertyID id)
             CSSPropertyID::BorderLeftWidth
         };
 
-        return CSSShorthand(data, std::size(data));
+        return CSSShorthand(data);
     }
 
     case CSSPropertyID::BorderTop: {
@@ -1565,7 +1568,7 @@ CSSShorthand CSSShorthand::longhand(CSSPropertyID id)
             CSSPropertyID::BorderTopWidth
         };
 
-        return CSSShorthand(data, std::size(data));
+        return CSSShorthand(data);
     }
 
     case CSSPropertyID::BorderRight: {
@@ -1575,7 +1578,7 @@ CSSShorthand CSSShorthand::longhand(CSSPropertyID id)
             CSSPropertyID::BorderRightWidth
         };
 
-        return CSSShorthand(data, std::size(data));
+        return CSSShorthand(data);
     }
 
     case CSSPropertyID::BorderBottom: {
@@ -1585,7 +1588,7 @@ CSSShorthand CSSShorthand::longhand(CSSPropertyID id)
             CSSPropertyID::BorderBottomWidth
         };
 
-        return CSSShorthand(data, std::size(data));
+        return CSSShorthand(data);
     }
 
     case CSSPropertyID::BorderLeft: {
@@ -1595,7 +1598,7 @@ CSSShorthand CSSShorthand::longhand(CSSPropertyID id)
             CSSPropertyID::BorderLeftWidth
         };
 
-        return CSSShorthand(data, std::size(data));
+        return CSSShorthand(data);
     }
 
     case CSSPropertyID::BorderRadius: {
@@ -1606,7 +1609,7 @@ CSSShorthand CSSShorthand::longhand(CSSPropertyID id)
             CSSPropertyID::BorderBottomRightRadius
         };
 
-        return CSSShorthand(data, std::size(data));
+        return CSSShorthand(data);
     }
 
     case CSSPropertyID::BorderSpacing: {
@@ -1615,7 +1618,7 @@ CSSShorthand CSSShorthand::longhand(CSSPropertyID id)
             CSSPropertyID::BorderVerticalSpacing
         };
 
-        return CSSShorthand(data, std::size(data));
+        return CSSShorthand(data);
     }
 
     case CSSPropertyID::Padding: {
@@ -1626,7 +1629,7 @@ CSSShorthand CSSShorthand::longhand(CSSPropertyID id)
             CSSPropertyID::PaddingLeft
         };
 
-        return CSSShorthand(data, std::size(data));
+        return CSSShorthand(data);
     }
 
     case CSSPropertyID::Margin: {
@@ -1637,7 +1640,7 @@ CSSShorthand CSSShorthand::longhand(CSSPropertyID id)
             CSSPropertyID::MarginLeft
         };
 
-        return CSSShorthand(data, std::size(data));
+        return CSSShorthand(data);
     }
 
     case CSSPropertyID::Inset: {
@@ -1648,7 +1651,7 @@ CSSShorthand CSSShorthand::longhand(CSSPropertyID id)
             CSSPropertyID::Left
         };
 
-        return CSSShorthand(data, std::size(data));
+        return CSSShorthand(data);
     }
 
     case CSSPropertyID::Outline: {
@@ -1658,7 +1661,7 @@ CSSShorthand CSSShorthand::longhand(CSSPropertyID id)
             CSSPropertyID::OutlineWidth
         };
 
-        return CSSShorthand(data, std::size(data));
+        return CSSShorthand(data);
     }
 
     case CSSPropertyID::ListStyle: {
@@ -1668,7 +1671,7 @@ CSSShorthand CSSShorthand::longhand(CSSPropertyID id)
             CSSPropertyID::ListStyleImage
         };
 
-        return CSSShorthand(data, std::size(data));
+        return CSSShorthand(data);
     }
 
     case CSSPropertyID::ColumnRule: {
@@ -1678,7 +1681,7 @@ CSSShorthand CSSShorthand::longhand(CSSPropertyID id)
             CSSPropertyID::ColumnRuleWidth
         };
 
-        return CSSShorthand(data, std::size(data));
+        return CSSShorthand(data);
     }
 
     case CSSPropertyID::FlexFlow: {
@@ -1687,7 +1690,7 @@ CSSShorthand CSSShorthand::longhand(CSSPropertyID id)
             CSSPropertyID::FlexWrap
         };
 
-        return CSSShorthand(data, std::size(data));
+        return CSSShorthand(data);
     }
 
     case CSSPropertyID::Flex: {
@@ -1697,7 +1700,7 @@ CSSShorthand CSSShorthand::longhand(CSSPropertyID id)
             CSSPropertyID::FlexBasis
         };
 
-        return CSSShorthand(data, std::size(data));
+        return CSSShorthand(data);
     }
 
     case CSSPropertyID::Background: {
@@ -1712,7 +1715,7 @@ CSSShorthand CSSShorthand::longhand(CSSPropertyID id)
             CSSPropertyID::BackgroundSize
         };
 
-        return CSSShorthand(data, std::size(data));
+        return CSSShorthand(data);
     }
 
     case CSSPropertyID::Gap: {
@@ -1721,7 +1724,7 @@ CSSShorthand CSSShorthand::longhand(CSSPropertyID id)
             CSSPropertyID::ColumnGap
         };
 
-        return CSSShorthand(data, std::size(data));
+        return CSSShorthand(data);
     }
 
     case CSSPropertyID::Columns: {
@@ -1730,7 +1733,7 @@ CSSShorthand CSSShorthand::longhand(CSSPropertyID id)
             CSSPropertyID::ColumnCount
         };
 
-        return CSSShorthand(data, std::size(data));
+        return CSSShorthand(data);
     }
 
     case CSSPropertyID::Font: {
@@ -1744,7 +1747,7 @@ CSSShorthand CSSShorthand::longhand(CSSPropertyID id)
             CSSPropertyID::FontFamily
         };
 
-        return CSSShorthand(data, std::size(data));
+        return CSSShorthand(data);
     }
 
     case CSSPropertyID::FontVariant: {
@@ -1757,7 +1760,7 @@ CSSShorthand CSSShorthand::longhand(CSSPropertyID id)
             CSSPropertyID::FontVariantPosition
         };
 
-        return CSSShorthand(data, std::size(data));
+        return CSSShorthand(data);
     }
 
     case CSSPropertyID::Border: {
@@ -1776,7 +1779,7 @@ CSSShorthand CSSShorthand::longhand(CSSPropertyID id)
             CSSPropertyID::BorderLeftColor
         };
 
-        return CSSShorthand(data, std::size(data));
+        return CSSShorthand(data);
     }
 
     case CSSPropertyID::TextDecoration: {
@@ -1786,7 +1789,7 @@ CSSShorthand CSSShorthand::longhand(CSSPropertyID id)
             CSSPropertyID::TextDecorationColor
         };
 
-        return CSSShorthand(data, std::size(data));
+        return CSSShorthand(data);
     }
 
     case CSSPropertyID::Marker: {
@@ -1796,11 +1799,11 @@ CSSShorthand CSSShorthand::longhand(CSSPropertyID id)
             CSSPropertyID::MarkerEnd
         };
 
-        return CSSShorthand(data, std::size(data));
+        return CSSShorthand(data);
     }
 
     default:
-        return CSSShorthand(nullptr, 0);
+        return CSSShorthand();
     }
 }
 
