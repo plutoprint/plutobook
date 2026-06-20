@@ -1601,6 +1601,25 @@ CSSShorthand CSSShorthand::longhand(CSSPropertyID id)
         return CSSShorthand(data);
     }
 
+    case CSSPropertyID::Border: {
+        static const CSSPropertyID data[] = {
+            CSSPropertyID::BorderTopWidth,
+            CSSPropertyID::BorderRightWidth,
+            CSSPropertyID::BorderBottomWidth,
+            CSSPropertyID::BorderLeftWidth,
+            CSSPropertyID::BorderTopStyle,
+            CSSPropertyID::BorderRightStyle,
+            CSSPropertyID::BorderBottomStyle,
+            CSSPropertyID::BorderLeftStyle,
+            CSSPropertyID::BorderTopColor,
+            CSSPropertyID::BorderRightColor,
+            CSSPropertyID::BorderBottomColor,
+            CSSPropertyID::BorderLeftColor
+        };
+
+        return CSSShorthand(data);
+    }
+
     case CSSPropertyID::BorderRadius: {
         static const CSSPropertyID data[] = {
             CSSPropertyID::BorderTopRightRadius,
@@ -1664,6 +1683,21 @@ CSSShorthand CSSShorthand::longhand(CSSPropertyID id)
         return CSSShorthand(data);
     }
 
+    case CSSPropertyID::Background: {
+        static const CSSPropertyID data[] = {
+            CSSPropertyID::BackgroundColor,
+            CSSPropertyID::BackgroundImage,
+            CSSPropertyID::BackgroundRepeat,
+            CSSPropertyID::BackgroundAttachment,
+            CSSPropertyID::BackgroundOrigin,
+            CSSPropertyID::BackgroundClip,
+            CSSPropertyID::BackgroundPosition,
+            CSSPropertyID::BackgroundSize
+        };
+
+        return CSSShorthand(data);
+    }
+
     case CSSPropertyID::ListStyle: {
         static const CSSPropertyID data[] = {
             CSSPropertyID::ListStyleType,
@@ -1698,21 +1732,6 @@ CSSShorthand CSSShorthand::longhand(CSSPropertyID id)
             CSSPropertyID::FlexGrow,
             CSSPropertyID::FlexShrink,
             CSSPropertyID::FlexBasis
-        };
-
-        return CSSShorthand(data);
-    }
-
-    case CSSPropertyID::Background: {
-        static const CSSPropertyID data[] = {
-            CSSPropertyID::BackgroundColor,
-            CSSPropertyID::BackgroundImage,
-            CSSPropertyID::BackgroundRepeat,
-            CSSPropertyID::BackgroundAttachment,
-            CSSPropertyID::BackgroundOrigin,
-            CSSPropertyID::BackgroundClip,
-            CSSPropertyID::BackgroundPosition,
-            CSSPropertyID::BackgroundSize
         };
 
         return CSSShorthand(data);
@@ -1758,25 +1777,6 @@ CSSShorthand CSSShorthand::longhand(CSSPropertyID id)
             CSSPropertyID::FontVariantLigatures,
             CSSPropertyID::FontVariantNumeric,
             CSSPropertyID::FontVariantPosition
-        };
-
-        return CSSShorthand(data);
-    }
-
-    case CSSPropertyID::Border: {
-        static const CSSPropertyID data[] = {
-            CSSPropertyID::BorderTopWidth,
-            CSSPropertyID::BorderRightWidth,
-            CSSPropertyID::BorderBottomWidth,
-            CSSPropertyID::BorderLeftWidth,
-            CSSPropertyID::BorderTopStyle,
-            CSSPropertyID::BorderRightStyle,
-            CSSPropertyID::BorderBottomStyle,
-            CSSPropertyID::BorderLeftStyle,
-            CSSPropertyID::BorderTopColor,
-            CSSPropertyID::BorderRightColor,
-            CSSPropertyID::BorderBottomColor,
-            CSSPropertyID::BorderLeftColor
         };
 
         return CSSShorthand(data);
