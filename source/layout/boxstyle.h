@@ -11,6 +11,7 @@
 
 #include "pointer.h"
 #include "heapstring.h"
+#include "writingmode.h"
 #include "color.h"
 
 #include <memory>
@@ -76,11 +77,6 @@ enum class Overflow : uint8_t {
     Scroll
 };
 
-enum class Direction : uint8_t {
-    Ltr,
-    Rtl
-};
-
 enum class UnicodeBidi : uint8_t {
     Normal,
     Embed,
@@ -132,12 +128,6 @@ enum class BackgroundAttachment : uint8_t {
     Scroll,
     Fixed,
     Local
-};
-
-enum class WritingMode : uint8_t {
-    HorizontalTb,
-    VerticalRl,
-    VerticalLr
 };
 
 enum class TextOrientation : uint8_t {
@@ -534,13 +524,6 @@ private:
     Type m_type = Type::Length;
     Length m_width = Length::Auto;
     Length m_height = Length::Auto;
-};
-
-enum BoxSide {
-    BoxSideTop = 0,
-    BoxSideRight,
-    BoxSideBottom,
-    BoxSideLeft
 };
 
 class BorderEdge {

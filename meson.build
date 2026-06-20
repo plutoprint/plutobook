@@ -193,6 +193,7 @@ plutobook_sources = [
 
     'source/counters.cpp',
     'source/cssparser.cpp',
+    'source/cssproperty.cpp',
     'source/cssrule.cpp',
     'source/cssstylesheet.cpp',
     'source/csstokenizer.cpp',

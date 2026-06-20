@@ -1115,6 +1115,12 @@ bool CSSParser::consumeDescriptor(CSSTokenStream& input, CSSPropertyList& proper
     case CSSPropertyID::BorderRight:
     case CSSPropertyID::BorderBottom:
     case CSSPropertyID::BorderLeft:
+    case CSSPropertyID::BorderBlock:
+    case CSSPropertyID::BorderInline:
+    case CSSPropertyID::BorderBlockStart:
+    case CSSPropertyID::BorderInlineEnd:
+    case CSSPropertyID::BorderBlockEnd:
+    case CSSPropertyID::BorderInlineStart:
     case CSSPropertyID::FlexFlow:
     case CSSPropertyID::ColumnRule:
     case CSSPropertyID::Outline:
@@ -1129,6 +1135,18 @@ bool CSSParser::consumeDescriptor(CSSTokenStream& input, CSSPropertyList& proper
         return consume4Shorthand(input, properties, id, important);
     case CSSPropertyID::Gap:
     case CSSPropertyID::BorderSpacing:
+    case CSSPropertyID::InsetBlock:
+    case CSSPropertyID::InsetInline:
+    case CSSPropertyID::MarginBlock:
+    case CSSPropertyID::MarginInline:
+    case CSSPropertyID::PaddingBlock:
+    case CSSPropertyID::PaddingInline:
+    case CSSPropertyID::BorderBlockColor:
+    case CSSPropertyID::BorderInlineColor:
+    case CSSPropertyID::BorderBlockStyle:
+    case CSSPropertyID::BorderInlineStyle:
+    case CSSPropertyID::BorderBlockWidth:
+    case CSSPropertyID::BorderInlineWidth:
         return consume2Shorthand(input, properties, id, important);
     case CSSPropertyID::Background:
         return consumeBackground(input, properties, important);
@@ -1163,248 +1181,6 @@ bool CSSParser::consumeDescriptor(CSSTokenStream& input, CSSPropertyList& proper
     return false;
 }
 
-constexpr bool isCustomPropertyName(std::string_view name)
-{
-    return name.length() > 2 && name[0] == '-' && name[1] == '-';
-}
-
-static CSSPropertyID csspropertyid(std::string_view name)
-{
-    if(isCustomPropertyName(name))
-        return CSSPropertyID::Custom;
-    static const struct {
-        std::string_view name;
-        CSSPropertyID value;
-    } table[] = {
-        {"-pluto-lang", CSSPropertyID::Lang},
-        {"-pluto-page-scale", CSSPropertyID::PageScale},
-        {"additive-symbols", CSSPropertyID::AdditiveSymbols},
-        {"align-content", CSSPropertyID::AlignContent},
-        {"align-items", CSSPropertyID::AlignItems},
-        {"align-self", CSSPropertyID::AlignSelf},
-        {"alignment-baseline", CSSPropertyID::AlignmentBaseline},
-        {"background", CSSPropertyID::Background},
-        {"background-attachment", CSSPropertyID::BackgroundAttachment},
-        {"background-clip", CSSPropertyID::BackgroundClip},
-        {"background-color", CSSPropertyID::BackgroundColor},
-        {"background-image", CSSPropertyID::BackgroundImage},
-        {"background-origin", CSSPropertyID::BackgroundOrigin},
-        {"background-position", CSSPropertyID::BackgroundPosition},
-        {"background-repeat", CSSPropertyID::BackgroundRepeat},
-        {"background-size", CSSPropertyID::BackgroundSize},
-        {"baseline-shift", CSSPropertyID::BaselineShift},
-        {"border", CSSPropertyID::Border},
-        {"border-bottom", CSSPropertyID::BorderBottom},
-        {"border-bottom-color", CSSPropertyID::BorderBottomColor},
-        {"border-bottom-left-radius", CSSPropertyID::BorderBottomLeftRadius},
-        {"border-bottom-right-radius", CSSPropertyID::BorderBottomRightRadius},
-        {"border-bottom-style", CSSPropertyID::BorderBottomStyle},
-        {"border-bottom-width", CSSPropertyID::BorderBottomWidth},
-        {"border-collapse", CSSPropertyID::BorderCollapse},
-        {"border-color", CSSPropertyID::BorderColor},
-        {"border-horizontal-spacing", CSSPropertyID::BorderHorizontalSpacing},
-        {"border-left", CSSPropertyID::BorderLeft},
-        {"border-left-color", CSSPropertyID::BorderLeftColor},
-        {"border-left-style", CSSPropertyID::BorderLeftStyle},
-        {"border-left-width", CSSPropertyID::BorderLeftWidth},
-        {"border-radius", CSSPropertyID::BorderRadius},
-        {"border-right", CSSPropertyID::BorderRight},
-        {"border-right-color", CSSPropertyID::BorderRightColor},
-        {"border-right-style", CSSPropertyID::BorderRightStyle},
-        {"border-right-width", CSSPropertyID::BorderRightWidth},
-        {"border-spacing", CSSPropertyID::BorderSpacing},
-        {"border-style", CSSPropertyID::BorderStyle},
-        {"border-top", CSSPropertyID::BorderTop},
-        {"border-top-color", CSSPropertyID::BorderTopColor},
-        {"border-top-left-radius", CSSPropertyID::BorderTopLeftRadius},
-        {"border-top-right-radius", CSSPropertyID::BorderTopRightRadius},
-        {"border-top-style", CSSPropertyID::BorderTopStyle},
-        {"border-top-width", CSSPropertyID::BorderTopWidth},
-        {"border-vertical-spacing", CSSPropertyID::BorderVerticalSpacing},
-        {"border-width", CSSPropertyID::BorderWidth},
-        {"bottom", CSSPropertyID::Bottom},
-        {"box-sizing", CSSPropertyID::BoxSizing},
-        {"break-after", CSSPropertyID::BreakAfter},
-        {"break-before", CSSPropertyID::BreakBefore},
-        {"break-inside", CSSPropertyID::BreakInside},
-        {"caption-side", CSSPropertyID::CaptionSide},
-        {"clear", CSSPropertyID::Clear},
-        {"clip", CSSPropertyID::Clip},
-        {"clip-path", CSSPropertyID::ClipPath},
-        {"clip-rule", CSSPropertyID::ClipRule},
-        {"color", CSSPropertyID::Color},
-        {"column-break-after", CSSPropertyID::ColumnBreakAfter},
-        {"column-break-before", CSSPropertyID::ColumnBreakBefore},
-        {"column-break-inside", CSSPropertyID::ColumnBreakInside},
-        {"column-count", CSSPropertyID::ColumnCount},
-        {"column-fill", CSSPropertyID::ColumnFill},
-        {"column-gap", CSSPropertyID::ColumnGap},
-        {"column-rule", CSSPropertyID::ColumnRule},
-        {"column-rule-color", CSSPropertyID::ColumnRuleColor},
-        {"column-rule-style", CSSPropertyID::ColumnRuleStyle},
-        {"column-rule-width", CSSPropertyID::ColumnRuleWidth},
-        {"column-span", CSSPropertyID::ColumnSpan},
-        {"column-width", CSSPropertyID::ColumnWidth},
-        {"columns", CSSPropertyID::Columns},
-        {"content", CSSPropertyID::Content},
-        {"counter-increment", CSSPropertyID::CounterIncrement},
-        {"counter-reset", CSSPropertyID::CounterReset},
-        {"counter-set", CSSPropertyID::CounterSet},
-        {"cx", CSSPropertyID::Cx},
-        {"cy", CSSPropertyID::Cy},
-        {"direction", CSSPropertyID::Direction},
-        {"display", CSSPropertyID::Display},
-        {"dominant-baseline", CSSPropertyID::DominantBaseline},
-        {"empty-cells", CSSPropertyID::EmptyCells},
-        {"fallback", CSSPropertyID::Fallback},
-        {"fill", CSSPropertyID::Fill},
-        {"fill-opacity", CSSPropertyID::FillOpacity},
-        {"fill-rule", CSSPropertyID::FillRule},
-        {"flex", CSSPropertyID::Flex},
-        {"flex-basis", CSSPropertyID::FlexBasis},
-        {"flex-direction", CSSPropertyID::FlexDirection},
-        {"flex-flow", CSSPropertyID::FlexFlow},
-        {"flex-grow", CSSPropertyID::FlexGrow},
-        {"flex-shrink", CSSPropertyID::FlexShrink},
-        {"flex-wrap", CSSPropertyID::FlexWrap},
-        {"float", CSSPropertyID::Float},
-        {"font", CSSPropertyID::Font},
-        {"font-family", CSSPropertyID::FontFamily},
-        {"font-feature-settings", CSSPropertyID::FontFeatureSettings},
-        {"font-kerning", CSSPropertyID::FontKerning},
-        {"font-size", CSSPropertyID::FontSize},
-        {"font-stretch", CSSPropertyID::FontStretch},
-        {"font-style", CSSPropertyID::FontStyle},
-        {"font-variant", CSSPropertyID::FontVariant},
-        {"font-variant-caps", CSSPropertyID::FontVariantCaps},
-        {"font-variant-east-asian", CSSPropertyID::FontVariantEastAsian},
-        {"font-variant-emoji", CSSPropertyID::FontVariantEmoji},
-        {"font-variant-ligatures", CSSPropertyID::FontVariantLigatures},
-        {"font-variant-numeric", CSSPropertyID::FontVariantNumeric},
-        {"font-variant-position", CSSPropertyID::FontVariantPosition},
-        {"font-variation-settings", CSSPropertyID::FontVariationSettings},
-        {"font-weight", CSSPropertyID::FontWeight},
-        {"gap", CSSPropertyID::Gap},
-        {"height", CSSPropertyID::Height},
-        {"hyphens", CSSPropertyID::Hyphens},
-        {"inset", CSSPropertyID::Inset},
-        {"justify-content", CSSPropertyID::JustifyContent},
-        {"left", CSSPropertyID::Left},
-        {"letter-spacing", CSSPropertyID::LetterSpacing},
-        {"line-height", CSSPropertyID::LineHeight},
-        {"list-style", CSSPropertyID::ListStyle},
-        {"list-style-image", CSSPropertyID::ListStyleImage},
-        {"list-style-position", CSSPropertyID::ListStylePosition},
-        {"list-style-type", CSSPropertyID::ListStyleType},
-        {"margin", CSSPropertyID::Margin},
-        {"margin-bottom", CSSPropertyID::MarginBottom},
-        {"margin-left", CSSPropertyID::MarginLeft},
-        {"margin-right", CSSPropertyID::MarginRight},
-        {"margin-top", CSSPropertyID::MarginTop},
-        {"marker", CSSPropertyID::Marker},
-        {"marker-end", CSSPropertyID::MarkerEnd},
-        {"marker-mid", CSSPropertyID::MarkerMid},
-        {"marker-start", CSSPropertyID::MarkerStart},
-        {"mask", CSSPropertyID::Mask},
-        {"mask-type", CSSPropertyID::MaskType},
-        {"max-height", CSSPropertyID::MaxHeight},
-        {"max-width", CSSPropertyID::MaxWidth},
-        {"min-height", CSSPropertyID::MinHeight},
-        {"min-width", CSSPropertyID::MinWidth},
-        {"mix-blend-mode", CSSPropertyID::MixBlendMode},
-        {"negative", CSSPropertyID::Negative},
-        {"object-fit", CSSPropertyID::ObjectFit},
-        {"object-position", CSSPropertyID::ObjectPosition},
-        {"opacity", CSSPropertyID::Opacity},
-        {"order", CSSPropertyID::Order},
-        {"orphans", CSSPropertyID::Orphans},
-        {"outline", CSSPropertyID::Outline},
-        {"outline-color", CSSPropertyID::OutlineColor},
-        {"outline-offset", CSSPropertyID::OutlineOffset},
-        {"outline-style", CSSPropertyID::OutlineStyle},
-        {"outline-width", CSSPropertyID::OutlineWidth},
-        {"overflow", CSSPropertyID::Overflow},
-        {"overflow-wrap", CSSPropertyID::OverflowWrap},
-        {"pad", CSSPropertyID::Pad},
-        {"padding", CSSPropertyID::Padding},
-        {"padding-bottom", CSSPropertyID::PaddingBottom},
-        {"padding-left", CSSPropertyID::PaddingLeft},
-        {"padding-right", CSSPropertyID::PaddingRight},
-        {"padding-top", CSSPropertyID::PaddingTop},
-        {"page", CSSPropertyID::Page},
-        {"page-break-after", CSSPropertyID::PageBreakAfter},
-        {"page-break-before", CSSPropertyID::PageBreakBefore},
-        {"page-break-inside", CSSPropertyID::PageBreakInside},
-        {"paint-order", CSSPropertyID::PaintOrder},
-        {"position", CSSPropertyID::Position},
-        {"prefix", CSSPropertyID::Prefix},
-        {"quotes", CSSPropertyID::Quotes},
-        {"r", CSSPropertyID::R},
-        {"range", CSSPropertyID::Range},
-        {"right", CSSPropertyID::Right},
-        {"row-gap", CSSPropertyID::RowGap},
-        {"rx", CSSPropertyID::Rx},
-        {"ry", CSSPropertyID::Ry},
-        {"size", CSSPropertyID::Size},
-        {"src", CSSPropertyID::Src},
-        {"stop-color", CSSPropertyID::StopColor},
-        {"stop-opacity", CSSPropertyID::StopOpacity},
-        {"stroke", CSSPropertyID::Stroke},
-        {"stroke-dasharray", CSSPropertyID::StrokeDasharray},
-        {"stroke-dashoffset", CSSPropertyID::StrokeDashoffset},
-        {"stroke-linecap", CSSPropertyID::StrokeLinecap},
-        {"stroke-linejoin", CSSPropertyID::StrokeLinejoin},
-        {"stroke-miterlimit", CSSPropertyID::StrokeMiterlimit},
-        {"stroke-opacity", CSSPropertyID::StrokeOpacity},
-        {"stroke-width", CSSPropertyID::StrokeWidth},
-        {"suffix", CSSPropertyID::Suffix},
-        {"symbols", CSSPropertyID::Symbols},
-        {"system", CSSPropertyID::System},
-        {"tab-size", CSSPropertyID::TabSize},
-        {"table-layout", CSSPropertyID::TableLayout},
-        {"text-align", CSSPropertyID::TextAlign},
-        {"text-anchor", CSSPropertyID::TextAnchor},
-        {"text-decoration", CSSPropertyID::TextDecoration},
-        {"text-decoration-color", CSSPropertyID::TextDecorationColor},
-        {"text-decoration-line", CSSPropertyID::TextDecorationLine},
-        {"text-decoration-style", CSSPropertyID::TextDecorationStyle},
-        {"text-indent", CSSPropertyID::TextIndent},
-        {"text-orientation", CSSPropertyID::TextOrientation},
-        {"text-overflow", CSSPropertyID::TextOverflow},
-        {"text-transform", CSSPropertyID::TextTransform},
-        {"top", CSSPropertyID::Top},
-        {"transform", CSSPropertyID::Transform},
-        {"transform-origin", CSSPropertyID::TransformOrigin},
-        {"unicode-bidi", CSSPropertyID::UnicodeBidi},
-        {"unicode-range", CSSPropertyID::UnicodeRange},
-        {"vector-effect", CSSPropertyID::VectorEffect},
-        {"vertical-align", CSSPropertyID::VerticalAlign},
-        {"visibility", CSSPropertyID::Visibility},
-        {"white-space", CSSPropertyID::WhiteSpace},
-        {"widows", CSSPropertyID::Widows},
-        {"width", CSSPropertyID::Width},
-        {"word-break", CSSPropertyID::WordBreak},
-        {"word-spacing", CSSPropertyID::WordSpacing},
-        {"writing-mode", CSSPropertyID::WritingMode},
-        {"x", CSSPropertyID::X},
-        {"y", CSSPropertyID::Y},
-        {"z-index", CSSPropertyID::ZIndex}
-    };
-
-    char buffer[32];
-    if(name.length() > sizeof(buffer))
-        return CSSPropertyID::Unknown;
-    for(size_t i = 0; i < name.length(); ++i) {
-        buffer[i] = toLower(name[i]);
-    }
-
-    std::string_view lowerName(buffer, name.length());
-    auto it = std::lower_bound(table, std::end(table), lowerName, [](const auto& item, const auto& name) { return item.name < name; });
-    if(it != std::end(table) && it->name == lowerName)
-        return it->value;
-    return CSSPropertyID::Unknown;
-}
-
 static bool containsVariableReferences(CSSTokenStream input)
 {
     while(!input.empty()) {
@@ -1427,7 +1203,7 @@ bool CSSParser::consumeDeclaraction(CSSTokenStream& input, CSSPropertyList& prop
     if(newInput->type() != CSSToken::Type::Ident)
         return false;
     auto name = newInput->data();
-    auto id = csspropertyid(name);
+    auto id = CSSProperty::id(name);
     if(id == CSSPropertyID::Unknown)
         return false;
     newInput.consumeIncludingWhitespace();
@@ -1503,308 +1279,6 @@ void CSSParser::addProperty(CSSPropertyList& properties, CSSPropertyID id, bool 
     }
 
     properties.emplace_back(id, m_context.origin(), important, std::move(value));
-}
-
-class CSSShorthand {
-public:
-    CSSShorthand() = default;
-
-    CSSPropertyID at(size_t index) const { return m_data[index]; }
-    size_t length() const { return m_length; }
-    bool empty() const { return m_length == 0; }
-
-    static CSSShorthand longhand(CSSPropertyID id);
-
-private:
-    template<size_t N>
-    explicit CSSShorthand(const CSSPropertyID(&data)[N])
-        : m_data(data), m_length(N)
-    {}
-
-    const CSSPropertyID* m_data = nullptr;
-    size_t m_length = 0;
-};
-
-CSSShorthand CSSShorthand::longhand(CSSPropertyID id)
-{
-    switch(id) {
-    case CSSPropertyID::BorderColor: {
-        static const CSSPropertyID data[] = {
-            CSSPropertyID::BorderTopColor,
-            CSSPropertyID::BorderRightColor,
-            CSSPropertyID::BorderBottomColor,
-            CSSPropertyID::BorderLeftColor
-        };
-
-        return CSSShorthand(data);
-    }
-
-    case CSSPropertyID::BorderStyle: {
-        static const CSSPropertyID data[] = {
-            CSSPropertyID::BorderTopStyle,
-            CSSPropertyID::BorderRightStyle,
-            CSSPropertyID::BorderBottomStyle,
-            CSSPropertyID::BorderLeftStyle
-        };
-
-        return CSSShorthand(data);
-    }
-
-    case CSSPropertyID::BorderWidth: {
-        static const CSSPropertyID data[] = {
-            CSSPropertyID::BorderTopWidth,
-            CSSPropertyID::BorderRightWidth,
-            CSSPropertyID::BorderBottomWidth,
-            CSSPropertyID::BorderLeftWidth
-        };
-
-        return CSSShorthand(data);
-    }
-
-    case CSSPropertyID::BorderTop: {
-        static const CSSPropertyID data[] = {
-            CSSPropertyID::BorderTopColor,
-            CSSPropertyID::BorderTopStyle,
-            CSSPropertyID::BorderTopWidth
-        };
-
-        return CSSShorthand(data);
-    }
-
-    case CSSPropertyID::BorderRight: {
-        static const CSSPropertyID data[] = {
-            CSSPropertyID::BorderRightColor,
-            CSSPropertyID::BorderRightStyle,
-            CSSPropertyID::BorderRightWidth
-        };
-
-        return CSSShorthand(data);
-    }
-
-    case CSSPropertyID::BorderBottom: {
-        static const CSSPropertyID data[] = {
-            CSSPropertyID::BorderBottomColor,
-            CSSPropertyID::BorderBottomStyle,
-            CSSPropertyID::BorderBottomWidth
-        };
-
-        return CSSShorthand(data);
-    }
-
-    case CSSPropertyID::BorderLeft: {
-        static const CSSPropertyID data[] = {
-            CSSPropertyID::BorderLeftColor,
-            CSSPropertyID::BorderLeftStyle,
-            CSSPropertyID::BorderLeftWidth
-        };
-
-        return CSSShorthand(data);
-    }
-
-    case CSSPropertyID::Border: {
-        static const CSSPropertyID data[] = {
-            CSSPropertyID::BorderTopWidth,
-            CSSPropertyID::BorderRightWidth,
-            CSSPropertyID::BorderBottomWidth,
-            CSSPropertyID::BorderLeftWidth,
-            CSSPropertyID::BorderTopStyle,
-            CSSPropertyID::BorderRightStyle,
-            CSSPropertyID::BorderBottomStyle,
-            CSSPropertyID::BorderLeftStyle,
-            CSSPropertyID::BorderTopColor,
-            CSSPropertyID::BorderRightColor,
-            CSSPropertyID::BorderBottomColor,
-            CSSPropertyID::BorderLeftColor
-        };
-
-        return CSSShorthand(data);
-    }
-
-    case CSSPropertyID::BorderRadius: {
-        static const CSSPropertyID data[] = {
-            CSSPropertyID::BorderTopRightRadius,
-            CSSPropertyID::BorderTopLeftRadius,
-            CSSPropertyID::BorderBottomLeftRadius,
-            CSSPropertyID::BorderBottomRightRadius
-        };
-
-        return CSSShorthand(data);
-    }
-
-    case CSSPropertyID::BorderSpacing: {
-        static const CSSPropertyID data[] = {
-            CSSPropertyID::BorderHorizontalSpacing,
-            CSSPropertyID::BorderVerticalSpacing
-        };
-
-        return CSSShorthand(data);
-    }
-
-    case CSSPropertyID::Padding: {
-        static const CSSPropertyID data[] = {
-            CSSPropertyID::PaddingTop,
-            CSSPropertyID::PaddingRight,
-            CSSPropertyID::PaddingBottom,
-            CSSPropertyID::PaddingLeft
-        };
-
-        return CSSShorthand(data);
-    }
-
-    case CSSPropertyID::Margin: {
-        static const CSSPropertyID data[] = {
-            CSSPropertyID::MarginTop,
-            CSSPropertyID::MarginRight,
-            CSSPropertyID::MarginBottom,
-            CSSPropertyID::MarginLeft
-        };
-
-        return CSSShorthand(data);
-    }
-
-    case CSSPropertyID::Inset: {
-        static const CSSPropertyID data[] = {
-            CSSPropertyID::Top,
-            CSSPropertyID::Right,
-            CSSPropertyID::Bottom,
-            CSSPropertyID::Left
-        };
-
-        return CSSShorthand(data);
-    }
-
-    case CSSPropertyID::Outline: {
-        static const CSSPropertyID data[] = {
-            CSSPropertyID::OutlineColor,
-            CSSPropertyID::OutlineStyle,
-            CSSPropertyID::OutlineWidth
-        };
-
-        return CSSShorthand(data);
-    }
-
-    case CSSPropertyID::Background: {
-        static const CSSPropertyID data[] = {
-            CSSPropertyID::BackgroundColor,
-            CSSPropertyID::BackgroundImage,
-            CSSPropertyID::BackgroundRepeat,
-            CSSPropertyID::BackgroundAttachment,
-            CSSPropertyID::BackgroundOrigin,
-            CSSPropertyID::BackgroundClip,
-            CSSPropertyID::BackgroundPosition,
-            CSSPropertyID::BackgroundSize
-        };
-
-        return CSSShorthand(data);
-    }
-
-    case CSSPropertyID::ListStyle: {
-        static const CSSPropertyID data[] = {
-            CSSPropertyID::ListStyleType,
-            CSSPropertyID::ListStylePosition,
-            CSSPropertyID::ListStyleImage
-        };
-
-        return CSSShorthand(data);
-    }
-
-    case CSSPropertyID::ColumnRule: {
-        static const CSSPropertyID data[] = {
-            CSSPropertyID::ColumnRuleColor,
-            CSSPropertyID::ColumnRuleStyle,
-            CSSPropertyID::ColumnRuleWidth
-        };
-
-        return CSSShorthand(data);
-    }
-
-    case CSSPropertyID::FlexFlow: {
-        static const CSSPropertyID data[] = {
-            CSSPropertyID::FlexDirection,
-            CSSPropertyID::FlexWrap
-        };
-
-        return CSSShorthand(data);
-    }
-
-    case CSSPropertyID::Flex: {
-        static const CSSPropertyID data[] = {
-            CSSPropertyID::FlexGrow,
-            CSSPropertyID::FlexShrink,
-            CSSPropertyID::FlexBasis
-        };
-
-        return CSSShorthand(data);
-    }
-
-    case CSSPropertyID::Gap: {
-        static const CSSPropertyID data[] = {
-            CSSPropertyID::RowGap,
-            CSSPropertyID::ColumnGap
-        };
-
-        return CSSShorthand(data);
-    }
-
-    case CSSPropertyID::Columns: {
-        static const CSSPropertyID data[] = {
-            CSSPropertyID::ColumnWidth,
-            CSSPropertyID::ColumnCount
-        };
-
-        return CSSShorthand(data);
-    }
-
-    case CSSPropertyID::Font: {
-        static const CSSPropertyID data[] = {
-            CSSPropertyID::FontStyle,
-            CSSPropertyID::FontWeight,
-            CSSPropertyID::FontVariantCaps,
-            CSSPropertyID::FontStretch,
-            CSSPropertyID::FontSize,
-            CSSPropertyID::LineHeight,
-            CSSPropertyID::FontFamily
-        };
-
-        return CSSShorthand(data);
-    }
-
-    case CSSPropertyID::FontVariant: {
-        static const CSSPropertyID data[] = {
-            CSSPropertyID::FontVariantCaps,
-            CSSPropertyID::FontVariantEastAsian,
-            CSSPropertyID::FontVariantEmoji,
-            CSSPropertyID::FontVariantLigatures,
-            CSSPropertyID::FontVariantNumeric,
-            CSSPropertyID::FontVariantPosition
-        };
-
-        return CSSShorthand(data);
-    }
-
-    case CSSPropertyID::TextDecoration: {
-        static const CSSPropertyID data[] = {
-            CSSPropertyID::TextDecorationLine,
-            CSSPropertyID::TextDecorationStyle,
-            CSSPropertyID::TextDecorationColor
-        };
-
-        return CSSShorthand(data);
-    }
-
-    case CSSPropertyID::Marker: {
-        static const CSSPropertyID data[] = {
-            CSSPropertyID::MarkerStart,
-            CSSPropertyID::MarkerMid,
-            CSSPropertyID::MarkerEnd
-        };
-
-        return CSSShorthand(data);
-    }
-
-    default:
-        return CSSShorthand();
-    }
 }
 
 void CSSParser::addExpandedProperty(CSSPropertyList& properties, CSSPropertyID id, bool important, RefPtr<CSSValue> value)
@@ -3809,6 +3283,10 @@ RefPtr<CSSValue> CSSParser::consumeLonghand(CSSTokenStream& input, CSSPropertyID
     case CSSPropertyID::PaddingRight:
     case CSSPropertyID::PaddingBottom:
     case CSSPropertyID::PaddingLeft:
+    case CSSPropertyID::PaddingInlineEnd:
+    case CSSPropertyID::PaddingInlineStart:
+    case CSSPropertyID::PaddingBlockEnd:
+    case CSSPropertyID::PaddingBlockStart:
         return consumeLengthOrPercent(input, false, false);
     case CSSPropertyID::StrokeWidth:
         return consumeLengthOrPercent(input, false, true);
@@ -3825,19 +3303,33 @@ RefPtr<CSSValue> CSSParser::consumeLonghand(CSSTokenStream& input, CSSPropertyID
     case CSSPropertyID::Left:
     case CSSPropertyID::Right:
     case CSSPropertyID::Top:
+    case CSSPropertyID::InsetBlockStart:
+    case CSSPropertyID::InsetBlockEnd:
+    case CSSPropertyID::InsetInlineStart:
+    case CSSPropertyID::InsetInlineEnd:
     case CSSPropertyID::MarginTop:
     case CSSPropertyID::MarginRight:
     case CSSPropertyID::MarginBottom:
     case CSSPropertyID::MarginLeft:
+    case CSSPropertyID::MarginInlineEnd:
+    case CSSPropertyID::MarginInlineStart:
+    case CSSPropertyID::MarginBlockEnd:
+    case CSSPropertyID::MarginBlockStart:
         return consumeLengthOrPercentOrAuto(input, true, false);
     case CSSPropertyID::Width:
     case CSSPropertyID::Height:
     case CSSPropertyID::MinWidth:
     case CSSPropertyID::MinHeight:
+    case CSSPropertyID::InlineSize:
+    case CSSPropertyID::BlockSize:
+    case CSSPropertyID::MinInlineSize:
+    case CSSPropertyID::MinBlockSize:
     case CSSPropertyID::FlexBasis:
         return consumeWidthOrHeightOrAuto(input, false);
     case CSSPropertyID::MaxWidth:
     case CSSPropertyID::MaxHeight:
+    case CSSPropertyID::MaxInlineSize:
+    case CSSPropertyID::MaxBlockSize:
         return consumeWidthOrHeightOrNone(input, false);
     case CSSPropertyID::Fill:
     case CSSPropertyID::Stroke:
@@ -3846,6 +3338,10 @@ RefPtr<CSSValue> CSSParser::consumeLonghand(CSSTokenStream& input, CSSPropertyID
     case CSSPropertyID::BorderLeftWidth:
     case CSSPropertyID::BorderRightWidth:
     case CSSPropertyID::BorderTopWidth:
+    case CSSPropertyID::BorderBlockStartWidth:
+    case CSSPropertyID::BorderBlockEndWidth:
+    case CSSPropertyID::BorderInlineStartWidth:
+    case CSSPropertyID::BorderInlineEndWidth:
         return consumeLineWidth(input);
     case CSSPropertyID::LineHeight:
         return consumeLengthOrPercentOrNormal(input, false, true);
@@ -3899,6 +3395,10 @@ RefPtr<CSSValue> CSSParser::consumeLonghand(CSSTokenStream& input, CSSPropertyID
     case CSSPropertyID::BorderBottomRightRadius:
     case CSSPropertyID::BorderTopLeftRadius:
     case CSSPropertyID::BorderTopRightRadius:
+    case CSSPropertyID::BorderEndStartRadius:
+    case CSSPropertyID::BorderEndEndRadius:
+    case CSSPropertyID::BorderStartStartRadius:
+    case CSSPropertyID::BorderStartEndRadius:
         return consumeBorderRadiusValue(input);
     case CSSPropertyID::Color:
     case CSSPropertyID::BackgroundColor:
@@ -3910,6 +3410,10 @@ RefPtr<CSSValue> CSSParser::consumeLonghand(CSSTokenStream& input, CSSPropertyID
     case CSSPropertyID::BorderLeftColor:
     case CSSPropertyID::BorderRightColor:
     case CSSPropertyID::BorderTopColor:
+    case CSSPropertyID::BorderBlockEndColor:
+    case CSSPropertyID::BorderInlineStartColor:
+    case CSSPropertyID::BorderInlineEndColor:
+    case CSSPropertyID::BorderBlockStartColor:
         return consumeColor(input);
     case CSSPropertyID::ClipPath:
     case CSSPropertyID::MarkerEnd:
@@ -4004,6 +3508,10 @@ RefPtr<CSSValue> CSSParser::consumeLonghand(CSSTokenStream& input, CSSPropertyID
     case CSSPropertyID::BorderRightStyle:
     case CSSPropertyID::BorderBottomStyle:
     case CSSPropertyID::BorderLeftStyle:
+    case CSSPropertyID::BorderBlockStartStyle:
+    case CSSPropertyID::BorderInlineEndStyle:
+    case CSSPropertyID::BorderBlockEndStyle:
+    case CSSPropertyID::BorderInlineStartStyle:
     case CSSPropertyID::ColumnRuleStyle:
     case CSSPropertyID::OutlineStyle: {
         static const CSSIdentValueEntry table[] = {

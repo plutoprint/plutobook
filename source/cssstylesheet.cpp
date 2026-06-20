@@ -395,6 +395,77 @@ void StyleBuilder::merge(uint32_t specificity, uint32_t position, const CSSPrope
     }
 }
 
+static CSSPropertyID resolveToPhysicalProperty(CSSPropertyID id, int index)
+{
+    auto longhand = CSSShorthand::longhand(id);
+    assert(longhand.length() == 4);
+    return longhand.at(index);
+}
+
+static CSSPropertyID resolveDirectionAwareProperty(CSSPropertyID id, WritingDirection direction)
+{
+    switch(id) {
+    case CSSPropertyID::BorderInlineStartColor:
+        return resolveToPhysicalProperty(CSSPropertyID::BorderColor, direction.inlineStart());
+    case CSSPropertyID::BorderInlineEndColor:
+        return resolveToPhysicalProperty(CSSPropertyID::BorderColor, direction.inlineEnd());
+    case CSSPropertyID::BorderBlockStartColor:
+        return resolveToPhysicalProperty(CSSPropertyID::BorderColor, direction.blockStart());
+    case CSSPropertyID::BorderBlockEndColor:
+        return resolveToPhysicalProperty(CSSPropertyID::BorderColor, direction.blockEnd());
+    case CSSPropertyID::BorderInlineStartStyle:
+        return resolveToPhysicalProperty(CSSPropertyID::BorderStyle, direction.inlineStart());
+    case CSSPropertyID::BorderInlineEndStyle:
+        return resolveToPhysicalProperty(CSSPropertyID::BorderStyle, direction.inlineEnd());
+    case CSSPropertyID::BorderBlockStartStyle:
+        return resolveToPhysicalProperty(CSSPropertyID::BorderStyle, direction.blockStart());
+    case CSSPropertyID::BorderBlockEndStyle:
+        return resolveToPhysicalProperty(CSSPropertyID::BorderStyle, direction.blockEnd());
+    case CSSPropertyID::BorderInlineStartWidth:
+        return resolveToPhysicalProperty(CSSPropertyID::BorderWidth, direction.inlineStart());
+    case CSSPropertyID::BorderInlineEndWidth:
+        return resolveToPhysicalProperty(CSSPropertyID::BorderWidth, direction.inlineEnd());
+    case CSSPropertyID::BorderBlockStartWidth:
+        return resolveToPhysicalProperty(CSSPropertyID::BorderWidth, direction.blockStart());
+    case CSSPropertyID::BorderBlockEndWidth:
+        return resolveToPhysicalProperty(CSSPropertyID::BorderWidth, direction.blockEnd());
+    case CSSPropertyID::MarginInlineStart:
+        return resolveToPhysicalProperty(CSSPropertyID::Margin, direction.inlineStart());
+    case CSSPropertyID::MarginInlineEnd:
+        return resolveToPhysicalProperty(CSSPropertyID::Margin, direction.inlineEnd());
+    case CSSPropertyID::MarginBlockStart:
+        return resolveToPhysicalProperty(CSSPropertyID::Margin, direction.blockStart());
+    case CSSPropertyID::MarginBlockEnd:
+        return resolveToPhysicalProperty(CSSPropertyID::Margin, direction.blockEnd());
+    case CSSPropertyID::PaddingInlineStart:
+        return resolveToPhysicalProperty(CSSPropertyID::Padding, direction.inlineStart());
+    case CSSPropertyID::PaddingInlineEnd:
+        return resolveToPhysicalProperty(CSSPropertyID::Padding, direction.inlineEnd());
+    case CSSPropertyID::PaddingBlockStart:
+        return resolveToPhysicalProperty(CSSPropertyID::Padding, direction.blockStart());
+    case CSSPropertyID::PaddingBlockEnd:
+        return resolveToPhysicalProperty(CSSPropertyID::Padding, direction.blockEnd());
+    case CSSPropertyID::InsetInlineStart:
+        return resolveToPhysicalProperty(CSSPropertyID::Inset, direction.inlineStart());
+    case CSSPropertyID::InsetInlineEnd:
+        return resolveToPhysicalProperty(CSSPropertyID::Inset, direction.inlineEnd());
+    case CSSPropertyID::InsetBlockStart:
+        return resolveToPhysicalProperty(CSSPropertyID::Inset, direction.blockStart());
+    case CSSPropertyID::InsetBlockEnd:
+        return resolveToPhysicalProperty(CSSPropertyID::Inset, direction.blockEnd());
+    case CSSPropertyID::BorderStartStartRadius:
+        return resolveToPhysicalProperty(CSSPropertyID::BorderRadius, direction.startStart());
+    case CSSPropertyID::BorderStartEndRadius:
+        return resolveToPhysicalProperty(CSSPropertyID::BorderRadius, direction.startEnd());
+    case CSSPropertyID::BorderEndStartRadius:
+        return resolveToPhysicalProperty(CSSPropertyID::BorderRadius, direction.endStart());
+    case CSSPropertyID::BorderEndEndRadius:
+        return resolveToPhysicalProperty(CSSPropertyID::BorderRadius, direction.endEnd());
+    default:
+        return id;
+    }
+}
+
 void StyleBuilder::buildStyle(BoxStyle* newStyle)
 {
     CSSPropertyDataList variables;
@@ -427,8 +498,11 @@ void StyleBuilder::buildStyle(BoxStyle* newStyle)
         }
     }
 
+    const WritingDirection direction(newStyle->writingMode(), newStyle->direction());
+
     for(const auto& property : m_properties) {
-        switch(property.id()) {
+        const auto id = property.id();
+        switch(id) {
         case CSSPropertyID::Custom:
         case CSSPropertyID::FontFamily:
         case CSSPropertyID::FontSize:
@@ -443,7 +517,7 @@ void StyleBuilder::buildStyle(BoxStyle* newStyle)
         case CSSPropertyID::WritingMode:
             break;
         default:
-            newStyle->set(property.id(), property.value());
+            newStyle->set(resolveDirectionAwareProperty(id, direction), property.value());
             break;
         }
     }
