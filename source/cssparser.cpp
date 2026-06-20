@@ -1115,8 +1115,6 @@ bool CSSParser::consumeDescriptor(CSSTokenStream& input, CSSPropertyList& proper
     case CSSPropertyID::BorderRight:
     case CSSPropertyID::BorderBottom:
     case CSSPropertyID::BorderLeft:
-    case CSSPropertyID::BorderBlock:
-    case CSSPropertyID::BorderInline:
     case CSSPropertyID::BorderBlockStart:
     case CSSPropertyID::BorderInlineEnd:
     case CSSPropertyID::BorderBlockEnd:
@@ -1148,14 +1146,16 @@ bool CSSParser::consumeDescriptor(CSSTokenStream& input, CSSPropertyList& proper
     case CSSPropertyID::BorderBlockWidth:
     case CSSPropertyID::BorderInlineWidth:
         return consume2Shorthand(input, properties, id, important);
+    case CSSPropertyID::Border:
+    case CSSPropertyID::BorderBlock:
+    case CSSPropertyID::BorderInline:
+        return consumeBorder(input, properties, id, important);
     case CSSPropertyID::Background:
         return consumeBackground(input, properties, important);
     case CSSPropertyID::Font:
         return consumeFont(input, properties, important);
     case CSSPropertyID::FontVariant:
         return consumeFontVariant(input, properties, important);
-    case CSSPropertyID::Border:
-        return consumeBorder(input, properties, important);
     case CSSPropertyID::BorderRadius:
         return consumeBorderRadius(input, properties, important);
     case CSSPropertyID::Columns:
@@ -4331,24 +4331,14 @@ bool CSSParser::consumeFontVariant(CSSTokenStream& input, CSSPropertyList& prope
     return true;
 }
 
-bool CSSParser::consumeBorder(CSSTokenStream& input, CSSPropertyList& properties, bool important)
+bool CSSParser::consumeMarker(CSSTokenStream& input, CSSPropertyList& properties, bool important)
 {
-    RefPtr<CSSValue> width;
-    RefPtr<CSSValue> style;
-    RefPtr<CSSValue> color;
-    while(!input.empty()) {
-        if(width == nullptr && (width = consumeLineWidth(input)))
-            continue;
-        if(style == nullptr && (style = consumeLonghand(input, CSSPropertyID::BorderTopStyle)))
-            continue;
-        if(color == nullptr && (color = consumeColor(input)))
-            continue;
+    auto marker = consumeLocalUrlOrNone(input);
+    if(!marker || !input.empty())
         return false;
-    }
-
-    addExpandedProperty(properties, CSSPropertyID::BorderWidth, important, std::move(width));
-    addExpandedProperty(properties, CSSPropertyID::BorderStyle, important, std::move(style));
-    addExpandedProperty(properties, CSSPropertyID::BorderColor, important, std::move(color));
+    addProperty(properties, CSSPropertyID::MarkerStart, important, marker);
+    addProperty(properties, CSSPropertyID::MarkerMid, important, marker);
+    addProperty(properties, CSSPropertyID::MarkerEnd, important, marker);
     return true;
 }
 
@@ -4411,14 +4401,41 @@ bool CSSParser::consumeBorderRadius(CSSTokenStream& input, CSSPropertyList& prop
     return true;
 }
 
-bool CSSParser::consumeMarker(CSSTokenStream& input, CSSPropertyList& properties, bool important)
+bool CSSParser::consumeBorder(CSSTokenStream& input, CSSPropertyList& properties, CSSPropertyID id, bool important)
 {
-    auto marker = consumeLocalUrlOrNone(input);
-    if(!marker || !input.empty())
+    RefPtr<CSSValue> width;
+    RefPtr<CSSValue> style;
+    RefPtr<CSSValue> color;
+    while(!input.empty()) {
+        if(width == nullptr && (width = consumeLineWidth(input)))
+            continue;
+        if(style == nullptr && (style = consumeLonghand(input, CSSPropertyID::BorderTopStyle)))
+            continue;
+        if(color == nullptr && (color = consumeColor(input)))
+            continue;
         return false;
-    addProperty(properties, CSSPropertyID::MarkerStart, important, marker);
-    addProperty(properties, CSSPropertyID::MarkerMid, important, marker);
-    addProperty(properties, CSSPropertyID::MarkerEnd, important, marker);
+    }
+
+    switch(id) {
+    case CSSPropertyID::Border:
+        addExpandedProperty(properties, CSSPropertyID::BorderWidth, important, std::move(width));
+        addExpandedProperty(properties, CSSPropertyID::BorderStyle, important, std::move(style));
+        addExpandedProperty(properties, CSSPropertyID::BorderColor, important, std::move(color));
+        break;
+    case CSSPropertyID::BorderBlock:
+        addExpandedProperty(properties, CSSPropertyID::BorderBlockWidth, important, std::move(width));
+        addExpandedProperty(properties, CSSPropertyID::BorderBlockStyle, important, std::move(style));
+        addExpandedProperty(properties, CSSPropertyID::BorderBlockColor, important, std::move(color));
+        break;
+    case CSSPropertyID::BorderInline:
+        addExpandedProperty(properties, CSSPropertyID::BorderInlineWidth, important, std::move(width));
+        addExpandedProperty(properties, CSSPropertyID::BorderInlineStyle, important, std::move(style));
+        addExpandedProperty(properties, CSSPropertyID::BorderInlineColor, important, std::move(color));
+        break;
+    default:
+        assert(false);
+    }
+
     return true;
 }
 
