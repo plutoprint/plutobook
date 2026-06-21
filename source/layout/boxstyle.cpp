@@ -2336,6 +2336,50 @@ RefPtr<Image> BoxStyle::convertImageOrNone(const CSSValue& value) const
     return convertImage(value);
 }
 
+Float BoxStyle::convertFloat(const CSSValue& value) const
+{
+    const auto& ident = to<CSSIdentValue>(value);
+    switch(ident.value()) {
+    case CSSValueID::None:
+        return Float::None;
+    case CSSValueID::Left:
+        return Float::Left;
+    case CSSValueID::Right:
+        return Float::Right;
+    case CSSValueID::InlineStart:
+        return m_direction == Direction::Ltr ? Float::Left : Float::Right;
+    case CSSValueID::InlineEnd:
+        return m_direction == Direction::Ltr ? Float::Right : Float::Left;
+    default:
+        assert(false);
+    }
+
+    return Float::None;
+}
+
+Clear BoxStyle::convertClear(const CSSValue& value) const
+{
+    const auto& ident = to<CSSIdentValue>(value);
+    switch(ident.value()) {
+    case CSSValueID::None:
+        return Clear::None;
+    case CSSValueID::Left:
+        return Clear::Left;
+    case CSSValueID::Right:
+        return Clear::Right;
+    case CSSValueID::Both:
+        return Clear::Both;
+    case CSSValueID::InlineStart:
+        return m_direction == Direction::Ltr ? Clear::Left : Clear::Right;
+    case CSSValueID::InlineEnd:
+        return m_direction == Direction::Ltr ? Clear::Right : Clear::Left;
+    default:
+        assert(false);
+    }
+
+    return Clear::None;
+}
+
 Display BoxStyle::convertDisplay(const CSSValue& value)
 {
     const auto& ident = to<CSSIdentValue>(value);
@@ -2404,42 +2448,6 @@ Position BoxStyle::convertPosition(const CSSValue& value)
     }
 
     return Position::Static;
-}
-
-Float BoxStyle::convertFloat(const CSSValue& value)
-{
-    const auto& ident = to<CSSIdentValue>(value);
-    switch(ident.value()) {
-    case CSSValueID::None:
-        return Float::None;
-    case CSSValueID::Left:
-        return Float::Left;
-    case CSSValueID::Right:
-        return Float::Right;
-    default:
-        assert(false);
-    }
-
-    return Float::None;
-}
-
-Clear BoxStyle::convertClear(const CSSValue& value)
-{
-    const auto& ident = to<CSSIdentValue>(value);
-    switch(ident.value()) {
-    case CSSValueID::None:
-        return Clear::None;
-    case CSSValueID::Left:
-        return Clear::Left;
-    case CSSValueID::Right:
-        return Clear::Right;
-    case CSSValueID::Both:
-        return Clear::Both;
-    default:
-        assert(false);
-    }
-
-    return Clear::None;
 }
 
 VerticalAlignType BoxStyle::convertVerticalAlignType(const CSSValue& value)

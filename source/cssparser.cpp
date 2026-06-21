@@ -3553,7 +3553,9 @@ RefPtr<CSSValue> CSSParser::consumeLonghand(CSSTokenStream& input, CSSPropertyID
             {"none", CSSValueID::None},
             {"left", CSSValueID::Left},
             {"right", CSSValueID::Right},
-            {"both", CSSValueID::Both}
+            {"both", CSSValueID::Both},
+            {"inline-start", CSSValueID::InlineStart},
+            {"inline-end", CSSValueID::InlineEnd}
         };
 
         return consumeIdent(input, table);
@@ -3582,7 +3584,9 @@ RefPtr<CSSValue> CSSParser::consumeLonghand(CSSTokenStream& input, CSSPropertyID
         static const CSSIdentValueEntry table[] = {
             {"none", CSSValueID::None},
             {"left", CSSValueID::Left},
-            {"right", CSSValueID::Right}
+            {"right", CSSValueID::Right},
+            {"inline-start", CSSValueID::InlineStart},
+            {"inline-end", CSSValueID::InlineEnd}
         };
 
         return consumeIdent(input, table);

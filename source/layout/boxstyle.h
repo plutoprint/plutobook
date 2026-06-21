@@ -981,11 +981,11 @@ public:
     Paint convertPaint(const CSSValue& value) const;
     RefPtr<Image> convertImage(const CSSValue& value) const;
     RefPtr<Image> convertImageOrNone(const CSSValue& value) const;
+    Float convertFloat(const CSSValue& value) const;
+    Clear convertClear(const CSSValue& value) const;
 
     static Display convertDisplay(const CSSValue& value);
     static Position convertPosition(const CSSValue& value);
-    static Float convertFloat(const CSSValue& value);
-    static Clear convertClear(const CSSValue& value);
     static VerticalAlignType convertVerticalAlignType(const CSSValue& value);
     static Direction convertDirection(const CSSValue& value);
     static UnicodeBidi convertUnicodeBidi(const CSSValue& value);
