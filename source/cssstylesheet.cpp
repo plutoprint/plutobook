@@ -461,6 +461,18 @@ static CSSPropertyID resolveDirectionAwareProperty(CSSPropertyID id, WritingDire
         return resolveToPhysicalProperty(CSSPropertyID::BorderRadius, direction.endStart());
     case CSSPropertyID::BorderEndEndRadius:
         return resolveToPhysicalProperty(CSSPropertyID::BorderRadius, direction.endEnd());
+    case CSSPropertyID::InlineSize:
+        return direction.isHorizontal() ? CSSPropertyID::Width : CSSPropertyID::Height;
+    case CSSPropertyID::BlockSize:
+        return direction.isHorizontal() ? CSSPropertyID::Height : CSSPropertyID::Width;
+    case CSSPropertyID::MinInlineSize:
+        return direction.isHorizontal() ? CSSPropertyID::MinWidth : CSSPropertyID::MinHeight;
+    case CSSPropertyID::MinBlockSize:
+        return direction.isHorizontal() ? CSSPropertyID::MinHeight : CSSPropertyID::MinWidth;
+    case CSSPropertyID::MaxInlineSize:
+        return direction.isHorizontal() ? CSSPropertyID::MaxWidth : CSSPropertyID::MaxHeight;
+    case CSSPropertyID::MaxBlockSize:
+        return direction.isHorizontal() ? CSSPropertyID::MaxHeight : CSSPropertyID::MaxWidth;
     default:
         return id;
     }

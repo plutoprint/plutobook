@@ -47,6 +47,8 @@ public:
     constexpr WritingMode mode() const { return m_mode; }
     constexpr Direction direction() const { return m_direction; }
 
+    constexpr bool isHorizontal() const { return m_mode == WritingMode::HorizontalTb; }
+
     constexpr BoxSide inlineStart() const;
     constexpr BoxSide inlineEnd() const;
     constexpr BoxSide blockStart() const;
