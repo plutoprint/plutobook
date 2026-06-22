@@ -4478,7 +4478,7 @@ bool CSSParser::consume4Shorthand(CSSTokenStream& input, CSSPropertyList& proper
     }
 
     addProperty(properties, longhand[1], important, right);
-    auto bottom = consumeLonghand(input, longhand[1]);
+    auto bottom = consumeLonghand(input, longhand[2]);
     if(bottom == nullptr) {
         addProperty(properties, longhand[2], important, top);
         addProperty(properties, longhand[3], important, right);
