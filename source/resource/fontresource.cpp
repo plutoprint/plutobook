@@ -839,8 +839,8 @@ Font::Font(Document* document, const FontDescription& description)
     : m_document(document)
     , m_description(description)
     , m_fonts(document->heap())
+    , m_locale(LocaleData::get(description.data.lang))
 {
-    m_locale = LocaleData::get(m_description.data.lang);
     for(const auto& family : description.families) {
         if(auto font = document->getFontData(family, description.data)) {
             if(m_primaryFont == nullptr)
