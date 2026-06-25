@@ -1965,7 +1965,7 @@ RefPtr<CSSValue> CSSParser::consumeColor(CSSTokenStream& input)
             return CSSColorValue::create(m_heap, Color::Transparent);
         }
 
-        auto color = Color::named(name);
+        auto color = Color::fromName(name);
         if(color == std::nullopt)
             return nullptr;
         input.consumeIncludingWhitespace();
