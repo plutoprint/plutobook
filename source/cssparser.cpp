@@ -281,9 +281,9 @@ RefPtr<CSSStyleRule> CSSParser::consumeStyleRule(CSSTokenStream& input)
 
     if(input.empty())
         return nullptr;
+    CSSSelectorList selectors(m_heap);
     CSSTokenStream prelude(preludeBegin, input.begin());
     auto block = input.consumeBlock();
-    CSSSelectorList selectors(m_heap);
     if(!consumeSelectorList(prelude, selectors, false))
         return nullptr;
     CSSPropertyList properties(m_heap);
@@ -522,8 +522,8 @@ bool CSSParser::consumePageSelector(CSSTokenStream& input, CSSPageSelector& sele
             block.consumeWhitespace();
             if(!block.empty())
                 return false;
-            input.consumeWhitespace();
             selector.emplace_front(CSSSimpleSelector::MatchType::PseudoPageNth, pattern);
+            input.consumeWhitespace();
             continue;
         }
 
@@ -536,12 +536,11 @@ bool CSSParser::consumePageSelector(CSSTokenStream& input, CSSPageSelector& sele
             {"blank", CSSSimpleSelector::MatchType::PseudoPageBlank}
         };
 
-        auto name = input->data();
-        input.consumeIncludingWhitespace();
-        auto matchType = matchIdent(table, name);
+        auto matchType = matchIdent(table, input->data());
         if(matchType == std::nullopt)
             return false;
         selector.emplace_front(matchType.value());
+        input.consumeIncludingWhitespace();
     }
 
     return true;
@@ -746,8 +745,6 @@ bool CSSParser::consumePseudoSelector(CSSTokenStream& input, CSSCompoundSelector
         input.consume();
         if(input->type() != CSSToken::Type::Ident)
             return false;
-        auto name = input->data();
-        input.consume();
         static const CSSIdentEntry<CSSSimpleSelector::MatchType> table[] = {
             {"after", CSSSimpleSelector::MatchType::PseudoElementAfter},
             {"before", CSSSimpleSelector::MatchType::PseudoElementBefore},
@@ -756,16 +753,15 @@ bool CSSParser::consumePseudoSelector(CSSTokenStream& input, CSSCompoundSelector
             {"marker", CSSSimpleSelector::MatchType::PseudoElementMarker}
         };
 
-        auto matchType = matchIdent(table, name);
+        auto matchType = matchIdent(table, input->data());
         if(matchType == std::nullopt)
             return false;
         selector.emplace_front(matchType.value());
+        input.consume();
         return true;
     }
 
     if(input->type() == CSSToken::Type::Ident) {
-        auto name = input->data();
-        input.consume();
         static const CSSIdentEntry<CSSSimpleSelector::MatchType> table[] = {
             {"active", CSSSimpleSelector::MatchType::PseudoClassActive},
             {"any-link", CSSSimpleSelector::MatchType::PseudoClassAnyLink},
@@ -796,17 +792,15 @@ bool CSSParser::consumePseudoSelector(CSSTokenStream& input, CSSCompoundSelector
             {"first-line", CSSSimpleSelector::MatchType::PseudoElementFirstLine}
         };
 
-        auto matchType = matchIdent(table, name);
+        auto matchType = matchIdent(table, input->data());
         if(matchType == std::nullopt)
             return false;
         selector.emplace_front(matchType.value());
+        input.consume();
         return true;
     }
 
     if(input->type() == CSSToken::Type::Function) {
-        auto name = input->data();
-        auto block = input.consumeBlock();
-        block.consumeWhitespace();
         static const CSSIdentEntry<CSSSimpleSelector::MatchType> table[] = {
             {"is", CSSSimpleSelector::MatchType::PseudoClassIs},
             {"not", CSSSimpleSelector::MatchType::PseudoClassNot},
@@ -819,9 +813,11 @@ bool CSSParser::consumePseudoSelector(CSSTokenStream& input, CSSCompoundSelector
             {"nth-of-type", CSSSimpleSelector::MatchType::PseudoClassNthOfType}
         };
 
-        auto matchType = matchIdent(table, name);
+        auto matchType = matchIdent(table, input->data());
         if(matchType == std::nullopt)
             return false;
+        auto block = input.consumeBlock();
+        block.consumeWhitespace();
         switch(matchType.value()) {
         case CSSSimpleSelector::MatchType::PseudoClassIs:
         case CSSSimpleSelector::MatchType::PseudoClassNot:
