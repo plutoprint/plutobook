@@ -9,7 +9,6 @@
 #include "cssrule.h"
 #include "cssparser.h"
 #include "document.h"
-#include "resource.h"
 #include "boxstyle.h"
 #include "uastylesheet.h"
 #include "stringutils.h"
@@ -1120,7 +1119,7 @@ const CSSCounterStyleMap* userAgentCounterStyleMap()
 {
     static std::unique_ptr<CSSCounterStyleMap> counterStyleMap = []() {
         static Heap heap(1024 * 96);
-        CSSParserContext context(nullptr, CSSStyleOrigin::UserAgent, ResourceLoader::baseUrl());
+        CSSParserContext context(nullptr, CSSStyleOrigin::UserAgent, Url());
         CSSParser parser(context, &heap);
         CSSRuleList rules(parser.parseSheet(kUserAgentCounterStyle));
         return CSSCounterStyleMap::create(&heap, rules, nullptr);

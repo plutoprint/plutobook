@@ -758,7 +758,7 @@ static const CSSRuleList& userAgentRules()
 {
     static CSSRuleList rules = []() {
         static Heap heap(1024 * 96);
-        CSSParserContext context(nullptr, CSSStyleOrigin::UserAgent, ResourceLoader::baseUrl());
+        CSSParserContext context(nullptr, CSSStyleOrigin::UserAgent, Url());
         CSSParser parser(context, &heap);
         return parser.parseSheet(kUserAgentStyle);
     }();
