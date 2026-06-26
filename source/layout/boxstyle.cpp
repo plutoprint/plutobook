@@ -1970,13 +1970,8 @@ void FontFeaturesBuilder::buildVariantCaps(FontFeatureList& features) const
 
 void FontFeaturesBuilder::buildVariantNumeric(FontFeatureList& features) const
 {
-    if(m_variantNumeric == nullptr)
+    if(m_variantNumeric == nullptr || m_variantNumeric->id() == CSSValueID::Normal)
         return;
-    if(auto ident = to<CSSIdentValue>(m_variantNumeric)) {
-        assert(ident->value() == CSSValueID::Normal);
-        return;
-    }
-
     constexpr FontTag lnumTag("lnum");
     constexpr FontTag onumTag("onum");
     constexpr FontTag pnumTag("pnum");
@@ -2020,13 +2015,8 @@ void FontFeaturesBuilder::buildVariantNumeric(FontFeatureList& features) const
 
 void FontFeaturesBuilder::buildVariantEastAsian(FontFeatureList& features) const
 {
-    if(m_variantEastAsian == nullptr)
+    if(m_variantEastAsian == nullptr || m_variantEastAsian->id() == CSSValueID::Normal)
         return;
-    if(auto ident = to<CSSIdentValue>(m_variantEastAsian)) {
-        assert(ident->value() == CSSValueID::Normal);
-        return;
-    }
-
     constexpr FontTag jp78Tag("jp78");
     constexpr FontTag jp83Tag("jp83");
     constexpr FontTag jp90Tag("jp90");
@@ -2074,13 +2064,8 @@ void FontFeaturesBuilder::buildVariantEastAsian(FontFeatureList& features) const
 
 void FontFeaturesBuilder::buildFeatureSettings(FontFeatureList& features) const
 {
-    if(m_featureSettings == nullptr)
+    if(m_featureSettings == nullptr || m_featureSettings->id() == CSSValueID::Normal)
         return;
-    if(auto ident = to<CSSIdentValue>(m_featureSettings)) {
-        assert(ident->value() == CSSValueID::Normal);
-        return;
-    }
-
     for(const auto& value : to<CSSListValue>(*m_featureSettings)) {
         const auto& feature = to<CSSFontFeatureValue>(*value);
         features.emplace_front(feature.tag(), feature.value());
@@ -2143,12 +2128,8 @@ float BoxStyle::convertLineWidth(const CSSValue& value) const
 
 float BoxStyle::convertSpacing(const CSSValue& value) const
 {
-    if(is<CSSIdentValue>(value)) {
-        const auto& ident = to<CSSIdentValue>(value);
-        assert(ident.value() == CSSValueID::Normal);
+    if(value.id() == CSSValueID::Normal)
         return 0.f;
-    }
-
     return convertLengthValue(value);
 }
 
@@ -2164,23 +2145,15 @@ float BoxStyle::convertLengthOrPercent(float maximum, const CSSValue& value) con
 
 std::optional<float> BoxStyle::convertLengthOrAuto(const CSSValue& value) const
 {
-    if(is<CSSIdentValue>(value)) {
-        const auto& ident = to<CSSIdentValue>(value);
-        assert(ident.value() == CSSValueID::Auto);
+    if(value.id() == CSSValueID::Auto)
         return std::nullopt;
-    }
-
     return convertLengthValue(value);
 }
 
 std::optional<float> BoxStyle::convertLengthOrNormal(const CSSValue& value) const
 {
-    if(is<CSSIdentValue>(value)) {
-        const auto& ident = to<CSSIdentValue>(value);
-        assert(ident.value() == CSSValueID::Normal);
+    if(value.id() == CSSValueID::Normal)
         return std::nullopt;
-    }
-
     return convertLengthValue(value);
 }
 
@@ -2201,12 +2174,8 @@ Length BoxStyle::convertLengthOrPercent(const CSSValue& value) const
 
 Length BoxStyle::convertLengthOrPercentOrAuto(const CSSValue& value) const
 {
-    if(is<CSSIdentValue>(value)) {
-        const auto& ident = to<CSSIdentValue>(value);
-        assert(ident.value() == CSSValueID::Auto);
+    if(value.id() == CSSValueID::Auto)
         return Length::Auto;
-    }
-
     return convertLengthOrPercent(value);
 }
 
@@ -2235,12 +2204,8 @@ Length BoxStyle::convertWidthOrHeightLength(const CSSValue& value) const
 
 Length BoxStyle::convertLineHeight(const CSSValue& value) const
 {
-    if(is<CSSIdentValue>(value)) {
-        const auto& ident = to<CSSIdentValue>(value);
-        assert(ident.value() == CSSValueID::Normal);
+    if(value.id() == CSSValueID::Normal)
         return Length::Auto;
-    }
-
     if(is<CSSPercentValue>(value)) {
         const auto& percent = to<CSSPercentValue>(value);
         return Length(Length::Type::Fixed, percent.value() * fontSize() / 100.f);
@@ -2287,12 +2252,8 @@ LengthSize BoxStyle::convertBorderRadius(const CSSValue& value) const
 
 Color BoxStyle::convertColor(const CSSValue& value) const
 {
-    if(is<CSSIdentValue>(value)) {
-        const auto& ident = to<CSSIdentValue>(value);
-        assert(ident.value() == CSSValueID::CurrentColor);
+    if(value.id() == CSSValueID::CurrentColor)
         return m_color;
-    }
-
     return to<CSSColorValue>(value).value();
 }
 
@@ -2327,12 +2288,8 @@ RefPtr<Image> BoxStyle::convertImage(const CSSValue& value) const
 
 RefPtr<Image> BoxStyle::convertImageOrNone(const CSSValue& value) const
 {
-    if(is<CSSIdentValue>(value)) {
-        const auto& ident = to<CSSIdentValue>(value);
-        assert(ident.value() == CSSValueID::None);
+    if(value.id() == CSSValueID::None)
         return nullptr;
-    }
-
     return convertImage(value);
 }
 
@@ -3320,12 +3277,8 @@ int BoxStyle::convertInteger(const CSSValue& value)
 
 std::optional<int> BoxStyle::convertIntegerOrAuto(const CSSValue& value)
 {
-    if(is<CSSIdentValue>(value)) {
-        const auto& ident = to<CSSIdentValue>(value);
-        assert(ident.value() == CSSValueID::Auto);
+    if(value.id() == CSSValueID::Auto)
         return std::nullopt;
-    }
-
     return convertInteger(value);
 }
 
@@ -3361,12 +3314,8 @@ HeapString BoxStyle::convertLocalUrl(const CSSValue& value)
 
 HeapString BoxStyle::convertLocalUrlOrNone(const CSSValue& value)
 {
-    if(is<CSSIdentValue>(value)) {
-        const auto& ident = to<CSSIdentValue>(value);
-        assert(ident.value() == CSSValueID::None);
+    if(value.id() == CSSValueID::None)
         return emptyGlo;
-    }
-
     return convertLocalUrl(value);
 }
 

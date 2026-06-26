@@ -306,14 +306,12 @@ FontVariationList FontDescriptionBuilder::variationSettings() const
 {
     if(m_variationSettings == nullptr)
         return m_parentStyle->fontVariationSettings();
-    if(is<CSSInitialValue>(*m_variationSettings))
+    if(is<CSSInitialValue>(*m_variationSettings)
+        || m_variationSettings->id() == CSSValueID::Normal) {
         return FontVariationList();
-    FontVariationList variationSettings;
-    if(auto ident = to<CSSIdentValue>(m_variationSettings)) {
-        assert(ident->value() == CSSValueID::Normal);
-        return variationSettings;
     }
 
+    FontVariationList variationSettings;
     for(const auto& value : to<CSSListValue>(*m_variationSettings)) {
         const auto& variation = to<CSSFontVariationValue>(*value);
         variationSettings.emplace_front(variation.tag(), variation.value());
@@ -328,10 +326,8 @@ GlobalString FontDescriptionBuilder::lang() const
 {
     if(m_lang == nullptr)
         return m_parentStyle->lang();
-    if(is<CSSInitialValue>(*m_lang))
-        return emptyGlo;
-    if(auto ident = to<CSSIdentValue>(m_lang)) {
-        assert(ident->value() == CSSValueID::Auto);
+    if(is<CSSInitialValue>(*m_lang)
+        || m_lang->id() == CSSValueID::Auto) {
         return emptyGlo;
     }
 
@@ -1131,14 +1127,9 @@ FontSelectionRange CSSFontFaceBuilder::style() const
 
 FontFeatureList CSSFontFaceBuilder::featureSettings() const
 {
+    if(m_featureSettings == nullptr || m_featureSettings->id() == CSSValueID::Normal)
+        return FontFeatureList();
     FontFeatureList featureSettings;
-    if(m_featureSettings == nullptr)
-        return featureSettings;
-    if(auto ident = to<CSSIdentValue>(m_featureSettings)) {
-        assert(ident->value() == CSSValueID::Normal);
-        return featureSettings;
-    }
-
     for(const auto& value : to<CSSListValue>(*m_featureSettings)) {
         const auto& feature = to<CSSFontFeatureValue>(*value);
         featureSettings.emplace_front(feature.tag(), feature.value());
@@ -1149,14 +1140,9 @@ FontFeatureList CSSFontFaceBuilder::featureSettings() const
 
 FontVariationList CSSFontFaceBuilder::variationSettings() const
 {
+    if(m_variationSettings == nullptr || m_variationSettings->id() == CSSValueID::Normal)
+        return FontVariationList();
     FontVariationList variationSettings;
-    if(m_variationSettings == nullptr)
-        return variationSettings;
-    if(auto ident = to<CSSIdentValue>(m_variationSettings)) {
-        assert(ident->value() == CSSValueID::Normal);
-        return variationSettings;
-    }
-
     for(const auto& value : to<CSSListValue>(*m_variationSettings)) {
         const auto& variation = to<CSSFontVariationValue>(*value);
         variationSettings.emplace_front(variation.tag(), variation.value());
@@ -1167,9 +1153,9 @@ FontVariationList CSSFontFaceBuilder::variationSettings() const
 
 UnicodeRangeList CSSFontFaceBuilder::unicodeRanges() const
 {
-    UnicodeRangeList unicodeRanges;
     if(m_unicodeRange == nullptr)
-        return unicodeRanges;
+        return UnicodeRangeList();
+    UnicodeRangeList unicodeRanges;
     for(const auto& value : to<CSSListValue>(*m_unicodeRange)) {
         const auto& range = to<CSSUnicodeRangeValue>(*value);
         unicodeRanges.emplace_front(range.from(), range.to());
