@@ -56,6 +56,186 @@ inline bool CSSPropertyData::isLessThan(const CSSPropertyData& data) const
 
 using CSSPropertyDataList = std::vector<CSSPropertyData>;
 
+class StyleBuilder {
+public:
+    StyleBuilder(const BoxStyle* parentStyle, PseudoType pseudoType)
+        : m_parentStyle(parentStyle), m_pseudoType(pseudoType)
+    {}
+
+    void merge(uint32_t specificity, uint32_t position, const CSSPropertyList& properties);
+    void buildStyle(BoxStyle* newStyle);
+
+    FontDescription fontDescription() const;
+
+protected:
+    const BoxStyle* m_parentStyle;
+    PseudoType m_pseudoType;
+    CSSPropertyDataList m_properties;
+};
+
+void StyleBuilder::merge(uint32_t specificity, uint32_t position, const CSSPropertyList& properties)
+{
+    for(const auto& property : properties) {
+        CSSPropertyData data(specificity, position, property);
+        auto predicate_func = [&property](const CSSPropertyData& item) {
+            if(property.id() == CSSPropertyID::Custom && item.id() == CSSPropertyID::Custom) {
+                const auto& a = to<CSSCustomPropertyValue>(*property.value());
+                const auto& b = to<CSSCustomPropertyValue>(*item.value());
+                return a.name() == b.name();
+            }
+
+            return property.id() == item.id();
+        };
+
+        auto it = std::find_if(m_properties.begin(), m_properties.end(), predicate_func);
+        if(it == m_properties.end()) {
+            m_properties.push_back(std::move(data));
+        } else if(!data.isLessThan(*it)) {
+            *it = std::move(data);
+        }
+    }
+}
+
+static CSSPropertyID resolveToPhysicalProperty(CSSPropertyID id, int index)
+{
+    auto longhand = CSSProperty::shorthand(id);
+    assert(longhand.size() == 4);
+    return longhand[index];
+}
+
+static CSSPropertyID resolveDirectionAwareProperty(CSSPropertyID id, WritingDirection direction)
+{
+    switch(id) {
+    case CSSPropertyID::BorderInlineStartColor:
+        return resolveToPhysicalProperty(CSSPropertyID::BorderColor, direction.inlineStart());
+    case CSSPropertyID::BorderInlineEndColor:
+        return resolveToPhysicalProperty(CSSPropertyID::BorderColor, direction.inlineEnd());
+    case CSSPropertyID::BorderBlockStartColor:
+        return resolveToPhysicalProperty(CSSPropertyID::BorderColor, direction.blockStart());
+    case CSSPropertyID::BorderBlockEndColor:
+        return resolveToPhysicalProperty(CSSPropertyID::BorderColor, direction.blockEnd());
+    case CSSPropertyID::BorderInlineStartStyle:
+        return resolveToPhysicalProperty(CSSPropertyID::BorderStyle, direction.inlineStart());
+    case CSSPropertyID::BorderInlineEndStyle:
+        return resolveToPhysicalProperty(CSSPropertyID::BorderStyle, direction.inlineEnd());
+    case CSSPropertyID::BorderBlockStartStyle:
+        return resolveToPhysicalProperty(CSSPropertyID::BorderStyle, direction.blockStart());
+    case CSSPropertyID::BorderBlockEndStyle:
+        return resolveToPhysicalProperty(CSSPropertyID::BorderStyle, direction.blockEnd());
+    case CSSPropertyID::BorderInlineStartWidth:
+        return resolveToPhysicalProperty(CSSPropertyID::BorderWidth, direction.inlineStart());
+    case CSSPropertyID::BorderInlineEndWidth:
+        return resolveToPhysicalProperty(CSSPropertyID::BorderWidth, direction.inlineEnd());
+    case CSSPropertyID::BorderBlockStartWidth:
+        return resolveToPhysicalProperty(CSSPropertyID::BorderWidth, direction.blockStart());
+    case CSSPropertyID::BorderBlockEndWidth:
+        return resolveToPhysicalProperty(CSSPropertyID::BorderWidth, direction.blockEnd());
+    case CSSPropertyID::MarginInlineStart:
+        return resolveToPhysicalProperty(CSSPropertyID::Margin, direction.inlineStart());
+    case CSSPropertyID::MarginInlineEnd:
+        return resolveToPhysicalProperty(CSSPropertyID::Margin, direction.inlineEnd());
+    case CSSPropertyID::MarginBlockStart:
+        return resolveToPhysicalProperty(CSSPropertyID::Margin, direction.blockStart());
+    case CSSPropertyID::MarginBlockEnd:
+        return resolveToPhysicalProperty(CSSPropertyID::Margin, direction.blockEnd());
+    case CSSPropertyID::PaddingInlineStart:
+        return resolveToPhysicalProperty(CSSPropertyID::Padding, direction.inlineStart());
+    case CSSPropertyID::PaddingInlineEnd:
+        return resolveToPhysicalProperty(CSSPropertyID::Padding, direction.inlineEnd());
+    case CSSPropertyID::PaddingBlockStart:
+        return resolveToPhysicalProperty(CSSPropertyID::Padding, direction.blockStart());
+    case CSSPropertyID::PaddingBlockEnd:
+        return resolveToPhysicalProperty(CSSPropertyID::Padding, direction.blockEnd());
+    case CSSPropertyID::InsetInlineStart:
+        return resolveToPhysicalProperty(CSSPropertyID::Inset, direction.inlineStart());
+    case CSSPropertyID::InsetInlineEnd:
+        return resolveToPhysicalProperty(CSSPropertyID::Inset, direction.inlineEnd());
+    case CSSPropertyID::InsetBlockStart:
+        return resolveToPhysicalProperty(CSSPropertyID::Inset, direction.blockStart());
+    case CSSPropertyID::InsetBlockEnd:
+        return resolveToPhysicalProperty(CSSPropertyID::Inset, direction.blockEnd());
+    case CSSPropertyID::BorderStartStartRadius:
+        return resolveToPhysicalProperty(CSSPropertyID::BorderRadius, direction.startStart());
+    case CSSPropertyID::BorderStartEndRadius:
+        return resolveToPhysicalProperty(CSSPropertyID::BorderRadius, direction.startEnd());
+    case CSSPropertyID::BorderEndStartRadius:
+        return resolveToPhysicalProperty(CSSPropertyID::BorderRadius, direction.endStart());
+    case CSSPropertyID::BorderEndEndRadius:
+        return resolveToPhysicalProperty(CSSPropertyID::BorderRadius, direction.endEnd());
+    case CSSPropertyID::InlineSize:
+        return direction.isHorizontal() ? CSSPropertyID::Width : CSSPropertyID::Height;
+    case CSSPropertyID::BlockSize:
+        return direction.isHorizontal() ? CSSPropertyID::Height : CSSPropertyID::Width;
+    case CSSPropertyID::MinInlineSize:
+        return direction.isHorizontal() ? CSSPropertyID::MinWidth : CSSPropertyID::MinHeight;
+    case CSSPropertyID::MinBlockSize:
+        return direction.isHorizontal() ? CSSPropertyID::MinHeight : CSSPropertyID::MinWidth;
+    case CSSPropertyID::MaxInlineSize:
+        return direction.isHorizontal() ? CSSPropertyID::MaxWidth : CSSPropertyID::MaxHeight;
+    case CSSPropertyID::MaxBlockSize:
+        return direction.isHorizontal() ? CSSPropertyID::MaxHeight : CSSPropertyID::MaxWidth;
+    default:
+        return id;
+    }
+}
+
+void StyleBuilder::buildStyle(BoxStyle* newStyle)
+{
+    CSSPropertyDataList variables;
+    for(const auto& property : m_properties) {
+        if(is<CSSVariableReferenceValue>(*property.value())) {
+            variables.push_back(property);
+        } else if(property.id() == CSSPropertyID::Custom) {
+            const auto& custom = to<CSSCustomPropertyValue>(*property.value());
+            newStyle->setCustom(custom.name(), custom.value());
+        }
+    }
+
+    for(const auto& variable : variables) {
+        const auto& value = to<CSSVariableReferenceValue>(*variable.value());
+        merge(variable.specificity(), variable.position(), value.resolve(newStyle));
+    }
+
+    newStyle->setFontDescription(fontDescription());
+
+    for(const auto& property : m_properties) {
+        switch(property.id()) {
+        case CSSPropertyID::Color:
+        case CSSPropertyID::LineHeight:
+        case CSSPropertyID::Direction:
+        case CSSPropertyID::WritingMode:
+            newStyle->set(property.id(), property.value());
+            break;
+        default:
+            break;
+        }
+    }
+
+    const WritingDirection direction(newStyle->writingMode(), newStyle->direction());
+
+    for(const auto& property : m_properties) {
+        const auto id = property.id();
+        switch(id) {
+        case CSSPropertyID::Custom:
+        case CSSPropertyID::FontFamily:
+        case CSSPropertyID::FontSize:
+        case CSSPropertyID::FontWeight:
+        case CSSPropertyID::FontStretch:
+        case CSSPropertyID::FontStyle:
+        case CSSPropertyID::FontVariationSettings:
+        case CSSPropertyID::Lang:
+        case CSSPropertyID::Color:
+        case CSSPropertyID::LineHeight:
+        case CSSPropertyID::Direction:
+        case CSSPropertyID::WritingMode:
+            break;
+        default:
+            newStyle->set(resolveDirectionAwareProperty(id, direction), property.value());
+            break;
+        }
+    }
+}
+
 class FontDescriptionBuilder {
 public:
     FontDescriptionBuilder(const BoxStyle* parentStyle, const CSSPropertyDataList& properties);
@@ -347,188 +527,9 @@ FontDescription FontDescriptionBuilder::build() const
     return description;
 }
 
-class StyleBuilder {
-public:
-    StyleBuilder(const BoxStyle* parentStyle, PseudoType pseudoType)
-        : m_parentStyle(parentStyle), m_pseudoType(pseudoType)
-    {}
-
-    FontDescription fontDescription() const;
-    void merge(uint32_t specificity, uint32_t position, const CSSPropertyList& properties);
-    void buildStyle(BoxStyle* newStyle);
-
-protected:
-    const BoxStyle* m_parentStyle;
-    PseudoType m_pseudoType;
-    CSSPropertyDataList m_properties;
-};
-
 FontDescription StyleBuilder::fontDescription() const
 {
     return FontDescriptionBuilder(m_parentStyle, m_properties).build();
-}
-
-void StyleBuilder::merge(uint32_t specificity, uint32_t position, const CSSPropertyList& properties)
-{
-    for(const auto& property : properties) {
-        CSSPropertyData data(specificity, position, property);
-        auto predicate_func = [&property](const CSSPropertyData& item) {
-            if(property.id() == CSSPropertyID::Custom && item.id() == CSSPropertyID::Custom) {
-                const auto& a = to<CSSCustomPropertyValue>(*property.value());
-                const auto& b = to<CSSCustomPropertyValue>(*item.value());
-                return a.name() == b.name();
-            }
-
-            return property.id() == item.id();
-        };
-
-        auto it = std::find_if(m_properties.begin(), m_properties.end(), predicate_func);
-        if(it == m_properties.end()) {
-            m_properties.push_back(std::move(data));
-        } else if(!data.isLessThan(*it)) {
-            *it = std::move(data);
-        }
-    }
-}
-
-static CSSPropertyID resolveToPhysicalProperty(CSSPropertyID id, int index)
-{
-    auto longhand = CSSProperty::shorthand(id);
-    assert(longhand.size() == 4);
-    return longhand[index];
-}
-
-static CSSPropertyID resolveDirectionAwareProperty(CSSPropertyID id, WritingDirection direction)
-{
-    switch(id) {
-    case CSSPropertyID::BorderInlineStartColor:
-        return resolveToPhysicalProperty(CSSPropertyID::BorderColor, direction.inlineStart());
-    case CSSPropertyID::BorderInlineEndColor:
-        return resolveToPhysicalProperty(CSSPropertyID::BorderColor, direction.inlineEnd());
-    case CSSPropertyID::BorderBlockStartColor:
-        return resolveToPhysicalProperty(CSSPropertyID::BorderColor, direction.blockStart());
-    case CSSPropertyID::BorderBlockEndColor:
-        return resolveToPhysicalProperty(CSSPropertyID::BorderColor, direction.blockEnd());
-    case CSSPropertyID::BorderInlineStartStyle:
-        return resolveToPhysicalProperty(CSSPropertyID::BorderStyle, direction.inlineStart());
-    case CSSPropertyID::BorderInlineEndStyle:
-        return resolveToPhysicalProperty(CSSPropertyID::BorderStyle, direction.inlineEnd());
-    case CSSPropertyID::BorderBlockStartStyle:
-        return resolveToPhysicalProperty(CSSPropertyID::BorderStyle, direction.blockStart());
-    case CSSPropertyID::BorderBlockEndStyle:
-        return resolveToPhysicalProperty(CSSPropertyID::BorderStyle, direction.blockEnd());
-    case CSSPropertyID::BorderInlineStartWidth:
-        return resolveToPhysicalProperty(CSSPropertyID::BorderWidth, direction.inlineStart());
-    case CSSPropertyID::BorderInlineEndWidth:
-        return resolveToPhysicalProperty(CSSPropertyID::BorderWidth, direction.inlineEnd());
-    case CSSPropertyID::BorderBlockStartWidth:
-        return resolveToPhysicalProperty(CSSPropertyID::BorderWidth, direction.blockStart());
-    case CSSPropertyID::BorderBlockEndWidth:
-        return resolveToPhysicalProperty(CSSPropertyID::BorderWidth, direction.blockEnd());
-    case CSSPropertyID::MarginInlineStart:
-        return resolveToPhysicalProperty(CSSPropertyID::Margin, direction.inlineStart());
-    case CSSPropertyID::MarginInlineEnd:
-        return resolveToPhysicalProperty(CSSPropertyID::Margin, direction.inlineEnd());
-    case CSSPropertyID::MarginBlockStart:
-        return resolveToPhysicalProperty(CSSPropertyID::Margin, direction.blockStart());
-    case CSSPropertyID::MarginBlockEnd:
-        return resolveToPhysicalProperty(CSSPropertyID::Margin, direction.blockEnd());
-    case CSSPropertyID::PaddingInlineStart:
-        return resolveToPhysicalProperty(CSSPropertyID::Padding, direction.inlineStart());
-    case CSSPropertyID::PaddingInlineEnd:
-        return resolveToPhysicalProperty(CSSPropertyID::Padding, direction.inlineEnd());
-    case CSSPropertyID::PaddingBlockStart:
-        return resolveToPhysicalProperty(CSSPropertyID::Padding, direction.blockStart());
-    case CSSPropertyID::PaddingBlockEnd:
-        return resolveToPhysicalProperty(CSSPropertyID::Padding, direction.blockEnd());
-    case CSSPropertyID::InsetInlineStart:
-        return resolveToPhysicalProperty(CSSPropertyID::Inset, direction.inlineStart());
-    case CSSPropertyID::InsetInlineEnd:
-        return resolveToPhysicalProperty(CSSPropertyID::Inset, direction.inlineEnd());
-    case CSSPropertyID::InsetBlockStart:
-        return resolveToPhysicalProperty(CSSPropertyID::Inset, direction.blockStart());
-    case CSSPropertyID::InsetBlockEnd:
-        return resolveToPhysicalProperty(CSSPropertyID::Inset, direction.blockEnd());
-    case CSSPropertyID::BorderStartStartRadius:
-        return resolveToPhysicalProperty(CSSPropertyID::BorderRadius, direction.startStart());
-    case CSSPropertyID::BorderStartEndRadius:
-        return resolveToPhysicalProperty(CSSPropertyID::BorderRadius, direction.startEnd());
-    case CSSPropertyID::BorderEndStartRadius:
-        return resolveToPhysicalProperty(CSSPropertyID::BorderRadius, direction.endStart());
-    case CSSPropertyID::BorderEndEndRadius:
-        return resolveToPhysicalProperty(CSSPropertyID::BorderRadius, direction.endEnd());
-    case CSSPropertyID::InlineSize:
-        return direction.isHorizontal() ? CSSPropertyID::Width : CSSPropertyID::Height;
-    case CSSPropertyID::BlockSize:
-        return direction.isHorizontal() ? CSSPropertyID::Height : CSSPropertyID::Width;
-    case CSSPropertyID::MinInlineSize:
-        return direction.isHorizontal() ? CSSPropertyID::MinWidth : CSSPropertyID::MinHeight;
-    case CSSPropertyID::MinBlockSize:
-        return direction.isHorizontal() ? CSSPropertyID::MinHeight : CSSPropertyID::MinWidth;
-    case CSSPropertyID::MaxInlineSize:
-        return direction.isHorizontal() ? CSSPropertyID::MaxWidth : CSSPropertyID::MaxHeight;
-    case CSSPropertyID::MaxBlockSize:
-        return direction.isHorizontal() ? CSSPropertyID::MaxHeight : CSSPropertyID::MaxWidth;
-    default:
-        return id;
-    }
-}
-
-void StyleBuilder::buildStyle(BoxStyle* newStyle)
-{
-    CSSPropertyDataList variables;
-    for(const auto& property : m_properties) {
-        if(is<CSSVariableReferenceValue>(*property.value())) {
-            variables.push_back(property);
-        } else if(property.id() == CSSPropertyID::Custom) {
-            const auto& custom = to<CSSCustomPropertyValue>(*property.value());
-            newStyle->setCustom(custom.name(), custom.value());
-        }
-    }
-
-    for(const auto& variable : variables) {
-        const auto& value = to<CSSVariableReferenceValue>(*variable.value());
-        merge(variable.specificity(), variable.position(), value.resolve(newStyle));
-    }
-
-    newStyle->setFontDescription(fontDescription());
-
-    for(const auto& property : m_properties) {
-        switch(property.id()) {
-        case CSSPropertyID::Color:
-        case CSSPropertyID::LineHeight:
-        case CSSPropertyID::Direction:
-        case CSSPropertyID::WritingMode:
-            newStyle->set(property.id(), property.value());
-            break;
-        default:
-            break;
-        }
-    }
-
-    const WritingDirection direction(newStyle->writingMode(), newStyle->direction());
-
-    for(const auto& property : m_properties) {
-        const auto id = property.id();
-        switch(id) {
-        case CSSPropertyID::Custom:
-        case CSSPropertyID::FontFamily:
-        case CSSPropertyID::FontSize:
-        case CSSPropertyID::FontWeight:
-        case CSSPropertyID::FontStretch:
-        case CSSPropertyID::FontStyle:
-        case CSSPropertyID::FontVariationSettings:
-        case CSSPropertyID::Lang:
-        case CSSPropertyID::Color:
-        case CSSPropertyID::LineHeight:
-        case CSSPropertyID::Direction:
-        case CSSPropertyID::WritingMode:
-            break;
-        default:
-            newStyle->set(resolveDirectionAwareProperty(id, direction), property.value());
-            break;
-        }
-    }
 }
 
 class ElementStyleBuilder final : public StyleBuilder {
