@@ -15,6 +15,7 @@
 - [Multiple Columns](#multiple-columns)
 - [Flexible Box](#flexible-box)
 - [Custom Properties](#custom-properties)
+- [Logical Properties](#logical-properties)
 - [Values and Units](#values-and-units)
 - [Transforms](#transforms)
 - [Media Queries](#media-queries)
@@ -132,6 +133,16 @@ PlutoBook supports CSS custom properties as described in the [CSS Custom Propert
 Custom properties are declared with identifiers prefixed by `--` and can be applied anywhere a property value is accepted. PlutoBook also supports fallback values in the `var()` function, so `var(--unknown, red)` will use `red` if `--unknown` is not defined.
 
 PlutoBook fully supports the cascading and inheritance behavior of custom properties as defined in the specification, ensuring that updates propagate naturally through the document. However, advanced features introduced in later drafts, such as typed custom properties defined with the `@property` at-rule, are not yet supported.
+
+## Logical Properties
+
+PlutoBook supports CSS logical properties and values as defined in the [CSS Logical Properties and Values Module Level 1](https://www.w3.org/TR/css-logical-1/). Logical properties provide flow-relative equivalents for physical properties, allowing styles to adapt naturally to different writing directions without requiring separate rules for each orientation.
+
+Rather than using physical properties like `margin-left` or `padding-top`, authors can write `margin-inline-start` or `padding-block-start`, which map to the correct physical side based on writing direction. The block axis refers to the direction block-level boxes stack, while the inline axis follows the direction text flows.
+
+PlutoBook supports logical shorthands and longhands for the box model (`margin-block`, `margin-inline`, `padding-block`, `padding-inline`, and their `-start`/`-end` variants), logical sizing (`inline-size`, `block-size`, and their min/max forms), logical borders and their sub-properties, and logical corner radii. Logical values for `float` and `clear` (`inline-start` and `inline-end`) and for `text-align` (`start` and `end`) are also supported.
+
+Note that `writing-mode` is only partially supported: it is recognized and used to resolve the mapping between logical and physical directions, but full vertical layout rendering is not guaranteed.
 
 ## Values and Units
 
