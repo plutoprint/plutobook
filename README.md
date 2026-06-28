@@ -397,6 +397,7 @@ For a full breakdown of supported features, see [`FEATURES.md`](FEATURES.md):
 * [Multiple Columns](FEATURES.md#multiple-columns)
 * [Flexible Box](FEATURES.md#flexible-box)
 * [Custom Properties](FEATURES.md#custom-properties)
+* [Logical Properties](FEATURES.md#logical-properties)
 * [Values and Units](FEATURES.md#values-and-units)
 * [Transforms](FEATURES.md#transforms)
 * [Media Queries](FEATURES.md#media-queries)
