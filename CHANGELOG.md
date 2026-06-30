@@ -1,5 +1,21 @@
 # Changelog
 
+## PlutoBook 0.18.0 (2026-06-30)
+
+- Add support for CSS Logical Properties
+- Add support for SVG `textPath`
+- Add support for SVG `textLength` and `lengthAdjust` attributes
+- Add support for SVG text stroke rendering
+- Fix SVG `unicode-bidi` handling
+- Fix rendering of invisible SVG text fragments
+- Fix double application of SVG `baseline-shift` offset
+
+Backers and sponsors:
+
+- [Sveltware Solutions](https://github.com/sveltware)
+- [Dino Maric](https://github.com/dixpac)
+- [Ashish Kulkarni](https://github.com/ashkulz)
+
 ## PlutoBook 0.17.0 (2026-04-14)
 
 - Add support for `inset` shorthand property
