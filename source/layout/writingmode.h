@@ -86,7 +86,7 @@ constexpr BoxSide WritingDirection::blockStart() const
 {
     if(m_mode == WritingMode::HorizontalTb) {
         return BoxSideTop;
-    } else if (m_mode == WritingMode::VerticalRl) {
+    } else if(m_mode == WritingMode::VerticalRl) {
         return BoxSideRight;
     } else {
         return BoxSideLeft;

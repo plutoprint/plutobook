@@ -3787,6 +3787,8 @@ RefPtr<CSSValue> CSSParser::consumeLonghand(CSSTokenStream& input, CSSPropertyID
             {"horizontal-tb", CSSValueID::HorizontalTb},
             {"vertical-rl", CSSValueID::VerticalRl},
             {"vertical-lr", CSSValueID::VerticalLr},
+            {"sideways-rl", CSSValueID::VerticalRl},
+            {"sideways-lr", CSSValueID::VerticalLr},
             {"lr-tb", CSSValueID::HorizontalTb},
             {"rl-tb", CSSValueID::HorizontalTb},
             {"lr", CSSValueID::HorizontalTb},
