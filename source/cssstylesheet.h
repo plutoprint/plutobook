@@ -10,7 +10,10 @@
 #define PLUTOBOOK_CSSSTYLESHEET_H
 
 #include "pointer.h"
+#include "globalstring.h"
+#include "url.h"
 
+#include <string>
 #include <vector>
 #include <memory>
 #include <map>
@@ -34,8 +37,6 @@ enum class CSSStyleOrigin : uint8_t;
 using CSSRuleList = std::pmr::vector<RefPtr<CSSRule>>;
 using CSSRuleDataList = std::pmr::vector<CSSRuleData>;
 using CSSPageRuleDataList = std::pmr::vector<CSSPageRuleData>;
-
-class Heap;
 
 template<typename T>
 class CSSRuleDataMap {
@@ -67,26 +68,20 @@ const CSSRuleDataList* CSSRuleDataMap<T>::get(const T& name) const
     return &it->second;
 }
 
-class HeapString;
-class GlobalString;
-
 class FontData;
 class SegmentedFontFace;
+class SelectorFilter;
+class BoxStyle;
+class Document;
+class Element;
 
 struct FontDataDescription;
 struct FontSelectionDescription;
 
-using CSSFontFaceMap = std::pmr::map<GlobalString, std::map<FontSelectionDescription, RefPtr<SegmentedFontFace>>>;
-
-class BoxStyle;
-class Document;
-class Element;
-class Url;
-
 enum class PseudoType : uint8_t;
 enum class PageMarginType : uint8_t;
 
-class SelectorFilter;
+using CSSFontFaceMap = std::pmr::map<GlobalString, std::map<FontSelectionDescription, RefPtr<SegmentedFontFace>>>;
 
 class CSSStyleSheet {
 public:

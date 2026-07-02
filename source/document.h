@@ -10,9 +10,6 @@
 #define PLUTOBOOK_DOCUMENT_H
 
 #include "cssstylesheet.h"
-#include "globalstring.h"
-#include "heapstring.h"
-#include "url.h"
 
 #include <forward_list>
 
