@@ -11,7 +11,7 @@
 
 namespace plutobook {
 
-constexpr char kUserAgentCounterStyle[] = R"CSS(
+inline constexpr char kUserAgentCounterStyle[] = R"CSS(
 @counter-style decimal {
     system: numeric;
     symbols: '0' '1' '2' '3' '4' '5' '6' '7' '8' '9';
@@ -314,7 +314,7 @@ constexpr char kUserAgentCounterStyle[] = R"CSS(
     symbols: '\30' '\31' '\32' '\33' '\34' '\35' '\36' '\37';
 })CSS";
 
-constexpr char kUserAgentStyle[] = R"CSS(
+inline constexpr char kUserAgentStyle[] = R"CSS(
 @namespace url('http://www.w3.org/1999/xhtml');
 @namespace svg url('http://www.w3.org/2000/svg');
 
