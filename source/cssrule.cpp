@@ -153,7 +153,7 @@ void SelectorFilter::pop()
     m_stack.pop_back();
 }
 
-CSSRuleData::CSSRuleData(const RefPtr<CSSStyleRule>& rule, const CSSSelector& selector, uint32_t specificity, uint32_t position)
+CSSRuleData::CSSRuleData(CSSStyleRule& rule, const CSSSelector& selector, uint32_t specificity, uint32_t position)
     : m_rule(rule), m_selector(&selector), m_specificity(specificity), m_position(position)
 {
     assert(!selector.empty());

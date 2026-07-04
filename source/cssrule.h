@@ -533,7 +533,7 @@ inline void SelectorFilter::unset(unsigned key)
 
 class CSSRuleData {
 public:
-    CSSRuleData(const RefPtr<CSSStyleRule>& rule, const CSSSelector& selector, uint32_t specificity, uint32_t position);
+    CSSRuleData(CSSStyleRule& rule, const CSSSelector& selector, uint32_t specificity, uint32_t position);
 
     const RefPtr<CSSStyleRule>& rule() const { return m_rule; }
     const CSSSelector* selector() const { return m_selector; }
@@ -600,7 +600,7 @@ private:
 
 class CSSPageRuleData {
 public:
-    CSSPageRuleData(const RefPtr<CSSPageRule>& rule, const CSSPageSelector* selector, uint32_t specificity, uint32_t position)
+    CSSPageRuleData(CSSPageRule& rule, const CSSPageSelector* selector, uint32_t specificity, uint32_t position)
         : m_rule(rule), m_selector(selector), m_specificity(specificity), m_position(position)
     {}
 
