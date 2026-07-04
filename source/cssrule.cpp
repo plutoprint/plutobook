@@ -19,7 +19,7 @@ namespace plutobook {
 
 bool CSSSimpleSelector::matchNth(int count) const
 {
-    auto [a, b] = m_matchPattern;
+    const auto [a, b] = matchPattern();
     if(a > 0)
         return count >= b && !((count - b) % a);
     if(a < 0)
@@ -106,7 +106,7 @@ uint32_t CSSSimpleSelector::specificity() const
     case MatchType::PseudoClassNot:
     case MatchType::PseudoClassHas: {
         uint32_t maxSpecificity = 0;
-        for(const auto& subSelector : m_subSelectors) {
+        for(const auto& subSelector : subSelectors()) {
             uint32_t specificity = 0x0;
             for(const auto& complexSelector : subSelector)
                 specificity += complexSelector.specificity();

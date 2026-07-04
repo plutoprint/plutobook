@@ -14,6 +14,7 @@
 #include <map>
 #include <forward_list>
 #include <memory>
+#include <variant>
 
 namespace plutobook {
 
@@ -101,18 +102,20 @@ public:
     explicit CSSSimpleSelector(MatchType matchType) : m_matchType(matchType) {}
     CSSSimpleSelector(MatchType matchType, const GlobalString& name) : m_matchType(matchType), m_name(name) {}
     CSSSimpleSelector(MatchType matchType, const HeapString& value) : m_matchType(matchType), m_value(value) {}
-    CSSSimpleSelector(MatchType matchType, const MatchPattern& matchPattern) : m_matchType(matchType), m_matchPattern(matchPattern) {}
-    CSSSimpleSelector(MatchType matchType, CSSSelectorList subSelectors) : m_matchType(matchType), m_subSelectors(std::move(subSelectors)) {}
+    CSSSimpleSelector(MatchType matchType, const MatchPattern& matchPattern) : m_matchType(matchType), m_value(matchPattern) {}
+    CSSSimpleSelector(MatchType matchType, CSSSelectorList subSelectors) : m_matchType(matchType), m_value(std::move(subSelectors)) {}
     CSSSimpleSelector(MatchType matchType, AttributeCaseType attributeCaseType, const GlobalString& name, const HeapString& value)
         : m_matchType(matchType), m_attributeCaseType(attributeCaseType), m_name(name), m_value(value)
     {}
 
     MatchType matchType() const { return m_matchType; }
     AttributeCaseType attributeCaseType() const { return m_attributeCaseType; }
-    const MatchPattern& matchPattern() const { return m_matchPattern; }
     const GlobalString& name() const { return m_name; }
-    const HeapString& value() const { return m_value; }
-    const CSSSelectorList& subSelectors() const { return m_subSelectors; }
+
+    const HeapString& value() const { return std::get<HeapString>(m_value); }
+    const MatchPattern& matchPattern() const { return std::get<MatchPattern>(m_value); }
+    const CSSSelectorList& subSelectors() const { return std::get<CSSSelectorList>(m_value); }
+
     bool isCaseSensitive() const { return m_attributeCaseType == AttributeCaseType::Sensitive; }
 
     bool matchNth(int count) const;
@@ -120,12 +123,11 @@ public:
     uint32_t specificity() const;
 
 private:
+    using Value = std::variant<HeapString, MatchPattern, CSSSelectorList>;
     MatchType m_matchType;
     AttributeCaseType m_attributeCaseType;
-    MatchPattern m_matchPattern;
     GlobalString m_name;
-    HeapString m_value;
-    CSSSelectorList m_subSelectors;
+    Value m_value;
 };
 
 class CSSComplexSelector {
