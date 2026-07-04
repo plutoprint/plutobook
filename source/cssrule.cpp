@@ -17,7 +17,7 @@
 
 namespace plutobook {
 
-bool CSSSimpleSelector::matchnth(int count) const
+bool CSSSimpleSelector::matchNth(int count) const
 {
     auto [a, b] = m_matchPattern;
     if(a > 0)
@@ -594,7 +594,7 @@ bool CSSRuleData::matchPseudoClassNthChildSelector(const Element* element, const
     int index = 0;
     for(auto sibling = element->previousSiblingElement(); sibling; sibling = sibling->previousSiblingElement())
         ++index;
-    return selector.matchnth(index + 1);
+    return selector.matchNth(index + 1);
 }
 
 bool CSSRuleData::matchPseudoClassNthLastChildSelector(const Element* element, const CSSSimpleSelector& selector)
@@ -602,7 +602,7 @@ bool CSSRuleData::matchPseudoClassNthLastChildSelector(const Element* element, c
     int index = 0;
     for(auto sibling = element->nextSiblingElement(); sibling; sibling = sibling->nextSiblingElement())
         ++index;
-    return selector.matchnth(index + 1);
+    return selector.matchNth(index + 1);
 }
 
 bool CSSRuleData::matchPseudoClassNthOfTypeSelector(const Element* element, const CSSSimpleSelector& selector)
@@ -614,7 +614,7 @@ bool CSSRuleData::matchPseudoClassNthOfTypeSelector(const Element* element, cons
         }
     }
 
-    return selector.matchnth(index + 1);
+    return selector.matchNth(index + 1);
 }
 
 bool CSSRuleData::matchPseudoClassNthLastOfTypeSelector(const Element* element, const CSSSimpleSelector& selector)
@@ -626,7 +626,7 @@ bool CSSRuleData::matchPseudoClassNthLastOfTypeSelector(const Element* element, 
         }
     }
 
-    return selector.matchnth(index + 1);
+    return selector.matchNth(index + 1);
 }
 
 bool CSSPageRuleData::match(const GlobalString& pageName, uint32_t pageIndex, PseudoType pseudoType) const
@@ -656,7 +656,7 @@ bool CSSPageRuleData::matchSelector(const GlobalString& pageName, uint32_t pageI
     case CSSSimpleSelector::MatchType::PseudoPageBlank:
         return pseudoType == PseudoType::BlankPage;
     case CSSSimpleSelector::MatchType::PseudoPageNth:
-        return selector.matchnth(pageIndex + 1);
+        return selector.matchNth(pageIndex + 1);
     default:
         assert(false);
     }
@@ -994,7 +994,7 @@ void CSSCounterStyle::extend(const CSSCounterStyle& extended)
 
 CSSCounterStyle& CSSCounterStyle::defaultStyle()
 {
-    static CSSCounterStyle* defaultStyle = userAgentCounterStyleMap()->findCounterStyle("decimal"_glo);
+    static auto* defaultStyle = userAgentCounterStyleMap()->findCounterStyle("decimal"_glo);
     assert(defaultStyle && defaultStyle == defaultStyle->fallbackStyle());
     return *defaultStyle;
 }

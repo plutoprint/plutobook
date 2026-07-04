@@ -115,7 +115,7 @@ public:
     const CSSSelectorList& subSelectors() const { return m_subSelectors; }
     bool isCaseSensitive() const { return m_attributeCaseType == AttributeCaseType::Sensitive; }
 
-    bool matchnth(int count) const;
+    bool matchNth(int count) const;
     PseudoType pseudoType() const;
     uint32_t specificity() const;
 
