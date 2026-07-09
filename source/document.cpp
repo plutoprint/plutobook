@@ -549,7 +549,6 @@ Document::Document(Book* book, Heap* heap, ResourceFetcher* fetcher, Url baseUrl
     , m_idCache(heap)
     , m_resourceCache(heap)
     , m_fontCache(heap)
-    , m_counterCache(heap)
     , m_runningStyles(heap)
     , m_styleSheet(this)
 {
@@ -776,22 +775,6 @@ RefPtr<BoxStyle> Document::getRunningStyle(const GlobalString& name) const
     if(it == m_runningStyles.end())
         return nullptr;
     return it->second;
-}
-
-void Document::addTargetCounters(const HeapString& id, const CounterMap& counters)
-{
-    assert(!id.empty() && !counters.empty());
-    m_counterCache.emplace(id, counters);
-}
-
-HeapString Document::getTargetCounterText(const HeapString& fragment, const GlobalString& name, const GlobalString& listStyle, const HeapString& separator)
-{
-    if(fragment.empty() || fragment.front() != '#')
-        return emptyGlo;
-    auto it = m_counterCache.find(fragment.substring(1));
-    if(it == m_counterCache.end())
-        return emptyGlo;
-    return getCountersText(it->second, name, listStyle, separator);
 }
 
 HeapString Document::getCountersText(const CounterMap& counters, const GlobalString& name, const GlobalString& listStyle, const HeapString& separator)

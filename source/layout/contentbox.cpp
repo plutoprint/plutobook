@@ -28,20 +28,6 @@ LeaderBox::LeaderBox(const RefPtr<BoxStyle>& style)
 {
 }
 
-TargetCounterBox::TargetCounterBox(const RefPtr<BoxStyle>& style, const HeapString& fragment, const GlobalString& identifier, const HeapString& seperator, const GlobalString& listStyle)
-    : ContentBox(style)
-    , m_fragment(fragment)
-    , m_identifier(identifier)
-    , m_seperator(seperator)
-    , m_listStyle(listStyle)
-{
-}
-
-void TargetCounterBox::build()
-{
-    setText(document()->getTargetCounterText(m_fragment, m_identifier, m_listStyle, m_seperator));
-}
-
 ContentBoxBuilder::ContentBoxBuilder(Counters& counters, Element* element, Box* box)
     : m_counters(counters)
     , m_element(element)
@@ -125,43 +111,6 @@ void ContentBoxBuilder::addElement(const CSSValue& value)
 void ContentBoxBuilder::addCounter(const CSSCounterValue& counter)
 {
     addText(m_counters.counterText(counter.identifier(), counter.listStyle(), counter.separator()));
-}
-
-void ContentBoxBuilder::addTargetCounter(const CSSFunctionValue& function)
-{
-    HeapString fragment;
-    GlobalString identifier;
-    HeapString seperator;
-    GlobalString listStyle;
-
-    size_t index = 0;
-
-    if(auto value = to<CSSLocalUrlValue>(function.at(index))) {
-        fragment = to<CSSLocalUrlValue>(*value).value();
-    } else {
-        fragment = resolveAttr(to<CSSAttrValue>(*function.at(index)));
-    }
-
-    ++index;
-
-    identifier = to<CSSCustomIdentValue>(*function.at(index++)).value();
-    if(function.id() == CSSFunctionID::TargetCounters)
-        seperator = to<CSSStringValue>(*function.at(index++)).value();
-    if(index < function.size()) {
-        listStyle = to<CSSCustomIdentValue>(*function.at(index++)).value();
-    }
-
-    assert(index == function.size());
-
-    if(m_box->isPageMarginBox()) {
-        addText(m_style->document()->getTargetCounterText(fragment, identifier, listStyle, seperator));
-        return;
-    }
-
-    auto newStyle = BoxStyle::create(m_style, Display::Inline);
-    auto newBox = new (m_style->heap()) TargetCounterBox(newStyle, fragment, identifier, seperator, listStyle);
-    m_box->addChild(newBox);
-    m_lastTextBox = nullptr;
 }
 
 void ContentBoxBuilder::addQuote(CSSValueID value)
@@ -302,13 +251,8 @@ void ContentBoxBuilder::build(const CSSValue& content)
         } else {
             if(is<CSSFunctionValue>(value)) {
                 const auto& function = to<CSSFunctionValue>(*value);
-                if(function.id() == CSSFunctionID::TargetCounter
-                    || function.id() == CSSFunctionID::TargetCounters) {
-                    addTargetCounter(function);
-                } else {
-                    assert(function.id() == CSSFunctionID::Qrcode);
-                    addQrCode(function);
-                }
+                assert(function.id() == CSSFunctionID::Qrcode);
+                addQrCode(function);
             } else {
                 const auto& function = to<CSSUnaryFunctionValue>(*value);
                 if(function.id() == CSSFunctionID::Leader) {

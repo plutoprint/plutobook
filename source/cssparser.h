@@ -126,7 +126,6 @@ private:
     RefPtr<CSSValue> consumeContentLeader(CSSTokenStream& input);
     RefPtr<CSSValue> consumeContentElement(CSSTokenStream& input);
     RefPtr<CSSValue> consumeContentCounter(CSSTokenStream& input, bool counters);
-    RefPtr<CSSValue> consumeContentTargetCounter(CSSTokenStream& input, bool counters);
     RefPtr<CSSValue> consumeContentQrCode(CSSTokenStream& input);
     RefPtr<CSSValue> consumeCounter(CSSTokenStream& input, bool increment);
     RefPtr<CSSValue> consumeOrientation(CSSTokenStream& input);

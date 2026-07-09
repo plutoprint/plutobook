@@ -104,7 +104,6 @@ public:
     virtual bool isWordBreakBox() const { return false; }
     virtual bool isContentBox() const { return false; }
     virtual bool isLeaderBox() const { return false; }
-    virtual bool isTargetCounterBox() const { return false; }
     virtual bool isInlineBox() const { return false; }
     virtual bool isBlockBox() const { return false; }
     virtual bool isBlockFlowBox() const { return false; }

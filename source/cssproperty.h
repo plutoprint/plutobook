@@ -1415,8 +1415,6 @@ enum class CSSFunctionID {
     Skew,
     SkewX,
     SkewY,
-    TargetCounter,
-    TargetCounters,
     Translate,
     TranslateX,
     TranslateY

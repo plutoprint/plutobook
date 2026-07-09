@@ -2296,10 +2296,6 @@ RefPtr<CSSValue> CSSParser::consumeContent(CSSTokenStream& input)
                 value = consumeContentCounter(block, false);
             else if(identMatches("counters", 8, name))
                 value = consumeContentCounter(block, true);
-            else if(identMatches("target-counter", 14, name))
-                value = consumeContentTargetCounter(block, false);
-            else if(identMatches("target-counters", 15, name))
-                value = consumeContentTargetCounter(block, true);
             else if(identMatches("-pluto-qrcode", 13, name))
                 value = consumeContentQrCode(block);
             input.consumeWhitespace();
@@ -2363,43 +2359,6 @@ RefPtr<CSSValue> CSSParser::consumeContentCounter(CSSTokenStream& input, bool co
     if(!input.empty())
         return nullptr;
     return CSSCounterValue::create(m_heap, identifier, listStyle, separator);
-}
-
-RefPtr<CSSValue> CSSParser::consumeContentTargetCounter(CSSTokenStream& input, bool counters)
-{
-    auto fragment = consumeLocalUrlOrAttr(input);
-    if(fragment == nullptr || !input.consumeCommaIncludingWhitespace())
-        return nullptr;
-    auto identifier = consumeCustomIdent(input);
-    if(identifier == nullptr) {
-        return nullptr;
-    }
-
-    CSSValueList values(m_heap);
-    values.push_back(std::move(fragment));
-    values.push_back(std::move(identifier));
-    if(counters) {
-        if(!input.consumeCommaIncludingWhitespace())
-            return nullptr;
-        auto separator = consumeString(input);
-        if(separator == nullptr)
-            return nullptr;
-        values.push_back(std::move(separator));
-        input.consumeWhitespace();
-    }
-
-    auto id = counters ? CSSFunctionID::TargetCounters : CSSFunctionID::TargetCounter;
-    if(input.consumeCommaIncludingWhitespace()) {
-        auto listStyle = consumeCustomIdent(input);
-        if(listStyle == nullptr)
-            return nullptr;
-        values.push_back(std::move(listStyle));
-        input.consumeWhitespace();
-    }
-
-    if(!input.empty())
-        return nullptr;
-    return CSSFunctionValue::create(m_heap, id, std::move(values));
 }
 
 RefPtr<CSSValue> CSSParser::consumeContentQrCode(CSSTokenStream& input)

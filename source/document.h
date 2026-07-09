@@ -307,7 +307,6 @@ using CounterMap = std::map<GlobalString, std::vector<int>>;
 using DocumentElementMap = std::pmr::multimap<HeapString, Element*, std::less<>>;
 using DocumentResourceMap = std::pmr::map<Url, RefPtr<Resource>>;
 using DocumentFontMap = std::pmr::map<FontDescription, RefPtr<Font>>;
-using DocumentCounterMap = std::pmr::map<HeapString, CounterMap, std::less<>>;
 using DocumentRunningStyleMap = std::pmr::map<GlobalString, RefPtr<BoxStyle>>;
 
 class BoxView;
@@ -367,9 +366,6 @@ public:
     void addRunningStyle(const GlobalString& name, RefPtr<BoxStyle> style);
     RefPtr<BoxStyle> getRunningStyle(const GlobalString& name) const;
 
-    void addTargetCounters(const HeapString& id, const CounterMap& counters);
-
-    HeapString getTargetCounterText(const HeapString& fragment, const GlobalString& name, const GlobalString& listStyle, const HeapString& separator);
     HeapString getCountersText(const CounterMap& counters, const GlobalString& name, const GlobalString& listStyle, const HeapString& separator);
 
     void addAuthorStyleSheet(std::string_view content, Url baseUrl);
@@ -437,7 +433,6 @@ private:
     DocumentElementMap m_idCache;
     DocumentResourceMap m_resourceCache;
     DocumentFontMap m_fontCache;
-    DocumentCounterMap m_counterCache;
     DocumentRunningStyleMap m_runningStyles;
     CSSStyleSheet m_styleSheet;
 };

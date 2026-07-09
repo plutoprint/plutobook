@@ -127,13 +127,8 @@ void Counters::update(const Box* box)
 
     if(!hasListItemCounter && box->isListItemBox())
         increment(listItemGlo, 1);
-    if(!hasPageCounter && box->isPageBox())
+    if(!hasPageCounter && box->isPageBox()) {
         increment(pageGlo, 1);
-    if(element && !m_values.empty()) {
-        const auto& id = element->id();
-        if(!id.empty()) {
-            m_document->addTargetCounters(id, m_values);
-        }
     }
 }
 
