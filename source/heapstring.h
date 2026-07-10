@@ -69,15 +69,15 @@ public:
 inline HeapString Heap::createString(std::string_view value)
 {
     auto content = static_cast<char*>(allocate(value.size(), alignof(char)));
-    std::memcpy(content, value.data(), value.size());
+    if(!value.empty()) std::memcpy(content, value.data(), value.size());
     return HeapString({content, value.size()});
 }
 
 inline HeapString Heap::concatenateString(std::string_view a, std::string_view b)
 {
     auto content = static_cast<char*>(allocate(a.size() + b.size(), alignof(char)));
-    std::memcpy(content, a.data(), a.size());
-    std::memcpy(content + a.size(), b.data(), b.size());
+    if(!a.empty()) std::memcpy(content, a.data(), a.size());
+    if(!b.empty()) std::memcpy(content + a.size(), b.data(), b.size());
     return HeapString({content, a.size() + b.size()});
 }
 
