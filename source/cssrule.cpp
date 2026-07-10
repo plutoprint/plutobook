@@ -689,6 +689,8 @@ static void fixedAlgorithm(int value, int firstSymbolValue, size_t numSymbols, s
     indexes.push_back(value - firstSymbolValue);
 }
 
+constexpr size_t kMaxCounterRepetitions = 120;
+
 static void symbolicAlgorithm(unsigned value, size_t numSymbols, std::vector<size_t>& indexes)
 {
     assert(numSymbols > 0);
@@ -696,6 +698,8 @@ static void symbolicAlgorithm(unsigned value, size_t numSymbols, std::vector<siz
         return;
     size_t index = (value - 1) % numSymbols;
     size_t repetitions = (value + numSymbols - 1) / numSymbols;
+    if(repetitions > kMaxCounterRepetitions)
+        return;
     for(size_t i = 0; i < repetitions; ++i) {
         indexes.push_back(index);
     }
@@ -764,6 +768,8 @@ std::string CSSCounterStyle::generateInitialRepresentation(int value) const
                 if(weight.value() == 0)
                     continue;
                 size_t repetitions = value / weight.value();
+                if(repetitions > kMaxCounterRepetitions)
+                    break;
                 for(size_t i = 0; i < repetitions; ++i)
                     representation += counterStyleSymbol(*pair.second());
                 value -= repetitions * weight.value();
@@ -866,8 +872,10 @@ std::string CSSCounterStyle::generateRepresentation(int value) const
     }
 
     size_t padRepetitions = 0;
-    if(padLength > initialLength) {
+    if(padLength > initialLength)
         padRepetitions = padLength - initialLength;
+    if(padRepetitions > kMaxCounterRepetitions) {
+        padRepetitions = 0;
     }
 
     std::string representation;
