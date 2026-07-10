@@ -620,6 +620,7 @@ void HTMLTableElement::collectAdditionalCellAttributeStyle(std::string& output) 
             addHTMLAttributeStyle(output, "border-top-style", "solid");
             addHTMLAttributeStyle(output, "border-bottom-style", "solid");
             addHTMLAttributeStyle(output, "border-color", "inherit");
+            break;
         case Rules::Cols:
             addHTMLAttributeStyle(output, "border-left-width", "thin");
             addHTMLAttributeStyle(output, "border-right-width", "thin");
