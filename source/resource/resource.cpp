@@ -285,6 +285,7 @@ ResourceData DefaultResourceFetcher::fetchUrl(const std::string& url)
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, writeCallback);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, content);
     curl_easy_setopt(curl, CURLOPT_USERAGENT, "PlutoBook/" PLUTOBOOK_VERSION_STRING);
+    curl_easy_setopt(curl, CURLOPT_MAXFILESIZE_LARGE, 0xFFFFFFFFU);
 
     if(!m_caInfo.empty())
         curl_easy_setopt(curl, CURLOPT_CAINFO, m_caInfo.data());
