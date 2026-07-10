@@ -823,9 +823,15 @@ HTMLTableColElement::HTMLTableColElement(Document* document, const GlobalString&
 {
 }
 
+constexpr unsigned kMinColspan = 1;
+constexpr unsigned kMaxColspan = 1000;
+constexpr unsigned kDefaultColspan = 1;
+
 unsigned HTMLTableColElement::span() const
 {
-    return parseNonNegativeIntegerAttribute(spanAttr).value_or(1);
+    if(auto value = parseNonNegativeIntegerAttribute(spanAttr))
+        return std::clamp(*value, kMinColspan, kMaxColspan);
+    return kDefaultColspan;
 }
 
 void HTMLTableColElement::collectAttributeStyle(std::string& output, const GlobalString& name, const HeapString& value) const
@@ -862,12 +868,20 @@ HTMLTableCellElement::HTMLTableCellElement(Document* document, const GlobalStrin
 
 unsigned HTMLTableCellElement::colSpan() const
 {
-    return std::max(1u, parseNonNegativeIntegerAttribute(colspanAttr).value_or(1));
+    if(auto value = parseNonNegativeIntegerAttribute(colspanAttr))
+        return std::clamp(*value, kMinColspan, kMaxColspan);
+    return kDefaultColspan;
 }
+
+constexpr unsigned kMinRowspan = 0;
+constexpr unsigned kMaxRowspan = 65534;
+constexpr unsigned kDefaultRowspan = 1;
 
 unsigned HTMLTableCellElement::rowSpan() const
 {
-    return parseNonNegativeIntegerAttribute(rowspanAttr).value_or(1);
+    if(auto value = parseNonNegativeIntegerAttribute(rowspanAttr))
+        return std::clamp(*value, kMinRowspan, kMaxRowspan);
+    return kDefaultRowspan;
 }
 
 void HTMLTableCellElement::collectAttributeStyle(std::string& output, const GlobalString& name, const HeapString& value) const
