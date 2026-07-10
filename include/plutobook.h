@@ -680,7 +680,7 @@ PLUTOBOOK_API void plutobook_set_http_max_redirects(int amount);
 /**
  * @brief Sets the maximum time allowed for an HTTP request.
  *
- * If not set, the default timeout is 300 seconds.
+ * If not set, the default timeout is 30 seconds.
  *
  * @param timeout Timeout duration in seconds.
  */
