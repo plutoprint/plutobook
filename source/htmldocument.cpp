@@ -209,6 +209,8 @@ template<typename T = int>
 static std::optional<T> parseHTMLInteger(std::string_view input)
 {
     constexpr auto isSigned = std::numeric_limits<T>::is_signed;
+    constexpr auto maxValue = std::numeric_limits<T>::max();
+    constexpr auto maxMultiplier = maxValue / 10;
 
     bool isNegative = false;
     stripLeadingAndTrailingSpaces(input);
@@ -223,7 +225,10 @@ static std::optional<T> parseHTMLInteger(std::string_view input)
         return std::nullopt;
     T output = 0;
     do {
-        output = output * 10 + input.front() - '0';
+        const auto digitValue = static_cast<T>(input.front() - '0');
+        if(output > maxMultiplier || (output == maxMultiplier && digitValue > (maxValue % 10) + isNegative))
+            return std::nullopt;
+        output = output * 10 + digitValue;
         input.remove_prefix(1);
     } while(!input.empty() && isDigit(input.front()));
 
