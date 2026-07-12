@@ -920,7 +920,9 @@ HTMLInputElement::HTMLInputElement(Document* document)
 
 unsigned HTMLInputElement::size() const
 {
-    return std::max(1u, parseNonNegativeIntegerAttribute(sizeAttr).value_or(20));
+    if(auto size = parseNonNegativeIntegerAttribute(sizeAttr))
+        return std::max(1u, size.value());
+    return 20;
 }
 
 Box* HTMLInputElement::createBox(const RefPtr<BoxStyle>& style)
@@ -947,12 +949,16 @@ HTMLTextAreaElement::HTMLTextAreaElement(Document* document)
 
 unsigned HTMLTextAreaElement::rows() const
 {
-    return std::max(1u, parseNonNegativeIntegerAttribute(rowsAttr).value_or(2));
+    if(auto rows = parseNonNegativeIntegerAttribute(rowsAttr))
+        return std::max(1u, rows.value());
+    return 2;
 }
 
 unsigned HTMLTextAreaElement::cols() const
 {
-    return std::max(1u, parseNonNegativeIntegerAttribute(colsAttr).value_or(20));
+    if(auto cols = parseNonNegativeIntegerAttribute(colsAttr))
+        return std::max(1u, cols.value());
+    return 20;
 }
 
 Box* HTMLTextAreaElement::createBox(const RefPtr<BoxStyle>& style)
