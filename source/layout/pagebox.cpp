@@ -637,7 +637,7 @@ constexpr PseudoType pagePseudoType(uint32_t pageIndex)
     return PseudoType::LeftPage;
 }
 
-constexpr auto kMinPageScaleFactor = 1.f / 100.f;
+constexpr auto kMinPageScaleFactor = 10.f / 100.f;
 
 void PageLayout::layout()
 {
