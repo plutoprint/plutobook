@@ -21,7 +21,7 @@ struct HTMLEntity {
     const char* name;
 };
 
-static const HTMLEntity htmlentitytable[] = {
+static const HTMLEntity kHtmlEntities[] = {
     {0x000C6, 0x00000, 5, "AElig"},
     {0x000C6, 0x00000, 6, "AElig;"},
     {0x00026, 0x00000, 3, "AMP"},
@@ -2255,81 +2255,35 @@ static const HTMLEntity htmlentitytable[] = {
     {0x0200C, 0x00000, 5, "zwnj;"}
 };
 
-static const HTMLEntity* uppercasetable[] = {
-    &htmlentitytable[0],
-    &htmlentitytable[27],
-    &htmlentitytable[39],
-    &htmlentitytable[75],
-    &htmlentitytable[129],
-    &htmlentitytable[159],
-    &htmlentitytable[167],
-    &htmlentitytable[189],
-    &htmlentitytable[201],
-    &htmlentitytable[230],
-    &htmlentitytable[237],
-    &htmlentitytable[245],
-    &htmlentitytable[305],
-    &htmlentitytable[314],
-    &htmlentitytable[386],
-    &htmlentitytable[415],
-    &htmlentitytable[434],
-    &htmlentitytable[439],
-    &htmlentitytable[484],
-    &htmlentitytable[524],
-    &htmlentitytable[547],
-    &htmlentitytable[587],
-    &htmlentitytable[604],
-    &htmlentitytable[609],
-    &htmlentitytable[613],
-    &htmlentitytable[624],
-    &htmlentitytable[634]
+static const uint16_t kUppercaseOffsets[] = {
+    0,   27,  39,  75,  129, 159, 167,
+    189, 201, 230, 237, 245, 305, 314,
+    386, 415, 434, 439, 484, 524, 547,
+    587, 604, 609, 613, 624, 634
 };
 
-static const HTMLEntity* lowercasetable[] = {
-    &htmlentitytable[634],
-    &htmlentitytable[703],
-    &htmlentitytable[819],
-    &htmlentitytable[918],
-    &htmlentitytable[984],
-    &htmlentitytable[1051],
-    &htmlentitytable[1090],
-    &htmlentitytable[1150],
-    &htmlentitytable[1178],
-    &htmlentitytable[1234],
-    &htmlentitytable[1242],
-    &htmlentitytable[1252],
-    &htmlentitytable[1406],
-    &htmlentitytable[1446],
-    &htmlentitytable[1614],
-    &htmlentitytable[1675],
-    &htmlentitytable[1744],
-    &htmlentitytable[1755],
-    &htmlentitytable[1859],
-    &htmlentitytable[2017],
-    &htmlentitytable[2075],
-    &htmlentitytable[2127],
-    &htmlentitytable[2169],
-    &htmlentitytable[2180],
-    &htmlentitytable[2204],
-    &htmlentitytable[2218],
-    &htmlentitytable[2231]
+static const uint16_t kLowercaseOffsets[] = {
+    634,  703,  819,  918,  984,  1051, 1090,
+    1150, 1178, 1234, 1242, 1252, 1406, 1446,
+    1614, 1675, 1744, 1755, 1859, 2017, 2075,
+    2127, 2169, 2180, 2204, 2218, 2231
 };
 
 inline const HTMLEntity* firstEntryStartingWith(char cc)
 {
     if(cc >= 'A' && cc <= 'Z')
-        return uppercasetable[cc - 'A'];
+        return kHtmlEntities + kUppercaseOffsets[cc - 'A'];
     if(cc >= 'a' && cc <= 'z')
-        return lowercasetable[cc - 'a'];
+        return kHtmlEntities + kLowercaseOffsets[cc - 'a'];
     return nullptr;
 }
 
 inline const HTMLEntity* lastEntryStartingWith(char cc)
 {
     if(cc >= 'A' && cc <= 'Z')
-        return uppercasetable[cc - 'A' + 1] - 1;
+        return kHtmlEntities + kUppercaseOffsets[cc - 'A' + 1] - 1;
     if(cc >= 'a' && cc <= 'z')
-        return lowercasetable[cc - 'a' + 1] - 1;
+        return kHtmlEntities + kLowercaseOffsets[cc - 'a' + 1] - 1;
     return nullptr;
 }
 
@@ -2360,9 +2314,9 @@ static const HTMLEntity* findFirstEntry(const HTMLEntity* left, const HTMLEntity
     while(left + 1 < right) {
         auto probe = halfway(left, right);
         auto relation = compare(probe, offset, cc);
-        if(relation < 0)
+        if(relation < 0) {
             left = probe;
-        else {
+        } else {
             right = probe;
         }
     }
@@ -2383,9 +2337,9 @@ static const HTMLEntity* findLastEntry(const HTMLEntity* left, const HTMLEntity*
     while(left + 1 < right) {
         auto probe = halfway(left, right);
         auto relation = compare(probe, offset, cc);
-        if(relation > 0)
+        if(relation > 0) {
             right = probe;
-        else {
+        } else {
             left = probe;
         }
     }
@@ -2457,9 +2411,9 @@ bool HTMLEntityParser::handleNamed(char cc)
         }
 
         if(lastMatch->lastCharacter() == ';' || !m_inAttributeValue || !(cc == '=' || isAlnum(cc))) {
-            append(lastMatch->firstValue);
+            appendCodePoint(lastMatch->firstValue);
             if(lastMatch->secondValue)
-                append(lastMatch->secondValue);
+                appendCodePoint(lastMatch->secondValue);
             return true;
         }
     }
@@ -2485,7 +2439,7 @@ bool HTMLEntityParser::handleDecimal(char cc)
     } while(isDigit(cc));
     if(cc == ';')
         m_offset += 1;
-    append(codepoint);
+    appendCodePoint(codepoint);
     return true;
 }
 
@@ -2505,11 +2459,11 @@ bool HTMLEntityParser::handleHex(char cc)
     } while(isHexDigit(cc));
     if(cc == ';')
         m_offset += 1;
-    append(codepoint);
+    appendCodePoint(codepoint);
     return true;
 }
 
-void HTMLEntityParser::append(uint32_t cp)
+void HTMLEntityParser::appendCodePoint(unsigned cp)
 {
     if(cp == 0 || cp >= 0x10FFFF || (cp >= 0xD800 && cp <= 0xDFFF))
         cp = 0xFFFD;
