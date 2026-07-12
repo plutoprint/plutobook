@@ -291,7 +291,9 @@ CSSToken CSSTokenizer::consumeNumericToken()
         } while(isDigit(cc));
     }
 
-    double number = (integer + fraction) * std::pow(10.0, exponent * expsign);
+    double number = (integer + fraction);
+    if(exponent)
+        number *= std::pow(10.0, exponent * expsign);
     if(numberSign == CSSToken::NumberSign::Minus)
         number = -number;
     if(m_input.peek() == '%') {
