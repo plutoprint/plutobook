@@ -265,13 +265,13 @@ CSSToken CSSTokenizer::consumeNumericToken()
     if(m_input.peek() == '.' && isDigit(m_input.peek(1))) {
         numberType = CSSToken::NumberType::Number;
         auto cc = m_input.consume();
-        int count = 0;
+        double divisor = 1.0;
         do {
             fraction = 10.0 * fraction + (cc - '0');
-            count += 1;
+            divisor *= 10.0;
             cc = m_input.consume();
         } while(isDigit(cc));
-        fraction *= std::pow(10.0, -count);
+        fraction /= divisor;
     }
 
     if(isExponentSequence()) {
