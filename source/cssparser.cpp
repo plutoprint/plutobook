@@ -4696,11 +4696,19 @@ RefPtr<CSSValue> CSSParser::consumeCounterStyleSymbols(CSSTokenStream& input)
 
 RefPtr<CSSValue> CSSParser::consumeCounterStyleAdditiveSymbols(CSSTokenStream& input)
 {
+    const CSSIntegerValue* lastInteger = nullptr;
+
     CSSValueList values(m_heap);
     do {
         auto value = consumeCounterStylePad(input);
         if(value == nullptr)
             return nullptr;
+        const auto& pair = to<CSSPairValue>(*value);
+        const auto& integer = to<CSSIntegerValue>(*pair.first());
+        if(lastInteger && integer.value() >= lastInteger->value())
+            return nullptr;
+        lastInteger = &integer;
+
         values.push_back(std::move(value));
     } while(input.consumeCommaIncludingWhitespace());
     return CSSListValue::create(m_heap, std::move(values));

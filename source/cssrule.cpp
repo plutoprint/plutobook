@@ -753,29 +753,23 @@ std::string CSSCounterStyle::generateInitialRepresentation(int value) const
         if(m_additiveSymbols == nullptr)
             return representation;
         if(value == 0) {
-            for(const auto& symbol : *m_additiveSymbols) {
-                const auto& pair = to<CSSPairValue>(*symbol);
-                const auto& weight = to<CSSIntegerValue>(*pair.first());
-                if(weight.value() == 0) {
-                    representation += counterStyleSymbol(*pair.second());
-                    break;
-                }
+            const auto& pair = to<CSSPairValue>(*m_additiveSymbols->back());
+            const auto& weight = to<CSSIntegerValue>(*pair.first());
+            if(weight.value() == 0) {
+                representation += counterStyleSymbol(*pair.second());
             }
         } else {
             for(const auto& symbol : *m_additiveSymbols) {
                 const auto& pair = to<CSSPairValue>(*symbol);
                 const auto& weight = to<CSSIntegerValue>(*pair.first());
-                if(weight.value() == 0)
-                    continue;
+                if(value == 0 || weight.value() == 0)
+                    break;
                 size_t repetitions = value / weight.value();
                 if(repetitions > kMaxCounterRepetitions)
                     break;
                 for(size_t i = 0; i < repetitions; ++i)
                     representation += counterStyleSymbol(*pair.second());
                 value -= repetitions * weight.value();
-                if(value == 0) {
-                    break;
-                }
             }
 
             if(value > 0) {
