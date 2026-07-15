@@ -32,10 +32,10 @@ public:
     explicit LineBreakIterator(const UString& text, const LocaleData* locale);
 
     uint32_t nextBreakOpportunity(uint32_t pos) const { return nextBreakOpportunity(pos, m_text.length()); }
-    uint32_t nextBreakOpportunity(uint32_t pos, uint32_t end) const;
-    uint32_t previousBreakOpportunity(uint32_t offset, uint32_t start = 0) const;
+    uint32_t nextBreakOpportunity(uint32_t pos, uint32_t end, bool skipSoftHyphen = false) const;
+    uint32_t previousBreakOpportunity(uint32_t offset, uint32_t start = 0, bool skipSoftHyphen = false) const;
 
-    bool isBreakable(uint32_t pos) const;
+    bool isBreakable(uint32_t pos, bool skipSoftHyphen = false) const;
 
 private:
     const UString m_text;
