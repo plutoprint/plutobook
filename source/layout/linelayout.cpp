@@ -1210,9 +1210,7 @@ void LineBreaker::breakText(LineItemRun& run, const RefPtr<TextShape>& shape, fl
 
 void LineBreaker::appendHyphen(LineItemRun& run, const BoxStyle* style, Direction direction)
 {
-    const UChar32 character = kHyphenCharacter;
-    UString text(character);
-    run.hyphenShape = TextShape::createForText(text, direction, false, style);
+    run.hyphenShape = TextShape::createForText(style->hyphenString(), direction, false, style);
     run.hyphenWidth = run.hyphenShape->width();
     run.width += run.hyphenWidth;
 }
