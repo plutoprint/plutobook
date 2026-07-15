@@ -113,7 +113,7 @@ inline bool needsLineBreakIterator(UChar ch)
     return ch > kAsciiLineBreakTableLastChar && ch != kNoBreakSpaceCharacter;
 }
 
-uint32_t LineBreakIterator::nextBreakOpportunity(uint32_t pos, uint32_t end) const
+uint32_t LineBreakIterator::nextBreakOpportunity(uint32_t pos, uint32_t end, bool skipSoftHyphen) const
 {
     UChar lastLastCh = pos > 1 ? m_text[pos - 2] : 0;
     UChar lastCh = pos > 0 ? m_text[pos - 1] : 0;
@@ -126,7 +126,10 @@ uint32_t LineBreakIterator::nextBreakOpportunity(uint32_t pos, uint32_t end) con
         if(needsLineBreakIterator(ch) || needsLineBreakIterator(lastCh)) {
             if(i > 0 && nextBreak < i)
                 nextBreak = m_locale->nextLineBreak(m_id, m_text, i - 1);
-            if(i == nextBreak && !isBreakableSpace(lastCh)) {
+            // A soft hyphen (U+00AD) is a hyphenation opportunity; suppress it for
+            // `hyphens: none` while keeping every other break the iterator reports.
+            if(i == nextBreak && !isBreakableSpace(lastCh)
+                && !(skipSoftHyphen && lastCh == kSoftHyphenCharacter)) {
                 return i;
             }
         }
@@ -138,13 +141,13 @@ uint32_t LineBreakIterator::nextBreakOpportunity(uint32_t pos, uint32_t end) con
     return end;
 }
 
-uint32_t LineBreakIterator::previousBreakOpportunity(uint32_t offset, uint32_t start) const
+uint32_t LineBreakIterator::previousBreakOpportunity(uint32_t offset, uint32_t start, bool skipSoftHyphen) const
 {
     auto buffer = m_text.getBuffer();
     auto pos = std::min<uint32_t>(offset, m_text.length());
     auto end = std::min<uint32_t>(pos + 2, m_text.length());
     while(pos > start) {
-        auto nextBreak = nextBreakOpportunity(pos, end);
+        auto nextBreak = nextBreakOpportunity(pos, end, skipSoftHyphen);
         if(pos == nextBreak)
             return nextBreak;
         end = pos;
@@ -154,10 +157,10 @@ uint32_t LineBreakIterator::previousBreakOpportunity(uint32_t offset, uint32_t s
     return start;
 }
 
-bool LineBreakIterator::isBreakable(uint32_t pos) const
+bool LineBreakIterator::isBreakable(uint32_t pos, bool skipSoftHyphen) const
 {
     auto end = std::min<uint32_t>(pos + 1, m_text.length());
-    auto nextBreak = nextBreakOpportunity(pos, end);
+    auto nextBreak = nextBreakOpportunity(pos, end, skipSoftHyphen);
     return pos == nextBreak;
 }
 
