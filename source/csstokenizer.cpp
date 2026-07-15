@@ -243,7 +243,7 @@ CSSToken CSSTokenizer::consumeNumericToken()
     auto numberSign = CSSToken::NumberSign::None;
     double integer = 0;
     double fraction = 0;
-    int exponent = 0;
+    double exponent = 0;
     int expsign = 1;
 
     if(m_input.peek() == '-') {
@@ -286,16 +286,17 @@ CSSToken CSSTokenizer::consumeNumericToken()
 
         auto cc = m_input.peek();
         do {
-            exponent = 10 * exponent + (cc - '0');
+            exponent = 10.0 * exponent + (cc - '0');
             cc = m_input.consume();
         } while(isDigit(cc));
     }
 
-    double number = (integer + fraction);
+    double value = (integer + fraction);
     if(exponent)
-        number *= std::pow(10.0, exponent * expsign);
+        value *= std::pow(10.0, exponent * expsign);
     if(numberSign == CSSToken::NumberSign::Minus)
-        number = -number;
+        value = -value;
+    float number = clampTo<float>(value);
     if(m_input.peek() == '%') {
         m_input.advance();
         return CSSToken(CSSToken::Type::Percentage, numberType, numberSign, number);

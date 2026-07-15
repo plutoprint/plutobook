@@ -49,6 +49,11 @@ void Counters::reset(const GlobalString& name, int value)
     }
 }
 
+constexpr int clampAdd(int64_t a, int64_t b)
+{
+    return clampTo<int>(a + b);
+}
+
 void Counters::increment(const GlobalString& name, int value)
 {
     auto& scopes = m_scopes.back();
@@ -57,7 +62,7 @@ void Counters::increment(const GlobalString& name, int value)
         scopes.insert(name);
         values.push_back(value);
     } else {
-        values.back() += value;
+        values.back() = clampAdd(value, values.back());
     }
 }
 

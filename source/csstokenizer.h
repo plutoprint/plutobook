@@ -12,10 +12,17 @@
 #include <list>
 #include <vector>
 #include <string>
+#include <limits>
 #include <cassert>
 #include <cstdint>
 
 namespace plutobook {
+
+template<typename T, typename U>
+constexpr T clampTo(U value, T min = std::numeric_limits<T>::lowest(), T max = std::numeric_limits<T>::max())
+{
+    return value >= max ? max : (value <= min ? min : static_cast<T>(value));
+}
 
 class CSSToken {
 public:
@@ -85,7 +92,7 @@ public:
     NumberSign numberSign() const { return m_numberSign; }
     uint32_t delim() const { return m_delim; }
     float number() const { return m_number; }
-    int integer() const { return static_cast<int>(m_number); }
+    int integer() const { return clampTo<int>(m_number); }
     uint32_t from() const { return m_from; }
     uint32_t to() const { return m_to; }
     std::string_view data() const { return m_data; }
