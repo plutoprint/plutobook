@@ -203,6 +203,7 @@ plutobook_sources = [
     'source/htmlentityparser.cpp',
     'source/htmlparser.cpp',
     'source/htmltokenizer.cpp',
+    'source/hyphenator.cpp',
     'source/localedata.cpp',
     'source/plutobook.cc',
     'source/plutobook.cpp',
@@ -234,6 +235,24 @@ plutobook_cpp_args += cpp.get_supported_arguments(
     '-Wno-unused-function',
     '-Wno-unused-variable'
 )
+
+# libhyphen has no pkg-config file on most distributions, so probe the header
+# and library directly. When absent, `hyphens: auto` degrades to `manual`.
+hyphen_option = get_option('hyphen')
+if hyphen_option.disabled()
+    hyphen_dep = dependency('', required: false)
+elif cpp.has_header('hyphen.h')
+    hyphen_dep = cpp.find_library('hyphen', required: hyphen_option)
+elif hyphen_option.enabled()
+    error('hyphen support was requested but <hyphen.h> could not be found')
+else
+    hyphen_dep = dependency('', required: false)
+endif
+
+if hyphen_dep.found()
+    plutobook_deps += [hyphen_dep]
+    plutobook_cpp_args += ['-DPLUTOBOOK_HAS_HYPHEN']
+endif
 
 plutobook_compile_args = []
 
