@@ -3,6 +3,8 @@ option('turbojpeg', type : 'feature', value : 'auto')
 option('webp', type : 'feature', value : 'auto')
 option('hyphen', type : 'feature', value : 'auto',
     description : 'Enable automatic hyphenation (`hyphens: auto`) via libhyphen')
+option('hyphen-embed-dicts', type : 'array', value : ['en-US'],
+    description : 'Hyphenation dictionaries embedded into the library as a fallback')
 
 option('autodetect-ca', type : 'feature', value : 'auto',
     description : 'Enable automatic CA bundle detection at runtime')
