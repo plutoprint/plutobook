@@ -161,6 +161,7 @@ enum class CSSPropertyID : uint16_t {
     FontWeight,
     Gap,
     Height,
+    HyphenateCharacter,
     Hyphens,
     InlineSize,
     Inset,
