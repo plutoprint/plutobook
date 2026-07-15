@@ -19,9 +19,12 @@
 namespace plutobook {
 
 template<typename T, typename U>
-constexpr T clampTo(U value, T min = std::numeric_limits<T>::lowest(), T max = std::numeric_limits<T>::max())
+constexpr T clampTo(U value)
 {
-    return value >= max ? max : (value <= min ? min : static_cast<T>(value));
+    constexpr T min = std::numeric_limits<T>::lowest();
+    constexpr T max = std::numeric_limits<T>::max();
+
+    return value >= U(max) ? max : (value <= U(min) ? min : T(value));
 }
 
 class CSSToken {
