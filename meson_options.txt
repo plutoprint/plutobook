@@ -1,6 +1,8 @@
 option('curl', type : 'feature', value : 'auto')
 option('turbojpeg', type : 'feature', value : 'auto')
 option('webp', type : 'feature', value : 'auto')
+option('hyphen', type : 'feature', value : 'auto',
+    description : 'Enable automatic hyphenation (`hyphens: auto`) via libhyphen')
 
 option('autodetect-ca', type : 'feature', value : 'auto',
     description : 'Enable automatic CA bundle detection at runtime')
