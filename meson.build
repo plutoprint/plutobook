@@ -252,6 +252,24 @@ endif
 if hyphen_dep.found()
     plutobook_deps += [hyphen_dep]
     plutobook_cpp_args += ['-DPLUTOBOOK_HAS_HYPHEN']
+
+    # Embed the selected dictionaries as a build-time fallback for systems
+    # without them installed (en-US only by default).
+    embed_dicts_args = []
+    embed_dicts_inputs = []
+    foreach lang : get_option('hyphen-embed-dicts')
+        dict_file = files('dicts' / ('hyph_' + lang.replace('-', '_') + '.dic'))
+        embed_dicts_args += [lang, dict_file]
+        embed_dicts_inputs += dict_file
+    endforeach
+
+    hyphen_dicts = custom_target('hyphendicts',
+        input: embed_dicts_inputs,
+        output: 'hyphendicts.cpp',
+        command: [find_program('python3'), files('tools/embed_dicts.py'), '@OUTPUT@', embed_dicts_args]
+    )
+
+    plutobook_sources += hyphen_dicts
 endif
 
 plutobook_compile_args = []
