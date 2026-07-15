@@ -10,11 +10,14 @@
 
 #ifdef PLUTOBOOK_HAS_HYPHEN
 
+#include "hyphendicts.h"
+
 #include <hyphen.h>
 
 #include <unicode/utf8.h>
 #include <unicode/utf16.h>
 
+#include <cstdio>
 #include <cstdlib>
 #include <map>
 #include <memory>
@@ -61,14 +64,53 @@ static HyphenDict* loadSystemDict(const std::string& localeName)
     return loadDictFrom("/usr/share/hyphen", localeName);
 }
 
+static HyphenDict* loadEmbeddedDictEntry(const EmbeddedHyphenationDict& entry)
+{
+    // libhyphen reads the whole dictionary up front, so the in-memory stream
+    // can be closed as soon as it has been loaded.
+    FILE* stream = fmemopen(const_cast<unsigned char*>(entry.data), entry.size, "rb");
+    if(stream == nullptr)
+        return nullptr;
+    HyphenDict* dict = hnj_hyphen_load_file(stream);
+    std::fclose(stream);
+    return dict;
+}
+
+static std::string_view languageOf(std::string_view localeName)
+{
+    return localeName.substr(0, localeName.find('_'));
+}
+
+static HyphenDict* loadEmbeddedDict(const std::string& localeName)
+{
+    // Prefer an exact locale match, then fall back to any embedded dictionary
+    // for the same language (so "en" resolves to an embedded "en_US").
+    for(unsigned int i = 0; i < kEmbeddedHyphenationDictCount; ++i) {
+        if(localeName == kEmbeddedHyphenationDicts[i].name)
+            return loadEmbeddedDictEntry(kEmbeddedHyphenationDicts[i]);
+    }
+
+    auto language = languageOf(localeName);
+    for(unsigned int i = 0; i < kEmbeddedHyphenationDictCount; ++i) {
+        if(languageOf(kEmbeddedHyphenationDicts[i].name) == language)
+            return loadEmbeddedDictEntry(kEmbeddedHyphenationDicts[i]);
+    }
+
+    return nullptr;
+}
+
 const Hyphenator* Hyphenator::get(const std::string& localeName)
 {
     thread_local std::map<std::string, std::unique_ptr<Hyphenator>> cache;
     auto it = cache.find(localeName);
     if(it != cache.end())
         return it->second.get();
+    // Prefer a system dictionary, falling back to one embedded at build time.
+    auto* dict = loadSystemDict(localeName);
+    if(dict == nullptr)
+        dict = loadEmbeddedDict(localeName);
     std::unique_ptr<Hyphenator> hyphenator;
-    if(auto* dict = loadSystemDict(localeName))
+    if(dict)
         hyphenator.reset(new Hyphenator(dict));
     auto* result = hyphenator.get();
     cache.emplace(localeName, std::move(hyphenator));
