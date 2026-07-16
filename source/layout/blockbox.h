@@ -49,6 +49,9 @@ public:
     float computeWidthUsing(const Length& widthLength, const BlockBox* container, float containerWidth) const;
     std::optional<float> computeHeightUsing(const Length& heightLength) const;
 
+    float computeBorderBoxHeightUsingAspectRatio(const AspectRatio& aspectRatio) const;
+    float computeBorderBoxWidthUsingAspectRatio(const AspectRatio& aspectRatio, float borderBoxHeight) const;
+
     float constrainWidth(float width, const BlockBox* container, float containerWidth) const;
     float constrainBorderBoxHeight(float height) const;
     float constrainContentBoxHeight(float height) const;
