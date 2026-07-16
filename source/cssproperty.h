@@ -29,6 +29,7 @@ enum class CSSPropertyID : uint16_t {
     AlignItems,
     AlignSelf,
     AlignmentBaseline,
+    AspectRatio,
     Background,
     BackgroundAttachment,
     BackgroundClip,
