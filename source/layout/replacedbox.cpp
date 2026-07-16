@@ -19,6 +19,18 @@ ReplacedBox::ReplacedBox(Node* node, const RefPtr<BoxStyle>& style)
     setIsReplaced(true);
 }
 
+void ReplacedBox::computeAspectRatioInformation(float& intrinsicWidth, float& intrinsicHeight, float& intrinsicRatio) const
+{
+    computeIntrinsicRatioInformation(intrinsicWidth, intrinsicHeight, intrinsicRatio);
+
+    // A CSS 'aspect-ratio' overrides the natural ratio unless 'auto' was
+    // specified and the element actually has a natural ratio of its own.
+    auto aspectRatio = style()->aspectRatio();
+    if(aspectRatio.value > 0.0 && (!aspectRatio.isAuto || intrinsicRatio == 0.f)) {
+        intrinsicRatio = aspectRatio.value;
+    }
+}
+
 float ReplacedBox::computePreferredReplacedWidth() const
 {
     auto widthLength = style()->width();
@@ -29,7 +41,7 @@ float ReplacedBox::computePreferredReplacedWidth() const
     float intrinsicWidth = 0.f;
     float intrinsicHeight = 0.f;
     float intrinsicRatio = 0.f;
-    computeIntrinsicRatioInformation(intrinsicWidth, intrinsicHeight, intrinsicRatio);
+    computeAspectRatioInformation(intrinsicWidth, intrinsicHeight, intrinsicRatio);
 
     if(intrinsicRatio > 0.f) {
         float height = 0.f;
@@ -326,7 +338,7 @@ float ReplacedBox::computeReplacedWidth() const
     float intrinsicWidth = 0.f;
     float intrinsicHeight = 0.f;
     float intrinsicRatio = 0.f;
-    computeIntrinsicRatioInformation(intrinsicWidth, intrinsicHeight, intrinsicRatio);
+    computeAspectRatioInformation(intrinsicWidth, intrinsicHeight, intrinsicRatio);
 
     if(intrinsicRatio > 0.f) {
         float height = 0.f;
@@ -357,7 +369,7 @@ float ReplacedBox::computeReplacedHeight() const
     float intrinsicWidth = 0.f;
     float intrinsicHeight = 0.f;
     float intrinsicRatio = 0.f;
-    computeIntrinsicRatioInformation(intrinsicWidth, intrinsicHeight, intrinsicRatio);
+    computeAspectRatioInformation(intrinsicWidth, intrinsicHeight, intrinsicRatio);
 
     if(intrinsicRatio > 0.f) {
         float width = 0.f;
