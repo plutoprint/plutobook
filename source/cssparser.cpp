@@ -3209,6 +3209,8 @@ RefPtr<CSSValue> CSSParser::consumeLonghand(CSSTokenStream& input, CSSPropertyID
     case CSSPropertyID::FlexShrink:
     case CSSPropertyID::StrokeMiterlimit:
         return consumeNumber(input, false);
+    case CSSPropertyID::AspectRatio:
+        return consumeAspectRatio(input);
     case CSSPropertyID::TabSize:
         return consumeLength(input, false, true);
     case CSSPropertyID::OutlineOffset:
@@ -4024,6 +4026,41 @@ RefPtr<CSSValue> CSSParser::consumeLonghand(CSSTokenStream& input, CSSPropertyID
     default:
         return nullptr;
     }
+}
+
+RefPtr<CSSValue> CSSParser::consumeAspectRatio(CSSTokenStream& input)
+{
+    // aspect-ratio: auto || <ratio>
+    // <ratio> = <number [0,inf]> [ / <number [0,inf]> ]?
+    auto autoValue = consumeAuto(input);
+
+    RefPtr<CSSValue> ratio;
+    if(auto first = consumeNumber(input, false)) {
+        RefPtr<CSSValue> second;
+        if(input.consumeSlashIncludingWhitespace()) {
+            second = consumeNumber(input, false);
+            if(second == nullptr)
+                return nullptr;
+        } else {
+            second = CSSNumberValue::create(m_heap, 1.0);
+        }
+
+        ratio = CSSPairValue::create(m_heap, std::move(first), std::move(second));
+    }
+
+    if(autoValue == nullptr)
+        autoValue = consumeAuto(input);
+    if(autoValue == nullptr && ratio == nullptr)
+        return nullptr;
+    if(ratio == nullptr)
+        return autoValue;
+    if(autoValue == nullptr)
+        return ratio;
+
+    CSSValueList values(m_heap);
+    values.push_back(std::move(autoValue));
+    values.push_back(std::move(ratio));
+    return CSSListValue::create(m_heap, std::move(values));
 }
 
 bool CSSParser::consumeFlex(CSSTokenStream& input, CSSPropertyList& properties, bool important)
