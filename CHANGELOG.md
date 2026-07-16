@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Add support for the CSS `aspect-ratio` property
+
 ## PlutoBook 0.19.0 (2026-08-04)
 
 - Fix several security vulnerabilities
