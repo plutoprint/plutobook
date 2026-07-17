@@ -243,8 +243,6 @@ CSSToken CSSTokenizer::consumeNumericToken()
     auto numberSign = CSSToken::NumberSign::None;
     double integer = 0;
     double fraction = 0;
-    double exponent = 0;
-    int expsign = 1;
 
     if(m_input.peek() == '-') {
         numberSign = CSSToken::NumberSign::Minus;
@@ -274,9 +272,12 @@ CSSToken CSSTokenizer::consumeNumericToken()
         fraction /= divisor;
     }
 
+    double value = (integer + fraction);
     if(isExponentSequence()) {
         numberType = CSSToken::NumberType::Number;
         m_input.advance();
+
+        int expsign = 1;
         if(m_input.peek() == '-') {
             expsign = -1;
             m_input.advance();
@@ -285,15 +286,16 @@ CSSToken CSSTokenizer::consumeNumericToken()
         }
 
         auto cc = m_input.peek();
+        double exponent = 0;
         do {
             exponent = 10.0 * exponent + (cc - '0');
             cc = m_input.consume();
         } while(isDigit(cc));
+        if(exponent) {
+            value *= std::pow(10.0, exponent * expsign);
+        }
     }
 
-    double value = (integer + fraction);
-    if(exponent)
-        value *= std::pow(10.0, exponent * expsign);
     if(numberSign == CSSToken::NumberSign::Minus)
         value = -value;
     float number = clampTo<float>(value);
