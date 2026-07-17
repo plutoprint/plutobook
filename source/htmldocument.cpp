@@ -353,11 +353,11 @@ static void addHTMLFontSizeAttributeStyle(std::string& output, std::string_view 
     do {
         value = value * 10 + input.front() - '0';
         input.remove_prefix(1);
-    } while(!input.empty() && isDigit(input.front()));
+    } while(!input.empty() && value < 10 && isDigit(input.front()));
 
-    if(hasPlusSign)
+    if(hasPlusSign) {
         value += 3;
-    else if(hasMinusSign) {
+    } else if(hasMinusSign) {
         value = 3 - value;
     }
 
