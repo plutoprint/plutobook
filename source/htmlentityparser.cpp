@@ -2434,7 +2434,8 @@ bool HTMLEntityParser::handleDecimal(char cc)
 {
     uint32_t codepoint = 0;
     do {
-        codepoint = codepoint * 10 + cc - '0';
+        if(codepoint <= 0x10FFFF)
+            codepoint = codepoint * 10 + cc - '0';
         cc = nextInputCharacter();
     } while(isDigit(cc));
     if(cc == ';')
@@ -2454,7 +2455,8 @@ bool HTMLEntityParser::handleHex(char cc)
 {
     uint32_t codepoint = 0;
     do {
-        codepoint = codepoint * 16 + toHexDigit(cc);
+        if(codepoint <= 0x10FFFF)
+            codepoint = codepoint * 16 + toHexDigit(cc);
         cc = nextInputCharacter();
     } while(isHexDigit(cc));
     if(cc == ';')
