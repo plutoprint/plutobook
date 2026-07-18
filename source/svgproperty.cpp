@@ -80,7 +80,7 @@ static bool parseNumber(std::string_view& input, T& output)
     constexpr T maxValue = std::numeric_limits<T>::max();
     T integer = 0;
     T fraction = 0;
-    int exponent = 0;
+    T exponent = 0;
     int sign = 1;
     int expsign = 1;
 
@@ -127,7 +127,7 @@ static bool parseNumber(std::string_view& input, T& output)
         if(input.empty() || !IS_NUM(input.front()))
             return false;
         do {
-            exponent = 10 * exponent + (input.front() - '0');
+            exponent = static_cast<T>(10) * exponent + (input.front() - '0');
             input.remove_prefix(1);
         } while(!input.empty() && IS_NUM(input.front()));
     }
