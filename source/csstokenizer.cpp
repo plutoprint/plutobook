@@ -263,13 +263,12 @@ CSSToken CSSTokenizer::consumeNumericToken()
     if(m_input.peek() == '.' && isDigit(m_input.peek(1))) {
         numberType = CSSToken::NumberType::Number;
         auto cc = m_input.consume();
-        double divisor = 1.0;
+        double scale = 1.0;
         do {
-            fraction = 10.0 * fraction + (cc - '0');
-            divisor *= 10.0;
+            scale *= 0.1;
+            fraction += scale * (cc - '0');
             cc = m_input.consume();
         } while(isDigit(cc));
-        fraction /= divisor;
     }
 
     double value = (integer + fraction);

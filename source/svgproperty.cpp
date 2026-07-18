@@ -103,13 +103,12 @@ static bool parseNumber(std::string_view& input, float& output)
         input.remove_prefix(1);
         if(input.empty() || !IS_NUM(input.front()))
             return false;
-        float divisor = 1.f;
+        float scale = 1.f;
         do {
-            fraction = 10.f * fraction + (input.front() - '0');
-            divisor *= 10.f;
+            scale *= 0.1f;
+            fraction += scale * (input.front() - '0');
             input.remove_prefix(1);
         } while(!input.empty() && IS_NUM(input.front()));
-        fraction /= divisor;
     }
 
     if(input.size() > 1 && (input[0] == 'e' || input[0] == 'E')
