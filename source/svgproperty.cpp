@@ -74,13 +74,12 @@ constexpr bool skipString(std::string_view& input, std::string_view value)
     return false;
 }
 
-template<typename T>
-static bool parseNumber(std::string_view& input, T& output)
+static bool parseNumber(std::string_view& input, float& output)
 {
-    constexpr T maxValue = std::numeric_limits<T>::max();
-    T integer = 0;
-    T fraction = 0;
-    T exponent = 0;
+    constexpr auto maxValue = std::numeric_limits<float>::max();
+    float integer = 0;
+    float fraction = 0;
+    float exponent = 0;
     int sign = 1;
     int expsign = 1;
 
@@ -95,7 +94,7 @@ static bool parseNumber(std::string_view& input, T& output)
         return false;
     if(IS_NUM(input.front())) {
         do {
-            integer = static_cast<T>(10) * integer + (input.front() - '0');
+            integer = 10.f * integer + (input.front() - '0');
             input.remove_prefix(1);
         } while(!input.empty() && IS_NUM(input.front()));
     }
@@ -104,10 +103,10 @@ static bool parseNumber(std::string_view& input, T& output)
         input.remove_prefix(1);
         if(input.empty() || !IS_NUM(input.front()))
             return false;
-        T divisor = static_cast<T>(1);
+        float divisor = 1.f;
         do {
-            fraction = static_cast<T>(10) * fraction + (input.front() - '0');
-            divisor *= static_cast<T>(10);
+            fraction = 10.f * fraction + (input.front() - '0');
+            divisor *= 10.f;
             input.remove_prefix(1);
         } while(!input.empty() && IS_NUM(input.front()));
         fraction /= divisor;
@@ -127,14 +126,14 @@ static bool parseNumber(std::string_view& input, T& output)
         if(input.empty() || !IS_NUM(input.front()))
             return false;
         do {
-            exponent = static_cast<T>(10) * exponent + (input.front() - '0');
+            exponent = 10.f * exponent + (input.front() - '0');
             input.remove_prefix(1);
         } while(!input.empty() && IS_NUM(input.front()));
     }
 
     output = sign * (integer + fraction);
     if(exponent)
-        output *= std::pow<T>(10, expsign * exponent);
+        output *= std::pow(10.f, expsign * exponent);
     return output >= -maxValue && output <= maxValue;
 }
 
