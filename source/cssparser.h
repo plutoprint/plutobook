@@ -62,8 +62,8 @@ private:
     bool consumeCounterStyleDescriptor(CSSTokenStream& input, CSSPropertyList& properties, CSSPropertyID id);
     bool consumeDescriptor(CSSTokenStream& input, CSSPropertyList& properties, CSSPropertyID id, bool important);
 
-    bool consumeDeclaraction(CSSTokenStream& input, CSSPropertyList& properties, CSSRuleType ruleType);
-    void consumeDeclaractionList(CSSTokenStream& input, CSSPropertyList& properties, CSSRuleType ruleType);
+    bool consumeDeclaration(CSSTokenStream& input, CSSPropertyList& properties, CSSRuleType ruleType);
+    void consumeDeclarationList(CSSTokenStream& input, CSSPropertyList& properties, CSSRuleType ruleType);
 
     void addProperty(CSSPropertyList& properties, CSSPropertyID id, bool important, RefPtr<CSSValue> value);
     void addExpandedProperty(CSSPropertyList& properties, CSSPropertyID id, bool important, RefPtr<CSSValue> value);

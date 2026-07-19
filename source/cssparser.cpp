@@ -36,7 +36,7 @@ CSSPropertyList CSSParser::parseStyle(std::string_view content)
     CSSPropertyList properties(m_heap);
     CSSTokenizer tokenizer(content);
     CSSTokenStream input(tokenizer.tokenize());
-    consumeDeclaractionList(input, properties, CSSRuleType::Style);
+    consumeDeclarationList(input, properties, CSSRuleType::Style);
     return properties;
 }
 
@@ -287,7 +287,7 @@ RefPtr<CSSStyleRule> CSSParser::consumeStyleRule(CSSTokenStream& input)
     if(!consumeSelectorList(prelude, selectors, false))
         return nullptr;
     CSSPropertyList properties(m_heap);
-    consumeDeclaractionList(block, properties, CSSRuleType::Style);
+    consumeDeclarationList(block, properties, CSSRuleType::Style);
     return CSSStyleRule::create(m_heap, std::move(selectors), std::move(properties));
 }
 
@@ -378,7 +378,7 @@ RefPtr<CSSFontFaceRule> CSSParser::consumeFontFaceRule(CSSTokenStream& prelude, 
     if(!prelude.empty())
         return nullptr;
     CSSPropertyList properties(m_heap);
-    consumeDeclaractionList(block, properties, CSSRuleType::FontFace);
+    consumeDeclarationList(block, properties, CSSRuleType::FontFace);
     return CSSFontFaceRule::create(m_heap, std::move(properties));
 }
 
@@ -392,7 +392,7 @@ RefPtr<CSSCounterStyleRule> CSSParser::consumeCounterStyleRule(CSSTokenStream& p
     if(!prelude.empty())
         return nullptr;
     CSSPropertyList properties(m_heap);
-    consumeDeclaractionList(block, properties, CSSRuleType::CounterStyle);
+    consumeDeclarationList(block, properties, CSSRuleType::CounterStyle);
     return CSSCounterStyleRule::create(m_heap, name, std::move(properties));
 }
 
@@ -414,7 +414,7 @@ RefPtr<CSSPageRule> CSSParser::consumePageRule(CSSTokenStream& prelude, CSSToken
                 margins.push_back(std::move(margin));
             break;
         default:
-            consumeDeclaraction(block, properties, CSSRuleType::Page);
+            consumeDeclaration(block, properties, CSSRuleType::Page);
             break;
         }
     }
@@ -462,7 +462,7 @@ RefPtr<CSSPageMarginRule> CSSParser::consumePageMarginRule(CSSTokenStream& input
     if(marginType == std::nullopt)
         return nullptr;
     CSSPropertyList properties(m_heap);
-    consumeDeclaractionList(block, properties, CSSRuleType::PageMargin);
+    consumeDeclarationList(block, properties, CSSRuleType::PageMargin);
     return CSSPageMarginRule::create(m_heap, marginType.value(), std::move(properties));
 }
 
@@ -1188,7 +1188,7 @@ static bool containsVariableReferences(CSSTokenStream input)
     return false;
 }
 
-bool CSSParser::consumeDeclaraction(CSSTokenStream& input, CSSPropertyList& properties, CSSRuleType ruleType)
+bool CSSParser::consumeDeclaration(CSSTokenStream& input, CSSPropertyList& properties, CSSRuleType ruleType)
 {
     auto begin = input.begin();
     while(!input.empty() && input->type() != CSSToken::Type::Semicolon) {
@@ -1253,7 +1253,7 @@ bool CSSParser::consumeDeclaraction(CSSTokenStream& input, CSSPropertyList& prop
     }
 }
 
-void CSSParser::consumeDeclaractionList(CSSTokenStream& input, CSSPropertyList& properties, CSSRuleType ruleType)
+void CSSParser::consumeDeclarationList(CSSTokenStream& input, CSSPropertyList& properties, CSSRuleType ruleType)
 {
     while(!input.empty()) {
         switch(input->type()) {
@@ -1262,7 +1262,7 @@ void CSSParser::consumeDeclaractionList(CSSTokenStream& input, CSSPropertyList& 
             input.consume();
             break;
         default:
-            consumeDeclaraction(input, properties, ruleType);
+            consumeDeclaration(input, properties, ruleType);
             break;
         }
     }
