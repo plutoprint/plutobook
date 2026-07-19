@@ -189,10 +189,7 @@ bool CSSParser::consumeMediaFeatures(CSSTokenStream& input, CSSMediaFeatureList&
 
 bool CSSParser::consumeMediaQuery(CSSTokenStream& input, CSSMediaQueryList& queries)
 {
-    auto begin = input.begin();
-    while(!input.empty() && input->type() != CSSToken::Type::Comma)
-        input.consumeComponent();
-    CSSTokenStream block(begin, input.begin());
+    auto block = input.consumeComponentsUntil<CSSToken::Type::Comma>();
 
     auto restrictor = consumeMediaRestrictor(block);
     auto type = consumeMediaType(block);
@@ -241,14 +238,7 @@ RefPtr<CSSRule> CSSParser::consumeAtRule(CSSTokenStream& input)
     assert(input->type() == CSSToken::Type::AtKeyword);
     auto name = input->data();
     input.consume();
-    auto preludeBegin = input.begin();
-    while(input->type() != CSSToken::Type::EndOfFile
-        && input->type() != CSSToken::Type::LeftCurlyBracket
-        && input->type() != CSSToken::Type::Semicolon) {
-        input.consumeComponent();
-    }
-
-    CSSTokenStream prelude(preludeBegin, input.begin());
+    auto prelude = input.consumeComponentsUntil<CSSToken::Type::LeftCurlyBracket, CSSToken::Type::Semicolon>();
     if(input->type() == CSSToken::Type::EndOfFile
         || input->type() == CSSToken::Type::Semicolon) {
         if(input->type() == CSSToken::Type::Semicolon)
@@ -274,15 +264,10 @@ RefPtr<CSSRule> CSSParser::consumeAtRule(CSSTokenStream& input)
 
 RefPtr<CSSStyleRule> CSSParser::consumeStyleRule(CSSTokenStream& input)
 {
-    auto preludeBegin = input.begin();
-    while(!input.empty() && input->type() != CSSToken::Type::LeftCurlyBracket) {
-        input.consumeComponent();
-    }
-
+    auto prelude = input.consumeComponentsUntil<CSSToken::Type::LeftCurlyBracket>();
     if(input.empty())
         return nullptr;
     CSSSelectorList selectors(m_heap);
-    CSSTokenStream prelude(preludeBegin, input.begin());
     auto block = input.consumeBlock();
     if(!consumeSelectorList(prelude, selectors, false))
         return nullptr;
@@ -427,14 +412,9 @@ RefPtr<CSSPageMarginRule> CSSParser::consumePageMarginRule(CSSTokenStream& input
     assert(input->type() == CSSToken::Type::AtKeyword);
     auto name = input->data();
     input.consume();
-    auto preludeBegin = input.begin();
-    while(!input.empty() && input->type() != CSSToken::Type::LeftCurlyBracket) {
-        input.consumeComponent();
-    }
-
+    auto prelude = input.consumeComponentsUntil<CSSToken::Type::LeftCurlyBracket>();
     if(input.empty())
         return nullptr;
-    CSSTokenStream prelude(preludeBegin, input.begin());
     auto block = input.consumeBlock();
     prelude.consumeWhitespace();
     if(!prelude.empty())
@@ -1190,12 +1170,7 @@ static bool containsVariableReferences(CSSTokenStream input)
 
 bool CSSParser::consumeDeclaration(CSSTokenStream& input, CSSPropertyList& properties, CSSRuleType ruleType)
 {
-    auto begin = input.begin();
-    while(!input.empty() && input->type() != CSSToken::Type::Semicolon) {
-        input.consumeComponent();
-    }
-
-    CSSTokenStream newInput(begin, input.begin());
+    auto newInput = input.consumeComponentsUntil<CSSToken::Type::Semicolon>();
     if(newInput->type() != CSSToken::Type::Ident)
         return false;
     auto name = newInput->data();

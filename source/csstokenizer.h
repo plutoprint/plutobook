@@ -202,6 +202,14 @@ public:
         }
     }
 
+    template<CSSToken::Type... Types>
+    CSSTokenStream consumeComponentsUntil() {
+        auto begin = m_begin;
+        while(m_begin < m_end && ((m_begin->type() != Types) && ...))
+            consumeComponent();
+        return CSSTokenStream(begin, m_begin);
+    }
+
     CSSTokenStream consumeBlock() {
         assert(m_begin < m_end);
         auto closeType = CSSToken::closeType(m_begin->type());
