@@ -166,7 +166,7 @@ uint32_t CSSTokenizer::consumeEscape()
             m_input.advance();
         }
 
-        if(cp == 0 || cp >= 0x10FFFF || (cp >= 0xD800 && cp <= 0xDFFF))
+        if(cp == 0 || cp > 0x10FFFF || (cp >= 0xD800 && cp <= 0xDFFF))
             return 0xFFFD;
         return cp;
     }
