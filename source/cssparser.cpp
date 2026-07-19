@@ -189,27 +189,25 @@ bool CSSParser::consumeMediaFeatures(CSSTokenStream& input, CSSMediaFeatureList&
 
 bool CSSParser::consumeMediaQuery(CSSTokenStream& input, CSSMediaQueryList& queries)
 {
-    auto block = input.consumeComponentsUntil<CSSToken::Type::Comma>();
-
-    auto restrictor = consumeMediaRestrictor(block);
-    auto type = consumeMediaType(block);
+    auto restrictor = consumeMediaRestrictor(input);
+    auto type = consumeMediaType(input);
 
     CSSMediaFeatureList features(m_heap);
     if(type == CSSMediaQuery::Type::None) {
         if(restrictor == CSSMediaQuery::Restrictor::Only)
             return false;
-        if(!consumeMediaFeatures(block, features)) {
+        if(!consumeMediaFeatures(input, features)) {
             return false;
         }
     } else {
-        if(consumeIdentIncludingWhitespace(block, "and", 3)) {
-            if(!consumeMediaFeatures(block, features)) {
+        if(consumeIdentIncludingWhitespace(input, "and", 3)) {
+            if(!consumeMediaFeatures(input, features)) {
                 return false;
             }
         }
     }
 
-    if(!block.empty())
+    if(!input.empty())
         return false;
     queries.emplace_front(restrictor, type, std::move(features));
     return true;
@@ -220,7 +218,8 @@ void CSSParser::consumeMediaQueries(CSSTokenStream& input, CSSMediaQueryList& qu
     input.consumeWhitespace();
     if(!input.empty()) {
         do {
-            if(!consumeMediaQuery(input, queries))
+            auto stream = input.consumeComponentsUntil<CSSToken::Type::Comma>();
+            if(!consumeMediaQuery(stream, queries))
                 queries.emplace_front(CSSMediaQuery::Restrictor::Not, CSSMediaQuery::Type::All);
         } while(input.consumeCommaIncludingWhitespace());
     }
@@ -239,26 +238,25 @@ RefPtr<CSSRule> CSSParser::consumeAtRule(CSSTokenStream& input)
     auto name = input->data();
     input.consume();
     auto prelude = input.consumeComponentsUntil<CSSToken::Type::LeftCurlyBracket, CSSToken::Type::Semicolon>();
-    if(input->type() == CSSToken::Type::EndOfFile
-        || input->type() == CSSToken::Type::Semicolon) {
-        if(input->type() == CSSToken::Type::Semicolon)
-            input.consume();
-        if(identMatches("import", 6, name))
-            return consumeImportRule(prelude);
-        if(identMatches("namespace", 9, name))
-            return consumeNamespaceRule(prelude);
+    if(input->type() == CSSToken::Type::LeftCurlyBracket) {
+        auto block = input.consumeBlock();
+        if(identMatches("font-face", 9, name))
+            return consumeFontFaceRule(prelude, block);
+        if(identMatches("media", 5, name))
+            return consumeMediaRule(prelude, block);
+        if(identMatches("counter-style", 13, name))
+            return consumeCounterStyleRule(prelude, block);
+        if(identMatches("page", 4, name))
+            return consumePageRule(prelude, block);
         return nullptr;
     }
 
-    auto block = input.consumeBlock();
-    if(identMatches("font-face", 9, name))
-        return consumeFontFaceRule(prelude, block);
-    if(identMatches("media", 5, name))
-        return consumeMediaRule(prelude, block);
-    if(identMatches("counter-style", 13, name))
-        return consumeCounterStyleRule(prelude, block);
-    if(identMatches("page", 4, name))
-        return consumePageRule(prelude, block);
+    if(input->type() == CSSToken::Type::Semicolon)
+        input.consume();
+    if(identMatches("import", 6, name))
+        return consumeImportRule(prelude);
+    if(identMatches("namespace", 9, name))
+        return consumeNamespaceRule(prelude);
     return nullptr;
 }
 
@@ -1170,19 +1168,21 @@ static bool containsVariableReferences(CSSTokenStream input)
 
 bool CSSParser::consumeDeclaration(CSSTokenStream& input, CSSPropertyList& properties, CSSRuleType ruleType)
 {
-    auto newInput = input.consumeComponentsUntil<CSSToken::Type::Semicolon>();
-    if(newInput->type() != CSSToken::Type::Ident)
+    auto stream = input.consumeComponentsUntil<CSSToken::Type::Semicolon>();
+    if(stream->type() != CSSToken::Type::Ident)
         return false;
-    auto name = newInput->data();
+    auto name = stream->data();
     auto id = CSSProperty::id(name);
     if(id == CSSPropertyID::Unknown)
         return false;
-    newInput.consumeIncludingWhitespace();
-    if(newInput->type() != CSSToken::Type::Colon)
+    stream.consumeIncludingWhitespace();
+    if(stream->type() != CSSToken::Type::Colon)
         return false;
-    newInput.consumeIncludingWhitespace();
-    auto valueBegin = newInput.begin();
-    auto valueEnd = newInput.end();
+    stream.consumeIncludingWhitespace();
+
+    auto valueBegin = stream.begin();
+    auto valueEnd = stream.end();
+
     auto it = valueEnd - 1;
     while(it->type() == CSSToken::Type::Whitespace) {
         --it;
