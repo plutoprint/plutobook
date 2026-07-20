@@ -300,8 +300,8 @@ void SVGSVGElement::collectAttributeStyle(std::string& output, const GlobalStrin
 {
     if(name == transformAttr && isSVGRootNode()) {
         addSVGTransformAttributeStyle(output, transform());
-    } else if(isSVGRootNode() && (name == widthAttr || name == heightAttr)) {
         addSVGAttributeStyle(output, name, value);
+    } else if((name == widthAttr || name == heightAttr) && isSVGRootNode()) {
     } else {
         SVGElement::collectAttributeStyle(output, name, value);
     }
