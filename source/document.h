@@ -202,12 +202,13 @@ public:
     const HeapString& getAttribute(const GlobalString& name) const;
     Url getUrlAttribute(const GlobalString& name) const;
 
+    virtual void parseAttribute(const GlobalString& name, const HeapString& value);
+
     void setAttributes(const AttributeList& attributes);
     void setAttribute(const Attribute& attribute);
     void setAttribute(const GlobalString& name, const HeapString& value);
     void removeAttribute(const GlobalString& name);
 
-    virtual void parseAttribute(const GlobalString& name, const HeapString& value);
     virtual void collectAttributeStyle(std::string& output, const GlobalString& name, const HeapString& value) const {}
     virtual void collectAdditionalAttributeStyle(std::string& output) const {}
 

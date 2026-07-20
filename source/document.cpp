@@ -341,6 +341,34 @@ Url Element::getUrlAttribute(const GlobalString& name) const
     return Url();
 }
 
+void Element::parseAttribute(const GlobalString& name, const HeapString& value)
+{
+    if(name == idAttr) {
+        if(!m_id.empty())
+            document()->removeElementById(m_id, this);
+        if(!value.empty()) {
+            document()->addElementById(value, this);
+        }
+
+        m_id = value;
+    } else if(name == classAttr) {
+        m_classNames.clear();
+
+        size_t begin = 0;
+        while(true) {
+            while(begin < value.size() && isSpace(value[begin]))
+                ++begin;
+            if(begin >= value.size())
+                break;
+            size_t end = begin + 1;
+            while(end < value.size() && !isSpace(value[end]))
+                ++end;
+            m_classNames.push_front(value.substring(begin, end - begin));
+            begin = end + 1;
+        }
+    }
+}
+
 void Element::setAttributes(const AttributeList& attributes)
 {
     assert(m_attributes.empty());
@@ -373,34 +401,6 @@ void Element::removeAttribute(const GlobalString& name)
     m_attributes.remove_if([&name](const auto& attribute) {
         return name == attribute.name();
     });
-}
-
-void Element::parseAttribute(const GlobalString& name, const HeapString& value)
-{
-    if(name == idAttr) {
-        if(!m_id.empty())
-            document()->removeElementById(m_id, this);
-        if(!value.empty()) {
-            document()->addElementById(value, this);
-        }
-
-        m_id = value;
-    } else if(name == classAttr) {
-        m_classNames.clear();
-
-        size_t begin = 0;
-        while(true) {
-            while(begin < value.size() && isSpace(value[begin]))
-                ++begin;
-            if(begin >= value.size())
-                break;
-            size_t end = begin + 1;
-            while(end < value.size() && !isSpace(value[end]))
-                ++end;
-            m_classNames.push_front(value.substring(begin, end - begin));
-            begin = end + 1;
-        }
-    }
 }
 
 CSSPropertyList Element::inlineStyle()
