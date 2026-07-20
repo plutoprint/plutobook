@@ -212,6 +212,9 @@ public:
     virtual void collectAttributeStyle(std::string& output, const GlobalString& name, const HeapString& value) const {}
     virtual void collectAdditionalAttributeStyle(std::string& output) const {}
 
+    static void addAttributeStyle(std::string& output, std::string_view name, std::string_view value);
+    static void addAttributeStyle(std::string& output, const char* name, const char* value);
+
     CSSPropertyList inlineStyle();
     CSSPropertyList presentationAttributeStyle();
 

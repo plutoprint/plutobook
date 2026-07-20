@@ -33,16 +33,6 @@ void SVGElement::parseAttribute(const GlobalString& name, const HeapString& valu
     }
 }
 
-static void addSVGAttributeStyle(std::string& output, std::string_view name, std::string_view value)
-{
-    if(value.empty())
-        return;
-    output += name;
-    output += ':';
-    output += value;
-    output += ';';
-}
-
 void SVGElement::collectAttributeStyle(std::string& output, const GlobalString& name, const HeapString& value) const
 {
     static const std::set<GlobalString> presentationAttrs = {
@@ -95,7 +85,7 @@ void SVGElement::collectAttributeStyle(std::string& output, const GlobalString& 
     };
 
     if(presentationAttrs.contains(name)) {
-        addSVGAttributeStyle(output, name, value);
+        addAttributeStyle(output, name, value);
     } else {
         Element::collectAttributeStyle(output, name, value);
     }
@@ -300,8 +290,8 @@ void SVGSVGElement::collectAttributeStyle(std::string& output, const GlobalStrin
 {
     if(name == transformAttr && isSVGRootNode()) {
         addSVGTransformAttributeStyle(output, transform());
-        addSVGAttributeStyle(output, name, value);
     } else if((name == widthAttr || name == heightAttr) && isSVGRootNode()) {
+        addAttributeStyle(output, name, value);
     } else {
         SVGElement::collectAttributeStyle(output, name, value);
     }

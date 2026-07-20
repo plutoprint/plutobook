@@ -403,6 +403,30 @@ void Element::removeAttribute(const GlobalString& name)
     });
 }
 
+void Element::addAttributeStyle(std::string& output, std::string_view name, std::string_view value)
+{
+    if(value.empty())
+        return;
+    for(auto cc : value) {
+        if(cc == ':' || cc == ';') {
+            return;
+        }
+    }
+
+    output += name;
+    output += ':';
+    output += value;
+    output += ';';
+}
+
+void Element::addAttributeStyle(std::string& output, const char* name, const char* value)
+{
+    output += name;
+    output += ':';
+    output += value;
+    output += ';';
+}
+
 CSSPropertyList Element::inlineStyle()
 {
     const auto& value = getAttribute(styleAttr);

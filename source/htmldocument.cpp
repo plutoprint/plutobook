@@ -182,24 +182,14 @@ void HTMLElement::buildBox(Counters& counters, SelectorFilter& selectorFilter, B
     buildElementBox(counters, selectorFilter, box);
 }
 
-static void addHTMLAttributeStyle(std::string& output, std::string_view name, std::string_view value)
-{
-    if(value.empty())
-        return;
-    output += name;
-    output += ':';
-    output += value;
-    output += ';';
-}
-
 void HTMLElement::collectAttributeStyle(std::string& output, const GlobalString& name, const HeapString& value) const
 {
     if(name == hiddenAttr) {
-        addHTMLAttributeStyle(output, "display", "none");
+        addAttributeStyle(output, "display", "none");
     } else if(name == alignAttr) {
-        addHTMLAttributeStyle(output, "text-align", value);
+        addAttributeStyle(output, "text-align", value);
     } else if(name == langAttr) {
-        addHTMLAttributeStyle(output, "-pluto-lang", value);
+        addAttributeStyle(output, "-pluto-lang", value);
     } else {
         Element::collectAttributeStyle(output, name, value);
     }
@@ -304,11 +294,17 @@ static void addHTMLUrlAttributeStyle(std::string& output, std::string_view name,
 {
     if(value.empty())
         return;
+    for(auto cc : value) {
+        if(cc == '\'') {
+            return;
+        }
+    }
+
     output += name;
     output += ':';
-    output += "url(";
+    output += "url('";
     output += value;
-    output += ");";
+    output += "');";
 }
 
 HTMLBodyElement::HTMLBodyElement(Document* document)
@@ -319,9 +315,9 @@ HTMLBodyElement::HTMLBodyElement(Document* document)
 void HTMLBodyElement::collectAttributeStyle(std::string& output, const GlobalString& name, const HeapString& value) const
 {
     if(name == textAttr) {
-        addHTMLAttributeStyle(output, "color", value);
+        addAttributeStyle(output, "color", value);
     } else if(name == bgcolorAttr) {
-        addHTMLAttributeStyle(output, "background-color", value);
+        addAttributeStyle(output, "background-color", value);
     } else if(name == backgroundAttr) {
         addHTMLUrlAttributeStyle(output, "background-image", value);
     } else {
@@ -400,9 +396,9 @@ void HTMLFontElement::collectAttributeStyle(std::string& output, const GlobalStr
     if(name == sizeAttr) {
         addHTMLFontSizeAttributeStyle(output, value);
     } else if(name == faceAttr) {
-        addHTMLAttributeStyle(output, "font-family", value);
+        addAttributeStyle(output, "font-family", value);
     } else if(name == colorAttr) {
-        addHTMLAttributeStyle(output, "color", value);
+        addAttributeStyle(output, "color", value);
     } else {
         HTMLElement::collectAttributeStyle(output, name, value);
     }
@@ -427,9 +423,9 @@ void HTMLImageElement::collectAttributeStyle(std::string& output, const GlobalSt
         addHTMLLengthAttributeStyle(output, "margin-bottom", value);
     } else if(name == borderAttr) {
         addHTMLLengthAttributeStyle(output, "border-width", value);
-        addHTMLAttributeStyle(output, "border-style", "solid");
+        addAttributeStyle(output, "border-style", "solid");
     } else if(name == valignAttr) {
-        addHTMLAttributeStyle(output, "vertical-align", value);
+        addAttributeStyle(output, "vertical-align", value);
     } else {
         HTMLElement::collectAttributeStyle(output, name, value);
     }
@@ -486,22 +482,22 @@ void HTMLHRElement::collectAttributeStyle(std::string& output, const GlobalStrin
     } else if(name == alignAttr) {
         if(equalsIgnoringCase(value, "left")) {
             addHTMLLengthAttributeStyle(output, "margin-left", 0);
-            addHTMLAttributeStyle(output, "margin-right", "auto");
+            addAttributeStyle(output, "margin-right", "auto");
         } else if(equalsIgnoringCase(value, "right")) {
-            addHTMLAttributeStyle(output, "margin-left", "auto");
+            addAttributeStyle(output, "margin-left", "auto");
             addHTMLLengthAttributeStyle(output, "margin-right", 0);
         } else {
-            addHTMLAttributeStyle(output, "margin-left", "auto");
-            addHTMLAttributeStyle(output, "margin-right", "auto");
+            addAttributeStyle(output, "margin-left", "auto");
+            addAttributeStyle(output, "margin-right", "auto");
         }
     } else if(name == colorAttr) {
-        addHTMLAttributeStyle(output, "border-style", "solid");
-        addHTMLAttributeStyle(output, "border-color", value);
-        addHTMLAttributeStyle(output, "background-color", value);
+        addAttributeStyle(output, "border-style", "solid");
+        addAttributeStyle(output, "border-color", value);
+        addAttributeStyle(output, "background-color", value);
     } else if(name == noshadeAttr) {
-        addHTMLAttributeStyle(output, "border-style", "solid");
-        addHTMLAttributeStyle(output, "border-color", "darkgray");
-        addHTMLAttributeStyle(output, "background-color", "darkgray");
+        addAttributeStyle(output, "border-style", "solid");
+        addAttributeStyle(output, "border-color", "darkgray");
+        addAttributeStyle(output, "background-color", "darkgray");
     } else {
         HTMLElement::collectAttributeStyle(output, name, value);
     }
@@ -557,7 +553,7 @@ std::string_view listTypeAttributeToStyleName(std::string_view value)
 void HTMLLIElement::collectAttributeStyle(std::string& output, const GlobalString& name, const HeapString& value) const
 {
     if(name == typeAttr) {
-        addHTMLAttributeStyle(output, "list-style-type", listTypeAttributeToStyleName(value));
+        addAttributeStyle(output, "list-style-type", listTypeAttributeToStyleName(value));
     } else {
         HTMLElement::collectAttributeStyle(output, name, value);
     }
@@ -576,7 +572,7 @@ int HTMLOLElement::start() const
 void HTMLOLElement::collectAttributeStyle(std::string& output, const GlobalString& name, const HeapString& value) const
 {
     if(name == typeAttr) {
-        addHTMLAttributeStyle(output, "list-style-type", listTypeAttributeToStyleName(value));
+        addAttributeStyle(output, "list-style-type", listTypeAttributeToStyleName(value));
     } else {
         HTMLElement::collectAttributeStyle(output, name, value);
     }
@@ -609,29 +605,29 @@ void HTMLTableElement::collectAdditionalCellAttributeStyle(std::string& output) 
     }
 
     if(m_border > 0 && m_rules == Rules::Unset) {
-        addHTMLAttributeStyle(output, "border-width", "thin");
-        addHTMLAttributeStyle(output, "border-style", "inset");
-        addHTMLAttributeStyle(output, "border-color", "inherit");
+        addAttributeStyle(output, "border-width", "thin");
+        addAttributeStyle(output, "border-style", "inset");
+        addAttributeStyle(output, "border-color", "inherit");
     } else {
         switch(m_rules) {
         case Rules::Rows:
-            addHTMLAttributeStyle(output, "border-top-width", "thin");
-            addHTMLAttributeStyle(output, "border-bottom-width", "thin");
-            addHTMLAttributeStyle(output, "border-top-style", "solid");
-            addHTMLAttributeStyle(output, "border-bottom-style", "solid");
-            addHTMLAttributeStyle(output, "border-color", "inherit");
+            addAttributeStyle(output, "border-top-width", "thin");
+            addAttributeStyle(output, "border-bottom-width", "thin");
+            addAttributeStyle(output, "border-top-style", "solid");
+            addAttributeStyle(output, "border-bottom-style", "solid");
+            addAttributeStyle(output, "border-color", "inherit");
             break;
         case Rules::Cols:
-            addHTMLAttributeStyle(output, "border-left-width", "thin");
-            addHTMLAttributeStyle(output, "border-right-width", "thin");
-            addHTMLAttributeStyle(output, "border-left-style", "solid");
-            addHTMLAttributeStyle(output, "border-right-style", "solid");
-            addHTMLAttributeStyle(output, "border-color", "inherit");
+            addAttributeStyle(output, "border-left-width", "thin");
+            addAttributeStyle(output, "border-right-width", "thin");
+            addAttributeStyle(output, "border-left-style", "solid");
+            addAttributeStyle(output, "border-right-style", "solid");
+            addAttributeStyle(output, "border-color", "inherit");
             break;
         case Rules::All:
-            addHTMLAttributeStyle(output, "border-width", "thin");
-            addHTMLAttributeStyle(output, "border-style", "solid");
-            addHTMLAttributeStyle(output, "border-color", "inherit");
+            addAttributeStyle(output, "border-width", "thin");
+            addAttributeStyle(output, "border-style", "solid");
+            addAttributeStyle(output, "border-color", "inherit");
             break;
         default:
             break;
@@ -642,20 +638,20 @@ void HTMLTableElement::collectAdditionalCellAttributeStyle(std::string& output) 
 void HTMLTableElement::collectAdditionalRowGroupAttributeStyle(std::string& output) const
 {
     if(m_rules == Rules::Groups) {
-        addHTMLAttributeStyle(output, "border-top-width", "thin");
-        addHTMLAttributeStyle(output, "border-bottom-width", "thin");
-        addHTMLAttributeStyle(output, "border-top-style", "solid");
-        addHTMLAttributeStyle(output, "border-bottom-style", "solid");
+        addAttributeStyle(output, "border-top-width", "thin");
+        addAttributeStyle(output, "border-bottom-width", "thin");
+        addAttributeStyle(output, "border-top-style", "solid");
+        addAttributeStyle(output, "border-bottom-style", "solid");
     }
 }
 
 void HTMLTableElement::collectAdditionalColGroupAttributeStyle(std::string& output) const
 {
     if(m_rules == Rules::Groups) {
-        addHTMLAttributeStyle(output, "border-left-width", "thin");
-        addHTMLAttributeStyle(output, "border-right-width", "thin");
-        addHTMLAttributeStyle(output, "border-left-style", "solid");
-        addHTMLAttributeStyle(output, "border-right-style", "solid");
+        addAttributeStyle(output, "border-left-width", "thin");
+        addAttributeStyle(output, "border-right-width", "thin");
+        addAttributeStyle(output, "border-left-style", "solid");
+        addAttributeStyle(output, "border-right-style", "solid");
     }
 }
 
@@ -663,7 +659,7 @@ void HTMLTableElement::collectAdditionalAttributeStyle(std::string& output) cons
 {
     HTMLElement::collectAdditionalAttributeStyle(output);
     if(m_rules > Rules::Unset) {
-        addHTMLAttributeStyle(output, "border-collapse", "collapse");
+        addAttributeStyle(output, "border-collapse", "collapse");
     }
 
     if(m_frame > Frame::Unset) {
@@ -699,17 +695,17 @@ void HTMLTableElement::collectAdditionalAttributeStyle(std::string& output) cons
             break;
         }
 
-        addHTMLAttributeStyle(output, "border-width", "thin");
-        addHTMLAttributeStyle(output, "border-top-style", topStyle);
-        addHTMLAttributeStyle(output, "border-bottom-style", bottomStyle);
-        addHTMLAttributeStyle(output, "border-left-style", leftStyle);
-        addHTMLAttributeStyle(output, "border-right-style", rightStyle);
+        addAttributeStyle(output, "border-width", "thin");
+        addAttributeStyle(output, "border-top-style", topStyle);
+        addAttributeStyle(output, "border-bottom-style", bottomStyle);
+        addAttributeStyle(output, "border-left-style", leftStyle);
+        addAttributeStyle(output, "border-right-style", rightStyle);
     } else {
         if(m_border > 0) {
             addHTMLLengthAttributeStyle(output, "border-width", m_border);
-            addHTMLAttributeStyle(output, "border-style", "outset");
+            addAttributeStyle(output, "border-style", "outset");
         } else if(m_rules > Rules::Unset) {
-            addHTMLAttributeStyle(output, "border-style", "hidden");
+            addAttributeStyle(output, "border-style", "hidden");
         }
     }
 }
@@ -721,13 +717,13 @@ void HTMLTableElement::collectAttributeStyle(std::string& output, const GlobalSt
     } else if(name == heightAttr) {
         addHTMLLengthAttributeStyle(output, "height", value);
     } else if(name == valignAttr) {
-        addHTMLAttributeStyle(output, "vertical-align", value);
+        addAttributeStyle(output, "vertical-align", value);
     } else if(name == cellspacingAttr) {
         addHTMLLengthAttributeStyle(output, "border-spacing", value);
     } else if(name == bordercolorAttr) {
-        addHTMLAttributeStyle(output, "border-color", value);
+        addAttributeStyle(output, "border-color", value);
     } else if(name == bgcolorAttr) {
-        addHTMLAttributeStyle(output, "background-color", value);
+        addAttributeStyle(output, "background-color", value);
     } else if(name == backgroundAttr) {
         addHTMLUrlAttributeStyle(output, "background-image", value);
     } else {
@@ -791,9 +787,9 @@ void HTMLTablePartElement::collectAttributeStyle(std::string& output, const Glob
     if(name == heightAttr) {
         addHTMLLengthAttributeStyle(output, "height", value);
     } else if(name == valignAttr) {
-        addHTMLAttributeStyle(output, "vertical-align", value);
+        addAttributeStyle(output, "vertical-align", value);
     } else if(name == bgcolorAttr) {
-        addHTMLAttributeStyle(output, "background-color", value);
+        addAttributeStyle(output, "background-color", value);
     } else if(name == backgroundAttr) {
         addHTMLUrlAttributeStyle(output, "background-image", value);
     } else {
