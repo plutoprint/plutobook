@@ -9,22 +9,95 @@
 #ifndef PLUTOBOOK_STRINGUTILS_H
 #define PLUTOBOOK_STRINGUTILS_H
 
+#include <array>
 #include <string>
 #include <cstdint>
 
 namespace plutobook {
 
-constexpr bool isSpace(uint8_t cc) { return (cc == ' ' || cc == '\n' || cc == '\t' || cc == '\r' || cc == '\f'); }
-constexpr bool isDigit(uint8_t cc) { return (cc >= '0' && cc <= '9'); }
-constexpr bool isUpper(uint8_t cc) { return (cc >= 'A' && cc <= 'Z'); }
-constexpr bool isLower(uint8_t cc) { return (cc >= 'a' && cc <= 'z'); }
-constexpr bool isAlpha(uint8_t cc) { return isUpper(cc) || isLower(cc); }
-constexpr bool isAlnum(uint8_t cc) { return isDigit(cc) || isAlpha(cc); }
+enum CharFlags : uint8_t {
+    Space    = 1 << 0,
+    Digit    = 1 << 1,
+    Upper    = 1 << 2,
+    Lower    = 1 << 3,
+    HexUpper = 1 << 4,
+    HexLower = 1 << 5
+};
 
-constexpr bool isHexUpper(uint8_t cc) { return (cc >= 'A' && cc <= 'F'); }
-constexpr bool isHexLower(uint8_t cc) { return (cc >= 'a' && cc <= 'f'); }
-constexpr bool isHexAlpha(uint8_t cc) { return isHexUpper(cc) || isHexLower(cc); }
-constexpr bool isHexDigit(uint8_t cc) { return isDigit(cc) || isHexAlpha(cc); }
+constexpr std::array<uint8_t, 256> createCharTable()
+{
+    std::array<uint8_t, 256> table{};
+
+    table[' ']  |= Space;
+    table['\n'] |= Space;
+    table['\t'] |= Space;
+    table['\r'] |= Space;
+    table['\f'] |= Space;
+
+    for(uint8_t c = '0'; c <= '9'; ++c)
+        table[c] |= Digit;
+    for(uint8_t c = 'A'; c <= 'Z'; ++c)
+        table[c] |= Upper;
+    for(uint8_t c = 'a'; c <= 'z'; ++c)
+        table[c] |= Lower;
+    for(uint8_t c = 'A'; c <= 'F'; ++c)
+        table[c] |= HexUpper;
+    for(uint8_t c = 'a'; c <= 'f'; ++c)
+        table[c] |= HexLower;
+    return table;
+}
+
+constexpr auto kCharTable = createCharTable();
+
+constexpr bool isSpace(uint8_t c)
+{
+    return kCharTable[c] & Space;
+}
+
+constexpr bool isDigit(uint8_t c)
+{
+    return kCharTable[c] & Digit;
+}
+
+constexpr bool isUpper(uint8_t c)
+{
+    return kCharTable[c] & Upper;
+}
+
+constexpr bool isLower(uint8_t c)
+{
+    return kCharTable[c] & Lower;
+}
+
+constexpr bool isAlpha(uint8_t c)
+{
+    return kCharTable[c] & (Upper | Lower);
+}
+
+constexpr bool isAlnum(uint8_t c)
+{
+    return kCharTable[c] & (Digit | Upper | Lower);
+}
+
+constexpr bool isHexUpper(uint8_t c)
+{
+    return kCharTable[c] & HexUpper;
+}
+
+constexpr bool isHexLower(uint8_t c)
+{
+    return kCharTable[c] & HexLower;
+}
+
+constexpr bool isHexAlpha(uint8_t c)
+{
+    return kCharTable[c] & (HexUpper | HexLower);
+}
+
+constexpr bool isHexDigit(uint8_t c)
+{
+    return kCharTable[c] & (Digit | HexUpper | HexLower);
+}
 
 constexpr uint8_t toHexDigit(uint8_t cc)
 {
