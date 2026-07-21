@@ -8,26 +8,23 @@
 
 #include "svgproperty.h"
 #include "svgdocument.h"
+#include "stringutils.h"
 #include "boxstyle.h"
 
 #include <cmath>
 
 namespace plutobook {
 
-constexpr bool IS_NUM(int cc) { return cc >= '0' && cc <= '9'; }
-constexpr bool IS_ALPHA(int cc) { return (cc >= 'a' && cc <= 'z') || (cc >= 'A' && cc <= 'Z'); }
-constexpr bool IS_WS(int cc) { return cc == ' ' || cc == '\t' || cc == '\n' || cc == '\r'; }
-
 constexpr void skipLeadingSpaces(std::string_view& input)
 {
-    while(!input.empty() && IS_WS(input.front())) {
+    while(!input.empty() && isSpace(input.front())) {
         input.remove_prefix(1);
     }
 }
 
 constexpr void skipTrailingSpaces(std::string_view& input)
 {
-    while(!input.empty() && IS_WS(input.back())) {
+    while(!input.empty() && isSpace(input.back())) {
         input.remove_suffix(1);
     }
 }
@@ -40,14 +37,14 @@ constexpr void skipLeadingAndTrailingSpaces(std::string_view& input)
 
 constexpr bool skipOptionalSpaces(std::string_view& input)
 {
-    while(!input.empty() && IS_WS(input.front()))
+    while(!input.empty() && isSpace(input.front()))
         input.remove_prefix(1);
     return !input.empty();
 }
 
 constexpr bool skipOptionalSpacesOrDelimiter(std::string_view& input, char delimiter)
 {
-    if(!input.empty() && !IS_WS(input.front()) && delimiter != input.front())
+    if(!input.empty() && !isSpace(input.front()) && delimiter != input.front())
         return false;
     if(skipOptionalSpaces(input)) {
         if(delimiter == input.front()) {
@@ -90,25 +87,25 @@ static bool parseNumber(std::string_view& input, float& output)
         sign = -1;
     }
 
-    if(input.empty() || (!IS_NUM(input.front()) && input.front() != '.'))
+    if(input.empty() || (!isDigit(input.front()) && input.front() != '.'))
         return false;
-    if(IS_NUM(input.front())) {
+    if(isDigit(input.front())) {
         do {
             integer = 10.f * integer + (input.front() - '0');
             input.remove_prefix(1);
-        } while(!input.empty() && IS_NUM(input.front()));
+        } while(!input.empty() && isDigit(input.front()));
     }
 
     if(!input.empty() && input.front() == '.') {
         input.remove_prefix(1);
-        if(input.empty() || !IS_NUM(input.front()))
+        if(input.empty() || !isDigit(input.front()))
             return false;
         float scale = 1.f;
         do {
             scale *= 0.1f;
             fraction += scale * (input.front() - '0');
             input.remove_prefix(1);
-        } while(!input.empty() && IS_NUM(input.front()));
+        } while(!input.empty() && isDigit(input.front()));
     }
 
     if(input.size() > 1 && (input[0] == 'e' || input[0] == 'E')
@@ -122,12 +119,12 @@ static bool parseNumber(std::string_view& input, float& output)
             expsign = -1;
         }
 
-        if(input.empty() || !IS_NUM(input.front()))
+        if(input.empty() || !isDigit(input.front()))
             return false;
         do {
             exponent = 10.f * exponent + (input.front() - '0');
             input.remove_prefix(1);
-        } while(!input.empty() && IS_NUM(input.front()));
+        } while(!input.empty() && isDigit(input.front()));
     }
 
     output = sign * (integer + fraction);
@@ -360,7 +357,7 @@ bool SVGLengthList::parse(std::string_view input)
     skipLeadingSpaces(input);
     while(!input.empty()) {
         size_t count = 0;
-        while(count < input.length() && input[count] != ',' && !IS_WS(input[count]))
+        while(count < input.length() && input[count] != ',' && !isSpace(input[count]))
             ++count;
         if(count == 0)
             break;
@@ -566,7 +563,7 @@ bool SVGPath::parse(std::string_view input)
     int command = 0;
     int lastCommand = 0;
     while(!input.empty()) {
-        if(IS_ALPHA(input.front())) {
+        if(isAlpha(input.front())) {
             command = input.front();
             input.remove_prefix(1);
             skipOptionalSpaces(input);
