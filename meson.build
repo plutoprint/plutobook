@@ -18,12 +18,6 @@ icuuc_dep = dependency('icu-uc',
     fallback: ['icu', 'icuuc_dep']
 )
 
-icui18n_dep = dependency('icu-i18n',
-    required: true,
-    version: icu_required_version,
-    fallback: ['icu', 'icui18n_dep']
-)
-
 freetype_dep = dependency('freetype2',
     required: true,
     version: '>=9.7.3',
@@ -86,7 +80,6 @@ cairo_dep = dependency('cairo',
 plutobook_deps = [
     expat_dep,
     icuuc_dep,
-    icui18n_dep,
     freetype_dep,
     fontconfig_dep,
     harfbuzz_dep,
