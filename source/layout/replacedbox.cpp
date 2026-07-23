@@ -22,6 +22,14 @@ ReplacedBox::ReplacedBox(Node* node, const RefPtr<BoxStyle>& style)
 void ReplacedBox::computeAspectRatioInformation(float& intrinsicWidth, float& intrinsicHeight, double& intrinsicRatio) const
 {
     computeIntrinsicRatioInformation(intrinsicWidth, intrinsicHeight, intrinsicRatio);
+
+    // A CSS 'aspect-ratio' overrides the natural ratio unless 'auto' was
+    // specified and the element actually has a natural ratio of its own.
+    auto aspectRatio = style()->aspectRatio();
+    if(aspectRatio.value > 0.0 && (!aspectRatio.isAuto || intrinsicRatio == 0.0)) {
+        intrinsicRatio = aspectRatio.value;
+    }
+
     if(intrinsicRatio && intrinsicWidth && intrinsicHeight && style()->height().isAuto() && style()->width().isAuto()) {
         auto constrainedWidth = constrainReplacedWidth(intrinsicWidth);
         auto constrainedHeight = constrainReplacedHeight(intrinsicHeight);
