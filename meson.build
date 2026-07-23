@@ -196,6 +196,7 @@ plutobook_sources = [
     'source/htmlentityparser.cpp',
     'source/htmlparser.cpp',
     'source/htmltokenizer.cpp',
+    'source/hyphenator.cpp',
     'source/localedata.cpp',
     'source/plutobook.cc',
     'source/plutobook.cpp',
@@ -227,6 +228,42 @@ plutobook_cpp_args += cpp.get_supported_arguments(
     '-Wno-unused-function',
     '-Wno-unused-variable'
 )
+
+# libhyphen has no pkg-config file on most distributions, so probe the header
+# and library directly. When absent, `hyphens: auto` degrades to `manual`.
+hyphen_option = get_option('hyphen')
+if hyphen_option.disabled()
+    hyphen_dep = dependency('', required: false)
+elif cpp.has_header('hyphen.h')
+    hyphen_dep = cpp.find_library('hyphen', required: hyphen_option)
+elif hyphen_option.enabled()
+    error('hyphen support was requested but <hyphen.h> could not be found')
+else
+    hyphen_dep = dependency('', required: false)
+endif
+
+if hyphen_dep.found()
+    plutobook_deps += [hyphen_dep]
+    plutobook_cpp_args += ['-DPLUTOBOOK_HAS_HYPHEN']
+
+    # Embed the selected dictionaries as a build-time fallback for systems
+    # without them installed (en-US only by default).
+    embed_dicts_args = []
+    embed_dicts_inputs = []
+    foreach lang : get_option('hyphen-embed-dicts')
+        dict_file = files('dicts' / ('hyph_' + lang.replace('-', '_') + '.dic'))
+        embed_dicts_args += [lang, dict_file]
+        embed_dicts_inputs += dict_file
+    endforeach
+
+    hyphen_dicts = custom_target('hyphendicts',
+        input: embed_dicts_inputs,
+        output: 'hyphendicts.cpp',
+        command: [find_program('python3'), files('tools/embed_dicts.py'), '@OUTPUT@', embed_dicts_args]
+    )
+
+    plutobook_sources += hyphen_dicts
+endif
 
 plutobook_compile_args = []
 
