@@ -746,7 +746,7 @@ static const HeapString& counterStyleSymbol(const CSSValue& value)
     return emptyGlo;
 }
 
-std::string CSSCounterStyle::generateInitialRepresentation(int value) const
+std::string CSSCounterStyle::generateInitialRepresentation(unsigned int value) const
 {
     std::string representation;
     if(system() == CSSValueID::Additive) {
@@ -836,7 +836,7 @@ std::string CSSCounterStyle::generateRepresentation(int value) const
 {
     if(!rangeContains(value))
         return generateFallbackRepresentation(value);
-    auto initialRepresentation = generateInitialRepresentation(std::abs(value));
+    auto initialRepresentation = generateInitialRepresentation(std::llabs(value));
     if(initialRepresentation.empty()) {
         return generateFallbackRepresentation(value);
     }
