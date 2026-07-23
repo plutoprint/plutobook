@@ -444,11 +444,11 @@ std::unique_ptr<LocaleData::Quotes> LocaleData::Quotes::create(const char* lang)
     };
 
     auto compare_func = [](const auto& quote, const char* lang) {
-        return strcmp(quote.lang, lang) < 0;
+        return std::strcmp(quote.lang, lang) < 0;
     };
 
     auto quote = std::lower_bound(quotes, std::end(quotes), lang, compare_func);
-    if(quote != std::end(quotes) && strcmp(quote->lang, lang) == 0) {
+    if(quote != std::end(quotes) && std::strcmp(quote->lang, lang) == 0) {
         encode_quote(open1, quote->open1);
         encode_quote(close1, quote->close1);
         encode_quote(open2, quote->open2);

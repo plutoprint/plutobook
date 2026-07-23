@@ -1077,7 +1077,7 @@ RefPtr<ResourceType> Document::fetchResource(const Url& url)
     if(!url.protocolIs("data"))
         m_resourceCache.emplace(url, resource);
     if(resource == nullptr)
-        fprintf(stderr, "WARNING: %s\n", plutobook_get_error_message());
+        std::fprintf(stderr, "WARNING: %s\n", plutobook_get_error_message());
     return resource;
 }
 
