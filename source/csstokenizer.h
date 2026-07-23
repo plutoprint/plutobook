@@ -223,10 +223,8 @@ public:
         return CSSTokenStream(blockBegin, blockEnd);
     }
 
-    const CSSToken& get() const { return m_begin < m_end ? *m_begin : eofToken; }
-
-    const CSSToken& operator*() const { return get(); }
-    const CSSToken* operator->() const { return &get(); }
+    const CSSToken& operator*() const { return m_begin < m_end ? *m_begin : eofToken; }
+    const CSSToken* operator->() const { return m_begin < m_end ? m_begin : &eofToken; }
 
     const CSSToken* begin() const { return m_begin; }
     const CSSToken* end() const { return m_end; }

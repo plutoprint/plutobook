@@ -1554,11 +1554,11 @@ static CSSCalcOperator convertCalcDelim(const CSSToken& token)
 static bool consumeCalcBlock(CSSTokenStream& input, CSSTokenList& stack, CSSCalcList& values)
 {
     assert(input->type() == CSSToken::Type::Function || input->type() == CSSToken::Type::LeftParenthesis);
-    stack.push_back(input.get());
+    stack.push_back(*input);
     auto block = input.consumeBlock();
     block.consumeWhitespace();
     while(!block.empty()) {
-        const auto& token = block.get();
+        const auto& token = *block;
         if(token.type() == CSSToken::Type::Number) {
             values.emplace_back(token.number());
             block.consumeIncludingWhitespace();

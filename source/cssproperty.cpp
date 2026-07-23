@@ -1114,7 +1114,7 @@ bool CSSVariableData::resolve(CSSTokenStream input, const BoxStyle* style, CSSTo
             continue;
         }
 
-        tokens.push_back(input.get());
+        tokens.push_back(*input);
         input.consume();
     }
 
