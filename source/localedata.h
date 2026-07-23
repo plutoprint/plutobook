@@ -36,7 +36,7 @@ public:
 
     class Quotes {
     public:
-        static std::unique_ptr<Quotes> create(const char* lang);
+        static std::unique_ptr<Quotes> create(std::string_view lang);
 
         const GlobalString& getQuote(bool open, size_t depth) const;
 
