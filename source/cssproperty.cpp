@@ -25,7 +25,7 @@ CSSPropertyID CSSProperty::id(std::string_view name)
     if(isCustomPropertyName(name))
         return CSSPropertyID::Custom;
     static const struct {
-        std::string_view name;
+        const char* name;
         CSSPropertyID value;
     } table[] = {
         {"-pluto-lang", CSSPropertyID::Lang},
@@ -295,16 +295,19 @@ CSSPropertyID CSSProperty::id(std::string_view name)
         {"z-index", CSSPropertyID::ZIndex}
     };
 
-    char buffer[32];
-    if(name.length() > sizeof(buffer))
+    char lowerName[64];
+    if(name.length() >= sizeof(lowerName))
         return CSSPropertyID::Unknown;
-    for(size_t i = 0; i < name.length(); ++i) {
-        buffer[i] = toLower(name[i]);
-    }
+    for(size_t i = 0; i < name.length(); ++i)
+        lowerName[i] = toLower(name[i]);
+    lowerName[name.length()] = '\0';
 
-    std::string_view lowerName(buffer, name.length());
-    auto it = std::lower_bound(table, std::end(table), lowerName, [](const auto& item, const auto& name) { return item.name < name; });
-    if(it != std::end(table) && it->name == lowerName)
+    auto compare_func = [](const auto& item, const char* name) {
+        return std::strcmp(item.name, name) < 0;
+    };
+
+    auto it = std::lower_bound(table, std::end(table), lowerName, compare_func);
+    if(it != std::end(table) && std::strcmp(it->name, lowerName) == 0)
         return it->value;
     return CSSPropertyID::Unknown;
 }

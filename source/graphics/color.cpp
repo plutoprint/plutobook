@@ -10,6 +10,7 @@
 #include "stringutils.h"
 
 #include <cmath>
+#include <cstring>
 
 namespace plutobook {
 
@@ -62,7 +63,7 @@ Color Color::darken() const
 std::optional<Color> Color::fromName(std::string_view name)
 {
     static const struct {
-        std::string_view name;
+        const char* name;
         uint32_t value;
     } table[] = {
         {"aliceblue", 0xF0F8FF},
@@ -215,18 +216,21 @@ std::optional<Color> Color::fromName(std::string_view name)
         {"yellowgreen", 0x9ACD32}
     };
 
-    char buffer[32];
-    if(name.length() > sizeof(buffer))
+    char lowerName[64];
+    if(name.length() >= sizeof(lowerName))
         return std::nullopt;
-    for(size_t i = 0; i < name.length(); ++i) {
-        buffer[i] = toLower(name[i]);
-    }
+    for(size_t i = 0; i < name.length(); ++i)
+        lowerName[i] = toLower(name[i]);
+    lowerName[name.length()] = '\0';
 
-    std::string_view lowerName(buffer, name.length());
-    auto it = std::lower_bound(table, std::end(table), lowerName, [](const auto& item, const auto& name) { return item.name < name; });
-    if(it == std::end(table) || it->name != lowerName)
-        return std::nullopt;
-    return Color(it->value | 0xFF000000);
+    auto compare_func = [](const auto& item, const char* name) {
+        return std::strcmp(item.name, name) < 0;
+    };
+
+    auto it = std::lower_bound(table, std::end(table), lowerName, compare_func);
+    if(it != std::end(table) && std::strcmp(it->name, lowerName) == 0)
+        return Color(it->value | 0xFF000000);
+    return std::nullopt;
 }
 
 } // namespace plutobook
