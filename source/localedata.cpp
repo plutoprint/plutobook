@@ -437,11 +437,14 @@ std::unique_ptr<LocaleData::Quotes> LocaleData::Quotes::create(const char* lang)
     char open2[MAX_QUOTE_SIZE]  = "\u2018";
     char close2[MAX_QUOTE_SIZE] = "\u2019";
 
-    auto compare_func = [](const auto& quote, const char* lang) { return strcmp(quote.lang, lang) < 0; };
     auto encode_quote = [](char* dest, UChar value) {
         int len = 0;
         U8_APPEND_UNSAFE(dest, len, value);
         dest[len] = '\0';
+    };
+
+    auto compare_func = [](const auto& quote, const char* lang) {
+        return strcmp(quote.lang, lang) < 0;
     };
 
     auto quote = std::lower_bound(quotes, std::end(quotes), lang, compare_func);
