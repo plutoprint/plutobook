@@ -225,7 +225,9 @@ cpp = meson.get_compiler('cpp')
 plutobook_cpp_args += cpp.get_supported_arguments(
     '-Wno-sign-compare',
     '-Wno-unused-function',
-    '-Wno-unused-variable'
+    '-Wno-unused-variable',
+    '-fvisibility=hidden',
+    '-fno-rtti'
 )
 
 plutobook_compile_args = []
