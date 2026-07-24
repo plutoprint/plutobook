@@ -58,8 +58,9 @@ CSSPropertyList CSSParser::parsePropertyValue(CSSTokenStream input, CSSPropertyI
 
 template<typename T>
 struct CSSIdentEntry {
-    constexpr CSSIdentEntry(const char* name, T value)
-        : name(name), value(value), length(std::strlen(name))
+    template<unsigned int N>
+    constexpr CSSIdentEntry(const char(&name)[N], T value)
+        : name(name), value(value), length(N - 1)
     {}
 
     const char* name;
@@ -69,7 +70,7 @@ struct CSSIdentEntry {
 
 using CSSIdentValueEntry = CSSIdentEntry<CSSValueID>;
 
-static bool identMatches(const char* name, int length, std::string_view ident)
+constexpr bool identMatches(const char* name, int length, std::string_view ident)
 {
     if(length != ident.length())
         return false;
@@ -84,8 +85,14 @@ static bool identMatches(const char* name, int length, std::string_view ident)
     return true;
 }
 
+template<unsigned int N>
+constexpr bool identMatches(const char(&name)[N], std::string_view ident)
+{
+    return identMatches(name, N - 1, ident);
+}
+
 template<typename T, unsigned int N>
-static std::optional<T> matchIdent(const CSSIdentEntry<T>(&table)[N], std::string_view ident)
+constexpr std::optional<T> matchIdent(const CSSIdentEntry<T>(&table)[N], std::string_view ident)
 {
     for(const auto& entry : table) {
         if(identMatches(entry.name, entry.length, ident)) {
@@ -96,9 +103,10 @@ static std::optional<T> matchIdent(const CSSIdentEntry<T>(&table)[N], std::strin
     return std::nullopt;
 }
 
-static bool consumeIdentIncludingWhitespace(CSSTokenStream& input, const char* name, int length)
+template<unsigned int N>
+static bool consumeIdentIncludingWhitespace(CSSTokenStream& input, const char(&name)[N])
 {
-    if(input->type() == CSSToken::Type::Ident && identMatches(name, length, input->data())) {
+    if(input->type() == CSSToken::Type::Ident && identMatches(name, input->data())) {
         input.consumeIncludingWhitespace();
         return true;
     }
@@ -108,20 +116,20 @@ static bool consumeIdentIncludingWhitespace(CSSTokenStream& input, const char* n
 
 static CSSMediaQuery::Type consumeMediaType(CSSTokenStream& input)
 {
-    if(consumeIdentIncludingWhitespace(input, "all", 3))
+    if(consumeIdentIncludingWhitespace(input, "all"))
         return CSSMediaQuery::Type::All;
-    if(consumeIdentIncludingWhitespace(input, "print", 5))
+    if(consumeIdentIncludingWhitespace(input, "print"))
         return CSSMediaQuery::Type::Print;
-    if(consumeIdentIncludingWhitespace(input, "screen", 6))
+    if(consumeIdentIncludingWhitespace(input, "screen"))
         return CSSMediaQuery::Type::Screen;
     return CSSMediaQuery::Type::None;
 }
 
 static CSSMediaQuery::Restrictor consumeMediaRestrictor(CSSTokenStream& input)
 {
-    if(consumeIdentIncludingWhitespace(input, "only", 4))
+    if(consumeIdentIncludingWhitespace(input, "only"))
         return CSSMediaQuery::Restrictor::Only;
-    if(consumeIdentIncludingWhitespace(input, "not", 3))
+    if(consumeIdentIncludingWhitespace(input, "not"))
         return CSSMediaQuery::Restrictor::Not;
     return CSSMediaQuery::Restrictor::None;
 }
@@ -130,7 +138,7 @@ bool CSSParser::consumeMediaFeature(CSSTokenStream& input, CSSMediaFeatureList& 
 {
     if(input->type() != CSSToken::Type::LeftParenthesis)
         return false;
-    static const CSSIdentEntry<CSSPropertyID> table[] = {
+    static constexpr CSSIdentEntry<CSSPropertyID> table[] = {
         {"width", CSSPropertyID::Width},
         {"min-width", CSSPropertyID::MinWidth},
         {"max-width", CSSPropertyID::MaxWidth},
@@ -183,7 +191,7 @@ bool CSSParser::consumeMediaFeatures(CSSTokenStream& input, CSSMediaFeatureList&
     do {
         if(!consumeMediaFeature(input, features))
             return false;
-    } while(consumeIdentIncludingWhitespace(input, "and", 3));
+    } while(consumeIdentIncludingWhitespace(input, "and"));
     return true;
 }
 
@@ -200,7 +208,7 @@ bool CSSParser::consumeMediaQuery(CSSTokenStream& input, CSSMediaQueryList& quer
             return false;
         }
     } else {
-        if(consumeIdentIncludingWhitespace(input, "and", 3)) {
+        if(consumeIdentIncludingWhitespace(input, "and")) {
             if(!consumeMediaFeatures(input, features)) {
                 return false;
             }
@@ -240,22 +248,22 @@ RefPtr<CSSRule> CSSParser::consumeAtRule(CSSTokenStream& input)
     auto prelude = input.consumeComponentsUntil<CSSToken::Type::LeftCurlyBracket, CSSToken::Type::Semicolon>();
     if(input->type() == CSSToken::Type::LeftCurlyBracket) {
         auto block = input.consumeBlock();
-        if(identMatches("font-face", 9, name))
+        if(identMatches("font-face", name))
             return consumeFontFaceRule(prelude, block);
-        if(identMatches("media", 5, name))
+        if(identMatches("media", name))
             return consumeMediaRule(prelude, block);
-        if(identMatches("counter-style", 13, name))
+        if(identMatches("counter-style", name))
             return consumeCounterStyleRule(prelude, block);
-        if(identMatches("page", 4, name))
+        if(identMatches("page", name))
             return consumePageRule(prelude, block);
         return nullptr;
     }
 
     if(input->type() == CSSToken::Type::Semicolon)
         input.consume();
-    if(identMatches("import", 6, name))
+    if(identMatches("import", name))
         return consumeImportRule(prelude);
-    if(identMatches("namespace", 9, name))
+    if(identMatches("namespace", name))
         return consumeNamespaceRule(prelude);
     return nullptr;
 }
@@ -282,7 +290,7 @@ static const CSSToken* consumeUrlToken(CSSTokenStream& input)
         return token;
     }
 
-    if(input->type() == CSSToken::Type::Function && identMatches("url", 3, input->data())) {
+    if(input->type() == CSSToken::Type::Function && identMatches("url", input->data())) {
         CSSTokenStreamGuard guard(input);
         auto block = input.consumeBlock();
         block.consumeWhitespace();
@@ -368,7 +376,7 @@ RefPtr<CSSFontFaceRule> CSSParser::consumeFontFaceRule(CSSTokenStream& prelude, 
 RefPtr<CSSCounterStyleRule> CSSParser::consumeCounterStyleRule(CSSTokenStream& prelude, CSSTokenStream& block)
 {
     prelude.consumeWhitespace();
-    if(prelude->type() != CSSToken::Type::Ident || identMatches("none", 4, prelude->data()))
+    if(prelude->type() != CSSToken::Type::Ident || identMatches("none", prelude->data()))
         return nullptr;
     GlobalString name(prelude->data());
     prelude.consumeIncludingWhitespace();
@@ -417,7 +425,7 @@ RefPtr<CSSPageMarginRule> CSSParser::consumePageMarginRule(CSSTokenStream& input
     prelude.consumeWhitespace();
     if(!prelude.empty())
         return nullptr;
-    static const CSSIdentEntry<PageMarginType> table[] = {
+    static constexpr CSSIdentEntry<PageMarginType> table[] = {
         {"top-left-corner", PageMarginType::TopLeftCorner},
         {"top-left", PageMarginType::TopLeft},
         {"top-center", PageMarginType::TopCenter},
@@ -490,7 +498,7 @@ bool CSSParser::consumePageSelector(CSSTokenStream& input, CSSPageSelector& sele
     while(input->type() == CSSToken::Type::Colon) {
         input.consumeIncludingWhitespace();
         if(input->type() == CSSToken::Type::Function) {
-            if(!identMatches("nth", 3, input->data()))
+            if(!identMatches("nth", input->data()))
                 return false;
             auto block = input.consumeBlock();
             block.consumeWhitespace();
@@ -507,7 +515,7 @@ bool CSSParser::consumePageSelector(CSSTokenStream& input, CSSPageSelector& sele
 
         if(input->type() != CSSToken::Type::Ident)
             return false;
-        static const CSSIdentEntry<CSSSimpleSelector::MatchType> table[] = {
+        static constexpr CSSIdentEntry<CSSSimpleSelector::MatchType> table[] = {
             {"first", CSSSimpleSelector::MatchType::PseudoPageFirst},
             {"left", CSSSimpleSelector::MatchType::PseudoPageLeft},
             {"right", CSSSimpleSelector::MatchType::PseudoPageRight},
@@ -723,7 +731,7 @@ bool CSSParser::consumePseudoSelector(CSSTokenStream& input, CSSCompoundSelector
         input.consume();
         if(input->type() != CSSToken::Type::Ident)
             return false;
-        static const CSSIdentEntry<CSSSimpleSelector::MatchType> table[] = {
+        static constexpr CSSIdentEntry<CSSSimpleSelector::MatchType> table[] = {
             {"after", CSSSimpleSelector::MatchType::PseudoElementAfter},
             {"before", CSSSimpleSelector::MatchType::PseudoElementBefore},
             {"first-letter", CSSSimpleSelector::MatchType::PseudoElementFirstLetter},
@@ -740,7 +748,7 @@ bool CSSParser::consumePseudoSelector(CSSTokenStream& input, CSSCompoundSelector
     }
 
     if(input->type() == CSSToken::Type::Ident) {
-        static const CSSIdentEntry<CSSSimpleSelector::MatchType> table[] = {
+        static constexpr CSSIdentEntry<CSSSimpleSelector::MatchType> table[] = {
             {"active", CSSSimpleSelector::MatchType::PseudoClassActive},
             {"any-link", CSSSimpleSelector::MatchType::PseudoClassAnyLink},
             {"checked", CSSSimpleSelector::MatchType::PseudoClassChecked},
@@ -779,7 +787,7 @@ bool CSSParser::consumePseudoSelector(CSSTokenStream& input, CSSCompoundSelector
     }
 
     if(input->type() == CSSToken::Type::Function) {
-        static const CSSIdentEntry<CSSSimpleSelector::MatchType> table[] = {
+        static constexpr CSSIdentEntry<CSSSimpleSelector::MatchType> table[] = {
             {"is", CSSSimpleSelector::MatchType::PseudoClassIs},
             {"not", CSSSimpleSelector::MatchType::PseudoClassNot},
             {"has", CSSSimpleSelector::MatchType::PseudoClassHas},
@@ -880,13 +888,13 @@ bool CSSParser::consumeMatchPattern(CSSTokenStream& input, CSSSimpleSelector::Ma
     }
 
     if(input->type() == CSSToken::Type::Ident) {
-        if(identMatches("odd", 3, input->data())) {
+        if(identMatches("odd", input->data())) {
             pattern = std::make_pair(2, 1);
             input.consume();
             return true;
         }
 
-        if(identMatches("even", 4, input->data())) {
+        if(identMatches("even", input->data())) {
             pattern = std::make_pair(2, 0);
             input.consume();
             return true;
@@ -1057,17 +1065,17 @@ static RefPtr<CSSValue> consumeWideKeyword(CSSTokenStream& input)
         return nullptr;
     }
 
-    if(identMatches("initial", 7, input->data())) {
+    if(identMatches("initial", input->data())) {
         input.consumeIncludingWhitespace();
         return CSSInitialValue::create();
     }
 
-    if(identMatches("inherit", 7, input->data())) {
+    if(identMatches("inherit", input->data())) {
         input.consumeIncludingWhitespace();
         return CSSInheritValue::create();
     }
 
-    if(identMatches("unset", 5, input->data())) {
+    if(identMatches("unset", input->data())) {
         input.consumeIncludingWhitespace();
         return CSSUnsetValue::create();
     }
@@ -1158,7 +1166,7 @@ bool CSSParser::consumeDescriptor(CSSTokenStream& input, CSSPropertyList& proper
 static bool containsVariableReferences(CSSTokenStream input)
 {
     while(!input.empty()) {
-        if(input->type() == CSSToken::Type::Function && identMatches("var", 3, input->data()))
+        if(input->type() == CSSToken::Type::Function && identMatches("var", input->data()))
             return true;
         input.consumeIncludingWhitespace();
     }
@@ -1189,7 +1197,7 @@ bool CSSParser::consumeDeclaration(CSSTokenStream& input, CSSPropertyList& prope
     }
 
     bool important = false;
-    if(it->type() == CSSToken::Type::Ident && identMatches("important", 9, it->data())) {
+    if(it->type() == CSSToken::Type::Ident && identMatches("important", it->data())) {
         do {
             --it;
         } while(it->type() == CSSToken::Type::Whitespace);
@@ -1290,7 +1298,7 @@ static RefPtr<CSSIdentValue> consumeIdent(CSSTokenStream& input, const CSSIdentV
 
 RefPtr<CSSIdentValue> CSSParser::consumeFontStyleIdent(CSSTokenStream& input)
 {
-    static const CSSIdentValueEntry table[] = {
+    static constexpr CSSIdentValueEntry table[] = {
         {"normal", CSSValueID::Normal},
         {"italic", CSSValueID::Italic},
         {"oblique", CSSValueID::Oblique}
@@ -1301,7 +1309,7 @@ RefPtr<CSSIdentValue> CSSParser::consumeFontStyleIdent(CSSTokenStream& input)
 
 RefPtr<CSSIdentValue> CSSParser::consumeFontStretchIdent(CSSTokenStream& input)
 {
-    static const CSSIdentValueEntry table[] = {
+    static constexpr CSSIdentValueEntry table[] = {
         {"normal", CSSValueID::Normal},
         {"ultra-condensed", CSSValueID::UltraCondensed},
         {"extra-condensed", CSSValueID::ExtraCondensed},
@@ -1318,7 +1326,7 @@ RefPtr<CSSIdentValue> CSSParser::consumeFontStretchIdent(CSSTokenStream& input)
 
 RefPtr<CSSIdentValue> CSSParser::consumeFontVariantCapsIdent(CSSTokenStream& input)
 {
-    static const CSSIdentValueEntry table[] = {
+    static constexpr CSSIdentValueEntry table[] = {
         {"small-caps", CSSValueID::SmallCaps},
         {"all-small-caps", CSSValueID::AllSmallCaps},
         {"petite-caps", CSSValueID::PetiteCaps},
@@ -1332,7 +1340,7 @@ RefPtr<CSSIdentValue> CSSParser::consumeFontVariantCapsIdent(CSSTokenStream& inp
 
 RefPtr<CSSIdentValue> CSSParser::consumeFontVariantEmojiIdent(CSSTokenStream& input)
 {
-    static const CSSIdentValueEntry table[] = {
+    static constexpr CSSIdentValueEntry table[] = {
         {"text", CSSValueID::Text},
         {"emoji", CSSValueID::Emoji},
         {"unicode", CSSValueID::Unicode}
@@ -1343,7 +1351,7 @@ RefPtr<CSSIdentValue> CSSParser::consumeFontVariantEmojiIdent(CSSTokenStream& in
 
 RefPtr<CSSIdentValue> CSSParser::consumeFontVariantPositionIdent(CSSTokenStream& input)
 {
-    static const CSSIdentValueEntry table[] = {
+    static constexpr CSSIdentValueEntry table[] = {
         {"sub", CSSValueID::Sub},
         {"super", CSSValueID::Super}
     };
@@ -1353,7 +1361,7 @@ RefPtr<CSSIdentValue> CSSParser::consumeFontVariantPositionIdent(CSSTokenStream&
 
 RefPtr<CSSIdentValue> CSSParser::consumeFontVariantEastAsianIdent(CSSTokenStream& input)
 {
-    static const CSSIdentValueEntry table[] = {
+    static constexpr CSSIdentValueEntry table[] = {
         {"jis78", CSSValueID::Jis78},
         {"jis83", CSSValueID::Jis83},
         {"jis90", CSSValueID::Jis90},
@@ -1370,7 +1378,7 @@ RefPtr<CSSIdentValue> CSSParser::consumeFontVariantEastAsianIdent(CSSTokenStream
 
 RefPtr<CSSIdentValue> CSSParser::consumeFontVariantLigaturesIdent(CSSTokenStream& input)
 {
-    static const CSSIdentValueEntry table[] = {
+    static constexpr CSSIdentValueEntry table[] = {
         {"common-ligatures", CSSValueID::CommonLigatures},
         {"no-common-ligatures", CSSValueID::NoCommonLigatures},
         {"historical-ligatures", CSSValueID::HistoricalLigatures},
@@ -1386,7 +1394,7 @@ RefPtr<CSSIdentValue> CSSParser::consumeFontVariantLigaturesIdent(CSSTokenStream
 
 RefPtr<CSSIdentValue> CSSParser::consumeFontVariantNumericIdent(CSSTokenStream& input)
 {
-    static const CSSIdentValueEntry table[] = {
+    static constexpr CSSIdentValueEntry table[] = {
         {"lining-nums", CSSValueID::LiningNums},
         {"oldstyle-nums", CSSValueID::OldstyleNums},
         {"proportional-nums", CSSValueID::ProportionalNums},
@@ -1402,21 +1410,21 @@ RefPtr<CSSIdentValue> CSSParser::consumeFontVariantNumericIdent(CSSTokenStream& 
 
 RefPtr<CSSValue> CSSParser::consumeNone(CSSTokenStream& input)
 {
-    if(consumeIdentIncludingWhitespace(input, "none", 4))
+    if(consumeIdentIncludingWhitespace(input, "none"))
         return CSSIdentValue::create(CSSValueID::None);
     return nullptr;
 }
 
 RefPtr<CSSValue> CSSParser::consumeAuto(CSSTokenStream& input)
 {
-    if(consumeIdentIncludingWhitespace(input, "auto", 4))
+    if(consumeIdentIncludingWhitespace(input, "auto"))
         return CSSIdentValue::create(CSSValueID::Auto);
     return nullptr;
 }
 
 RefPtr<CSSValue> CSSParser::consumeNormal(CSSTokenStream& input)
 {
-    if(consumeIdentIncludingWhitespace(input, "normal", 6))
+    if(consumeIdentIncludingWhitespace(input, "normal"))
         return CSSIdentValue::create(CSSValueID::Normal);
     return nullptr;
 }
@@ -1501,7 +1509,7 @@ RefPtr<CSSValue> CSSParser::consumeNumberOrPercentOrAuto(CSSTokenStream& input, 
 
 static std::optional<CSSLengthUnits> matchUnitType(std::string_view name)
 {
-    static const CSSIdentEntry<CSSLengthUnits> table[] = {
+    static constexpr CSSIdentEntry<CSSLengthUnits> table[] = {
         {"px", CSSLengthUnits::Pixels},
         {"pt", CSSLengthUnits::Points},
         {"pc", CSSLengthUnits::Picas},
@@ -1531,8 +1539,8 @@ static std::optional<CSSLengthUnits> matchUnitType(std::string_view name)
 
 static bool isValidCalcFunction(std::string_view name)
 {
-    return identMatches("calc", 4, name) || identMatches("clamp", 5, name)
-        || identMatches("min", 3, name) || identMatches("max", 3, name);
+    return identMatches("calc", name) || identMatches("clamp", name)
+        || identMatches("min", name) || identMatches("max", name);
 }
 
 static CSSCalcOperator convertCalcDelim(const CSSToken& token)
@@ -1634,11 +1642,11 @@ static bool consumeCalcBlock(CSSTokenStream& input, CSSTokenList& stack, CSSCalc
     if(left.type() == CSSToken::Type::LeftParenthesis)
         return commaCount == 0;
     assert(left.type() == CSSToken::Type::Function);
-    if(identMatches("calc", 4, left.data())) {
+    if(identMatches("calc", left.data())) {
         return commaCount == 0;
     }
 
-    if(identMatches("clamp", 5, left.data())) {
+    if(identMatches("clamp", left.data())) {
         if(commaCount != 2)
             return false;
         values.emplace_back(CSSCalcOperator::Min);
@@ -1646,7 +1654,7 @@ static bool consumeCalcBlock(CSSTokenStream& input, CSSTokenList& stack, CSSCalc
         return true;
     }
 
-    auto op = identMatches("min", 3, left.data()) ? CSSCalcOperator::Min : CSSCalcOperator::Max;
+    auto op = identMatches("min", left.data()) ? CSSCalcOperator::Min : CSSCalcOperator::Max;
     for(size_t i = 0; i < commaCount; ++i)
         values.emplace_back(op);
     return true;
@@ -1734,7 +1742,7 @@ RefPtr<CSSValue> CSSParser::consumeLengthOrPercentOrNormal(CSSTokenStream& input
 
 RefPtr<CSSValue> CSSParser::consumeWidthOrHeight(CSSTokenStream& input, bool unitless)
 {
-    static const CSSIdentValueEntry table[] = {
+    static constexpr CSSIdentValueEntry table[] = {
         {"min-content", CSSValueID::MinContent},
         {"max-content", CSSValueID::MaxContent},
         {"fit-content", CSSValueID::FitContent}
@@ -1797,7 +1805,7 @@ RefPtr<CSSValue> CSSParser::consumeCustomIdentOrAuto(CSSTokenStream& input)
 
 RefPtr<CSSValue> CSSParser::consumeAttr(CSSTokenStream& input)
 {
-    if(input->type() != CSSToken::Type::Function || !identMatches("attr", 4, input->data()))
+    if(input->type() != CSSToken::Type::Function || !identMatches("attr", input->data()))
         return nullptr;
     CSSTokenStreamGuard guard(input);
     auto block = input.consumeBlock();
@@ -1811,7 +1819,7 @@ RefPtr<CSSValue> CSSParser::consumeAttr(CSSTokenStream& input)
 
     block.consumeIncludingWhitespace();
     if(block->type() == CSSToken::Type::Ident) {
-        if(!identMatches("url", 3, block->data()) && !identMatches("string", 6, block->data()))
+        if(!identMatches("url", block->data()) && !identMatches("string", block->data()))
             return nullptr;
         block.consumeIncludingWhitespace();
     }
@@ -1915,23 +1923,23 @@ RefPtr<CSSValue> CSSParser::consumeColor(CSSTokenStream& input)
 
     if(input->type() == CSSToken::Type::Function) {
         auto name = input->data();
-        if(identMatches("rgb", 3, name) || identMatches("rgba", 4, name))
+        if(identMatches("rgb", name) || identMatches("rgba", name))
             return consumeRgb(input);
-        if(identMatches("hsl", 3, name) || identMatches("hsla", 4, name))
+        if(identMatches("hsl", name) || identMatches("hsla", name))
             return consumeHsl(input);
-        if(identMatches("hwb", 3, name))
+        if(identMatches("hwb", name))
             return consumeHwb(input);
         return nullptr;
     }
 
     if(input->type() == CSSToken::Type::Ident) {
         auto name = input->data();
-        if(identMatches("currentcolor", 12, name)) {
+        if(identMatches("currentcolor", name)) {
             input.consumeIncludingWhitespace();
             return CSSIdentValue::create(CSSValueID::CurrentColor);
         }
 
-        if(identMatches("transparent", 11, name)) {
+        if(identMatches("transparent", name)) {
             input.consumeIncludingWhitespace();
             return CSSColorValue::create(m_heap, Color::Transparent);
         }
@@ -2039,7 +2047,7 @@ static bool consumeAngleComponent(CSSTokenStream& input, float& component)
 
     component = input->number();
     if(input->type() == CSSToken::Type::Dimension) {
-        static const CSSIdentEntry<CSSAngleValue::Units> table[] = {
+        static constexpr CSSIdentEntry<CSSAngleValue::Units> table[] = {
             {"deg", CSSAngleValue::Units::Degrees},
             {"rad", CSSAngleValue::Units::Radians},
             {"grad", CSSAngleValue::Units::Gradians},
@@ -2208,7 +2216,7 @@ RefPtr<CSSValue> CSSParser::consumePaint(CSSTokenStream& input)
 
 RefPtr<CSSValue> CSSParser::consumeListStyleType(CSSTokenStream& input)
 {
-    static const CSSIdentValueEntry table[] = {
+    static constexpr CSSIdentValueEntry table[] = {
         {"none", CSSValueID::None},
         {"disc", CSSValueID::Disc},
         {"circle", CSSValueID::Circle},
@@ -2249,7 +2257,7 @@ RefPtr<CSSValue> CSSParser::consumeContent(CSSTokenStream& input)
         if(value == nullptr)
             value = consumeAttr(input);
         if(value == nullptr && input->type() == CSSToken::Type::Ident) {
-            static const CSSIdentValueEntry table[] = {
+            static constexpr CSSIdentValueEntry table[] = {
                 {"open-quote", CSSValueID::OpenQuote},
                 {"close-quote", CSSValueID::CloseQuote},
                 {"no-open-quote", CSSValueID::NoOpenQuote},
@@ -2263,15 +2271,15 @@ RefPtr<CSSValue> CSSParser::consumeContent(CSSTokenStream& input)
             auto name = input->data();
             auto block = input.consumeBlock();
             block.consumeWhitespace();
-            if(identMatches("leader", 6, name))
+            if(identMatches("leader", name))
                 value = consumeContentLeader(block);
-            else if(identMatches("element", 7, name))
+            else if(identMatches("element", name))
                 value = consumeContentElement(block);
-            else if(identMatches("counter", 7, name))
+            else if(identMatches("counter", name))
                 value = consumeContentCounter(block, false);
-            else if(identMatches("counters", 8, name))
+            else if(identMatches("counters", name))
                 value = consumeContentCounter(block, true);
-            else if(identMatches("-pluto-qrcode", 13, name))
+            else if(identMatches("-pluto-qrcode", name))
                 value = consumeContentQrCode(block);
             input.consumeWhitespace();
         }
@@ -2285,7 +2293,7 @@ RefPtr<CSSValue> CSSParser::consumeContent(CSSTokenStream& input)
 
 RefPtr<CSSValue> CSSParser::consumeContentLeader(CSSTokenStream& input)
 {
-    static const CSSIdentValueEntry table[] = {
+    static constexpr CSSIdentValueEntry table[] = {
         {"dotted", CSSValueID::Dotted},
         {"solid", CSSValueID::Solid},
         {"space", CSSValueID::Space}
@@ -2325,7 +2333,7 @@ RefPtr<CSSValue> CSSParser::consumeContentCounter(CSSTokenStream& input, bool co
 
     GlobalString listStyle("decimal");
     if(input.consumeCommaIncludingWhitespace()) {
-        if(input->type() != CSSToken::Type::Ident || identMatches("none", 4, input->data()))
+        if(input->type() != CSSToken::Type::Ident || identMatches("none", input->data()))
             return nullptr;
         listStyle = GlobalString(input->data());
         input.consumeIncludingWhitespace();
@@ -2387,7 +2395,7 @@ RefPtr<CSSValue> CSSParser::consumeSize(CSSTokenStream& input)
     RefPtr<CSSValue> size;
     RefPtr<CSSValue> orientation;
     for(int index = 0; index < 2; ++index) {
-        static const CSSIdentValueEntry table[] = {
+        static constexpr CSSIdentValueEntry table[] = {
             {"a3", CSSValueID::A3},
             {"a4", CSSValueID::A4},
             {"a5", CSSValueID::A5},
@@ -2418,7 +2426,7 @@ RefPtr<CSSValue> CSSParser::consumeSize(CSSTokenStream& input)
 
 RefPtr<CSSValue> CSSParser::consumeOrientation(CSSTokenStream& input)
 {
-    static const CSSIdentValueEntry table[] = {
+    static constexpr CSSIdentValueEntry table[] = {
         {"portrait", CSSValueID::Portrait},
         {"landscape", CSSValueID::Landscape}
     };
@@ -2428,7 +2436,7 @@ RefPtr<CSSValue> CSSParser::consumeOrientation(CSSTokenStream& input)
 
 RefPtr<CSSValue> CSSParser::consumeFontSize(CSSTokenStream& input)
 {
-    static const CSSIdentValueEntry table[] = {
+    static constexpr CSSIdentValueEntry table[] = {
         {"xx-small", CSSValueID::XxSmall},
         {"x-small", CSSValueID::XSmall},
         {"small", CSSValueID::Small},
@@ -2448,7 +2456,7 @@ RefPtr<CSSValue> CSSParser::consumeFontSize(CSSTokenStream& input)
 
 RefPtr<CSSValue> CSSParser::consumeFontWeight(CSSTokenStream& input)
 {
-    static const CSSIdentValueEntry table[] = {
+    static constexpr CSSIdentValueEntry table[] = {
         {"normal", CSSValueID::Normal},
         {"bold", CSSValueID::Bold},
         {"bolder", CSSValueID::Bolder},
@@ -2538,7 +2546,7 @@ RefPtr<CSSValue> CSSParser::consumeFontFeature(CSSTokenStream& input)
         value = input->integer();
         input.consumeIncludingWhitespace();
     } else if(input->type() == CSSToken::Type::Ident) {
-        static const CSSIdentValueEntry table[] = {
+        static constexpr CSSIdentValueEntry table[] = {
             {"on", CSSValueID::On},
             {"off", CSSValueID::Off}
         };
@@ -2784,7 +2792,7 @@ RefPtr<CSSValue> CSSParser::consumeFontVariantNumeric(CSSTokenStream& input)
 
 RefPtr<CSSValue> CSSParser::consumeLineWidth(CSSTokenStream& input)
 {
-    static const CSSIdentValueEntry table[] = {
+    static constexpr CSSIdentValueEntry table[] = {
         {"thin", CSSValueID::Thin},
         {"medium", CSSValueID::Medium},
         {"thick", CSSValueID::Thick}
@@ -2810,7 +2818,7 @@ RefPtr<CSSValue> CSSParser::consumeClip(CSSTokenStream& input)
 {
     if(auto value = consumeAuto(input))
         return value;
-    if(input->type() != CSSToken::Type::Function || !identMatches("rect", 4, input->data())) {
+    if(input->type() != CSSToken::Type::Function || !identMatches("rect", input->data())) {
         return nullptr;
     }
 
@@ -2855,7 +2863,7 @@ RefPtr<CSSValue> CSSParser::consumeDashList(CSSTokenStream& input)
 
 RefPtr<CSSValue> CSSParser::consumePosition(CSSTokenStream& input)
 {
-    static const CSSIdentValueEntry table[] = {
+    static constexpr CSSIdentValueEntry table[] = {
         {"static", CSSValueID::Static},
         {"relative", CSSValueID::Relative},
         {"absolute", CSSValueID::Absolute},
@@ -2864,7 +2872,7 @@ RefPtr<CSSValue> CSSParser::consumePosition(CSSTokenStream& input)
 
     if(auto value = consumeIdent(input, table))
         return value;
-    if(input->type() != CSSToken::Type::Function || !identMatches("running", 7, input->data()))
+    if(input->type() != CSSToken::Type::Function || !identMatches("running", input->data()))
         return nullptr;
     CSSTokenStreamGuard guard(input);
     auto block = input.consumeBlock();
@@ -2879,7 +2887,7 @@ RefPtr<CSSValue> CSSParser::consumePosition(CSSTokenStream& input)
 
 RefPtr<CSSValue> CSSParser::consumeVerticalAlign(CSSTokenStream& input)
 {
-    static const CSSIdentValueEntry table[] = {
+    static constexpr CSSIdentValueEntry table[] = {
         {"baseline", CSSValueID::Baseline},
         {"sub", CSSValueID::Sub},
         {"super", CSSValueID::Super},
@@ -2897,7 +2905,7 @@ RefPtr<CSSValue> CSSParser::consumeVerticalAlign(CSSTokenStream& input)
 
 RefPtr<CSSValue> CSSParser::consumeBaselineShift(CSSTokenStream& input)
 {
-    static const CSSIdentValueEntry table[] = {
+    static constexpr CSSIdentValueEntry table[] = {
         {"baseline", CSSValueID::Baseline},
         {"sub", CSSValueID::Sub},
         {"super", CSSValueID::Super}
@@ -2912,7 +2920,7 @@ RefPtr<CSSValue> CSSParser::consumeTextDecorationLine(CSSTokenStream& input)
 {
     if(auto value = consumeNone(input))
         return value;
-    static const CSSIdentValueEntry table[] = {
+    static constexpr CSSIdentValueEntry table[] = {
         {"underline", CSSValueID::Underline},
         {"overline", CSSValueID::Overline},
         {"line-through", CSSValueID::LineThrough}
@@ -2956,7 +2964,7 @@ RefPtr<CSSValue> CSSParser::consumeTextDecorationLine(CSSTokenStream& input)
 
 RefPtr<CSSValue> CSSParser::consumePositionComponent(CSSTokenStream& input)
 {
-    static const CSSIdentValueEntry table[] = {
+    static constexpr CSSIdentValueEntry table[] = {
         {"left", CSSValueID::Left},
         {"right", CSSValueID::Right},
         {"top", CSSValueID::Top},
@@ -3008,7 +3016,7 @@ RefPtr<CSSValue> CSSParser::consumePositionCoordinate(CSSTokenStream& input)
 
 RefPtr<CSSValue> CSSParser::consumeBackgroundSize(CSSTokenStream& input)
 {
-    static const CSSIdentValueEntry table[] = {
+    static constexpr CSSIdentValueEntry table[] = {
         {"contain", CSSValueID::Contain},
         {"cover", CSSValueID::Cover}
     };
@@ -3028,7 +3036,7 @@ RefPtr<CSSValue> CSSParser::consumeAngle(CSSTokenStream& input)
 {
     if(input->type() != CSSToken::Type::Dimension)
         return nullptr;
-    static const CSSIdentEntry<CSSAngleValue::Units> table[] = {
+    static constexpr CSSIdentEntry<CSSAngleValue::Units> table[] = {
         {"deg", CSSAngleValue::Units::Degrees},
         {"rad", CSSAngleValue::Units::Radians},
         {"grad", CSSAngleValue::Units::Gradians},
@@ -3047,7 +3055,7 @@ RefPtr<CSSValue> CSSParser::consumeTransformValue(CSSTokenStream& input)
 {
     if(input->type() != CSSToken::Type::Function)
         return nullptr;
-    static const CSSIdentEntry<CSSFunctionID> table[] = {
+    static constexpr CSSIdentEntry<CSSFunctionID> table[] = {
         {"skew", CSSFunctionID::Skew},
         {"skewx", CSSFunctionID::SkewX},
         {"skewy", CSSFunctionID::SkewY},
@@ -3161,7 +3169,7 @@ RefPtr<CSSValue> CSSParser::consumePaintOrder(CSSTokenStream& input)
 {
     if(auto value = consumeNormal(input))
         return value;
-    static const CSSIdentValueEntry table[] = {
+    static constexpr CSSIdentValueEntry table[] = {
         {"fill", CSSValueID::Fill},
         {"stroke", CSSValueID::Stroke},
         {"markers", CSSValueID::Markers}
@@ -3384,7 +3392,7 @@ RefPtr<CSSValue> CSSParser::consumeLonghand(CSSTokenStream& input, CSSPropertyID
     case CSSPropertyID::PaintOrder:
         return consumePaintOrder(input);
     case CSSPropertyID::FontKerning: {
-        static const CSSIdentValueEntry table[] = {
+        static constexpr CSSIdentValueEntry table[] = {
             {"auto", CSSValueID::Auto},
             {"normal", CSSValueID::Normal},
             {"none", CSSValueID::None}
@@ -3394,7 +3402,7 @@ RefPtr<CSSValue> CSSParser::consumeLonghand(CSSTokenStream& input, CSSPropertyID
     }
 
     case CSSPropertyID::BackgroundAttachment: {
-        static const CSSIdentValueEntry table[] = {
+        static constexpr CSSIdentValueEntry table[] = {
             {"scroll", CSSValueID::Scroll},
             {"fixed", CSSValueID::Fixed},
             {"local", CSSValueID::Local}
@@ -3405,7 +3413,7 @@ RefPtr<CSSValue> CSSParser::consumeLonghand(CSSTokenStream& input, CSSPropertyID
 
     case CSSPropertyID::BackgroundClip:
     case CSSPropertyID::BackgroundOrigin: {
-        static const CSSIdentValueEntry table[] = {
+        static constexpr CSSIdentValueEntry table[] = {
             {"border-box", CSSValueID::BorderBox},
             {"padding-box", CSSValueID::PaddingBox},
             {"content-box", CSSValueID::ContentBox}
@@ -3415,7 +3423,7 @@ RefPtr<CSSValue> CSSParser::consumeLonghand(CSSTokenStream& input, CSSPropertyID
     }
 
     case CSSPropertyID::BackgroundRepeat: {
-        static const CSSIdentValueEntry table[] = {
+        static constexpr CSSIdentValueEntry table[] = {
             {"repeat", CSSValueID::Repeat},
             {"repeat-x", CSSValueID::RepeatX},
             {"repeat-y", CSSValueID::RepeatY},
@@ -3426,7 +3434,7 @@ RefPtr<CSSValue> CSSParser::consumeLonghand(CSSTokenStream& input, CSSPropertyID
     }
 
     case CSSPropertyID::BorderCollapse: {
-        static const CSSIdentValueEntry table[] = {
+        static constexpr CSSIdentValueEntry table[] = {
             {"collapse", CSSValueID::Collapse},
             {"separate", CSSValueID::Separate}
         };
@@ -3444,7 +3452,7 @@ RefPtr<CSSValue> CSSParser::consumeLonghand(CSSTokenStream& input, CSSPropertyID
     case CSSPropertyID::BorderInlineStartStyle:
     case CSSPropertyID::ColumnRuleStyle:
     case CSSPropertyID::OutlineStyle: {
-        static const CSSIdentValueEntry table[] = {
+        static constexpr CSSIdentValueEntry table[] = {
             {"none", CSSValueID::None},
             {"hidden", CSSValueID::Hidden},
             {"inset", CSSValueID::Inset},
@@ -3461,7 +3469,7 @@ RefPtr<CSSValue> CSSParser::consumeLonghand(CSSTokenStream& input, CSSPropertyID
     }
 
     case CSSPropertyID::BoxSizing: {
-        static const CSSIdentValueEntry table[] = {
+        static constexpr CSSIdentValueEntry table[] = {
             {"border-box", CSSValueID::BorderBox},
             {"content-box", CSSValueID::ContentBox}
         };
@@ -3470,7 +3478,7 @@ RefPtr<CSSValue> CSSParser::consumeLonghand(CSSTokenStream& input, CSSPropertyID
     }
 
     case CSSPropertyID::CaptionSide: {
-        static const CSSIdentValueEntry table[] = {
+        static constexpr CSSIdentValueEntry table[] = {
             {"top", CSSValueID::Top},
             {"bottom", CSSValueID::Bottom}
         };
@@ -3479,7 +3487,7 @@ RefPtr<CSSValue> CSSParser::consumeLonghand(CSSTokenStream& input, CSSPropertyID
     }
 
     case CSSPropertyID::Clear: {
-        static const CSSIdentValueEntry table[] = {
+        static constexpr CSSIdentValueEntry table[] = {
             {"none", CSSValueID::None},
             {"left", CSSValueID::Left},
             {"right", CSSValueID::Right},
@@ -3492,7 +3500,7 @@ RefPtr<CSSValue> CSSParser::consumeLonghand(CSSTokenStream& input, CSSPropertyID
     }
 
     case CSSPropertyID::EmptyCells: {
-        static const CSSIdentValueEntry table[] = {
+        static constexpr CSSIdentValueEntry table[] = {
             {"show", CSSValueID::Show},
             {"hide", CSSValueID::Hide}
         };
@@ -3502,7 +3510,7 @@ RefPtr<CSSValue> CSSParser::consumeLonghand(CSSTokenStream& input, CSSPropertyID
 
     case CSSPropertyID::FillRule:
     case CSSPropertyID::ClipRule: {
-        static const CSSIdentValueEntry table[] = {
+        static constexpr CSSIdentValueEntry table[] = {
             {"nonzero", CSSValueID::Nonzero},
             {"evenodd", CSSValueID::Evenodd}
         };
@@ -3511,7 +3519,7 @@ RefPtr<CSSValue> CSSParser::consumeLonghand(CSSTokenStream& input, CSSPropertyID
     }
 
     case CSSPropertyID::Float: {
-        static const CSSIdentValueEntry table[] = {
+        static constexpr CSSIdentValueEntry table[] = {
             {"none", CSSValueID::None},
             {"left", CSSValueID::Left},
             {"right", CSSValueID::Right},
@@ -3523,7 +3531,7 @@ RefPtr<CSSValue> CSSParser::consumeLonghand(CSSTokenStream& input, CSSPropertyID
     }
 
     case CSSPropertyID::Hyphens: {
-        static const CSSIdentValueEntry table[] = {
+        static constexpr CSSIdentValueEntry table[] = {
             {"none", CSSValueID::None},
             {"auto", CSSValueID::Auto},
             {"manual", CSSValueID::Manual}
@@ -3533,7 +3541,7 @@ RefPtr<CSSValue> CSSParser::consumeLonghand(CSSTokenStream& input, CSSPropertyID
     }
 
     case CSSPropertyID::ListStylePosition: {
-        static const CSSIdentValueEntry table[] = {
+        static constexpr CSSIdentValueEntry table[] = {
             {"inside", CSSValueID::Inside},
             {"outside", CSSValueID::Outside}
         };
@@ -3542,7 +3550,7 @@ RefPtr<CSSValue> CSSParser::consumeLonghand(CSSTokenStream& input, CSSPropertyID
     }
 
     case CSSPropertyID::WordBreak: {
-        static const CSSIdentValueEntry table[] = {
+        static constexpr CSSIdentValueEntry table[] = {
             {"normal", CSSValueID::Normal},
             {"keep-all", CSSValueID::KeepAll},
             {"break-all", CSSValueID::BreakAll},
@@ -3553,7 +3561,7 @@ RefPtr<CSSValue> CSSParser::consumeLonghand(CSSTokenStream& input, CSSPropertyID
     }
 
     case CSSPropertyID::OverflowWrap: {
-        static const CSSIdentValueEntry table[] = {
+        static constexpr CSSIdentValueEntry table[] = {
             {"normal", CSSValueID::Normal},
             {"anywhere", CSSValueID::Anywhere},
             {"break-word", CSSValueID::BreakWord}
@@ -3563,7 +3571,7 @@ RefPtr<CSSValue> CSSParser::consumeLonghand(CSSTokenStream& input, CSSPropertyID
     }
 
     case CSSPropertyID::Overflow: {
-        static const CSSIdentValueEntry table[] = {
+        static constexpr CSSIdentValueEntry table[] = {
             {"auto", CSSValueID::Auto},
             {"visible", CSSValueID::Visible},
             {"hidden", CSSValueID::Hidden},
@@ -3575,7 +3583,7 @@ RefPtr<CSSValue> CSSParser::consumeLonghand(CSSTokenStream& input, CSSPropertyID
 
     case CSSPropertyID::BreakBefore:
     case CSSPropertyID::BreakAfter: {
-        static const CSSIdentValueEntry table[] = {
+        static constexpr CSSIdentValueEntry table[] = {
             {"auto", CSSValueID::Auto},
             {"avoid", CSSValueID::Avoid},
             {"avoid-column", CSSValueID::AvoidColumn},
@@ -3592,7 +3600,7 @@ RefPtr<CSSValue> CSSParser::consumeLonghand(CSSTokenStream& input, CSSPropertyID
     }
 
     case CSSPropertyID::BreakInside: {
-        static const CSSIdentValueEntry table[] = {
+        static constexpr CSSIdentValueEntry table[] = {
             {"auto", CSSValueID::Auto},
             {"avoid", CSSValueID::Avoid},
             {"avoid-column", CSSValueID::AvoidColumn},
@@ -3604,7 +3612,7 @@ RefPtr<CSSValue> CSSParser::consumeLonghand(CSSTokenStream& input, CSSPropertyID
 
     case CSSPropertyID::ColumnBreakBefore:
     case CSSPropertyID::ColumnBreakAfter: {
-        static const CSSIdentValueEntry table[] = {
+        static constexpr CSSIdentValueEntry table[] = {
             {"auto", CSSValueID::Auto},
             {"always", CSSValueID::Column},
             {"avoid", CSSValueID::Avoid}
@@ -3615,7 +3623,7 @@ RefPtr<CSSValue> CSSParser::consumeLonghand(CSSTokenStream& input, CSSPropertyID
 
     case CSSPropertyID::PageBreakBefore:
     case CSSPropertyID::PageBreakAfter: {
-        static const CSSIdentValueEntry table[] = {
+        static constexpr CSSIdentValueEntry table[] = {
             {"auto", CSSValueID::Auto},
             {"always", CSSValueID::Page},
             {"avoid", CSSValueID::Avoid},
@@ -3628,7 +3636,7 @@ RefPtr<CSSValue> CSSParser::consumeLonghand(CSSTokenStream& input, CSSPropertyID
 
     case CSSPropertyID::ColumnBreakInside:
     case CSSPropertyID::PageBreakInside: {
-        static const CSSIdentValueEntry table[] = {
+        static constexpr CSSIdentValueEntry table[] = {
             {"auto", CSSValueID::Auto},
             {"avoid", CSSValueID::Avoid}
         };
@@ -3637,7 +3645,7 @@ RefPtr<CSSValue> CSSParser::consumeLonghand(CSSTokenStream& input, CSSPropertyID
     }
 
     case CSSPropertyID::StrokeLinecap: {
-        static const CSSIdentValueEntry table[] = {
+        static constexpr CSSIdentValueEntry table[] = {
             {"butt", CSSValueID::Butt},
             {"round", CSSValueID::Round},
             {"square", CSSValueID::Square}
@@ -3647,7 +3655,7 @@ RefPtr<CSSValue> CSSParser::consumeLonghand(CSSTokenStream& input, CSSPropertyID
     }
 
     case CSSPropertyID::StrokeLinejoin: {
-        static const CSSIdentValueEntry table[] = {
+        static constexpr CSSIdentValueEntry table[] = {
             {"miter", CSSValueID::Miter},
             {"round", CSSValueID::Round},
             {"bevel", CSSValueID::Bevel}
@@ -3657,7 +3665,7 @@ RefPtr<CSSValue> CSSParser::consumeLonghand(CSSTokenStream& input, CSSPropertyID
     }
 
     case CSSPropertyID::TableLayout: {
-        static const CSSIdentValueEntry table[] = {
+        static constexpr CSSIdentValueEntry table[] = {
             {"auto", CSSValueID::Auto},
             {"fixed", CSSValueID::Fixed}
         };
@@ -3666,7 +3674,7 @@ RefPtr<CSSValue> CSSParser::consumeLonghand(CSSTokenStream& input, CSSPropertyID
     }
 
     case CSSPropertyID::AlignmentBaseline: {
-        static const CSSIdentValueEntry table[] = {
+        static constexpr CSSIdentValueEntry table[] = {
             {"auto", CSSValueID::Auto},
             {"baseline", CSSValueID::Baseline},
             {"before-edge", CSSValueID::BeforeEdge},
@@ -3685,7 +3693,7 @@ RefPtr<CSSValue> CSSParser::consumeLonghand(CSSTokenStream& input, CSSPropertyID
     }
 
     case CSSPropertyID::DominantBaseline: {
-        static const CSSIdentValueEntry table[] = {
+        static constexpr CSSIdentValueEntry table[] = {
             {"auto", CSSValueID::Auto},
             {"use-script", CSSValueID::UseScript},
             {"no-change", CSSValueID::NoChange},
@@ -3704,7 +3712,7 @@ RefPtr<CSSValue> CSSParser::consumeLonghand(CSSTokenStream& input, CSSPropertyID
     }
 
     case CSSPropertyID::TextAlign: {
-        static const CSSIdentValueEntry table[] = {
+        static constexpr CSSIdentValueEntry table[] = {
             {"left", CSSValueID::Left},
             {"right", CSSValueID::Right},
             {"center", CSSValueID::Center},
@@ -3717,7 +3725,7 @@ RefPtr<CSSValue> CSSParser::consumeLonghand(CSSTokenStream& input, CSSPropertyID
     }
 
     case CSSPropertyID::WritingMode: {
-        static const CSSIdentValueEntry table[] = {
+        static constexpr CSSIdentValueEntry table[] = {
             {"horizontal-tb", CSSValueID::HorizontalTb},
             {"vertical-rl", CSSValueID::VerticalRl},
             {"vertical-lr", CSSValueID::VerticalLr},
@@ -3735,7 +3743,7 @@ RefPtr<CSSValue> CSSParser::consumeLonghand(CSSTokenStream& input, CSSPropertyID
     }
 
     case CSSPropertyID::TextOrientation: {
-        static const CSSIdentValueEntry table[] = {
+        static constexpr CSSIdentValueEntry table[] = {
             {"mixed", CSSValueID::Mixed},
             {"upright", CSSValueID::Upright}
         };
@@ -3744,7 +3752,7 @@ RefPtr<CSSValue> CSSParser::consumeLonghand(CSSTokenStream& input, CSSPropertyID
     }
 
     case CSSPropertyID::TextAnchor: {
-        static const CSSIdentValueEntry table[] = {
+        static constexpr CSSIdentValueEntry table[] = {
             {"start", CSSValueID::Start},
             {"middle", CSSValueID::Middle},
             {"end", CSSValueID::End}
@@ -3754,7 +3762,7 @@ RefPtr<CSSValue> CSSParser::consumeLonghand(CSSTokenStream& input, CSSPropertyID
     }
 
     case CSSPropertyID::TextDecorationStyle: {
-        static const CSSIdentValueEntry table[] = {
+        static constexpr CSSIdentValueEntry table[] = {
             {"solid", CSSValueID::Solid},
             {"double", CSSValueID::Double},
             {"dotted", CSSValueID::Dotted},
@@ -3766,7 +3774,7 @@ RefPtr<CSSValue> CSSParser::consumeLonghand(CSSTokenStream& input, CSSPropertyID
     }
 
     case CSSPropertyID::TextOverflow: {
-        static const CSSIdentValueEntry table[] = {
+        static constexpr CSSIdentValueEntry table[] = {
             {"clip", CSSValueID::Clip},
             {"ellipsis", CSSValueID::Ellipsis}
         };
@@ -3775,7 +3783,7 @@ RefPtr<CSSValue> CSSParser::consumeLonghand(CSSTokenStream& input, CSSPropertyID
     }
 
     case CSSPropertyID::TextTransform: {
-        static const CSSIdentValueEntry table[] = {
+        static constexpr CSSIdentValueEntry table[] = {
             {"none", CSSValueID::None},
             {"capitalize", CSSValueID::Capitalize},
             {"uppercase", CSSValueID::Uppercase},
@@ -3786,7 +3794,7 @@ RefPtr<CSSValue> CSSParser::consumeLonghand(CSSTokenStream& input, CSSPropertyID
     }
 
     case CSSPropertyID::MixBlendMode: {
-        static const CSSIdentValueEntry table[] = {
+        static constexpr CSSIdentValueEntry table[] = {
             {"normal", CSSValueID::Normal},
             {"multiply", CSSValueID::Multiply},
             {"screen", CSSValueID::Screen},
@@ -3809,7 +3817,7 @@ RefPtr<CSSValue> CSSParser::consumeLonghand(CSSTokenStream& input, CSSPropertyID
     }
 
     case CSSPropertyID::MaskType: {
-        static const CSSIdentValueEntry table[] = {
+        static constexpr CSSIdentValueEntry table[] = {
             {"luminance", CSSValueID::Luminance},
             {"alpha", CSSValueID::Alpha}
         };
@@ -3818,7 +3826,7 @@ RefPtr<CSSValue> CSSParser::consumeLonghand(CSSTokenStream& input, CSSPropertyID
     }
 
     case CSSPropertyID::VectorEffect: {
-        static const CSSIdentValueEntry table[] = {
+        static constexpr CSSIdentValueEntry table[] = {
             {"none", CSSValueID::None},
             {"non-scaling-stroke", CSSValueID::NonScalingStroke}
         };
@@ -3827,7 +3835,7 @@ RefPtr<CSSValue> CSSParser::consumeLonghand(CSSTokenStream& input, CSSPropertyID
     }
 
     case CSSPropertyID::Visibility: {
-        static const CSSIdentValueEntry table[] = {
+        static constexpr CSSIdentValueEntry table[] = {
             {"visible", CSSValueID::Visible},
             {"hidden", CSSValueID::Hidden},
             {"collapse", CSSValueID::Collapse}
@@ -3837,7 +3845,7 @@ RefPtr<CSSValue> CSSParser::consumeLonghand(CSSTokenStream& input, CSSPropertyID
     }
 
     case CSSPropertyID::Display: {
-        static const CSSIdentValueEntry table[] = {
+        static constexpr CSSIdentValueEntry table[] = {
             {"none", CSSValueID::None},
             {"block", CSSValueID::Block},
             {"flex", CSSValueID::Flex},
@@ -3861,7 +3869,7 @@ RefPtr<CSSValue> CSSParser::consumeLonghand(CSSTokenStream& input, CSSPropertyID
     }
 
     case CSSPropertyID::FlexDirection: {
-        static const CSSIdentValueEntry table[] = {
+        static constexpr CSSIdentValueEntry table[] = {
             {"row", CSSValueID::Row},
             {"row-reverse", CSSValueID::RowReverse},
             {"column", CSSValueID::Column},
@@ -3872,7 +3880,7 @@ RefPtr<CSSValue> CSSParser::consumeLonghand(CSSTokenStream& input, CSSPropertyID
     }
 
     case CSSPropertyID::FlexWrap: {
-        static const CSSIdentValueEntry table[] = {
+        static constexpr CSSIdentValueEntry table[] = {
             {"nowrap", CSSValueID::Nowrap},
             {"wrap", CSSValueID::Wrap},
             {"wrap-reverse", CSSValueID::WrapReverse}
@@ -3882,7 +3890,7 @@ RefPtr<CSSValue> CSSParser::consumeLonghand(CSSTokenStream& input, CSSPropertyID
     }
 
     case CSSPropertyID::WhiteSpace: {
-        static const CSSIdentValueEntry table[] = {
+        static constexpr CSSIdentValueEntry table[] = {
             {"normal", CSSValueID::Normal},
             {"pre", CSSValueID::Pre},
             {"pre-wrap", CSSValueID::PreWrap},
@@ -3894,7 +3902,7 @@ RefPtr<CSSValue> CSSParser::consumeLonghand(CSSTokenStream& input, CSSPropertyID
     }
 
     case CSSPropertyID::Direction: {
-        static const CSSIdentValueEntry table[] = {
+        static constexpr CSSIdentValueEntry table[] = {
             {"ltr", CSSValueID::Ltr},
             {"rtl", CSSValueID::Rtl}
         };
@@ -3903,7 +3911,7 @@ RefPtr<CSSValue> CSSParser::consumeLonghand(CSSTokenStream& input, CSSPropertyID
     }
 
     case CSSPropertyID::UnicodeBidi: {
-        static const CSSIdentValueEntry table[] = {
+        static constexpr CSSIdentValueEntry table[] = {
             {"normal", CSSValueID::Normal},
             {"embed", CSSValueID::Embed},
             {"bidi-override", CSSValueID::BidiOverride},
@@ -3915,7 +3923,7 @@ RefPtr<CSSValue> CSSParser::consumeLonghand(CSSTokenStream& input, CSSPropertyID
     }
 
     case CSSPropertyID::ColumnSpan: {
-        static const CSSIdentValueEntry table[] = {
+        static constexpr CSSIdentValueEntry table[] = {
             {"none", CSSValueID::None},
             {"all", CSSValueID::All}
         };
@@ -3924,7 +3932,7 @@ RefPtr<CSSValue> CSSParser::consumeLonghand(CSSTokenStream& input, CSSPropertyID
     }
 
     case CSSPropertyID::ColumnFill: {
-        static const CSSIdentValueEntry table[] = {
+        static constexpr CSSIdentValueEntry table[] = {
             {"auto", CSSValueID::Auto},
             {"balance", CSSValueID::Balance}
         };
@@ -3933,7 +3941,7 @@ RefPtr<CSSValue> CSSParser::consumeLonghand(CSSTokenStream& input, CSSPropertyID
     }
 
     case CSSPropertyID::JustifyContent: {
-        static const CSSIdentValueEntry table[] = {
+        static constexpr CSSIdentValueEntry table[] = {
             {"flex-start", CSSValueID::FlexStart},
             {"flex-end", CSSValueID::FlexEnd},
             {"center", CSSValueID::Center},
@@ -3946,7 +3954,7 @@ RefPtr<CSSValue> CSSParser::consumeLonghand(CSSTokenStream& input, CSSPropertyID
     }
 
     case CSSPropertyID::AlignContent: {
-        static const CSSIdentValueEntry table[] = {
+        static constexpr CSSIdentValueEntry table[] = {
             {"flex-start", CSSValueID::FlexStart},
             {"flex-end", CSSValueID::FlexEnd},
             {"center", CSSValueID::Center},
@@ -3960,7 +3968,7 @@ RefPtr<CSSValue> CSSParser::consumeLonghand(CSSTokenStream& input, CSSPropertyID
     }
 
     case CSSPropertyID::AlignItems: {
-        static const CSSIdentValueEntry table[] = {
+        static constexpr CSSIdentValueEntry table[] = {
             {"flex-start", CSSValueID::FlexStart},
             {"flex-end", CSSValueID::FlexEnd},
             {"center", CSSValueID::Center},
@@ -3972,7 +3980,7 @@ RefPtr<CSSValue> CSSParser::consumeLonghand(CSSTokenStream& input, CSSPropertyID
     }
 
     case CSSPropertyID::AlignSelf: {
-        static const CSSIdentValueEntry table[] = {
+        static constexpr CSSIdentValueEntry table[] = {
             {"auto", CSSValueID::Auto},
             {"flex-start", CSSValueID::FlexStart},
             {"flex-end", CSSValueID::FlexEnd},
@@ -3985,7 +3993,7 @@ RefPtr<CSSValue> CSSParser::consumeLonghand(CSSTokenStream& input, CSSPropertyID
     }
 
     case CSSPropertyID::ObjectFit: {
-        static const CSSIdentValueEntry table[] = {
+        static constexpr CSSIdentValueEntry table[] = {
             {"fill", CSSValueID::Fill},
             {"contain", CSSValueID::Contain},
             {"cover", CSSValueID::Cover},
@@ -4003,7 +4011,7 @@ RefPtr<CSSValue> CSSParser::consumeLonghand(CSSTokenStream& input, CSSPropertyID
 
 bool CSSParser::consumeFlex(CSSTokenStream& input, CSSPropertyList& properties, bool important)
 {
-    if(consumeIdentIncludingWhitespace(input, "none", 4)) {
+    if(consumeIdentIncludingWhitespace(input, "none")) {
         if(!input.empty())
             return false;
         addProperty(properties, CSSPropertyID::FlexGrow, important, CSSNumberValue::create(m_heap, 0.0));
@@ -4110,7 +4118,7 @@ bool CSSParser::consumeColumns(CSSTokenStream& input, CSSPropertyList& propertie
     RefPtr<CSSValue> width;
     RefPtr<CSSValue> count;
     for(int index = 0; index < 2; ++index) {
-        if(consumeIdentIncludingWhitespace(input, "auto", 4))
+        if(consumeIdentIncludingWhitespace(input, "auto"))
             continue;
         if(width == nullptr && (width = consumeLength(input, false, false)))
             continue;
@@ -4167,7 +4175,7 @@ bool CSSParser::consumeFont(CSSTokenStream& input, CSSPropertyList& properties, 
     RefPtr<CSSValue> variant;
     RefPtr<CSSValue> stretch;
     for(int index = 0; index < 4; ++index) {
-        if(consumeIdentIncludingWhitespace(input, "normal", 6))
+        if(consumeIdentIncludingWhitespace(input, "normal"))
             continue;
         if(style == nullptr && (style = consumeFontStyle(input)))
             continue;
@@ -4454,7 +4462,7 @@ bool CSSParser::consumeShorthand(CSSTokenStream& input, CSSPropertyList& propert
 RefPtr<CSSValue> CSSParser::consumeFontFaceSource(CSSTokenStream& input)
 {
     CSSValueList values(m_heap);
-    if(input->type() == CSSToken::Type::Function && identMatches("local", 5, input->data())) {
+    if(input->type() == CSSToken::Type::Function && identMatches("local", input->data())) {
         auto block = input.consumeBlock();
         block.consumeWhitespace();
         auto value = consumeFontFamilyName(block);
@@ -4468,7 +4476,7 @@ RefPtr<CSSValue> CSSParser::consumeFontFaceSource(CSSTokenStream& input)
         if(url == nullptr)
             return nullptr;
         values.push_back(std::move(url));
-        if(input->type() == CSSToken::Type::Function && identMatches("format", 6, input->data())) {
+        if(input->type() == CSSToken::Type::Function && identMatches("format", input->data())) {
             auto block = input.consumeBlock();
             block.consumeWhitespace();
             auto value = consumeStringOrCustomIdent(block);
@@ -4497,7 +4505,7 @@ RefPtr<CSSValue> CSSParser::consumeFontFaceSrc(CSSTokenStream& input)
 
 RefPtr<CSSValue> CSSParser::consumeFontFaceWeight(CSSTokenStream& input)
 {
-    static const CSSIdentValueEntry table[] = {
+    static constexpr CSSIdentValueEntry table[] = {
         {"normal", CSSValueID::Normal},
         {"bold", CSSValueID::Bold}
     };
@@ -4562,7 +4570,7 @@ RefPtr<CSSValue> CSSParser::consumeFontFaceUnicodeRange(CSSTokenStream& input)
 
 RefPtr<CSSValue> CSSParser::consumeCounterStyleName(CSSTokenStream& input)
 {
-    if(input->type() != CSSToken::Type::Ident || identMatches("none", 4, input->data()))
+    if(input->type() != CSSToken::Type::Ident || identMatches("none", input->data()))
         return nullptr;
     GlobalString name(input->data());
     input.consumeIncludingWhitespace();
@@ -4571,7 +4579,7 @@ RefPtr<CSSValue> CSSParser::consumeCounterStyleName(CSSTokenStream& input)
 
 RefPtr<CSSValue> CSSParser::consumeCounterStyleSystem(CSSTokenStream& input)
 {
-    static const CSSIdentValueEntry table[] = {
+    static constexpr CSSIdentValueEntry table[] = {
         {"cyclic", CSSValueID::Cyclic},
         {"symbolic", CSSValueID::Symbolic},
         {"alphabetic", CSSValueID::Alphabetic},
@@ -4620,7 +4628,7 @@ RefPtr<CSSValue> CSSParser::consumeCounterStyleSymbol(CSSTokenStream& input)
 
 RefPtr<CSSValue> CSSParser::consumeCounterStyleRangeBound(CSSTokenStream& input)
 {
-    if(consumeIdentIncludingWhitespace(input, "infinite", 8))
+    if(consumeIdentIncludingWhitespace(input, "infinite"))
         return CSSIdentValue::create(CSSValueID::Infinite);
     return consumeInteger(input, true);
 }
