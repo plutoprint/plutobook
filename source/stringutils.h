@@ -15,7 +15,7 @@
 
 namespace plutobook {
 
-enum CharFlags : uint8_t {
+enum AsciiCharFlags : uint8_t {
     Space    = 1 << 0,
     Digit    = 1 << 1,
     Upper    = 1 << 2,
@@ -24,7 +24,7 @@ enum CharFlags : uint8_t {
     HexLower = 1 << 5
 };
 
-constexpr std::array<uint8_t, 256> createCharTable()
+constexpr std::array<uint8_t, 256> createAsciiCharTable()
 {
     std::array<uint8_t, 256> table{};
 
@@ -47,56 +47,56 @@ constexpr std::array<uint8_t, 256> createCharTable()
     return table;
 }
 
-constexpr auto kCharTable = createCharTable();
+constexpr auto kAsciiCharTable = createAsciiCharTable();
 
 constexpr bool isSpace(uint8_t c)
 {
-    return kCharTable[c] & Space;
+    return kAsciiCharTable[c] & Space;
 }
 
 constexpr bool isDigit(uint8_t c)
 {
-    return kCharTable[c] & Digit;
+    return kAsciiCharTable[c] & Digit;
 }
 
 constexpr bool isUpper(uint8_t c)
 {
-    return kCharTable[c] & Upper;
+    return kAsciiCharTable[c] & Upper;
 }
 
 constexpr bool isLower(uint8_t c)
 {
-    return kCharTable[c] & Lower;
+    return kAsciiCharTable[c] & Lower;
 }
 
 constexpr bool isAlpha(uint8_t c)
 {
-    return kCharTable[c] & (Upper | Lower);
+    return kAsciiCharTable[c] & (Upper | Lower);
 }
 
 constexpr bool isAlnum(uint8_t c)
 {
-    return kCharTable[c] & (Digit | Upper | Lower);
+    return kAsciiCharTable[c] & (Digit | Upper | Lower);
 }
 
 constexpr bool isHexUpper(uint8_t c)
 {
-    return kCharTable[c] & HexUpper;
+    return kAsciiCharTable[c] & HexUpper;
 }
 
 constexpr bool isHexLower(uint8_t c)
 {
-    return kCharTable[c] & HexLower;
+    return kAsciiCharTable[c] & HexLower;
 }
 
 constexpr bool isHexAlpha(uint8_t c)
 {
-    return kCharTable[c] & (HexUpper | HexLower);
+    return kAsciiCharTable[c] & (HexUpper | HexLower);
 }
 
 constexpr bool isHexDigit(uint8_t c)
 {
-    return kCharTable[c] & (Digit | HexUpper | HexLower);
+    return kAsciiCharTable[c] & (Digit | HexUpper | HexLower);
 }
 
 constexpr uint8_t toHexDigit(uint8_t cc)
