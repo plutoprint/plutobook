@@ -47,7 +47,7 @@ constexpr std::array<uint8_t, 256> createAsciiCharTable()
     return table;
 }
 
-constexpr auto kAsciiCharTable = createAsciiCharTable();
+inline constexpr auto kAsciiCharTable = createAsciiCharTable();
 
 constexpr bool isSpace(uint8_t c)
 {
