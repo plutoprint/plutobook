@@ -271,6 +271,7 @@ inline const GlobalString maskUnitsAttr("maskUnits");
 inline const GlobalString mediaAttr("media");
 inline const GlobalString multipleAttr("multiple");
 inline const GlobalString noshadeAttr("noshade");
+inline const GlobalString nowrapAttr("nowrap");
 inline const GlobalString offsetAttr("offset");
 inline const GlobalString orientAttr("orient");
 inline const GlobalString patternContentUnitsAttr("patternContentUnits");

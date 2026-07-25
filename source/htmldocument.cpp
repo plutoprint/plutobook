@@ -885,6 +885,8 @@ void HTMLTableCellElement::collectAttributeStyle(std::string& output, const Glob
 {
     if(name == widthAttr) {
         addHTMLLengthAttributeStyle(output, "width", value);
+    } else if(name == nowrapAttr) {
+        addAttributeStyle(output, "white-space", "nowrap");
     } else {
         HTMLTablePartElement::collectAttributeStyle(output, name, value);
     }
