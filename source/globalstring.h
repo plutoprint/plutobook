@@ -47,6 +47,8 @@ private:
     const HeapString* m_entry{nullptr};
 };
 
+inline const HeapString GlobalString::nullString;
+
 inline const HeapString& GlobalString::value() const
 {
     return m_entry ? *m_entry : nullString;
@@ -69,8 +71,6 @@ inline bool operator<(const GlobalString& a, std::string_view b) { return a.valu
 inline bool operator<(std::string_view a, const GlobalString& b) { return a < b.value(); }
 inline bool operator<(const GlobalString& a, const HeapString& b) { return a.value() < b; }
 inline bool operator<(const HeapString& a, const GlobalString& b) { return a < b.value(); }
-
-inline const HeapString GlobalString::nullString;
 
 inline const GlobalString nullGlo;
 inline const GlobalString emptyGlo("");
