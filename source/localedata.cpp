@@ -17,7 +17,7 @@ namespace plutobook {
 const LocaleData* LocaleData::get(const GlobalString& lang)
 {
     if(lang.isEmpty()) {
-        thread_local std::unique_ptr<LocaleData> locale(new LocaleData(icu::Locale::getDefault()));
+        thread_local auto locale = std::make_unique<LocaleData>(icu::Locale::getDefault());
         return locale.get();
     }
 
@@ -29,7 +29,7 @@ const LocaleData* LocaleData::get(const GlobalString& lang)
         icu::Locale loc(language.data());
         if(loc.isBogus())
             loc = icu::Locale::getDefault();
-        locale.reset(new LocaleData(loc));
+        locale = std::make_unique<LocaleData>(loc);
     }
 
     return locale.get();
