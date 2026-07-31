@@ -115,11 +115,14 @@ constexpr uint8_t toHexByte(uint8_t a, uint8_t b)
     return toHexDigit(a) << 4 | toHexDigit(b);
 }
 
-extern const uint8_t kAsciiCaseFoldTable[256];
-
-inline char toLower(uint8_t cc)
+constexpr char toLower(uint8_t cc)
 {
-    return kAsciiCaseFoldTable[cc];
+    return cc | (isUpper(cc) << 5);
+}
+
+constexpr char toUpper(uint8_t cc)
+{
+    return cc & ~(isLower(cc) << 5);
 }
 
 constexpr bool equals(uint8_t a, uint8_t b, bool caseSensitive)
