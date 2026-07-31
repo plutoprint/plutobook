@@ -701,7 +701,7 @@ bool CSSParser::consumeAttributeSelector(CSSTokenStream& input, CSSCompoundSelec
 
     if(matchType != CSSSimpleSelector::MatchType::AttributeEquals) {
         block.consume();
-        if(block->type() != CSSToken::Type::Delim && block->delim() != '=') {
+        if(block->type() != CSSToken::Type::Delim || block->delim() != '=') {
             return false;
         }
     }
