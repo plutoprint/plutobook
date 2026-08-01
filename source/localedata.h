@@ -19,15 +19,15 @@ namespace plutobook {
 
 class LocaleData {
 public:
-    static const LocaleData* get(const GlobalString& lang);
+    static std::unique_ptr<LocaleData> create(const GlobalString& lang);
 
     icu::BreakIterator* characterIterator() const;
     icu::BreakIterator* lineIterator() const;
 
     const GlobalString& getQuote(bool open, size_t depth) const;
 
-public:
-    LocaleData(const icu::Locale& locale) : m_locale(locale) {}
+private:
+    LocaleData(const icu::Locale& locale = icu::Locale::getDefault()) : m_locale(locale) {}
 
     icu::Locale m_locale;
 

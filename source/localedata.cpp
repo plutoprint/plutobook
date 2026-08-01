@@ -10,29 +10,18 @@
 
 #include <cassert>
 #include <algorithm>
-#include <map>
 
 namespace plutobook {
 
-const LocaleData* LocaleData::get(const GlobalString& lang)
+std::unique_ptr<LocaleData> LocaleData::create(const GlobalString& lang)
 {
-    if(lang.isEmpty()) {
-        thread_local auto locale = std::make_unique<LocaleData>(icu::Locale::getDefault());
-        return locale.get();
-    }
-
-    thread_local std::map<GlobalString, std::unique_ptr<LocaleData>> table;
-
-    auto& locale = table[lang];
-    if(!locale) {
-        std::string language(lang.value());
-        icu::Locale loc(language.data());
-        if(loc.isBogus())
-            loc = icu::Locale::getDefault();
-        locale = std::make_unique<LocaleData>(loc);
-    }
-
-    return locale.get();
+    if(lang.isEmpty())
+        return std::unique_ptr<LocaleData>(new LocaleData());
+    std::string language(lang.value());
+    icu::Locale locale(language.data());
+    if(locale.isBogus())
+        locale = icu::Locale::getDefault();
+    return std::unique_ptr<LocaleData>(new LocaleData(locale));
 }
 
 icu::BreakIterator* LocaleData::characterIterator() const

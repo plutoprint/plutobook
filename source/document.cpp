@@ -19,6 +19,7 @@
 #include "textresource.h"
 #include "imageresource.h"
 #include "fontresource.h"
+#include "localedata.h"
 #include "stringutils.h"
 #include "plutobook.hpp"
 
@@ -571,6 +572,7 @@ Document::Document(Book* book, Heap* heap, ResourceFetcher* fetcher, Url baseUrl
     , m_baseUrl(std::move(baseUrl))
     , m_pages(heap)
     , m_idCache(heap)
+    , m_localeCache(heap)
     , m_resourceCache(heap)
     , m_fontCache(heap)
     , m_runningStyles(heap)
@@ -944,6 +946,14 @@ std::string Document::getCounterText(int value, const GlobalString& listType)
 std::string Document::getMarkerText(int value, const GlobalString& listType)
 {
     return m_styleSheet.getMarkerText(value, listType);
+}
+
+const LocaleData* Document::getLocaleData(const GlobalString& lang)
+{
+    auto& locale = m_localeCache[lang];
+    if(locale == nullptr)
+        locale = LocaleData::create(lang);
+    return locale.get();
 }
 
 RefPtr<FontData> Document::getFontData(const GlobalString& family, const FontDataDescription& description)

@@ -301,6 +301,7 @@ class TextResource;
 class ImageResource;
 class FontResource;
 class ResourceFetcher;
+class LocaleData;
 class Font;
 
 struct FontDescription;
@@ -309,6 +310,7 @@ struct FontDataDescription;
 using CounterMap = std::map<GlobalString, std::vector<int>>;
 
 using DocumentElementMap = std::pmr::multimap<HeapString, Element*, std::less<>>;
+using DocumentLocaleMap = std::pmr::map<GlobalString, std::unique_ptr<LocaleData>>;
 using DocumentResourceMap = std::pmr::map<Url, RefPtr<Resource>>;
 using DocumentFontMap = std::pmr::map<FontDescription, RefPtr<Font>>;
 using DocumentRunningStyleMap = std::pmr::map<GlobalString, RefPtr<BoxStyle>>;
@@ -392,6 +394,8 @@ public:
     std::string getCounterText(int value, const GlobalString& listType);
     std::string getMarkerText(int value, const GlobalString& listType);
 
+    const LocaleData* getLocaleData(const GlobalString& lang);
+
     RefPtr<FontData> getFontData(const GlobalString& family, const FontDataDescription& description);
     RefPtr<Font> createFont(const FontDescription& description);
 
@@ -435,6 +439,7 @@ private:
     Url m_baseUrl;
     PageBoxList m_pages;
     DocumentElementMap m_idCache;
+    DocumentLocaleMap m_localeCache;
     DocumentResourceMap m_resourceCache;
     DocumentFontMap m_fontCache;
     DocumentRunningStyleMap m_runningStyles;
