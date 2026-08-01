@@ -1660,6 +1660,47 @@ static bool consumeCalcBlock(CSSTokenStream& input, CSSTokenList& stack, CSSCalc
     return true;
 }
 
+static bool isValidCalcExpression(const CSSCalcList& values, bool unitless)
+{
+    std::vector<bool> stack;
+    for(const auto& item : values) {
+        if(item.op == CSSCalcOperator::None) {
+            stack.push_back(item.units != CSSLengthUnits::None);
+        } else {
+            if(stack.size() < 2)
+                return false;
+            bool right = stack.back();
+            stack.pop_back();
+            bool left = stack.back();
+            stack.pop_back();
+            switch(item.op) {
+            case CSSCalcOperator::Add:
+            case CSSCalcOperator::Sub:
+            case CSSCalcOperator::Min:
+            case CSSCalcOperator::Max:
+                if(left != right)
+                    return false;
+                stack.push_back(left);
+                break;
+            case CSSCalcOperator::Mul:
+                if(left && right)
+                    return false;
+                stack.push_back(left || right);
+                break;
+            case CSSCalcOperator::Div:
+                if(right)
+                    return false;
+                stack.push_back(left);
+                break;
+            default:
+                assert(false);
+            }
+        }
+    }
+
+    return stack.size() == 1 && (unitless || stack.back());
+}
+
 RefPtr<CSSValue> CSSParser::consumeCalc(CSSTokenStream& input, bool negative, bool unitless)
 {
     if(input->type() != CSSToken::Type::Function || !isValidCalcFunction(input->data()))
@@ -1667,10 +1708,9 @@ RefPtr<CSSValue> CSSParser::consumeCalc(CSSTokenStream& input, bool negative, bo
     CSSTokenList stack;
     CSSCalcList values(m_heap);
     CSSTokenStreamGuard guard(input);
-    if(!consumeCalcBlock(input, stack, values))
+    if(!consumeCalcBlock(input, stack, values)) {
         return nullptr;
-    input.consumeWhitespace();
-    guard.release();
+    }
 
     unitless |= m_context.inSVGElement();
     while(!stack.empty()) {
@@ -1679,6 +1719,10 @@ RefPtr<CSSValue> CSSParser::consumeCalc(CSSTokenStream& input, bool negative, bo
         stack.pop_back();
     }
 
+    if(!isValidCalcExpression(values, unitless))
+        return nullptr;
+    input.consumeWhitespace();
+    guard.release();
     return CSSCalcValue::create(m_heap, negative, unitless, std::move(values));
 }
 
