@@ -939,7 +939,7 @@ bool CSSParser::consumeMatchPattern(CSSTokenStream& input, CSSSimpleSelector::Ma
         sign = CSSToken::NumberSign::Minus;
         if(ss.peek() != eof) {
             ss >> pattern.second;
-            if(ss.fail())
+            if(ss.fail() || ss.peek() != eof)
                 return false;
             pattern.second = -pattern.second;
             return true;
