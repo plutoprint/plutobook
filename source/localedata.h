@@ -13,7 +13,10 @@
 
 #include <unicode/locid.h>
 #include <unicode/brkiter.h>
+
 #include <memory>
+
+typedef const struct hb_language_impl_t* hb_language_t;
 
 namespace plutobook {
 
@@ -21,18 +24,23 @@ class LocaleData {
 public:
     static std::unique_ptr<LocaleData> create(const GlobalString& lang);
 
+    hb_language_t language() const { return m_language; }
+
     icu::BreakIterator* characterIterator() const;
     icu::BreakIterator* lineIterator() const;
-
     const GlobalString& getQuote(bool open, size_t depth) const;
 
-private:
-    LocaleData(const icu::Locale& locale) : m_locale(locale) {}
+    const char* name() const;
 
-    icu::Locale m_locale;
+private:
+    LocaleData(hb_language_t language) : m_language(language) {}
+
+    hb_language_t m_language;
 
     mutable std::unique_ptr<icu::BreakIterator> m_characterIterator;
     mutable std::unique_ptr<icu::BreakIterator> m_lineIterator;
+
+    icu::Locale locale() const;
 
     class Quotes {
     public:

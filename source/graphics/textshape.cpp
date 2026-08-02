@@ -8,6 +8,7 @@
 
 #include "textshape.h"
 #include "fontresource.h"
+#include "localedata.h"
 #include "graphicscontext.h"
 #include "geometry.h"
 #include "textbreakiterator.h"
@@ -157,7 +158,7 @@ RefPtr<TextShape> TextShape::createForText(const UString& text, Direction direct
 {
     assert(!text.isEmpty());
     const auto* font = style->font();
-    const auto& lang = font->lang();
+    const auto* locale = font->locale();
     auto fontFeatures = style->fontFeatures();
     auto fontVariantEmoji = style->fontVariantEmoji();
     auto letterSpacing = disableSpacing ? 0 : style->letterSpacing();
@@ -166,16 +167,16 @@ RefPtr<TextShape> TextShape::createForText(const UString& text, Direction direct
 
     thread_local hb::unique_ptr<hb_buffer_t> hbBuffer(hb_buffer_create());
     auto hbDirection = direction == Direction::Ltr ? HB_DIRECTION_LTR : HB_DIRECTION_RTL;
-    auto hbLanguage = hb_language_from_string(lang.data(), lang.size());
-    auto textBuffer = reinterpret_cast<const uint16_t*>(text.getBuffer());
+    auto hbLanguage = locale->language();
 
     float totalWidth = 0.f;
     int startIndex = 0;
     int totalLength = text.length();
     TextShapeRunList textRuns(heap);
 
-    CharacterBreakIterator iterator(text, font->locale());
+    CharacterBreakIterator iterator(text, locale);
     auto character = text.char32At(startIndex);
+    auto textBuffer = reinterpret_cast<const uint16_t*>(text.getBuffer());
     auto nextIndex = iterator.nextBreakOpportunity(startIndex, totalLength);
     auto nextFontData = resolveFontData(font, textBuffer + startIndex, nextIndex, fontVariantEmoji);
 

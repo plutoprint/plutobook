@@ -11,27 +11,26 @@
 #include <cassert>
 #include <algorithm>
 
+#include <hb.h>
+
 namespace plutobook {
 
 std::unique_ptr<LocaleData> LocaleData::create(const GlobalString& lang)
 {
-    auto locale = icu::Locale::getDefault();
-    if(!lang.isEmpty()) {
-        std::string language(lang.value());
-        locale = icu::Locale(language.data());
-        if(locale.isBogus()) {
-            locale = icu::Locale::getRoot();
-        }
+    auto language = hb_language_from_string(lang.data(), lang.size());
+    if(language == nullptr) {
+        const char* name = icu::Locale::getDefault().getName();
+        language = hb_language_from_string(name, std::strlen(name));
     }
 
-    return std::unique_ptr<LocaleData>(new LocaleData(locale));
+    return std::unique_ptr<LocaleData>(new LocaleData(language));
 }
 
 icu::BreakIterator* LocaleData::characterIterator() const
 {
     if(!m_characterIterator) {
         UErrorCode status = U_ZERO_ERROR;
-        m_characterIterator.reset(icu::BreakIterator::createCharacterInstance(m_locale, status));
+        m_characterIterator.reset(icu::BreakIterator::createCharacterInstance(locale(), status));
         assert(m_characterIterator && U_SUCCESS(status));
     }
 
@@ -42,11 +41,31 @@ icu::BreakIterator* LocaleData::lineIterator() const
 {
     if(!m_lineIterator) {
         UErrorCode status = U_ZERO_ERROR;
-        m_lineIterator.reset(icu::BreakIterator::createLineInstance(m_locale, status));
+        m_lineIterator.reset(icu::BreakIterator::createLineInstance(locale(), status));
         assert(m_lineIterator && U_SUCCESS(status));
     }
 
     return m_lineIterator.get();
+}
+
+const GlobalString& LocaleData::getQuote(bool open, size_t depth) const
+{
+    if(!m_quotes)
+        m_quotes = Quotes::create(name());
+    return m_quotes->getQuote(open, depth);
+}
+
+const char* LocaleData::name() const
+{
+    return hb_language_to_string(m_language);
+}
+
+icu::Locale LocaleData::locale() const
+{
+    auto locale = icu::Locale(name());
+    if(locale.isBogus())
+        return icu::Locale::getRoot();
+    return locale;
 }
 
 std::unique_ptr<LocaleData::Quotes> LocaleData::Quotes::create(std::string_view lang)
@@ -62,7 +81,7 @@ std::unique_ptr<LocaleData::Quotes> LocaleData::Quotes::create(std::string_view 
         {0x00ab, 0x00bb, 0x2039, 0x203a, "am"},
         {0x201d, 0x201c, 0x2019, 0x2018, "ar"},
         {0x00ab, 0x00bb, 0x201c, 0x201d, "ast"},
-        {0x00ab, 0x00bb, 0x2039, 0x203a, "az_Cyrl"},
+        {0x00ab, 0x00bb, 0x2039, 0x203a, "az-cyrl"},
         {0x00ab, 0x00bb, 0x201e, 0x201c, "bas"},
         {0x00ab, 0x00bb, 0x201e, 0x201c, "be"},
         {0x201e, 0x201c, 0x201e, 0x201c, "bg"},
@@ -70,7 +89,7 @@ std::unique_ptr<LocaleData::Quotes> LocaleData::Quotes::create(std::string_view 
         {0x00ab, 0x00bb, 0x201c, 0x201d, "bm"},
         {0x00ab, 0x00bb, 0x201c, 0x201d, "br"},
         {0x201e, 0x201d, 0x2018, 0x2019, "bs"},
-        {0x201e, 0x201c, 0x201a, 0x2018, "bs_Cyrl"},
+        {0x201e, 0x201c, 0x201a, 0x2018, "bs-cyrl"},
         {0x00ab, 0x00bb, 0x201c, 0x201d, "ca"},
         {0x201e, 0x201c, 0x201a, 0x2018, "cs"},
         {0x00ab, 0x00bb, 0x201e, 0x201c, "cv"},
@@ -86,8 +105,8 @@ std::unique_ptr<LocaleData::Quotes> LocaleData::Quotes::create(std::string_view 
         {0x201e, 0x201d, 0x201a, 0x2019, "ff"},
         {0x201d, 0x201d, 0x2019, 0x2019, "fi"},
         {0x00ab, 0x00bb, 0x00ab, 0x00bb, "fr"},
-        {0x00ab, 0x00bb, 0x201d, 0x201c, "fr_CA"},
-        {0x00ab, 0x00bb, 0x2039, 0x203a, "fr_CH"},
+        {0x00ab, 0x00bb, 0x201d, 0x201c, "fr-ca"},
+        {0x00ab, 0x00bb, 0x2039, 0x203a, "fr-ch"},
         {0x2018, 0x2019, 0x201c, 0x201d, "fur"},
         {0x00ab, 0x00bb, 0x2039, 0x203a, "gsw"},
         {0x201d, 0x201d, 0x2019, 0x2019, "he"},
@@ -129,17 +148,17 @@ std::unique_ptr<LocaleData::Quotes> LocaleData::Quotes::create(std::string_view 
         {0x00ab, 0x00bb, 0x201e, 0x201c, "os"},
         {0x201e, 0x201d, 0x00ab, 0x00bb, "pl"},
         {0x201e, 0x201c, 0x201e, 0x201c, "prg"},
-        {0x00ab, 0x00bb, 0x201c, 0x201d, "pt_AO"},
-        {0x00ab, 0x00bb, 0x201c, 0x201d, "pt_CH"},
-        {0x00ab, 0x00bb, 0x201c, 0x201d, "pt_CV"},
-        {0x00ab, 0x00bb, 0x201c, 0x201d, "pt_GQ"},
-        {0x00ab, 0x00bb, 0x201c, 0x201d, "pt_GW"},
-        {0x00ab, 0x00bb, 0x201c, 0x201d, "pt_LU"},
-        {0x00ab, 0x00bb, 0x201c, 0x201d, "pt_MO"},
-        {0x00ab, 0x00bb, 0x201c, 0x201d, "pt_MZ"},
-        {0x00ab, 0x00bb, 0x201c, 0x201d, "pt_PT"},
-        {0x00ab, 0x00bb, 0x201c, 0x201d, "pt_ST"},
-        {0x00ab, 0x00bb, 0x201c, 0x201d, "pt_TL"},
+        {0x00ab, 0x00bb, 0x201c, 0x201d, "pt-ao"},
+        {0x00ab, 0x00bb, 0x201c, 0x201d, "pt-ch"},
+        {0x00ab, 0x00bb, 0x201c, 0x201d, "pt-cv"},
+        {0x00ab, 0x00bb, 0x201c, 0x201d, "pt-gq"},
+        {0x00ab, 0x00bb, 0x201c, 0x201d, "pt-gw"},
+        {0x00ab, 0x00bb, 0x201c, 0x201d, "pt-lu"},
+        {0x00ab, 0x00bb, 0x201c, 0x201d, "pt-mo"},
+        {0x00ab, 0x00bb, 0x201c, 0x201d, "pt-mz"},
+        {0x00ab, 0x00bb, 0x201c, 0x201d, "pt-pt"},
+        {0x00ab, 0x00bb, 0x201c, 0x201d, "pt-st"},
+        {0x00ab, 0x00bb, 0x201c, 0x201d, "pt-tl"},
         {0x00ab, 0x00bb, 0x2039, 0x203a, "rm"},
         {0x201d, 0x201d, 0x2019, 0x2019, "rn"},
         {0x201e, 0x201d, 0x00ab, 0x00bb, "ro"},
@@ -160,7 +179,7 @@ std::unique_ptr<LocaleData::Quotes> LocaleData::Quotes::create(std::string_view 
         {0x201d, 0x201c, 0x2019, 0x2018, "syr"},
         {0x201e, 0x201d, 0x00bb, 0x00ab, "szl"},
         {0x00ab, 0x00bb, 0x201c, 0x201d, "ti"},
-        {0x2018, 0x2019, 0x201c, 0x201d, "ti_ER"},
+        {0x2018, 0x2019, 0x201c, 0x201d, "ti-er"},
         {0x201c, 0x201d, 0x201c, 0x201d, "tk"},
         {0x2018, 0x2019, 0x201c, 0x201d, "tn"},
         {0x00bb, 0x00ab, 0x203a, 0x2039, "ug"},
@@ -172,7 +191,7 @@ std::unique_ptr<LocaleData::Quotes> LocaleData::Quotes::create(std::string_view 
         {0x201d, 0x201d, 0x2019, 0x2019, "yi"},
         {0x300c, 0x300d, 0x300e, 0x300f, "yue"},
         {0x00ab, 0x00bb, 0x201e, 0x201d, "zgh"},
-        {0x300c, 0x300d, 0x300e, 0x300f, "zh_Hant"}
+        {0x300c, 0x300d, 0x300e, 0x300f, "zh-hant"}
     };
 
     constexpr auto MAX_QUOTE_SIZE = U8_MAX_LENGTH + 1;
@@ -202,7 +221,7 @@ std::unique_ptr<LocaleData::Quotes> LocaleData::Quotes::create(std::string_view 
             break;
         }
 
-        auto pos = lang.find_last_of('_', lang.length() - 1);
+        auto pos = lang.find_last_of('-', lang.length() - 1);
         if(pos == std::string_view::npos)
             break;
         lang.remove_suffix(lang.length() - pos);
@@ -216,13 +235,6 @@ const GlobalString& LocaleData::Quotes::getQuote(bool open, size_t depth) const
     if(!depth)
         return open ? m_open1 : m_close1;
     return open ? m_open2 : m_close2;
-}
-
-const GlobalString& LocaleData::getQuote(bool open, size_t depth) const
-{
-    if(!m_quotes)
-        m_quotes = Quotes::create(m_locale.getName());
-    return m_quotes->getQuote(open, depth);
 }
 
 } // namespace plutobook
