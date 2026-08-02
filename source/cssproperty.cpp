@@ -964,8 +964,7 @@ std::optional<CSSCalc> CSSCalcValue::resolve(const CSSLengthResolver& resolver) 
                 stack.emplace_back(value, CSSLengthUnits::Pixels);
             }
         } else {
-            if(stack.size() < 2)
-                return std::nullopt;
+            assert(stack.size() >= 2);
             auto right = stack.back();
             stack.pop_back();
             auto left = stack.back();
@@ -973,33 +972,29 @@ std::optional<CSSCalc> CSSCalcValue::resolve(const CSSLengthResolver& resolver) 
 
             switch(item.op) {
             case CSSCalcOperator::Add:
-                if(right.units != left.units)
-                    return std::nullopt;
+                assert(right.units == left.units);
                 stack.emplace_back(left.value + right.value, right.units);
                 break;
             case CSSCalcOperator::Sub:
-                if(right.units != left.units)
-                    return std::nullopt;
+                assert(right.units == left.units);
                 stack.emplace_back(left.value - right.value, right.units);
                 break;
             case CSSCalcOperator::Mul:
-                if(right.units == CSSLengthUnits::Pixels && left.units == CSSLengthUnits::Pixels)
-                    return std::nullopt;
+                assert(right.units == CSSLengthUnits::None || left.units == CSSLengthUnits::None);
                 stack.emplace_back(left.value * right.value, std::max(left.units, right.units));
                 break;
             case CSSCalcOperator::Div:
-                if(right.units == CSSLengthUnits::Pixels || right.value == 0)
+                assert(right.units == CSSLengthUnits::None);
+                if(right.value == 0)
                     return std::nullopt;
                 stack.emplace_back(left.value / right.value, left.units);
                 break;
             case CSSCalcOperator::Min:
-                if(right.units != left.units)
-                    return std::nullopt;
+                assert(right.units == left.units);
                 stack.emplace_back(std::min(left.value, right.value), right.units);
                 break;
             case CSSCalcOperator::Max:
-                if(right.units != left.units)
-                    return std::nullopt;
+                assert(right.units == left.units);
                 stack.emplace_back(std::max(left.value, right.value), right.units);
                 break;
             default:
@@ -1008,16 +1003,12 @@ std::optional<CSSCalc> CSSCalcValue::resolve(const CSSLengthResolver& resolver) 
         }
     }
 
-    if(stack.size() == 1) {
-        const auto& result = stack.back();
-        if(result.value < 0 && !m_negative)
-            return std::nullopt;
-        if(result.units == CSSLengthUnits::None && !m_unitless)
-            return std::nullopt;
-        return result;
-    }
-
-    return std::nullopt;
+    assert(stack.size() == 1);
+    auto result = stack.back();
+    if(result.value < 0 && !m_negative)
+        return std::nullopt;
+    assert(m_unitless || result.units != CSSLengthUnits::None);
+    return result;
 }
 
 using CSSIdentValueList = std::pmr::vector<RefPtr<CSSIdentValue>>;
