@@ -816,6 +816,13 @@ Heap* Font::heap() const
     return m_document->heap();
 }
 
+const LocaleData* Font::locale() const
+{
+    if(m_locale == nullptr)
+        m_locale = m_document->getLocaleData(m_description.data.lang);
+    return m_locale;
+}
+
 const SimpleFontData* Font::fontDataForCharacters(const uint16_t* characters, int length, EmojiPolicy emojiPolicy) const
 {
     for(const auto& font : m_fonts) {
@@ -838,7 +845,6 @@ Font::Font(Document* document, const FontDescription& description)
     : m_document(document)
     , m_description(description)
     , m_fonts(document->heap())
-    , m_locale(document->getLocaleData(description.data.lang))
 {
     for(const auto& family : description.families) {
         if(auto font = document->getFontData(family, description.data)) {

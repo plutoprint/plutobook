@@ -425,8 +425,8 @@ public:
     Document* document() const { return m_document; }
     const FontDescription& description() const { return m_description; }
     const FontDataList& fonts() const { return m_fonts; }
-    const LocaleData* locale() const { return m_locale; }
     const SimpleFontData* primaryFont() const { return m_primaryFont; }
+    const LocaleData* locale() const;
 
     float size() const { return m_description.data.size; }
     float weight() const { return m_description.data.request.weight; }
@@ -444,8 +444,8 @@ private:
     Document* m_document;
     FontDescription m_description;
     mutable FontDataList m_fonts;
-    const LocaleData* m_locale;
     const SimpleFontData* m_primaryFont{nullptr};
+    mutable const LocaleData* m_locale{nullptr};
 };
 
 } // namespace plutobook
