@@ -15,12 +15,15 @@ namespace plutobook {
 
 std::unique_ptr<LocaleData> LocaleData::create(const GlobalString& lang)
 {
-    if(lang.isEmpty())
-        return std::unique_ptr<LocaleData>(new LocaleData());
-    std::string language(lang.value());
-    icu::Locale locale(language.data());
-    if(locale.isBogus())
-        locale = icu::Locale::getDefault();
+    auto locale = icu::Locale::getDefault();
+    if(!lang.isEmpty()) {
+        std::string language(lang.value());
+        locale = icu::Locale(language.data());
+        if(locale.isBogus()) {
+            locale = icu::Locale::getRoot();
+        }
+    }
+
     return std::unique_ptr<LocaleData>(new LocaleData(locale));
 }
 

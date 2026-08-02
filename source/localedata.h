@@ -27,7 +27,7 @@ public:
     const GlobalString& getQuote(bool open, size_t depth) const;
 
 private:
-    LocaleData(const icu::Locale& locale = icu::Locale::getDefault()) : m_locale(locale) {}
+    LocaleData(const icu::Locale& locale) : m_locale(locale) {}
 
     icu::Locale m_locale;
 
