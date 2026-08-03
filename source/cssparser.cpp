@@ -3584,6 +3584,16 @@ RefPtr<CSSValue> CSSParser::consumeLonghand(CSSTokenStream& input, CSSPropertyID
         return consumeIdent(input, table);
     }
 
+    case CSSPropertyID::HyphenateCharacter: {
+        if(auto value = consumeString(input))
+            return value;
+        static const CSSIdentValueEntry table[] = {
+            {"auto", CSSValueID::Auto}
+        };
+
+        return consumeIdent(input, table);
+    }
+
     case CSSPropertyID::ListStylePosition: {
         static constexpr CSSIdentValueEntry table[] = {
             {"inside", CSSValueID::Inside},
