@@ -453,6 +453,11 @@ inline float Length::calcMin(float maximum) const
 
 using LengthList = std::vector<Length>;
 
+struct AspectRatio {
+    bool isAuto = true;
+    double value = 0.0; // preferred width/height ratio; 0 means none
+};
+
 class LengthPoint {
 public:
     explicit LengthPoint(const Length& value) : LengthPoint(value, value) {}
@@ -788,6 +793,8 @@ public:
 
     ObjectFit objectFit() const { return m_objectFit; }
     LengthPoint objectPosition() const;
+
+    AspectRatio aspectRatio() const;
 
     TableLayout tableLayout() const { return m_tableLayout; }
     CaptionSide captionSide() const { return m_captionSide; }

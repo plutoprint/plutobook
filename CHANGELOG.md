@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Add support for the CSS `aspect-ratio` property
+
 ## PlutoBook 0.18.0 (2026-06-30)
 
 - Add support for CSS Logical Properties
