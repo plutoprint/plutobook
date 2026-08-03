@@ -30,7 +30,7 @@ public:
     icu::BreakIterator* lineIterator() const;
     const GlobalString& getQuote(bool open, size_t depth) const;
 
-    const char* name() const;
+    const char* lang() const;
 
 private:
     LocaleData(hb_language_t language) : m_language(language) {}

@@ -51,18 +51,18 @@ icu::BreakIterator* LocaleData::lineIterator() const
 const GlobalString& LocaleData::getQuote(bool open, size_t depth) const
 {
     if(!m_quotes)
-        m_quotes = Quotes::create(name());
+        m_quotes = Quotes::create(lang());
     return m_quotes->getQuote(open, depth);
 }
 
-const char* LocaleData::name() const
+const char* LocaleData::lang() const
 {
     return hb_language_to_string(m_language);
 }
 
 icu::Locale LocaleData::locale() const
 {
-    auto locale = icu::Locale(name());
+    auto locale = icu::Locale(lang());
     if(locale.isBogus())
         return icu::Locale::getRoot();
     return locale;
