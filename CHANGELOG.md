@@ -1,5 +1,22 @@
 # Changelog
 
+## PlutoBook 0.19.0 (2026-08-04)
+
+- Fix several security vulnerabilities
+- Add support for the legacy `nowrap` attribute on table cells
+- Remove ICU i18n dependency
+- Remove incomplete `target-counter` and `target-counters` implementation
+- Reduce default resource request timeout to 30 seconds
+- Reject invalid `calc()` expressions at parse time
+- Reject trailing garbage in An+B dimension values
+- Prevent `rules=rows` from applying column borders
+
+Backers and sponsors:
+
+- [Sveltware Solutions](https://github.com/sveltware)
+- [Dino Maric](https://github.com/dixpac)
+- [Ashish Kulkarni](https://github.com/ashkulz)
+
 ## PlutoBook 0.18.0 (2026-06-30)
 
 - Add support for CSS Logical Properties
