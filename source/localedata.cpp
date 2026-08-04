@@ -62,12 +62,8 @@ const char* LocaleData::lang() const
 
 icu::Locale LocaleData::locale() const
 {
-    const char* tag = lang();
-    if(tag == nullptr)
-        return icu::Locale::getDefault();
-    UErrorCode status = U_ZERO_ERROR;
-    auto locale = icu::Locale::forLanguageTag(tag, status);
-    if(U_FAILURE(status))
+    auto locale = icu::Locale(lang());
+    if(locale.isBogus())
         return icu::Locale::getRoot();
     return locale;
 }
