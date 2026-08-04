@@ -316,6 +316,16 @@ public:
      */
     static const PageMargins Moderate;
 
+    /**
+     * @brief Represents wide page margins.
+     *
+     * - Top: 72 points (1 inch)
+     * - Right: 144 points (2 inches)
+     * - Bottom: 72 points (1 inch)
+     * - Left: 144 points (2 inches)
+     */
+    static const PageMargins Wide;
+
 private:
     float m_top{0};
     float m_right{0};
@@ -327,6 +337,7 @@ inline const PageMargins PageMargins::None = PLUTOBOOK_PAGE_MARGINS_NONE;
 inline const PageMargins PageMargins::Normal = PLUTOBOOK_PAGE_MARGINS_NORMAL;
 inline const PageMargins PageMargins::Narrow = PLUTOBOOK_PAGE_MARGINS_NARROW;
 inline const PageMargins PageMargins::Moderate = PLUTOBOOK_PAGE_MARGINS_MODERATE;
+inline const PageMargins PageMargins::Wide = PLUTOBOOK_PAGE_MARGINS_WIDE;
 
 /**
  * Defines conversion factors for various units to points (pt) and vice versa.
