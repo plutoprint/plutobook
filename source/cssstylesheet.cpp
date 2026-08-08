@@ -14,8 +14,6 @@
 #include "document.h"
 #include "boxstyle.h"
 
-#include "plutobook.hpp"
-
 namespace plutobook {
 
 class CSSPropertyData {
