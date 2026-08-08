@@ -154,7 +154,7 @@ void SelectorFilter::pop()
 }
 
 CSSRuleData::CSSRuleData(CSSStyleRule& rule, const CSSSelector& selector, uint32_t specificity, uint32_t position)
-    : m_rule(rule), m_selector(&selector), m_specificity(specificity), m_position(position)
+    : m_rule(rule), m_selector(selector), m_specificity(specificity), m_position(position)
 {
     assert(!selector.empty());
     auto it = selector.begin();
@@ -198,7 +198,7 @@ bool CSSRuleData::match(const Element* element, PseudoType pseudoType, const Sel
         }
     }
 
-    return matchSelector(element, pseudoType, *m_selector);
+    return matchSelector(element, pseudoType, m_selector);
 }
 
 bool CSSRuleData::matchSelector(const Element* element, PseudoType pseudoType, const CSSSelector& selector)

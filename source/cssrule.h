@@ -536,7 +536,7 @@ public:
     CSSRuleData(CSSStyleRule& rule, const CSSSelector& selector, uint32_t specificity, uint32_t position);
 
     const RefPtr<CSSStyleRule>& rule() const { return m_rule; }
-    const CSSSelector* selector() const { return m_selector; }
+    const CSSSelector& selector() const { return m_selector; }
     const CSSPropertyList& properties() const { return m_rule->properties(); }
     const uint32_t specificity() const { return m_specificity; }
     const uint32_t position() const { return m_position; }
@@ -592,7 +592,7 @@ private:
     static const unsigned maxHashCount = 4;
 
     RefPtr<CSSStyleRule> m_rule;
-    const CSSSelector* m_selector;
+    const CSSSelector& m_selector;
     uint32_t m_specificity;
     uint32_t m_position;
     unsigned m_hashes[maxHashCount];
