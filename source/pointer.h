@@ -9,7 +9,7 @@
 #ifndef PLUTOBOOK_POINTER_H
 #define PLUTOBOOK_POINTER_H
 
-#include <algorithm>
+#include <utility>
 #include <cstdint>
 #include <cassert>
 #include <atomic>
