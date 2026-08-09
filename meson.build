@@ -8,7 +8,8 @@ project('plutobook', 'cpp', 'c',
 expat_dep = dependency('expat',
     required: true,
     version: '>=2.1.0',
-    fallback: ['expat', 'expat_dep']
+    fallback: ['expat', 'expat_dep'],
+    default_options: ['default_library=static']
 )
 
 icu_required_version = '>=57.0'
@@ -18,14 +19,21 @@ icuuc_dep = dependency('icu-uc',
     fallback: ['icu', 'icuuc_dep']
 )
 
+freetype_default_options = [
+    'default_library=static',
+    'harfbuzz=disabled',
+    'error_strings=true'
+]
+
 freetype_dep = dependency('freetype2',
     required: true,
     version: '>=9.7.3',
-    default_options: ['harfbuzz=disabled', 'error_strings=true'],
+    default_options: freetype_default_options,
     fallback: ['freetype2', 'freetype_dep']
 )
 
 fontconfig_default_options = [
+    'default_library=static',
     'doc=disabled',
     'tests=disabled',
     'tools=disabled',
@@ -40,12 +48,19 @@ fontconfig_dep = dependency('fontconfig',
 )
 
 harfbuzz_default_options = [
+    'default_library=static',
     'glib=disabled',
+    'gobject=disabled',
     'cairo=disabled',
     'icu=enabled',
     'freetype=enabled',
+    'raster=disabled',
+    'vector=disabled',
+    'subset=disabled',
+    'introspection=disabled',
     'tests=disabled',
-    'docs=disabled'
+    'docs=disabled',
+    'utilities=disabled'
 ]
 
 harfbuzz_dep = dependency('harfbuzz',
@@ -57,6 +72,7 @@ harfbuzz_dep = dependency('harfbuzz',
 
 cairo_required_version = '>=1.15.10'
 cairo_default_options = [
+    'default_library=static',
     'freetype=enabled',
     'fontconfig=enabled',
     'png=enabled',

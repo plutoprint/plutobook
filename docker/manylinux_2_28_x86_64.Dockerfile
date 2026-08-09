@@ -19,7 +19,8 @@ WORKDIR /tmp
 
 RUN git clone https://github.com/plutoprint/plutobook.git && \
     cd plutobook && \
-    meson setup build --buildtype=release --prefix=/usr && \
+    meson setup build --buildtype=release --prefix=/usr \
+        --force-fallback-for=cairo,freetype2,fontconfig,harfbuzz,expat && \
     meson compile -C build && \
     meson install -C build --strip
 
