@@ -1,10 +1,10 @@
 [wrap-file]
-directory = fontconfig-2.16.2
-source_url = https://gitlab.freedesktop.org/api/v4/projects/890/packages/generic/fontconfig/2.16.2/fontconfig-2.16.2.tar.xz
-source_filename = fontconfig-2.16.2.tar.xz
-source_hash = 165b8fd2a119864c87464b233986c4a1bc09efb09c65de1ca40cc1e85ffb77e2
-source_fallback_url = https://github.com/mesonbuild/wrapdb/releases/download/fontconfig_2.16.2-1/fontconfig-2.16.2.tar.xz
-wrapdb_version = 2.16.2-1
+directory = fontconfig-2.18.3
+source_url = https://gitlab.freedesktop.org/api/v4/projects/890/packages/generic/fontconfig/2.18.3/fontconfig-2.18.3.tar.xz
+source_filename = fontconfig-2.18.3.tar.xz
+source_hash = 4f7b554a38cdf78c033f666c8871f3749e14a094f65a07f630c91ed0b43d35e3
+source_fallback_url = https://wrapdb.mesonbuild.com/v2/fontconfig_2.18.3-1/get_source/fontconfig-2.18.3.tar.xz
+wrapdb_version = 2.18.3-1
 
 [provide]
 fontconfig = fontconfig_dep
