@@ -3,7 +3,7 @@ name: Build
 on: [push, pull_request]
 
 jobs:
-  linux:
+  test-linux:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -35,7 +35,7 @@ jobs:
           meson setup build --wrap-mode=nodownload
           meson compile -C build
 
-  macos:
+  test-macos:
     runs-on: macos-latest
     steps:
       - name: Checkout code
@@ -56,7 +56,7 @@ jobs:
           meson setup build --wrap-mode=nodownload
           meson compile -C build
 
-  windows:
+  build-windows:
     runs-on: windows-latest
     if: github.ref_type == 'tag' || contains(github.event.head_commit.message, '[build:windows]')
     defaults:
@@ -89,7 +89,7 @@ jobs:
       - name: Setup and Build
         run: |
           meson setup build \
-            --prefix='${{ github.workspace }}/plutobook-win64' \
+            --prefix='${{ github.workspace }}/plutobook-win-x64' \
             --buildtype=release \
             --wrap-mode=nodownload \
             --prefer-static \
@@ -100,19 +100,20 @@ jobs:
 
       - name: Create artifact
         run: |
-          mkdir -p plutobook-win64/{licenses,bin/fonts}
-          cp -r /ucrt64/etc/fonts/* plutobook-win64/bin/fonts/
-          cp -r licenses/* plutobook-win64/licenses/
-          cp -v CREDITS LICENSE plutobook-win64/
-          zip -r plutobook-win64.zip plutobook-win64/
+          mkdir -p plutobook-win-x64/{licenses,bin/fonts}
+          cp -r /ucrt64/etc/fonts/* plutobook-win-x64/bin/fonts/
+          cp -r licenses/* plutobook-win-x64/licenses/
+          cp -v CREDITS LICENSE plutobook-win-x64/
+
+          zip -r plutobook-win-x64.zip plutobook-win-x64/
 
       - name: Upload artifact
         uses: actions/upload-artifact@v7
         with:
-          name: plutobook-win64
-          path: plutobook-win64.zip
+          name: plutobook-win-x64
+          path: plutobook-win-x64.zip
 
-  docker:
+  build-docker:
     runs-on: ubuntu-latest
     if: github.ref_type == 'tag' || contains(github.event.head_commit.message, '[build:docker]')
     permissions:
@@ -146,8 +147,58 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
+  build-linux:
+    needs: [build-docker]
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/${{ github.repository_owner }}/plutobook-manylinux_2_28_x86_64:latest
+
+    steps:
+      - name: Create artifact
+        run: |
+          dnf -y install patchelf pax-utils binutils
+
+          mkdir -p plutobook-linux-x64/{lib,include,tools}
+          cp -r /usr/include/plutobook* plutobook-linux-x64/include/
+          cp /usr/bin/html2pdf /usr/bin/html2png plutobook-linux-x64/tools/
+
+          tools="html2pdf html2png"
+          libraries=$( for tool in $tools; do lddtree -l /usr/bin/$tool; done \
+            | grep -v '^/usr/bin/' \
+            | grep -v -e 'libgcc_s.so.1' \
+                      -e 'libresolv.so.2' \
+                      -e 'libpthread.so.0' \
+                      -e 'libm.so.6' \
+                      -e 'libdl.so.2' \
+                      -e 'libexpat.so.1' \
+                      -e 'libc.so.6' \
+                      -e 'librt.so.1' \
+                      -e 'libz.so.1' \
+                      -e 'ld-linux-x86-64.so.2' \
+                      -e 'libstdc++.so.6' \
+            | sort -u)
+
+          for lib in $libraries; do
+            cp -v $lib plutobook-linux-x64/lib/
+            patchelf --set-rpath '$ORIGIN' plutobook-linux-x64/lib/$(basename $lib)
+            strip --strip-unneeded plutobook-linux-x64/lib/$(basename $lib)
+          done
+
+          for tool in $tools; do
+            patchelf --set-rpath '$ORIGIN/../lib' plutobook-linux-x64/tools/$tool
+            strip --strip-unneeded plutobook-linux-x64/tools/$tool
+          done
+
+          tar -czhvf plutobook-linux-x64.tar.gz plutobook-linux-x64/
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: plutobook-linux-x64
+          path: plutobook-linux-x64.tar.gz
+
   release:
-    needs: [linux, macos, windows]
+    needs: [build-windows, build-linux]
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/v')
     permissions:
