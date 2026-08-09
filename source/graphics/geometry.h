@@ -18,12 +18,12 @@ namespace plutobook {
 
 constexpr auto kLayoutEpsilon = 1e-3f;
 
-constexpr bool isNearlyZero(float v, float epsilon = kLayoutEpsilon)
+inline bool isNearlyZero(float v, float epsilon = kLayoutEpsilon)
 {
     return std::abs(v) <= epsilon;
 }
 
-constexpr bool isNearlyEqual(float a, float b, float epsilon = kLayoutEpsilon)
+inline bool isNearlyEqual(float a, float b, float epsilon = kLayoutEpsilon)
 {
     return isNearlyZero(a - b, epsilon);
 }

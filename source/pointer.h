@@ -194,70 +194,70 @@ struct is_a {
 };
 
 template<typename T, typename U>
-constexpr bool is(U& value) {
+inline bool is(U& value) {
     return is_a<T>::check(value);
 }
 
 template<typename T, typename U>
-constexpr bool is(const U& value) {
+inline bool is(const U& value) {
     return is_a<T>::check(value);
 }
 
 template<typename T, typename U>
-constexpr bool is(U* value) {
+inline bool is(U* value) {
     return value && is_a<T>::check(*value);
 }
 
 template<typename T, typename U>
-constexpr bool is(const U* value) {
+inline bool is(const U* value) {
     return value && is_a<T>::check(*value);
 }
 
 template<typename T, typename U>
-constexpr bool is(RefPtr<U>& value) {
+inline bool is(RefPtr<U>& value) {
     return value && is_a<T>::check(*value);
 }
 
 template<typename T, typename U>
-constexpr bool is(const RefPtr<U>& value) {
+inline bool is(const RefPtr<U>& value) {
     return value && is_a<T>::check(*value);
 }
 
 template<typename T, typename U>
-constexpr T& to(U& value) {
+inline T& to(U& value) {
     assert(is<T>(value));
     return static_cast<T&>(value);
 }
 
 template<typename T, typename U>
-constexpr const T& to(const U& value) {
+inline const T& to(const U& value) {
     assert(is<T>(value));
     return static_cast<const T&>(value);
 }
 
 template<typename T, typename U>
-constexpr T* to(U* value) {
+inline T* to(U* value) {
     if(!is<T>(value))
         return nullptr;
     return static_cast<T*>(value);
 }
 
 template<typename T, typename U>
-constexpr const T* to(const U* value) {
+inline const T* to(const U* value) {
     if(!is<T>(value))
         return nullptr;
     return static_cast<const T*>(value);
 }
 
 template<typename T, typename U>
-constexpr RefPtr<T> to(const RefPtr<U>& value) {
+inline RefPtr<T> to(const RefPtr<U>& value) {
     if(!is<T>(value))
         return nullptr;
     return static_cast<T&>(*value);
 }
 
 template<typename T, typename U>
-constexpr RefPtr<T> to(RefPtr<U>& value) {
+inline RefPtr<T> to(RefPtr<U>& value) {
     if(!is<T>(value))
         return nullptr;
     return static_cast<T&>(*value);

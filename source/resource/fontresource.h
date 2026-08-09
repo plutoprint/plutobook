@@ -202,12 +202,12 @@ struct FontDataDescription {
     GlobalString lang;
 };
 
-constexpr bool operator==(const FontDataDescription& a, const FontDataDescription& b)
+inline bool operator==(const FontDataDescription& a, const FontDataDescription& b)
 {
     return std::tie(a.size, a.request, a.variations, a.lang) == std::tie(b.size, b.request, b.variations, b.lang);
 }
 
-constexpr bool operator<(const FontDataDescription& a, const FontDataDescription& b)
+inline bool operator<(const FontDataDescription& a, const FontDataDescription& b)
 {
     return std::tie(a.size, a.request, a.variations, a.lang) < std::tie(b.size, b.request, b.variations, b.lang);
 }
@@ -219,12 +219,12 @@ struct FontDescription {
     FontDataDescription data;
 };
 
-constexpr bool operator==(const FontDescription& a, const FontDescription& b)
+inline bool operator==(const FontDescription& a, const FontDescription& b)
 {
     return std::tie(a.families, a.data) == std::tie(b.families, b.data);
 }
 
-constexpr bool operator<(const FontDescription& a, const FontDescription& b)
+inline bool operator<(const FontDescription& a, const FontDescription& b)
 {
     return std::tie(a.families, a.data) < std::tie(b.families, b.data);
 }
