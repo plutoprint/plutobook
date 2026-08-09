@@ -161,7 +161,8 @@ jobs:
         run: |
           dnf -y install patchelf pax-utils binutils
 
-          mkdir -p plutobook-linux-x64/{lib,include,tools}
+          mkdir -p plutobook-linux-x64/{lib,lib/fonts,include,tools}
+          cp -r /etc/fonts/* plutobook-linux-x64/lib/fonts/
           cp -r /usr/include/plutobook* plutobook-linux-x64/include/
           cp /usr/bin/html2pdf /usr/bin/html2png plutobook-linux-x64/tools/
 
@@ -173,7 +174,6 @@ jobs:
                       -e 'libpthread.so.0' \
                       -e 'libm.so.6' \
                       -e 'libdl.so.2' \
-                      -e 'libexpat.so.1' \
                       -e 'libc.so.6' \
                       -e 'librt.so.1' \
                       -e 'libz.so.1' \
