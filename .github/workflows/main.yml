@@ -161,10 +161,12 @@ jobs:
         run: |
           dnf -y install patchelf pax-utils binutils
 
-          mkdir -p plutobook-linux-x64/{lib,lib/fonts,include,tools}
+          mkdir -p plutobook-linux-x64/{lib,lib/fonts,include,tools,licenses}
           cp -rL /etc/fonts/* plutobook-linux-x64/lib/fonts/
           cp -r /usr/include/plutobook* plutobook-linux-x64/include/
           cp /usr/bin/html2pdf /usr/bin/html2png plutobook-linux-x64/tools/
+          cp -r licenses/* plutobook-linux-x64/licenses/
+          cp -v CREDITS LICENSE plutobook-linux-x64/
 
           tools="html2pdf html2png"
           libraries=$( for tool in $tools; do lddtree -l /usr/bin/$tool; done \
@@ -216,11 +218,6 @@ jobs:
           pattern: plutobook-*
           merge-multiple: true
 
-      - name: Rename artifacts
-        run: |
-          for file in plutobook-*.zip; do
-            mv -v "$file" "${file%.zip}-${GITHUB_REF_NAME#v}.zip"
-          done
       - name: Generate Release Note
         run: |
           TAG_VERSION="${GITHUB_REF_NAME#v}"
