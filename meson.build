@@ -141,7 +141,7 @@ endif
 
 jpeg_dep = dependency('libturbojpeg',
     required: get_option('turbojpeg'),
-    default_options: ['tests=disabled'],
+    default_options: ['tests=disabled', 'turbojpeg=enabled'],
     fallback: ['libjpeg-turbo', 'turbojpeg_dep']
 )
 
