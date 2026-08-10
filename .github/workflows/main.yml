@@ -219,15 +219,20 @@ jobs:
           pattern: plutobook-*
           merge-multiple: true
 
-      - name: Generate Release Note
+      - name: Prepare Release
         run: |
           TAG_VERSION="${GITHUB_REF_NAME#v}"
+
+          mv -v plutobook-win-x64.zip "plutobook-${TAG_VERSION}-win-x64.zip"
+          mv -v plutobook-linux-x64.tar.gz "plutobook-${TAG_VERSION}-linux-x64.tar.gz"
+
           sed -n "/^## PlutoBook $TAG_VERSION/,/^## PlutoBook /{
             /^## PlutoBook $TAG_VERSION/b
             /^## PlutoBook /b
             p
           }" CHANGELOG.md > RELEASENOTE.md
-      - name: Upload to GitHub Release
+
+      - name: Upload Release
         uses: softprops/action-gh-release@v3
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
