@@ -25,13 +25,6 @@
 #include <numbers>
 #include <cmath>
 
-#ifdef __linux__
-#include <dlfcn.h>
-#include <libgen.h>
-#include <stdlib.h>
-#include <unistd.h>
-#endif
-
 namespace plutobook {
 
 class FTFontData {
@@ -802,37 +795,8 @@ FontDataCache::~FontDataCache()
     FcConfigDestroy(m_config);
 }
 
-#ifdef __linux__
-static void setDefaultConfigPath()
-{
-    if(getenv("FONTCONFIG_PATH") || getenv("FONTCONFIG_FILE"))
-        return;
-    if(access("/etc/fonts/fonts.conf", R_OK) == 0)
-        return;
-    Dl_info info;
-    if(!dladdr((void*)&setDefaultConfigPath, &info))
-        return;
-    char path[PATH_MAX];
-    if(!info.dli_fname || !realpath(info.dli_fname, path))
-        return;
-    char fontdir[PATH_MAX];
-    snprintf(fontdir, sizeof(fontdir), "%s/fonts", dirname(path));
-    if(access(fontdir, R_OK) == 0) {
-        setenv("FONTCONFIG_PATH", fontdir, 0);
-    }
-}
-#endif
-
-static FcConfig* loadConfigAndFonts()
-{
-#ifdef __linux__
-    setDefaultConfigPath();
-#endif
-    return FcInitLoadConfigAndFonts();
-}
-
 FontDataCache::FontDataCache()
-    : m_config(loadConfigAndFonts())
+    : m_config(FcInitLoadConfigAndFonts())
 {
 }
 

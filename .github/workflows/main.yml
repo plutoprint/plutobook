@@ -163,8 +163,7 @@ jobs:
         run: |
           dnf -y install patchelf pax-utils binutils
 
-          mkdir -p plutobook-linux-x64/{lib,lib/fonts,include,tools,licenses}
-          cp -rL /etc/fonts/* plutobook-linux-x64/lib/fonts/
+          mkdir -p plutobook-linux-x64/{lib,include,tools,licenses}
           cp -r /usr/include/plutobook* plutobook-linux-x64/include/
           cp /usr/bin/html2pdf /usr/bin/html2png plutobook-linux-x64/tools/
           cp -r licenses/* plutobook-linux-x64/licenses/
