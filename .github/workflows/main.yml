@@ -232,4 +232,6 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           body_path: RELEASENOTE.md
-          files: plutobook-*.zip
+          files: |
+            plutobook-*.zip
+            plutobook-*.tar.gz
