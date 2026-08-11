@@ -590,6 +590,13 @@ Heap* Document::heap() const
     return m_book->heap();
 }
 
+int Document::jpegQuality() const
+{
+    if(box()->isPrinting())
+        return m_book->jpegQuality();
+    return 100;
+}
+
 BoxView* Document::box() const
 {
     return static_cast<BoxView*>(Node::box());

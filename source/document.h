@@ -339,6 +339,8 @@ public:
     ResourceFetcher* customResourceFetcher() const;
     Heap* heap() const;
 
+    int jpegQuality() const;
+
     const Url& baseUrl() const { return m_baseUrl; }
     void setBaseUrl(Url baseUrl) { m_baseUrl = std::move(baseUrl); }
     Url completeUrl(std::string_view value) const { return m_baseUrl.complete(value); }

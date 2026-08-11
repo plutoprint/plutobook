@@ -1318,6 +1318,21 @@ public:
     bool writeToPng(plutobook_stream_write_callback_t callback, void* closure, int width = -1, int height = -1) const;
 
     /**
+     * @brief Sets the quality used when compressing images in the output document.
+     *
+     * If not set, the default quality is 100.
+     *
+     * @param quality The compression quality, from 0 (smallest) to 100 (lossless).
+     */
+    void setJpegQuality(uint8_t quality) { m_jpegQuality = quality; }
+
+    /**
+     * @brief Gets the quality used when compressing images in the output document.
+     * @return The compression quality, from 0 (smallest) to 100 (lossless).
+     */
+    uint8_t jpegQuality() const { return m_jpegQuality; }
+
+    /**
      * @brief Sets a custom resource fetcher to be used for fetching external resources.
      *
      * @param fetcher A pointer to a `ResourceFetcher` object. Pass `nullptr` to clear the custom fetcher.
@@ -1350,6 +1365,8 @@ private:
     PageMargins m_pageMargins;
     MediaType m_mediaType;
 
+    uint8_t m_jpegQuality{100};
+
     mutable bool m_needsBuild{true};
     mutable bool m_needsLayout{true};
     mutable bool m_needsPagination{true};
@@ -1363,6 +1380,7 @@ private:
     std::string m_modificationDate;
 
     ResourceFetcher* m_customResourceFetcher{nullptr};
+
     std::unique_ptr<Heap> m_heap;
     std::unique_ptr<Document> m_document;
 };

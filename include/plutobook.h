@@ -1019,6 +1019,21 @@ PLUTOBOOK_API bool plutobook_write_to_png_stream(const plutobook_t* book,
     plutobook_stream_write_callback_t callback, void* closure, int width, int height);
 
 /**
+ * @brief Sets the quality used when compressing images in the output document.
+ *
+ * If not set, the default quality is 100.
+ *
+ * @param quality The compression quality, from 0 (smallest) to 100 (lossless).
+ */
+PLUTOBOOK_API void plutobook_set_jpeg_quality(plutobook_t* book, int quality);
+
+/**
+ * @brief Gets the quality used when compressing images in the output document.
+ * @return The compression quality, from 0 (smallest) to 100 (lossless).
+ */
+PLUTOBOOK_API int plutobook_get_jpeg_quality(const plutobook_t* book);
+
+/**
  * @brief Sets a custom resource fetcher callback for the document.
  *
  * @param book A pointer to a `plutobook_t` object.

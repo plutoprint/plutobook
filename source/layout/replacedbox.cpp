@@ -486,6 +486,7 @@ void ImageBox::paintReplaced(const PaintInfo& info, const Point& offset)
     }
 
     m_image->setContainerSize(objectRect.size());
+    m_image->setJpegQuality(document()->jpegQuality());
     m_image->draw(*info, objectRect, Rect(m_image->size()));
     if(clipping) {
         info->restore();

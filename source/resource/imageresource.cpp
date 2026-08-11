@@ -115,11 +115,11 @@ static cairo_surface_t* decodeBitmapImage(const char* data, size_t size)
         tjDecompress2(tj, (uint8_t*)(data), size, surfaceData, surfaceWidth, surfaceStride, surfaceHeight, TJPF_BGRX, 0);
         tjDestroy(tj);
 
-        auto mimeData = (uint8_t*)std::malloc(size);
+        auto mimeData = tjAlloc(size);
         std::memcpy(mimeData, data, size);
 
         cairo_surface_mark_dirty(surface);
-        cairo_surface_set_mime_data(surface, CAIRO_MIME_TYPE_JPEG, mimeData, size, std::free, mimeData);
+        cairo_surface_set_mime_data(surface, CAIRO_MIME_TYPE_JPEG, mimeData, size, (cairo_destroy_func_t)(tjFree), mimeData);
         return surface;
     }
 #endif // PLUTOBOOK_HAS_TURBOJPEG
@@ -289,6 +289,36 @@ void BitmapImage::computeIntrinsicDimensions(float& intrinsicWidth, float& intri
     } else {
         intrinsicRatio = 0;
     }
+}
+
+void BitmapImage::setJpegQuality(int quality)
+{
+#ifdef PLUTOBOOK_HAS_TURBOJPEG
+    auto format = cairo_image_surface_get_format(m_surface);
+    if(format != CAIRO_FORMAT_RGB24 || quality == m_jpegQuality) {
+        return;
+    }
+
+    auto tj = tjInitCompress();
+    if(tj == nullptr) {
+        return;
+    }
+
+    unsigned char* data = nullptr;
+    unsigned long size = 0;
+
+    auto pixels = cairo_image_surface_get_data(m_surface);
+    auto width = cairo_image_surface_get_width(m_surface);
+    auto height = cairo_image_surface_get_height(m_surface);
+    auto stride = cairo_image_surface_get_stride(m_surface);
+
+    if(tjCompress2(tj, pixels, width, stride, height, TJPF_BGRX, &data, &size, TJSAMP_444, quality, 0) == 0) {
+        cairo_surface_set_mime_data(m_surface, CAIRO_MIME_TYPE_JPEG, data, size, (cairo_destroy_func_t)(tjFree), data);
+        m_jpegQuality = quality;
+    }
+
+    tjDestroy(tj);
+#endif // PLUTOBOOK_HAS_TURBOJPEG
 }
 
 Size BitmapImage::intrinsicSize() const
