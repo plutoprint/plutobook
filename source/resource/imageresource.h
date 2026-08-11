@@ -56,7 +56,7 @@ public:
     virtual void drawPattern(GraphicsContext& context, const Rect& destRect, const Size& size, const Size& scale, const Point& phase) = 0;
     virtual void computeIntrinsicDimensions(float& intrinsicWidth, float& intrinsicHeight, double& intrinsicRatio) = 0;
 
-    virtual void setContainerSize(const Size& size) = 0;
+    virtual void setContainerSize(const Size& size) {};
     virtual Size intrinsicSize() const = 0;
     virtual Size size() const = 0;
 };
@@ -71,16 +71,14 @@ public:
     void drawPattern(GraphicsContext& context, const Rect& destRect, const Size& size, const Size& scale, const Point& phase) final;
     void computeIntrinsicDimensions(float& intrinsicWidth, float& intrinsicHeight, double& intrinsicRatio) final;
 
-    void setContainerSize(const Size& size) final {}
-    Size intrinsicSize() const final { return m_intrinsicSize; }
-    Size size() const final { return m_intrinsicSize; }
+    Size intrinsicSize() const final;
+    Size size() const final;
 
     ~BitmapImage() final;
 
 private:
     BitmapImage(cairo_surface_t* surface);
     cairo_surface_t* m_surface;
-    Size m_intrinsicSize;
 };
 
 template<>

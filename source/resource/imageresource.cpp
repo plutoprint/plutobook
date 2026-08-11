@@ -282,13 +282,26 @@ void BitmapImage::drawPattern(GraphicsContext& context, const Rect& destRect, co
 
 void BitmapImage::computeIntrinsicDimensions(float& intrinsicWidth, float& intrinsicHeight, double& intrinsicRatio)
 {
-    intrinsicWidth = m_intrinsicSize.w;
-    intrinsicHeight = m_intrinsicSize.h;
+    intrinsicWidth = cairo_image_surface_get_width(m_surface);
+    intrinsicHeight = cairo_image_surface_get_height(m_surface);
     if(intrinsicHeight > 0) {
         intrinsicRatio = intrinsicWidth / intrinsicHeight;
     } else {
         intrinsicRatio = 0;
     }
+}
+
+Size BitmapImage::intrinsicSize() const
+{
+    auto width = cairo_image_surface_get_width(m_surface);
+    auto height = cairo_image_surface_get_height(m_surface);
+
+    return Size(width, height);
+}
+
+Size BitmapImage::size() const
+{
+    return intrinsicSize();
 }
 
 BitmapImage::~BitmapImage()
@@ -297,7 +310,7 @@ BitmapImage::~BitmapImage()
 }
 
 BitmapImage::BitmapImage(cairo_surface_t* surface)
-    : m_surface(surface), m_intrinsicSize(cairo_image_surface_get_width(m_surface), cairo_image_surface_get_height(m_surface))
+    : m_surface(surface)
 {
 }
 
