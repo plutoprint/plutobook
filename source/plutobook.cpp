@@ -435,29 +435,12 @@ bool Book::loadImage(const char* data, size_t length, std::string_view mimeType,
 
 bool Book::loadXml(std::string_view content, std::string_view userStyle, std::string_view userScript, std::string_view baseUrl)
 {
-    clearContent();
-    m_document = XMLDocument::create(this, ResourceLoader::completeUrl(baseUrl));
-    if(!m_document->parse(content)) {
-        clearContent();
-        return false;
-    }
-
-    m_document->addUserStyleSheet(userStyle);
-    m_document->runJavaScript(userScript);
-    return true;
+    return loadDocument<XMLDocument>(content, userStyle, userScript, baseUrl);
 }
 
 bool Book::loadHtml(std::string_view content, std::string_view userStyle, std::string_view userScript, std::string_view baseUrl)
 {
-    clearContent();
-    m_document = HTMLDocument::create(this, ResourceLoader::completeUrl(baseUrl));
-    if(!m_document->parse(content)) {
-        assert(false);
-    }
-
-    m_document->addUserStyleSheet(userStyle);
-    m_document->runJavaScript(userScript);
-    return true;
+    return loadDocument<HTMLDocument>(content, userStyle, userScript, baseUrl);
 }
 
 void Book::clearContent()
@@ -633,6 +616,21 @@ bool Book::writeToPng(plutobook_stream_write_callback_t callback, void* closure,
     canvas.scale(xScale, yScale);
     renderDocument(canvas, 0, 0, docWidth, docHeight);
     return canvas.writeToPng(callback, closure);
+}
+
+template<typename DocumentType>
+bool Book::loadDocument(std::string_view content, std::string_view userStyle, std::string_view userScript, std::string_view baseUrl)
+{
+    clearContent();
+    m_document = DocumentType::create(this, ResourceLoader::completeUrl(baseUrl));
+    if(!m_document->parse(content)) {
+        clearContent();
+        return false;
+    }
+
+    m_document->addUserStyleSheet(userStyle);
+    m_document->runJavaScript(userScript);
+    return true;
 }
 
 Document* Book::buildIfNeeded() const

@@ -1342,6 +1342,10 @@ public:
     Document* document() const { return m_document.get(); }
 
 private:
+    template<typename DocumentType>
+    bool loadDocument(std::string_view content, std::string_view userStyle,
+        std::string_view userScript, std::string_view baseUrl);
+
     Document* buildIfNeeded() const;
     Document* layoutIfNeeded() const;
     Document* paginateIfNeeded() const;
