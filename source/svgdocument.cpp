@@ -13,6 +13,7 @@
 #include "svgtextbox.h"
 #include "imageresource.h"
 #include "stringutils.h"
+#include "plutobook.hpp"
 
 #include <set>
 
@@ -1001,13 +1002,13 @@ void SVGStyleElement::finishParsingDocument()
     SVGElement::finishParsingDocument();
 }
 
-std::unique_ptr<SVGDocument> SVGDocument::create(Book* book, Heap* heap, ResourceFetcher* fetcher, Url baseUrl)
+std::unique_ptr<SVGDocument> SVGDocument::create(Book* book, Url baseUrl)
 {
-    return std::unique_ptr<SVGDocument>(new (heap) SVGDocument(book, heap, fetcher, std::move(baseUrl)));
+    return std::unique_ptr<SVGDocument>(new (book->heap()) SVGDocument(book, std::move(baseUrl)));
 }
 
-SVGDocument::SVGDocument(Book* book, Heap* heap, ResourceFetcher* fetcher, Url baseUrl)
-    : XMLDocument(book, heap, fetcher, std::move(baseUrl))
+SVGDocument::SVGDocument(Book* book, Url baseUrl)
+    : XMLDocument(book, std::move(baseUrl))
 {
 }
 

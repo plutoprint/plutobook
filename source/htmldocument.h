@@ -262,13 +262,13 @@ public:
 
 class HTMLDocument final : public Document {
 public:
-    static std::unique_ptr<HTMLDocument> create(Book* book, Heap* heap, ResourceFetcher* fetcher, Url baseUrl);
+    static std::unique_ptr<HTMLDocument> create(Book* book, Url baseUrl);
 
     bool isHTMLDocument() const final { return true; }
     bool parse(std::string_view content) final;
 
 private:
-    HTMLDocument(Book* book, Heap* heap, ResourceFetcher* fetcher, Url baseUrl);
+    HTMLDocument(Book* book, Url baseUrl);
 };
 
 template<>

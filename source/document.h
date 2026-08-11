@@ -330,15 +330,14 @@ using PageBoxList = std::pmr::vector<std::unique_ptr<PageBox>>;
 
 class Document : public ContainerNode {
 public:
-    Document(Book* book, Heap* heap, ResourceFetcher* fetcher, Url baseUrl);
+    Document(Book* book, Url baseUrl);
     ~Document() override;
 
     bool isDocumentNode() const final { return true; }
-    bool isSVGImageDocument() const { return !m_book && isSVGDocument(); }
 
     Book* book() const { return m_book; }
-    Heap* heap() const { return m_heap; }
-    ResourceFetcher* customResourceFetcher() const { return m_customResourceFetcher; }
+    ResourceFetcher* customResourceFetcher() const;
+    Heap* heap() const;
 
     const Url& baseUrl() const { return m_baseUrl; }
     void setBaseUrl(Url baseUrl) { m_baseUrl = std::move(baseUrl); }
@@ -434,8 +433,6 @@ private:
     float m_containerHeight{0};
     Element* m_rootElement{nullptr};
     Book* m_book;
-    Heap* m_heap;
-    ResourceFetcher* m_customResourceFetcher;
     Url m_baseUrl;
     PageBoxList m_pages;
     DocumentElementMap m_idCache;

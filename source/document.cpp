@@ -564,23 +564,31 @@ void Element::finishParsingDocument()
     ContainerNode::finishParsingDocument();
 }
 
-Document::Document(Book* book, Heap* heap, ResourceFetcher* fetcher, Url baseUrl)
+Document::Document(Book* book, Url baseUrl)
     : ContainerNode(this)
     , m_book(book)
-    , m_heap(heap)
-    , m_customResourceFetcher(fetcher)
     , m_baseUrl(std::move(baseUrl))
-    , m_pages(heap)
-    , m_idCache(heap)
-    , m_localeCache(heap)
-    , m_resourceCache(heap)
-    , m_fontCache(heap)
-    , m_runningStyles(heap)
+    , m_pages(book->heap())
+    , m_idCache(book->heap())
+    , m_localeCache(book->heap())
+    , m_resourceCache(book->heap())
+    , m_fontCache(book->heap())
+    , m_runningStyles(book->heap())
     , m_styleSheet(this)
 {
 }
 
 Document::~Document() = default;
+
+ResourceFetcher* Document::customResourceFetcher() const
+{
+    return m_book->customResourceFetcher();
+}
+
+Heap* Document::heap() const
+{
+    return m_book->heap();
+}
 
 BoxView* Document::box() const
 {
@@ -599,16 +607,12 @@ float Document::height() const
 
 float Document::viewportWidth() const
 {
-    if(m_book)
-        return m_book->viewportWidth();
-    return 0.f;
+    return m_book->viewportWidth();
 }
 
 float Document::viewportHeight() const
 {
-    if(m_book)
-        return m_book->viewportHeight();
-    return 0.f;
+    return m_book->viewportHeight();
 }
 
 bool Document::setContainerSize(float containerWidth, float containerHeight)
@@ -624,108 +628,108 @@ bool Document::setContainerSize(float containerWidth, float containerHeight)
 
 TextNode* Document::createTextNode(std::string_view value)
 {
-    return new (m_heap) TextNode(this, m_heap->createString(value));
+    return new (m_book->heap()) TextNode(this, m_book->heap()->createString(value));
 }
 
 Element* Document::createElement(const GlobalString& namespaceURI, const GlobalString& tagName)
 {
     if(namespaceURI == xhtmlNs) {
         if(tagName == bodyTag)
-            return new (m_heap) HTMLBodyElement(this);
+            return new (m_book->heap()) HTMLBodyElement(this);
         if(tagName == fontTag)
-            return new (m_heap) HTMLFontElement(this);
+            return new (m_book->heap()) HTMLFontElement(this);
         if(tagName == imgTag)
-            return new (m_heap) HTMLImageElement(this);
+            return new (m_book->heap()) HTMLImageElement(this);
         if(tagName == hrTag)
-            return new (m_heap) HTMLHRElement(this);
+            return new (m_book->heap()) HTMLHRElement(this);
         if(tagName == brTag)
-            return new (m_heap) HTMLBRElement(this);
+            return new (m_book->heap()) HTMLBRElement(this);
         if(tagName == wbrTag)
-            return new (m_heap) HTMLWBRElement(this);
+            return new (m_book->heap()) HTMLWBRElement(this);
         if(tagName == liTag)
-            return new (m_heap) HTMLLIElement(this);
+            return new (m_book->heap()) HTMLLIElement(this);
         if(tagName == olTag)
-            return new (m_heap) HTMLOLElement(this);
+            return new (m_book->heap()) HTMLOLElement(this);
         if(tagName == tableTag)
-            return new (m_heap) HTMLTableElement(this);
+            return new (m_book->heap()) HTMLTableElement(this);
         if(tagName == theadTag || tagName == tbodyTag || tagName == tfootTag)
-            return new (m_heap) HTMLTableSectionElement(this, tagName);
+            return new (m_book->heap()) HTMLTableSectionElement(this, tagName);
         if(tagName == trTag)
-            return new (m_heap) HTMLTableRowElement(this);
+            return new (m_book->heap()) HTMLTableRowElement(this);
         if(tagName == colTag || tagName == colgroupTag)
-            return new (m_heap) HTMLTableColElement(this, tagName);
+            return new (m_book->heap()) HTMLTableColElement(this, tagName);
         if(tagName == tdTag || tagName == thTag)
-            return new (m_heap) HTMLTableCellElement(this, tagName);
+            return new (m_book->heap()) HTMLTableCellElement(this, tagName);
         if(tagName == inputTag)
-            return new (m_heap) HTMLInputElement(this);
+            return new (m_book->heap()) HTMLInputElement(this);
         if(tagName == textareaTag)
-            return new (m_heap) HTMLTextAreaElement(this);
+            return new (m_book->heap()) HTMLTextAreaElement(this);
         if(tagName == selectTag)
-            return new (m_heap) HTMLSelectElement(this);
+            return new (m_book->heap()) HTMLSelectElement(this);
         if(tagName == styleTag)
-            return new (m_heap) HTMLStyleElement(this);
+            return new (m_book->heap()) HTMLStyleElement(this);
         if(tagName == linkTag)
-            return new (m_heap) HTMLLinkElement(this);
+            return new (m_book->heap()) HTMLLinkElement(this);
         if(tagName == titleTag)
-            return new (m_heap) HTMLTitleElement(this);
+            return new (m_book->heap()) HTMLTitleElement(this);
         if(tagName == baseTag)
-            return new (m_heap) HTMLBaseElement(this);
-        return new (m_heap) HTMLElement(this, tagName);
+            return new (m_book->heap()) HTMLBaseElement(this);
+        return new (m_book->heap()) HTMLElement(this, tagName);
     }
 
     if(namespaceURI == svgNs) {
         if(tagName == svgTag)
-            return new (m_heap) SVGSVGElement(this);
+            return new (m_book->heap()) SVGSVGElement(this);
         if(tagName == useTag)
-            return new (m_heap) SVGUseElement(this);
+            return new (m_book->heap()) SVGUseElement(this);
         if(tagName == imageTag)
-            return new (m_heap) SVGImageElement(this);
+            return new (m_book->heap()) SVGImageElement(this);
         if(tagName == symbolTag)
-            return new (m_heap) SVGSymbolElement(this);
+            return new (m_book->heap()) SVGSymbolElement(this);
         if(tagName == aTag)
-            return new (m_heap) SVGAElement(this);
+            return new (m_book->heap()) SVGAElement(this);
         if(tagName == gTag)
-            return new (m_heap) SVGGElement(this);
+            return new (m_book->heap()) SVGGElement(this);
         if(tagName == defsTag)
-            return new (m_heap) SVGDefsElement(this);
+            return new (m_book->heap()) SVGDefsElement(this);
         if(tagName == lineTag)
-            return new (m_heap) SVGLineElement(this);
+            return new (m_book->heap()) SVGLineElement(this);
         if(tagName == rectTag)
-            return new (m_heap) SVGRectElement(this);
+            return new (m_book->heap()) SVGRectElement(this);
         if(tagName == circleTag)
-            return new (m_heap) SVGCircleElement(this);
+            return new (m_book->heap()) SVGCircleElement(this);
         if(tagName == ellipseTag)
-            return new (m_heap) SVGEllipseElement(this);
+            return new (m_book->heap()) SVGEllipseElement(this);
         if(tagName == polylineTag || tagName == polygonTag)
-            return new (m_heap) SVGPolyElement(this, tagName);
+            return new (m_book->heap()) SVGPolyElement(this, tagName);
         if(tagName == pathTag)
-            return new (m_heap) SVGPathElement(this);
+            return new (m_book->heap()) SVGPathElement(this);
         if(tagName == tspanTag)
-            return new (m_heap) SVGTSpanElement(this);
+            return new (m_book->heap()) SVGTSpanElement(this);
         if(tagName == textPathTag)
-            return new (m_heap) SVGTextPathElement(this);
+            return new (m_book->heap()) SVGTextPathElement(this);
         if(tagName == textTag)
-            return new (m_heap) SVGTextElement(this);
+            return new (m_book->heap()) SVGTextElement(this);
         if(tagName == markerTag)
-            return new (m_heap) SVGMarkerElement(this);
+            return new (m_book->heap()) SVGMarkerElement(this);
         if(tagName == clipPathTag)
-            return new (m_heap) SVGClipPathElement(this);
+            return new (m_book->heap()) SVGClipPathElement(this);
         if(tagName == maskTag)
-            return new (m_heap) SVGMaskElement(this);
+            return new (m_book->heap()) SVGMaskElement(this);
         if(tagName == patternTag)
-            return new (m_heap) SVGPatternElement(this);
+            return new (m_book->heap()) SVGPatternElement(this);
         if(tagName == stopTag)
-            return new (m_heap) SVGStopElement(this);
+            return new (m_book->heap()) SVGStopElement(this);
         if(tagName == linearGradientTag)
-            return new (m_heap) SVGLinearGradientElement(this);
+            return new (m_book->heap()) SVGLinearGradientElement(this);
         if(tagName == radialGradientTag)
-            return new (m_heap) SVGRadialGradientElement(this);
+            return new (m_book->heap()) SVGRadialGradientElement(this);
         if(tagName == styleTag)
-            return new (m_heap) SVGStyleElement(this);
-        return new (m_heap) SVGElement(this, tagName);
+            return new (m_book->heap()) SVGStyleElement(this);
+        return new (m_book->heap()) SVGElement(this, tagName);
     }
 
-    return new (m_heap) Element(this, namespaceURI, tagName);
+    return new (m_book->heap()) Element(this, namespaceURI, tagName);
 }
 
 Element* Document::bodyElement() const
@@ -807,12 +811,12 @@ HeapString Document::getCountersText(const CounterMap& counters, const GlobalStr
 {
     auto it = counters.find(name);
     if(it == counters.end())
-        return m_heap->createString(getCounterText(0, listStyle));
+        return m_book->heap()->createString(getCounterText(0, listStyle));
     if(separator.empty()) {
         int value = 0;
         if(!it->second.empty())
             value = it->second.back();
-        return m_heap->createString(getCounterText(value, listStyle));
+        return m_book->heap()->createString(getCounterText(value, listStyle));
     }
 
     std::string text;
@@ -822,7 +826,7 @@ HeapString Document::getCountersText(const CounterMap& counters, const GlobalStr
         text += getCounterText(value, listStyle);
     }
 
-    return m_heap->createString(text);
+    return m_book->heap()->createString(text);
 }
 
 void Document::addAuthorStyleSheet(std::string_view content, Url baseUrl)
@@ -894,7 +898,7 @@ bool Document::supportsMediaQuery(const CSSMediaQuery& query) const
 
 bool Document::supportsMediaQueries(const CSSMediaQueryList& queries) const
 {
-    if(m_book == nullptr || queries.empty())
+    if(queries.empty())
         return true;
     for(const auto& query : queries) {
         if(supportsMediaQuery(query)) {
@@ -909,9 +913,9 @@ bool Document::supportsMedia(std::string_view type, std::string_view media) cons
 {
     if(!type.empty() && !equals(type, "text/css", isXMLDocument()))
         return false;
-    if(m_book && !media.empty()) {
+    if(!media.empty()) {
         CSSParserContext context(this, CSSStyleOrigin::Author, m_baseUrl);
-        CSSParser parser(context, m_heap);
+        CSSParser parser(context, m_book->heap());
         return supportsMediaQueries(parser.parseMediaQueries(media));
     }
 
@@ -991,11 +995,12 @@ Node* Document::cloneNode(bool deep)
 
 Box* Document::createBox(const RefPtr<BoxStyle>& style)
 {
-    return new (m_heap) BoxView(this, style);
+    return new (m_book->heap()) BoxView(this, style);
 }
 
 void Document::finishParsingDocument()
 {
+    m_styleSheet.addUserAgentRules();
     assert(m_rootElement == nullptr);
     auto child = firstChild();
     while(child) {

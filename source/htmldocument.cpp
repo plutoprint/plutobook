@@ -1064,9 +1064,9 @@ void HTMLBaseElement::finishParsingDocument()
     HTMLElement::finishParsingDocument();
 }
 
-std::unique_ptr<HTMLDocument> HTMLDocument::create(Book* book, Heap* heap, ResourceFetcher* fetcher, Url baseUrl)
+std::unique_ptr<HTMLDocument> HTMLDocument::create(Book* book, Url baseUrl)
 {
-    return std::unique_ptr<HTMLDocument>(new (heap) HTMLDocument(book, heap, fetcher, std::move(baseUrl)));
+    return std::unique_ptr<HTMLDocument>(new (book->heap()) HTMLDocument(book, std::move(baseUrl)));
 }
 
 bool HTMLDocument::parse(std::string_view content)
@@ -1074,8 +1074,8 @@ bool HTMLDocument::parse(std::string_view content)
     return HTMLParser(this, content).parse();
 }
 
-HTMLDocument::HTMLDocument(Book* book, Heap* heap, ResourceFetcher* fetcher, Url baseUrl)
-    : Document(book, heap, fetcher, std::move(baseUrl))
+HTMLDocument::HTMLDocument(Book* book, Url baseUrl)
+    : Document(book, std::move(baseUrl))
 {
 }
 

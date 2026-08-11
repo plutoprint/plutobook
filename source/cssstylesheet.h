@@ -103,13 +103,15 @@ public:
     void parseStyle(std::string_view content, CSSStyleOrigin origin, Url baseUrl);
 
 private:
-    void addRuleList(const CSSRuleList& rules);
+    void addRules(const CSSRuleList& rules);
     void addStyleRule(CSSStyleRule& rule);
     void addImportRule(CSSImportRule& rule);
     void addPageRule(CSSPageRule& rule);
     void addFontFaceRule(CSSFontFaceRule& rule);
     void addCounterStyleRule(CSSCounterStyleRule& rule);
     void addMediaRule(CSSMediaRule& rule);
+
+    void addUserAgentRules();
 
     Document* m_document;
     uint32_t m_ruleCount{0};
@@ -127,6 +129,8 @@ private:
 
     std::unique_ptr<CSSRuleList> m_counterStyleRules;
     std::unique_ptr<CSSCounterStyleMap> m_counterStyleMap;
+
+    friend class Document;
 };
 
 } // namespace plutobook

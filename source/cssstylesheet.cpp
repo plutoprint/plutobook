@@ -749,18 +749,6 @@ RefPtr<BoxStyle> PageStyleBuilder::build()
     return newStyle;
 }
 
-static const CSSRuleList& userAgentRules()
-{
-    static CSSRuleList rules = []() {
-        static Heap heap(1024 * 96);
-        CSSParserContext context(nullptr, CSSStyleOrigin::UserAgent, Url());
-        CSSParser parser(context, &heap);
-        return parser.parseSheet(kUserAgentStyle);
-    }();
-
-    return rules;
-}
-
 CSSStyleSheet::CSSStyleSheet(Document* document)
     : m_document(document)
     , m_idRules(document->heap())
@@ -772,9 +760,6 @@ CSSStyleSheet::CSSStyleSheet(Document* document)
     , m_pageRules(document->heap())
     , m_fontFaces(document->heap())
 {
-    if(document->book()) {
-        addRuleList(userAgentRules());
-    }
 }
 
 CSSStyleSheet::~CSSStyleSheet() = default;
@@ -867,10 +852,10 @@ void CSSStyleSheet::parseStyle(std::string_view content, CSSStyleOrigin origin, 
         return;
     CSSParserContext context(m_document, origin, std::move(baseUrl));
     CSSParser parser(context, m_document->heap());
-    addRuleList(parser.parseSheet(content));
+    addRules(parser.parseSheet(content));
 }
 
-void CSSStyleSheet::addRuleList(const CSSRuleList& rules)
+void CSSStyleSheet::addRules(const CSSRuleList& rules)
 {
     for(const auto& rule : rules) {
         switch(rule->type()) {
@@ -1243,7 +1228,26 @@ void CSSStyleSheet::addCounterStyleRule(CSSCounterStyleRule& rule)
 void CSSStyleSheet::addMediaRule(CSSMediaRule& rule)
 {
     if(m_document->supportsMediaQueries(rule.queries())) {
-        addRuleList(rule.rules());
+        addRules(rule.rules());
+    }
+}
+
+static const CSSRuleList& userAgentRules()
+{
+    static CSSRuleList rules = []() {
+        static Heap heap(1024 * 96);
+        CSSParserContext context(nullptr, CSSStyleOrigin::UserAgent, Url());
+        CSSParser parser(context, &heap);
+        return parser.parseSheet(kUserAgentStyle);
+    }();
+
+    return rules;
+}
+
+void CSSStyleSheet::addUserAgentRules()
+{
+    if(!m_document->isSVGDocument()) {
+        addRules(userAgentRules());
     }
 }
 

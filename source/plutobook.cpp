@@ -404,11 +404,6 @@ bool Book::loadData(const char* data, size_t length, std::string_view mimeType, 
 
 bool Book::loadImage(const char* data, size_t length, std::string_view mimeType, std::string_view textEncoding, std::string_view userStyle, std::string_view userScript, std::string_view baseUrl)
 {
-    auto image = ImageResource::decode(data, length, mimeType, textEncoding, baseUrl, m_customResourceFetcher);
-    if(image == nullptr) {
-        return false;
-    }
-
     loadHtml("<img>", userStyle, userScript, baseUrl);
 
     auto document = buildIfNeeded();
@@ -428,6 +423,11 @@ bool Book::loadImage(const char* data, size_t length, std::string_view mimeType,
         return false;
     }
 
+    auto image = ImageResource::decode(this, data, length, mimeType, textEncoding, baseUrl);
+    if(image == nullptr) {
+        return false;
+    }
+
     auto& imageBox = to<ImageBox>(*box);
     imageBox.setImage(std::move(image));
     return true;
@@ -436,7 +436,7 @@ bool Book::loadImage(const char* data, size_t length, std::string_view mimeType,
 bool Book::loadXml(std::string_view content, std::string_view userStyle, std::string_view userScript, std::string_view baseUrl)
 {
     clearContent();
-    m_document = XMLDocument::create(this, m_heap.get(), m_customResourceFetcher, ResourceLoader::completeUrl(baseUrl));
+    m_document = XMLDocument::create(this, ResourceLoader::completeUrl(baseUrl));
     if(!m_document->parse(content)) {
         clearContent();
         return false;
@@ -450,7 +450,7 @@ bool Book::loadXml(std::string_view content, std::string_view userStyle, std::st
 bool Book::loadHtml(std::string_view content, std::string_view userStyle, std::string_view userScript, std::string_view baseUrl)
 {
     clearContent();
-    m_document = HTMLDocument::create(this, m_heap.get(), m_customResourceFetcher, ResourceLoader::completeUrl(baseUrl));
+    m_document = HTMLDocument::create(this, ResourceLoader::completeUrl(baseUrl));
     if(!m_document->parse(content)) {
         assert(false);
     }

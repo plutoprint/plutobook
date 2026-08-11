@@ -41,7 +41,7 @@ RefPtr<ImageResource> ImageResource::create(Document* document, const Url& url)
     auto resource = ResourceLoader::loadUrl(url, document->customResourceFetcher());
     if(resource.isNull())
         return nullptr;
-    auto image = decode(resource.content(), resource.contentLength(), resource.mimeType(), resource.textEncoding(), url.base(), document->customResourceFetcher());
+    auto image = decode(document->book(), resource.content(), resource.contentLength(), resource.mimeType(), resource.textEncoding(), url.base());
     if(image == nullptr) {
         plutobook_set_error_message("Unable to load image '%s': %s", url.value().data(), plutobook_get_error_message());
         return nullptr;
@@ -50,11 +50,11 @@ RefPtr<ImageResource> ImageResource::create(Document* document, const Url& url)
     return adoptPtr(new (document->heap()) ImageResource(std::move(image)));
 }
 
-RefPtr<Image> ImageResource::decode(const char* data, size_t size, std::string_view mimeType, std::string_view textEncoding, std::string_view baseUrl, ResourceFetcher* fetcher)
+RefPtr<Image> ImageResource::decode(Book* book, const char* data, size_t size, std::string_view mimeType, std::string_view textEncoding, std::string_view baseUrl)
 {
     if(equals(mimeType, "image/svg+xml", false))
-        return SVGImage::create(TextResource::decode(data, size, mimeType, textEncoding), baseUrl, fetcher);
-    return BitmapImage::create(data, size);
+        return SVGImage::create(book, TextResource::decode(data, size, mimeType, textEncoding), baseUrl);
+    return BitmapImage::create(book, data, size);
 }
 
 bool ImageResource::supportsMimeType(std::string_view mimeType)
@@ -192,7 +192,7 @@ static cairo_surface_t* decodeBitmapImage(const char* data, size_t size)
     return surface;
 }
 
-RefPtr<BitmapImage> BitmapImage::create(const char* data, size_t size)
+RefPtr<BitmapImage> BitmapImage::create(Book* book, const char* data, size_t size)
 {
     auto surface = decodeBitmapImage(data, size);
     if(surface == nullptr)
@@ -202,7 +202,7 @@ RefPtr<BitmapImage> BitmapImage::create(const char* data, size_t size)
         return nullptr;
     }
 
-    return adoptPtr(new BitmapImage(surface));
+    return adoptPtr(new (book->heap()) BitmapImage(surface));
 }
 
 void Image::drawTiled(GraphicsContext& context, const Rect& destRect, const Rect& tileRect)
@@ -301,10 +301,9 @@ BitmapImage::BitmapImage(cairo_surface_t* surface)
 {
 }
 
-RefPtr<SVGImage> SVGImage::create(std::string_view content, std::string_view baseUrl, ResourceFetcher* fetcher)
+RefPtr<SVGImage> SVGImage::create(Book* book, std::string_view content, std::string_view baseUrl)
 {
-    std::unique_ptr<Heap> heap(new Heap(1024 * 24));
-    auto document = SVGDocument::create(nullptr, heap.get(), fetcher, ResourceLoader::completeUrl(baseUrl));
+    auto document = SVGDocument::create(book, ResourceLoader::completeUrl(baseUrl));
     if(!document->parse(content))
         return nullptr;
     if(!document->rootElement()->isOfType(svgNs, svgTag)) {
@@ -312,7 +311,7 @@ RefPtr<SVGImage> SVGImage::create(std::string_view content, std::string_view bas
         return nullptr;
     }
 
-    return adoptPtr(new SVGImage(std::move(heap), std::move(document)));
+    return adoptPtr(new (book->heap()) SVGImage(std::move(document)));
 }
 
 void SVGImage::draw(GraphicsContext& context, const Rect& dstRect, const Rect& srcRect)
@@ -419,8 +418,8 @@ Size SVGImage::size() const
 
 SVGImage::~SVGImage() = default;
 
-SVGImage::SVGImage(std::unique_ptr<Heap> heap, std::unique_ptr<SVGDocument> document)
-    : m_heap(std::move(heap)), m_document(std::move(document))
+SVGImage::SVGImage(std::unique_ptr<SVGDocument> document)
+    : m_document(std::move(document))
 {
     m_document->build();
 }

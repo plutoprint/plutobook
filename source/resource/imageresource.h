@@ -20,11 +20,12 @@ namespace plutobook {
 
 class Image;
 class Document;
+class Book;
 
 class ImageResource final : public Resource {
 public:
     static RefPtr<ImageResource> create(Document* document, const Url& url);
-    static RefPtr<Image> decode(const char* data, size_t size, std::string_view mimeType, std::string_view textEncoding, std::string_view baseUrl, ResourceFetcher* fetcher);
+    static RefPtr<Image> decode(Book* book, const char* data, size_t size, std::string_view mimeType, std::string_view textEncoding, std::string_view baseUrl);
     static bool supportsMimeType(std::string_view mimeType);
     const RefPtr<Image>& image() const { return m_image; }
     Type type() const final { return Type::Image; }
@@ -41,7 +42,7 @@ struct is_a<ImageResource> {
 
 class GraphicsContext;
 
-class Image : public RefCounted<Image> {
+class Image : public HeapMember, public RefCounted<Image> {
 public:
     Image() = default;
     virtual ~Image() = default;
@@ -62,7 +63,7 @@ public:
 
 class BitmapImage final : public Image {
 public:
-    static RefPtr<BitmapImage> create(const char* data, size_t size);
+    static RefPtr<BitmapImage> create(Book* book, const char* data, size_t size);
 
     bool isBitmapImage() const final { return true; }
 
@@ -92,7 +93,7 @@ class Heap;
 
 class SVGImage final : public Image {
 public:
-    static RefPtr<SVGImage> create(std::string_view content, std::string_view baseUrl, ResourceFetcher* fetcher);
+    static RefPtr<SVGImage> create(Book* book, std::string_view content, std::string_view baseUrl);
 
     bool isSVGImage() const final { return true; }
 
@@ -107,8 +108,7 @@ public:
     ~SVGImage() final;
 
 private:
-    SVGImage(std::unique_ptr<Heap> heap, std::unique_ptr<SVGDocument> document);
-    std::unique_ptr<Heap> m_heap;
+    SVGImage(std::unique_ptr<SVGDocument> document);
     std::unique_ptr<SVGDocument> m_document;
     Size m_containerSize;
 };
