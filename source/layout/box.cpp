@@ -601,7 +601,6 @@ void BoxModel::paintBackgroundStyle(const PaintInfo& info, const Rect& borderRec
         destRect.intersect(borderRect);
         if(destRect.intersects(info.rect())) {
             backgroundImage->setContainerSize(tileRect.size());
-            backgroundImage->setJpegQuality(document()->jpegQuality());
             backgroundImage->drawTiled(*info, destRect, tileRect);
         }
     }

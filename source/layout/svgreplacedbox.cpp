@@ -192,7 +192,6 @@ void SVGImageBox::render(const SVGRenderState& state) const
         return;
     Rect dstRect(fillBoundingBox());
     m_image->setContainerSize(dstRect.size());
-    m_image->setJpegQuality(document()->jpegQuality());
 
     Rect srcRect(m_image->size());
     element()->preserveAspectRatio().transformRect(dstRect, srcRect);

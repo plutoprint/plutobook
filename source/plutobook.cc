@@ -710,16 +710,6 @@ bool plutobook_write_to_png_stream(const plutobook_t* book, plutobook_stream_wri
     return book->writeToPng(callback, closure, width, height);
 }
 
-void plutobook_set_jpeg_quality(plutobook_t* book, int quality)
-{
-    book->setJpegQuality(quality);
-}
-
-int plutobook_get_jpeg_quality(const plutobook_t* book)
-{
-    return book->jpegQuality();
-}
-
 void plutobook_set_custom_resource_fetcher(plutobook_t* book, plutobook_resource_fetch_callback_t callback, void* closure)
 {
     book->setCustomResourceFetcher(book);
