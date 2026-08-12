@@ -815,6 +815,15 @@ std::optional<float> BoxStyle::pageScale() const
     return convertNumberOrPercent(*value);
 }
 
+UString BoxStyle::hyphenString() const
+{
+    auto value = get(CSSPropertyID::HyphenateCharacter);
+    if(value == nullptr || value->id() == CSSValueID::Auto)
+        return UString(UChar32(kHyphenCharacter));
+    const auto string = to<CSSStringValue>(*value).value();
+    return UString::fromUTF8(icu::StringPiece(string.data(), string.size()));
+}
+
 GlobalString BoxStyle::page() const
 {
     auto value = get(CSSPropertyID::Page);
@@ -3363,6 +3372,7 @@ BoxStyle::BoxStyle(Node* node, const BoxStyle* parentStyle, PseudoType pseudoTyp
             case CSSPropertyID::FontVariantLigatures:
             case CSSPropertyID::FontVariantNumeric:
             case CSSPropertyID::FontVariantPosition:
+            case CSSPropertyID::HyphenateCharacter:
             case CSSPropertyID::LetterSpacing:
             case CSSPropertyID::ListStyleImage:
             case CSSPropertyID::ListStyleType:
