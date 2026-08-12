@@ -2272,6 +2272,8 @@ Paint BoxStyle::convertPaint(const CSSValue& value) const
 
 RefPtr<Image> BoxStyle::convertImage(const CSSValue& value) const
 {
+    if(is<CSSGradientValue>(value))
+        return nullptr;
     return to<CSSImageValue>(value).fetch(document());
 }
 
