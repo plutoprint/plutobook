@@ -3,6 +3,7 @@
 - [Fonts](#fonts)
 - [Color](#color)
 - [Backgrounds and Borders](#backgrounds-and-borders)
+- [Gradients](#gradients)
 - [Outlines](#outlines)
 - [Box Model](#box-model)
 - [Box Sizing](#box-sizing)
@@ -36,9 +37,19 @@ PlutoBook also provides partial support for [CSS Color Module Level 4](https://w
 
 ## Backgrounds and Borders
 
-PlutoBook implements the [CSS Backgrounds and Borders Module Level 3](https://www.w3.org/TR/css-backgrounds-3), providing control over the decoration of the border area and the background of the content, padding, and border areas. It supports properties like `background-color` for solid fills and `background-image` for adding images, along with `background-repeat`, `background-attachment`, `background-position`, `background-clip`, `background-origin`, and `background-size` for controlling placement and scaling. The `background` shorthand is fully supported, but multiple background layers are not yet supported.
+PlutoBook implements the [CSS Backgrounds and Borders Module Level 3](https://www.w3.org/TR/css-backgrounds-3), providing control over the decoration of the border area and the background of the content, padding, and border areas. It supports properties like `background-color` for solid fills and `background-image` for adding images and [gradients](#gradients), along with `background-repeat`, `background-attachment`, `background-position`, `background-clip`, `background-origin`, and `background-size` for controlling placement and scaling. The `background` shorthand is fully supported, but multiple background layers are not yet supported.
 
 For borders, PlutoBook handles `border-color`, `border-style`, and `border-width`, which can be combined using the `border` shorthand. Side-specific border properties such as `border-top`, `border-right`, `border-bottom`, and `border-left` are also supported for precise control of each edge. The shape of corners can be adjusted using `border-radius`, allowing smooth rounding for any or all corners.
+
+## Gradients
+
+PlutoBook supports CSS gradients as defined in the [CSS Images Module Level 3](https://www.w3.org/TR/css-images-3), which can be used anywhere an image is expected, such as `background-image` and `list-style-image`. All six gradient functions are available: `linear-gradient()`, `radial-gradient()`, `conic-gradient()`, and their `repeating-` counterparts.
+
+A linear gradient may be given an explicit `<angle>` or a `to <side-or-corner>` keyword such as `to top right`. A radial gradient accepts an ending shape (`circle` or `ellipse`), a size given either as one of the `closest-side`, `closest-corner`, `farthest-side`, and `farthest-corner` keywords or as explicit radii, and a center position through `at <position>`. A conic gradient accepts a starting angle through `from <angle>` and a center position through `at <position>`.
+
+Color stops support implicit positions, which spread evenly between their positioned neighbours, the two-position syntax (`red 20% 40%`), and transition hints (`red, 20%, blue`). Since a gradient is resolved against the style of the element using it, `currentColor` and font relative lengths such as `em` inside a gradient behave as expected. Gradients have no intrinsic dimensions, so they take the size of the area they are painted into and respond to `background-size`, `background-position`, and `background-repeat`.
+
+Gradients are emitted as PDF shadings rather than as bitmaps, so they stay resolution independent. PDF has no conic shading, so a conic gradient is approximated with a mesh of patches; the alternative of sampling the sweep into a bitmap can be selected at runtime with `plutobook::setConicGradientRendering()`, or `plutobook_set_conic_gradient_rendering()` from the C API.
 
 ## Outlines
 
