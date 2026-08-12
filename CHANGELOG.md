@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Add support for CSS gradients as background images
+
 ## PlutoBook 0.20.0 (2026-10-20)
 
 - Add support for fragmenting flex containers across pages and columns
