@@ -12,6 +12,7 @@
 #include <cairo.h>
 
 #include <cmath>
+#include <numbers>
 
 namespace plutobook {
 
@@ -171,10 +172,35 @@ void GradientImage::buildColorStops(float lineLength, GradientStops& stops) cons
     }
 }
 
-GradientImage::ResolvedGradient GradientImage::resolveGradient(float lineLength) const
+static void clampColorStops(GradientStops& stops)
+{
+    if(stops.front().first >= 0.f)
+        return;
+    size_t index = 0;
+    while(index + 1 < stops.size() && stops[index + 1].first <= 0.f)
+        ++index;
+    if(index + 1 == stops.size()) {
+        // The whole ramp lies before the origin, only its end is visible.
+        auto color = stops.back().second;
+        stops.clear();
+        stops.emplace_back(0.f, color);
+        stops.emplace_back(1.f, color);
+        return;
+    }
+
+    const auto& from = stops[index];
+    const auto& to = stops[index + 1];
+    auto color = interpolateColor(from.second, to.second, -from.first / (to.first - from.first));
+    stops.erase(stops.begin(), stops.begin() + index + 1);
+    stops.insert(stops.begin(), GradientStop(0.f, color));
+}
+
+GradientImage::ResolvedGradient GradientImage::resolveGradient(float lineLength, bool positiveOnly) const
 {
     ResolvedGradient gradient;
     buildColorStops(lineLength, gradient.stops);
+    if(positiveOnly && !m_repeating)
+        clampColorStops(gradient.stops);
 
     auto first = gradient.stops.front().first;
     auto last = gradient.stops.back().first;
@@ -186,14 +212,24 @@ GradientImage::ResolvedGradient GradientImage::resolveGradient(float lineLength)
             return gradient;
         }
 
-        gradient.start = first;
-        gradient.end = first + kHardTransitionSpan;
+        gradient.start = std::max(first, 0.f);
+        gradient.end = gradient.start + kHardTransitionSpan;
 
         GradientStops stops;
         stops.emplace_back(0.f, gradient.stops.front().second);
         stops.emplace_back(1.f, gradient.stops.back().second);
         gradient.stops = std::move(stops);
         return gradient;
+    }
+
+    if(positiveOnly && first < 0.f) {
+        // A repeating ramp is periodic, so sliding it by whole periods keeps
+        // the rendering identical while moving it onto the positive ray.
+        auto shift = std::ceil(-first / span) * span;
+        for(auto& stop : gradient.stops)
+            stop.first += shift;
+        first += shift;
+        last += shift;
     }
 
     // Cairo clamps stop offsets to [0, 1], so the gradient geometry is moved
@@ -234,7 +270,7 @@ void GradientImage::applyLinearGradient(GraphicsContext& context) const
     // An angle of 0deg points to the top and grows clockwise; the line is
     // long enough for the box corners to fall on the 0% and 100% stops.
     auto lineLength = std::abs(width * dx) + std::abs(height * dy);
-    auto gradient = resolveGradient(lineLength);
+    auto gradient = resolveGradient(lineLength, false);
     if(gradient.degenerate) {
         context.setColor(gradient.color);
         return;
@@ -250,11 +286,84 @@ void GradientImage::applyLinearGradient(GraphicsContext& context) const
     context.setLinearGradient(values, gradient.stops, Transform(), gradient.method, 1.f);
 }
 
+void GradientImage::applyRadialGradient(GraphicsContext& context) const
+{
+    auto width = m_containerSize.w;
+    auto height = m_containerSize.h;
+
+    Point center(m_position.x().calc(width), m_position.y().calc(height));
+    auto left = std::abs(center.x);
+    auto right = std::abs(width - center.x);
+    auto top = std::abs(center.y);
+    auto bottom = std::abs(height - center.y);
+
+    float radiusX = 0.f;
+    float radiusY = 0.f;
+    switch(m_sizeType) {
+    case CSSValueID::ClosestSide:
+    case CSSValueID::ClosestCorner:
+        radiusX = std::min(left, right);
+        radiusY = std::min(top, bottom);
+        break;
+    case CSSValueID::FarthestSide:
+    case CSSValueID::FarthestCorner:
+        radiusX = std::max(left, right);
+        radiusY = std::max(top, bottom);
+        break;
+    default:
+        radiusX = m_radiusX.calc(width);
+        radiusY = m_radiusY.calc(height);
+        break;
+    }
+
+    if(m_sizeType == CSSValueID::ClosestSide || m_sizeType == CSSValueID::FarthestSide) {
+        if(m_circle) {
+            radiusX = radiusY = m_sizeType == CSSValueID::ClosestSide
+                ? std::min(radiusX, radiusY) : std::max(radiusX, radiusY);
+        }
+    } else if(m_sizeType == CSSValueID::ClosestCorner || m_sizeType == CSSValueID::FarthestCorner) {
+        if(m_circle) {
+            radiusX = radiusY = std::hypot(radiusX, radiusY);
+        } else {
+            // The ending shape keeps the aspect ratio of the matching side
+            // sized ellipse while passing through the corner.
+            radiusX *= std::numbers::sqrt2_v<float>;
+            radiusY *= std::numbers::sqrt2_v<float>;
+        }
+    }
+
+    if(radiusX <= 0.f || radiusY <= 0.f) {
+        context.setColor(m_stops.back().color);
+        return;
+    }
+
+    // The gradient ray runs from the center towards the right edge of the
+    // ending shape, so its length is the horizontal radius.
+    auto gradient = resolveGradient(radiusX, true);
+    if(gradient.degenerate) {
+        context.setColor(gradient.color);
+        return;
+    }
+
+    // Cairo only draws circular gradients; the ellipse comes from scaling the
+    // pattern space, which keeps the shading vectorial.
+    auto transform = Transform::makeTranslate(center.x, center.y);
+    transform.scale(1.f, radiusY / radiusX);
+
+    RadialGradientValues values;
+    values.r0 = radiusX * gradient.start;
+    values.r = radiusX * gradient.end;
+    context.setRadialGradient(values, gradient.stops, transform, gradient.method, 1.f);
+}
+
 void GradientImage::apply(GraphicsContext& context) const
 {
     switch(m_gradientType) {
     case CSSGradientType::Linear:
         applyLinearGradient(context);
+        break;
+    case CSSGradientType::Radial:
+        applyRadialGradient(context);
         break;
     default:
         context.setColor(Color::Transparent);
@@ -354,6 +463,25 @@ RefPtr<GradientImage> GradientImage::create(const BoxStyle& style, const CSSGrad
         image->m_directionY = pair.second()->id();
     }
 
+    if(const auto& shape = value.shape())
+        image->m_circle = shape->id() == CSSValueID::Circle;
+    if(const auto& size = value.size()) {
+        if(is<CSSIdentValue>(*size)) {
+            image->m_sizeType = size->id();
+        } else if(is<CSSPairValue>(*size)) {
+            const auto& pair = to<CSSPairValue>(*size);
+            image->m_sizeType = CSSValueID::Unknown;
+            image->m_radiusX = style.convertLengthOrPercent(*pair.first());
+            image->m_radiusY = style.convertLengthOrPercent(*pair.second());
+        } else {
+            image->m_sizeType = CSSValueID::Unknown;
+            image->m_radiusX = style.convertLength(*size);
+            image->m_radiusY = image->m_radiusX;
+        }
+    }
+
+    if(const auto& position = value.position())
+        image->m_position = style.convertPositionCoordinate(*position);
     return image;
 }
 

@@ -185,7 +185,7 @@ void GraphicsContext::setLinearGradient(const LinearGradientValues& values, cons
 
 void GraphicsContext::setRadialGradient(const RadialGradientValues& values, const GradientStops& stops, const Transform& transform, SpreadMethod method, float opacity)
 {
-    auto pattern = cairo_pattern_create_radial(values.fx, values.fy, 0, values.cx, values.cy, values.r);
+    auto pattern = cairo_pattern_create_radial(values.fx, values.fy, values.r0, values.cx, values.cy, values.r);
     set_cairo_gradient(pattern, stops, transform, method, opacity);
     cairo_set_source(m_canvas, pattern);
     cairo_pattern_destroy(pattern);
