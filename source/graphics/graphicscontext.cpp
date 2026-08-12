@@ -191,6 +191,139 @@ void GraphicsContext::setRadialGradient(const RadialGradientValues& values, cons
     cairo_pattern_destroy(pattern);
 }
 
+// A conic sweep is cut into sectors no wider than this, which keeps the
+// piecewise linear approximation of the ramp below the visible threshold.
+constexpr float kConicSectorTurn = 1.f / 48.f;
+
+// Upper bound on the number of stop boundaries materialized for a repeating
+// sweep, so that a tiny period does not explode into thousands of patches.
+constexpr size_t kMaxConicBoundaries = 512;
+
+static Color conic_gradient_color_at(const GradientStops& stops, float offset, SpreadMethod method)
+{
+    auto first = stops.front().first;
+    auto last = stops.back().first;
+    if(method == SpreadMethod::Repeat) {
+        auto span = last - first;
+        offset = first + std::fmod(std::fmod(offset - first, span) + span, span);
+    }
+
+    if(offset <= first)
+        return stops.front().second;
+    if(offset >= last)
+        return stops.back().second;
+    size_t index = 1;
+    while(stops[index].first < offset)
+        ++index;
+    const auto& from = stops[index - 1];
+    const auto& to = stops[index];
+    if(to.first <= from.first)
+        return to.second;
+    return interpolateColor(from.second, to.second, (offset - from.first) / (to.first - from.first));
+}
+
+static std::vector<float> conic_gradient_boundaries(const GradientStops& stops, SpreadMethod method)
+{
+    std::vector<float> offsets = {0.f, 1.f};
+    auto first = stops.front().first;
+    auto last = stops.back().first;
+    if(method == SpreadMethod::Repeat) {
+        auto span = last - first;
+        auto begin = static_cast<int>(std::floor(-first / span));
+        auto end = static_cast<int>(std::ceil((1.f - first) / span));
+        if(stops.size() * (end - begin + 1) <= kMaxConicBoundaries) {
+            for(int period = begin; period <= end; ++period) {
+                for(const auto& stop : stops) {
+                    auto offset = stop.first + period * span;
+                    if(offset > 0.f && offset < 1.f) {
+                        offsets.push_back(offset);
+                    }
+                }
+            }
+        }
+    } else {
+        for(const auto& stop : stops) {
+            if(stop.first > 0.f && stop.first < 1.f) {
+                offsets.push_back(stop.first);
+            }
+        }
+    }
+
+    std::sort(offsets.begin(), offsets.end());
+
+    std::vector<float> boundaries = {offsets.front()};
+    for(size_t index = 1; index < offsets.size(); ++index) {
+        auto from = boundaries.back();
+        auto to = offsets[index];
+        if(to <= from)
+            continue;
+        auto count = static_cast<int>(std::ceil((to - from) / kConicSectorTurn));
+        for(int step = 1; step <= count; ++step) {
+            boundaries.push_back(from + (to - from) * step / count);
+        }
+    }
+
+    return boundaries;
+}
+
+static void add_conic_gradient_patch(cairo_pattern_t* pattern, const ConicGradientValues& values, float fromOffset, float toOffset, const Color& fromColor, const Color& toColor, float opacity)
+{
+    // A zero turn points up and the sweep runs clockwise, which in device
+    // space, with the y axis growing downwards, is the increasing direction.
+    auto fromAngle = deg2rad(values.angle) + fromOffset * 2.f * kPi - kPi / 2.f;
+    auto toAngle = deg2rad(values.angle) + toOffset * 2.f * kPi - kPi / 2.f;
+
+    auto fromX = values.cx + values.r * std::cos(fromAngle);
+    auto fromY = values.cy + values.r * std::sin(fromAngle);
+    auto toX = values.cx + values.r * std::cos(toAngle);
+    auto toY = values.cy + values.r * std::sin(toAngle);
+
+    auto handle = values.r * 4.f / 3.f * std::tan((toAngle - fromAngle) / 4.f);
+
+    cairo_mesh_pattern_begin_patch(pattern);
+    cairo_mesh_pattern_move_to(pattern, values.cx, values.cy);
+    cairo_mesh_pattern_line_to(pattern, fromX, fromY);
+    cairo_mesh_pattern_curve_to(pattern,
+        fromX - handle * std::sin(fromAngle), fromY + handle * std::cos(fromAngle),
+        toX + handle * std::sin(toAngle), toY - handle * std::cos(toAngle),
+        toX, toY);
+    cairo_mesh_pattern_line_to(pattern, values.cx, values.cy);
+
+    // The two corners of a radial edge share a color, so the patch only
+    // interpolates along the arc.
+    const Color corners[4] = {fromColor, fromColor, toColor, toColor};
+    for(unsigned int corner = 0; corner < 4; ++corner) {
+        const auto& color = corners[corner];
+        cairo_mesh_pattern_set_corner_color_rgba(pattern, corner, color.red() / 255.0,
+            color.green() / 255.0, color.blue() / 255.0, color.alpha() / 255.0 * opacity);
+    }
+
+    cairo_mesh_pattern_end_patch(pattern);
+}
+
+void GraphicsContext::setConicGradient(const ConicGradientValues& values, const GradientStops& stops, const Transform& transform, SpreadMethod method, float opacity)
+{
+    auto pattern = cairo_pattern_create_mesh();
+    const auto boundaries = conic_gradient_boundaries(stops, method);
+    for(size_t index = 1; index < boundaries.size(); ++index) {
+        auto fromOffset = boundaries[index - 1];
+        auto toOffset = boundaries[index];
+
+        // Sample just inside the sector so that two stops sharing a position
+        // still produce the hard transition they describe.
+        auto epsilon = (toOffset - fromOffset) / 1000.f;
+        add_conic_gradient_patch(pattern, values, fromOffset, toOffset,
+            conic_gradient_color_at(stops, fromOffset + epsilon, method),
+            conic_gradient_color_at(stops, toOffset - epsilon, method), opacity);
+    }
+
+    auto matrix = to_cairo_matrix(transform);
+    cairo_matrix_invert(&matrix);
+    cairo_pattern_set_matrix(pattern, &matrix);
+    cairo_set_source(m_canvas, pattern);
+    cairo_pattern_destroy(pattern);
+}
+
 void GraphicsContext::setPattern(cairo_surface_t* surface, const Transform& transform)
 {
     auto pattern = cairo_pattern_create_for_surface(surface);

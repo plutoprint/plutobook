@@ -52,6 +52,7 @@ private:
     void apply(GraphicsContext& context) const;
     void applyLinearGradient(GraphicsContext& context) const;
     void applyRadialGradient(GraphicsContext& context) const;
+    void applyConicGradient(GraphicsContext& context) const;
 
     // Resolves the color stop list onto a gradient line of the given length,
     // following the CSS color stop fixup rules and expanding transition hints
