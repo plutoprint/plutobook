@@ -687,6 +687,35 @@ PLUTOBOOK_API void plutobook_set_http_max_redirects(int amount);
 PLUTOBOOK_API void plutobook_set_http_timeout(int timeout);
 
 /**
+ * @brief Defines how a CSS conic gradient is rendered.
+ *
+ * Neither cairo nor PDF has a conic shading, so the sweep has to be
+ * approximated one way or another.
+ */
+typedef enum _plutobook_conic_gradient_rendering {
+    PLUTOBOOK_CONIC_GRADIENT_RENDERING_MESH,
+    PLUTOBOOK_CONIC_GRADIENT_RENDERING_RASTER
+} plutobook_conic_gradient_rendering_t;
+
+/**
+ * @brief Selects the method used to render conic gradients.
+ *
+ * If not set, conic gradients are rendered with
+ * PLUTOBOOK_CONIC_GRADIENT_RENDERING_MESH, which keeps them resolution
+ * independent in the PDF output. PLUTOBOOK_CONIC_GRADIENT_RENDERING_RASTER
+ * trades that for an exact sweep, at the cost of an embedded bitmap.
+ *
+ * @param rendering The rendering method to use.
+ */
+PLUTOBOOK_API void plutobook_set_conic_gradient_rendering(plutobook_conic_gradient_rendering_t rendering);
+
+/**
+ * @brief Returns the method used to render conic gradients.
+ * @return The rendering method currently in use.
+ */
+PLUTOBOOK_API plutobook_conic_gradient_rendering_t plutobook_get_conic_gradient_rendering(void);
+
+/**
  * @brief Defines the different media types used for CSS @media queries.
  */
 typedef enum _plutobook_media_type {
