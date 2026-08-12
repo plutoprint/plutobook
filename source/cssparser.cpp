@@ -2128,7 +2128,6 @@ RefPtr<CSSValue> CSSParser::consumeGradientStopPosition(CSSTokenStream& input, C
 
 bool CSSParser::consumeGradientStops(CSSTokenStream& input, CSSGradientType gradientType, CSSGradientStopList& stops)
 {
-    size_t colorStopCount = 0;
     do {
         auto color = consumeColor(input);
         if(color == nullptr) {
@@ -2147,7 +2146,6 @@ bool CSSParser::consumeGradientStops(CSSTokenStream& input, CSSGradientType grad
             }
         }
 
-        ++colorStopCount;
         if(auto first = consumeGradientStopPosition(input, gradientType)) {
             auto second = consumeGradientStopPosition(input, gradientType);
             stops.emplace_back(color, std::move(first));
@@ -2159,7 +2157,8 @@ bool CSSParser::consumeGradientStops(CSSTokenStream& input, CSSGradientType grad
         }
     } while(input.consumeCommaIncludingWhitespace());
 
-    return colorStopCount >= 2;
+    // A lone color stop is allowed and paints a solid color.
+    return true;
 }
 
 RefPtr<CSSValue> CSSParser::consumeGradient(CSSTokenStream& input, CSSGradientType gradientType, bool repeating)
