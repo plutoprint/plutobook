@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Add support for multiple background layers
+
 ## PlutoBook 0.19.0 (2026-08-04)
 
 - Fix several security vulnerabilities
