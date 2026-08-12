@@ -1132,6 +1132,14 @@ bool CSSParser::consumeDescriptor(CSSTokenStream& input, CSSPropertyList& proper
     case CSSPropertyID::BorderBlock:
     case CSSPropertyID::BorderInline:
         return consumeBorder(input, properties, id, important);
+    case CSSPropertyID::BackgroundImage:
+    case CSSPropertyID::BackgroundPosition:
+    case CSSPropertyID::BackgroundSize:
+    case CSSPropertyID::BackgroundRepeat:
+    case CSSPropertyID::BackgroundAttachment:
+    case CSSPropertyID::BackgroundOrigin:
+    case CSSPropertyID::BackgroundClip:
+        return consumeBackgroundLonghand(input, properties, id, important);
     case CSSPropertyID::Background:
         return consumeBackground(input, properties, important);
     case CSSPropertyID::Font:
@@ -4105,6 +4113,28 @@ bool CSSParser::consumeFlex(CSSTokenStream& input, CSSPropertyList& properties, 
     addProperty(properties, CSSPropertyID::FlexGrow, important, std::move(grow));
     addProperty(properties, CSSPropertyID::FlexShrink, important, std::move(shrink));
     addProperty(properties, CSSPropertyID::FlexBasis, important, std::move(basis));
+    return true;
+}
+
+bool CSSParser::consumeBackgroundLonghand(CSSTokenStream& input, CSSPropertyList& properties, CSSPropertyID id, bool important)
+{
+    CSSValueList values(m_heap);
+    do {
+        auto value = consumeLonghand(input, id);
+        if(value == nullptr)
+            return false;
+        values.push_back(std::move(value));
+    } while(input.consumeCommaIncludingWhitespace());
+
+    input.consumeWhitespace();
+    if(!input.empty())
+        return false;
+    if(values.size() == 1) {
+        addProperty(properties, id, important, std::move(values.front()));
+        return true;
+    }
+
+    addProperty(properties, id, important, CSSListValue::create(m_heap, std::move(values)));
     return true;
 }
 

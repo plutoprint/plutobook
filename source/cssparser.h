@@ -164,6 +164,7 @@ private:
     RefPtr<CSSValue> consumeLonghand(CSSTokenStream& input, CSSPropertyID id);
 
     bool consumeFlex(CSSTokenStream& input, CSSPropertyList& properties, bool important);
+    bool consumeBackgroundLonghand(CSSTokenStream& input, CSSPropertyList& properties, CSSPropertyID id, bool important);
     bool consumeBackground(CSSTokenStream& input, CSSPropertyList& properties, bool important);
     bool consumeColumns(CSSTokenStream& input, CSSPropertyList& properties, bool important);
     bool consumeListStyle(CSSTokenStream& input, CSSPropertyList& properties, bool important);
