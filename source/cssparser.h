@@ -165,6 +165,7 @@ private:
 
     bool consumeFlex(CSSTokenStream& input, CSSPropertyList& properties, bool important);
     bool consumeBackgroundLonghand(CSSTokenStream& input, CSSPropertyList& properties, CSSPropertyID id, bool important);
+    void addBackgroundProperty(CSSPropertyList& properties, CSSPropertyID id, bool important, CSSValueList values, RefPtr<CSSValue> initial);
     bool consumeBackground(CSSTokenStream& input, CSSPropertyList& properties, bool important);
     bool consumeColumns(CSSTokenStream& input, CSSPropertyList& properties, bool important);
     bool consumeListStyle(CSSTokenStream& input, CSSPropertyList& properties, bool important);
