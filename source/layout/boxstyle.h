@@ -650,6 +650,7 @@ class CSSVariableData;
 
 using CSSPropertyMap = std::pmr::unordered_map<CSSPropertyID, RefPtr<CSSValue>>;
 using CSSCustomPropertyMap = std::pmr::map<HeapString, RefPtr<CSSVariableData>, std::less<>>;
+using GradientImageMap = std::pmr::unordered_map<const CSSValue*, RefPtr<Image>>;
 
 enum class PseudoType : uint8_t {
     None,
@@ -1046,6 +1047,10 @@ private:
     const BoxStyle* m_parentStyle;
     CSSPropertyMap m_properties;
     std::unique_ptr<CSSCustomPropertyMap> m_customProperties;
+
+    // A gradient image is derived from this style, so it is memoized per
+    // gradient value rather than rebuilt on every paint.
+    mutable std::unique_ptr<GradientImageMap> m_gradientImages;
     RefPtr<Font> m_font;
 
     Display m_display : 5;
