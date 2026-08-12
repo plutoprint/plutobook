@@ -37,6 +37,7 @@ struct RadialGradientValues {
     float cx = 0.f;
     float cy = 0.f;
     float r = 0.f;
+    float r0 = 0.f;
 };
 
 enum class SpreadMethod {
