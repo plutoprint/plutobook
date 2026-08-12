@@ -51,6 +51,7 @@ private:
 
     void apply(GraphicsContext& context) const;
     void applyLinearGradient(GraphicsContext& context) const;
+    void applyRadialGradient(GraphicsContext& context) const;
 
     // Resolves the color stop list onto a gradient line of the given length,
     // following the CSS color stop fixup rules and expanding transition hints
@@ -58,8 +59,10 @@ private:
     void buildColorStops(float lineLength, GradientStops& stops) const;
 
     // Moves the stop offsets onto [0, 1] and reports, as fractions of the
-    // gradient line, where those two ends now sit.
-    ResolvedGradient resolveGradient(float lineLength) const;
+    // gradient line, where those two ends now sit. A radial or conic gradient
+    // sets |positiveOnly|, since its gradient ray starts at the center and
+    // nothing exists before it.
+    ResolvedGradient resolveGradient(float lineLength, bool positiveOnly) const;
 
     CSSGradientType m_gradientType;
     bool m_repeating;
@@ -68,6 +71,12 @@ private:
     float m_angle{180.f};
     CSSValueID m_directionX{CSSValueID::Unknown};
     CSSValueID m_directionY{CSSValueID::Unknown};
+
+    bool m_circle{false};
+    CSSValueID m_sizeType{CSSValueID::FarthestCorner};
+    Length m_radiusX;
+    Length m_radiusY;
+    LengthPoint m_position{Length(Length::Type::Percent, 50.f)};
 
     Size m_containerSize;
 };
