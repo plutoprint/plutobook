@@ -88,7 +88,6 @@ struct is_a<BitmapImage> {
 };
 
 class SVGDocument;
-class Heap;
 
 class SVGImage final : public Image {
 public:
