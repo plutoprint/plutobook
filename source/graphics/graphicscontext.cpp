@@ -8,6 +8,7 @@
 
 #include "graphicscontext.h"
 #include "geometry.h"
+#include "plutobook.hpp"
 
 #include <cairo.h>
 
@@ -199,6 +200,21 @@ constexpr float kConicSectorTurn = 1.f / 48.f;
 // sweep, so that a tiny period does not explode into thousands of patches.
 constexpr size_t kMaxConicBoundaries = 512;
 
+// Upper bound on the side of the bitmap a rasterized sweep is sampled into.
+constexpr int kMaxConicRasterSize = 2048;
+
+static ConicGradientRendering g_conicGradientRendering = ConicGradientRendering::Mesh;
+
+void setConicGradientRendering(ConicGradientRendering rendering)
+{
+    g_conicGradientRendering = rendering;
+}
+
+ConicGradientRendering conicGradientRendering()
+{
+    return g_conicGradientRendering;
+}
+
 static Color conic_gradient_color_at(const GradientStops& stops, float offset, SpreadMethod method)
 {
     auto first = stops.front().first;
@@ -301,7 +317,7 @@ static void add_conic_gradient_patch(cairo_pattern_t* pattern, const ConicGradie
     cairo_mesh_pattern_end_patch(pattern);
 }
 
-void GraphicsContext::setConicGradient(const ConicGradientValues& values, const GradientStops& stops, const Transform& transform, SpreadMethod method, float opacity)
+static cairo_pattern_t* create_conic_gradient_mesh(const ConicGradientValues& values, const GradientStops& stops, SpreadMethod method, float opacity)
 {
     auto pattern = cairo_pattern_create_mesh();
     const auto boundaries = conic_gradient_boundaries(stops, method);
@@ -317,8 +333,67 @@ void GraphicsContext::setConicGradient(const ConicGradientValues& values, const 
             conic_gradient_color_at(stops, toOffset - epsilon, method), opacity);
     }
 
-    auto matrix = to_cairo_matrix(transform);
-    cairo_matrix_invert(&matrix);
+    return pattern;
+}
+
+static cairo_pattern_t* create_conic_gradient_raster(cairo_t* canvas, const ConicGradientValues& values, const GradientStops& stops, SpreadMethod method, float opacity)
+{
+    cairo_matrix_t canvasMatrix;
+    cairo_get_matrix(canvas, &canvasMatrix);
+    auto deviceScale = std::max(std::hypot(canvasMatrix.xx, canvasMatrix.yx), std::hypot(canvasMatrix.xy, canvasMatrix.yy));
+
+    auto diameter = 2.f * values.r;
+    auto resolution = std::clamp(static_cast<int>(std::ceil(diameter * deviceScale)), 1, kMaxConicRasterSize);
+    auto buffer = ImageBuffer::create(0, 0, resolution, resolution);
+
+    auto surface = buffer->surface();
+    cairo_surface_flush(surface);
+
+    auto data = cairo_image_surface_get_data(surface);
+    auto stride = cairo_image_surface_get_stride(surface);
+    auto step = diameter / resolution;
+    for(int y = 0; y < resolution; ++y) {
+        auto row = reinterpret_cast<uint32_t*>(data + y * stride);
+        auto dy = (y + 0.5f) * step - values.r;
+        for(int x = 0; x < resolution; ++x) {
+            auto dx = (x + 0.5f) * step - values.r;
+            auto turn = (std::atan2(dy, dx) + kPi / 2.f - deg2rad(values.angle)) / (2.f * kPi);
+            auto color = conic_gradient_color_at(stops, turn - std::floor(turn), method);
+            auto alpha = color.alpha() / 255.f * opacity;
+            auto premultiply = [&](uint8_t value) { return static_cast<uint32_t>(std::lround(value * alpha)); };
+            row[x] = static_cast<uint32_t>(std::lround(alpha * 255.f)) << 24 | premultiply(color.red()) << 16
+                | premultiply(color.green()) << 8 | premultiply(color.blue());
+        }
+    }
+
+    cairo_surface_mark_dirty(surface);
+
+    auto pattern = cairo_pattern_create_for_surface(surface);
+    cairo_pattern_set_extend(pattern, CAIRO_EXTEND_PAD);
+    cairo_pattern_set_filter(pattern, CAIRO_FILTER_BILINEAR);
+
+    cairo_matrix_t patternMatrix;
+    cairo_matrix_init_scale(&patternMatrix, resolution / diameter, resolution / diameter);
+    cairo_matrix_translate(&patternMatrix, values.r - values.cx, values.r - values.cy);
+    cairo_pattern_set_matrix(pattern, &patternMatrix);
+    return pattern;
+}
+
+void GraphicsContext::setConicGradient(const ConicGradientValues& values, const GradientStops& stops, const Transform& transform, SpreadMethod method, float opacity)
+{
+    cairo_pattern_t* pattern = nullptr;
+    if(conicGradientRendering() == ConicGradientRendering::Raster) {
+        pattern = create_conic_gradient_raster(m_canvas, values, stops, method, opacity);
+    } else {
+        pattern = create_conic_gradient_mesh(values, stops, method, opacity);
+    }
+
+    cairo_matrix_t matrix;
+    cairo_pattern_get_matrix(pattern, &matrix);
+
+    auto userMatrix = to_cairo_matrix(transform);
+    cairo_matrix_invert(&userMatrix);
+    cairo_matrix_multiply(&matrix, &userMatrix, &matrix);
     cairo_pattern_set_matrix(pattern, &matrix);
     cairo_set_source(m_canvas, pattern);
     cairo_pattern_destroy(pattern);
