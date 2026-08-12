@@ -777,14 +777,15 @@ public:
     ListStylePosition listStylePosition() const { return m_listStylePosition; }
     RefPtr<Image> listStyleImage() const;
 
-    RefPtr<Image> backgroundImage() const;
+    size_t backgroundLayerCount() const;
     Color backgroundColor() const;
-    BackgroundRepeat backgroundRepeat() const { return m_backgroundRepeat; }
-    BackgroundBox backgroundOrigin() const { return m_backgroundOrigin; }
-    BackgroundBox backgroundClip() const { return m_backgroundClip; }
-    BackgroundAttachment backgroundAttachment() const { return m_backgroundAttachment; }
-    BackgroundSize backgroundSize() const;
-    LengthPoint backgroundPosition() const;
+    RefPtr<Image> backgroundImage(size_t index = 0) const;
+    BackgroundRepeat backgroundRepeat(size_t index = 0) const;
+    BackgroundBox backgroundOrigin(size_t index = 0) const;
+    BackgroundBox backgroundClip(size_t index = 0) const;
+    BackgroundAttachment backgroundAttachment(size_t index = 0) const;
+    BackgroundSize backgroundSize(size_t index = 0) const;
+    LengthPoint backgroundPosition(size_t index = 0) const;
 
     ObjectFit objectFit() const { return m_objectFit; }
     LengthPoint objectPosition() const;
@@ -1042,6 +1043,7 @@ public:
 
 private:
     BoxStyle(Node* node, const BoxStyle* parentStyle, PseudoType pseudoType, Display display);
+    const CSSValue* backgroundLayerValue(CSSPropertyID id, size_t index) const;
     Node* m_node;
     const BoxStyle* m_parentStyle;
     CSSPropertyMap m_properties;
@@ -1091,10 +1093,6 @@ private:
     FlexWrap m_flexWrap : 2 {FlexWrap::Nowrap};
     LineCap m_strokeLinecap : 2 {LineCap::Butt};
     LineJoin m_strokeLinejoin : 2 {LineJoin::Miter};
-    BackgroundRepeat m_backgroundRepeat : 2 {BackgroundRepeat::Repeat};
-    BackgroundBox m_backgroundOrigin : 2 {BackgroundBox::PaddingBox};
-    BackgroundBox m_backgroundClip : 2 {BackgroundBox::BorderBox};
-    BackgroundAttachment m_backgroundAttachment : 2 {BackgroundAttachment::Scroll};
 
     Direction m_direction : 1 {Direction::Ltr};
     BoxSizing m_boxSizing : 1 {BoxSizing::ContentBox};
