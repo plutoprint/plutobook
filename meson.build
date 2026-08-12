@@ -195,6 +195,7 @@ plutobook_sources = [
     'source/layout/textbox.cpp',
 
     'source/resource/fontresource.cpp',
+    'source/resource/gradientimage.cpp',
     'source/resource/imageresource.cpp',
     'source/resource/resource.cpp',
     'source/resource/textresource.cpp',

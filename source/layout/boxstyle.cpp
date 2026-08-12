@@ -10,6 +10,7 @@
 #include "cssproperty.h"
 #include "document.h"
 #include "imageresource.h"
+#include "gradientimage.h"
 #include "fontresource.h"
 #include "localedata.h"
 #include "geometry.h"
@@ -2284,7 +2285,7 @@ Paint BoxStyle::convertPaint(const CSSValue& value) const
 RefPtr<Image> BoxStyle::convertImage(const CSSValue& value) const
 {
     if(is<CSSGradientValue>(value))
-        return nullptr;
+        return GradientImage::create(*this, to<CSSGradientValue>(value));
     return to<CSSImageValue>(value).fetch(document());
 }
 
