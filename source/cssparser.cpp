@@ -2036,6 +2036,12 @@ RefPtr<CSSValue> CSSParser::consumeGradientStopPosition(CSSTokenStream& input, C
     if(gradientType == CSSGradientType::Conic) {
         if(auto value = consumeAngle(input))
             return value;
+        // A unitless zero is accepted wherever an angle is expected.
+        if(input->type() == CSSToken::Type::Number && input->number() == 0.f) {
+            input.consumeIncludingWhitespace();
+            return CSSAngleValue::create(m_heap, 0.f, CSSAngleValue::Units::Degrees);
+        }
+
         return consumePercent(input, true);
     }
 

@@ -29,47 +29,6 @@ constexpr int kHintSampleCount = 12;
 // Number of samples used between two stops of differing opacity.
 constexpr int kAlphaSampleCount = 12;
 
-static Color interpolateColor(const Color& from, const Color& to, float t)
-{
-    auto fromAlpha = from.alpha() / 255.f;
-    auto toAlpha = to.alpha() / 255.f;
-    auto alpha = fromAlpha + (toAlpha - fromAlpha) * t;
-
-    // CSS interpolates gradient colors in premultiplied sRGB, so that a
-    // transition to a transparent color does not darken the ramp.
-    auto interpolate = [&](uint8_t fromValue, uint8_t toValue) {
-        auto fromPremultiplied = fromValue / 255.f * fromAlpha;
-        auto toPremultiplied = toValue / 255.f * toAlpha;
-        auto value = fromPremultiplied + (toPremultiplied - fromPremultiplied) * t;
-        if(alpha > 0.f)
-            value /= alpha;
-        return static_cast<int>(std::lround(std::clamp(value, 0.f, 1.f) * 255.f));
-    };
-
-    return Color(interpolate(from.red(), to.red()), interpolate(from.green(), to.green()),
-        interpolate(from.blue(), to.blue()), static_cast<int>(std::lround(std::clamp(alpha, 0.f, 1.f) * 255.f)));
-}
-
-static Color averageColor(const GradientStops& stops)
-{
-    float red = 0.f;
-    float green = 0.f;
-    float blue = 0.f;
-    float alpha = 0.f;
-    for(const auto& stop : stops) {
-        auto stopAlpha = stop.second.alpha() / 255.f;
-        red += stop.second.red() / 255.f * stopAlpha;
-        green += stop.second.green() / 255.f * stopAlpha;
-        blue += stop.second.blue() / 255.f * stopAlpha;
-        alpha += stopAlpha;
-    }
-
-    if(alpha <= 0.f)
-        return Color::Transparent;
-    auto toByte = [](float value) { return static_cast<int>(std::lround(std::clamp(value, 0.f, 1.f) * 255.f)); };
-    return Color(toByte(red / alpha), toByte(green / alpha), toByte(blue / alpha), toByte(alpha / stops.size()));
-}
-
 static void appendHintStops(GradientStops& stops, float fromOffset, const Color& fromColor, float hintOffset, float toOffset, const Color& toColor)
 {
     auto span = toOffset - fromOffset;
@@ -207,7 +166,8 @@ GradientImage::ResolvedGradient GradientImage::resolveGradient(float lineLength,
     auto span = last - first;
     if(span <= 0.f) {
         if(m_repeating) {
-            gradient.color = averageColor(gradient.stops);
+            // A repeating ramp with no length has no period to repeat.
+            gradient.color = gradient.stops.back().second;
             gradient.degenerate = true;
             return gradient;
         }
@@ -356,6 +316,33 @@ void GradientImage::applyRadialGradient(GraphicsContext& context) const
     context.setRadialGradient(values, gradient.stops, transform, gradient.method, 1.f);
 }
 
+void GradientImage::applyConicGradient(GraphicsContext& context) const
+{
+    auto width = m_containerSize.w;
+    auto height = m_containerSize.h;
+
+    Point center(m_position.x().calc(width), m_position.y().calc(height));
+
+    // The positions of a conic gradient are fractions of a turn, so its
+    // gradient line has no length of its own.
+    GradientStops stops;
+    buildColorStops(1.f, stops);
+    if(stops.back().first <= stops.front().first) {
+        context.setColor(stops.back().second);
+        return;
+    }
+
+    ConicGradientValues values;
+    values.cx = center.x;
+    values.cy = center.y;
+    values.angle = m_angle;
+
+    // The sweep has to reach every corner of the area it is painted into.
+    values.r = std::max(std::hypot(center.x, center.y), std::hypot(width - center.x, center.y));
+    values.r = std::max(values.r, std::max(std::hypot(center.x, height - center.y), std::hypot(width - center.x, height - center.y)));
+    context.setConicGradient(values, stops, Transform(), m_repeating ? SpreadMethod::Repeat : SpreadMethod::Pad, 1.f);
+}
+
 void GradientImage::apply(GraphicsContext& context) const
 {
     switch(m_gradientType) {
@@ -365,8 +352,8 @@ void GradientImage::apply(GraphicsContext& context) const
     case CSSGradientType::Radial:
         applyRadialGradient(context);
         break;
-    default:
-        context.setColor(Color::Transparent);
+    case CSSGradientType::Conic:
+        applyConicGradient(context);
         break;
     }
 }
