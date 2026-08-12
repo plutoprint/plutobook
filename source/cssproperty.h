@@ -368,6 +368,8 @@ enum class CSSValueID : uint16_t {
     Circle,
     Clip,
     CloseQuote,
+    ClosestCorner,
+    ClosestSide,
     Collapse,
     Color,
     ColorBurn,
@@ -390,6 +392,7 @@ enum class CSSValueID : uint16_t {
     DiscretionaryLigatures,
     Dotted,
     Double,
+    Ellipse,
     Ellipsis,
     Embed,
     Emoji,
@@ -400,6 +403,8 @@ enum class CSSValueID : uint16_t {
     Extends,
     ExtraCondensed,
     ExtraExpanded,
+    FarthestCorner,
+    FarthestSide,
     Fill,
     FitContent,
     Fixed,
@@ -599,6 +604,7 @@ enum class CSSValueType {
     LocalUrl,
     Url,
     Image,
+    Gradient,
     Color,
     Counter,
     FontFeature,
@@ -1177,6 +1183,79 @@ private:
 template<>
 struct is_a<CSSImageValue> {
     static bool check(const CSSValue& value) { return value.type() == CSSValueType::Image; }
+};
+
+enum class CSSGradientType {
+    Linear,
+    Radial,
+    Conic
+};
+
+class CSSGradientStop {
+public:
+    CSSGradientStop(RefPtr<CSSValue> color, RefPtr<CSSValue> position)
+        : m_color(std::move(color)), m_position(std::move(position))
+    {}
+
+    const RefPtr<CSSValue>& color() const { return m_color; }
+    const RefPtr<CSSValue>& position() const { return m_position; }
+
+    bool isHint() const { return m_color == nullptr; }
+
+private:
+    RefPtr<CSSValue> m_color;
+    RefPtr<CSSValue> m_position;
+};
+
+using CSSGradientStopList = std::pmr::vector<CSSGradientStop>;
+
+class CSSGradientValue final : public CSSValue {
+public:
+    static RefPtr<CSSGradientValue> create(Heap* heap, CSSGradientType gradientType, bool repeating,
+        RefPtr<CSSValue> angle, RefPtr<CSSValue> direction, RefPtr<CSSValue> shape,
+        RefPtr<CSSValue> size, RefPtr<CSSValue> position, CSSGradientStopList stops);
+
+    CSSGradientType gradientType() const { return m_gradientType; }
+    bool repeating() const { return m_repeating; }
+
+    const RefPtr<CSSValue>& angle() const { return m_angle; }
+    const RefPtr<CSSValue>& direction() const { return m_direction; }
+    const RefPtr<CSSValue>& shape() const { return m_shape; }
+    const RefPtr<CSSValue>& size() const { return m_size; }
+    const RefPtr<CSSValue>& position() const { return m_position; }
+    const CSSGradientStopList& stops() const { return m_stops; }
+    CSSValueType type() const final { return CSSValueType::Gradient; }
+
+private:
+    CSSGradientValue(CSSGradientType gradientType, bool repeating, RefPtr<CSSValue> angle,
+        RefPtr<CSSValue> direction, RefPtr<CSSValue> shape, RefPtr<CSSValue> size,
+        RefPtr<CSSValue> position, CSSGradientStopList stops)
+        : m_gradientType(gradientType), m_repeating(repeating), m_angle(std::move(angle))
+        , m_direction(std::move(direction)), m_shape(std::move(shape)), m_size(std::move(size))
+        , m_position(std::move(position)), m_stops(std::move(stops))
+    {}
+
+    CSSGradientType m_gradientType;
+    bool m_repeating;
+    RefPtr<CSSValue> m_angle;
+    RefPtr<CSSValue> m_direction;
+    RefPtr<CSSValue> m_shape;
+    RefPtr<CSSValue> m_size;
+    RefPtr<CSSValue> m_position;
+    CSSGradientStopList m_stops;
+};
+
+inline RefPtr<CSSGradientValue> CSSGradientValue::create(Heap* heap, CSSGradientType gradientType, bool repeating,
+    RefPtr<CSSValue> angle, RefPtr<CSSValue> direction, RefPtr<CSSValue> shape,
+    RefPtr<CSSValue> size, RefPtr<CSSValue> position, CSSGradientStopList stops)
+{
+    return adoptPtr(new (heap) CSSGradientValue(gradientType, repeating, std::move(angle), std::move(direction),
+        std::move(shape), std::move(size), std::move(position), std::move(stops)));
+}
+
+template<>
+struct is_a<CSSGradientValue> {
+    static bool check(const CSSValue& value) { return value.type() == CSSValueType::Gradient; }
 };
 
 class CSSColorValue final : public CSSValue {

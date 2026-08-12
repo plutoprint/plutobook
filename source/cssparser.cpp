@@ -1918,10 +1918,234 @@ RefPtr<CSSValue> CSSParser::consumeUrlOrNone(CSSTokenStream& input)
     return consumeUrl(input);
 }
 
+bool CSSParser::consumeLinearGradientPrelude(CSSTokenStream& input, RefPtr<CSSValue>& angle, RefPtr<CSSValue>& direction)
+{
+    if((angle = consumeAngle(input)))
+        return true;
+    if(!consumeIdentIncludingWhitespace(input, "to"))
+        return true;
+    static constexpr CSSIdentValueEntry horizontalTable[] = {
+        {"left", CSSValueID::Left},
+        {"right", CSSValueID::Right}
+    };
+
+    static constexpr CSSIdentValueEntry verticalTable[] = {
+        {"top", CSSValueID::Top},
+        {"bottom", CSSValueID::Bottom}
+    };
+
+    RefPtr<CSSValue> horizontal;
+    RefPtr<CSSValue> vertical;
+    do {
+        if(horizontal == nullptr && (horizontal = consumeIdent(input, horizontalTable)))
+            continue;
+        if(vertical == nullptr && (vertical = consumeIdent(input, verticalTable)))
+            continue;
+        break;
+    } while(true);
+
+    if(horizontal == nullptr && vertical == nullptr)
+        return false;
+    if(horizontal == nullptr)
+        horizontal = CSSIdentValue::create(CSSValueID::Center);
+    if(vertical == nullptr)
+        vertical = CSSIdentValue::create(CSSValueID::Center);
+    direction = CSSPairValue::create(m_heap, std::move(horizontal), std::move(vertical));
+    return true;
+}
+
+bool CSSParser::consumeRadialGradientPrelude(CSSTokenStream& input, RefPtr<CSSValue>& shape, RefPtr<CSSValue>& size, RefPtr<CSSValue>& position)
+{
+    static constexpr CSSIdentValueEntry shapeTable[] = {
+        {"circle", CSSValueID::Circle},
+        {"ellipse", CSSValueID::Ellipse}
+    };
+
+    static constexpr CSSIdentValueEntry sizeTable[] = {
+        {"closest-side", CSSValueID::ClosestSide},
+        {"closest-corner", CSSValueID::ClosestCorner},
+        {"farthest-side", CSSValueID::FarthestSide},
+        {"farthest-corner", CSSValueID::FarthestCorner}
+    };
+
+    do {
+        if(shape == nullptr && (shape = consumeIdent(input, shapeTable)))
+            continue;
+        if(size == nullptr) {
+            if((size = consumeIdent(input, sizeTable)))
+                continue;
+            if(auto first = consumeLengthOrPercent(input, false, false)) {
+                if(auto second = consumeLengthOrPercent(input, false, false)) {
+                    size = CSSPairValue::create(m_heap, std::move(first), std::move(second));
+                } else {
+                    size = std::move(first);
+                }
+
+                continue;
+            }
+        }
+
+        break;
+    } while(true);
+
+    if(size && !is<CSSIdentValue>(*size)) {
+        auto ellipse = is<CSSPairValue>(*size);
+        if(shape == nullptr) {
+            shape = CSSIdentValue::create(ellipse ? CSSValueID::Ellipse : CSSValueID::Circle);
+        } else if(ellipse != (shape->id() == CSSValueID::Ellipse)) {
+            return false;
+        }
+
+        // A circle radius must be a length, percentages resolve against no single axis.
+        if(!ellipse && is<CSSPercentValue>(*size)) {
+            return false;
+        }
+    }
+
+    if(consumeIdentIncludingWhitespace(input, "at")) {
+        position = consumePositionCoordinate(input);
+        if(position == nullptr) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+bool CSSParser::consumeConicGradientPrelude(CSSTokenStream& input, RefPtr<CSSValue>& angle, RefPtr<CSSValue>& position)
+{
+    if(consumeIdentIncludingWhitespace(input, "from")) {
+        angle = consumeAngle(input);
+        if(angle == nullptr) {
+            return false;
+        }
+    }
+
+    if(consumeIdentIncludingWhitespace(input, "at")) {
+        position = consumePositionCoordinate(input);
+        if(position == nullptr) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+RefPtr<CSSValue> CSSParser::consumeGradientStopPosition(CSSTokenStream& input, CSSGradientType gradientType)
+{
+    if(gradientType == CSSGradientType::Conic) {
+        if(auto value = consumeAngle(input))
+            return value;
+        return consumePercent(input, true);
+    }
+
+    return consumeLengthOrPercent(input, true, false);
+}
+
+bool CSSParser::consumeGradientStops(CSSTokenStream& input, CSSGradientType gradientType, CSSGradientStopList& stops)
+{
+    size_t colorStopCount = 0;
+    do {
+        auto color = consumeColor(input);
+        if(color == nullptr) {
+            // A color hint must sit between two color stops.
+            if(stops.empty())
+                return false;
+            auto hint = consumeGradientStopPosition(input, gradientType);
+            if(hint == nullptr)
+                return false;
+            stops.emplace_back(nullptr, std::move(hint));
+            if(!input.consumeCommaIncludingWhitespace())
+                return false;
+            color = consumeColor(input);
+            if(color == nullptr) {
+                return false;
+            }
+        }
+
+        ++colorStopCount;
+        if(auto first = consumeGradientStopPosition(input, gradientType)) {
+            auto second = consumeGradientStopPosition(input, gradientType);
+            stops.emplace_back(color, std::move(first));
+            if(second) {
+                stops.emplace_back(std::move(color), std::move(second));
+            }
+        } else {
+            stops.emplace_back(std::move(color), nullptr);
+        }
+    } while(input.consumeCommaIncludingWhitespace());
+
+    return colorStopCount >= 2;
+}
+
+RefPtr<CSSValue> CSSParser::consumeGradient(CSSTokenStream& input, CSSGradientType gradientType, bool repeating)
+{
+    assert(input->type() == CSSToken::Type::Function);
+    CSSTokenStreamGuard guard(input);
+    auto block = input.consumeBlock();
+    block.consumeWhitespace();
+
+    RefPtr<CSSValue> angle;
+    RefPtr<CSSValue> direction;
+    RefPtr<CSSValue> shape;
+    RefPtr<CSSValue> size;
+    RefPtr<CSSValue> position;
+    switch(gradientType) {
+    case CSSGradientType::Linear:
+        if(!consumeLinearGradientPrelude(block, angle, direction))
+            return nullptr;
+        break;
+    case CSSGradientType::Radial:
+        if(!consumeRadialGradientPrelude(block, shape, size, position))
+            return nullptr;
+        break;
+    case CSSGradientType::Conic:
+        if(!consumeConicGradientPrelude(block, angle, position))
+            return nullptr;
+        break;
+    }
+
+    if(angle || direction || shape || size || position) {
+        if(!block.consumeCommaIncludingWhitespace()) {
+            return nullptr;
+        }
+    }
+
+    CSSGradientStopList stops(m_heap);
+    if(!consumeGradientStops(block, gradientType, stops))
+        return nullptr;
+    if(!block.empty())
+        return nullptr;
+    input.consumeWhitespace();
+    guard.release();
+    return CSSGradientValue::create(m_heap, gradientType, repeating, std::move(angle), std::move(direction),
+        std::move(shape), std::move(size), std::move(position), std::move(stops));
+}
+
 RefPtr<CSSValue> CSSParser::consumeImage(CSSTokenStream& input)
 {
     if(auto token = consumeUrlToken(input))
         return CSSImageValue::create(m_heap, m_context.completeUrl(token->data()));
+    if(input->type() == CSSToken::Type::Function) {
+        struct CSSGradientEntry {
+            CSSGradientType gradientType;
+            bool repeating;
+        };
+
+        static constexpr CSSIdentEntry<CSSGradientEntry> table[] = {
+            {"linear-gradient", {CSSGradientType::Linear, false}},
+            {"radial-gradient", {CSSGradientType::Radial, false}},
+            {"conic-gradient", {CSSGradientType::Conic, false}},
+            {"repeating-linear-gradient", {CSSGradientType::Linear, true}},
+            {"repeating-radial-gradient", {CSSGradientType::Radial, true}},
+            {"repeating-conic-gradient", {CSSGradientType::Conic, true}}
+        };
+
+        if(auto entry = matchIdent(table, input->data())) {
+            return consumeGradient(input, entry->gradientType, entry->repeating);
+        }
+    }
+
     return nullptr;
 }
 
