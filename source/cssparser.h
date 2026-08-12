@@ -114,6 +114,8 @@ private:
     RefPtr<CSSValue> consumeUrlOrNone(CSSTokenStream& input);
     RefPtr<CSSValue> consumeImage(CSSTokenStream& input);
     RefPtr<CSSValue> consumeImageOrNone(CSSTokenStream& input);
+    RefPtr<CSSValue> consumeGradient(CSSTokenStream& input, CSSGradientType gradientType, bool repeating);
+    RefPtr<CSSValue> consumeGradientStopPosition(CSSTokenStream& input, CSSGradientType gradientType);
     RefPtr<CSSValue> consumeColor(CSSTokenStream& input);
     RefPtr<CSSValue> consumeRgb(CSSTokenStream& input);
     RefPtr<CSSValue> consumeHsl(CSSTokenStream& input);
@@ -162,6 +164,11 @@ private:
     RefPtr<CSSValue> consumeTransform(CSSTokenStream& input);
     RefPtr<CSSValue> consumePaintOrder(CSSTokenStream& input);
     RefPtr<CSSValue> consumeLonghand(CSSTokenStream& input, CSSPropertyID id);
+
+    bool consumeLinearGradientPrelude(CSSTokenStream& input, RefPtr<CSSValue>& angle, RefPtr<CSSValue>& direction);
+    bool consumeRadialGradientPrelude(CSSTokenStream& input, RefPtr<CSSValue>& shape, RefPtr<CSSValue>& size, RefPtr<CSSValue>& position);
+    bool consumeConicGradientPrelude(CSSTokenStream& input, RefPtr<CSSValue>& angle, RefPtr<CSSValue>& position);
+    bool consumeGradientStops(CSSTokenStream& input, CSSGradientType gradientType, CSSGradientStopList& stops);
 
     bool consumeFlex(CSSTokenStream& input, CSSPropertyList& properties, bool important);
     bool consumeBackground(CSSTokenStream& input, CSSPropertyList& properties, bool important);
