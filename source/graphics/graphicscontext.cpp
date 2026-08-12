@@ -245,10 +245,15 @@ static std::vector<float> conic_gradient_boundaries(const GradientStops& stops, 
     auto last = stops.back().first;
     if(method == SpreadMethod::Repeat) {
         auto span = last - first;
-        auto begin = static_cast<int>(std::floor(-first / span));
-        auto end = static_cast<int>(std::ceil((1.f - first) / span));
-        if(stops.size() * (end - begin + 1) <= kMaxConicBoundaries) {
-            for(int period = begin; period <= end; ++period) {
+        auto begin = std::floor(-first / span);
+        auto end = std::ceil((1.f - first) / span);
+
+        // The period count is tested before it is narrowed: a nearly zero span
+        // pushes the bounds far past what an int can hold, and converting that
+        // is undefined. A non-finite count fails the comparison and is skipped.
+        auto periodCount = (end - begin + 1.f) * stops.size();
+        if(periodCount > 0.f && periodCount <= kMaxConicBoundaries) {
+            for(int period = static_cast<int>(begin); period <= static_cast<int>(end); ++period) {
                 for(const auto& stop : stops) {
                     auto offset = stop.first + period * span;
                     if(offset > 0.f && offset < 1.f) {
@@ -343,7 +348,17 @@ static cairo_pattern_t* create_conic_gradient_raster(cairo_t* canvas, const Coni
     auto deviceScale = std::max(std::hypot(canvasMatrix.xx, canvasMatrix.yx), std::hypot(canvasMatrix.xy, canvasMatrix.yy));
 
     auto diameter = 2.f * values.r;
-    auto resolution = std::clamp(static_cast<int>(std::ceil(diameter * deviceScale)), 1, kMaxConicRasterSize);
+
+    // Clamped before narrowing, since a large radius or device scale would
+    // otherwise overflow the conversion. A non-finite side fails both
+    // comparisons and settles on the upper bound.
+    auto side = std::ceil(diameter * deviceScale);
+    auto resolution = kMaxConicRasterSize;
+    if(side < 1.f) {
+        resolution = 1;
+    } else if(side < static_cast<float>(kMaxConicRasterSize)) {
+        resolution = static_cast<int>(side);
+    }
     auto buffer = ImageBuffer::create(0, 0, resolution, resolution);
 
     auto surface = buffer->surface();
