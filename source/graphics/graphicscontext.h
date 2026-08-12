@@ -40,6 +40,13 @@ struct RadialGradientValues {
     float r0 = 0.f;
 };
 
+struct ConicGradientValues {
+    float cx = 0.f;
+    float cy = 0.f;
+    float r = 0.f;
+    float angle = 0.f;
+};
+
 enum class SpreadMethod {
     Pad,
     Reflect,
@@ -92,6 +99,12 @@ public:
     void setColor(const Color& color);
     void setLinearGradient(const LinearGradientValues& values, const GradientStops& stops, const Transform& transform, SpreadMethod method, float opacity);
     void setRadialGradient(const RadialGradientValues& values, const GradientStops& stops, const Transform& transform, SpreadMethod method, float opacity);
+
+    // Cairo has no conic gradient primitive, so the sweep is approximated with
+    // a mesh of circular sectors, which stays vectorial in the PDF output.
+    // Stop offsets are expressed in turns and |values.angle| is the angle the
+    // sweep starts from, in degrees, zero pointing up and growing clockwise.
+    void setConicGradient(const ConicGradientValues& values, const GradientStops& stops, const Transform& transform, SpreadMethod method, float opacity);
     void setPattern(cairo_surface_t* surface, const Transform& transform);
 
     void translate(float tx, float ty);
