@@ -280,9 +280,10 @@ public:
 
 private:
     SegmentedFontFace(const FontSelectionDescription& description) : m_description(description) {}
+    RefPtr<FontData> createFontData(Document* document, const FontDataDescription& description) const;
     FontSelectionDescription m_description;
     std::vector<RefPtr<SimpleFontFace>> m_faces;
-    std::map<FontDataDescription, RefPtr<SegmentedFontData>> m_table;
+    std::map<FontDataDescription, RefPtr<FontData>> m_table;
 };
 
 inline RefPtr<SegmentedFontFace> SegmentedFontFace::create(const FontSelectionDescription& description)

@@ -311,10 +311,13 @@ RefPtr<FontData> SimpleFontFace::getFontData(Document* document, const FontDataD
 RefPtr<FontData> SegmentedFontFace::getFontData(Document* document, const FontDataDescription& description)
 {
     auto& fontData = m_table[description];
-    if(fontData != nullptr) {
-        return fontData;
-    }
+    if(fontData == nullptr)
+        fontData = createFontData(document, description);
+    return fontData;
+}
 
+RefPtr<FontData> SegmentedFontFace::createFontData(Document* document, const FontDataDescription& description) const
+{
     const auto syntheticOblique = !m_description.slope
         || description.request.slope < m_description.slope.minimum
         || description.request.slope > m_description.slope.maximum;
@@ -333,9 +336,7 @@ RefPtr<FontData> SegmentedFontFace::getFontData(Document* document, const FontDa
         }
     }
 
-    if(!fonts.empty())
-        fontData = SegmentedFontData::create(std::move(fonts));
-    return fontData;
+    return SegmentedFontData::create(std::move(fonts));
 }
 
 const SimpleFontData* FontData::fontDataForCharacters(const uint16_t* characters, int length, EmojiPolicy emojiPolicy) const
