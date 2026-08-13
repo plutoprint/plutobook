@@ -98,6 +98,8 @@ static plutobook_canvas_t* plutobook_canvas_create(cairo_surface_t* surface)
     auto canvas = (plutobook_canvas_t*)(std::malloc(sizeof(plutobook_canvas_t)));
     if(canvas == nullptr) {
         plutobook_set_error_message("canvas allocation failed");
+        cairo_destroy(context);
+        cairo_surface_destroy(surface);
         return nullptr;
     }
 

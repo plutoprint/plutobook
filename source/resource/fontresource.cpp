@@ -79,9 +79,9 @@ RefPtr<FontResource> FontResource::create(Document* document, const Url& url)
 
     static cairo_user_data_key_t key;
     auto face = cairo_ft_font_face_create_for_ft_face(fontData->face(), FT_LOAD_DEFAULT);
-    cairo_font_face_set_user_data(face, &key, fontData, FTFontDataDestroy);
-    if(auto status = cairo_font_face_status(face)) {
+    if(auto status = cairo_font_face_set_user_data(face, &key, fontData, FTFontDataDestroy)) {
         plutobook_set_error_message("Unable to load font '%s': %s", url.value().data(), cairo_status_to_string(status));
+        cairo_font_face_destroy(face);
         FTFontDataDestroy(fontData);
         return nullptr;
     }

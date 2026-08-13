@@ -250,6 +250,7 @@ RefPtr<BitmapImage> BitmapImage::create(Book* book, const char* data, size_t siz
         return nullptr;
     if(auto status = cairo_surface_status(surface)) {
         plutobook_set_error_message("image decode error: %s", cairo_status_to_string(status));
+        cairo_surface_destroy(surface);
         return nullptr;
     }
 
