@@ -35,8 +35,10 @@ enum class FileMode {
     Write
 };
 
+using ByteArray = std::vector<char>;
+
 FILE* openFile(const std::string& filename, FileMode mode);
-bool loadFile(const std::string& filename, char** data, unsigned* length);
+bool loadFile(const std::string& filename, ByteArray& output);
 
 class ResourceData;
 class ResourceFetcher;
