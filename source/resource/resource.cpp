@@ -18,9 +18,7 @@
 #endif
 
 #include <filesystem>
-#include <cstring>
 #include <vector>
-#include <map>
 
 namespace plutobook {
 
@@ -198,10 +196,18 @@ static ResourceData loadDataUrl(std::string_view input)
 
 static bool mimeTypeFromPath(std::string& mimeType, std::string_view path)
 {
-    auto index = path.rfind('.');
-    if(index == std::string_view::npos)
+    auto dot = path.rfind('.');
+    if(dot == std::string_view::npos)
         return false;
-    static std::map<std::string_view, std::string_view> table = {
+    auto slash = path.find_last_of("/\\");
+    if(slash != std::string_view::npos && dot < slash) {
+        return false;
+    }
+
+    static const struct {
+        std::string_view ext;
+        std::string_view mime;
+    } table[] = {
         {"xhtml", "application/xhtml+xml"},
         {"html", "text/html"},
         {"htm", "text/html"},
@@ -217,11 +223,15 @@ static bool mimeTypeFromPath(std::string& mimeType, std::string_view path)
         {"bmp", "image/bmp"}
     };
 
-    auto it = table.find(path.substr(index + 1));
-    if(it == table.end())
-        return false;
-    mimeType.assign(it->second);
-    return true;
+    const auto ext = path.substr(dot + 1);
+    for(const auto& entry : table) {
+        if(equalsIgnoringCase(ext, entry.ext)) {
+            mimeType.assign(entry.mime);
+            return true;
+        }
+    }
+
+    return false;
 }
 
 #ifdef PLUTOBOOK_HAS_CURL
