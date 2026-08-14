@@ -198,7 +198,7 @@ plutobook_sources = [
     'source/resource/imageresource.cpp',
     'source/resource/resource.cpp',
     'source/resource/textresource.cpp',
-    'source/resource/url.cpp',
+    'source/resource/ada.cpp',
 
     'source/counters.cpp',
     'source/cssparser.cpp',

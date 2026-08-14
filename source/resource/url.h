@@ -9,8 +9,7 @@
 #ifndef PLUTOBOOK_URL_H
 #define PLUTOBOOK_URL_H
 
-#include <string>
-#include <ostream>
+#include "ada.h"
 
 namespace plutobook {
 
@@ -22,42 +21,59 @@ public:
     Url complete(std::string_view input) const;
 
     bool protocolIs(std::string_view protocol) const;
-    bool isHierarchical() const { return m_hierarchical; }
-    bool isEmpty() const { return m_value.empty(); }
+    bool isHierarchical() const { return !m_aggregator.has_opaque_path; }
+    bool isEmpty() const { return !m_aggregator.get_href_size(); }
 
-    const std::string& value() const { return m_value; }
+    const std::string& value() const { return m_aggregator.get_buffer(); }
 
-    std::string_view path() const { return componentString(m_portEnd, m_pathEnd); }
-    std::string_view query() const { return componentString(m_pathEnd, m_queryEnd); }
-    std::string_view fragment() const { return componentString(m_queryEnd, m_fragmentEnd); }
+    std::string_view path() const { return m_aggregator.get_pathname(); }
+    std::string_view query() const { return m_aggregator.get_search(); }
+    std::string_view fragment() const { return m_aggregator.get_hash(); }
 
     std::string_view base() const;
 
 private:
-    std::string_view componentString(size_t begin, size_t end) const;
-    std::string m_value;
-    bool m_hierarchical{false};
-    unsigned m_schemeEnd{0};
-    unsigned m_userBegin{0};
-    unsigned m_userEnd{0};
-    unsigned m_passwordEnd{0};
-    unsigned m_hostEnd{0};
-    unsigned m_portEnd{0};
-    unsigned m_pathEnd{0};
-    unsigned m_queryEnd{0};
-    unsigned m_fragmentEnd{0};
+    explicit Url(ada::url_aggregator aggregator);
+    ada::url_aggregator m_aggregator;
 };
+
+inline Url::Url(std::string_view input)
+    : Url(ada::parser::parse_url(input))
+{
+}
+
+inline Url::Url(ada::url_aggregator aggregator)
+    : m_aggregator(std::move(aggregator))
+{
+}
+
+inline Url Url::complete(std::string_view input) const
+{
+    return Url(ada::parser::parse_url(input, &m_aggregator));
+}
+
+inline bool Url::protocolIs(std::string_view protocol) const
+{
+    auto value = m_aggregator.get_protocol();
+    if(!value.empty() && value.back() == ':')
+        value.remove_suffix(1);
+    return value == protocol;
+}
 
 inline std::string_view Url::base() const
 {
-    if(m_hierarchical)
-        return componentString(0, m_queryEnd);
-    return componentString(0, m_portEnd);
-}
+    const auto& components = m_aggregator.get_components();
 
-inline std::string_view Url::componentString(size_t begin, size_t end) const
-{
-    return std::string_view(m_value).substr(begin, end - begin);
+    auto end = m_aggregator.get_href_size();
+    if(m_aggregator.has_opaque_path) {
+        end = components.protocol_end;
+    } else if(components.search_start != ada::url_components::omitted) {
+        end = components.search_start;
+    } else if(components.hash_start != ada::url_components::omitted) {
+        end = components.hash_start;
+    }
+
+    return m_aggregator.get_href().substr(0, end);
 }
 
 inline std::ostream& operator<<(std::ostream& o, const Url& in) { return o << in.value(); }

@@ -380,10 +380,10 @@ ResourceData ResourceLoader::loadUrl(const Url& url, ResourceFetcher* customFetc
 
 Url ResourceLoader::baseUrl()
 {
-    auto path = std::filesystem::current_path().generic_string();
-    if(!path.empty() && path.front() != '/')
-        path.insert(path.begin(), '/');
-    return Url("file://" + path + "/");
+    auto path = std::filesystem::current_path();
+    auto href = ada::href_from_file(path.generic_string());
+
+    return Url(href);
 }
 
 Url ResourceLoader::completeUrl(std::string_view value)
