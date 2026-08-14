@@ -17,11 +17,6 @@
 
 #include <cmath>
 #include <utility>
-#include <cstdio>
-
-#ifdef _WIN32
-#include <windows.h>
-#endif
 
 namespace plutobook {
 
@@ -38,27 +33,9 @@ private:
     FILE* m_handle;
 };
 
-static FILE* output_stream_fopen(const char* filename)
-{
-#ifdef _WIN32
-    wchar_t wfilename[1024];
-    if(!MultiByteToWideChar(CP_UTF8, 0, filename, -1, wfilename, sizeof(wfilename) / sizeof(wchar_t))) {
-        errno = EINVAL;
-        return NULL;
-    }
-
-    return _wfopen(wfilename, L"wb");
-#else
-    return fopen(filename, "wb");
-#endif
-}
-
 FileOutputStream::FileOutputStream(const std::string& filename)
-    : m_handle(output_stream_fopen(filename.data()))
+    : m_handle(openFile(filename, FileMode::Write))
 {
-    if(m_handle == NULL) {
-        plutobook_set_error_message("Unable to open file '%s': %s", filename.data(), std::strerror(errno));
-    }
 }
 
 bool FileOutputStream::write(const char* data, size_t length)

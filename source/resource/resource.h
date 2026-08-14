@@ -30,6 +30,14 @@ protected:
     Resource() = default;
 };
 
+enum class FileMode {
+    Read,
+    Write
+};
+
+FILE* openFile(const std::string& filename, FileMode mode);
+bool loadFile(const std::string& filename, char** data, unsigned* length);
+
 class ResourceData;
 class ResourceFetcher;
 

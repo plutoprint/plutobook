@@ -8,19 +8,77 @@
 
 #include "resource.h"
 #include "stringutils.h"
-
 #include "plutobook.hpp"
-
-#ifdef PLUTOBOOK_HAS_CURL
-#include <curl/curl.h>
-#else
-#include <fstream>
-#endif
 
 #include <filesystem>
 #include <vector>
 
+#ifdef PLUTOBOOK_HAS_CURL
+#include <curl/curl.h>
+#endif
+
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 namespace plutobook {
+
+static FILE* openStream(const std::string& filename, FileMode mode)
+{
+#ifdef _WIN32
+    wchar_t wfilename[1024];
+    MultiByteToWideChar(CP_UTF8, 0, filename.data(), -1, wfilename, sizeof(wfilename) / sizeof(wchar_t));
+
+    return _wfopen(wfilename, mode == FileMode::Read ? L"rb" : L"wb");
+#else
+    return fopen(filename.data(), mode == FileMode::Read ? "rb" : "wb");
+#endif
+}
+
+FILE* openFile(const std::string& filename, FileMode mode)
+{
+    auto stream = openStream(filename, mode);
+    if(stream == nullptr)
+        plutobook_set_error_message("Unable to open file '%s': %s", filename.data(), strerror(errno));
+    return stream;
+}
+
+bool loadFile(const std::string& filename, char** data, unsigned* length)
+{
+    auto stream = openFile(filename, FileMode::Read);
+    if(stream == nullptr) {
+        return false;
+    }
+
+    void* content = nullptr;
+    bool success = false;
+
+    fseek(stream, 0, SEEK_END);
+    long size = ftell(stream);
+    if(size == -1L) {
+        goto cleanup;
+    }
+
+    content = malloc(size);
+    if(content == nullptr) {
+        goto cleanup;
+    }
+
+    fseek(stream, 0, SEEK_SET);
+    if(fread(content, 1, size, stream) == size) {
+        *data = (char*)(content);
+        *length = size;
+        content = nullptr;
+        success = true;
+    }
+
+cleanup:
+    if(!success)
+        plutobook_set_error_message("Unable to load file '%s': %s", filename.data(), strerror(errno));
+    fclose(stream);
+    free(content);
+    return success;
+}
 
 using ByteArray = std::vector<char>;
 
@@ -234,6 +292,32 @@ static bool mimeTypeFromPath(std::string& mimeType, std::string_view path)
     return false;
 }
 
+static ResourceData loadLocalFile(std::string_view input)
+{
+    assert(startswith(input, "file://", false));
+    input.remove_prefix(7);
+    if(input.size() >= 3 && input[0] == '/' && isAlpha(input[1]) && input[2] == ':') {
+        input.remove_prefix(1);
+    }
+
+    auto filename = percentDecode(input.substr(0, input.find('?')));
+#ifdef _WIN32
+    std::replace(filename.begin(), filename.end(), '/', '\\');
+#endif
+
+    char* data = nullptr;
+    unsigned size = 0;
+    if(!loadFile(filename, &data, &size)) {
+        return ResourceData();
+    }
+
+    std::string mimeType;
+    std::string textEncoding;
+    mimeTypeFromPath(mimeType, filename);
+
+    return ResourceData(data, size, mimeType, textEncoding, free, data);
+}
+
 #ifdef PLUTOBOOK_HAS_CURL
 
 DefaultResourceFetcher::DefaultResourceFetcher()
@@ -286,6 +370,10 @@ ResourceData DefaultResourceFetcher::fetchUrl(const std::string& url)
 {
     if(startswith(url, "data:", false))
         return loadDataUrl(percentDecode(url));
+    if(startswith(url, "file://", false)) {
+        return loadLocalFile(url);
+    }
+
     std::string mimeType;
     std::string textEncoding;
     auto content = ByteArrayCreate();
@@ -343,38 +431,10 @@ ResourceData DefaultResourceFetcher::fetchUrl(const std::string& url)
 {
     if(startswith(url, "data:", false))
         return loadDataUrl(percentDecode(url));
-    std::string_view input(url);
-    if(!startswith(input, "file://", false)) {
-        plutobook_set_error_message("Unable to fetch URL '%s': Unsupported protocol", url.data());
-        return ResourceData();
-    }
-
-    input.remove_prefix(7);
-    if(input.size() >= 3 && input[0] == '/' && isAlpha(input[1]) && input[2] == ':') {
-        input.remove_prefix(1);
-    }
-
-    auto filename = percentDecode(input.substr(0, input.rfind('?')));
-#ifdef _WIN32
-    std::replace(filename.begin(), filename.end(), '/', '\\');
-#endif
-
-    std::ifstream in(filename, std::ios::ate | std::ios::binary);
-    if(!in.is_open()) {
-        plutobook_set_error_message("Unable to fetch URL '%s': %s", url.data(), std::strerror(errno));
-        return ResourceData();
-    }
-
-    std::string mimeType;
-    std::string textEncoding;
-    mimeTypeFromPath(mimeType, filename);
-
-    auto content = ByteArrayCreate(in.tellg());
-    in.seekg(0, std::ios::beg);
-    in.read(content->data(), content->size());
-    in.close();
-
-    return ResourceData(content->data(), content->size(), mimeType, textEncoding, ByteArrayDestroy, content);
+    if(startswith(url, "file://", false))
+        return loadLocalFile(url);
+    plutobook_set_error_message("Unable to fetch URL '%s': Unsupported protocol", url.data());
+    return ResourceData();
 }
 
 #endif // PLUTOBOOK_HAS_CURL
