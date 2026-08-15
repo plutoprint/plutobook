@@ -11,7 +11,6 @@
 #include "plutobook.hpp"
 
 #include <filesystem>
-#include <vector>
 
 #ifdef PLUTOBOOK_HAS_CURL
 #include <curl/curl.h>
@@ -423,7 +422,7 @@ ResourceData DefaultResourceFetcher::fetchUrl(const std::string& url)
         }
 
         if(mimeType.empty()) {
-            mimeTypeFromPath(mimeType, percentDecode(url.substr(0, url.rfind('?'))));
+            mimeTypeFromPath(mimeType, percentDecode(url.substr(0, url.find('?'))));
         }
     }
 

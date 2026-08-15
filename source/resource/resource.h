@@ -13,6 +13,8 @@
 #include "heapstring.h"
 #include "url.h"
 
+#include <vector>
+
 namespace plutobook {
 
 class Resource : public HeapMember, public RefCounted<Resource> {
