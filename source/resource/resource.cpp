@@ -215,10 +215,12 @@ static std::string percentDecode(std::string_view input)
     return output;
 }
 
+constexpr std::string_view kDataUrlPrefix = "data:";
+
 static ResourceData loadDataUrl(std::string_view input)
 {
-    assert(startswith(input, "data:", false));
-    input.remove_prefix(5);
+    assert(startswith(input, kDataUrlPrefix, false));
+    input.remove_prefix(kDataUrlPrefix.length());
 
     auto headerEnd = input.find(',');
     if(headerEnd == std::string_view::npos) {
@@ -304,10 +306,12 @@ static bool mimeTypeFromPath(std::string& mimeType, std::string_view path)
     return false;
 }
 
+constexpr std::string_view kFileUrlPrefix = "file://";
+
 static ResourceData loadLocalFile(std::string_view input)
 {
-    assert(startswith(input, "file://", false));
-    input.remove_prefix(7);
+    assert(startswith(input, kFileUrlPrefix, false));
+    input.remove_prefix(kFileUrlPrefix.length());
     if(input.size() >= 3 && input[0] == '/' && isAlpha(input[1]) && input[2] == ':') {
         input.remove_prefix(1);
     }
@@ -380,9 +384,9 @@ static size_t writeCallback(const char* contents, size_t blockSize, size_t numbe
 
 ResourceData DefaultResourceFetcher::fetchUrl(const std::string& url)
 {
-    if(startswith(url, "data:", false))
+    if(startswith(url, kDataUrlPrefix, false))
         return loadDataUrl(percentDecode(url));
-    if(startswith(url, "file://", false)) {
+    if(startswith(url, kFileUrlPrefix, false)) {
         return loadLocalFile(url);
     }
 
@@ -441,9 +445,9 @@ DefaultResourceFetcher::~DefaultResourceFetcher() = default;
 
 ResourceData DefaultResourceFetcher::fetchUrl(const std::string& url)
 {
-    if(startswith(url, "data:", false))
+    if(startswith(url, kDataUrlPrefix, false))
         return loadDataUrl(percentDecode(url));
-    if(startswith(url, "file://", false))
+    if(startswith(url, kFileUrlPrefix, false))
         return loadLocalFile(url);
     plutobook_set_error_message("Unable to fetch URL '%s': Unsupported protocol", url.data());
     return ResourceData();
