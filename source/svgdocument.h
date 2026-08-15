@@ -63,6 +63,7 @@ public:
 
     const Rect& viewBox() const { return m_viewBox.value(); }
     const SVGPreserveAspectRatio& preserveAspectRatio() const { return m_preserveAspectRatio; }
+    Transform viewBoxToViewTransform(const Rect& viewBoxRect, const Size& viewportSize) const;
     Transform viewBoxToViewTransform(const Size& viewportSize) const;
     Rect getClipRect(const Size& viewportSize) const;
 
@@ -110,9 +111,14 @@ public:
     const SVGLength& y() const { return m_y; }
     const SVGLength& width() const { return m_width; }
     const SVGLength& height() const { return m_height; }
-    void computeIntrinsicDimensions(float& intrinsicWidth, float& intrinsicHeight, double& intrinsicRatio);
     void collectAttributeStyle(std::string& output, const GlobalString& name, const HeapString& value) const final;
     Box* createBox(const RefPtr<BoxStyle>& style) final;
+
+    Rect currentViewBoxRect() const;
+    Transform viewBoxToViewTransform(const Size& viewportSize) const;
+
+    void computeintrinsicSize(float& intrinsicWidth, float& intrinsicHeight) const;
+    void computeIntrinsicDimensions(float& intrinsicWidth, float& intrinsicHeight, double& intrinsicRatio);
 
 private:
     SVGLength m_x;

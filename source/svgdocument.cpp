@@ -117,7 +117,7 @@ Size SVGElement::currentViewportSize() const
 
     if(parent->tagName() == svgTag) {
         auto element = static_cast<const SVGSVGElement*>(parent);
-        const auto& viewBoxRect = element->viewBox();
+        auto viewBoxRect = element->currentViewBoxRect();
         if(viewBoxRect.isValid())
             return viewBoxRect.size();
         if(auto rootBox = to<SVGRootBox>(element->box()))
@@ -202,12 +202,19 @@ SVGFitToViewBox::SVGFitToViewBox(SVGElement* element)
     element->addProperty(preserveAspectRatioAttr, m_preserveAspectRatio);
 }
 
+Transform SVGFitToViewBox::viewBoxToViewTransform(const Rect& viewBoxRect, const Size& viewportSize) const
+{
+    if(viewportSize.isEmpty())
+        return Transform::Identity;
+    return m_preserveAspectRatio.getTransform(viewBoxRect, viewportSize);
+}
+
 Transform SVGFitToViewBox::viewBoxToViewTransform(const Size& viewportSize) const
 {
     const auto& viewBoxRect = m_viewBox.value();
-    if(viewBoxRect.isEmpty() || viewportSize.isEmpty())
+    if(viewBoxRect.isEmpty())
         return Transform::Identity;
-    return m_preserveAspectRatio.getTransform(viewBoxRect, viewportSize);
+    return viewBoxToViewTransform(viewBoxRect, viewportSize);
 }
 
 Rect SVGFitToViewBox::getClipRect(const Size& viewportSize) const
@@ -245,31 +252,6 @@ SVGSVGElement::SVGSVGElement(Document* document)
     addProperty(heightAttr, m_height);
 }
 
-void SVGSVGElement::computeIntrinsicDimensions(float& intrinsicWidth, float& intrinsicHeight, double& intrinsicRatio)
-{
-    SVGLengthContext lengthContext(this);
-    if(m_width.type() != SVGLengthType::Percentage) {
-        intrinsicWidth = lengthContext.valueForLength(m_width);
-    } else {
-        intrinsicWidth = 0.f;
-    }
-
-    if(m_height.type() != SVGLengthType::Percentage) {
-        intrinsicHeight = lengthContext.valueForLength(m_height);
-    } else {
-        intrinsicHeight = 0.f;
-    }
-
-    const auto& viewBoxRect = viewBox();
-    if(intrinsicWidth > 0.f && intrinsicHeight > 0.f) {
-        intrinsicRatio = intrinsicWidth / intrinsicHeight;
-    } else if(!viewBoxRect.isEmpty()) {
-        intrinsicRatio = viewBoxRect.w / viewBoxRect.h;
-    } else {
-        intrinsicRatio = 0.0;
-    }
-}
-
 static void addSVGTransformAttributeStyle(std::string& output, const Transform& matrix)
 {
     output += "transform:matrix(";
@@ -303,6 +285,53 @@ Box* SVGSVGElement::createBox(const RefPtr<BoxStyle>& style)
     if(isSVGRootNode())
         return new (heap()) SVGRootBox(this, style);
     return new (heap()) SVGViewportContainerBox(this, style);
+}
+
+Rect SVGSVGElement::currentViewBoxRect() const
+{
+    const auto& viewBoxRect = viewBox();
+    if(viewBoxRect.isEmpty() && isSVGRootNode() && document()->isSVGDocument()) {
+        float intrinsicWidth, intrinsicHeight;
+        computeintrinsicSize(intrinsicWidth, intrinsicHeight);
+        return Rect(intrinsicWidth, intrinsicHeight);
+    }
+
+    return viewBoxRect;
+}
+
+Transform SVGSVGElement::viewBoxToViewTransform(const Size& viewportSize) const
+{
+    const auto viewBoxRect = currentViewBoxRect();
+    if(viewBoxRect.isEmpty())
+        return Transform::Identity;
+    return SVGFitToViewBox::viewBoxToViewTransform(viewBoxRect, viewportSize);
+}
+
+void SVGSVGElement::computeintrinsicSize(float& intrinsicWidth, float& intrinsicHeight) const
+{
+    intrinsicWidth = 0.f;
+    intrinsicHeight = 0.f;
+
+    SVGLengthContext lengthContext(this);
+    if(m_width.type() != SVGLengthType::Percentage)
+        intrinsicWidth = lengthContext.valueForLength(m_width);
+    if(m_height.type() != SVGLengthType::Percentage) {
+        intrinsicHeight = lengthContext.valueForLength(m_height);
+    }
+}
+
+void SVGSVGElement::computeIntrinsicDimensions(float& intrinsicWidth, float& intrinsicHeight, double& intrinsicRatio)
+{
+    const auto viewBoxRect = currentViewBoxRect();
+
+    computeintrinsicSize(intrinsicWidth, intrinsicHeight);
+    if(intrinsicWidth > 0.f && intrinsicHeight > 0.f) {
+        intrinsicRatio = intrinsicWidth / intrinsicHeight;
+    } else if(!viewBoxRect.isEmpty()) {
+        intrinsicRatio = viewBoxRect.w / viewBoxRect.h;
+    } else {
+        intrinsicRatio = 0.0;
+    }
 }
 
 SVGUseElement::SVGUseElement(Document* document)
