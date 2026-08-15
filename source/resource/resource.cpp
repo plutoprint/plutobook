@@ -295,7 +295,7 @@ static bool mimeTypeFromPath(std::string& mimeType, std::string_view path)
 
     const auto ext = path.substr(dot + 1);
     for(const auto& entry : table) {
-        if(equalsIgnoringCase(ext, entry.ext)) {
+        if(equalsIgnoringCase(entry.ext, ext)) {
             mimeType.assign(entry.mime);
             return true;
         }
