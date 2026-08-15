@@ -243,6 +243,8 @@ plutobook_cpp_args += cpp.get_supported_arguments(
     '-Wno-unused-function',
     '-Wno-unused-variable',
     '-fvisibility=hidden',
+    '-fvisibility-inlines-hidden',
+    '-fno-exceptions',
     '-fno-rtti'
 )
 
@@ -280,5 +282,6 @@ pkgmod.generate(plutobook_lib,
     name: 'PlutoBook',
     description: 'Paged HTML rendering library',
     filebase: 'plutobook',
-    subdirs: 'plutobook'
+    subdirs: 'plutobook',
+    extra_cflags: plutobook_compile_args
 )
