@@ -251,10 +251,9 @@ void parseArgs(const char* program, const char* description, ArgDesc* args, int 
         plutobook_set_error_message("the following arguments are required: ");
         for(arg = args; arg->name; ++arg) {
             if(arg->required) {
-                const char* last_message = plutobook_get_error_message();
-                plutobook_set_error_message("%s%s", last_message, arg->name);
+                plutobook_set_error_message("%s%s", plutobook_get_error_message(), arg->name);
                 if(--required) {
-                    plutobook_set_error_message("%s%s", last_message, ", ");
+                    plutobook_set_error_message("%s%s", plutobook_get_error_message(), ", ");
                 }
             }
         }

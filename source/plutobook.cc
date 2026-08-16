@@ -729,28 +729,60 @@ void* plutobook_get_custom_resource_fetcher_closure(const plutobook_t* book)
     return book->custom_resource_fetcher_closure;
 }
 
-constexpr int kErrorBufferSize = 512;
+struct plutobook_error_info {
+    plutobook_error_info() = default;
+    ~plutobook_error_info() { std::free(data); }
+    char* data = 0;
+    size_t size = 0;
+};
 
-thread_local char plutobook_error_message[kErrorBufferSize];
+struct plutobook_error_buffer {
+    plutobook_error_info info[2];
+    size_t current = 0;
+};
+
+static plutobook_error_buffer* plutobook_get_error_buffer(void)
+{
+    thread_local plutobook_error_buffer error_buffer;
+    return &error_buffer;
+}
 
 void plutobook_set_error_message(const char* format, ...)
 {
+    auto error = plutobook_get_error_buffer();
+    auto next = error->current ? 0 : 1;
+    auto info = &error->info[next];
+    error->current = next;
+
     va_list args;
     va_start(args, format);
-    char error_message[kErrorBufferSize];
-    vsnprintf(error_message, kErrorBufferSize, format, args);
-    strcpy(plutobook_error_message, error_message);
+    auto length = std::vsnprintf(info->data, info->size, format, args);
     va_end(args);
+
+    if(length >= 0 && info->size <= (size_t)(length)) {
+        info->size = ((size_t)(length) + 1);
+        info->data = (char*)std::realloc(info->data, info->size);
+
+        va_start(args, format);
+        std::vsnprintf(info->data, info->size, format, args);
+        va_end(args);
+    }
 }
 
 const char* plutobook_get_error_message(void)
 {
-    return plutobook_error_message;
+    auto error = plutobook_get_error_buffer();
+    if(error->info[error->current].data)
+        return error->info[error->current].data;
+    return "";
 }
 
 void plutobook_clear_error_message(void)
 {
-    std::memset(plutobook_error_message, 0, sizeof(plutobook_error_message));
+    auto error = plutobook_get_error_buffer();
+    if(error->info[error->current].data) {
+        error->info[error->current].data[0] = '\0';
+    }
 }
 
 void plutobook_set_fontconfig_path(const char* path)
