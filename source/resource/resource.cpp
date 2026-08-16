@@ -155,7 +155,7 @@ static bool base64Decode(std::string_view input, ByteArray& output)
     output.resize(input.length());
     size_t equalsSignCount = 0;
     size_t outputLength = 0;
-    for(int cc : input) {
+    for(unsigned char cc : input) {
         if(cc == '=') {
             ++equalsSignCount;
         } else if(cc == '+' || cc == '/' || isAlpha(cc) || isDigit(cc)) {
@@ -229,20 +229,10 @@ static ResourceData loadDataUrl(std::string_view input)
     }
 
     auto header = input.substr(0, headerEnd);
-    input.remove_prefix(headerEnd + 1);
 
     auto mediaTypeEnd = header.rfind(';');
     if(mediaTypeEnd == std::string_view::npos) {
         mediaTypeEnd = header.length();
-    }
-
-    std::string mimeType;
-    std::string textEncoding;
-    auto mediaType = header.substr(0, mediaTypeEnd);
-    parseContentType(mediaType, mimeType, textEncoding);
-    if(mimeType.empty() && textEncoding.empty()) {
-        mimeType.assign("text/plain");
-        textEncoding.assign("US-ASCII");
     }
 
     std::string_view formatType;
@@ -251,16 +241,27 @@ static ResourceData loadDataUrl(std::string_view input)
         stripLeadingAndTrailingSpaces(formatType);
     }
 
+    bool isBase64 = equals(formatType, "base64", false);
+
+    std::string mimeType;
+    std::string textEncoding;
+    auto mediaType = !isBase64 ? header : header.substr(0, mediaTypeEnd);
+    parseContentType(mediaType, mimeType, textEncoding);
+    if(mimeType.empty() && textEncoding.empty()) {
+        mimeType.assign("text/plain");
+        textEncoding.assign("US-ASCII");
+    }
+
+    auto data = percentDecode(input.substr(headerEnd + 1));
+
     auto content = ByteArrayCreate();
-    if(!equals(formatType, "base64", false)) {
-        content->reserve(input.length());
-        content->assign(input.begin(), input.end());
-    } else {
-        if(!base64Decode(input, *content)) {
-            plutobook_set_error_message("invalid data URL: base64 decoding failed");
-            ByteArrayDestroy(content);
-            return ResourceData();
-        }
+    if(!isBase64) {
+        content->reserve(data.length());
+        content->assign(data.begin(), data.end());
+    } else if(!base64Decode(data, *content)) {
+        plutobook_set_error_message("invalid data URL: base64 decoding failed");
+        ByteArrayDestroy(content);
+        return ResourceData();
     }
 
     return createResourceData(content, mimeType, textEncoding);
@@ -385,7 +386,7 @@ static size_t writeCallback(const char* contents, size_t blockSize, size_t numbe
 ResourceData DefaultResourceFetcher::fetchUrl(const std::string& url)
 {
     if(startswith(url, kDataUrlPrefix, false))
-        return loadDataUrl(percentDecode(url));
+        return loadDataUrl(url);
     if(startswith(url, kFileUrlPrefix, false)) {
         return loadLocalFile(url);
     }
@@ -446,7 +447,7 @@ DefaultResourceFetcher::~DefaultResourceFetcher() = default;
 ResourceData DefaultResourceFetcher::fetchUrl(const std::string& url)
 {
     if(startswith(url, kDataUrlPrefix, false))
-        return loadDataUrl(percentDecode(url));
+        return loadDataUrl(url);
     if(startswith(url, kFileUrlPrefix, false))
         return loadLocalFile(url);
     plutobook_set_error_message("Unable to fetch URL '%s': Unsupported protocol", url.data());
@@ -458,7 +459,7 @@ ResourceData DefaultResourceFetcher::fetchUrl(const std::string& url)
 ResourceData ResourceLoader::loadUrl(const Url& url, ResourceFetcher* customFetcher)
 {
     if(url.protocolIs("data"))
-        return loadDataUrl(percentDecode(url.value()));
+        return loadDataUrl(url.value());
     if(customFetcher == nullptr)
         customFetcher = defaultResourceFetcher();
     return customFetcher->fetchUrl(url.value());
