@@ -244,8 +244,7 @@ plutobook_cpp_args += cpp.get_supported_arguments(
     '-Wno-unused-variable',
     '-fvisibility=hidden',
     '-fvisibility-inlines-hidden',
-    '-fno-exceptions',
-    '-fno-rtti'
+    '-fno-exceptions'
 )
 
 plutobook_compile_args = []
