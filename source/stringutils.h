@@ -233,6 +233,8 @@ std::string toString(int value);
 std::string toString(float value);
 std::string toUtf8(uint32_t codepoint);
 
+std::string ellipsize(std::string_view input, size_t maxLength = 1024);
+
 } // namespace plutobook
 
 #endif // PLUTOBOOK_STRINGUTILS_H

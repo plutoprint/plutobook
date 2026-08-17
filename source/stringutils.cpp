@@ -35,4 +35,25 @@ std::string toUtf8(uint32_t codepoint)
     return {buffer, length};
 }
 
+std::string ellipsize(std::string_view input, size_t maxLength)
+{
+    constexpr std::string_view ellipsis = "...";
+    if(input.length() <= maxLength)
+        return std::string(input);
+    if(maxLength <= ellipsis.length()) {
+        return std::string(input.substr(0, maxLength));
+    }
+
+    const size_t remainingLength = maxLength - ellipsis.length();
+    const size_t leftLength = remainingLength - remainingLength / 2;
+    const size_t rightLength = remainingLength / 2;
+
+    std::string output;
+    output.reserve(maxLength);
+    output.append(input.substr(0, leftLength));
+    output.append(ellipsis);
+    output.append(input.substr(input.length() - rightLength));
+    return output;
+}
+
 } // namespace plutobook

@@ -44,7 +44,7 @@ RefPtr<ImageResource> ImageResource::create(Document* document, const Url& url)
         return nullptr;
     auto image = decode(document->book(), resource.content(), resource.contentLength(), resource.mimeType(), resource.textEncoding(), url.base());
     if(image == nullptr) {
-        plutobook_set_error_message("Unable to load image '%s': %s", url.value().data(), plutobook_get_error_message());
+        plutobook_set_error_message("Unable to load image '%s': %s", ellipsize(url.value()).data(), plutobook_get_error_message());
         return nullptr;
     }
 

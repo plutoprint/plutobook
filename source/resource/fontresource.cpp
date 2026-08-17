@@ -73,14 +73,14 @@ RefPtr<FontResource> FontResource::create(Document* document, const Url& url)
         return nullptr;
     auto fontData = FTFontData::create(std::move(resource));
     if(fontData == nullptr) {
-        plutobook_set_error_message("Unable to load font '%s': %s", url.value().data(), plutobook_get_error_message());
+        plutobook_set_error_message("Unable to load font '%s': %s", ellipsize(url.value()).data(), plutobook_get_error_message());
         return nullptr;
     }
 
     static cairo_user_data_key_t key;
     auto face = cairo_ft_font_face_create_for_ft_face(fontData->face(), FT_LOAD_DEFAULT);
     if(auto status = cairo_font_face_set_user_data(face, &key, fontData, FTFontDataDestroy)) {
-        plutobook_set_error_message("Unable to load font '%s': %s", url.value().data(), cairo_status_to_string(status));
+        plutobook_set_error_message("Unable to load font '%s': %s", ellipsize(url.value()).data(), cairo_status_to_string(status));
         cairo_font_face_destroy(face);
         FTFontDataDestroy(fontData);
         return nullptr;

@@ -14,6 +14,7 @@
 #include "fontresource.h"
 #include "replacedbox.h"
 #include "graphicscontext.h"
+#include "stringutils.h"
 
 #include <cmath>
 #include <utility>
@@ -366,7 +367,7 @@ bool Book::loadUrl(std::string_view url, std::string_view userStyle, std::string
         return true;
     }
 
-    plutobook_set_error_message("Unable to load URL '%s': %s", completeUrl.value().data(), plutobook_get_error_message());
+    plutobook_set_error_message("Unable to load URL '%s': %s", ellipsize(completeUrl.value()).data(), plutobook_get_error_message());
     return false;
 }
 
