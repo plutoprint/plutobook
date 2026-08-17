@@ -614,6 +614,8 @@ public:
 
 private:
     DefaultResourceFetcher();
+    DefaultResourceFetcher(const DefaultResourceFetcher&) = delete;
+    DefaultResourceFetcher& operator=(const DefaultResourceFetcher&) = delete;
 
     std::string m_caInfo;
     std::string m_caPath;
@@ -1342,6 +1344,8 @@ public:
     Document* document() const { return m_document.get(); }
 
 private:
+    Book(const Book&) = delete;
+    Book& operator=(const Book&) = delete;
     template<typename DocumentType>
     bool loadDocument(std::string_view content, std::string_view userStyle,
         std::string_view userScript, std::string_view baseUrl);
