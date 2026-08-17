@@ -25,30 +25,22 @@ class FileOutputStream final : public OutputStream {
 public:
     explicit FileOutputStream(const std::string& filename);
 
-    bool isOpen() const { return m_handle; }
+    bool isOpen() const { return m_file != nullptr; }
+
     bool write(const char* data, size_t length) final;
 
-    ~FileOutputStream() final;
-
 private:
-    FILE* m_handle;
+    File m_file;
 };
 
 FileOutputStream::FileOutputStream(const std::string& filename)
-    : m_handle(openFile(filename, FileMode::Write))
+    : m_file(openFile(filename, FileMode::Write))
 {
 }
 
 bool FileOutputStream::write(const char* data, size_t length)
 {
-    return length == fwrite(data, 1, length, m_handle);
-}
-
-FileOutputStream::~FileOutputStream()
-{
-    if(m_handle) {
-        fclose(m_handle);
-    }
+    return m_file && length == fwrite(data, 1, length, m_file.get());
 }
 
 static plutobook_stream_status_t stream_write_func(void* closure, const char* data, unsigned int length)

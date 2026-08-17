@@ -34,12 +34,12 @@ static FILE* openStream(const std::string& filename, FileMode mode)
 #endif
 }
 
-FILE* openFile(const std::string& filename, FileMode mode)
+File openFile(const std::string& filename, FileMode mode)
 {
     auto stream = openStream(filename, mode);
     if(stream == nullptr)
         plutobook_set_error_message("Unable to open file '%s': %s", filename.data(), strerror(errno));
-    return stream;
+    return File(stream);
 }
 
 static bool loadStream(FILE* stream, ByteArray& output)
@@ -59,20 +59,14 @@ static bool loadStream(FILE* stream, ByteArray& output)
     return ferror(stream) == 0;
 }
 
-struct FileCloser {
-    void operator()(FILE* file) const { fclose(file); }
-};
-
 bool loadFile(const std::string& filename, ByteArray& output)
 {
-    auto stream = openFile(filename, FileMode::Read);
-    if(stream == nullptr) {
+    auto file = openFile(filename, FileMode::Read);
+    if(file == nullptr) {
         return false;
     }
 
-    std::unique_ptr<FILE, FileCloser> guard(stream);
-
-    if(loadStream(stream, output))
+    if(loadStream(file.get(), output))
         return true;
     plutobook_set_error_message("Unable to load file '%s': %s", filename.data(), strerror(errno));
     return false;

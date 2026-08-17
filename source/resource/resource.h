@@ -13,6 +13,8 @@
 #include "heapstring.h"
 #include "url.h"
 
+#include <cstdio>
+#include <memory>
 #include <vector>
 
 namespace plutobook {
@@ -32,6 +34,12 @@ protected:
     Resource() = default;
 };
 
+struct FileCloser {
+    void operator()(FILE* file) const { fclose(file); }
+};
+
+using File = std::unique_ptr<FILE, FileCloser>;
+
 enum class FileMode {
     Read,
     Write
@@ -39,7 +47,7 @@ enum class FileMode {
 
 using ByteArray = std::vector<char>;
 
-FILE* openFile(const std::string& filename, FileMode mode);
+File openFile(const std::string& filename, FileMode mode);
 bool loadFile(const std::string& filename, ByteArray& output);
 
 class ResourceData;
