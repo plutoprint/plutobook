@@ -640,7 +640,7 @@ private:
  * @brief Returns a singleton instance of DefaultResourceFetcher.
  * @return A pointer to the singleton DefaultResourceFetcher instance.
  */
-DefaultResourceFetcher* defaultResourceFetcher();
+PLUTOBOOK_API DefaultResourceFetcher* defaultResourceFetcher();
 
 /**
  * @brief The OutputStream is an abstract base class for writing data to an output stream.
