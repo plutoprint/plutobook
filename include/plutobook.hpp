@@ -366,15 +366,15 @@ public:
     /**
      * @brief Constructs a ResourceData object by initializing the underlying resource with a null pointer.
      */
-    ResourceData() : m_data(nullptr) {}
+    ResourceData() : m_resource(nullptr) {}
 
     /**
      * @brief Constructs a `ResourceData` object by adopting a bare pointer to the resource without
      * modifying the reference count.
      *
-     * @param data A bare pointer to a `plutobook_resource_data_t` object.
+     * @param resource A bare pointer to a `plutobook_resource_data_t` object.
      */
-    explicit ResourceData(plutobook_resource_data_t* data) : m_data(data) {}
+    explicit ResourceData(plutobook_resource_data_t* resource) : m_resource(resource) {}
 
     /**
      * @brief Constructs a ResourceData object by copying the provided content.
@@ -413,7 +413,7 @@ public:
      *
      * @param resource A `ResourceData` object.
      */
-    ResourceData(ResourceData&& resource) : m_data(resource.release()) {}
+    ResourceData(ResourceData&& resource) : m_resource(resource.release()) {}
 
     /**
      * @brief Constructs a ResourceData object by sharing the underlying resource.
@@ -489,16 +489,22 @@ public:
     std::string_view textEncoding() const;
 
     /**
+     * @brief Retrieves the underlying resource.
+     * @return A pointer to the underlying `plutobook_resource_data_t` object.
+     */
+    plutobook_resource_data_t* resource() const { return m_resource; }
+
+    /**
+     * @brief Retrieves the underlying resource.
+     * @return A pointer to the underlying `plutobook_resource_data_t` object.
+     */
+    plutobook_resource_data_t* get() const { return m_resource; }
+
+    /**
      * @brief Releases the underlying resource and transfers ownership.
      * @return A pointer to the underlying `plutobook_resource_data_t` object, which is now owned by the caller.
      */
     plutobook_resource_data_t* release();
-
-    /**
-     * @brief Retrieves the underlying resource.
-     * @return A pointer to the underlying `plutobook_resource_data_t` resource.
-     */
-    plutobook_resource_data_t* get() const { return m_data; }
 
     /**
      * @brief Checks if the resource is null.
@@ -507,10 +513,10 @@ public:
      *
      * @return `true` if the resource is null, otherwise `false`.
      */
-    bool isNull() const { return m_data == nullptr; }
+    bool isNull() const { return m_resource == nullptr; }
 
 private:
-    plutobook_resource_data_t* m_data;
+    plutobook_resource_data_t* m_resource;
 };
 
 /**

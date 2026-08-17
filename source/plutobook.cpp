@@ -248,23 +248,23 @@ void PDFCanvas::showPage()
 }
 
 ResourceData::ResourceData(const char* content, size_t contentLength, const std::string& mimeType, const std::string& textEncoding)
-    : m_data(plutobook_resource_data_create(content, contentLength, mimeType.data(), textEncoding.data()))
+    : m_resource(plutobook_resource_data_create(content, contentLength, mimeType.data(), textEncoding.data()))
 {
 }
 
 ResourceData::ResourceData(const char* content, size_t contentLength, const std::string& mimeType, const std::string& textEncoding, plutobook_resource_destroy_callback_t destroyCallback, void* closure)
-    : m_data(plutobook_resource_data_create_without_copy(content, contentLength, mimeType.data(), textEncoding.data(), destroyCallback, closure))
+    : m_resource(plutobook_resource_data_create_without_copy(content, contentLength, mimeType.data(), textEncoding.data(), destroyCallback, closure))
 {
 }
 
 ResourceData::ResourceData(const ResourceData& resource)
-    : m_data(plutobook_resource_data_reference(resource.get()))
+    : m_resource(plutobook_resource_data_reference(resource.get()))
 {
 }
 
 ResourceData::~ResourceData()
 {
-    plutobook_resource_data_destroy(m_data);
+    plutobook_resource_data_destroy(m_resource);
 }
 
 ResourceData& ResourceData::operator=(const ResourceData& resource)
@@ -281,32 +281,32 @@ ResourceData& ResourceData::operator=(ResourceData&& resource)
 
 void ResourceData::swap(ResourceData& resource)
 {
-    std::swap(m_data, resource.m_data);
+    std::swap(m_resource, resource.m_resource);
 }
 
 const char* ResourceData::content() const
 {
-    return plutobook_resource_data_get_content(m_data);
+    return plutobook_resource_data_get_content(m_resource);
 }
 
 size_t ResourceData::contentLength() const
 {
-    return plutobook_resource_data_get_content_length(m_data);
+    return plutobook_resource_data_get_content_length(m_resource);
 }
 
 std::string_view ResourceData::mimeType() const
 {
-    return plutobook_resource_data_get_mime_type(m_data);
+    return plutobook_resource_data_get_mime_type(m_resource);
 }
 
 std::string_view ResourceData::textEncoding() const
 {
-    return plutobook_resource_data_get_text_encoding(m_data);
+    return plutobook_resource_data_get_text_encoding(m_resource);
 }
 
 plutobook_resource_data_t* ResourceData::release()
 {
-    return std::exchange(m_data, nullptr);
+    return std::exchange(m_resource, nullptr);
 }
 
 Book::Book(const PageSize& size, const PageMargins& margins, MediaType media)
