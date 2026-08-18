@@ -459,17 +459,19 @@ ResourceData ResourceLoader::loadUrl(const Url& url, ResourceFetcher* customFetc
     return customFetcher->fetchUrl(url.value());
 }
 
-Url ResourceLoader::baseUrl()
+Url ResourceLoader::completeUrl(std::string_view input)
 {
-    auto path = std::filesystem::current_path();
-    auto href = ada::href_from_file(path.generic_string());
+    Url completeUrl(input);
+    if(completeUrl.isValid()) {
+        return completeUrl;
+    }
 
-    return Url(href + '/');
-}
+    stripLeadingAndTrailingSpaces(input);
 
-Url ResourceLoader::completeUrl(std::string_view value)
-{
-    return baseUrl().complete(value);
+    auto path = std::filesystem::absolute(input).u8string();
+    auto data = reinterpret_cast<const char*>(path.data());
+
+    return Url(ada::href_from_file({data, path.size()}));
 }
 
 DefaultResourceFetcher* defaultResourceFetcher()
