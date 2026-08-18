@@ -343,6 +343,8 @@ SVGResourceLinearGradientBox::SVGResourceLinearGradientBox(SVGLinearGradientElem
 static GradientStops buildGradientStops(const SVGGradientElement* element)
 {
     GradientStops gradientStops;
+    gradientStops.reserve(2);
+
     float previousOffset = 0.f;
     for(auto child = element->firstChild(); child; child = child->nextSibling()) {
         if(child->isOfType(svgNs, stopTag)) {
