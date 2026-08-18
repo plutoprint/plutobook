@@ -550,7 +550,7 @@ void Element::finishParsingDocument()
                 setIsLinkSource(true);
             }
         } else {
-            setIsLinkSource(!completeUrl.isEmpty());
+            setIsLinkSource(completeUrl.isValid());
         }
     }
 
@@ -1083,7 +1083,7 @@ Rect Document::pageContentRectAt(uint32_t pageIndex) const
 template<typename ResourceType>
 RefPtr<ResourceType> Document::fetchResource(const Url& url)
 {
-    if(url.isEmpty())
+    if(!url.isValid())
         return nullptr;
     auto it = m_resourceCache.find(url);
     if(it != m_resourceCache.end())

@@ -1059,7 +1059,7 @@ HTMLBaseElement::HTMLBaseElement(Document* document)
 void HTMLBaseElement::finishParsingDocument()
 {
     Url baseUrl(getAttribute(hrefAttr));
-    if(!baseUrl.isEmpty())
+    if(baseUrl.isValid())
         document()->setBaseUrl(std::move(baseUrl));
     HTMLElement::finishParsingDocument();
 }

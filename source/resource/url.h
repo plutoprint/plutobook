@@ -22,7 +22,7 @@ public:
 
     bool protocolIs(std::string_view protocol) const;
     bool isHierarchical() const { return !m_aggregator.has_opaque_path; }
-    bool isEmpty() const { return !m_aggregator.get_href_size(); }
+    bool isValid() const { return m_aggregator.is_valid; }
 
     const std::string& value() const { return m_aggregator.get_buffer(); }
 
