@@ -24,61 +24,74 @@ const char* plutobook_version_string(void)
     return PLUTOBOOK_VERSION_STRING;
 }
 
-#if defined(_WIN32)
-#define SYSTEM_NAME "Windows"
-#elif defined(__APPLE__) && defined(__MACH__)
-#define SYSTEM_NAME "macOS"
-#elif defined(__linux__)
-#define SYSTEM_NAME "Linux"
-#elif defined(__unix__)
-#define SYSTEM_NAME "Unix"
-#else
-#define SYSTEM_NAME "Unknown"
-#endif
-
-#if defined(__x86_64__) || defined(_M_X64)
-#define MACHINE_NAME "x86_64"
-#elif defined(__aarch64__) || defined(_M_ARM64)
-#define MACHINE_NAME "ARM64"
-#elif defined(__i386__) || defined(_M_IX86)
-#define MACHINE_NAME "x86"
-#elif defined(__arm__) || defined(_M_ARM)
-#define MACHINE_NAME "ARM"
-#else
-#define MACHINE_NAME "Unknown"
+#ifndef PLUTOBOOK_BUILD_DATE
+#define PLUTOBOOK_BUILD_DATE __DATE__ ", " __TIME__
 #endif
 
 #if defined(__clang__)
-#define COMPILER_NAME "Clang " __clang_version__
+#define PLUTOBOOK_COMPILER "Clang " __clang_version__
 #elif defined(__GNUC__)
-#define COMPILER_NAME "GCC " __VERSION__
+#define PLUTOBOOK_COMPILER "GCC " __VERSION__
 #elif defined(_MSC_VER)
-#define STRINGIZE(x) #x
-#define STRINGIFY(x) STRINGIZE(x)
-#define COMPILER_NAME "MSVC " STRINGIFY(_MSC_VER)
+#define PLUTOBOOK_COMPILER "MSVC " PLUTOBOOK_STRINGIZE(_MSC_VER)
 #else
-#define COMPILER_NAME "Unknown"
+#define PLUTOBOOK_COMPILER "Unknown"
 #endif
+
+#if defined(_WIN32)
+#define PLUTOBOOK_SYSTEM "Windows"
+#elif defined(__APPLE__) && defined(__MACH__)
+#define PLUTOBOOK_SYSTEM "Darwin"
+#elif defined(__linux__)
+#define PLUTOBOOK_SYSTEM "Linux"
+#elif defined(__unix__)
+#define PLUTOBOOK_SYSTEM "Unix"
+#else
+#define PLUTOBOOK_SYSTEM "Unknown"
+#endif
+
+#if defined(__x86_64__) || defined(_M_X64)
+#define PLUTOBOOK_MACHINE "x86_64"
+#elif defined(__i386__) || defined(_M_IX86)
+#define PLUTOBOOK_MACHINE "x86"
+#elif defined(__aarch64__) || defined(_M_ARM64)
+#define PLUTOBOOK_MACHINE "arm64"
+#elif defined(__arm__) || defined(_M_ARM)
+#define PLUTOBOOK_MACHINE "arm"
+#else
+#define PLUTOBOOK_MACHINE "unknown"
+#endif
+
+#ifdef PLUTOBOOK_HAS_CURL
+#define PLUTOBOOK_FEAT_CURL "+curl"
+#else
+#define PLUTOBOOK_FEAT_CURL "-curl"
+#endif
+
+#ifdef PLUTOBOOK_HAS_TURBOJPEG
+#define PLUTOBOOK_FEAT_TURBOJPEG "+turbojpeg"
+#else
+#define PLUTOBOOK_FEAT_TURBOJPEG "-turbojpeg"
+#endif
+
+#ifdef PLUTOBOOK_HAS_WEBP
+#define PLUTOBOOK_FEAT_WEBP "+webp"
+#else
+#define PLUTOBOOK_FEAT_WEBP "-webp"
+#endif
+
+#define PLUTOBOOK_FEATURES PLUTOBOOK_FEAT_CURL " " PLUTOBOOK_FEAT_TURBOJPEG " " PLUTOBOOK_FEAT_WEBP
 
 const char* plutobook_build_info(void)
 {
-    return "Compiler: " COMPILER_NAME "\n"
-           "Built   : " __DATE__ " " __TIME__ "\n"
-           "System  : " SYSTEM_NAME "\n"
-           "Machine : " MACHINE_NAME "\n"
-           "Features:"
-#ifdef PLUTOBOOK_HAS_CURL
-           " Curl"
-#endif
-#ifdef PLUTOBOOK_HAS_TURBOJPEG
-           " TurboJPEG"
-#endif
-#ifdef PLUTOBOOK_HAS_WEBP
-           " WebP"
-#endif
-           "\n\n"
-           "PlutoBook version: " PLUTOBOOK_VERSION_STRING "\n"
-           "Cairo version: " CAIRO_VERSION_STRING "\n";
+    return "PlutoBook   " PLUTOBOOK_VERSION_STRING "\n"
+           "----------------------------------------\n"
+           "Built     : " PLUTOBOOK_BUILD_DATE     "\n"
+           "Compiler  : " PLUTOBOOK_COMPILER       "\n"
+           "System    : " PLUTOBOOK_SYSTEM         "\n"
+           "Machine   : " PLUTOBOOK_MACHINE        "\n"
+           "Features  : " PLUTOBOOK_FEATURES       "\n"
+           "Cairo     : " CAIRO_VERSION_STRING     "\n";
 }
 
 struct _plutobook_canvas {
