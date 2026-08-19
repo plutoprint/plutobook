@@ -1132,6 +1132,14 @@ bool CSSParser::consumeDescriptor(CSSTokenStream& input, CSSPropertyList& proper
     case CSSPropertyID::BorderBlock:
     case CSSPropertyID::BorderInline:
         return consumeBorder(input, properties, id, important);
+    case CSSPropertyID::BackgroundImage:
+    case CSSPropertyID::BackgroundPosition:
+    case CSSPropertyID::BackgroundSize:
+    case CSSPropertyID::BackgroundRepeat:
+    case CSSPropertyID::BackgroundAttachment:
+    case CSSPropertyID::BackgroundOrigin:
+    case CSSPropertyID::BackgroundClip:
+        return consumeBackgroundLonghand(input, properties, id, important);
     case CSSPropertyID::Background:
         return consumeBackground(input, properties, important);
     case CSSPropertyID::Font:
@@ -4108,52 +4116,117 @@ bool CSSParser::consumeFlex(CSSTokenStream& input, CSSPropertyList& properties, 
     return true;
 }
 
+bool CSSParser::consumeBackgroundLonghand(CSSTokenStream& input, CSSPropertyList& properties, CSSPropertyID id, bool important)
+{
+    CSSValueList values(m_heap);
+    do {
+        auto value = consumeLonghand(input, id);
+        if(value == nullptr)
+            return false;
+        values.push_back(std::move(value));
+    } while(input.consumeCommaIncludingWhitespace());
+
+    input.consumeWhitespace();
+    if(!input.empty())
+        return false;
+    if(values.size() == 1) {
+        addProperty(properties, id, important, std::move(values.front()));
+        return true;
+    }
+
+    addProperty(properties, id, important, CSSListValue::create(m_heap, std::move(values)));
+    return true;
+}
+
+void CSSParser::addBackgroundProperty(CSSPropertyList& properties, CSSPropertyID id, bool important, CSSValueList values, RefPtr<CSSValue> initial)
+{
+    if(values.size() == 1) {
+        addProperty(properties, id, important, std::move(values.front()));
+        return;
+    }
+
+    for(auto& value : values) {
+        if(value == nullptr) {
+            value = initial;
+        }
+    }
+
+    addProperty(properties, id, important, CSSListValue::create(m_heap, std::move(values)));
+}
+
 bool CSSParser::consumeBackground(CSSTokenStream& input, CSSPropertyList& properties, bool important)
 {
     RefPtr<CSSValue> color;
-    RefPtr<CSSValue> image;
-    RefPtr<CSSValue> repeat;
-    RefPtr<CSSValue> attachment;
-    RefPtr<CSSValue> origin;
-    RefPtr<CSSValue> clip;
-    RefPtr<CSSValue> position;
-    RefPtr<CSSValue> size;
-    while(!input.empty()) {
-        if(position == nullptr && (position = consumePositionCoordinate(input))) {
-            if(input.consumeSlashIncludingWhitespace()) {
-                if(size == nullptr && (size = consumeBackgroundSize(input)))
-                    continue;
-                return false;
-            }
-
-            continue;
+    CSSValueList images(m_heap);
+    CSSValueList repeats(m_heap);
+    CSSValueList attachments(m_heap);
+    CSSValueList origins(m_heap);
+    CSSValueList clips(m_heap);
+    CSSValueList positions(m_heap);
+    CSSValueList sizes(m_heap);
+    do {
+        if(color) {
+            return false;
         }
 
-        if(image == nullptr && (image = consumeImageOrNone(input)))
-            continue;
-        if(repeat == nullptr && (repeat = consumeLonghand(input, CSSPropertyID::BackgroundRepeat)))
-            continue;
-        if(attachment == nullptr && (attachment = consumeLonghand(input, CSSPropertyID::BackgroundAttachment)))
-            continue;
-        if(origin == nullptr && (origin = consumeLonghand(input, CSSPropertyID::BackgroundOrigin)))
-            continue;
-        if(clip == nullptr && (clip = consumeLonghand(input, CSSPropertyID::BackgroundClip)))
-            continue;
-        if(color == nullptr && (color = consumeColor(input)))
-            continue;
-        return false;
-    }
+        RefPtr<CSSValue> image;
+        RefPtr<CSSValue> repeat;
+        RefPtr<CSSValue> attachment;
+        RefPtr<CSSValue> origin;
+        RefPtr<CSSValue> clip;
+        RefPtr<CSSValue> position;
+        RefPtr<CSSValue> size;
+        while(!input.empty() && input->type() != CSSToken::Type::Comma) {
+            if(position == nullptr && (position = consumePositionCoordinate(input))) {
+                if(input.consumeSlashIncludingWhitespace()) {
+                    if(size == nullptr && (size = consumeBackgroundSize(input)))
+                        continue;
+                    return false;
+                }
 
-    if(clip == nullptr)
-        clip = origin;
+                continue;
+            }
+
+            if(image == nullptr && (image = consumeImageOrNone(input)))
+                continue;
+            if(repeat == nullptr && (repeat = consumeLonghand(input, CSSPropertyID::BackgroundRepeat)))
+                continue;
+            if(attachment == nullptr && (attachment = consumeLonghand(input, CSSPropertyID::BackgroundAttachment)))
+                continue;
+            if(origin == nullptr && (origin = consumeLonghand(input, CSSPropertyID::BackgroundOrigin)))
+                continue;
+            if(clip == nullptr && (clip = consumeLonghand(input, CSSPropertyID::BackgroundClip)))
+                continue;
+            if(color == nullptr && (color = consumeColor(input)))
+                continue;
+            return false;
+        }
+
+        if(image == nullptr && repeat == nullptr && attachment == nullptr && origin == nullptr
+            && clip == nullptr && position == nullptr && size == nullptr && color == nullptr) {
+            return false;
+        }
+
+        if(clip == nullptr)
+            clip = origin;
+        images.push_back(std::move(image));
+        repeats.push_back(std::move(repeat));
+        attachments.push_back(std::move(attachment));
+        origins.push_back(std::move(origin));
+        clips.push_back(std::move(clip));
+        positions.push_back(std::move(position));
+        sizes.push_back(std::move(size));
+    } while(input.consumeCommaIncludingWhitespace());
+
+    auto autoValue = CSSIdentValue::create(CSSValueID::Auto);
     addProperty(properties, CSSPropertyID::BackgroundColor, important, std::move(color));
-    addProperty(properties, CSSPropertyID::BackgroundImage, important, std::move(image));
-    addProperty(properties, CSSPropertyID::BackgroundRepeat, important, std::move(repeat));
-    addProperty(properties, CSSPropertyID::BackgroundAttachment, important, std::move(attachment));
-    addProperty(properties, CSSPropertyID::BackgroundOrigin, important, std::move(origin));
-    addProperty(properties, CSSPropertyID::BackgroundClip, important, std::move(clip));
-    addProperty(properties, CSSPropertyID::BackgroundPosition, important, std::move(position));
-    addProperty(properties, CSSPropertyID::BackgroundSize, important, std::move(size));
+    addBackgroundProperty(properties, CSSPropertyID::BackgroundImage, important, std::move(images), CSSIdentValue::create(CSSValueID::None));
+    addBackgroundProperty(properties, CSSPropertyID::BackgroundRepeat, important, std::move(repeats), CSSIdentValue::create(CSSValueID::Repeat));
+    addBackgroundProperty(properties, CSSPropertyID::BackgroundAttachment, important, std::move(attachments), CSSIdentValue::create(CSSValueID::Scroll));
+    addBackgroundProperty(properties, CSSPropertyID::BackgroundOrigin, important, std::move(origins), CSSIdentValue::create(CSSValueID::PaddingBox));
+    addBackgroundProperty(properties, CSSPropertyID::BackgroundClip, important, std::move(clips), CSSIdentValue::create(CSSValueID::BorderBox));
+    addBackgroundProperty(properties, CSSPropertyID::BackgroundPosition, important, std::move(positions), CSSPairValue::create(m_heap, CSSIdentValue::create(CSSValueID::Left), CSSIdentValue::create(CSSValueID::Top)));
+    addBackgroundProperty(properties, CSSPropertyID::BackgroundSize, important, std::move(sizes), CSSPairValue::create(m_heap, autoValue, autoValue));
     return true;
 }
 

@@ -478,12 +478,20 @@ RefPtr<Image> BoxStyle::listStyleImage() const
     return convertImageOrNone(*value);
 }
 
-RefPtr<Image> BoxStyle::backgroundImage() const
+const CSSValue* BoxStyle::backgroundLayerValue(CSSPropertyID id, size_t index) const
+{
+    auto value = get(id);
+    if(auto list = to<CSSListValue>(value))
+        return list->at(index % list->size()).get();
+    return value;
+}
+
+size_t BoxStyle::backgroundLayerCount() const
 {
     auto value = get(CSSPropertyID::BackgroundImage);
-    if(value == nullptr)
-        return nullptr;
-    return convertImageOrNone(*value);
+    if(auto list = to<CSSListValue>(value))
+        return list->size();
+    return 1;
 }
 
 Color BoxStyle::backgroundColor() const
@@ -494,9 +502,49 @@ Color BoxStyle::backgroundColor() const
     return convertColor(*value);
 }
 
-BackgroundSize BoxStyle::backgroundSize() const
+RefPtr<Image> BoxStyle::backgroundImage(size_t index) const
 {
-    auto value = get(CSSPropertyID::BackgroundSize);
+    auto value = backgroundLayerValue(CSSPropertyID::BackgroundImage, index);
+    if(value == nullptr)
+        return nullptr;
+    return convertImageOrNone(*value);
+}
+
+BackgroundRepeat BoxStyle::backgroundRepeat(size_t index) const
+{
+    auto value = backgroundLayerValue(CSSPropertyID::BackgroundRepeat, index);
+    if(value == nullptr)
+        return BackgroundRepeat::Repeat;
+    return convertBackgroundRepeat(*value);
+}
+
+BackgroundBox BoxStyle::backgroundOrigin(size_t index) const
+{
+    auto value = backgroundLayerValue(CSSPropertyID::BackgroundOrigin, index);
+    if(value == nullptr)
+        return BackgroundBox::PaddingBox;
+    return convertBackgroundBox(*value);
+}
+
+BackgroundBox BoxStyle::backgroundClip(size_t index) const
+{
+    auto value = backgroundLayerValue(CSSPropertyID::BackgroundClip, index);
+    if(value == nullptr)
+        return BackgroundBox::BorderBox;
+    return convertBackgroundBox(*value);
+}
+
+BackgroundAttachment BoxStyle::backgroundAttachment(size_t index) const
+{
+    auto value = backgroundLayerValue(CSSPropertyID::BackgroundAttachment, index);
+    if(value == nullptr)
+        return BackgroundAttachment::Scroll;
+    return convertBackgroundAttachment(*value);
+}
+
+BackgroundSize BoxStyle::backgroundSize(size_t index) const
+{
+    auto value = backgroundLayerValue(CSSPropertyID::BackgroundSize, index);
     if(value == nullptr)
         return BackgroundSize();
     if(auto ident = to<CSSIdentValue>(value)) {
@@ -516,9 +564,9 @@ BackgroundSize BoxStyle::backgroundSize() const
     return BackgroundSize(width, height);
 }
 
-LengthPoint BoxStyle::backgroundPosition() const
+LengthPoint BoxStyle::backgroundPosition(size_t index) const
 {
-    auto value = get(CSSPropertyID::BackgroundPosition);
+    auto value = backgroundLayerValue(CSSPropertyID::BackgroundPosition, index);
     if(value == nullptr)
         return LengthPoint(Length::ZeroFixed);
     return convertPositionCoordinate(*value);
@@ -1118,7 +1166,16 @@ bool BoxStyle::hasStroke() const
 
 bool BoxStyle::hasBackground() const
 {
-    return backgroundColor().isVisible() || backgroundImage();
+    if(backgroundColor().isVisible())
+        return true;
+    auto layerCount = backgroundLayerCount();
+    for(size_t index = 0; index < layerCount; ++index) {
+        if(backgroundImage(index)) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 bool BoxStyle::hasColumns() const
@@ -1241,18 +1298,6 @@ bool BoxStyle::apply(CSSPropertyID id, const CSSValue& value)
         break;
     case CSSPropertyID::ListStylePosition:
         m_listStylePosition = convertListStylePosition(value);
-        break;
-    case CSSPropertyID::BackgroundRepeat:
-        m_backgroundRepeat = convertBackgroundRepeat(value);
-        break;
-    case CSSPropertyID::BackgroundOrigin:
-        m_backgroundOrigin = convertBackgroundBox(value);
-        break;
-    case CSSPropertyID::BackgroundClip:
-        m_backgroundClip = convertBackgroundBox(value);
-        break;
-    case CSSPropertyID::BackgroundAttachment:
-        m_backgroundAttachment = convertBackgroundAttachment(value);
         break;
     case CSSPropertyID::ObjectFit:
         m_objectFit = convertObjectFit(value);
@@ -1431,18 +1476,6 @@ void BoxStyle::reset(CSSPropertyID id)
         break;
     case CSSPropertyID::ListStylePosition:
         m_listStylePosition = ListStylePosition::Outside;
-        break;
-    case CSSPropertyID::BackgroundRepeat:
-        m_backgroundRepeat = BackgroundRepeat::Repeat;
-        break;
-    case CSSPropertyID::BackgroundOrigin:
-        m_backgroundOrigin = BackgroundBox::PaddingBox;
-        break;
-    case CSSPropertyID::BackgroundClip:
-        m_backgroundClip = BackgroundBox::BorderBox;
-        break;
-    case CSSPropertyID::BackgroundAttachment:
-        m_backgroundAttachment = BackgroundAttachment::Scroll;
         break;
     case CSSPropertyID::ObjectFit:
         m_objectFit = ObjectFit::Fill;
@@ -1623,18 +1656,6 @@ void BoxStyle::inherit(CSSPropertyID id)
         break;
     case CSSPropertyID::ListStylePosition:
         m_listStylePosition = m_parentStyle->listStylePosition();
-        break;
-    case CSSPropertyID::BackgroundRepeat:
-        m_backgroundRepeat = m_parentStyle->backgroundRepeat();
-        break;
-    case CSSPropertyID::BackgroundOrigin:
-        m_backgroundOrigin = m_parentStyle->backgroundOrigin();
-        break;
-    case CSSPropertyID::BackgroundClip:
-        m_backgroundClip = m_parentStyle->backgroundClip();
-        break;
-    case CSSPropertyID::BackgroundAttachment:
-        m_backgroundAttachment = m_parentStyle->backgroundAttachment();
         break;
     case CSSPropertyID::ObjectFit:
         m_objectFit = m_parentStyle->objectFit();
