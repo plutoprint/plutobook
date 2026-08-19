@@ -115,11 +115,11 @@ int main(int argc, char* argv[])
     const char* user_style = "";
     const char* user_script = "";
 
-    const char* title = "";
-    const char* subject = "";
-    const char* author = "";
-    const char* keywords = "";
-    const char* creator = "";
+    const char* title = nullptr;
+    const char* subject = nullptr;
+    const char* author = nullptr;
+    const char* keywords = nullptr;
+    const char* creator = nullptr;
 
     ArgDesc args[] = {
         {"input", ArgType::String, &input, nullptr, "Specify the input HTML filename or URL"},

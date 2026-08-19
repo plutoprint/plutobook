@@ -480,7 +480,7 @@ PLUTOBOOK_API plutobook_canvas_t* plutobook_pdf_canvas_create_for_stream(
  *
  * @param canvas A pointer to a `plutobook_canvas_t` object.
  * @param metadata The metadata type to set.
- * @param value The value of the metadata field.
+ * @param value The value of the metadata field, or `NULL` to unset it.
  */
 PLUTOBOOK_API void plutobook_pdf_canvas_set_metadata(plutobook_canvas_t* canvas, plutobook_pdf_metadata_t metadata, const char* value);
 

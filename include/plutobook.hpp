@@ -872,6 +872,125 @@ public:
 };
 
 /**
+ * @brief An immutable, heap-owned, null-terminated string used for PDF metadata.
+ *
+ * A `PDFString` is either null (unset) or holds its own copy of the character
+ * data. The null state lets callers distinguish "no value provided" from an
+ * explicitly empty value when setting document metadata.
+ */
+class PLUTOBOOK_API PDFString {
+public:
+    /**
+     * @brief Constructs a null string.
+     */
+    PDFString() = default;
+
+    /**
+     * @brief Constructs a null string.
+     */
+    PDFString(std::nullptr_t);
+
+    /**
+     * @brief Constructs from a null-terminated C string.
+     * @param data Pointer to a null-terminated string, or `nullptr` to construct a null string.
+     */
+    PDFString(const char* data);
+
+    /**
+     * @brief Constructs by copying the first `length` bytes of a character buffer.
+     * @param data Pointer to the character data to copy.
+     * @param length Number of bytes to copy.
+     */
+    PDFString(const char* data, size_t length);
+
+    /**
+     * @brief Constructs from a `std::string`.
+     * @param value The string to copy.
+     */
+    PDFString(const std::string& value);
+
+    /**
+     * @brief Constructs from a `std::string_view`.
+     * @param value The string view to copy.
+     */
+    PDFString(std::string_view value);
+
+    /**
+     * @brief Copy constructor
+     * @param value The string to copy.
+     */
+    PDFString(const PDFString& value);
+
+    /**
+     * @brief Move constructor
+     */
+    PDFString(PDFString&&) = default;
+
+    /**
+     * @brief Copy assignment
+     * @param value String to copy.
+     * @return Reference to this string.
+     */
+    PDFString& operator=(const PDFString& value);
+
+    /**
+     * @brief Move assignment
+     * @return Reference to this string.
+     */
+    PDFString& operator=(PDFString&&) = default;
+
+    /**
+     * @brief data Returns the null-terminated character data.
+     * @return Pointer to the character data, or `nullptr` if the string is null.
+     */
+    const char* data() const { return m_data.get(); }
+
+    /**
+     * @brief Returns the length in bytes, excluding the null terminator.
+     * @return The number of bytes, or 0 if the string is null or empty.
+     */
+    size_t size() const { return length(m_data.get()); }
+
+    /**
+     * @brief Converts to a `std::string_view` over the contents.
+     */
+    operator std::string_view() const;
+
+    /**
+     * @brief Replace the stored string.
+     * @param value The new string to store. Defaults to null.
+     */
+    void reset(PDFString value = PDFString()) { swap(value); }
+
+    /**
+     * @brief Swaps contents with another string.
+     * @param value String to swap with.
+     */
+    void swap(PDFString& value) { m_data.swap(value.m_data); }
+
+    /**
+     * @brief Checks whether the string is null or has zero length.
+     * @return true if null or empty, false otherwise.
+     */
+    bool isEmpty() const { return m_data == nullptr || m_data[0] == '\0'; }
+
+    /**
+     * @brief Checks whether the string is null (unset).
+     * @return true if null, false otherwise.
+     */
+    bool isNull() const { return m_data == nullptr; }
+
+private:
+    static size_t length(const char* data);
+    std::unique_ptr<char[]> m_data;
+};
+
+inline PDFString::operator std::string_view() const
+{
+    return m_data == nullptr ? std::string_view() : std::string_view(data());
+}
+
+/**
  * @brief The PDFCanvas class represents a canvas for creating PDF documents.
  */
 class PLUTOBOOK_API PDFCanvas final : public Canvas {
@@ -902,31 +1021,31 @@ public:
      * @brief Sets the title of the PDF document.
      * @param title The title of the PDF document.
      */
-    void setTitle(const std::string& title);
+    void setTitle(const PDFString& title);
 
     /**
      * @brief Sets the author of the PDF document.
      * @param author The author of the PDF document.
      */
-    void setAuthor(const std::string& author);
+    void setAuthor(const PDFString& author);
 
     /**
      * @brief Sets the subject of the PDF document.
      * @param subject The subject of the PDF document.
      */
-    void setSubject(const std::string& subject);
+    void setSubject(const PDFString& subject);
 
     /**
      * @brief Sets the keywords associated with the PDF document.
      * @param keywords The keywords associated with the PDF document.
      */
-    void setKeywords(const std::string& keywords);
+    void setKeywords(const PDFString& keywords);
 
     /**
      * @brief Sets the creator of the PDF document.
      * @param creator The creator of the PDF document.
      */
-    void setCreator(const std::string& creator);
+    void setCreator(const PDFString& creator);
 
     /**
      * @brief Sets the creation date of the PDF document.
@@ -935,7 +1054,7 @@ public:
      *
      * @param creationDate The creation date of the PDF document.
      */
-    void setCreationDate(const std::string& creationDate);
+    void setCreationDate(const PDFString& creationDate);
 
     /**
      * @brief Sets the modification date of the PDF document.
@@ -944,7 +1063,7 @@ public:
      *
      * @param modificationDate The modification date of the PDF document.
      */
-    void setModificationDate(const std::string& modificationDate);
+    void setModificationDate(const PDFString& modificationDate);
 
     /**
      * @brief Sets the page size of the PDF document.
@@ -989,61 +1108,61 @@ public:
      * @brief Sets the title of the document.
      * @param title The title of the document.
      */
-    void setTitle(std::string title) { m_title = std::move(title); }
+    void setTitle(PDFString title) { m_title = std::move(title); }
 
     /**
      * @brief Gets the title of the document.
      * @return The title of the document.
      */
-    const std::string& title() const { return m_title; }
+    const PDFString& title() const { return m_title; }
 
     /**
      * @brief Sets the author of the document.
      * @param author The author of the document.
      */
-    void setAuthor(std::string author) { m_author = std::move(author); }
+    void setAuthor(PDFString author) { m_author = std::move(author); }
 
     /**
      * @brief Gets the author of the document.
      * @return The author of the document.
      */
-    const std::string& author() const { return m_author; }
+    const PDFString& author() const { return m_author; }
 
     /**
      * @brief Sets the subject of the document.
      * @param subject The subject of the document.
      */
-    void setSubject(std::string subject) { m_subject = std::move(subject); }
+    void setSubject(PDFString subject) { m_subject = std::move(subject); }
 
     /**
      * @brief Gets the subject of the document.
      * @return The subject of the document.
      */
-    const std::string& subject() const { return m_subject; }
+    const PDFString& subject() const { return m_subject; }
 
     /**
      * @brief Sets the keywords associated with the document.
      * @param keywords The keywords associated with the document.
      */
-    void setKeywords(std::string keywords) { m_keywords = std::move(keywords); }
+    void setKeywords(PDFString keywords) { m_keywords = std::move(keywords); }
 
     /**
      * @brief Gets the keywords associated with the document.
      * @return The keywords associated with the document.
      */
-    const std::string& keywords() const { return m_keywords; }
+    const PDFString& keywords() const { return m_keywords; }
 
     /**
      * @brief Sets the creator of the document.
      * @param creator The creator of the document.
      */
-    void setCreator(std::string creator) { m_creator = std::move(creator); }
+    void setCreator(PDFString creator) { m_creator = std::move(creator); }
 
     /**
      * @brief Gets the creator of the document.
      * @return The creator of the document.
      */
-    const std::string& creator() const { return m_creator; }
+    const PDFString& creator() const { return m_creator; }
 
     /**
      * @brief Sets the creation date of the document.
@@ -1052,13 +1171,13 @@ public:
      *
      * @param creationDate The creation date of the document.
      */
-    void setCreationDate(std::string creationDate) { m_creationDate = std::move(creationDate); }
+    void setCreationDate(PDFString creationDate) { m_creationDate = std::move(creationDate); }
 
     /**
      * @brief Gets the creation date of the document.
      * @return The creation date of the document.
      */
-    const std::string& creationDate() const { return m_creationDate; }
+    const PDFString& creationDate() const { return m_creationDate; }
 
     /**
      * @brief Sets the modification date of the document.
@@ -1067,13 +1186,13 @@ public:
      *
      * @param modificationDate The modification date of the document.
      */
-    void setModificationDate(std::string modificationDate) { m_modificationDate = std::move(modificationDate); }
+    void setModificationDate(PDFString modificationDate) { m_modificationDate = std::move(modificationDate); }
 
     /**
      * @brief Gets the modification date of the document.
      * @return The modification date of the document.
      */
-    const std::string& modificationDate() const { return m_modificationDate; }
+    const PDFString& modificationDate() const { return m_modificationDate; }
 
     /**
      * @brief Returns the width of the viewport.
@@ -1368,15 +1487,16 @@ private:
     mutable bool m_needsLayout{true};
     mutable bool m_needsPagination{true};
 
-    std::string m_title;
-    std::string m_author;
-    std::string m_subject;
-    std::string m_keywords;
-    std::string m_creator;
-    std::string m_creationDate;
-    std::string m_modificationDate;
+    PDFString m_title;
+    PDFString m_author;
+    PDFString m_subject;
+    PDFString m_keywords;
+    PDFString m_creator;
+    PDFString m_creationDate;
+    PDFString m_modificationDate;
 
     ResourceFetcher* m_customResourceFetcher{nullptr};
+
     std::unique_ptr<Heap> m_heap;
     std::unique_ptr<Document> m_document;
 };

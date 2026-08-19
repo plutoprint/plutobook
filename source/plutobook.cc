@@ -342,6 +342,10 @@ void plutobook_pdf_canvas_set_metadata(plutobook_canvas_t* canvas, plutobook_pdf
 {
     if(canvas == nullptr)
         return;
+    if(value == nullptr && metadata == PLUTOBOOK_PDF_METADATA_CREATOR) {
+        value = "PlutoBook " PLUTOBOOK_VERSION_STRING " (https://github.com/plutoprint)";
+    }
+
     cairo_pdf_surface_set_metadata(canvas->surface, (cairo_pdf_metadata_t)(metadata), value);
 }
 

@@ -179,6 +179,49 @@ bool ImageCanvas::writeToPng(plutobook_stream_write_callback_t callback, void* c
     return plutobook_image_canvas_write_to_png_stream(m_canvas, callback, closure);
 }
 
+PDFString::PDFString(std::nullptr_t) {}
+
+PDFString::PDFString(const char* data)
+    : PDFString(data, length(data))
+{
+}
+
+PDFString::PDFString(const char* data, size_t length)
+{
+    if(data == nullptr)
+        return;
+    m_data = std::make_unique<char[]>(length + 1);
+    for(size_t i = 0; i < length; i++)
+        m_data[i] = data[i];
+    m_data[length] = '\0';
+}
+
+PDFString::PDFString(const std::string& value)
+    : PDFString(value.data(), value.size())
+{
+}
+
+PDFString::PDFString(std::string_view value)
+    : PDFString(value.data(), value.size())
+{
+}
+
+PDFString::PDFString(const PDFString& value)
+    : PDFString(value.data(), value.size())
+{
+}
+
+PDFString& PDFString::operator=(const PDFString& value)
+{
+    PDFString(value).swap(*this);
+    return *this;
+}
+
+size_t PDFString::length(const char* data)
+{
+    return data == nullptr ? 0 : std::strlen(data);
+}
+
 PDFCanvas::PDFCanvas(const std::string& filename, const PageSize& pageSize)
     : Canvas(plutobook_pdf_canvas_create(filename.data(), (plutobook_page_size_t)(pageSize)))
 {
@@ -194,37 +237,37 @@ PDFCanvas::PDFCanvas(plutobook_stream_write_callback_t callback, void* closure, 
 {
 }
 
-void PDFCanvas::setTitle(const std::string& title)
+void PDFCanvas::setTitle(const PDFString& title)
 {
     plutobook_pdf_canvas_set_metadata(m_canvas, PLUTOBOOK_PDF_METADATA_TITLE, title.data());
 }
 
-void PDFCanvas::setAuthor(const std::string& author)
+void PDFCanvas::setAuthor(const PDFString& author)
 {
     plutobook_pdf_canvas_set_metadata(m_canvas, PLUTOBOOK_PDF_METADATA_AUTHOR, author.data());
 }
 
-void PDFCanvas::setSubject(const std::string& subject)
+void PDFCanvas::setSubject(const PDFString& subject)
 {
     plutobook_pdf_canvas_set_metadata(m_canvas, PLUTOBOOK_PDF_METADATA_SUBJECT, subject.data());
 }
 
-void PDFCanvas::setKeywords(const std::string& keywords)
+void PDFCanvas::setKeywords(const PDFString& keywords)
 {
     plutobook_pdf_canvas_set_metadata(m_canvas, PLUTOBOOK_PDF_METADATA_KEYWORDS, keywords.data());
 }
 
-void PDFCanvas::setCreator(const std::string& creator)
+void PDFCanvas::setCreator(const PDFString& creator)
 {
     plutobook_pdf_canvas_set_metadata(m_canvas, PLUTOBOOK_PDF_METADATA_CREATOR, creator.data());
 }
 
-void PDFCanvas::setCreationDate(const std::string& creationDate)
+void PDFCanvas::setCreationDate(const PDFString& creationDate)
 {
     plutobook_pdf_canvas_set_metadata(m_canvas, PLUTOBOOK_PDF_METADATA_CREATION_DATE, creationDate.data());
 }
 
-void PDFCanvas::setModificationDate(const std::string& modificationDate)
+void PDFCanvas::setModificationDate(const PDFString& modificationDate)
 {
     plutobook_pdf_canvas_set_metadata(m_canvas, PLUTOBOOK_PDF_METADATA_MODIFICATION_DATE, modificationDate.data());
 }
@@ -527,7 +570,7 @@ bool Book::writeToPdf(plutobook_stream_write_callback_t callback, void* closure,
     canvas.setTitle(m_title);
     canvas.setSubject(m_subject);
     canvas.setAuthor(m_author);
-    canvas.setCreator("PlutoBook " PLUTOBOOK_VERSION_STRING " (https://github.com/plutoprint)");
+    canvas.setCreator(m_creator);
     canvas.setKeywords(m_keywords);
     canvas.setCreationDate(m_creationDate);
     canvas.setModificationDate(m_modificationDate);
