@@ -18,6 +18,8 @@
 
 #ifdef _WIN32
 #include <windows.h>
+#else
+#include <sys/stat.h>
 #endif
 
 namespace plutobook {
@@ -30,6 +32,14 @@ static FILE* openStream(const char* filename, FileMode mode)
 
     return _wfopen(wfilename, mode == FileMode::Read ? L"rb" : L"wb");
 #else
+    struct stat st;
+    if(stat(filename, &st) != 0)
+        return nullptr;
+    if(S_ISDIR(st.st_mode)) {
+        errno = EISDIR;
+        return nullptr;
+    }
+
     return fopen(filename, mode == FileMode::Read ? "rb" : "wb");
 #endif
 }
