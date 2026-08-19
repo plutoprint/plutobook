@@ -47,16 +47,16 @@ static bool loadStream(FILE* stream, ByteArray& output)
     if(fseek(stream, 0, SEEK_END) != 0)
         return false;
     auto size = ftell(stream);
-    if(size == -1L) {
+    if(size == -1L)
         return false;
-    }
-
-    output.resize(size);
-
     if(fseek(stream, 0, SEEK_SET) != 0)
         return false;
-    fread(output.data(), 1, size, stream);
-    return ferror(stream) == 0;
+    output.resize(size);
+
+    auto data = output.data();
+    if(fread(data, 1, size, stream) == output.size())
+        return ferror(stream) == 0;
+    return false;
 }
 
 bool loadFile(const std::string& filename, ByteArray& output)
