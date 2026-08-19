@@ -22,24 +22,24 @@
 
 namespace plutobook {
 
-static FILE* openStream(const std::string& filename, FileMode mode)
+static FILE* openStream(const char* filename, FileMode mode)
 {
 #ifdef _WIN32
     wchar_t wfilename[1024];
-    MultiByteToWideChar(CP_UTF8, 0, filename.data(), -1, wfilename, sizeof(wfilename) / sizeof(wchar_t));
+    MultiByteToWideChar(CP_UTF8, 0, filename, -1, wfilename, sizeof(wfilename) / sizeof(wchar_t));
 
     return _wfopen(wfilename, mode == FileMode::Read ? L"rb" : L"wb");
 #else
-    return fopen(filename.data(), mode == FileMode::Read ? "rb" : "wb");
+    return fopen(filename, mode == FileMode::Read ? "rb" : "wb");
 #endif
 }
 
 File openFile(const std::string& filename, FileMode mode)
 {
-    auto stream = openStream(filename, mode);
-    if(stream == nullptr)
+    File file(openStream(filename.data(), mode));
+    if(file == nullptr)
         plutobook_set_error_message("Unable to open file '%s': %s", filename.data(), strerror(errno));
-    return File(stream);
+    return file;
 }
 
 static bool loadStream(FILE* stream, ByteArray& output)
