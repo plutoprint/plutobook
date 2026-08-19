@@ -18,6 +18,24 @@ const Color Color::Transparent(0x00000000);
 const Color Color::Black(0xFF000000);
 const Color Color::White(0xFFFFFFFF);
 
+Color interpolateColor(const Color& from, const Color& to, float t)
+{
+    auto fromAlpha = from.alpha() / 255.f;
+    auto toAlpha = to.alpha() / 255.f;
+    auto alpha = fromAlpha + (toAlpha - fromAlpha) * t;
+    auto blend = [&](uint8_t fromValue, uint8_t toValue) {
+        auto fromPremultiplied = fromValue / 255.f * fromAlpha;
+        auto toPremultiplied = toValue / 255.f * toAlpha;
+        auto value = fromPremultiplied + (toPremultiplied - fromPremultiplied) * t;
+        if(alpha > 0.f)
+            value /= alpha;
+        return static_cast<int>(std::lround(std::clamp(value, 0.f, 1.f) * 255.f));
+    };
+
+    return Color(blend(from.red(), to.red()), blend(from.green(), to.green()), blend(from.blue(), to.blue()),
+        static_cast<int>(std::lround(std::clamp(alpha, 0.f, 1.f) * 255.f)));
+}
+
 Color Color::lighten() const
 {
     if(m_value == 0xFF000000) {

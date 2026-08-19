@@ -506,6 +506,19 @@ void plutobook_set_http_timeout(int timeout)
     plutobook::defaultResourceFetcher()->setTimeout(timeout);
 }
 
+void plutobook_set_conic_gradient_rendering(plutobook_conic_gradient_rendering_t rendering)
+{
+    plutobook::setConicGradientRendering(rendering == PLUTOBOOK_CONIC_GRADIENT_RENDERING_RASTER
+        ? plutobook::ConicGradientRendering::Raster : plutobook::ConicGradientRendering::Mesh);
+}
+
+plutobook_conic_gradient_rendering_t plutobook_get_conic_gradient_rendering(void)
+{
+    if(plutobook::conicGradientRendering() == plutobook::ConicGradientRendering::Raster)
+        return PLUTOBOOK_CONIC_GRADIENT_RENDERING_RASTER;
+    return PLUTOBOOK_CONIC_GRADIENT_RENDERING_MESH;
+}
+
 struct _plutobook final : public plutobook::Book, public plutobook::ResourceFetcher {
     _plutobook(plutobook_page_size_t size, plutobook_page_margins_t margins, plutobook_media_type_t media);
     plutobook::ResourceData fetchUrl(const std::string& url) final;
