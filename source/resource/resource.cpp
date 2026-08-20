@@ -32,14 +32,6 @@ static FILE* openStream(const char* filename, FileMode mode)
 
     return _wfopen(wfilename, mode == FileMode::Read ? L"rb" : L"wb");
 #else
-    struct stat st;
-    if(stat(filename, &st) != 0)
-        return nullptr;
-    if(S_ISDIR(st.st_mode)) {
-        errno = EISDIR;
-        return nullptr;
-    }
-
     return fopen(filename, mode == FileMode::Read ? "rb" : "wb");
 #endif
 }
@@ -54,6 +46,16 @@ File openFile(const std::string& filename, FileMode mode)
 
 static bool loadStream(FILE* stream, ByteArray& output)
 {
+#ifndef _WIN32
+    struct stat st;
+    if(fstat(fileno(stream), &st) != 0)
+        return false;
+    if(S_ISDIR(st.st_mode)) {
+        errno = EISDIR;
+        return false;
+    }
+#endif
+
     if(fseek(stream, 0, SEEK_END) != 0)
         return false;
     auto size = ftell(stream);
