@@ -341,7 +341,7 @@ public:
 
     const Url& baseUrl() const { return m_baseUrl; }
     void setBaseUrl(Url baseUrl) { m_baseUrl = std::move(baseUrl); }
-    Url completeUrl(std::string_view value) const { return m_baseUrl.complete(value); }
+    Url completeUrl(std::string_view input) const;
 
     BoxView* box() const;
     float width() const;

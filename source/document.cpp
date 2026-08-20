@@ -590,6 +590,14 @@ Heap* Document::heap() const
     return m_book->heap();
 }
 
+Url Document::completeUrl(std::string_view input) const
+{
+    auto completeUrl = m_baseUrl.complete(input);
+    if(!completeUrl.isValid())
+        std::cerr << "WARNING: Unable to complete URL: '" << ellipsize(input) << '\'' << std::endl;
+    return completeUrl;
+}
+
 BoxView* Document::box() const
 {
     return static_cast<BoxView*>(Node::box());

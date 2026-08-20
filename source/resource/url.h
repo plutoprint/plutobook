@@ -15,14 +15,14 @@ namespace plutobook {
 
 class Url {
 public:
-    Url() = default;
+    explicit Url(bool valid = false);
     explicit Url(std::string_view input);
 
     Url complete(std::string_view input) const;
 
     bool protocolIs(std::string_view protocol) const;
     bool isHierarchical() const { return !m_aggregator.has_opaque_path; }
-    bool isValid() const;
+    bool isValid() const { return m_aggregator.is_valid; }
 
     const std::string& value() const { return m_aggregator.get_buffer(); }
 
@@ -37,6 +37,11 @@ private:
     ada::url_aggregator m_aggregator;
 };
 
+inline Url::Url(bool valid)
+{
+    m_aggregator.is_valid = valid;
+}
+
 inline Url::Url(std::string_view input)
     : Url(ada::parser::parse_url(input))
 {
@@ -49,7 +54,10 @@ inline Url::Url(ada::url_aggregator aggregator)
 
 inline Url Url::complete(std::string_view input) const
 {
-    return Url(ada::parser::parse_url(input, &m_aggregator));
+    const ada::url_aggregator* base = nullptr;
+    if(m_aggregator.is_valid)
+        base = &m_aggregator;
+    return Url(ada::parser::parse_url(input, base));
 }
 
 inline bool Url::protocolIs(std::string_view protocol) const
@@ -58,13 +66,6 @@ inline bool Url::protocolIs(std::string_view protocol) const
     if(!value.empty() && value.back() == ':')
         value.remove_suffix(1);
     return value == protocol;
-}
-
-inline bool Url::isValid() const
-{
-    if(m_aggregator.is_valid)
-        return m_aggregator.get_href_size() > 0;
-    return false;
 }
 
 inline std::string_view Url::base() const

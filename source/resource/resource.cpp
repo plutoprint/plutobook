@@ -480,10 +480,20 @@ Url ResourceLoader::completeUrl(std::string_view input)
 
     stripLeadingAndTrailingSpaces(input);
 
-    auto path = std::filesystem::absolute(input).u8string();
-    auto data = reinterpret_cast<const char*>(path.data());
+    if(input.empty()) {
+        return Url();
+    }
 
-    return Url(ada::href_from_file({data, path.size()}));
+    std::error_code ec;
+    auto abspath = std::filesystem::absolute(input, ec);
+    if(ec) {
+        return Url();
+    }
+
+    auto u8string = abspath.u8string();
+    std::string path(u8string.begin(), u8string.end());
+
+    return Url(ada::href_from_file(path));
 }
 
 DefaultResourceFetcher* defaultResourceFetcher()
