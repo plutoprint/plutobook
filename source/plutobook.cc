@@ -320,14 +320,23 @@ bool plutobook_image_canvas_write_to_png_stream(const plutobook_canvas_t* canvas
     return true;
 }
 
+static plutobook_canvas_t* plutobook_create_pdf_canvas(cairo_surface_t* surface)
+{
+    auto canvas = plutobook_canvas_create(surface);
+    if(canvas == nullptr)
+        return nullptr;
+    cairo_pdf_surface_set_metadata(surface, CAIRO_PDF_METADATA_CREATOR, "PlutoBook " PLUTOBOOK_VERSION_STRING " (https://github.com/plutoprint)");
+    return canvas;
+}
+
 plutobook_canvas_t* plutobook_pdf_canvas_create(const char* filename, plutobook_page_size_t size)
 {
-    return plutobook_canvas_create(cairo_pdf_surface_create(filename, size.width, size.height));
+    return plutobook_create_pdf_canvas(cairo_pdf_surface_create(filename, size.width, size.height));
 }
 
 plutobook_canvas_t* plutobook_pdf_canvas_create_for_stream(plutobook_stream_write_callback_t callback, void* closure, plutobook_page_size_t size)
 {
-    return plutobook_canvas_create(cairo_pdf_surface_create_for_stream((cairo_write_func_t)(callback), closure, size.width, size.height));
+    return plutobook_create_pdf_canvas(cairo_pdf_surface_create_for_stream((cairo_write_func_t)(callback), closure, size.width, size.height));
 }
 
 static_assert(PLUTOBOOK_PDF_METADATA_TITLE == static_cast<plutobook_pdf_metadata_t>(CAIRO_PDF_METADATA_TITLE), "unexpected plutobook_pdf_metadata_t value");
@@ -342,11 +351,7 @@ void plutobook_pdf_canvas_set_metadata(plutobook_canvas_t* canvas, plutobook_pdf
 {
     if(canvas == nullptr)
         return;
-    if(value == nullptr && metadata == PLUTOBOOK_PDF_METADATA_CREATOR) {
-        value = "PlutoBook " PLUTOBOOK_VERSION_STRING " (https://github.com/plutoprint)";
-    }
-
-    cairo_pdf_surface_set_metadata(canvas->surface, (cairo_pdf_metadata_t)(metadata), value);
+    cairo_pdf_surface_set_metadata(canvas->surface, (cairo_pdf_metadata_t)(metadata), (value ? value : ""));
 }
 
 void plutobook_pdf_canvas_set_size(plutobook_canvas_t* canvas, plutobook_page_size_t size)

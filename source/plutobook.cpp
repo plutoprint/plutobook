@@ -570,10 +570,15 @@ bool Book::writeToPdf(plutobook_stream_write_callback_t callback, void* closure,
     canvas.setTitle(m_title);
     canvas.setSubject(m_subject);
     canvas.setAuthor(m_author);
-    canvas.setCreator(m_creator);
     canvas.setKeywords(m_keywords);
-    canvas.setCreationDate(m_creationDate);
     canvas.setModificationDate(m_modificationDate);
+
+    if(!m_creator.isNull())
+        canvas.setCreator(m_creator);
+    if(!m_creationDate.isNull()) {
+        canvas.setCreationDate(m_creationDate);
+    }
+
     for(auto pageNum = pageStart; pageStep > 0 ? pageNum <= pageEnd : pageNum >= pageEnd; pageNum += pageStep) {
         canvas.setPageSize(pageSizeAt(pageNum - 1));
         renderPage(canvas, pageNum - 1);
