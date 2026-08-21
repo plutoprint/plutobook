@@ -153,7 +153,7 @@ void BoxLayer::paintLayerContents(BoxLayer* rootLayer, GraphicsContext& context,
         if(clipRect.isEmpty())
             return;
         context.save();
-        context.clipRect(clipRect);
+        context.clipRoundedRect(m_box->style()->getBorderRoundedRect(clipRect, true, true));
     }
 
     auto compositing = m_opacity < 1.f || m_box->style()->hasBlendMode();
