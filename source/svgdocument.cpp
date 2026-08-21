@@ -111,27 +111,25 @@ SVGProperty* SVGElement::getProperty(const GlobalString& name) const
 Size SVGElement::currentViewportSize() const
 {
     auto parent = to<SVGElement>(parentNode());
-    if(parent == nullptr) {
-        return to<SVGRootBox>(box())->contentBoxSize();
+    while(parent && parent->tagName() != svgTag) {
+        parent = to<SVGElement>(parent->parentNode());
     }
 
-    if(parent->tagName() == svgTag) {
-        auto element = static_cast<const SVGSVGElement*>(parent);
-        auto viewBoxRect = element->currentViewBoxRect();
-        if(viewBoxRect.isValid())
-            return viewBoxRect.size();
-        if(auto rootBox = to<SVGRootBox>(element->box()))
-            return rootBox->contentBoxSize();
-        SVGLengthContext lengthContext(element);
-        const Size viewportSize = {
-            lengthContext.valueForLength(element->width()),
-            lengthContext.valueForLength(element->height())
-        };
+    assert(parent && parent->isOfType(svgNs, svgTag));
+    auto element = static_cast<const SVGSVGElement*>(parent);
 
-        return viewportSize;
-    }
+    const auto& viewBoxRect = element->viewBox();
+    if(viewBoxRect.isValid())
+        return viewBoxRect.size();
+    if(auto rootBox = to<SVGRootBox>(element->box()))
+        return rootBox->contentBoxSize();
+    SVGLengthContext lengthContext(element);
+    const Size viewportSize = {
+        lengthContext.valueForLength(element->width()),
+        lengthContext.valueForLength(element->height())
+    };
 
-    return parent->currentViewportSize();
+    return viewportSize;
 }
 
 SVGResourceContainerBox* SVGElement::getResourceById(std::string_view id) const
