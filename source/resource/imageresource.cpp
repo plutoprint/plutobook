@@ -471,7 +471,7 @@ Size SVGImage::intrinsicSize() const
         return Size(intrinsicWidth, intrinsicHeight);
     }
 
-    auto viewBoxRect = rootElement->currentViewBoxRect();
+    auto viewBoxRect = rootElement->viewBox();
     if(viewBoxRect.isValid())
         return viewBoxRect.size();
     return Size(300, 150);
