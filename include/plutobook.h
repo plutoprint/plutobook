@@ -479,7 +479,7 @@ PLUTOBOOK_API plutobook_canvas_t* plutobook_pdf_canvas_create_for_stream(
  * An optional timezone of the form "[+/-]hh:mm" or "Z" for UTC time can be appended. All other metadata values can be any string.
  *
  * @param canvas A pointer to a `plutobook_canvas_t` object.
- * @param metadata The metadata type to set.
+ * @param metadata The metadata field to set.
  * @param value The value of the metadata field, or `NULL` to unset it.
  */
 PLUTOBOOK_API void plutobook_pdf_canvas_set_metadata(plutobook_canvas_t* canvas, plutobook_pdf_metadata_t metadata, const char* value);
@@ -733,17 +733,17 @@ PLUTOBOOK_API void plutobook_clear_content(plutobook_t* book);
  * An optional timezone of the form "[+/-]hh:mm" or "Z" for UTC time can be appended. All other metadata values can be any string.
  *
  * @param book A pointer to a `plutobook_t` object.
- * @param metadata The metadata type to set.
- * @param value The value of the metadata field.
+ * @param metadata The metadata field to set.
+ * @param value The value of the metadata field, or `NULL` to unset it.
  */
 PLUTOBOOK_API void plutobook_set_metadata(plutobook_t* book, plutobook_pdf_metadata_t metadata, const char* value);
 
 /**
- * @brief Gets the value of the specified metadata.
+ * @brief Gets the value of the metadata field.
  *
  * @param book A pointer to a `plutobook_t` object.
- * @param metadata The type of metadata to get.
- * @return The value of the specified metadata.
+ * @param metadata The metadata field to get.
+ * @return The value of the metadata field, or `NULL` if it is not set.
  */
 PLUTOBOOK_API const char* plutobook_get_metadata(const plutobook_t* book, plutobook_pdf_metadata_t metadata);
 
