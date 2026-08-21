@@ -380,6 +380,9 @@ struct _plutobook_resource_data {
 
 static plutobook_resource_data_t* plutobook_resource_data_create_uninitialized(unsigned int content_length, const char* mime_type, const char* text_encoding)
 {
+    if(mime_type == nullptr) mime_type = "";
+    if(text_encoding == nullptr) text_encoding = "";
+
     auto mime_type_length = std::strlen(mime_type) + 1ul;
     auto text_encoding_length = std::strlen(text_encoding) + 1ul;
     auto resource = (plutobook_resource_data_t*)(std::malloc(mime_type_length + text_encoding_length + content_length + sizeof(plutobook_resource_data_t)));
