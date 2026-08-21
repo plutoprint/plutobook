@@ -18,6 +18,7 @@
 
 #include <cmath>
 #include <utility>
+#include <algorithm>
 
 namespace plutobook {
 
@@ -191,8 +192,7 @@ PDFString::PDFString(const char* data, size_t length)
     if(data == nullptr)
         return;
     m_data = std::make_unique<char[]>(length + 1);
-    for(size_t i = 0; i < length; i++)
-        m_data[i] = data[i];
+    std::copy_n(data, length, m_data.get());
     m_data[length] = '\0';
 }
 
