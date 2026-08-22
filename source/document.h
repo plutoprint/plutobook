@@ -343,6 +343,8 @@ public:
     bool shouldSetTitle() const;
     void setTitle(std::string title);
 
+    void setMetadata(std::string_view name, std::string_view content);
+
     const Url& baseUrl() const { return m_baseUrl; }
     void setBaseUrl(Url baseUrl) { m_baseUrl = std::move(baseUrl); }
     Url completeUrl(std::string_view input) const;

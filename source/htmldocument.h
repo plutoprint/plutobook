@@ -253,6 +253,16 @@ public:
     void finishParsingDocument() final;
 };
 
+class HTMLMetaElement final : public HTMLElement {
+public:
+    HTMLMetaElement(Document* document);
+
+    const HeapString& name() const;
+    const HeapString& content() const;
+
+    void finishParsingDocument() final;
+};
+
 class HTMLBaseElement final : public HTMLElement {
 public:
     HTMLBaseElement(Document* document);

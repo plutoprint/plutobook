@@ -622,6 +622,24 @@ void Document::setTitle(std::string title)
     m_book->setTitle(title);
 }
 
+void Document::setMetadata(std::string_view name, std::string_view content)
+{
+    if(equals(name, "author", false)) {
+        if(m_book->author().isNull())
+            m_book->setAuthor(content);
+    } else if(equals(name, "subject", false)) {
+        if(m_book->subject().isNull())
+            m_book->setSubject(content);
+    } else if(equals(name, "keywords", false)) {
+        if(m_book->keywords().isNull())
+            m_book->setKeywords(content);
+    } else if(equals(name, "creator", false)) {
+        if(m_book->creator().isNull()) {
+            m_book->setCreator(content);
+        }
+    }
+}
+
 Url Document::completeUrl(std::string_view input) const
 {
     auto completeUrl = m_baseUrl.complete(input);
@@ -712,6 +730,8 @@ Element* Document::createElement(const GlobalString& namespaceURI, const GlobalS
             return new (m_book->heap()) HTMLLinkElement(this);
         if(tagName == titleTag)
             return new (m_book->heap()) HTMLTitleElement(this);
+        if(tagName == metaTag)
+            return new (m_book->heap()) HTMLMetaElement(this);
         if(tagName == baseTag)
             return new (m_book->heap()) HTMLBaseElement(this);
         return new (m_book->heap()) HTMLElement(this, tagName);

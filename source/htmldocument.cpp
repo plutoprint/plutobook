@@ -1050,6 +1050,28 @@ void HTMLTitleElement::finishParsingDocument()
     HTMLElement::finishParsingDocument();
 }
 
+HTMLMetaElement::HTMLMetaElement(Document* document)
+    : HTMLElement(document, metaTag)
+{
+}
+
+const HeapString& HTMLMetaElement::name() const
+{
+    return getAttribute(nameAttr);
+}
+
+const HeapString& HTMLMetaElement::content() const
+{
+    return getAttribute(contentAttr);
+}
+
+void HTMLMetaElement::finishParsingDocument()
+{
+    if(document()->isRootDocument())
+        document()->setMetadata(name(), content());
+    HTMLElement::finishParsingDocument();
+}
+
 HTMLBaseElement::HTMLBaseElement(Document* document)
     : HTMLElement(document, baseTag)
 {
