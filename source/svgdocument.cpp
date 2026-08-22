@@ -318,14 +318,13 @@ void SVGSVGElement::computeintrinsicSize(float& intrinsicWidth, float& intrinsic
     }
 }
 
-void SVGSVGElement::computeIntrinsicDimensions(float& intrinsicWidth, float& intrinsicHeight, double& intrinsicRatio)
+void SVGSVGElement::computeIntrinsicDimensions(float& intrinsicWidth, float& intrinsicHeight, double& intrinsicRatio) const
 {
-    const auto viewBoxRect = currentViewBoxRect();
-
     computeintrinsicSize(intrinsicWidth, intrinsicHeight);
+
     if(intrinsicWidth > 0.f && intrinsicHeight > 0.f) {
         intrinsicRatio = intrinsicWidth / intrinsicHeight;
-    } else if(!viewBoxRect.isEmpty()) {
+    } else if(const auto& viewBoxRect = viewBox(); !viewBoxRect.isEmpty()) {
         intrinsicRatio = viewBoxRect.w / viewBoxRect.h;
     } else {
         intrinsicRatio = 0.0;

@@ -431,16 +431,9 @@ void SVGImage::drawPattern(GraphicsContext& context, const Rect& destRect, const
     cairo_surface_destroy(pattern_surface);
 }
 
-static SVGSVGElement* toSVGRootElement(Element* element)
-{
-    assert(element && element->isOfType(svgNs, svgTag));
-    return static_cast<SVGSVGElement*>(element);
-}
-
 void SVGImage::computeIntrinsicDimensions(float& intrinsicWidth, float& intrinsicHeight, double& intrinsicRatio)
 {
-    auto rootElement = toSVGRootElement(m_document->rootElement());
-    rootElement->computeIntrinsicDimensions(intrinsicWidth, intrinsicHeight, intrinsicRatio);
+    rootElement()->computeIntrinsicDimensions(intrinsicWidth, intrinsicHeight, intrinsicRatio);
 }
 
 void SVGImage::setContainerSize(const Size& size)
@@ -457,8 +450,7 @@ Size SVGImage::intrinsicSize() const
     float intrinsicHeight = 0.f;
     double intrinsicRatio = 0.0;
 
-    auto rootElement = toSVGRootElement(m_document->rootElement());
-    rootElement->computeIntrinsicDimensions(intrinsicWidth, intrinsicHeight, intrinsicRatio);
+    rootElement()->computeIntrinsicDimensions(intrinsicWidth, intrinsicHeight, intrinsicRatio);
     if(intrinsicRatio && (!intrinsicWidth || !intrinsicHeight)) {
         if(!intrinsicWidth && intrinsicHeight)
             intrinsicWidth = intrinsicHeight * intrinsicRatio;
@@ -471,7 +463,7 @@ Size SVGImage::intrinsicSize() const
         return Size(intrinsicWidth, intrinsicHeight);
     }
 
-    auto viewBoxRect = rootElement->viewBox();
+    auto viewBoxRect = rootElement()->viewBox();
     if(viewBoxRect.isValid())
         return viewBoxRect.size();
     return Size(300, 150);
@@ -488,6 +480,13 @@ SVGImage::SVGImage(std::unique_ptr<SVGDocument> document)
     : m_document(std::move(document))
 {
     m_document->build();
+}
+
+SVGSVGElement* SVGImage::rootElement() const
+{
+    auto element = m_document->rootElement();
+    assert(element && element->isOfType(svgNs, svgTag));
+    return static_cast<SVGSVGElement*>(element);
 }
 
 } // namespace plutobook
