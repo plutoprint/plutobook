@@ -1028,6 +1028,19 @@ void SVGStyleElement::finishParsingDocument()
     SVGElement::finishParsingDocument();
 }
 
+SVGTitleElement::SVGTitleElement(Document* document)
+    : SVGElement(document, titleTag)
+{
+}
+
+void SVGTitleElement::finishParsingDocument()
+{
+    auto book = document()->book();
+    if(book->title().isNull() && document()->isRootDocument())
+        book->setRawTitle(textFromChildren());
+    SVGElement::finishParsingDocument();
+}
+
 std::unique_ptr<SVGDocument> SVGDocument::create(Book* book, Url baseUrl)
 {
     return std::unique_ptr<SVGDocument>(new (book->heap()) SVGDocument(book, std::move(baseUrl)));

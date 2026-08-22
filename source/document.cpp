@@ -739,6 +739,8 @@ Element* Document::createElement(const GlobalString& namespaceURI, const GlobalS
             return new (m_book->heap()) SVGRadialGradientElement(this);
         if(tagName == styleTag)
             return new (m_book->heap()) SVGStyleElement(this);
+        if(tagName == titleTag)
+            return new (m_book->heap()) SVGTitleElement(this);
         return new (m_book->heap()) SVGElement(this, tagName);
     }
 

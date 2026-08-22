@@ -697,6 +697,13 @@ public:
     void finishParsingDocument() final;
 };
 
+class SVGTitleElement final : public SVGElement {
+public:
+    SVGTitleElement(Document* document);
+
+    void finishParsingDocument() final;
+};
+
 class SVGDocument final : public XMLDocument {
 public:
     static std::unique_ptr<SVGDocument> create(Book* book, Url baseUrl);
