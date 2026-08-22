@@ -354,6 +354,28 @@ Book::Book(const PageSize& size, const PageMargins& margins, MediaType media)
 
 Book::~Book() = default;
 
+void Book::setRawTitle(std::string title)
+{
+    unsigned int index = 0;
+
+    bool pendingWhitespace = false;
+    for(auto cc : title) {
+        if(!isSpace(cc)) {
+            if(pendingWhitespace) {
+                title[index++] = ' ';
+                pendingWhitespace = false;
+            }
+
+            title[index++] = cc;
+        } else if(index > 0) {
+            pendingWhitespace = true;
+        }
+    }
+
+    title.resize(index);
+    m_title.reset(title);
+}
+
 float Book::viewportWidth() const
 {
     return std::max(0.f, m_pageSize.width() - m_pageMargins.left() - m_pageMargins.right()) / units::px;
