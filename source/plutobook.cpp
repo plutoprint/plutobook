@@ -463,6 +463,10 @@ void Book::clearContent()
     m_needsBuild = true;
     m_needsLayout = true;
     m_needsPagination = true;
+    for(auto value : {&m_title, &m_author, &m_subject, &m_keywords,
+        &m_creator, &m_creationDate, &m_modificationDate}) {
+        value->reset();
+    }
 }
 
 void Book::renderPage(Canvas& canvas, uint32_t pageIndex) const
