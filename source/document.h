@@ -334,6 +334,7 @@ public:
     ~Document() override;
 
     bool isDocumentNode() const final { return true; }
+    bool isRootDocument() const;
 
     Book* book() const { return m_book; }
     ResourceFetcher* customResourceFetcher() const;

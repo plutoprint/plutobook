@@ -1247,7 +1247,7 @@ static const CSSRuleList& userAgentRules()
 void CSSStyleSheet::addUserAgentRules()
 {
     assert(m_ruleCount == 0);
-    if(!m_document->isSVGDocument()) {
+    if(m_document->isRootDocument()) {
         addRules(userAgentRules());
     }
 }

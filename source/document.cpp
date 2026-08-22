@@ -580,6 +580,11 @@ Document::Document(Book* book, Url baseUrl)
 
 Document::~Document() = default;
 
+bool Document::isRootDocument() const
+{
+    return this == m_book->document();
+}
+
 ResourceFetcher* Document::customResourceFetcher() const
 {
     return m_book->customResourceFetcher();
