@@ -1045,9 +1045,8 @@ HTMLTitleElement::HTMLTitleElement(Document* document)
 
 void HTMLTitleElement::finishParsingDocument()
 {
-    auto book = document()->book();
-    if(book->title().isNull())
-        book->setRawTitle(textFromChildren());
+    if(document()->shouldSetTitle())
+        document()->setTitle(textFromChildren());
     HTMLElement::finishParsingDocument();
 }
 

@@ -595,6 +595,33 @@ Heap* Document::heap() const
     return m_book->heap();
 }
 
+bool Document::shouldSetTitle() const
+{
+    return m_book->title().isNull() && isRootDocument();
+}
+
+void Document::setTitle(std::string title)
+{
+    unsigned int index = 0;
+
+    bool pendingWhitespace = false;
+    for(auto cc : title) {
+        if(!isSpace(cc)) {
+            if(pendingWhitespace) {
+                title[index++] = ' ';
+                pendingWhitespace = false;
+            }
+
+            title[index++] = cc;
+        } else if(index > 0) {
+            pendingWhitespace = true;
+        }
+    }
+
+    title.resize(index);
+    m_book->setTitle(title);
+}
+
 Url Document::completeUrl(std::string_view input) const
 {
     auto completeUrl = m_baseUrl.complete(input);

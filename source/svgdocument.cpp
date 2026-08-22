@@ -1035,9 +1035,8 @@ SVGTitleElement::SVGTitleElement(Document* document)
 
 void SVGTitleElement::finishParsingDocument()
 {
-    auto book = document()->book();
-    if(book->title().isNull() && document()->isRootDocument())
-        book->setRawTitle(textFromChildren());
+    if(document()->shouldSetTitle())
+        document()->setTitle(textFromChildren());
     SVGElement::finishParsingDocument();
 }
 

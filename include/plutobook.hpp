@@ -1111,13 +1111,6 @@ public:
     void setTitle(PDFString title) { m_title = std::move(title); }
 
     /**
-     * @brief Sets the title of the document, with leading, trailing, and
-     * repeated whitespace removed.
-     * @param title The raw title of the document.
-     */
-    void setRawTitle(std::string title);
-
-    /**
      * @brief Gets the title of the document.
      * @return The title of the document.
      */

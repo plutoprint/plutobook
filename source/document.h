@@ -340,6 +340,9 @@ public:
     ResourceFetcher* customResourceFetcher() const;
     Heap* heap() const;
 
+    bool shouldSetTitle() const;
+    void setTitle(std::string title);
+
     const Url& baseUrl() const { return m_baseUrl; }
     void setBaseUrl(Url baseUrl) { m_baseUrl = std::move(baseUrl); }
     Url completeUrl(std::string_view input) const;
