@@ -407,6 +407,7 @@ ResourceData DefaultResourceFetcher::fetchUrl(const std::string& url)
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, content);
     curl_easy_setopt(curl, CURLOPT_USERAGENT, "PlutoBook/" PLUTOBOOK_VERSION_STRING);
     curl_easy_setopt(curl, CURLOPT_MAXFILESIZE_LARGE, MAX_RESOURCE_SIZE);
+    curl_easy_setopt(curl, CURLOPT_FAILONERROR, 1L);
 
     if(!m_caInfo.empty())
         curl_easy_setopt(curl, CURLOPT_CAINFO, m_caInfo.data());
@@ -427,20 +428,26 @@ ResourceData DefaultResourceFetcher::fetchUrl(const std::string& url)
     auto response = curl_easy_perform(curl);
     if(response == CURLE_OK) {
         const char* contentType = nullptr;
-        auto response = curl_easy_getinfo(curl, CURLINFO_CONTENT_TYPE, &contentType);
-        if(response == CURLE_OK && contentType) {
+        curl_easy_getinfo(curl, CURLINFO_CONTENT_TYPE, &contentType);
+        if(contentType)
             parseContentType(contentType, mimeType, textEncoding);
-        }
-
-        if(mimeType.empty()) {
+        if(mimeType.empty())
             mimeTypeFromPath(mimeType, percentDecode(url.substr(0, url.find('?'))));
-        }
+        curl_easy_cleanup(curl);
+
+        return createResourceData(content, mimeType, textEncoding);
+    }
+
+    const char* message = curl_easy_strerror(response);
+    if(response == CURLE_HTTP_RETURNED_ERROR) {
+        long code = 0;
+        curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &code);
+        plutobook_set_error_message("Unable to fetch URL '%s': %s (%ld)", url.data(), message, code);
+    } else {
+        plutobook_set_error_message("Unable to fetch URL '%s': %s", url.data(), message);
     }
 
     curl_easy_cleanup(curl);
-    if(response == CURLE_OK)
-        return createResourceData(content, mimeType, textEncoding);
-    plutobook_set_error_message("Unable to fetch URL '%s': %s", url.data(), curl_easy_strerror(response));
     ByteArrayDestroy(content);
     return ResourceData();
 }
