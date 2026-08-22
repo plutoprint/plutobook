@@ -181,15 +181,16 @@ int main(int argc, char* argv[])
 
     Book book(pageSize, margins, media);
 
-    book.setTitle(title);
-    book.setSubject(subject);
-    book.setAuthor(author);
-    book.setKeywords(keywords);
-    book.setCreator(creator);
+    if(book.loadUrl(input, user_style, user_script)) {
+        if(title) book.setTitle(title);
+        if(subject) book.setSubject(subject);
+        if(author) book.setAuthor(author);
+        if(keywords) book.setKeywords(keywords);
+        if(creator) book.setCreator(creator);
 
-    if(book.loadUrl(input, user_style, user_script)
-        && book.writeToPdf(output, page_start, page_end, page_step)) {
-        return 0;
+        if(book.writeToPdf(output, page_start, page_end, page_step)) {
+            return 0;
+        }
     }
 
     fprintf(stderr, "ERROR: %s\n", plutobook_get_error_message());
