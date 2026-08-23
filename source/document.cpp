@@ -627,13 +627,13 @@ void Document::setMetadata(std::string_view name, std::string_view content)
     if(equals(name, "author", false)) {
         if(m_book->author().isNull())
             m_book->setAuthor(content);
-    } else if(equals(name, "subject", false)) {
+    } else if(equals(name, "description", false)) {
         if(m_book->subject().isNull())
             m_book->setSubject(content);
     } else if(equals(name, "keywords", false)) {
         if(m_book->keywords().isNull())
             m_book->setKeywords(content);
-    } else if(equals(name, "creator", false)) {
+    } else if(equals(name, "generator", false)) {
         if(m_book->creator().isNull()) {
             m_book->setCreator(content);
         }
