@@ -85,11 +85,11 @@ public:
         return m_ptr;
     }
 
-    operator T*() const { return m_ptr; }
-    operator bool() const { return !!m_ptr; }
+    explicit operator bool() const { return !!m_ptr; }
 
     RefPtr<T>& operator=(std::nullptr_t) {
-        clear();
+        derefIfNotNull(m_ptr);
+        m_ptr = nullptr;
         return *this;
     }
 
@@ -141,9 +141,13 @@ public:
         return ptr;
     }
 
-    void clear() {
-        derefIfNotNull(m_ptr);
-        m_ptr = nullptr;
+    bool operator==(std::nullptr_t) const {
+        return m_ptr == nullptr;
+    }
+
+    template<typename U>
+    bool operator==(const U* o) const {
+        return m_ptr == o;
     }
 
     template<typename U>
@@ -156,35 +160,23 @@ public:
         return m_ptr < o.get();
     }
 
-    friend RefPtr<T> adoptPtr<T>(T*);
-
 private:
-    RefPtr(T* ptr, std::nullptr_t) : m_ptr(ptr) {}
+    enum AdoptTag { Adopt };
+    RefPtr(T* ptr, AdoptTag) : m_ptr(ptr) {}
+    friend RefPtr<T> adoptPtr<T>(T*);
     T* m_ptr{nullptr};
 };
 
 template<typename T>
 inline RefPtr<T> adoptPtr(T* ptr)
 {
-    return RefPtr<T>(ptr, nullptr);
+    return RefPtr<T>(ptr, RefPtr<T>::Adopt);
 }
 
 template<class T>
 inline void swap(RefPtr<T>& a, RefPtr<T>& b)
 {
     a.swap(b);
-}
-
-template<typename T>
-inline bool operator==(const RefPtr<T>& a, std::nullptr_t)
-{
-    return a.get() == nullptr;
-}
-
-template<typename T>
-inline bool operator==(std::nullptr_t, const RefPtr<T>& a)
-{
-    return nullptr == a.get();
 }
 
 template<typename T>
