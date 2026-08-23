@@ -288,7 +288,7 @@ Box* SVGSVGElement::createBox(const RefPtr<BoxStyle>& style)
 Rect SVGSVGElement::currentViewBoxRect() const
 {
     const auto& viewBoxRect = viewBox();
-    if(viewBoxRect.isEmpty() && isSVGRootNode() && !document()->isRootDocument()) {
+    if(viewBoxRect.isEmpty() && isSVGRootNode() && document()->isSVGDocument()) {
         float intrinsicWidth, intrinsicHeight;
         computeintrinsicSize(intrinsicWidth, intrinsicHeight);
         return Rect(intrinsicWidth, intrinsicHeight);

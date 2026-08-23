@@ -72,21 +72,21 @@ Rect SVGRootBox::paintBoundingBox() const
 
 float SVGRootBox::computePreferredReplacedWidth() const
 {
-    if(document()->isRootDocument())
+    if(document()->isSVGDocument())
         return document()->containerWidth();
     return ReplacedBox::computePreferredReplacedWidth();
 }
 
 float SVGRootBox::computeReplacedWidth() const
 {
-    if(document()->isRootDocument())
+    if(document()->isSVGDocument())
         return document()->containerWidth();
     return ReplacedBox::computeReplacedWidth();
 }
 
 float SVGRootBox::computeReplacedHeight() const
 {
-    if(document()->isRootDocument())
+    if(document()->isSVGDocument())
         return document()->containerHeight();
     return ReplacedBox::computeReplacedHeight();
 }
