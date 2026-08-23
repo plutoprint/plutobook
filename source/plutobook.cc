@@ -351,7 +351,7 @@ void plutobook_pdf_canvas_set_metadata(plutobook_canvas_t* canvas, plutobook_pdf
 {
     if(canvas == nullptr)
         return;
-    cairo_pdf_surface_set_metadata(canvas->surface, (cairo_pdf_metadata_t)(metadata), (value ? value : ""));
+    cairo_pdf_surface_set_metadata(canvas->surface, (cairo_pdf_metadata_t)(metadata), value);
 }
 
 void plutobook_pdf_canvas_set_size(plutobook_canvas_t* canvas, plutobook_page_size_t size)
