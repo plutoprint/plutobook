@@ -15,8 +15,6 @@
 
 namespace plutobook {
 
-class HTMLDocument;
-
 class HTMLElement : public Element {
 public:
     HTMLElement(Document* document, const GlobalString& tagName);
