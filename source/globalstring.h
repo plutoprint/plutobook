@@ -18,6 +18,8 @@ public:
     GlobalString() = default;
     explicit GlobalString(std::string_view value);
 
+    const HeapString& value() const;
+
     const char* data() const { return value().data(); }
     size_t size() const { return value().size(); }
 
@@ -31,16 +33,14 @@ public:
     const char& back() const { return value().back(); }
 
     bool isEmpty() const { return value().empty(); }
-    bool isNull() const { return !m_entry; }
+    bool isNull() const { return m_entry == nullptr; }
 
-    GlobalString foldCase() const;
+    bool operator==(const GlobalString& o) const { return m_entry == o.m_entry; }
 
     operator std::string_view() const { return value(); }
     operator const HeapString&() const { return value(); }
 
-    bool operator==(const GlobalString& o) const { return m_entry == o.m_entry; }
-
-    const HeapString& value() const;
+    GlobalString foldCase() const;
 
 private:
     static const HeapString nullString;
