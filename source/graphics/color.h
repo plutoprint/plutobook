@@ -54,6 +54,10 @@ constexpr Color Color::colorWithAlpha(float opacity) const
     return Color(rgb | a << 24);
 }
 
+// Blends two colors in premultiplied sRGB, as CSS requires of gradients, so
+// that a ramp towards a transparent color does not pick up its hue.
+Color interpolateColor(const Color& from, const Color& to, float t);
+
 constexpr bool operator==(const Color& a, const Color& b)
 {
     return a.value() == b.value();

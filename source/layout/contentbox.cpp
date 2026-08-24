@@ -9,6 +9,7 @@
 #include "contentbox.h"
 #include "replacedbox.h"
 #include "imageresource.h"
+#include "gradientimage.h"
 #include "htmldocument.h"
 #include "cssrule.h"
 #include "counters.h"
@@ -242,6 +243,8 @@ void ContentBoxBuilder::build(const CSSValue& content)
             addText(string->value());
         } else if(auto image = to<CSSImageValue>(value)) {
             addImage(image->fetch(m_style->document()));
+        } else if(auto gradient = to<CSSGradientValue>(value)) {
+            addImage(GradientImage::create(*m_style, *gradient));
         } else if(auto counter = to<CSSCounterValue>(value)) {
             addCounter(*counter);
         } else if(auto ident = to<CSSIdentValue>(value)) {

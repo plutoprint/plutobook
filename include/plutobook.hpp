@@ -643,6 +643,35 @@ private:
 PLUTOBOOK_API DefaultResourceFetcher* defaultResourceFetcher();
 
 /**
+ * @brief Defines how a CSS conic gradient is rendered.
+ *
+ * Neither cairo nor PDF has a conic shading, so the sweep has to be
+ * approximated one way or another.
+ */
+enum class ConicGradientRendering {
+    Mesh, ///< Approximate the sweep with a mesh of patches, which stays vectorial.
+    Raster ///< Sample the sweep into a bitmap.
+};
+
+/**
+ * @brief Selects the method used to render conic gradients.
+ *
+ * If not set, conic gradients are rendered with ConicGradientRendering::Mesh,
+ * which keeps them resolution independent in the PDF output.
+ * ConicGradientRendering::Raster trades that for an exact sweep, at the cost of
+ * an embedded bitmap.
+ *
+ * @param rendering The rendering method to use.
+ */
+PLUTOBOOK_API void setConicGradientRendering(ConicGradientRendering rendering);
+
+/**
+ * @brief Returns the method used to render conic gradients.
+ * @return The rendering method currently in use.
+ */
+PLUTOBOOK_API ConicGradientRendering conicGradientRendering();
+
+/**
  * @brief The OutputStream is an abstract base class for writing data to an output stream.
  */
 class PLUTOBOOK_API OutputStream {
