@@ -2849,8 +2849,8 @@ void HTMLParser::handleFormattingEndTagToken(HTMLTokenView& token)
         furthestBlock->reparentChildren(newNode);
         furthestBlock->appendChild(newNode);
 
-        m_activeFormattingElements.remove(formattingElement);
         m_activeFormattingElements.insert(bookmark, newNode);
+        m_activeFormattingElements.remove(formattingElement);
 
         m_openElements.remove(formattingElement);
         m_openElements.insertAfter(furthestBlock, newNode);
