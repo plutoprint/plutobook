@@ -1149,9 +1149,9 @@ void HTMLParser::handleBeforeHTMLMode(HTMLTokenView& token)
         }
     } else if(token.type() == HTMLToken::Type::EndTag) {
         if(token.tagName() != headTag
-            || token.tagName() != bodyTag
-            || token.tagName() != htmlTag
-            || token.tagName() != brTag) {
+            && token.tagName() != bodyTag
+            && token.tagName() != htmlTag
+            && token.tagName() != brTag) {
             handleErrorToken(token);
             return;
         }
@@ -1178,9 +1178,9 @@ void HTMLParser::handleBeforeHeadMode(HTMLTokenView& token)
         }
     } else if(token.type() == HTMLToken::Type::EndTag) {
         if(token.tagName() != headTag
-            || token.tagName() != bodyTag
-            || token.tagName() != htmlTag
-            || token.tagName() != brTag) {
+            && token.tagName() != bodyTag
+            && token.tagName() != htmlTag
+            && token.tagName() != brTag) {
             handleErrorToken(token);
             return;
         }
@@ -1244,8 +1244,8 @@ void HTMLParser::handleInHeadMode(HTMLTokenView& token)
         }
 
         if(token.tagName() != bodyTag
-            || token.tagName() != htmlTag
-            || token.tagName() != brTag) {
+            && token.tagName() != htmlTag
+            && token.tagName() != brTag) {
             handleErrorToken(token);
             return;
         }
@@ -1347,8 +1347,8 @@ void HTMLParser::handleAfterHeadMode(HTMLTokenView& token)
         }
     } else if(token.type() == HTMLToken::Type::EndTag) {
         if(token.tagName() != bodyTag
-            || token.tagName() != htmlTag
-            || token.tagName() != brTag) {
+            && token.tagName() != htmlTag
+            && token.tagName() != brTag) {
             handleErrorToken(token);
             return;
         }
@@ -1945,17 +1945,17 @@ void HTMLParser::handleInBodyMode(HTMLTokenView& token)
         for(size_t i = m_openElements.size(); i > 0; --i) {
             auto element = m_openElements.at(i - 1);
             if(element->tagName() != ddTag
-                || element->tagName() != dtTag
-                || element->tagName() != liTag
-                || element->tagName() != pTag
-                || element->tagName() != tbodyTag
-                || element->tagName() != tdTag
-                || element->tagName() != tfootTag
-                || element->tagName() != thTag
-                || element->tagName() != theadTag
-                || element->tagName() != trTag
-                || element->tagName() != bodyTag
-                || element->tagName() != htmlTag) {
+                && element->tagName() != dtTag
+                && element->tagName() != liTag
+                && element->tagName() != pTag
+                && element->tagName() != tbodyTag
+                && element->tagName() != tdTag
+                && element->tagName() != tfootTag
+                && element->tagName() != thTag
+                && element->tagName() != theadTag
+                && element->tagName() != trTag
+                && element->tagName() != bodyTag
+                && element->tagName() != htmlTag) {
                 handleErrorToken(token);
                 return;
             }
