@@ -217,6 +217,7 @@ public:
             m_publicIdentifier = token.publicIdentifier();
             m_systemIdentifier = token.systemIdentifier();
             m_data = token.data();
+            break;
         case HTMLToken::Type::StartTag:
         case HTMLToken::Type::EndTag:
             m_selfClosing = token.selfClosing();
