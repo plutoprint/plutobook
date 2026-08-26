@@ -34,10 +34,11 @@ inline bool isImpliedEndTag(const GlobalString& tagName)
         || tagName == rtTag;
 }
 
-inline bool isFosterRedirectingTag(const GlobalString& tagName)
+inline bool causesFosterParenting(const GlobalString& tagName)
 {
     return tagName == tableTag
         || tagName == tbodyTag
+        || tagName == tfootTag
         || tagName == theadTag
         || tagName == trTag;
 }
@@ -722,7 +723,7 @@ void HTMLParser::insertElement(Element* child)
 
 bool HTMLParser::shouldFosterParent() const
 {
-    return m_fosterRedirecting && isFosterRedirectingTag(currentElement()->tagName());
+    return m_fosterRedirecting && causesFosterParenting(currentElement()->tagName());
 }
 
 void HTMLParser::findFosterLocation(InsertionLocation& location) const
@@ -2838,7 +2839,7 @@ void HTMLParser::handleFormattingEndTagToken(HTMLTokenView& token)
 
         lastNode->remove();
 
-        if(isFosterRedirectingTag(commonAncestor->tagName())) {
+        if(causesFosterParenting(commonAncestor->tagName())) {
             fosterParent(lastNode);
         } else {
             commonAncestor->appendChild(lastNode);
