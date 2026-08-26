@@ -278,9 +278,9 @@ void HTMLElementList::insert(size_t index, Element* element)
 
 size_t HTMLElementList::index(const Element* element) const
 {
-    for(int i = m_elements.size() - 1; i >= 0; --i) {
-        if(element == m_elements.at(i)) {
-            return i;
+    for(size_t i = m_elements.size(); i > 0; --i) {
+        if(element == m_elements.at(i - 1)) {
+            return i - 1;
         }
     }
 
@@ -1021,10 +1021,10 @@ void HTMLParser::insertTextNode(std::string_view data)
 
 void HTMLParser::resetInsertionModeAppropriately()
 {
-    for(int i = m_openElements.size() - 1; i >= 0; --i) {
-        auto element = m_openElements.at(i);
+    for(size_t i = m_openElements.size(); i > 0; --i) {
+        auto element = m_openElements.at(i - 1);
         if(element->tagName() == selectTag) {
-            for(int j = i; j > 0; --j) {
+            for(size_t j = i - 1; j > 0; --j) {
                 auto ancestor = m_openElements.at(j - 1);
                 if(ancestor->tagName() == tableTag) {
                     m_insertionMode = InsertionMode::InSelectInTable;
@@ -1479,8 +1479,8 @@ void HTMLParser::handleInBodyMode(HTMLTokenView& token)
 
         if(token.tagName() == liTag) {
             m_framesetOk = false;
-            for(int i = m_openElements.size() - 1; i >= 0; --i) {
-                auto element = m_openElements.at(i);
+            for(size_t i = m_openElements.size(); i > 0; --i) {
+                auto element = m_openElements.at(i - 1);
                 if(element->tagName() == liTag) {
                     handleFakeEndTagToken(liTag);
                     break;
@@ -1503,8 +1503,8 @@ void HTMLParser::handleInBodyMode(HTMLTokenView& token)
         if(token.tagName() == ddTag
             || token.tagName() == dtTag) {
             m_framesetOk = false;
-            for(int i = m_openElements.size() - 1; i >= 0; --i) {
-                auto element = m_openElements.at(i);
+            for(size_t i = m_openElements.size(); i > 0; --i) {
+                auto element = m_openElements.at(i - 1);
                 if(element->tagName() == ddTag
                     || element->tagName() == dtTag) {
                     handleFakeEndTagToken(element->tagName());
@@ -1942,8 +1942,8 @@ void HTMLParser::handleInBodyMode(HTMLTokenView& token)
     }
 
     if(token.type() == HTMLToken::Type::EndOfFile) {
-        for(int i = m_openElements.size() - 1; i >= 0; --i) {
-            auto element = m_openElements.at(i);
+        for(size_t i = m_openElements.size(); i > 0; --i) {
+            auto element = m_openElements.at(i - 1);
             if(element->tagName() != ddTag
                 || element->tagName() != dtTag
                 || element->tagName() != liTag
@@ -2752,13 +2752,14 @@ void HTMLParser::handleInForeignContentMode(HTMLTokenView& token)
             handleErrorToken(token);
         }
 
-        for(int i = m_openElements.size() - 1; i >= 0; --i) {
+        for(size_t i = m_openElements.size(); i > 0; --i) {
+            assert(node == m_openElements.at(i - 1));
             if(node->tagName() == token.tagName()) {
                 m_openElements.popUntilPopped(node);
                 return;
             }
 
-            node = m_openElements.at(i - 1);
+            node = m_openElements.at(i - 2);
             if(node->namespaceURI() == xhtmlNs) {
                 handleToken(token);
                 return;
@@ -2859,8 +2860,8 @@ void HTMLParser::handleFormattingEndTagToken(HTMLTokenView& token)
 
 void HTMLParser::handleOtherFormattingEndTagToken(HTMLTokenView& token)
 {
-    for(int i = m_openElements.size() - 1; i >= 0; --i) {
-        auto element = m_openElements.at(i);
+    for(size_t i = m_openElements.size(); i > 0; --i) {
+        auto element = m_openElements.at(i - 1);
         if(element->tagName() == token.tagName()) {
             m_openElements.generateImpliedEndTagsExcept(token.tagName());
             if(currentElement()->tagName() != token.tagName())
