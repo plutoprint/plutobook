@@ -711,9 +711,17 @@ bool CSSParser::consumeAttributeSelector(CSSTokenStream& input, CSSCompoundSelec
         return false;
     auto value = m_heap->createString(block->data());
     block.consumeIncludingWhitespace();
-    auto caseMode = CaseMode::Exact;
-    if(block->type() == CSSToken::Type::Ident && block->data() == "i") {
-        caseMode = CaseMode::Ignore;
+
+    CaseMode caseMode = CaseMode::Exact;
+    if(block->type() == CSSToken::Type::Ident) {
+        if(identMatches("i", block->data())) {
+            caseMode = CaseMode::Ignore;
+        } else if(identMatches("s", block->data())) {
+            caseMode = CaseMode::Exact;
+        } else {
+            return false;
+        }
+
         block.consumeIncludingWhitespace();
     }
 
