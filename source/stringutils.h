@@ -125,17 +125,22 @@ constexpr char toUpper(uint8_t cc)
     return cc & ~(isLower(cc) << 5);
 }
 
-constexpr bool equals(uint8_t a, uint8_t b, bool caseSensitive)
+enum class CaseMode : uint8_t {
+    Ignore,
+    Exact
+};
+
+constexpr bool equals(uint8_t a, uint8_t b, CaseMode mode)
 {
-    return caseSensitive ? (a == b) : toLower(a) == toLower(b);
+    return mode == CaseMode::Exact ? (a == b) : toLower(a) == toLower(b);
 }
 
-constexpr bool equals(const char* aData, size_t aLength, const char* bData, size_t bLength, bool caseSensitive)
+constexpr bool equals(const char* aData, size_t aLength, const char* bData, size_t bLength, CaseMode mode)
 {
     if(aLength != bLength)
         return false;
     for(size_t i = 0; i < aLength; ++i) {
-        if(!equals(aData[i], bData[i], caseSensitive)) {
+        if(!equals(aData[i], bData[i], mode)) {
             return false;
         }
     }
@@ -143,23 +148,23 @@ constexpr bool equals(const char* aData, size_t aLength, const char* bData, size
     return true;
 }
 
-constexpr bool equals(std::string_view a, std::string_view b, bool caseSensitive)
+constexpr bool equals(std::string_view a, std::string_view b, CaseMode mode)
 {
-    return equals(a.data(), a.length(), b.data(), b.length(), caseSensitive);
+    return equals(a.data(), a.length(), b.data(), b.length(), mode);
 }
 
 constexpr bool equalsIgnoringCase(std::string_view a, std::string_view b)
 {
-    return equals(a, b, false);
+    return equals(a, b, CaseMode::Ignore);
 }
 
-constexpr bool contains(std::string_view haystack, std::string_view needle, bool caseSensitive)
+constexpr bool contains(std::string_view haystack, std::string_view needle, CaseMode mode)
 {
     if(needle.empty() || needle.length() > haystack.length())
         return false;
     const auto limit = haystack.length() - needle.length();
     for(size_t i = 0; i <= limit; ++i) {
-        if(equals(haystack.substr(i, needle.length()), needle, caseSensitive)) {
+        if(equals(haystack.substr(i, needle.length()), needle, mode)) {
             return true;
         }
     }
@@ -167,7 +172,7 @@ constexpr bool contains(std::string_view haystack, std::string_view needle, bool
     return false;
 }
 
-constexpr bool includes(std::string_view haystack, std::string_view needle, bool caseSensitive)
+constexpr bool includes(std::string_view haystack, std::string_view needle, CaseMode mode)
 {
     if(needle.empty() || needle.length() > haystack.length())
         return false;
@@ -180,7 +185,7 @@ constexpr bool includes(std::string_view haystack, std::string_view needle, bool
         size_t end = begin + 1;
         while(end < haystack.length() && !isSpace(haystack[end]))
             ++end;
-        if(equals(haystack.substr(begin, end - begin), needle, caseSensitive))
+        if(equals(haystack.substr(begin, end - begin), needle, mode))
             return true;
         begin = end + 1;
     }
@@ -188,23 +193,23 @@ constexpr bool includes(std::string_view haystack, std::string_view needle, bool
     return false;
 }
 
-constexpr bool startswith(std::string_view input, std::string_view prefix, bool caseSensitive)
+constexpr bool startswith(std::string_view input, std::string_view prefix, CaseMode mode)
 {
     if(prefix.empty() || prefix.length() > input.length())
         return false;
-    return equals(input.substr(0, prefix.length()), prefix, caseSensitive);
+    return equals(input.substr(0, prefix.length()), prefix, mode);
 }
 
-constexpr bool endswith(std::string_view input, std::string_view suffix, bool caseSensitive)
+constexpr bool endswith(std::string_view input, std::string_view suffix, CaseMode mode)
 {
     if(suffix.empty() || suffix.length() > input.length())
         return false;
-    return equals(input.substr(input.length() - suffix.length(), suffix.length()), suffix, caseSensitive);
+    return equals(input.substr(input.length() - suffix.length(), suffix.length()), suffix, mode);
 }
 
-constexpr bool dashequals(std::string_view input, std::string_view prefix, bool caseSensitive)
+constexpr bool dashequals(std::string_view input, std::string_view prefix, CaseMode mode)
 {
-    if(startswith(input, prefix, caseSensitive))
+    if(startswith(input, prefix, mode))
         return (input.length() == prefix.length() || input.at(prefix.length()) == '-');
     return false;
 }

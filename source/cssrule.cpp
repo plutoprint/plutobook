@@ -376,7 +376,7 @@ bool CSSRuleData::matchAttributeEqualsSelector(const Element* element, const CSS
     auto attribute = element->findAttributePossiblyIgnoringCase(selector.name());
     if(attribute == nullptr)
         return false;
-    return equals(attribute->value(), selector.value(), selector.isCaseSensitive());
+    return equals(attribute->value(), selector.value(), selector.caseMode());
 }
 
 bool CSSRuleData::matchAttributeIncludesSelector(const Element* element, const CSSSimpleSelector& selector)
@@ -384,7 +384,7 @@ bool CSSRuleData::matchAttributeIncludesSelector(const Element* element, const C
     auto attribute = element->findAttributePossiblyIgnoringCase(selector.name());
     if(attribute == nullptr)
         return false;
-    return includes(attribute->value(), selector.value(), selector.isCaseSensitive());
+    return includes(attribute->value(), selector.value(), selector.caseMode());
 }
 
 bool CSSRuleData::matchAttributeContainsSelector(const Element* element, const CSSSimpleSelector& selector)
@@ -392,7 +392,7 @@ bool CSSRuleData::matchAttributeContainsSelector(const Element* element, const C
     auto attribute = element->findAttributePossiblyIgnoringCase(selector.name());
     if(attribute == nullptr)
         return false;
-    return contains(attribute->value(), selector.value(), selector.isCaseSensitive());
+    return contains(attribute->value(), selector.value(), selector.caseMode());
 }
 
 bool CSSRuleData::matchAttributeDashEqualsSelector(const Element* element, const CSSSimpleSelector& selector)
@@ -400,7 +400,7 @@ bool CSSRuleData::matchAttributeDashEqualsSelector(const Element* element, const
     auto attribute = element->findAttributePossiblyIgnoringCase(selector.name());
     if(attribute == nullptr)
         return false;
-    return dashequals(attribute->value(), selector.value(), selector.isCaseSensitive());
+    return dashequals(attribute->value(), selector.value(), selector.caseMode());
 }
 
 bool CSSRuleData::matchAttributeStartsWithSelector(const Element* element, const CSSSimpleSelector& selector)
@@ -408,7 +408,7 @@ bool CSSRuleData::matchAttributeStartsWithSelector(const Element* element, const
     auto attribute = element->findAttributePossiblyIgnoringCase(selector.name());
     if(attribute == nullptr)
         return false;
-    return startswith(attribute->value(), selector.value(), selector.isCaseSensitive());
+    return startswith(attribute->value(), selector.value(), selector.caseMode());
 }
 
 bool CSSRuleData::matchAttributeEndsWithSelector(const Element* element, const CSSSimpleSelector& selector)
@@ -416,7 +416,7 @@ bool CSSRuleData::matchAttributeEndsWithSelector(const Element* element, const C
     auto attribute = element->findAttributePossiblyIgnoringCase(selector.name());
     if(attribute == nullptr)
         return false;
-    return endswith(attribute->value(), selector.value(), selector.isCaseSensitive());
+    return endswith(attribute->value(), selector.value(), selector.caseMode());
 }
 
 bool CSSRuleData::matchPseudoClassIsSelector(const Element* element, const CSSSimpleSelector& selector)
@@ -534,7 +534,7 @@ bool CSSRuleData::matchPseudoClassCheckedSelector(const Element* element, const 
 
 bool CSSRuleData::matchPseudoClassLangSelector(const Element* element, const CSSSimpleSelector& selector)
 {
-    return dashequals(element->lang(), selector.value(), false);
+    return dashequals(element->lang(), selector.value(), CaseMode::Ignore);
 }
 
 bool CSSRuleData::matchPseudoClassRootSelector(const Element* element, const CSSSimpleSelector& selector)

@@ -150,8 +150,8 @@ inline bool isHTMLIntegrationPoint(const Element* element)
         if(attribute == nullptr)
             return false;
         const auto& encoding = attribute->value();
-        return equals(encoding, "text/html", false)
-            || equals(encoding, "application/xhtml+xml", false);
+        return equalsIgnoringCase(encoding, "text/html")
+            || equalsIgnoringCase(encoding, "application/xhtml+xml");
     }
 
     if(element->namespaceURI() == svgNs) {
@@ -1627,7 +1627,7 @@ void HTMLParser::handleInBodyMode(HTMLTokenView& token)
             reconstructActiveFormattingElements();
             insertSelfClosingHTMLElement(token);
             auto typeAttribute = token.findAttribute(typeAttr);
-            if(typeAttribute == nullptr || !equals(typeAttribute->value(), "hidden", false))
+            if(typeAttribute == nullptr || !equalsIgnoringCase("hidden", typeAttribute->value()))
                 m_framesetOk = false;
             return;
         }
@@ -2050,7 +2050,7 @@ void HTMLParser::handleInTableMode(HTMLTokenView& token)
 
         if(token.tagName() == inputTag) {
             auto typeAttribute = token.findAttribute(typeAttr);
-            if(typeAttribute && equals(typeAttribute->value(), "hidden", false)) {
+            if(typeAttribute && equalsIgnoringCase("hidden", typeAttribute->value())) {
                 handleErrorToken(token);
                 insertSelfClosingHTMLElement(token);
                 return;

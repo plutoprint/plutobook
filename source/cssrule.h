@@ -31,6 +31,7 @@ using CSSPageSelector = CSSCompoundSelector;
 using CSSPageSelectorList = CSSCompoundSelectorList;
 
 enum class PseudoType : uint8_t;
+enum class CaseMode : uint8_t;
 
 class CSSSimpleSelector {
 public:
@@ -92,11 +93,6 @@ public:
         PseudoPageRight
     };
 
-    enum class AttributeCaseType {
-        Sensitive,
-        InSensitive
-    };
-
     using MatchPattern = std::pair<int, int>;
 
     explicit CSSSimpleSelector(MatchType matchType) : m_matchType(matchType) {}
@@ -104,19 +100,17 @@ public:
     CSSSimpleSelector(MatchType matchType, const HeapString& value) : m_matchType(matchType), m_value(value) {}
     CSSSimpleSelector(MatchType matchType, const MatchPattern& matchPattern) : m_matchType(matchType), m_value(matchPattern) {}
     CSSSimpleSelector(MatchType matchType, CSSSelectorList subSelectors) : m_matchType(matchType), m_value(std::move(subSelectors)) {}
-    CSSSimpleSelector(MatchType matchType, AttributeCaseType attributeCaseType, const GlobalString& name, const HeapString& value)
-        : m_matchType(matchType), m_attributeCaseType(attributeCaseType), m_name(name), m_value(value)
+    CSSSimpleSelector(MatchType matchType, CaseMode caseMode, const GlobalString& name, const HeapString& value)
+        : m_matchType(matchType), m_caseMode(caseMode), m_name(name), m_value(value)
     {}
 
     MatchType matchType() const { return m_matchType; }
-    AttributeCaseType attributeCaseType() const { return m_attributeCaseType; }
+    CaseMode caseMode() const { return m_caseMode; }
     const GlobalString& name() const { return m_name; }
 
     const HeapString& value() const { return std::get<HeapString>(m_value); }
     const MatchPattern& matchPattern() const { return std::get<MatchPattern>(m_value); }
     const CSSSelectorList& subSelectors() const { return std::get<CSSSelectorList>(m_value); }
-
-    bool isCaseSensitive() const { return m_attributeCaseType == AttributeCaseType::Sensitive; }
 
     bool matchNth(int count) const;
     PseudoType pseudoType() const;
@@ -125,7 +119,7 @@ public:
 private:
     using Value = std::variant<HeapString, MatchPattern, CSSSelectorList>;
     MatchType m_matchType;
-    AttributeCaseType m_attributeCaseType;
+    CaseMode m_caseMode;
     GlobalString m_name;
     Value m_value;
 };

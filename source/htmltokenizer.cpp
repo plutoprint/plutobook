@@ -970,15 +970,15 @@ bool HTMLTokenizer::handleMarkupDeclarationOpenState(char cc)
     constexpr std::string_view dashdash("--");
     constexpr std::string_view doctype("DOCTYPE");
     constexpr std::string_view cdata("[CDATA[");
-    if(consumeString(dashdash, true)) {
+    if(consumeString(dashdash, CaseMode::Exact)) {
         m_currentToken.beginComment();
         return switchTo(State::CommentStart);
     }
 
-    if(consumeString(doctype, false))
+    if(consumeString(doctype, CaseMode::Ignore))
         return switchTo(State::DOCTYPE);
 
-    if(consumeString(cdata, true))
+    if(consumeString(cdata, CaseMode::Exact))
         return switchTo(State::CDATASection);
 
     m_currentToken.beginComment();
@@ -1151,10 +1151,10 @@ bool HTMLTokenizer::handleAfterDOCTYPENameState(char cc)
 
     constexpr std::string_view publicKeyword("public");
     constexpr std::string_view systemKeyword("system");
-    if(consumeString(publicKeyword, false))
+    if(consumeString(publicKeyword, CaseMode::Ignore))
         return switchTo(State::AfterDOCTYPEPublicKeyword);
 
-    if(consumeString(systemKeyword, false))
+    if(consumeString(systemKeyword, CaseMode::Ignore))
         return switchTo(State::AfterDOCTYPESystemKeyword);
 
     m_currentToken.setForceQuirks();
@@ -1543,9 +1543,9 @@ bool HTMLTokenizer::consumeCharacterReference(std::string& output, bool inAttrib
     return true;
 }
 
-bool HTMLTokenizer::consumeString(std::string_view value, bool caseSensitive)
+bool HTMLTokenizer::consumeString(std::string_view value, CaseMode mode)
 {
-    if(startswith(m_input, value, caseSensitive)) {
+    if(startswith(m_input, value, mode)) {
         m_input.remove_prefix(value.size());
         return true;
     }

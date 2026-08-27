@@ -926,12 +926,12 @@ unsigned HTMLInputElement::size() const
 Box* HTMLInputElement::createBox(const RefPtr<BoxStyle>& style)
 {
     const auto& type = getAttribute(typeAttr);
-    if(!type.empty() && !equals(type, "text", false)
-        && !equals(type, "search", false)
-        && !equals(type, "url", false)
-        && !equals(type, "tel", false)
-        && !equals(type, "email", false)
-        && !equals(type, "password", false)) {
+    if(!type.empty() && !equalsIgnoringCase(type, "text")
+        && !equalsIgnoringCase(type, "search")
+        && !equalsIgnoringCase(type, "url")
+        && !equalsIgnoringCase(type, "tel")
+        && !equalsIgnoringCase(type, "email")
+        && !equalsIgnoringCase(type, "password")) {
         return HTMLElement::createBox(style);
     }
 
@@ -1028,7 +1028,7 @@ const HeapString& HTMLLinkElement::media() const
 
 void HTMLLinkElement::finishParsingDocument()
 {
-    if(equals(rel(), "stylesheet", false) && document()->supportsMedia(type(), media())) {
+    if(equalsIgnoringCase("stylesheet", rel()) && document()->supportsMedia(type(), media())) {
         auto url = getUrlAttribute(hrefAttr);
         if(auto resource = document()->fetchTextResource(url)) {
             document()->addAuthorStyleSheet(resource->text(), std::move(url));

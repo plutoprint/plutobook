@@ -501,6 +501,13 @@ Element* Element::nextSiblingElement() const
     return nullptr;
 }
 
+CaseMode Element::caseMode() const
+{
+    if(m_isCaseSensitive)
+        return CaseMode::Exact;
+    return CaseMode::Ignore;
+}
+
 Node* Element::cloneNode(bool deep)
 {
     auto newElement = document()->createElement(m_namespaceURI, m_tagName);
@@ -595,6 +602,13 @@ Heap* Document::heap() const
     return m_book->heap();
 }
 
+CaseMode Document::caseMode() const
+{
+    if(isXMLDocument())
+        return CaseMode::Exact;
+    return CaseMode::Ignore;
+}
+
 bool Document::shouldSetTitle() const
 {
     return m_book->title().isNull() && isRootDocument();
@@ -624,16 +638,16 @@ void Document::setTitle(std::string title)
 
 void Document::setMetadata(std::string_view name, std::string_view content)
 {
-    if(equals(name, "author", false)) {
+    if(equalsIgnoringCase(name, "author")) {
         if(m_book->author().isNull())
             m_book->setAuthor(content);
-    } else if(equals(name, "description", false)) {
+    } else if(equalsIgnoringCase(name, "description")) {
         if(m_book->subject().isNull())
             m_book->setSubject(content);
-    } else if(equals(name, "keywords", false)) {
+    } else if(equalsIgnoringCase(name, "keywords")) {
         if(m_book->keywords().isNull())
             m_book->setKeywords(content);
-    } else if(equals(name, "generator", false)) {
+    } else if(equalsIgnoringCase(name, "generator")) {
         if(m_book->creator().isNull()) {
             m_book->setCreator(content);
         }
@@ -973,7 +987,7 @@ bool Document::supportsMediaQueries(const CSSMediaQueryList& queries) const
 
 bool Document::supportsMedia(std::string_view type, std::string_view media) const
 {
-    if(!type.empty() && !equals(type, "text/css", isXMLDocument()))
+    if(!type.empty() && !equals(type, "text/css", caseMode()))
         return false;
     if(!media.empty()) {
         CSSParserContext context(this, CSSStyleOrigin::Author, m_baseUrl);

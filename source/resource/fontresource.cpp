@@ -91,16 +91,16 @@ RefPtr<FontResource> FontResource::create(Document* document, const Url& url)
 
 bool FontResource::supportsFormat(std::string_view format)
 {
-    return equals(format, "opentype", false)
-        || equals(format, "opentype-variations", false)
-        || equals(format, "truetype", false)
-        || equals(format, "truetype-variations", false)
+    return equalsIgnoringCase(format, "opentype")
+        || equalsIgnoringCase(format, "opentype-variations")
+        || equalsIgnoringCase(format, "truetype")
+        || equalsIgnoringCase(format, "truetype-variations")
 #ifdef FT_CONFIG_OPTION_USE_BROTLI
-        || equals(format, "woff2", false)
-        || equals(format, "woff2-variations", false)
+        || equalsIgnoringCase(format, "woff2")
+        || equalsIgnoringCase(format, "woff2-variations")
 #endif
-        || equals(format, "woff", false)
-        || equals(format, "woff-variations", false);
+        || equalsIgnoringCase(format, "woff")
+        || equalsIgnoringCase(format, "woff-variations");
 }
 
 FontResource::~FontResource()
@@ -640,13 +640,13 @@ static RefPtr<SimpleFontData> createFontDataFromPattern(FcPattern* pattern, cons
 
 constexpr bool isGenericFamilyName(std::string_view familyName)
 {
-    return equals(familyName, "sans", false)
-        || equals(familyName, "sans-serif", false)
-        || equals(familyName, "serif", false)
-        || equals(familyName, "monospace", false)
-        || equals(familyName, "fantasy", false)
-        || equals(familyName, "cursive", false)
-        || equals(familyName, "emoji", false);
+    return equalsIgnoringCase(familyName, "sans")
+        || equalsIgnoringCase(familyName, "sans-serif")
+        || equalsIgnoringCase(familyName, "serif")
+        || equalsIgnoringCase(familyName, "monospace")
+        || equalsIgnoringCase(familyName, "fantasy")
+        || equalsIgnoringCase(familyName, "cursive")
+        || equalsIgnoringCase(familyName, "emoji");
 }
 
 static FcPattern* createFontPattern(const FontDataDescription& description)

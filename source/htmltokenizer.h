@@ -300,6 +300,8 @@ private:
     std::string_view m_data;
 };
 
+enum class CaseMode : uint8_t;
+
 class HTMLTokenizer {
 public:
     enum class State {
@@ -476,7 +478,7 @@ private:
     char handleInputCharacter(char inputCharacter);
 
     bool consumeCharacterReference(std::string& output, bool inAttributeValue);
-    bool consumeString(std::string_view value, bool caseSensitive);
+    bool consumeString(std::string_view value, CaseMode mode);
 
     std::string_view m_input;
     std::string m_entityBuffer;

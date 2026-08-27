@@ -711,15 +711,15 @@ bool CSSParser::consumeAttributeSelector(CSSTokenStream& input, CSSCompoundSelec
         return false;
     auto value = m_heap->createString(block->data());
     block.consumeIncludingWhitespace();
-    auto caseType = CSSSimpleSelector::AttributeCaseType::Sensitive;
+    auto caseMode = CaseMode::Exact;
     if(block->type() == CSSToken::Type::Ident && block->data() == "i") {
-        caseType = CSSSimpleSelector::AttributeCaseType::InSensitive;
+        caseMode = CaseMode::Ignore;
         block.consumeIncludingWhitespace();
     }
 
     if(!block.empty())
         return false;
-    selector.emplace_front(matchType, caseType, name, value);
+    selector.emplace_front(matchType, caseMode, name, value);
     return true;
 }
 
@@ -930,7 +930,7 @@ bool CSSParser::consumeMatchPattern(CSSTokenStream& input, CSSSimpleSelector::Ma
     }
 
     constexpr auto eof = std::stringstream::traits_type::eof();
-    if(ss.peek() == eof || !equals(ss.get(), 'n', false))
+    if(ss.peek() == eof || !equals(ss.get(), 'n', CaseMode::Ignore))
         return false;
     auto sign = CSSToken::NumberSign::None;
     if(ss.peek() != eof) {

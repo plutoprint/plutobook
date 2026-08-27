@@ -53,21 +53,21 @@ RefPtr<ImageResource> ImageResource::create(Document* document, const Url& url)
 
 RefPtr<Image> ImageResource::decode(Book* book, const char* data, size_t size, std::string_view mimeType, std::string_view textEncoding, std::string_view baseUrl)
 {
-    if(equals(mimeType, "image/svg+xml", false))
+    if(equalsIgnoringCase(mimeType, "image/svg+xml"))
         return SVGImage::create(book, TextResource::decode(data, size, mimeType, textEncoding), baseUrl);
     return BitmapImage::create(book, data, size);
 }
 
 bool ImageResource::supportsMimeType(std::string_view mimeType)
 {
-    return equals(mimeType, "image/jpeg", false)
-        || equals(mimeType, "image/png", false)
+    return equalsIgnoringCase(mimeType, "image/jpeg")
+        || equalsIgnoringCase(mimeType, "image/png")
 #ifdef PLUTOBOOK_HAS_WEBP
-        || equals(mimeType, "image/webp", false)
+        || equalsIgnoringCase(mimeType, "image/webp")
 #endif
-        || equals(mimeType, "image/svg+xml", false)
-        || equals(mimeType, "image/gif", false)
-        || equals(mimeType, "image/bmp", false);
+        || equalsIgnoringCase(mimeType, "image/svg+xml")
+        || equalsIgnoringCase(mimeType, "image/gif")
+        || equalsIgnoringCase(mimeType, "image/bmp");
 }
 
 static cairo_surface_t* createImageSurface(cairo_format_t format, int width, int height)
