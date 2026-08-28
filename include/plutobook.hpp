@@ -489,22 +489,16 @@ public:
     std::string_view textEncoding() const;
 
     /**
-     * @brief Retrieves the underlying resource.
-     * @return A pointer to the underlying `plutobook_resource_data_t` object.
+     * @brief Releases the underlying resource and transfers ownership.
+     * @return A pointer to the underlying `plutobook_resource_data_t` object, which is now owned by the caller.
      */
-    plutobook_resource_data_t* resource() const { return m_resource; }
+    plutobook_resource_data_t* release();
 
     /**
      * @brief Retrieves the underlying resource.
      * @return A pointer to the underlying `plutobook_resource_data_t` object.
      */
     plutobook_resource_data_t* get() const { return m_resource; }
-
-    /**
-     * @brief Releases the underlying resource and transfers ownership.
-     * @return A pointer to the underlying `plutobook_resource_data_t` object, which is now owned by the caller.
-     */
-    plutobook_resource_data_t* release();
 
     /**
      * @brief Checks if the resource is null.
@@ -772,7 +766,7 @@ public:
      * @brief Gets the underlying canvas.
      * @return A pointer to the underlying `plutobook_canvas_t` object.
      */
-    plutobook_canvas_t* canvas() const { return m_canvas; }
+    plutobook_canvas_t* get() const { return m_canvas; }
 
     /**
      * @brief Checks if the canvas is null.
