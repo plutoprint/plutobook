@@ -347,7 +347,7 @@ float SVGLengthContext::viewportDimension(SVGLengthDirection direction) const
     case SVGLengthDirection::Vertical:
         return viewportSize.h;
     default:
-        return std::sqrt(viewportSize.w * viewportSize.w + viewportSize.h * viewportSize.h) / kSqrt2;
+        return std::hypot(viewportSize.w, viewportSize.h) / kSqrt2;
     }
 }
 
