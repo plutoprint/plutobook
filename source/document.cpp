@@ -656,6 +656,11 @@ void Document::setMetadata(std::string_view name, std::string_view content)
 
 Url Document::completeUrl(std::string_view input) const
 {
+    stripLeadingAndTrailingSpaces(input);
+    if(input.empty()) {
+        return Url();
+    }
+
     auto completeUrl = m_baseUrl.complete(input);
     if(!completeUrl.isValid())
         std::cerr << "WARNING: Unable to complete URL: '" << ellipsize(input) << '\'' << std::endl;
