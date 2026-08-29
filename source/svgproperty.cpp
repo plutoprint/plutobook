@@ -366,7 +366,7 @@ bool SVGLengthList::parse(std::string_view input)
             return false;
         input.remove_prefix(count);
         skipOptionalSpacesOrComma(input);
-        m_values.push_back(std::move(value));
+        m_values.push_back(value);
     }
 
     return true;
