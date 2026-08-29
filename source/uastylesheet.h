@@ -535,6 +535,7 @@ input[type=button i], input[type=reset i], input[type=submit i], button {
     text-align: center;
     background-color: lightgray;
     border-radius: 2px;
+    min-width: 2ch;
 }
 
 input::before {
