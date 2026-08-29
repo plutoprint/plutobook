@@ -407,6 +407,7 @@ ResourceData DefaultResourceFetcher::fetchUrl(const std::string& url)
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, content);
     curl_easy_setopt(curl, CURLOPT_USERAGENT, "PlutoBook/" PLUTOBOOK_VERSION_STRING);
     curl_easy_setopt(curl, CURLOPT_MAXFILESIZE_LARGE, MAX_RESOURCE_SIZE);
+    curl_easy_setopt(curl, CURLOPT_ACCEPT_ENCODING, "");
     curl_easy_setopt(curl, CURLOPT_FAILONERROR, 1L);
 
     if(!m_caInfo.empty())
