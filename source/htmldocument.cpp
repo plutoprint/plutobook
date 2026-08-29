@@ -926,12 +926,11 @@ unsigned HTMLInputElement::size() const
 Box* HTMLInputElement::createBox(const RefPtr<BoxStyle>& style)
 {
     const auto& type = getAttribute(typeAttr);
-    if(!type.empty() && !equalsIgnoringCase(type, "text")
-        && !equalsIgnoringCase(type, "search")
-        && !equalsIgnoringCase(type, "url")
-        && !equalsIgnoringCase(type, "tel")
-        && !equalsIgnoringCase(type, "email")
-        && !equalsIgnoringCase(type, "password")) {
+    if(equalsIgnoringCase(type, "checkbox")
+        || equalsIgnoringCase(type, "radio")
+        || equalsIgnoringCase(type, "submit")
+        || equalsIgnoringCase(type, "reset")
+        || equalsIgnoringCase(type, "button")) {
         return HTMLElement::createBox(style);
     }
 
