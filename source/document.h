@@ -178,8 +178,6 @@ using AttributeList = std::pmr::forward_list<Attribute>;
 using ClassNameList = std::pmr::forward_list<HeapString>;
 using CSSPropertyList = std::pmr::vector<CSSProperty>;
 
-enum class CaseMode : uint8_t;
-
 class Element : public ContainerNode {
 public:
     Element(Document* document, const GlobalString& namespaceURI, const GlobalString& tagName);
@@ -225,8 +223,6 @@ public:
     Element* lastChildElement() const;
     Element* previousSiblingElement() const;
     Element* nextSiblingElement() const;
-
-    CaseMode caseMode() const;
 
     bool hasID() const { return !m_id.empty(); }
     bool hasClass() const { return !m_classNames.empty(); }
@@ -343,8 +339,6 @@ public:
     Book* book() const { return m_book; }
     ResourceFetcher* customResourceFetcher() const;
     Heap* heap() const;
-
-    CaseMode caseMode() const;
 
     bool shouldSetTitle() const;
     void setTitle(std::string title);

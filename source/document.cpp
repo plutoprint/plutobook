@@ -500,13 +500,6 @@ Element* Element::nextSiblingElement() const
     return nullptr;
 }
 
-CaseMode Element::caseMode() const
-{
-    if(m_isCaseSensitive)
-        return CaseMode::Exact;
-    return CaseMode::Ignore;
-}
-
 Node* Element::cloneNode(bool deep)
 {
     auto newElement = document()->createElement(m_namespaceURI, m_tagName);
@@ -599,13 +592,6 @@ ResourceFetcher* Document::customResourceFetcher() const
 Heap* Document::heap() const
 {
     return m_book->heap();
-}
-
-CaseMode Document::caseMode() const
-{
-    if(isXMLDocument())
-        return CaseMode::Exact;
-    return CaseMode::Ignore;
 }
 
 bool Document::shouldSetTitle() const
@@ -989,9 +975,16 @@ bool Document::supportsMediaQueries(const CSSMediaQueryList& queries) const
     return false;
 }
 
+static CaseMode caseMode(const Document* document)
+{
+    if(document->isXMLDocument())
+        return CaseMode::Exact;
+    return CaseMode::Ignore;
+}
+
 bool Document::supportsMedia(std::string_view type, std::string_view media) const
 {
-    if(!type.empty() && !equals(type, "text/css", caseMode()))
+    if(!type.empty() && !equals(type, "text/css", caseMode(this)))
         return false;
     if(!media.empty()) {
         CSSParserContext context(this, CSSStyleOrigin::Author, m_baseUrl);
