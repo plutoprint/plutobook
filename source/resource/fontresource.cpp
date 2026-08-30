@@ -259,7 +259,7 @@ static std::string buildVariationSettings(const FontDataDescription& description
 
         if(!output.empty())
             output += ',';
-        output.append(name, 4);
+        output.append(name, sizeof(name));
         output += '=';
         output += toString(value);
     }
