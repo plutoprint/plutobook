@@ -191,8 +191,9 @@ bool HTMLTokenizer::handleDataState(char cc)
         return advanceTo(State::TagOpen);
     }
 
-    if(cc == 0)
+    if(cc == kEndOfFileMarker) {
         return emitEOFToken();
+    }
 
     m_characterBuffer += cc;
     return advanceTo(State::Data);
@@ -216,9 +217,9 @@ bool HTMLTokenizer::handleRCDATAState(char cc)
         return advanceTo(State::CharacterReferenceInRCDATA);
     if(cc == '<')
         return advanceTo(State::RCDATALessThanSign);
-
-    if(cc == 0)
+    if(cc == kEndOfFileMarker) {
         return emitEOFToken();
+    }
 
     m_characterBuffer += cc;
     return advanceTo(State::RCDATA);
@@ -240,9 +241,9 @@ bool HTMLTokenizer::handleRAWTEXTState(char cc)
 {
     if(cc == '<')
         return advanceTo(State::RAWTEXTLessThanSign);
-
-   if(cc == 0)
+    if(cc == kEndOfFileMarker) {
         return emitEOFToken();
+    }
 
     m_characterBuffer += cc;
     return advanceTo(State::RAWTEXT);
@@ -252,9 +253,9 @@ bool HTMLTokenizer::handleScriptDataState(char cc)
 {
     if(cc == '<')
         return advanceTo(State::ScriptDataLessThanSign);
-
-    if(cc == 0)
+    if(cc == kEndOfFileMarker) {
         return emitEOFToken();
+    }
 
     m_characterBuffer += cc;
     return advanceTo(State::ScriptData);
@@ -262,8 +263,9 @@ bool HTMLTokenizer::handleScriptDataState(char cc)
 
 bool HTMLTokenizer::handlePLAINTEXTState(char cc)
 {
-    if(cc == 0)
+    if(cc == kEndOfFileMarker) {
         return emitEOFToken();
+    }
 
     m_characterBuffer += cc;
     return advanceTo(State::PLAINTEXT);
@@ -301,8 +303,7 @@ bool HTMLTokenizer::handleEndTagOpenState(char cc)
 
     if(cc == '>')
         return advanceTo(State::Data);
-
-    if(cc == 0) {
+    if(cc == kEndOfFileMarker) {
         m_characterBuffer += '<';
         m_characterBuffer += '/';
         return switchTo(State::Data);
@@ -320,9 +321,9 @@ bool HTMLTokenizer::handleTagNameState(char cc)
         return advanceTo(State::SelfClosingStartTag);
     if(cc == '>')
         return advanceTo(State::Data) && emitCurrentToken();
-
-    if(cc == 0)
+    if(cc == kEndOfFileMarker) {
         return switchTo(State::Data);
+    }
 
     m_currentToken.addToTagName(toLower(cc));
     return advanceTo(State::TagName);
@@ -358,13 +359,10 @@ bool HTMLTokenizer::handleRCDATAEndTagNameState(char cc)
 {
     if(isSpace(cc) && isAppropriateEndTag())
         return advanceTo(State::BeforeAttributeName) && flushEndTagNameBuffer();
-
     if(cc == '/' && isAppropriateEndTag())
         return advanceTo(State::SelfClosingStartTag) && flushEndTagNameBuffer();
-
     if(cc == '>' && isAppropriateEndTag())
         return advanceTo(State::Data) && emitEndTagToken();
-
     if(isAlpha(cc)) {
         m_temporaryBuffer += cc;
         m_endTagNameBuffer += toLower(cc);
@@ -406,13 +404,10 @@ bool HTMLTokenizer::handleRAWTEXTEndTagNameState(char cc)
 {
     if(isSpace(cc) && isAppropriateEndTag())
         return advanceTo(State::BeforeAttributeName) && flushEndTagNameBuffer();
-
     if(cc == '/' && isAppropriateEndTag())
         return advanceTo(State::SelfClosingStartTag) && flushEndTagNameBuffer();
-
     if(cc == '>' && isAppropriateEndTag())
         return advanceTo(State::Data) && emitEndTagToken();
-
     if(isAlpha(cc)) {
         m_temporaryBuffer += cc;
         m_endTagNameBuffer += toLower(cc);
@@ -460,13 +455,10 @@ bool HTMLTokenizer::handleScriptDataEndTagNameState(char cc)
 {
     if(isSpace(cc) && isAppropriateEndTag())
         return advanceTo(State::BeforeAttributeName) && flushEndTagNameBuffer();
-
     if(cc == '/' && isAppropriateEndTag())
         return advanceTo(State::SelfClosingStartTag) && flushEndTagNameBuffer();
-
     if(cc == '>' && isAppropriateEndTag())
         return advanceTo(State::Data) && emitEndTagToken();
-
     if(isAlpha(cc)) {
         m_temporaryBuffer += cc;
         m_endTagNameBuffer += toLower(cc);
@@ -507,9 +499,9 @@ bool HTMLTokenizer::handleScriptDataEscapedState(char cc)
 
     if(cc == '<')
         return advanceTo(State::ScriptDataEscapedLessThanSign);
-
-    if(cc == 0)
+    if(cc == kEndOfFileMarker) {
         return switchTo(State::Data);
+    }
 
     m_characterBuffer += cc;
     return advanceTo(State::ScriptDataEscaped);
@@ -524,9 +516,9 @@ bool HTMLTokenizer::handleScriptDataEscapedDashState(char cc)
 
     if(cc == '<')
         return advanceTo(State::ScriptDataEscapedLessThanSign);
-
-    if(cc == 0)
+    if(cc == kEndOfFileMarker) {
         return switchTo(State::Data);
+    }
 
     m_characterBuffer += cc;
     return advanceTo(State::ScriptDataEscaped);
@@ -547,8 +539,9 @@ bool HTMLTokenizer::handleScriptDataEscapedDashDashState(char cc)
         return advanceTo(State::ScriptData);
     }
 
-    if(cc == 0)
+    if(cc == kEndOfFileMarker) {
         return switchTo(State::Data);
+    }
 
     m_characterBuffer += cc;
     return advanceTo(State::ScriptDataEscaped);
@@ -592,13 +585,10 @@ bool HTMLTokenizer::handleScriptDataEscapedEndTagNameState(char cc)
 {
     if(isSpace(cc) && isAppropriateEndTag())
         return advanceTo(State::BeforeAttributeName) && flushEndTagNameBuffer();
-
     if(cc == '/' && isAppropriateEndTag())
         return advanceTo(State::SelfClosingStartTag) && flushEndTagNameBuffer();
-
     if(cc == '>' && isAppropriateEndTag())
         return advanceTo(State::Data) && emitEndTagToken();
-
     if(isAlpha(cc)) {
         m_temporaryBuffer += cc;
         m_endTagNameBuffer += toLower(cc);
@@ -640,8 +630,9 @@ bool HTMLTokenizer::handleScriptDataDoubleEscapedState(char cc)
         return advanceTo(State::ScriptDataDoubleEscapedLessThanSign);
     }
 
-    if(cc == 0)
+    if(cc == kEndOfFileMarker) {
         return switchTo(State::Data);
+    }
 
     m_characterBuffer += cc;
     return advanceTo(State::ScriptDataDoubleEscaped);
@@ -659,8 +650,9 @@ bool HTMLTokenizer::handleScriptDataDoubleEscapedDashState(char cc)
         return advanceTo(State::ScriptDataDoubleEscapedLessThanSign);
     }
 
-    if(cc == 0)
+    if(cc == kEndOfFileMarker) {
         return switchTo(State::Data);
+    }
 
     m_characterBuffer += cc;
     return advanceTo(State::ScriptDataDoubleEscaped);
@@ -683,8 +675,9 @@ bool HTMLTokenizer::handleScriptDataDoubleEscapedDashDashState(char cc)
         return advanceTo(State::ScriptData);
     }
 
-    if(cc == 0)
+    if(cc == kEndOfFileMarker) {
         return switchTo(State::Data);
+    }
 
     m_characterBuffer += cc;
     return advanceTo(State::ScriptDataDoubleEscaped);
@@ -723,21 +716,19 @@ bool HTMLTokenizer::handleBeforeAttributeNameState(char cc)
 {
     if(isSpace(cc))
         return advanceTo(State::BeforeAttributeName);
-
     if(cc == '/')
         return advanceTo(State::SelfClosingStartTag);
-
     if(cc == '>')
         return advanceTo(State::Data) && emitCurrentToken();
-
     if(isAlpha(cc)) {
         m_currentToken.beginAttribute();
         m_currentToken.addToAttributeName(toLower(cc));
         return advanceTo(State::AttributeName);
     }
 
-    if(cc == 0)
+    if(cc == kEndOfFileMarker) {
         return switchTo(State::Data);
+    }
 
     m_currentToken.beginAttribute();
     m_currentToken.addToAttributeName(cc);
@@ -748,7 +739,6 @@ bool HTMLTokenizer::handleAttributeNameState(char cc)
 {
     if(isSpace(cc))
         return advanceTo(State::AfterAttributeName);
-
     if(cc == '/') {
         m_currentToken.endAttribute();
         return advanceTo(State::SelfClosingStartTag);
@@ -756,7 +746,6 @@ bool HTMLTokenizer::handleAttributeNameState(char cc)
 
     if(cc == '=')
         return advanceTo(State::BeforeAttributeValue);
-
     if(cc == '>') {
         m_currentToken.endAttribute();
         return advanceTo(State::Data) && emitCurrentToken();
@@ -767,7 +756,7 @@ bool HTMLTokenizer::handleAttributeNameState(char cc)
         return advanceTo(State::AttributeName);
     }
 
-    if(cc == 0) {
+    if(cc == kEndOfFileMarker) {
         m_currentToken.endAttribute();
         return switchTo(State::Data);
     }
@@ -780,7 +769,6 @@ bool HTMLTokenizer::handleAfterAttributeNameState(char cc)
 {
     if(isSpace(cc))
         return advanceTo(State::AfterAttributeName);
-
     if(cc == '/') {
         m_currentToken.endAttribute();
         return advanceTo(State::SelfClosingStartTag);
@@ -801,7 +789,7 @@ bool HTMLTokenizer::handleAfterAttributeNameState(char cc)
         return advanceTo(State::AttributeName);
     }
 
-    if(cc == 0) {
+    if(cc == kEndOfFileMarker) {
         m_currentToken.endAttribute();
         return switchTo(State::Data);
     }
@@ -816,22 +804,18 @@ bool HTMLTokenizer::handleBeforeAttributeValueState(char cc)
 {
     if(isSpace(cc))
         return advanceTo(State::BeforeAttributeValue);
-
     if(cc == '"')
         return advanceTo(State::AttributeValueDoubleQuoted);
-
     if(cc == '&')
         return switchTo(State::AttributeValueUnquoted);
-
     if(cc == '\'')
         return advanceTo(State::AttributeValueSingleQuoted);
-
     if(cc == '>') {
         m_currentToken.endAttribute();
         return advanceTo(State::Data) && emitCurrentToken();
     }
 
-    if(cc == 0) {
+    if(cc == kEndOfFileMarker) {
         m_currentToken.endAttribute();
         return switchTo(State::Data);
     }
@@ -844,13 +828,12 @@ bool HTMLTokenizer::handleAttributeValueDoubleQuotedState(char cc)
 {
     if(cc == '"')
         return advanceTo(State::AfterAttributeValueQuoted);
-
     if(cc == '&') {
         m_additionalAllowedCharacter = '"';
         return advanceTo(State::CharacterReferenceInAttributeValue);
     }
 
-    if(cc == 0) {
+    if(cc == kEndOfFileMarker) {
         m_currentToken.endAttribute();
         return switchTo(State::Data);
     }
@@ -863,13 +846,12 @@ bool HTMLTokenizer::handleAttributeValueSingleQuotedState(char cc)
 {
     if(cc == '\'')
         return advanceTo(State::AfterAttributeValueQuoted);
-
     if(cc == '&') {
         m_additionalAllowedCharacter = '\'';
         return advanceTo(State::CharacterReferenceInAttributeValue);
     }
 
-    if(cc == 0) {
+    if(cc == kEndOfFileMarker) {
         m_currentToken.endAttribute();
         return switchTo(State::Data);
     }
@@ -895,7 +877,7 @@ bool HTMLTokenizer::handleAttributeValueUnquotedState(char cc)
         return advanceTo(State::Data) && emitCurrentToken();
     }
 
-    if(cc == 0) {
+    if(cc == kEndOfFileMarker) {
         m_currentToken.endAttribute();
         return switchTo(State::Data);
     }
@@ -917,7 +899,6 @@ bool HTMLTokenizer::handleCharacterReferenceInAttributeValueState(char cc)
         return switchTo(State::AttributeValueDoubleQuoted);
     if(m_additionalAllowedCharacter == '\'')
         return switchTo(State::AttributeValueSingleQuoted);
-
     assert(m_additionalAllowedCharacter == '>');
     return switchTo(State::AttributeValueUnquoted);
 }
@@ -927,15 +908,13 @@ bool HTMLTokenizer::handleAfterAttributeValueQuotedState(char cc)
     m_currentToken.endAttribute();
     if(isSpace(cc))
         return advanceTo(State::BeforeAttributeName);
-
     if(cc == '/')
         return advanceTo(State::SelfClosingStartTag);
-
     if(cc == '>')
         return advanceTo(State::Data) && emitCurrentToken();
-
-    if(cc == 0)
+    if(cc == kEndOfFileMarker) {
         return switchTo(State::Data);
+    }
 
     return switchTo(State::BeforeAttributeName);
 }
@@ -947,8 +926,9 @@ bool HTMLTokenizer::handleSelfClosingStartTagState(char cc)
         return advanceTo(State::Data) && emitCurrentToken();
     }
 
-    if(cc == 0)
+    if(cc == kEndOfFileMarker) {
         return switchTo(State::Data);
+    }
 
     return switchTo(State::BeforeAttributeName);
 }
@@ -957,9 +937,9 @@ bool HTMLTokenizer::handleBogusCommentState(char cc)
 {
     if(cc == '>')
         return advanceTo(State::Data) && emitCurrentToken();
-
-    if(cc == 0)
+    if(cc == kEndOfFileMarker) {
         return switchTo(State::Data) && emitCurrentToken();
+    }
 
     m_currentToken.addToComment(cc);
     return advanceTo(State::BogusComment);
@@ -977,9 +957,9 @@ bool HTMLTokenizer::handleMarkupDeclarationOpenState(char cc)
 
     if(consumeString(doctype, CaseMode::Ignore))
         return switchTo(State::DOCTYPE);
-
-    if(consumeString(cdata, CaseMode::Exact))
+    if(consumeString(cdata, CaseMode::Exact)) {
         return switchTo(State::CDATASection);
+    }
 
     m_currentToken.beginComment();
     return switchTo(State::BogusComment);
@@ -989,12 +969,11 @@ bool HTMLTokenizer::handleCommentStartState(char cc)
 {
     if(cc == '-')
         return advanceTo(State::CommentStartDash);
-
     if(cc == '>')
         return advanceTo(State::Data) && emitCurrentToken();
-
-    if(cc == 0)
+    if(cc == kEndOfFileMarker) {
         return switchTo(State::Data) && emitCurrentToken();
+    }
 
     m_currentToken.addToComment(cc);
     return advanceTo(State::Comment);
@@ -1004,12 +983,11 @@ bool HTMLTokenizer::handleCommentStartDashState(char cc)
 {
     if(cc == '-')
         return advanceTo(State::CommentEnd);
-
     if(cc == '>')
         return advanceTo(State::Data) && emitCurrentToken();
-
-    if(cc == 0)
+    if(cc == kEndOfFileMarker) {
         return switchTo(State::Data) && emitCurrentToken();
+    }
 
     m_currentToken.addToComment('-');
     m_currentToken.addToComment(cc);
@@ -1020,9 +998,9 @@ bool HTMLTokenizer::handleCommentState(char cc)
 {
     if(cc == '-')
         return advanceTo(State::CommentEndDash);
-
-    if(cc == 0)
+    if(cc == kEndOfFileMarker) {
         return switchTo(State::Data) && emitCurrentToken();
+    }
 
     m_currentToken.addToComment(cc);
     return advanceTo(State::Comment);
@@ -1032,9 +1010,9 @@ bool HTMLTokenizer::handleCommentEndDashState(char cc)
 {
     if(cc == '-')
         return advanceTo(State::CommentEnd);
-
-    if(cc == 0)
+    if(cc == kEndOfFileMarker) {
         return switchTo(State::Data) && emitCurrentToken();
+    }
 
     m_currentToken.addToComment('-');
     m_currentToken.addToComment(cc);
@@ -1045,17 +1023,16 @@ bool HTMLTokenizer::handleCommentEndState(char cc)
 {
     if(cc == '>')
         return advanceTo(State::Data) && emitCurrentToken();
-
     if(cc == '!')
         return advanceTo(State::CommentEndBang);
-
     if(cc == '-') {
         m_currentToken.addToComment(cc);
         return advanceTo(State::CommentEnd);
     }
 
-    if(cc == 0)
+    if(cc == kEndOfFileMarker) {
         return switchTo(State::Data) && emitCurrentToken();
+    }
 
     m_currentToken.addToComment('-');
     m_currentToken.addToComment('-');
@@ -1074,9 +1051,9 @@ bool HTMLTokenizer::handleCommentEndBangState(char cc)
 
     if(cc == '>')
         return advanceTo(State::Data) && emitCurrentToken();
-
-    if(cc == 0)
+    if(cc == kEndOfFileMarker) {
         return switchTo(State::Data) && emitCurrentToken();
+    }
 
     m_currentToken.addToComment('-');
     m_currentToken.addToComment('-');
@@ -1089,8 +1066,7 @@ bool HTMLTokenizer::handleDOCTYPEState(char cc)
 {
     if(isSpace(cc))
         return advanceTo(State::BeforeDOCTYPEName);
-
-    if(cc == 0) {
+    if(cc == kEndOfFileMarker) {
         m_currentToken.beginDOCTYPE();
         m_currentToken.setForceQuirks();
         return switchTo(State::Data) && emitCurrentToken();
@@ -1103,14 +1079,13 @@ bool HTMLTokenizer::handleBeforeDOCTYPENameState(char cc)
 {
     if(isSpace(cc))
         return advanceTo(State::BeforeDOCTYPEName);
-
     if(cc == '>') {
         m_currentToken.beginDOCTYPE();
         m_currentToken.setForceQuirks();
         return advanceTo(State::Data) && emitCurrentToken();
     }
 
-    if(cc == 0) {
+    if(cc == kEndOfFileMarker) {
         m_currentToken.beginDOCTYPE();
         m_currentToken.setForceQuirks();
         return switchTo(State::Data) && emitCurrentToken();
@@ -1125,11 +1100,9 @@ bool HTMLTokenizer::handleDOCTYPENameState(char cc)
 {
     if(isSpace(cc))
         return advanceTo(State::AfterDOCTYPEName);
-
     if(cc == '>')
         return advanceTo(State::Data) && emitCurrentToken();
-
-    if(cc == 0) {
+    if(cc == kEndOfFileMarker) {
         m_currentToken.setForceQuirks();
         return switchTo(State::Data) && emitCurrentToken();
     }
@@ -1144,7 +1117,7 @@ bool HTMLTokenizer::handleAfterDOCTYPENameState(char cc)
         return advanceTo(State::AfterDOCTYPEName);
     if(cc == '>')
         return advanceTo(State::Data) && emitCurrentToken();
-    if(cc == 0) {
+    if(cc == kEndOfFileMarker) {
         m_currentToken.setForceQuirks();
         return switchTo(State::Data) && emitCurrentToken();
     }
@@ -1153,9 +1126,9 @@ bool HTMLTokenizer::handleAfterDOCTYPENameState(char cc)
     constexpr std::string_view systemKeyword("system");
     if(consumeString(publicKeyword, CaseMode::Ignore))
         return switchTo(State::AfterDOCTYPEPublicKeyword);
-
-    if(consumeString(systemKeyword, CaseMode::Ignore))
+    if(consumeString(systemKeyword, CaseMode::Ignore)) {
         return switchTo(State::AfterDOCTYPESystemKeyword);
+    }
 
     m_currentToken.setForceQuirks();
     return advanceTo(State::BogusDOCTYPE);
@@ -1165,7 +1138,6 @@ bool HTMLTokenizer::handleAfterDOCTYPEPublicKeywordState(char cc)
 {
     if(isSpace(cc))
         return advanceTo(State::BeforeDOCTYPEPublicIdentifier);
-
     if(cc == '"') {
         m_currentToken.setPublicIdentifier();
         return advanceTo(State::DOCTYPEPublicIdentifierDoubleQuoted);
@@ -1181,7 +1153,7 @@ bool HTMLTokenizer::handleAfterDOCTYPEPublicKeywordState(char cc)
         return advanceTo(State::Data) && emitCurrentToken();
     }
 
-    if(cc == 0) {
+    if(cc == kEndOfFileMarker) {
         m_currentToken.setForceQuirks();
         return switchTo(State::Data) && emitCurrentToken();
     }
@@ -1194,7 +1166,6 @@ bool HTMLTokenizer::handleBeforeDOCTYPEPublicIdentifierState(char cc)
 {
     if(isSpace(cc))
         return advanceTo(State::BeforeDOCTYPEPublicIdentifier);
-
     if(cc == '"') {
         m_currentToken.setPublicIdentifier();
         return advanceTo(State::DOCTYPEPublicIdentifierDoubleQuoted);
@@ -1210,7 +1181,7 @@ bool HTMLTokenizer::handleBeforeDOCTYPEPublicIdentifierState(char cc)
         return advanceTo(State::Data) && emitCurrentToken();
     }
 
-    if(cc == 0) {
+    if(cc == kEndOfFileMarker) {
         m_currentToken.setForceQuirks();
         return switchTo(State::Data) && emitCurrentToken();
     }
@@ -1223,13 +1194,12 @@ bool HTMLTokenizer::handleDOCTYPEPublicIdentifierDoubleQuotedState(char cc)
 {
     if(cc == '"')
         return advanceTo(State::AfterDOCTYPEPublicIdentifier);
-
     if(cc == '>') {
         m_currentToken.setForceQuirks();
         return advanceTo(State::Data) && emitCurrentToken();
     }
 
-    if(cc == 0) {
+    if(cc == kEndOfFileMarker) {
         m_currentToken.setForceQuirks();
         return switchTo(State::Data) && emitCurrentToken();
     }
@@ -1242,13 +1212,12 @@ bool HTMLTokenizer::handleDOCTYPEPublicIdentifierSingleQuotedState(char cc)
 {
     if(cc == '\'')
         return advanceTo(State::AfterDOCTYPEPublicIdentifier);
-
     if(cc == '>') {
         m_currentToken.setForceQuirks();
         return advanceTo(State::Data) && emitCurrentToken();
     }
 
-    if(cc == 0) {
+    if(cc == kEndOfFileMarker) {
         m_currentToken.setForceQuirks();
         return switchTo(State::Data) && emitCurrentToken();
     }
@@ -1261,10 +1230,8 @@ bool HTMLTokenizer::handleAfterDOCTYPEPublicIdentifierState(char cc)
 {
     if(isSpace(cc))
         return advanceTo(State::BetweenDOCTYPEPublicAndSystemIdentifiers);
-
     if(cc == '>')
         return advanceTo(State::Data) && emitCurrentToken();
-
     if(cc == '"') {
         m_currentToken.setSystemIdentifier();
         return advanceTo(State::DOCTYPESystemIdentifierDoubleQuoted);
@@ -1275,7 +1242,7 @@ bool HTMLTokenizer::handleAfterDOCTYPEPublicIdentifierState(char cc)
         return advanceTo(State::DOCTYPESystemIdentifierSingleQuoted);
     }
 
-    if(cc == 0) {
+    if(cc == kEndOfFileMarker) {
         m_currentToken.setForceQuirks();
         return switchTo(State::Data) && emitCurrentToken();
     }
@@ -1288,10 +1255,8 @@ bool HTMLTokenizer::handleBetweenDOCTYPEPublicAndSystemIdentifiersState(char cc)
 {
     if(isSpace(cc))
         return advanceTo(State::BetweenDOCTYPEPublicAndSystemIdentifiers);
-
     if(cc == '>')
         return advanceTo(State::Data) && emitCurrentToken();
-
     if(cc == '"') {
         m_currentToken.setSystemIdentifier();
         return advanceTo(State::DOCTYPESystemIdentifierDoubleQuoted);
@@ -1302,7 +1267,7 @@ bool HTMLTokenizer::handleBetweenDOCTYPEPublicAndSystemIdentifiersState(char cc)
         return advanceTo(State::DOCTYPESystemIdentifierSingleQuoted);
     }
 
-    if(cc == 0) {
+    if(cc == kEndOfFileMarker) {
         m_currentToken.setForceQuirks();
         return switchTo(State::Data) && emitCurrentToken();
     }
@@ -1315,7 +1280,6 @@ bool HTMLTokenizer::handleAfterDOCTYPESystemKeywordState(char cc)
 {
     if(isSpace(cc))
         return advanceTo(State::BeforeDOCTYPESystemIdentifier);
-
     if(cc == '"') {
         m_currentToken.setSystemIdentifier();
         return advanceTo(State::DOCTYPESystemIdentifierDoubleQuoted);
@@ -1331,7 +1295,7 @@ bool HTMLTokenizer::handleAfterDOCTYPESystemKeywordState(char cc)
         return advanceTo(State::Data) && emitCurrentToken();
     }
 
-    if(cc == 0) {
+    if(cc == kEndOfFileMarker) {
         m_currentToken.setForceQuirks();
         return switchTo(State::Data) && emitCurrentToken();
     }
@@ -1344,7 +1308,6 @@ bool HTMLTokenizer::handleBeforeDOCTYPESystemIdentifierState(char cc)
 {
     if(isSpace(cc))
         return advanceTo(State::BeforeDOCTYPESystemIdentifier);
-
     if(cc == '"') {
         m_currentToken.setSystemIdentifier();
         return advanceTo(State::DOCTYPESystemIdentifierDoubleQuoted);
@@ -1360,7 +1323,7 @@ bool HTMLTokenizer::handleBeforeDOCTYPESystemIdentifierState(char cc)
         return advanceTo(State::Data) && emitCurrentToken();
     }
 
-    if(cc == 0) {
+    if(cc == kEndOfFileMarker) {
         m_currentToken.setForceQuirks();
         return switchTo(State::Data) && emitCurrentToken();
     }
@@ -1373,13 +1336,12 @@ bool HTMLTokenizer::handleDOCTYPESystemIdentifierDoubleQuotedState(char cc)
 {
     if(cc == '"')
         return advanceTo(State::AfterDOCTYPESystemIdentifier);
-
     if(cc == '>') {
         m_currentToken.setForceQuirks();
         return advanceTo(State::Data) && emitCurrentToken();
     }
 
-    if(cc == 0) {
+    if(cc == kEndOfFileMarker) {
         m_currentToken.setForceQuirks();
         return switchTo(State::Data) && emitCurrentToken();
     }
@@ -1392,13 +1354,12 @@ bool HTMLTokenizer::handleDOCTYPESystemIdentifierSingleQuotedState(char cc)
 {
     if(cc == '\'')
         return advanceTo(State::AfterDOCTYPESystemIdentifier);
-
     if(cc == '>') {
         m_currentToken.setForceQuirks();
         return advanceTo(State::Data) && emitCurrentToken();
     }
 
-    if(cc == 0) {
+    if(cc == kEndOfFileMarker) {
         m_currentToken.setForceQuirks();
         return switchTo(State::Data) && emitCurrentToken();
     }
@@ -1411,11 +1372,9 @@ bool HTMLTokenizer::handleAfterDOCTYPESystemIdentifierState(char cc)
 {
     if(isSpace(cc))
         return advanceTo(State::AfterDOCTYPESystemIdentifier);
-
     if(cc == '>')
         return advanceTo(State::Data) && emitCurrentToken();
-
-    if(cc == 0) {
+    if(cc == kEndOfFileMarker) {
         m_currentToken.setForceQuirks();
         return switchTo(State::Data) && emitCurrentToken();
     }
@@ -1427,9 +1386,9 @@ bool HTMLTokenizer::handleBogusDOCTYPEState(char cc)
 {
     if(cc == '>')
         return advanceTo(State::Data) && emitCurrentToken();
-
-    if(cc == 0)
+    if(cc == kEndOfFileMarker) {
         return switchTo(State::Data) && emitCurrentToken();
+    }
 
     return advanceTo(State::BogusDOCTYPE);
 }
@@ -1438,8 +1397,9 @@ bool HTMLTokenizer::handleCDATASectionState(char cc)
 {
     if(cc == ']')
         return advanceTo(State::CDATASectionRightSquareBracket);
-    if(cc == 0)
+    if(cc == kEndOfFileMarker) {
         return switchTo(State::Data);
+    }
 
     m_characterBuffer += cc;
     return advanceTo(State::CDATASection);
@@ -1447,8 +1407,9 @@ bool HTMLTokenizer::handleCDATASectionState(char cc)
 
 bool HTMLTokenizer::handleCDATASectionRightSquareBracketState(char cc)
 {
-    if(cc == ']')
+    if(cc == ']') {
         return advanceTo(State::CDATASectionDoubleRightSquareBracket);
+    }
 
     m_characterBuffer += cc;
     return switchTo(State::CDATASection);
@@ -1456,8 +1417,9 @@ bool HTMLTokenizer::handleCDATASectionRightSquareBracketState(char cc)
 
 bool HTMLTokenizer::handleCDATASectionDoubleRightSquareBracketState(char cc)
 {
-    if(cc == '>')
+    if(cc == '>') {
         return advanceTo(State::Data);
+    }
 
     m_characterBuffer += ']';
     m_characterBuffer += ']';

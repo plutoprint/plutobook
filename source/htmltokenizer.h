@@ -506,6 +506,8 @@ inline bool HTMLTokenizer::switchTo(State state)
     return true;
 }
 
+constexpr char kEndOfFileMarker = '\0';
+
 inline char HTMLTokenizer::nextInputCharacter()
 {
     if(!m_input.empty()) {
@@ -516,7 +518,7 @@ inline char HTMLTokenizer::nextInputCharacter()
 
     if(!m_input.empty())
         return handleInputCharacter(m_input.front());
-    return 0;
+    return kEndOfFileMarker;
 }
 
 inline char HTMLTokenizer::handleInputCharacter(char inputCharacter)
