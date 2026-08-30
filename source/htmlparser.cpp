@@ -653,21 +653,17 @@ bool HTMLParser::parse()
         auto token = m_tokenizer.nextToken();
         if(token.type() == HTMLToken::Type::DOCTYPE) {
             handleDoctypeToken(token);
-            continue;
-        }
-
-        if(token.type() == HTMLToken::Type::Comment) {
+        } else if(token.type() == HTMLToken::Type::Comment) {
             handleCommentToken(token);
-            continue;
-        }
+        } else {
+            if(m_skipLeadingNewline) {
+                if(token.type() == HTMLToken::Type::SpaceCharacter)
+                    token.skipLeadingNewLine();
+                m_skipLeadingNewline = false;
+            }
 
-        if(m_skipLeadingNewline
-            && token.type() == HTMLToken::Type::SpaceCharacter) {
-            token.skipLeadingNewLine();
+            handleToken(token, currentInsertionMode(token));
         }
-
-        m_skipLeadingNewline = false;
-        handleToken(token, currentInsertionMode(token));
     }
 
     assert(!m_openElements.empty());
