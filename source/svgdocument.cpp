@@ -12,7 +12,6 @@
 #include "svggeometrybox.h"
 #include "svgtextbox.h"
 #include "imageresource.h"
-#include "stringutils.h"
 #include "plutobook.hpp"
 
 #include <set>
