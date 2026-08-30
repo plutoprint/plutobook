@@ -93,9 +93,14 @@ public:
 
     void endAttribute() {
         assert(m_type == Type::StartTag || m_type == Type::EndTag);
-        auto name = GlobalString(m_attributeName);
-        auto value = m_heap->createString(m_attributeValue);
-        m_attributes.emplace_back(name, value);
+        const GlobalString name(m_attributeName);
+        for(const auto& attribute : m_attributes) {
+            if(name == attribute.name()) {
+                return;
+            }
+        }
+
+        m_attributes.emplace_back(name, m_heap->createString(m_attributeValue));
     }
 
     void beginComment() {
