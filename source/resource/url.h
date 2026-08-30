@@ -70,12 +70,12 @@ inline bool Url::protocolIs(std::string_view protocol) const
 
 inline std::string_view Url::base() const
 {
+    if(m_aggregator.has_opaque_path)
+        return m_aggregator.get_protocol();
     const auto& components = m_aggregator.get_components();
 
     auto end = m_aggregator.get_href_size();
-    if(m_aggregator.has_opaque_path) {
-        end = components.protocol_end;
-    } else if(components.search_start != ada::url_components::omitted) {
+    if(components.search_start != ada::url_components::omitted) {
         end = components.search_start;
     } else if(components.hash_start != ada::url_components::omitted) {
         end = components.hash_start;
