@@ -390,6 +390,10 @@ public:
 
     State state() const { return m_state; }
     void setState(State state) { m_state = state; }
+
+    bool shouldAllowCDATA() const { return m_shouldAllowCDATA; }
+    void setShouldAllowCDATA(bool value) { m_shouldAllowCDATA = value; }
+
     bool atEOF() const { return m_currentToken.type() == HTMLToken::Type::EndOfFile; }
 
 private:
@@ -492,6 +496,7 @@ private:
     std::string m_endTagNameBuffer;
     std::string m_appropriateEndTagName;
     State m_state{State::Data};
+    bool m_shouldAllowCDATA{false};
     bool m_reconsumeCurrentCharacter{true};
     char m_additionalAllowedCharacter{0};
     HTMLToken m_currentToken;

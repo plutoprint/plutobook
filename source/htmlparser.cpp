@@ -664,6 +664,11 @@ bool HTMLParser::parse()
 
             handleToken(token, currentInsertionMode(token));
         }
+
+        auto shouldAllowCDATA = false;
+        if(!m_openElements.empty())
+            shouldAllowCDATA = currentElement()->namespaceURI() != xhtmlNs;
+        m_tokenizer.setShouldAllowCDATA(shouldAllowCDATA);
     }
 
     assert(!m_openElements.empty());

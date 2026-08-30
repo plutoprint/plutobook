@@ -957,7 +957,7 @@ bool HTMLTokenizer::handleMarkupDeclarationOpenState(char cc)
 
     if(consumeString(doctype, CaseMode::Ignore))
         return switchTo(State::DOCTYPE);
-    if(consumeString(cdata, CaseMode::Exact)) {
+    if(m_shouldAllowCDATA && consumeString(cdata, CaseMode::Exact)) {
         return switchTo(State::CDATASection);
     }
 
