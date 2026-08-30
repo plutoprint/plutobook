@@ -336,9 +336,8 @@ const HeapString& Element::getAttribute(const GlobalString& name) const
 
 Url Element::getUrlAttribute(const GlobalString& name) const
 {
-    const auto& value = getAttribute(name);
-    if(!value.empty())
-        return document()->completeUrl(value);
+    if(auto attribute = findAttribute(name))
+        return document()->completeUrl(attribute->value());
     return Url();
 }
 
