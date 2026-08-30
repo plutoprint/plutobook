@@ -12,6 +12,8 @@
 #include <array>
 #include <string>
 #include <cstdint>
+#include <cassert>
+#include <charconv>
 
 namespace plutobook {
 
@@ -234,11 +236,59 @@ constexpr void stripLeadingAndTrailingSpaces(std::string_view& input)
     stripTrailingSpaces(input);
 }
 
-std::string toString(int value);
-std::string toString(float value);
-std::string toUtf8(uint32_t codepoint);
+static std::string ellipsize(std::string_view input, size_t maxLength = 1024)
+{
+    constexpr std::string_view ellipsis = "...";
+    if(input.length() <= maxLength)
+        return std::string(input);
+    if(maxLength <= ellipsis.length()) {
+        return std::string(input.substr(0, maxLength));
+    }
 
-std::string ellipsize(std::string_view input, size_t maxLength = 1024);
+    const size_t remainingLength = maxLength - ellipsis.length();
+    const size_t leftLength = remainingLength - remainingLength / 2;
+    const size_t rightLength = remainingLength / 2;
+
+    std::string output;
+    output.reserve(maxLength);
+    output.append(input.substr(0, leftLength));
+    output.append(ellipsis);
+    output.append(input.substr(input.length() - rightLength));
+    return output;
+}
+
+template <typename T>
+static std::string toString(T value)
+{
+    char buffer[64];
+    auto result = std::to_chars(buffer, std::end(buffer), value);
+    assert(result.ec == std::errc());
+    return std::string(buffer, result.ptr);
+}
+
+static std::string toUtf8(uint32_t codepoint)
+{
+    char buffer[4];
+    size_t length = 0;
+
+    if(codepoint <= 0x7F) {
+        buffer[length++] = char(codepoint);
+    } else if(codepoint <= 0x7FF) {
+        buffer[length++] = char(0xC0 | (codepoint >> 6));
+        buffer[length++] = char(0x80 | (codepoint & 0x3F));
+    } else if(codepoint <= 0xFFFF) {
+        buffer[length++] = char(0xE0 | (codepoint >> 12));
+        buffer[length++] = char(0x80 | ((codepoint >> 6) & 0x3F));
+        buffer[length++] = char(0x80 | (codepoint & 0x3F));
+    } else {
+        buffer[length++] = char(0xF0 | (codepoint >> 18));
+        buffer[length++] = char(0x80 | ((codepoint >> 12) & 0x3F));
+        buffer[length++] = char(0x80 | ((codepoint >> 6) & 0x3F));
+        buffer[length++] = char(0x80 | (codepoint & 0x3F));
+    }
+
+    return std::string(buffer, length);
+}
 
 } // namespace plutobook
 
