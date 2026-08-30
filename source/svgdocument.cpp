@@ -253,17 +253,17 @@ SVGSVGElement::SVGSVGElement(Document* document)
 static void addSVGTransformAttributeStyle(std::string& output, const Transform& matrix)
 {
     output += "transform:matrix(";
-    output += toString(matrix.a);
+    output += std::to_string(matrix.a);
     output += ',';
-    output += toString(matrix.b);
+    output += std::to_string(matrix.b);
     output += ',';
-    output += toString(matrix.c);
+    output += std::to_string(matrix.c);
     output += ',';
-    output += toString(matrix.d);
+    output += std::to_string(matrix.d);
     output += ',';
-    output += toString(matrix.e);
+    output += std::to_string(matrix.e);
     output += ',';
-    output += toString(matrix.f);
+    output += std::to_string(matrix.f);
     output += ");";
 }
 

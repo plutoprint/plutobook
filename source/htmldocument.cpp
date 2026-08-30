@@ -282,7 +282,7 @@ static void addHTMLLengthAttributeStyle(std::string& output, std::string_view na
 {
     output += name;
     output += ':';
-    output += toString(value);
+    output += std::to_string(value);
     if(value) {
         output += "px;";
     } else {

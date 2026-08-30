@@ -13,7 +13,6 @@
 #include <string>
 #include <cstdint>
 #include <cassert>
-#include <charconv>
 
 namespace plutobook {
 
@@ -252,15 +251,6 @@ static std::string ellipsize(std::string_view input, size_t maxLength = 1024)
     output.append(ellipsis);
     output.append(input.substr(input.length() - rightLength));
     return output;
-}
-
-template <typename T>
-static std::string toString(T value)
-{
-    char buffer[64];
-    auto result = std::to_chars(buffer, std::end(buffer), value);
-    assert(result.ec == std::errc());
-    return std::string(buffer, result.ptr);
 }
 
 static std::string toUtf8(uint32_t codepoint)
