@@ -103,13 +103,10 @@ constexpr bool isHexDigit(uint8_t c)
 
 constexpr uint8_t toHexDigit(uint8_t cc)
 {
-    if(isDigit(cc))
+    assert(isHexDigit(cc));
+    if(cc < 'A')
         return cc - '0';
-    if(isHexUpper(cc))
-        return 10 + cc - 'A';
-    if(isHexLower(cc))
-        return 10 + cc - 'a';
-    return 0;
+    return (cc - 'A' + 10) & 0xF;
 }
 
 constexpr uint8_t toHexByte(uint8_t a, uint8_t b)
