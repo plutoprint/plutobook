@@ -481,15 +481,14 @@ ResourceData ResourceLoader::loadUrl(const Url& url, ResourceFetcher* customFetc
 
 Url ResourceLoader::completeUrl(std::string_view input)
 {
+    stripLeadingAndTrailingSpaces(input);
+    if(input.empty()) {
+        return Url();
+    }
+
     Url completeUrl(input);
     if(completeUrl.isValid()) {
         return completeUrl;
-    }
-
-    stripLeadingAndTrailingSpaces(input);
-
-    if(input.empty()) {
-        return Url();
     }
 
     std::error_code ec;
