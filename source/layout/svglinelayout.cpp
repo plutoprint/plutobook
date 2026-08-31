@@ -568,8 +568,7 @@ static void paintSVGTextDecorations(GraphicsContext& context, const Point& origi
         return;
     auto baseline = style->fontAscent();
     if(decorations & TextDecorationLine::Underline) {
-        auto gap = std::max(1.f, std::ceil(thickness / 2.f));
-        Point offset(origin.x, origin.y + gap);
+        Point offset(origin.x, origin.y + style->underlineDistanceFromBaseline(thickness));
         paintSVGTextDecoration(context, offset, width, thickness);
     }
 
