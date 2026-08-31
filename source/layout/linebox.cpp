@@ -13,6 +13,7 @@
 #include "graphicscontext.h"
 #include "boxlayer.h"
 
+#include <algorithm>
 #include <cmath>
 
 namespace plutobook {
@@ -144,7 +145,11 @@ static void paintTextDecoration(GraphicsContext& context, const Point& origin, f
         float y = y1 + doubleOffset * wavyOffsetFactor;
 
         float distance = 3.f * thickness;
-        float step = 2.f * thickness;
+
+        // The wave period follows the thickness, but a period below a fraction of a
+        // pixel is not renderable and would only make the loop below run for as many
+        // iterations as the author cares to ask for.
+        float step = std::max(2.f * thickness, 0.5f);
 
         path.moveTo(x, y);
         while(x < x2) {
