@@ -120,13 +120,14 @@ std::string_view CSSTokenizer::addstring(std::string&& value)
 
 std::string_view CSSTokenizer::consumeName()
 {
+    const auto offset = m_input.offset();
+
     size_t count = 0;
     while(true) {
         auto cc = m_input.peek(count);
-        if(cc == 0 || cc == '\\')
+        if(cc == '\\')
             break;
         if(!isNameChar(cc)) {
-            auto offset = m_input.offset();
             m_input.advance(count);
             return m_input.substring(offset, count);
         }
@@ -135,6 +136,8 @@ std::string_view CSSTokenizer::consumeName()
     }
 
     std::string output;
+    output += m_input.substring(offset, count);
+    m_input.advance(count);
     while(true) {
         auto cc = m_input.peek();
         if(isNameChar(cc)) {
@@ -193,14 +196,17 @@ CSSToken CSSTokenizer::consumeStringToken()
     assert(endingCodePoint == '\"' || endingCodePoint == '\'');
     m_input.advance();
 
+    const auto offset = m_input.offset();
+
     size_t count = 0;
     while(true) {
         auto cc = m_input.peek(count);
-        if(cc == 0 || cc == '\\')
+        if(cc == '\\')
             break;
-        if(cc == endingCodePoint) {
-            auto offset = m_input.offset();
-            m_input.advance(count + 1);
+        if(cc == 0 || cc == endingCodePoint) {
+            m_input.advance(count);
+            if(cc == endingCodePoint)
+                m_input.advance();
             return CSSToken(CSSToken::Type::String, m_input.substring(offset, count));
         }
 
@@ -213,6 +219,8 @@ CSSToken CSSTokenizer::consumeStringToken()
     }
 
     std::string output;
+    output += m_input.substring(offset, count);
+    m_input.advance(count);
     while(true) {
         auto cc = m_input.peek();
         if(cc == 0)
@@ -388,14 +396,17 @@ CSSToken CSSTokenizer::consumeUrlToken()
         cc = m_input.consume();
     }
 
+    const auto offset = m_input.offset();
+
     size_t count = 0;
     while(true) {
         auto cc = m_input.peek(count);
-        if(cc == 0 || cc == '\\' || isSpace(cc))
+        if(cc == '\\' || isSpace(cc))
             break;
-        if(cc == ')') {
-            auto offset = m_input.offset();
-            m_input.advance(count + 1);
+        if(cc == 0 || cc == ')') {
+            m_input.advance(count);
+            if(cc == ')')
+                m_input.advance();
             return CSSToken(CSSToken::Type::Url, m_input.substring(offset, count));
         }
 
@@ -408,6 +419,8 @@ CSSToken CSSTokenizer::consumeUrlToken()
     }
 
     std::string output;
+    output += m_input.substring(offset, count);
+    m_input.advance(count);
     while(true) {
         auto cc = m_input.peek();
         if(cc == 0)
