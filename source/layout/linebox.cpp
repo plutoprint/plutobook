@@ -175,8 +175,10 @@ static void paintTextDecorations(GraphicsContext& context, const Point& offset, 
     auto decorations = style->textDecorationLine();
     if(decorations == TextDecorationLine::None)
         return;
+    auto thickness = style->textDecorationThickness();
+    if(thickness <= 0.f)
+        return;
     auto baseline = style->fontAscent();
-    auto thickness = style->fontSize() / 16.f;
     auto doubleOffset = thickness + 1.f;
     auto decorationStyle = style->textDecorationStyle();
     context.setColor(style->textDecorationColor());

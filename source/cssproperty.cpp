@@ -272,6 +272,7 @@ CSSPropertyID CSSProperty::id(std::string_view name)
         {"text-decoration-color", CSSPropertyID::TextDecorationColor},
         {"text-decoration-line", CSSPropertyID::TextDecorationLine},
         {"text-decoration-style", CSSPropertyID::TextDecorationStyle},
+        {"text-decoration-thickness", CSSPropertyID::TextDecorationThickness},
         {"text-indent", CSSPropertyID::TextIndent},
         {"text-orientation", CSSPropertyID::TextOrientation},
         {"text-overflow", CSSPropertyID::TextOverflow},

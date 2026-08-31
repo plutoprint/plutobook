@@ -630,6 +630,21 @@ Color BoxStyle::textDecorationColor() const
     return convertColor(*value);
 }
 
+float BoxStyle::textDecorationThickness() const
+{
+    auto defaultThickness = fontSize() / 16.f;
+    auto value = get(CSSPropertyID::TextDecorationThickness);
+    if(value == nullptr || value->id() == CSSValueID::Auto)
+        return defaultThickness;
+    if(value->id() == CSSValueID::FromFont) {
+        if(auto thickness = fontUnderlineThickness())
+            return thickness;
+        return defaultThickness;
+    }
+
+    return convertLengthOrPercent(*value).calcMin(fontSize());
+}
+
 Length BoxStyle::textIndent() const
 {
     auto value = get(CSSPropertyID::TextIndent);
@@ -3396,6 +3411,7 @@ BoxStyle::BoxStyle(Node* node, const BoxStyle* parentStyle, PseudoType pseudoTyp
             case CSSPropertyID::TextDecorationColor:
             case CSSPropertyID::TextDecorationLine:
             case CSSPropertyID::TextDecorationStyle:
+            case CSSPropertyID::TextDecorationThickness:
             case CSSPropertyID::TextIndent:
             case CSSPropertyID::Widows:
             case CSSPropertyID::WordSpacing:

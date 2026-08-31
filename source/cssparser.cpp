@@ -3054,6 +3054,18 @@ RefPtr<CSSValue> CSSParser::consumeTextDecorationLine(CSSTokenStream& input)
     return CSSListValue::create(m_heap, std::move(values));
 }
 
+RefPtr<CSSValue> CSSParser::consumeTextDecorationThickness(CSSTokenStream& input)
+{
+    static constexpr CSSIdentValueEntry table[] = {
+        {"auto", CSSValueID::Auto},
+        {"from-font", CSSValueID::FromFont}
+    };
+
+    if(auto value = consumeIdent(input, table))
+        return value;
+    return consumeLengthOrPercent(input, false, false);
+}
+
 RefPtr<CSSValue> CSSParser::consumePositionComponent(CSSTokenStream& input)
 {
     static constexpr CSSIdentValueEntry table[] = {
@@ -3473,6 +3485,8 @@ RefPtr<CSSValue> CSSParser::consumeLonghand(CSSTokenStream& input, CSSPropertyID
         return consumeVerticalAlign(input);
     case CSSPropertyID::TextDecorationLine:
         return consumeTextDecorationLine(input);
+    case CSSPropertyID::TextDecorationThickness:
+        return consumeTextDecorationThickness(input);
     case CSSPropertyID::BackgroundSize:
         return consumeBackgroundSize(input);
     case CSSPropertyID::BackgroundPosition:
