@@ -3831,6 +3831,16 @@ RefPtr<CSSValue> CSSParser::consumeLonghand(CSSTokenStream& input, CSSPropertyID
         return consumeIdent(input, table);
     }
 
+    case CSSPropertyID::TextUnderlinePosition: {
+        static constexpr CSSIdentValueEntry table[] = {
+            {"auto", CSSValueID::Auto},
+            {"from-font", CSSValueID::FromFont},
+            {"under", CSSValueID::Under}
+        };
+
+        return consumeIdent(input, table);
+    }
+
     case CSSPropertyID::TextOverflow: {
         static constexpr CSSIdentValueEntry table[] = {
             {"clip", CSSValueID::Clip},

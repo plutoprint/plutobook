@@ -16,6 +16,8 @@
 
 #include "plutobook.hpp"
 
+#include <cmath>
+
 namespace plutobook {
 
 const Length Length::None(Length::Type::None);
@@ -643,6 +645,43 @@ float BoxStyle::textDecorationThickness() const
     }
 
     return convertLengthOrPercent(*value).calcMin(fontSize());
+}
+
+TextUnderlinePosition BoxStyle::textUnderlinePosition() const
+{
+    auto value = get(CSSPropertyID::TextUnderlinePosition);
+    if(value == nullptr)
+        return TextUnderlinePosition::Auto;
+    const auto& ident = to<CSSIdentValue>(*value);
+    switch(ident.value()) {
+    case CSSValueID::Auto:
+        return TextUnderlinePosition::Auto;
+    case CSSValueID::FromFont:
+        return TextUnderlinePosition::FromFont;
+    case CSSValueID::Under:
+        return TextUnderlinePosition::Under;
+    default:
+        assert(false);
+    }
+
+    return TextUnderlinePosition::Auto;
+}
+
+float BoxStyle::underlineDistanceFromBaseline(float thickness) const
+{
+    auto gap = std::max(1.f, std::ceil(thickness / 2.f));
+    switch(textUnderlinePosition()) {
+    case TextUnderlinePosition::FromFont:
+        if(auto position = fontUnderlinePosition())
+            return position;
+        break;
+    case TextUnderlinePosition::Under:
+        return fontDescent();
+    default:
+        break;
+    }
+
+    return gap;
 }
 
 Length BoxStyle::textIndent() const
@@ -3413,6 +3452,7 @@ BoxStyle::BoxStyle(Node* node, const BoxStyle* parentStyle, PseudoType pseudoTyp
             case CSSPropertyID::TextDecorationStyle:
             case CSSPropertyID::TextDecorationThickness:
             case CSSPropertyID::TextIndent:
+            case CSSPropertyID::TextUnderlinePosition:
             case CSSPropertyID::Widows:
             case CSSPropertyID::WordSpacing:
                 m_properties.insert_or_assign(id, value);
