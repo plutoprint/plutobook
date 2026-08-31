@@ -183,8 +183,7 @@ static void paintTextDecorations(GraphicsContext& context, const Point& offset, 
     auto decorationStyle = style->textDecorationStyle();
     context.setColor(style->textDecorationColor());
     if(decorations & TextDecorationLine::Underline) {
-        auto gap = std::max(1.f, std::ceil(thickness / 2.f));
-        Point origin(offset.x, offset.y + baseline + gap);
+        Point origin(offset.x, offset.y + baseline + style->underlineDistanceFromBaseline(thickness));
         paintTextDecoration(context, origin, width, thickness, doubleOffset, 0, decorationStyle);
     }
 
