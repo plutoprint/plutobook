@@ -667,21 +667,29 @@ TextUnderlinePosition BoxStyle::textUnderlinePosition() const
     return TextUnderlinePosition::Auto;
 }
 
+Length BoxStyle::textUnderlineOffset() const
+{
+    auto value = get(CSSPropertyID::TextUnderlineOffset);
+    if(value == nullptr)
+        return Length::Auto;
+    return convertLengthOrPercentOrAuto(*value);
+}
+
 float BoxStyle::underlineDistanceFromBaseline(float thickness) const
 {
-    auto gap = std::max(1.f, std::ceil(thickness / 2.f));
+    auto offset = textUnderlineOffset().calcMin(fontSize());
     switch(textUnderlinePosition()) {
     case TextUnderlinePosition::FromFont:
         if(auto position = fontUnderlinePosition())
-            return position;
+            return position + offset;
         break;
     case TextUnderlinePosition::Under:
-        return fontDescent();
+        return fontDescent() + offset;
     default:
         break;
     }
 
-    return gap;
+    return std::max(1.f, std::ceil(thickness / 2.f)) + offset;
 }
 
 Length BoxStyle::textIndent() const
@@ -3452,6 +3460,7 @@ BoxStyle::BoxStyle(Node* node, const BoxStyle* parentStyle, PseudoType pseudoTyp
             case CSSPropertyID::TextDecorationStyle:
             case CSSPropertyID::TextDecorationThickness:
             case CSSPropertyID::TextIndent:
+            case CSSPropertyID::TextUnderlineOffset:
             case CSSPropertyID::TextUnderlinePosition:
             case CSSPropertyID::Widows:
             case CSSPropertyID::WordSpacing:
