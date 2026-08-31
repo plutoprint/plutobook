@@ -277,6 +277,7 @@ CSSPropertyID CSSProperty::id(std::string_view name)
         {"text-orientation", CSSPropertyID::TextOrientation},
         {"text-overflow", CSSPropertyID::TextOverflow},
         {"text-transform", CSSPropertyID::TextTransform},
+        {"text-underline-offset", CSSPropertyID::TextUnderlineOffset},
         {"text-underline-position", CSSPropertyID::TextUnderlinePosition},
         {"top", CSSPropertyID::Top},
         {"transform", CSSPropertyID::Transform},
