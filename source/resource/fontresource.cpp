@@ -385,6 +385,9 @@ RefPtr<SimpleFontData> SimpleFontData::create(cairo_scaled_font_t* font, FcCharS
     cairo_font_extents_t font_extents;
     cairo_scaled_font_extents(font, &font_extents);
 
+    cairo_matrix_t scale_matrix;
+    cairo_scaled_font_get_scale_matrix(font, &scale_matrix);
+
     FontDataInfo info;
     info.ascent = round(font_extents.ascent);
     info.descent = round(font_extents.descent);
@@ -400,11 +403,17 @@ RefPtr<SimpleFontData> SimpleFontData::create(cairo_scaled_font_t* font, FcCharS
     info.hasKerning = FT_HAS_KERNING(ftFace);
     info.hasColor = FT_HAS_COLOR(ftFace);
 
+    info.underlinePosition = 0.f;
+    info.underlineThickness = 0.f;
+    if(FT_IS_SCALABLE(ftFace) && ftFace->units_per_EM) {
+        auto scale = scale_matrix.yy / ftFace->units_per_EM;
+        info.underlinePosition = -ftFace->underline_position * scale;
+        info.underlineThickness = ftFace->underline_thickness * scale;
+    }
+
     auto hbFace = hb_ft_face_create_referenced(ftFace);
     auto hbFont = hb_font_create(hbFace);
 
-    cairo_matrix_t scale_matrix;
-    cairo_scaled_font_get_scale_matrix(font, &scale_matrix);
     hb_font_set_scale(hbFont, FLT_TO_HB(scale_matrix.xx), FLT_TO_HB(scale_matrix.yy));
 
     if(FT_MM_Var* ftMMVar; !FT_Get_MM_Var(ftFace, &ftMMVar)) {
