@@ -750,7 +750,8 @@ CSSShorthand CSSProperty::shorthand(CSSPropertyID id)
         static const CSSPropertyID data[] = {
             CSSPropertyID::TextDecorationLine,
             CSSPropertyID::TextDecorationStyle,
-            CSSPropertyID::TextDecorationColor
+            CSSPropertyID::TextDecorationColor,
+            CSSPropertyID::TextDecorationThickness
         };
 
         return CSSShorthand(data);
