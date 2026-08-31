@@ -691,6 +691,9 @@ public:
     float fontHeight() const;
     float fontLineHeight() const;
 
+    float fontUnderlinePosition() const;
+    float fontUnderlineThickness() const;
+
     float exFontSize() const;
     float capFontSize() const;
     float chFontSize() const;
