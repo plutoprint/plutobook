@@ -96,6 +96,20 @@ float BoxStyle::fontLineHeight() const
     return 0.f;
 }
 
+float BoxStyle::fontUnderlinePosition() const
+{
+    if(auto fontData = m_font->primaryFont())
+        return fontData->underlinePosition();
+    return 0.f;
+}
+
+float BoxStyle::fontUnderlineThickness() const
+{
+    if(auto fontData = m_font->primaryFont())
+        return fontData->underlineThickness();
+    return 0.f;
+}
+
 float BoxStyle::exFontSize() const
 {
     if(auto fontData = m_font->primaryFont()) {
