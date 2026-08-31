@@ -9,14 +9,16 @@
 #include "csstokenizer.h"
 #include "stringutils.h"
 
+#include <unicode/utf8.h>
+
 #include <cmath>
 
 namespace plutobook {
 
-constexpr bool isNameStart(char cc) { return isAlpha(cc) || cc == '_'; }
-constexpr bool isNameChar(char cc) { return isNameStart(cc) || isDigit(cc) || cc == '-'; }
-constexpr bool isNewLine(char cc) { return (cc == '\n' || cc == '\r' || cc == '\f'); }
-constexpr bool isNonPrintable(char cc) { return (cc >= 0 && cc <= 0x8) || cc == 0xb || (cc >= 0xf && cc <= 0x1f) || cc == 0x7f; }
+constexpr bool isNameStart(uint8_t cc) { return isAlpha(cc) || cc == '_' || cc >= 0x80; }
+constexpr bool isNameChar(uint8_t cc) { return isNameStart(cc) || isDigit(cc) || cc == '-'; }
+constexpr bool isNewLine(uint8_t cc) { return (cc == '\n' || cc == '\r' || cc == '\f'); }
+constexpr bool isNonPrintable(uint8_t cc) { return cc <= 0x8 || cc == 0xb || (cc >= 0xe && cc <= 0x1f) || cc == 0x7f; }
 
 const CSSToken CSSTokenStream::eofToken(CSSToken::Type::EndOfFile);
 
@@ -171,10 +173,18 @@ uint32_t CSSTokenizer::consumeEscape()
         return cp;
     }
 
-    if(cc == 0)
+    if(cc == 0) {
         return 0xFFFD;
-    m_input.advance();
-    return cc;
+    }
+
+    auto data = m_input.data();
+    auto offset = m_input.offset();
+    auto length = m_input.length();
+
+    uint32_t cp = 0;
+    U8_NEXT_OR_FFFD(data, offset, length, cp);
+    m_input.advance(offset - m_input.offset());
+    return cp;
 }
 
 CSSToken CSSTokenizer::consumeStringToken()
