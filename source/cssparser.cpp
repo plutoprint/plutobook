@@ -3390,6 +3390,8 @@ RefPtr<CSSValue> CSSParser::consumeLonghand(CSSTokenStream& input, CSSPropertyID
     case CSSPropertyID::LetterSpacing:
     case CSSPropertyID::WordSpacing:
         return consumeLengthOrNormal(input, true, false);
+    case CSSPropertyID::TextUnderlineOffset:
+        return consumeLengthOrPercentOrAuto(input, true, false);
     case CSSPropertyID::OutlineWidth:
     case CSSPropertyID::ColumnRuleWidth:
         return consumeLineWidth(input);
