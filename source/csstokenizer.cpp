@@ -327,7 +327,6 @@ CSSToken CSSTokenizer::consumeUnicodeRangeToken()
 
     uint32_t to = from;
     if(count < 6 && cc == '?') {
-        m_input.advance();
         do {
             from *= 16;
             to = to * 16 + 0xF;
