@@ -275,6 +275,7 @@ enum class CSSPropertyID : uint16_t {
     TextOrientation,
     TextOverflow,
     TextTransform,
+    TextUnderlineOffset,
     TextUnderlinePosition,
     Top,
     Transform,

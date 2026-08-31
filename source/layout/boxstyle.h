@@ -822,6 +822,7 @@ public:
     Hyphens hyphens() const { return m_hyphens; }
     float textDecorationThickness() const;
     TextUnderlinePosition textUnderlinePosition() const;
+    Length textUnderlineOffset() const;
 
     // distance from the alphabetic baseline down to the underline
     float underlineDistanceFromBaseline(float thickness) const;
