@@ -170,8 +170,8 @@ private:
     bool consumeFont(CSSTokenStream& input, CSSPropertyList& properties, bool important);
     bool consumeFontVariant(CSSTokenStream& input, CSSPropertyList& properties, bool important);
     bool consumeMarker(CSSTokenStream& input, CSSPropertyList& properties, bool important);
-    bool consumeBorderRadius(CSSTokenStream& input, CSSPropertyList& properties, bool important);
     bool consumeBorder(CSSTokenStream& input, CSSPropertyList& properties, CSSPropertyID id, bool important);
+    bool consumeBorderRadius(CSSTokenStream& input, CSSPropertyList& properties, bool important);
     bool consume2Shorthand(CSSTokenStream& input, CSSPropertyList& properties, CSSPropertyID id, bool important);
     bool consume4Shorthand(CSSTokenStream& input, CSSPropertyList& properties, CSSPropertyID id, bool important);
     bool consumeShorthand(CSSTokenStream& input, CSSPropertyList& properties, CSSPropertyID id, bool important);

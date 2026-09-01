@@ -4338,65 +4338,6 @@ bool CSSParser::consumeMarker(CSSTokenStream& input, CSSPropertyList& properties
     return true;
 }
 
-bool CSSParser::consumeBorderRadius(CSSTokenStream& input, CSSPropertyList& properties, bool important)
-{
-    auto completesides = [](auto sides[4]) {
-        if(sides[1] == nullptr) sides[1] = sides[0];
-        if(sides[2] == nullptr) sides[2] = sides[0];
-        if(sides[3] == nullptr) sides[3] = sides[1];
-    };
-
-    RefPtr<CSSValue> horizontal[4];
-    for(auto& side : horizontal) {
-        if(input->type() == CSSToken::Type::EndOfFile || input->type() == CSSToken::Type::Delim)
-            break;
-        auto value = consumeLengthOrPercent(input, false, false);
-        if(value == nullptr)
-            return false;
-        side = std::move(value);
-    }
-
-    if(horizontal[0] == nullptr)
-        return false;
-    completesides(horizontal);
-
-    RefPtr<CSSValue> vertical[4];
-    if(input.consumeSlashIncludingWhitespace()) {
-        for(auto& side : vertical) {
-            if(input->type() == CSSToken::Type::EndOfFile)
-                break;
-            auto value = consumeLengthOrPercent(input, false, false);
-            if(value == nullptr)
-                return false;
-            side = std::move(value);
-        }
-
-        if(vertical[0] == nullptr)
-            return false;
-        completesides(vertical);
-    } else if(input->type() == CSSToken::Type::EndOfFile) {
-        vertical[0] = horizontal[0];
-        vertical[1] = horizontal[1];
-        vertical[2] = horizontal[2];
-        vertical[3] = horizontal[3];
-    } else {
-        return false;
-    }
-
-    if(!input.empty())
-        return false;
-    auto tl = CSSPairValue::create(m_heap, std::move(horizontal[0]), std::move(vertical[0]));
-    auto tr = CSSPairValue::create(m_heap, std::move(horizontal[1]), std::move(vertical[1]));
-    auto br = CSSPairValue::create(m_heap, std::move(horizontal[2]), std::move(vertical[2]));
-    auto bl = CSSPairValue::create(m_heap, std::move(horizontal[3]), std::move(vertical[3]));
-
-    addProperty(properties, CSSPropertyID::BorderTopLeftRadius, important, std::move(tl));
-    addProperty(properties, CSSPropertyID::BorderTopRightRadius, important, std::move(tr));
-    addProperty(properties, CSSPropertyID::BorderBottomRightRadius, important, std::move(br));
-    addProperty(properties, CSSPropertyID::BorderBottomLeftRadius, important, std::move(bl));
-    return true;
-}
-
 bool CSSParser::consumeBorder(CSSTokenStream& input, CSSPropertyList& properties, CSSPropertyID id, bool important)
 {
     RefPtr<CSSValue> width;
@@ -4432,6 +4373,62 @@ bool CSSParser::consumeBorder(CSSTokenStream& input, CSSPropertyList& properties
         assert(false);
     }
 
+    return true;
+}
+
+static void complete4Sides(RefPtr<CSSValue> sides[4])
+{
+    if(sides[1] == nullptr) sides[1] = sides[0];
+    if(sides[2] == nullptr) sides[2] = sides[0];
+    if(sides[3] == nullptr) sides[3] = sides[1];
+}
+
+bool CSSParser::consumeBorderRadius(CSSTokenStream& input, CSSPropertyList& properties, bool important)
+{
+    static constexpr size_t kSideCount = 4;
+
+    RefPtr<CSSValue> horizontal[kSideCount];
+    for(size_t i = 0; i < kSideCount && input->type() != CSSToken::Type::Delim; ++i) {
+        auto value = consumeLengthOrPercent(input, false, false);
+        if(value == nullptr)
+            break;
+        horizontal[i] = std::move(value);
+    }
+
+    if(horizontal[0] == nullptr)
+        return false;
+    complete4Sides(horizontal);
+
+    RefPtr<CSSValue> vertical[kSideCount];
+    if(input.consumeSlashIncludingWhitespace()) {
+        for(size_t i = 0; i < kSideCount; ++i) {
+            auto value = consumeLengthOrPercent(input, false, false);
+            if(value == nullptr)
+                break;
+            vertical[i] = std::move(value);
+        }
+
+        if(vertical[0] == nullptr)
+            return false;
+        complete4Sides(vertical);
+    } else {
+        vertical[0] = horizontal[0];
+        vertical[1] = horizontal[1];
+        vertical[2] = horizontal[2];
+        vertical[3] = horizontal[3];
+    }
+
+    if(!input.empty())
+        return false;
+    auto tl = CSSPairValue::create(m_heap, std::move(horizontal[0]), std::move(vertical[0]));
+    auto tr = CSSPairValue::create(m_heap, std::move(horizontal[1]), std::move(vertical[1]));
+    auto br = CSSPairValue::create(m_heap, std::move(horizontal[2]), std::move(vertical[2]));
+    auto bl = CSSPairValue::create(m_heap, std::move(horizontal[3]), std::move(vertical[3]));
+
+    addProperty(properties, CSSPropertyID::BorderTopLeftRadius, important, std::move(tl));
+    addProperty(properties, CSSPropertyID::BorderTopRightRadius, important, std::move(tr));
+    addProperty(properties, CSSPropertyID::BorderBottomRightRadius, important, std::move(br));
+    addProperty(properties, CSSPropertyID::BorderBottomLeftRadius, important, std::move(bl));
     return true;
 }
 
