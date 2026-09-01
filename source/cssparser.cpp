@@ -2194,6 +2194,12 @@ RefPtr<CSSValue> CSSParser::consumeHsl(CSSTokenStream& input)
     return CSSColorValue::create(m_heap, Color(r, g, b, alpha));
 }
 
+static int computeHwbComponent(float hue, float white, float black, float n)
+{
+    auto component = computeHslComponent(hue, 1.0f, 0.5f, n);
+    return std::lroundf(component * (1 - white - black) + white * 255);
+}
+
 RefPtr<CSSValue> CSSParser::consumeHwb(CSSTokenStream& input)
 {
     assert(input->type() == CSSToken::Type::Function);
@@ -2238,15 +2244,9 @@ RefPtr<CSSValue> CSSParser::consumeHwb(CSSTokenStream& input)
         black /= sum;
     }
 
-    int channels[3] = { 0, 8, 4 };
-    for(auto& channel : channels) {
-        auto component = computeHslComponent(hue, 1.0f, 0.5f, channel);
-        channel = std::lroundf(component * (1 - white - black) + (white * 255));
-    }
-
-    const auto r = channels[0];
-    const auto g = channels[1];
-    const auto b = channels[2];
+    const auto r = computeHwbComponent(hue, white, black, 0);
+    const auto g = computeHwbComponent(hue, white, black, 8);
+    const auto b = computeHwbComponent(hue, white, black, 4);
 
     return CSSColorValue::create(m_heap, Color(r, g, b, alpha));
 }
