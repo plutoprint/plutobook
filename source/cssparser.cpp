@@ -4434,55 +4434,48 @@ bool CSSParser::consumeBorderRadius(CSSTokenStream& input, CSSPropertyList& prop
 
 bool CSSParser::consume2Shorthand(CSSTokenStream& input, CSSPropertyList& properties, CSSPropertyID id, bool important)
 {
+    RefPtr<CSSValue> values[2];
     auto longhand = CSSProperty::shorthand(id);
-    assert(longhand.size() == 2);
-    auto first = consumeLonghand(input, longhand[0]);
-    if(first == nullptr)
-        return false;
-    addProperty(properties, longhand[0], important, first);
-    auto second = consumeLonghand(input, longhand[1]);
-    if(second == nullptr) {
-        addProperty(properties, longhand[1], important, first);
-        return input.empty();
+    assert(longhand.size() == std::size(values));
+
+    for(size_t i = 0; i < longhand.size(); ++i) {
+        auto value = consumeLonghand(input, longhand[i]);
+        if(value == nullptr)
+            break;
+        values[i] = std::move(value);
     }
 
-    addProperty(properties, longhand[1], important, second);
-    return input.empty();
+    if(values[0] == nullptr || !input.empty())
+        return false;
+    if(values[1] == nullptr) {
+        values[1] = values[0];
+    }
+
+    for(size_t i = 0; i < longhand.size(); ++i)
+        addProperty(properties, longhand[i], important, std::move(values[i]));
+    return true;
 }
 
 bool CSSParser::consume4Shorthand(CSSTokenStream& input, CSSPropertyList& properties, CSSPropertyID id, bool important)
 {
+    RefPtr<CSSValue> values[4];
     auto longhand = CSSProperty::shorthand(id);
-    assert(longhand.size() == 4);
-    auto top = consumeLonghand(input, longhand[0]);
-    if(top == nullptr)
+    assert(longhand.size() == std::size(values));
+
+    for(size_t i = 0; i < longhand.size(); ++i) {
+        auto value = consumeLonghand(input, longhand[i]);
+        if(value == nullptr)
+            break;
+        values[i] = std::move(value);
+    }
+
+    if(values[0] == nullptr || !input.empty())
         return false;
-    addProperty(properties, longhand[0], important, top);
-    auto right = consumeLonghand(input, longhand[1]);
-    if(right == nullptr) {
-        addProperty(properties, longhand[1], important, top);
-        addProperty(properties, longhand[2], important, top);
-        addProperty(properties, longhand[3], important, top);
-        return input.empty();
-    }
+    complete4Sides(values);
 
-    addProperty(properties, longhand[1], important, right);
-    auto bottom = consumeLonghand(input, longhand[2]);
-    if(bottom == nullptr) {
-        addProperty(properties, longhand[2], important, top);
-        addProperty(properties, longhand[3], important, right);
-        return input.empty();
-    }
-
-    addProperty(properties, longhand[2], important, bottom);
-    auto left = consumeLonghand(input, longhand[3]);
-    if(left == nullptr) {
-        addProperty(properties, longhand[3], important, right);
-        return input.empty();
-    }
-
-    addProperty(properties, longhand[3], important, left);
-    return input.empty();
+    for(size_t i = 0; i < longhand.size(); ++i)
+        addProperty(properties, longhand[i], important, std::move(values[i]));
+    return true;
 }
 
 bool CSSParser::consumeShorthand(CSSTokenStream& input, CSSPropertyList& properties, CSSPropertyID id, bool important)
@@ -4490,6 +4483,7 @@ bool CSSParser::consumeShorthand(CSSTokenStream& input, CSSPropertyList& propert
     RefPtr<CSSValue> values[6];
     auto longhand = CSSProperty::shorthand(id);
     assert(longhand.size() <= std::size(values));
+
     while(!input.empty()) {
         bool consumed = false;
         for(size_t i = 0; i < longhand.size(); ++i) {
