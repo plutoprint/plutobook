@@ -2006,14 +2006,14 @@ RefPtr<CSSValue> CSSParser::consumeColor(CSSTokenStream& input)
     return nullptr;
 }
 
-static bool consumeRgbComponent(CSSTokenStream& input, int& component, bool requiresPercent)
+static bool consumeRgbComponent(CSSTokenStream& input, int& component, bool requiresPercent, bool isLegacySyntax)
 {
     if(input->type() != CSSToken::Type::Number
         && input->type() != CSSToken::Type::Percentage) {
         return false;
     }
 
-    if(requiresPercent && input->type() != CSSToken::Type::Percentage)
+    if(isLegacySyntax && requiresPercent != (input->type() == CSSToken::Type::Percentage))
         return false;
     auto value = input->number();
     if(input->type() == CSSToken::Type::Percentage)
@@ -2038,9 +2038,9 @@ static bool consumeAlphaComponent(CSSTokenStream& input, int& component)
     return true;
 }
 
-static bool consumeAlphaDelimiter(CSSTokenStream& input, bool requiresComma)
+static bool consumeAlphaDelimiter(CSSTokenStream& input, bool isLegacySyntax)
 {
-    if(requiresComma)
+    if(isLegacySyntax)
         return input.consumeCommaIncludingWhitespace();
     return input.consumeSlashIncludingWhitespace();
 }
@@ -2055,31 +2055,30 @@ RefPtr<CSSValue> CSSParser::consumeRgb(CSSTokenStream& input)
     auto requiresPercent = block->type() == CSSToken::Type::Percentage;
 
     int red = 0;
-    if(!consumeRgbComponent(block, red, requiresPercent)) {
+    if(!consumeRgbComponent(block, red, requiresPercent, false)) {
         return nullptr;
     }
 
-    auto requiresComma = block.consumeCommaIncludingWhitespace();
+    auto isLegacySyntax = block.consumeCommaIncludingWhitespace();
 
     int green = 0;
-    if(!consumeRgbComponent(block, green, requiresPercent)) {
+    if(!consumeRgbComponent(block, green, requiresPercent, isLegacySyntax)) {
         return nullptr;
     }
 
-    if(requiresComma && !block.consumeCommaIncludingWhitespace()) {
+    if(isLegacySyntax && !block.consumeCommaIncludingWhitespace()) {
         return nullptr;
     }
 
     int blue = 0;
-    if(!consumeRgbComponent(block, blue, requiresPercent)) {
+    if(!consumeRgbComponent(block, blue, requiresPercent, isLegacySyntax)) {
         return nullptr;
     }
 
     int alpha = 255;
-    if(consumeAlphaDelimiter(block, requiresComma)) {
-        if(!consumeAlphaComponent(block, alpha)) {
-            return nullptr;
-        }
+    if(consumeAlphaDelimiter(block, isLegacySyntax)
+        && !consumeAlphaComponent(block, alpha)) {
+        return nullptr;
     }
 
     if(!block.empty())
@@ -2131,9 +2130,14 @@ static bool consumeAngleComponent(CSSTokenStream& input, float& component)
     return true;
 }
 
-static bool consumePercentComponent(CSSTokenStream& input, float& component)
+static bool consumePercentComponent(CSSTokenStream& input, float& component, bool isLegacySyntax)
 {
-    if(input->type() != CSSToken::Type::Percentage)
+    if(input->type() != CSSToken::Type::Number
+        && input->type() != CSSToken::Type::Percentage) {
+        return false;
+    }
+
+    if(isLegacySyntax && input->type() == CSSToken::Type::Number)
         return false;
     auto value = input->number() / 100.f;
     component = std::clamp(value, 0.f, 1.f);
@@ -2161,25 +2165,24 @@ RefPtr<CSSValue> CSSParser::consumeHsl(CSSTokenStream& input)
         return nullptr;
     }
 
-    auto requiresComma = block.consumeCommaIncludingWhitespace();
+    auto isLegacySyntax = block.consumeCommaIncludingWhitespace();
 
-    if(!consumePercentComponent(block, s)) {
+    if(!consumePercentComponent(block, s, isLegacySyntax)) {
         return nullptr;
     }
 
-    if(requiresComma && !block.consumeCommaIncludingWhitespace()) {
+    if(isLegacySyntax && !block.consumeCommaIncludingWhitespace()) {
         return nullptr;
     }
 
-    if(!consumePercentComponent(block, l)) {
+    if(!consumePercentComponent(block, l, isLegacySyntax)) {
         return nullptr;
     }
 
     int alpha = 255;
-    if(consumeAlphaDelimiter(block, requiresComma)) {
-        if(!consumeAlphaComponent(block, alpha)) {
-            return nullptr;
-        }
+    if(consumeAlphaDelimiter(block, isLegacySyntax)
+        && !consumeAlphaComponent(block, alpha)) {
+        return nullptr;
     }
 
     if(!block.empty())
@@ -2208,29 +2211,18 @@ RefPtr<CSSValue> CSSParser::consumeHwb(CSSTokenStream& input)
     block.consumeWhitespace();
 
     float hue, white, black;
-    if(!consumeAngleComponent(block, hue)) {
+    if(!consumeAngleComponent(block, hue))
         return nullptr;
-    }
-
-    auto requiresComma = block.consumeCommaIncludingWhitespace();
-
-    if(!consumePercentComponent(block, white)) {
+    if(!consumePercentComponent(block, white, false))
         return nullptr;
-    }
-
-    if(requiresComma && !block.consumeCommaIncludingWhitespace()) {
-        return nullptr;
-    }
-
-    if(!consumePercentComponent(block, black)) {
+    if(!consumePercentComponent(block, black, false)) {
         return nullptr;
     }
 
     int alpha = 255;
-    if(consumeAlphaDelimiter(block, requiresComma)) {
-        if(!consumeAlphaComponent(block, alpha)) {
-            return nullptr;
-        }
+    if(consumeAlphaDelimiter(block, false)
+        && !consumeAlphaComponent(block, alpha)) {
+        return nullptr;
     }
 
     if(!block.empty())
