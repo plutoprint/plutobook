@@ -1950,7 +1950,7 @@ RefPtr<CSSValue> CSSParser::consumeColor(CSSTokenStream& input)
             }
         }
 
-        int r, g, b, a = 255;
+        uint8_t r, g, b, a = 255;
         if(data.size() == 3 || data.size() == 4) {
             r = toHexByte(data[0], data[0]);
             g = toHexByte(data[1], data[1]);
@@ -2006,7 +2006,7 @@ RefPtr<CSSValue> CSSParser::consumeColor(CSSTokenStream& input)
     return nullptr;
 }
 
-static bool consumeRgbComponent(CSSTokenStream& input, int& component, bool requiresPercent, bool isLegacySyntax)
+static bool consumeRgbComponent(CSSTokenStream& input, float& component, bool requiresPercent, bool isLegacySyntax)
 {
     if(input->type() != CSSToken::Type::Number
         && input->type() != CSSToken::Type::Percentage) {
@@ -2015,15 +2015,13 @@ static bool consumeRgbComponent(CSSTokenStream& input, int& component, bool requ
 
     if(isLegacySyntax && requiresPercent != (input->type() == CSSToken::Type::Percentage))
         return false;
-    auto value = input->number();
-    if(input->type() == CSSToken::Type::Percentage)
-        value *= 2.55f;
-    component = std::lroundf(std::clamp(value, 0.f, 255.f));
+    auto value = input->number() / (input->type() == CSSToken::Type::Percentage ? 100.f : 255.f);
+    component = std::clamp(value, 0.f, 1.f);
     input.consumeIncludingWhitespace();
     return true;
 }
 
-static bool consumeAlphaComponent(CSSTokenStream& input, int& component)
+static bool consumeAlphaComponent(CSSTokenStream& input, float& component)
 {
     if(input->type() != CSSToken::Type::Number
         && input->type() != CSSToken::Type::Percentage) {
@@ -2033,7 +2031,7 @@ static bool consumeAlphaComponent(CSSTokenStream& input, int& component)
     auto value = input->number();
     if(input->type() == CSSToken::Type::Percentage)
         value /= 100.f;
-    component = std::lroundf(255.f * std::clamp(value, 0.f, 1.f));
+    component = std::clamp(value, 0.f, 1.f);
     input.consumeIncludingWhitespace();
     return true;
 }
@@ -2054,14 +2052,14 @@ RefPtr<CSSValue> CSSParser::consumeRgb(CSSTokenStream& input)
 
     auto requiresPercent = block->type() == CSSToken::Type::Percentage;
 
-    int red = 0;
+    float red = 0;
     if(!consumeRgbComponent(block, red, requiresPercent, false)) {
         return nullptr;
     }
 
     auto isLegacySyntax = block.consumeCommaIncludingWhitespace();
 
-    int green = 0;
+    float green = 0;
     if(!consumeRgbComponent(block, green, requiresPercent, isLegacySyntax)) {
         return nullptr;
     }
@@ -2070,12 +2068,12 @@ RefPtr<CSSValue> CSSParser::consumeRgb(CSSTokenStream& input)
         return nullptr;
     }
 
-    int blue = 0;
+    float blue = 0;
     if(!consumeRgbComponent(block, blue, requiresPercent, isLegacySyntax)) {
         return nullptr;
     }
 
-    int alpha = 255;
+    float alpha = 1.f;
     if(consumeAlphaDelimiter(block, isLegacySyntax)
         && !consumeAlphaComponent(block, alpha)) {
         return nullptr;
@@ -2145,12 +2143,11 @@ static bool consumePercentComponent(CSSTokenStream& input, float& component, boo
     return true;
 }
 
-static int computeHslComponent(float h, float s, float l, float n)
+static float computeHslComponent(float h, float s, float l, float n)
 {
     auto k = fmodf(n + h / 30.f, 12.f);
     auto a = s * std::min(l, 1.f - l);
-    auto v = l - a * std::max(-1.f, std::min(1.f, std::min(k - 3.f, 9.f - k)));
-    return std::lroundf(v * 255.f);
+    return l - a * std::max(-1.f, std::min(1.f, std::min(k - 3.f, 9.f - k)));
 }
 
 RefPtr<CSSValue> CSSParser::consumeHsl(CSSTokenStream& input)
@@ -2160,7 +2157,7 @@ RefPtr<CSSValue> CSSParser::consumeHsl(CSSTokenStream& input)
     auto block = input.consumeBlock();
     block.consumeWhitespace();
 
-    float h, s, l;
+    float h, s, l, a = 1.f;
     if(!consumeAngleComponent(block, h)) {
         return nullptr;
     }
@@ -2179,9 +2176,8 @@ RefPtr<CSSValue> CSSParser::consumeHsl(CSSTokenStream& input)
         return nullptr;
     }
 
-    int alpha = 255;
     if(consumeAlphaDelimiter(block, isLegacySyntax)
-        && !consumeAlphaComponent(block, alpha)) {
+        && !consumeAlphaComponent(block, a)) {
         return nullptr;
     }
 
@@ -2194,13 +2190,13 @@ RefPtr<CSSValue> CSSParser::consumeHsl(CSSTokenStream& input)
     const auto g = computeHslComponent(h, s, l, 8);
     const auto b = computeHslComponent(h, s, l, 4);
 
-    return CSSColorValue::create(m_heap, Color(r, g, b, alpha));
+    return CSSColorValue::create(m_heap, Color(r, g, b, a));
 }
 
-static int computeHwbComponent(float hue, float white, float black, float n)
+static float computeHwbComponent(float hue, float white, float black, float n)
 {
     auto component = computeHslComponent(hue, 1.0f, 0.5f, n);
-    return std::lroundf(component * (1 - white - black) + white * 255);
+    return component * (1.f - white - black) + white;
 }
 
 RefPtr<CSSValue> CSSParser::consumeHwb(CSSTokenStream& input)
@@ -2210,7 +2206,7 @@ RefPtr<CSSValue> CSSParser::consumeHwb(CSSTokenStream& input)
     auto block = input.consumeBlock();
     block.consumeWhitespace();
 
-    float hue, white, black;
+    float hue, white, black, alpha = 1.f;
     if(!consumeAngleComponent(block, hue))
         return nullptr;
     if(!consumePercentComponent(block, white, false))
@@ -2219,7 +2215,6 @@ RefPtr<CSSValue> CSSParser::consumeHwb(CSSTokenStream& input)
         return nullptr;
     }
 
-    int alpha = 255;
     if(consumeAlphaDelimiter(block, false)
         && !consumeAlphaComponent(block, alpha)) {
         return nullptr;
