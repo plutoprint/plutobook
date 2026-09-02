@@ -2052,14 +2052,14 @@ RefPtr<CSSValue> CSSParser::consumeRgb(CSSTokenStream& input)
 
     auto requiresPercent = block->type() == CSSToken::Type::Percentage;
 
-    float red = 0;
+    float red = 0.f;
     if(!consumeRgbComponent(block, red, requiresPercent, false)) {
         return nullptr;
     }
 
     auto isLegacySyntax = block.consumeCommaIncludingWhitespace();
 
-    float green = 0;
+    float green = 0.f;
     if(!consumeRgbComponent(block, green, requiresPercent, isLegacySyntax)) {
         return nullptr;
     }
@@ -2068,7 +2068,7 @@ RefPtr<CSSValue> CSSParser::consumeRgb(CSSTokenStream& input)
         return nullptr;
     }
 
-    float blue = 0;
+    float blue = 0.f;
     if(!consumeRgbComponent(block, blue, requiresPercent, isLegacySyntax)) {
         return nullptr;
     }
@@ -2186,9 +2186,9 @@ RefPtr<CSSValue> CSSParser::consumeHsl(CSSTokenStream& input)
     input.consumeWhitespace();
     guard.release();
 
-    const auto r = computeHslComponent(h, s, l, 0);
-    const auto g = computeHslComponent(h, s, l, 8);
-    const auto b = computeHslComponent(h, s, l, 4);
+    auto r = computeHslComponent(h, s, l, 0);
+    auto g = computeHslComponent(h, s, l, 8);
+    auto b = computeHslComponent(h, s, l, 4);
 
     return CSSColorValue::create(m_heap, Color(r, g, b, a));
 }
@@ -2206,15 +2206,22 @@ RefPtr<CSSValue> CSSParser::consumeHwb(CSSTokenStream& input)
     auto block = input.consumeBlock();
     block.consumeWhitespace();
 
-    float hue, white, black, alpha = 1.f;
-    if(!consumeAngleComponent(block, hue))
+    float hue = 0.f;
+    if(!consumeAngleComponent(block, hue)) {
         return nullptr;
-    if(!consumePercentComponent(block, white, false))
+    }
+
+    float white = 0.f;
+    if(!consumePercentComponent(block, white, false)) {
         return nullptr;
+    }
+
+    float black = 0.f;
     if(!consumePercentComponent(block, black, false)) {
         return nullptr;
     }
 
+    float alpha = 1.f;
     if(consumeAlphaDelimiter(block, false)
         && !consumeAlphaComponent(block, alpha)) {
         return nullptr;
@@ -2231,11 +2238,11 @@ RefPtr<CSSValue> CSSParser::consumeHwb(CSSTokenStream& input)
         black /= sum;
     }
 
-    const auto r = computeHwbComponent(hue, white, black, 0);
-    const auto g = computeHwbComponent(hue, white, black, 8);
-    const auto b = computeHwbComponent(hue, white, black, 4);
+    auto red = computeHwbComponent(hue, white, black, 0);
+    auto green = computeHwbComponent(hue, white, black, 8);
+    auto blue = computeHwbComponent(hue, white, black, 4);
 
-    return CSSColorValue::create(m_heap, Color(r, g, b, alpha));
+    return CSSColorValue::create(m_heap, Color(red, green, blue, alpha));
 }
 
 RefPtr<CSSValue> CSSParser::consumePaint(CSSTokenStream& input)
