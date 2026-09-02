@@ -18,46 +18,40 @@ const Color Color::Transparent(0x00000000);
 const Color Color::Black(0xFF000000);
 const Color Color::White(0xFFFFFFFF);
 
-Color Color::lighten() const
+Color Color::lightened() const
 {
-    if(m_value == 0xFF000000) {
+    if(*this == Color::Black) {
         return Color(0xFF545454);
     }
-
-    const float scale = std::nextafter(256.0f, 0.0f);
 
     auto redF = red() / 255.f;
     auto greenF = green() / 255.f;
     auto blueF = blue() / 255.f;
+    auto alphaF = alpha() / 255.f;
+
     auto value = std::max(redF, std::max(greenF, blueF));
     if(value == 0.0f)
         return Color(0x54, 0x54, 0x54, alpha());
     auto multiplier = std::min(1.0f, value + 0.33f) / value;
-    auto red = static_cast<int>(multiplier * redF * scale);
-    auto green = static_cast<int>(multiplier * greenF * scale);
-    auto blue = static_cast<int>(multiplier * blueF * scale);
-    return Color(red, green, blue, alpha());
+    return Color(redF * multiplier, greenF * multiplier, blueF * multiplier, alphaF);
 }
 
-Color Color::darken() const
+Color Color::darkened() const
 {
-    if(m_value == 0xFFFFFFFF) {
+    if(*this == Color::White) {
         return Color(0xFFABABAB);
     }
-
-    const float scale = std::nextafter(256.0f, 0.0f);
 
     auto redF = red() / 255.f;
     auto greenF = green() / 255.f;
     auto blueF = blue() / 255.f;
+    auto alphaF = alpha() / 255.f;
+
     auto value = std::max(redF, std::max(greenF, blueF));
     if(value == 0.0f)
         return Color(0, 0, 0, alpha());
     auto multiplier = std::max(0.0f, (value - 0.33f) / value);
-    auto red = static_cast<int>(multiplier * redF * scale);
-    auto green = static_cast<int>(multiplier * greenF * scale);
-    auto blue = static_cast<int>(multiplier * blueF * scale);
-    return Color(red, green, blue, alpha());
+    return Color(redF * multiplier, greenF * multiplier, blueF * multiplier, alphaF);
 }
 
 std::optional<Color> Color::fromName(std::string_view name)

@@ -149,9 +149,9 @@ static void paintSolidBoxSide(GraphicsContext& context, const Color& color, floa
 static void paintInsetOrOutsetBoxSide(GraphicsContext& context, BoxSide side, LineStyle style, const Color& color, float x1, float y1, float x2, float y2)
 {
     if((side == BoxSideTop || side == BoxSideLeft) == (style == LineStyle::Inset)) {
-        context.setColor(color.darken());
+        context.setColor(color.darkened());
     } else {
-        context.setColor(color.lighten());
+        context.setColor(color.lightened());
     }
 
     context.fillRect(Rect(x1, y1, x2 - x1, y2 - y1));
@@ -531,9 +531,9 @@ void BorderPainter::paintBoxSide(GraphicsContext& context, BoxSide side, LineSty
     case LineStyle::Inset:
     case LineStyle::Outset:
         if((side == BoxSideTop || side == BoxSideLeft) == (style == LineStyle::Inset)) {
-            context.setColor(color.darken());
+            context.setColor(color.darkened());
         } else {
-            context.setColor(color.lighten());
+            context.setColor(color.lightened());
         }
 
         context.fillRect(m_outer.rect());
