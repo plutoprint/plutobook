@@ -4322,7 +4322,7 @@ bool CSSParser::consumeFontVariant(CSSTokenStream& input, CSSPropertyList& prope
 bool CSSParser::consumeMarker(CSSTokenStream& input, CSSPropertyList& properties, bool important)
 {
     auto marker = consumeLocalUrlOrNone(input);
-    if(!marker || !input.empty())
+    if(marker == nullptr || !input.empty())
         return false;
     addProperty(properties, CSSPropertyID::MarkerStart, important, marker);
     addProperty(properties, CSSPropertyID::MarkerMid, important, marker);
