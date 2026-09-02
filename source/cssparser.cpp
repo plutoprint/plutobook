@@ -11,7 +11,6 @@
 #include "stringutils.h"
 #include "document.h"
 
-#include <sstream>
 #include <algorithm>
 #include <cmath>
 
@@ -909,7 +908,7 @@ bool CSSParser::consumeMatchPattern(CSSTokenStream& input, CSSSimpleSelector::Ma
         }
     }
 
-    std::stringstream ss;
+    std::string_view data;
     if(input->type() == CSSToken::Type::Delim) {
         if(input->delim() != '+')
             return false;
@@ -917,39 +916,46 @@ bool CSSParser::consumeMatchPattern(CSSTokenStream& input, CSSSimpleSelector::Ma
         if(input->type() != CSSToken::Type::Ident)
             return false;
         pattern.first = 1;
-        ss << input->data();
+        data = input->data();
         input.consume();
     } else if(input->type() == CSSToken::Type::Ident) {
-        auto ident = input->data();
-        input.consume();
-        if(ident.front() == '-') {
+        data = input->data();
+        if(data.front() == '-') {
             pattern.first = -1;
-            ss << ident.substr(1);
+            data.remove_prefix(1);
         } else {
             pattern.first = 1;
-            ss << ident;
         }
+
+        input.consume();
     } else if(input->type() == CSSToken::Type::Dimension) {
         if(input->numberType() != CSSToken::NumberType::Integer)
             return false;
         pattern.first = input->integer();
-        ss << input->data();
+        data = input->data();
         input.consume();
     }
 
-    constexpr auto eof = std::stringstream::traits_type::eof();
-    if(ss.peek() == eof || !equals(ss.get(), 'n', CaseMode::Ignore))
+    if(data.empty() || !equals(data.front(), 'n', CaseMode::Ignore))
         return false;
+    data.remove_prefix(1);
+
     auto sign = CSSToken::NumberSign::None;
-    if(ss.peek() != eof) {
-        if(ss.get() != '-')
+    if(!data.empty()) {
+        if(data.front() != '-')
             return false;
+        data.remove_prefix(1);
+
         sign = CSSToken::NumberSign::Minus;
-        if(ss.peek() != eof) {
-            ss >> pattern.second;
-            if(ss.fail() || ss.peek() != eof)
-                return false;
-            pattern.second = -pattern.second;
+        if(!data.empty()) {
+            double value = 0;
+            for(char cc : data) {
+                if(!isDigit(cc))
+                    return false;
+                value = value * 10.0 + (cc - '0');
+            }
+
+            pattern.second = clampTo<int>(-value);
             return true;
         }
     }
@@ -973,9 +979,7 @@ bool CSSParser::consumeMatchPattern(CSSTokenStream& input, CSSSimpleSelector::Ma
 
     if(input->type() != CSSToken::Type::Number || input->numberType() != CSSToken::NumberType::Integer)
         return false;
-    if(sign == CSSToken::NumberSign::None && input->numberSign() == CSSToken::NumberSign::None)
-        return false;
-    if(sign != CSSToken::NumberSign::None && input->numberSign() != CSSToken::NumberSign::None)
+    if((sign == CSSToken::NumberSign::None) == (input->numberSign() == CSSToken::NumberSign::None))
         return false;
     pattern.second = input->integer();
     if(sign == CSSToken::NumberSign::Minus)
