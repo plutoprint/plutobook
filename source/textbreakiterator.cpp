@@ -12,22 +12,26 @@
 
 namespace plutobook {
 
-CharacterBreakIterator::CharacterBreakIterator(const UString& text, const LocaleData* locale)
-    : m_iterator(locale->characterIterator())
+TextBreakIterator::TextBreakIterator(const UString &text, const LocaleData *locale)
+    : m_text(text), m_locale(locale), m_id(locale->nextIteratorId())
 {
-    m_iterator->setText(text);
+}
+
+CharacterBreakIterator::CharacterBreakIterator(const UString& text, const LocaleData* locale)
+    : TextBreakIterator(text, locale)
+{
 }
 
 int CharacterBreakIterator::nextBreakOpportunity(int offset, int end) const
 {
-    auto position = m_iterator->following(offset);
+    auto position = m_locale->nextCharacterBreak(m_id, m_text, offset);
     if(position == UBRK_DONE)
         return end;
     return position;
 }
 
 LineBreakIterator::LineBreakIterator(const UString& text, const LocaleData* locale)
-    : m_text(text), m_locale(locale)
+    : TextBreakIterator(text, locale)
 {
 }
 
@@ -120,15 +124,8 @@ uint32_t LineBreakIterator::nextBreakOpportunity(uint32_t pos, uint32_t end) con
         if(isBreakableSpace(ch) || shouldBreakAfter(lastLastCh, lastCh, ch))
             return i;
         if(needsLineBreakIterator(ch) || needsLineBreakIterator(lastCh)) {
-            if(m_iterator == nullptr) {
-                m_iterator = m_locale->lineIterator();
-                m_iterator->setText(m_text);
-            }
-
-            if(i > 0 && nextBreak < i) {
-                nextBreak = m_iterator->following(i - 1);
-            }
-
+            if(i > 0 && nextBreak < i)
+                nextBreak = m_locale->nextLineBreak(m_id, m_text, i - 1);
             if(i == nextBreak && !isBreakableSpace(lastCh)) {
                 return i;
             }

@@ -10,6 +10,7 @@
 #define PLUTOBOOK_LOCALE_DATA_H
 
 #include "globalstring.h"
+#include "ustring.h"
 
 #include <unicode/locid.h>
 #include <unicode/brkiter.h>
@@ -24,12 +25,12 @@ class LocaleData {
 public:
     static std::unique_ptr<LocaleData> create(const GlobalString& lang);
 
+    uint64_t nextIteratorId() const { return ++m_iteratorIdCounter; }
+    int nextCharacterBreak(uint64_t id, const UString& text, int offset) const;
+    int nextLineBreak(uint64_t id, const UString& text, int offset) const;
+
     hb_language_t language() const { return m_language; }
-
-    icu::BreakIterator* characterIterator() const;
-    icu::BreakIterator* lineIterator() const;
     const GlobalString& getQuote(bool open, size_t depth) const;
-
     const char* lang() const;
 
 private:
@@ -39,6 +40,10 @@ private:
 
     mutable std::unique_ptr<icu::BreakIterator> m_characterIterator;
     mutable std::unique_ptr<icu::BreakIterator> m_lineIterator;
+
+    mutable uint64_t m_iteratorIdCounter = 0;
+    mutable uint64_t m_characterIteratorId = 0;
+    mutable uint64_t m_lineIteratorId = 0;
 
     icu::Locale locale() const;
 

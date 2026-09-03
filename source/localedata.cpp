@@ -26,26 +26,36 @@ std::unique_ptr<LocaleData> LocaleData::create(const GlobalString& lang)
     return std::unique_ptr<LocaleData>(new LocaleData(language));
 }
 
-icu::BreakIterator* LocaleData::characterIterator() const
+int LocaleData::nextCharacterBreak(uint64_t id, const UString& text, int offset) const
 {
-    if(!m_characterIterator) {
-        UErrorCode status = U_ZERO_ERROR;
-        m_characterIterator.reset(icu::BreakIterator::createCharacterInstance(locale(), status));
-        assert(m_characterIterator && U_SUCCESS(status));
+    if(m_characterIteratorId != id) {
+        if(m_characterIterator == nullptr) {
+            UErrorCode status = U_ZERO_ERROR;
+            m_characterIterator.reset(icu::BreakIterator::createCharacterInstance(locale(), status));
+            assert(m_characterIterator && U_SUCCESS(status));
+        }
+
+        m_characterIterator->setText(text);
+        m_characterIteratorId = id;
     }
 
-    return m_characterIterator.get();
+    return m_characterIterator->following(offset);
 }
 
-icu::BreakIterator* LocaleData::lineIterator() const
+int LocaleData::nextLineBreak(uint64_t id, const UString& text, int offset) const
 {
-    if(!m_lineIterator) {
-        UErrorCode status = U_ZERO_ERROR;
-        m_lineIterator.reset(icu::BreakIterator::createLineInstance(locale(), status));
-        assert(m_lineIterator && U_SUCCESS(status));
+    if(m_lineIteratorId != id) {
+        if(m_lineIterator == nullptr) {
+            UErrorCode status = U_ZERO_ERROR;
+            m_lineIterator.reset(icu::BreakIterator::createLineInstance(locale(), status));
+            assert(m_lineIterator && U_SUCCESS(status));
+        }
+
+        m_lineIterator->setText(text);
+        m_lineIteratorId = id;
     }
 
-    return m_lineIterator.get();
+    return m_lineIterator->following(offset);
 }
 
 const GlobalString& LocaleData::getQuote(bool open, size_t depth) const
