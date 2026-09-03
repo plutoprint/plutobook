@@ -1021,7 +1021,7 @@ void LineBreaker::handleHardBreak(const LineItem& item)
         const auto& item = m_data.items[m_itemIndex];
         if(item.type() == LineItem::Type::NormalText && !item.length()) {
             handleEmptyText(item);
-        } if(item.type() == LineItem::Type::InlineEnd) {
+        } else if(item.type() == LineItem::Type::InlineEnd) {
             handleInlineEnd(item);
         } else {
             break;
