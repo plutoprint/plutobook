@@ -31,6 +31,8 @@ class LineBreakIterator {
 public:
     explicit LineBreakIterator(const UString& text, const LocaleData* locale);
 
+    static bool isBreakableSpace(UChar cc);
+
     uint32_t nextBreakOpportunity(uint32_t pos) const { return nextBreakOpportunity(pos, m_text.length()); }
     uint32_t nextBreakOpportunity(uint32_t pos, uint32_t end) const;
     uint32_t previousBreakOpportunity(uint32_t offset, uint32_t start = 0) const;
@@ -42,6 +44,11 @@ private:
     const LocaleData* m_locale;
     mutable icu::BreakIterator* m_iterator = nullptr;
 };
+
+inline bool LineBreakIterator::isBreakableSpace(UChar cc)
+{
+    return cc == kSpaceCharacter || cc == kTabulationCharacter || cc == kNewlineCharacter;
+}
 
 } // namespace plutobook
 

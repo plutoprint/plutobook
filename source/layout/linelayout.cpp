@@ -1541,14 +1541,19 @@ void LineLayout::computeIntrinsicWidths(float& minWidth, float& maxWidth) const
                 } else {
                     auto startOffset = item.startOffset();
                     while(startOffset < item.endOffset()) {
-                        auto endOffset = breakIterator.nextBreakOpportunity(startOffset, item.endOffset());
+                        if(breakIterator.isBreakableSpace(m_data.text[startOffset])) {
+                            ++startOffset;
+                            continue;
+                        }
+
+                        auto endOffset = breakIterator.nextBreakOpportunity(startOffset + 1, item.endOffset());
                         auto subShape = TextShapeView(shape, startOffset - item.startOffset(), endOffset - item.startOffset());
                         inlineMinWidth += subShape.width();
-                        if(endOffset == item.endOffset())
-                            break;
-                        minWidth = std::max(minWidth, inlineMinWidth);
-                        inlineMinWidth = 0.f;
-                        startOffset = endOffset + 1;
+                        startOffset = endOffset;
+                        if(endOffset < item.endOffset()) {
+                            minWidth = std::max(minWidth, inlineMinWidth);
+                            inlineMinWidth = 0.f;
+                        }
                     }
                 }
 
