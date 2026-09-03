@@ -39,7 +39,7 @@ constexpr bool includesAdjacentEdges(BorderEdgeFlags flags)
 
 static void paintDashedOrDottedBoxSide(GraphicsContext& context, BoxSide side, LineStyle style, const Color& color, float x1, float y1, float x2, float y2, float thickness, float length)
 {
-    auto cornerWidth = style == LineStyle::Dotted ? thickness : std::min(2.f * thickness, std::max(thickness, length / 3.f));
+    auto cornerWidth = std::min(length / 2.f, style == LineStyle::Dotted ? thickness : std::min(2.f * thickness, std::max(thickness, length / 3.f)));
     context.setColor(color);
     if(side == BoxSideLeft || side == BoxSideRight) {
         context.fillRect(Rect(x1, y1, thickness, cornerWidth));
@@ -60,9 +60,9 @@ static void paintDashedOrDottedBoxSide(GraphicsContext& context, BoxSide side, L
     if(oddNumberOfSegments && remainingWidth) {
         patternOffset -= remainingWidth / 2.f;
     } else if(!oddNumberOfSegments) {
-        if(remainingWidth)
+        if(remainingWidth) {
             patternOffset += patternOffset - (patternWidth + remainingWidth) / 2.f;
-        else {
+        } else {
             patternOffset += patternWidth / 2.f;
         }
     }
@@ -91,7 +91,7 @@ static void paintDashedOrDottedBoxSide(GraphicsContext& context, BoxSide side, L
 
 static void paintDoubleBoxSide(GraphicsContext& context, BoxSide side, const Color& color, float x1, float y1, float x2, float y2, float thickness, float length)
 {
-    auto thirdOfThickness = std::ceil(thickness / 3.f);
+    auto thirdOfThickness = thickness / 3.f;
     context.setColor(color);
     switch(side) {
     case BoxSideTop:
@@ -119,7 +119,7 @@ static void paintRidgeOrGrooveBoxSide(GraphicsContext& context, BoxSide side, Li
         s2 = LineStyle::Inset;
     }
 
-    auto secondOfThickness = std::ceil(thickness / 2.f);
+    auto secondOfThickness = thickness / 2.f;
     switch(side) {
     case BoxSideTop:
         BorderPainter::paintBoxSide(context, side, s1, color, Rect(x1, y1, length, secondOfThickness));
@@ -176,8 +176,6 @@ void BorderPainter::paintBoxSide(GraphicsContext& context, BoxSide side, LineSty
 
     if(thickness <= 0.f || length <= 0.f )
         return;
-    if(style == LineStyle::Double && thickness < 3.f)
-        style = LineStyle::Solid;
     switch(style) {
     case LineStyle::Dashed:
     case LineStyle::Dotted:
@@ -428,30 +426,31 @@ constexpr bool borderStyleHasUnmatchedColorsAtCorner(BoxSide side, BoxSide adjac
         return flags == topRightFlags || flags == bottomLeftFlags;
     }
 
-    return style == LineStyle::Groove || style == LineStyle::Ridge;
+    return style == LineStyle::Groove || style == LineStyle::Ridge || style == LineStyle::Double;
+}
+
+static bool joinRequiresMitre(const std::array<BorderEdge, 4>& edges, BoxSide side, BoxSide adjacentSide)
+{
+    const auto& edge = edges[side];
+    const auto& adjacentEdge = edges[adjacentSide];
+    if(!adjacentEdge.width())
+        return false;
+    if(edge.color() != adjacentEdge.color())
+        return true;
+    if(edge.style() != adjacentEdge.style())
+        return true;
+    return borderStyleHasUnmatchedColorsAtCorner(side, adjacentSide, edge.style());
 }
 
 void BorderPainter::paintSide(GraphicsContext& context, BoxSide side, BoxSide adjacentSide1, BoxSide adjacentSide2, const Color& color, const Rect& rect) const
 {
-    const auto& edge = m_edges[side];
-    auto joinRequiresMitre = [&](BoxSide side, BoxSide adjacentSide) {
-        const auto& adjacentEdge = m_edges[adjacentSide];
-        if(!adjacentEdge.width())
-            return false;
-        if(edge.color() != adjacentEdge.color())
-            return true;
-        if(edge.style() != adjacentEdge.style())
-            return true;
-        return borderStyleHasUnmatchedColorsAtCorner(side, adjacentSide, edge.style());
-    };
-
-    auto clipping = joinRequiresMitre(side, adjacentSide1) || joinRequiresMitre(side, adjacentSide2);
+    auto clipping = joinRequiresMitre(m_edges, side, adjacentSide1) || joinRequiresMitre(m_edges, side, adjacentSide2);
     if(clipping) {
         context.save();
         clipBoxSide(context, side);
     }
 
-    paintBoxSide(context, side, edge.style(), color, rect);
+    paintBoxSide(context, side, m_edges[side].style(), color, rect);
     if(clipping) {
         context.restore();
     }
