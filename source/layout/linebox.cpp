@@ -110,9 +110,9 @@ LineBox::LineBox(Box* box, float width)
 {
 }
 
-std::unique_ptr<TextLineBox> TextLineBox::create(TextBox* box, const TextShapeView& shape, float expansion, float width)
+std::unique_ptr<TextLineBox> TextLineBox::create(TextBox* box, const TextShapeView& shape, float width, float expansion)
 {
-    return std::unique_ptr<TextLineBox>(new (box->heap()) TextLineBox(box, shape, expansion, width));
+    return std::unique_ptr<TextLineBox>(new (box->heap()) TextLineBox(box, shape, width, expansion));
 }
 
 float TextLineBox::lineHeight() const
