@@ -149,8 +149,8 @@ static const SimpleFontData* resolveFontData(const Font* font, const uint16_t* c
     return font->fontDataForCharacters(characters, length, resolveEmojiPolicy(variantEmoji, characters, length));
 }
 
-constexpr int kMaxGlyphs = 1 << 16;
-constexpr int kMaxCharacters = kMaxGlyphs;
+constexpr uint32_t kMaxGlyphs = 1 << 16;
+constexpr uint32_t kMaxCharacters = kMaxGlyphs;
 
 #define HB_TO_FLT(v) (static_cast<float>(v) / (1 << 16))
 
@@ -170,8 +170,8 @@ RefPtr<TextShape> TextShape::createForText(const UString& text, Direction direct
     auto hbLanguage = locale->language();
 
     float totalWidth = 0.f;
-    int startIndex = 0;
-    int totalLength = text.length();
+    uint32_t startIndex = 0;
+    uint32_t totalLength = text.length();
     TextShapeRunList textRuns(heap);
 
     CharacterBreakIterator iterator(text, locale);
@@ -290,8 +290,8 @@ RefPtr<TextShape> TextShape::createForTabs(const UString& text, Direction direct
     auto heap = style->heap();
 
     float totalWidth = 0.f;
-    int startIndex = 0;
-    int totalLength = text.length();
+    uint32_t startIndex = 0;
+    uint32_t totalLength = text.length();
 
     TextShapeRunList runs(heap);
     if(auto fontData = font->primaryFont()) {
@@ -323,7 +323,7 @@ RefPtr<TextShape> TextShape::createForTabs(const UString& text, Direction direct
 
 uint32_t TextShape::offsetForPosition(float position) const
 {
-    auto currentOffset = m_direction == Direction::Ltr ? 0 : m_text.length();
+    uint32_t currentOffset = m_direction == Direction::Ltr ? 0 : m_text.length();
     if(position <= 0.f)
         return currentOffset;
     float currentPosition = 0;

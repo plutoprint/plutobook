@@ -57,7 +57,7 @@ bool TextResource::isXMLMIMEType(std::string_view mimeType)
     }
 
     bool hasSlash = false;
-    for(int i = 0; i < length - 4; ++i) {
+    for(size_t i = 0; i < length - 4; ++i) {
         auto cc = mimeType[i];
         if(isAlnum(cc))
             continue;

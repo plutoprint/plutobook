@@ -22,10 +22,10 @@ CharacterBreakIterator::CharacterBreakIterator(const UString& text, const Locale
 {
 }
 
-int CharacterBreakIterator::nextBreakOpportunity(int offset, int end) const
+uint32_t CharacterBreakIterator::nextBreakOpportunity(uint32_t offset, uint32_t end) const
 {
     auto position = m_locale->nextCharacterBreak(m_id, m_text, offset);
-    if(position == UBRK_DONE)
+    if(position == UBRK_DONE || position > end)
         return end;
     return position;
 }
@@ -141,8 +141,8 @@ uint32_t LineBreakIterator::nextBreakOpportunity(uint32_t pos, uint32_t end) con
 uint32_t LineBreakIterator::previousBreakOpportunity(uint32_t offset, uint32_t start) const
 {
     auto buffer = m_text.getBuffer();
-    auto pos = std::min<int>(offset, m_text.length());
-    auto end = std::min<int>(pos + 2, m_text.length());
+    auto pos = std::min<uint32_t>(offset, m_text.length());
+    auto end = std::min<uint32_t>(pos + 2, m_text.length());
     while(pos > start) {
         auto nextBreak = nextBreakOpportunity(pos, end);
         if(pos == nextBreak)
@@ -156,7 +156,7 @@ uint32_t LineBreakIterator::previousBreakOpportunity(uint32_t offset, uint32_t s
 
 bool LineBreakIterator::isBreakable(uint32_t pos) const
 {
-    auto end = std::min<int>(pos + 1, m_text.length());
+    auto end = std::min<uint32_t>(pos + 1, m_text.length());
     auto nextBreak = nextBreakOpportunity(pos, end);
     return pos == nextBreak;
 }

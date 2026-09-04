@@ -32,7 +32,7 @@ class CharacterBreakIterator final : public TextBreakIterator {
 public:
     explicit CharacterBreakIterator(const UString& text, const LocaleData* locale);
 
-    int nextBreakOpportunity(int pos, int end) const;
+    uint32_t nextBreakOpportunity(uint32_t pos, uint32_t end) const;
 };
 
 class LineBreakIterator final : public TextBreakIterator {
