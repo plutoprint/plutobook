@@ -13,6 +13,7 @@
 #include "graphicscontext.h"
 #include "boxlayer.h"
 
+#include <algorithm>
 #include <cmath>
 
 namespace plutobook {
@@ -144,7 +145,11 @@ static void paintTextDecoration(GraphicsContext& context, const Point& origin, f
         float y = y1 + doubleOffset * wavyOffsetFactor;
 
         float distance = 3.f * thickness;
-        float step = 2.f * thickness;
+
+        // The wave period follows the thickness, but a period below a fraction of a
+        // pixel is not renderable and would only make the loop below run for as many
+        // iterations as the author cares to ask for.
+        float step = std::max(2.f * thickness, 0.5f);
 
         path.moveTo(x, y);
         while(x < x2) {
@@ -175,14 +180,15 @@ static void paintTextDecorations(GraphicsContext& context, const Point& offset, 
     auto decorations = style->textDecorationLine();
     if(decorations == TextDecorationLine::None)
         return;
+    auto thickness = style->textDecorationThickness();
+    if(thickness <= 0.f)
+        return;
     auto baseline = style->fontAscent();
-    auto thickness = style->fontSize() / 16.f;
     auto doubleOffset = thickness + 1.f;
     auto decorationStyle = style->textDecorationStyle();
     context.setColor(style->textDecorationColor());
     if(decorations & TextDecorationLine::Underline) {
-        auto gap = std::max(1.f, std::ceil(thickness / 2.f));
-        Point origin(offset.x, offset.y + baseline + gap);
+        Point origin(offset.x, offset.y + baseline + style->underlineDistanceFromBaseline(thickness));
         paintTextDecoration(context, origin, width, thickness, doubleOffset, 0, decorationStyle);
     }
 

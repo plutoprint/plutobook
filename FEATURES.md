@@ -2,6 +2,7 @@
 
 - [Fonts](#fonts)
 - [Color](#color)
+- [Text Decoration](#text-decoration)
 - [Backgrounds and Borders](#backgrounds-and-borders)
 - [Outlines](#outlines)
 - [Box Model](#box-model)
@@ -33,6 +34,12 @@ PlutoBook also supports the `@font-face` rule for loading fonts, with both local
 PlutoBook fully supports standard CSS color formats as defined in the [CSS Color Module Level 3](https://www.w3.org/TR/css-color-3), including hexadecimal (`#rgb` and `#rrggbb`), functional notations like `rgb()`, `rgba()`, `hsl()`, and `hsla()`, as well as both basic and extended keyword colors. It also recognizes the special keywords `transparent` and `currentColor`, but does not support deprecated system color keywords such as `ButtonFace` and `WindowText`, which have been removed from modern CSS. In addition, PlutoBook honors the `opacity` property, which applies a uniform alpha transparency to an element and all its descendants, so the entire subtree appears with the same level of transparency.
 
 PlutoBook also provides partial support for [CSS Color Module Level 4](https://www.w3.org/TR/css-color-4). This includes modern hexadecimal forms with alpha (`#rgba`, `#rrggbbaa`), the `hwb()` function, and the updated space-separated syntax with an optional `/` for alpha (e.g. `rgb(255 0 0 / 0.5)`). More advanced Level 4 features such as `lab()`, `lch()`, and `color()` are not yet supported.
+
+## Text Decoration
+
+PlutoBook supports text decorations as defined in the [CSS Text Decoration Module Level 3](https://www.w3.org/TR/css-text-decor-3), drawing underlines, overlines, and line-throughs through `text-decoration-line`, in any of the `solid`, `double`, `dotted`, `dashed`, and `wavy` styles selected by `text-decoration-style`, and in any color through `text-decoration-color`. All three can be set at once with the `text-decoration` shorthand.
+
+The geometry of the lines can be tuned with the [CSS Text Decoration Module Level 4](https://www.w3.org/TR/css-text-decor-4) properties. `text-decoration-thickness` sets the stroke width of every line, `text-underline-position` chooses the underline’s zero position — either the engine's default, the position suggested by the font (`from-font`), or below the text’s descenders (`under`) — and `text-underline-offset` shifts the underline away from that position by a length or a percentage of the font size. Each of these accepts `auto`, which preserves PlutoBook’s default placement. The `text-decoration` shorthand also accepts a thickness. `text-decoration-skip-ink` is not yet supported, so lines are not interrupted where they cross glyphs.
 
 ## Backgrounds and Borders
 
