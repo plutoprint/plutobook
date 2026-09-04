@@ -17,12 +17,12 @@ class LocaleData;
 
 class TextBreakIterator {
 public:
+    TextBreakIterator(const UString& text, const LocaleData* locale);
+
     TextBreakIterator(const TextBreakIterator&) = delete;
     TextBreakIterator& operator=(const TextBreakIterator&) = delete;
 
 protected:
-    TextBreakIterator(const UString& text, const LocaleData* locale);
-
     const UString m_text;
     const LocaleData* m_locale;
     const uint64_t m_id;
@@ -30,14 +30,14 @@ protected:
 
 class CharacterBreakIterator final : public TextBreakIterator {
 public:
-    explicit CharacterBreakIterator(const UString& text, const LocaleData* locale);
+    CharacterBreakIterator(const UString& text, const LocaleData* locale);
 
     uint32_t nextBreakOpportunity(uint32_t pos, uint32_t end) const;
 };
 
 class LineBreakIterator final : public TextBreakIterator {
 public:
-    explicit LineBreakIterator(const UString& text, const LocaleData* locale);
+    LineBreakIterator(const UString& text, const LocaleData* locale);
 
     static bool isBreakableSpace(UChar cc);
 
