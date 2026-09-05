@@ -154,12 +154,21 @@ constexpr uint32_t kMaxCharacters = kMaxGlyphs;
 
 #define HB_TO_FLT(v) (static_cast<float>(v) / (1 << 16))
 
+static hb_feature_t toHbFeature(const FontFeature& feature)
+{
+    hb_feature_t hbFeature;
+    hbFeature.tag = feature.first.value();
+    hbFeature.value = feature.second;
+    hbFeature.start = 0;
+    hbFeature.end = static_cast<unsigned>(-1);
+    return hbFeature;
+}
+
 RefPtr<TextShape> TextShape::createForText(const UString& text, Direction direction, bool disableSpacing, const BoxStyle* style)
 {
     assert(!text.isEmpty());
     const auto* font = style->font();
     const auto* locale = font->locale();
-    auto fontFeatures = style->fontFeatures();
     auto fontVariantEmoji = style->fontVariantEmoji();
     auto letterSpacing = disableSpacing ? 0 : style->letterSpacing();
     auto wordSpacing = disableSpacing ? 0 : style->wordSpacing();
@@ -168,6 +177,11 @@ RefPtr<TextShape> TextShape::createForText(const UString& text, Direction direct
     thread_local hb::unique_ptr<hb_buffer_t> hbBuffer(hb_buffer_create());
     auto hbDirection = direction == Direction::Ltr ? HB_DIRECTION_LTR : HB_DIRECTION_RTL;
     auto hbLanguage = locale->language();
+
+    std::vector<hb_feature_t> hbFeatures;
+    for(const auto& feature : style->fontFeatures())
+        hbFeatures.push_back(toHbFeature(feature));
+    const auto initialHbFeaturesSize = hbFeatures.size();
 
     float totalWidth = 0.f;
     uint32_t startIndex = 0;
@@ -216,20 +230,10 @@ RefPtr<TextShape> TextShape::createForText(const UString& text, Direction direct
         auto scriptName = uscript_getShortName(scriptCode);
         auto hbScript = hb_script_from_string(scriptName, -1);
 
-        std::vector<hb_feature_t> hbFeatures;
-        auto addFeatures = [&hbFeatures](const FontFeatureList& features) {
-            for(const auto& feature : features) {
-                hb_feature_t hbFeature;
-                hbFeature.tag = feature.first.value();
-                hbFeature.value = feature.second;
-                hbFeature.start = 0;
-                hbFeature.end = static_cast<unsigned>(-1);
-                hbFeatures.push_back(hbFeature);
-            }
-        };
-
-        addFeatures(fontFeatures);
-        addFeatures(fontData->features());
+        hbFeatures.resize(initialHbFeaturesSize);
+        for(const auto& feature : fontData->features()) {
+            hbFeatures.push_back(toHbFeature(feature));
+        }
 
         while(numCharacters > 0) {
             const auto itemLength = std::min(numCharacters, kMaxCharacters);
