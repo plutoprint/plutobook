@@ -81,6 +81,36 @@ static cairo_surface_t* createImageSurface(cairo_format_t format, int width, int
     return surface;
 }
 
+inline bool matchesPngSignature(const char* data, size_t size)
+{
+    return size >= 8 && std::memcmp(data, "\x89PNG\r\n\x1A\n", 8) == 0;
+}
+
+inline bool matchesJpegSignature(const char* data, size_t size)
+{
+    return size >= 3 && std::memcmp(data, "\xFF\xD8\xFF", 3) == 0;
+}
+
+inline bool matchesWebpSignature(const char* data, size_t size)
+{
+    return size >= 14 && std::memcmp(data, "RIFF", 4) == 0 && std::memcmp(data + 8, "WEBPVP", 6) == 0;
+}
+
+static void attachMimeData(cairo_surface_t* surface, const char* data, size_t size)
+{
+    if(!matchesJpegSignature(data, size))
+        return;
+    auto destroy_func = [](void* data) {
+        delete[] static_cast<uint8_t*>(data);
+    };
+
+    auto mimeData = new uint8_t[size];
+    std::memcpy(mimeData, data, size);
+    if(cairo_surface_set_mime_data(surface, CAIRO_MIME_TYPE_JPEG, mimeData, size, destroy_func, mimeData)) {
+        destroy_func(mimeData);
+    }
+}
+
 #ifdef CAIRO_HAS_PNG_FUNCTIONS
 static cairo_surface_t* decodePngImage(const char* data, size_t size)
 {
@@ -136,11 +166,8 @@ static cairo_surface_t* decodeJpegImage(const char* data, size_t size)
     }
 
     cairo_surface_mark_dirty(surface);
+    attachMimeData(surface, data, size);
     tjDestroy(tj);
-
-    auto mimeData = (uint8_t*)std::malloc(size);
-    std::memcpy(mimeData, data, size);
-    cairo_surface_set_mime_data(surface, CAIRO_MIME_TYPE_JPEG, mimeData, size, std::free, mimeData);
     return surface;
 }
 #endif // PLUTOBOOK_HAS_TURBOJPEG
@@ -221,23 +248,24 @@ static cairo_surface_t* decodeGenericImage(const char* data, size_t size)
         }
     }
 
-    stbi_image_free(imageData);
     cairo_surface_mark_dirty(surface);
+    attachMimeData(surface, data, size);
+    stbi_image_free(imageData);
     return surface;
 }
 
 static cairo_surface_t* decodeBitmapImage(const char* data, size_t size)
 {
 #ifdef CAIRO_HAS_PNG_FUNCTIONS
-    if(size > 8 && std::memcmp(data, "\x89PNG\r\n\x1A\n", 8) == 0)
+    if(matchesPngSignature(data, size))
         return decodePngImage(data, size);
 #endif
 #ifdef PLUTOBOOK_HAS_TURBOJPEG
-    if(size > 3 && std::memcmp(data, "\xFF\xD8\xFF", 3) == 0)
+    if(matchesJpegSignature(data, size))
         return decodeJpegImage(data, size);
 #endif
 #ifdef PLUTOBOOK_HAS_WEBP
-    if(size > 14 && std::memcmp(data, "RIFF", 4) == 0 && std::memcmp(data + 8, "WEBPVP", 6) == 0)
+    if(matchesWebpSignature(data, size))
         return decodeWebpImage(data, size);
 #endif
     return decodeGenericImage(data, size);
