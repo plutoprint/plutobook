@@ -82,26 +82,25 @@ static cairo_surface_t* createImageSurface(cairo_format_t format, int width, int
 }
 
 #ifdef CAIRO_HAS_PNG_FUNCTIONS
-struct PngInputStream {
-    const char* data;
-    size_t size;
-};
-
-static cairo_status_t png_read_func(void* closure, uint8_t* data, uint32_t length)
-{
-    auto stream = static_cast<PngInputStream*>(closure);
-    if(length > stream->size)
-        return CAIRO_STATUS_READ_ERROR;
-    std::memcpy(data, stream->data, length);
-    stream->data += length;
-    stream->size -= length;
-    return CAIRO_STATUS_SUCCESS;
-}
-
 static cairo_surface_t* decodePngImage(const char* data, size_t size)
 {
-    PngInputStream stream = { data, size };
-    return cairo_image_surface_create_from_png_stream(png_read_func, &stream);
+    struct ReadStream {
+        const char* data;
+        size_t size;
+    };
+
+    auto read_func = [](void* closure, uint8_t* data, uint32_t length) -> cairo_status_t {
+        auto stream = static_cast<ReadStream*>(closure);
+        if(length > stream->size)
+            return CAIRO_STATUS_READ_ERROR;
+        std::memcpy(data, stream->data, length);
+        stream->data += length;
+        stream->size -= length;
+        return CAIRO_STATUS_SUCCESS;
+    };
+
+    ReadStream stream = { data, size };
+    return cairo_image_surface_create_from_png_stream(read_func, &stream);
 }
 #endif // CAIRO_HAS_PNG_FUNCTIONS
 
