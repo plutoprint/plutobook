@@ -284,16 +284,9 @@ public:
         return std::string_view(m_data + offset, count);
     }
 
-    const char& operator*() const {
-        assert(m_offset < m_length);
-        return m_data[m_offset];
-    }
-
     const char* data() const { return m_data; }
     size_t length() const { return m_length; }
     size_t offset() const { return m_offset; }
-
-    bool empty() const { return m_offset == m_length; }
 
 private:
     const char* m_data;
@@ -308,10 +301,6 @@ public:
     CSSTokenStream tokenize();
 
 private:
-    static bool isEscapeSequence(char first, char second);
-    static bool isIdentSequence(char first, char second, char third);
-    static bool isNumberSequence(char first, char second, char third);
-
     bool isEscapeSequence() const;
     bool isIdentSequence() const;
     bool isNumberSequence() const;
