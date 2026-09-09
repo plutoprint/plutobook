@@ -333,7 +333,7 @@ public:
     static RefPtr<SimpleFontData> create(cairo_scaled_font_t* font, FcCharSet* charSet, FontFeatureList features);
 
     cairo_scaled_font_t* font() const { return m_font; }
-    hb_font_t* hbFont() const { return m_hbFont; }
+    hb_font_t* hbFont(bool vertical = false) const { return vertical ? m_hbVerticalFont : m_hbFont; }
     const FontDataInfo& info() const { return m_info; }
     const FontFeatureList& features() const { return m_features; }
 
@@ -354,12 +354,13 @@ public:
     ~SimpleFontData() final;
 
 private:
-    SimpleFontData(cairo_scaled_font_t* font, hb_font_t* hbFont, FcCharSet* charSet, const FontDataInfo& info, FontFeatureList features)
-        : m_font(font), m_hbFont(hbFont), m_charSet(charSet), m_info(info), m_features(std::move(features))
+    SimpleFontData(cairo_scaled_font_t* font, hb_font_t* hbFont, hb_font_t* hbVerticalFont, FcCharSet* charSet, const FontDataInfo& info, FontFeatureList features)
+        : m_font(font), m_hbFont(hbFont), m_hbVerticalFont(hbVerticalFont), m_charSet(charSet), m_info(info), m_features(std::move(features))
     {}
 
     cairo_scaled_font_t* m_font;
     hb_font_t* m_hbFont;
+    hb_font_t* m_hbVerticalFont;
     FcCharSet* m_charSet;
     FontDataInfo m_info;
     FontFeatureList m_features;

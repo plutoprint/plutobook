@@ -3779,14 +3779,14 @@ RefPtr<CSSValue> CSSParser::consumeLonghand(CSSTokenStream& input, CSSPropertyID
             {"horizontal-tb", CSSValueID::HorizontalTb},
             {"vertical-rl", CSSValueID::VerticalRl},
             {"vertical-lr", CSSValueID::VerticalLr},
-            {"sideways-rl", CSSValueID::VerticalRl},
-            {"sideways-lr", CSSValueID::VerticalLr},
+            {"sideways-rl", CSSValueID::SidewaysRl},
+            {"sideways-lr", CSSValueID::SidewaysLr},
             {"lr-tb", CSSValueID::HorizontalTb},
             {"rl-tb", CSSValueID::HorizontalTb},
             {"lr", CSSValueID::HorizontalTb},
             {"rl", CSSValueID::HorizontalTb},
             {"tb-rl", CSSValueID::VerticalRl},
-            {"tb", CSSValueID::VerticalLr}
+            {"tb", CSSValueID::VerticalRl}
         };
 
         return consumeIdent(input, table);
@@ -3795,7 +3795,8 @@ RefPtr<CSSValue> CSSParser::consumeLonghand(CSSTokenStream& input, CSSPropertyID
     case CSSPropertyID::TextOrientation: {
         static constexpr CSSIdentValueEntry table[] = {
             {"mixed", CSSValueID::Mixed},
-            {"upright", CSSValueID::Upright}
+            {"upright", CSSValueID::Upright},
+            {"sideways", CSSValueID::Sideways}
         };
 
         return consumeIdent(input, table);

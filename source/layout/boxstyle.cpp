@@ -1595,7 +1595,7 @@ void BoxStyle::inherit(CSSPropertyID id)
         m_verticalAlignType = m_parentStyle->verticalAlignType();
         break;
     case CSSPropertyID::Direction:
-        m_direction = m_parentStyle->direction();
+        m_direction = m_parentStyle->m_direction;
         break;
     case CSSPropertyID::UnicodeBidi:
         m_unicodeBidi = m_parentStyle->unicodeBidi();
@@ -2679,6 +2679,10 @@ WritingMode BoxStyle::convertWritingMode(const CSSValue& value)
         return WritingMode::VerticalRl;
     case CSSValueID::VerticalLr:
         return WritingMode::VerticalLr;
+    case CSSValueID::SidewaysRl:
+        return WritingMode::SidewaysRl;
+    case CSSValueID::SidewaysLr:
+        return WritingMode::SidewaysLr;
     default:
         assert(false);
     }
@@ -2694,6 +2698,8 @@ TextOrientation BoxStyle::convertTextOrientation(const CSSValue& value)
         return TextOrientation::Mixed;
     case CSSValueID::Upright:
         return TextOrientation::Upright;
+    case CSSValueID::Sideways:
+        return TextOrientation::Sideways;
     default:
         assert(false);
     }
@@ -3333,7 +3339,7 @@ BoxStyle::BoxStyle(Node* node, const BoxStyle* parentStyle, PseudoType pseudoTyp
         m_captionSide = parentStyle->captionSide();
         m_clipRule = parentStyle->clipRule();
         m_color = parentStyle->color();
-        m_direction = parentStyle->direction();
+        m_direction = parentStyle->m_direction;
         m_dominantBaseline = parentStyle->dominantBaseline();
         m_emptyCells = parentStyle->emptyCells();
         m_fillRule = parentStyle->fillRule();

@@ -627,7 +627,7 @@ private:
     int m_maxRedirects = 30;
     int m_timeout = 30;
 
-    friend DefaultResourceFetcher* defaultResourceFetcher();
+    friend PLUTOBOOK_API DefaultResourceFetcher* defaultResourceFetcher();
 };
 
 /**

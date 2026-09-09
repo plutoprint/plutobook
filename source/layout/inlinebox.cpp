@@ -9,6 +9,7 @@
 #include "inlinebox.h"
 #include "blockbox.h"
 #include "linebox.h"
+#include "graphicscontext.h"
 
 namespace plutobook {
 
@@ -47,7 +48,10 @@ Rect InlineBox::visualOverflowRect() const
 
     auto width = rightSide - leftSide;
     auto height = lastLine->overflowBottom() - firstLine->overflowTop();
-    return Rect(leftSide, firstLine->overflowTop(), width, height);
+    auto rect = Rect(leftSide, firstLine->overflowTop(), width, height);
+    if(auto block = to<BlockFlowBox>(containingBlock()))
+        return block->lineTransform().mapRect(rect);
+    return rect;
 }
 
 Rect InlineBox::borderBoundingBox() const
@@ -76,7 +80,10 @@ Rect InlineBox::paintBoundingBox() const
 
     auto width = rightSide - leftSide;
     auto height = lastLine->bottom() - firstLine->y();
-    return Rect(leftSide, firstLine->y(), width, height);
+    auto rect = Rect(leftSide, firstLine->y(), width, height);
+    if(auto block = to<BlockFlowBox>(containingBlock()))
+        return block->lineTransform().mapRect(rect);
+    return rect;
 }
 
 Point InlineBox::relativePositionedInlineOffset(const BoxModel* child) const
@@ -186,6 +193,17 @@ void InlineBox::addChild(Box* newChild)
 void InlineBox::paint(const PaintInfo& info, const Point& offset, PaintPhase phase)
 {
     if(phase == PaintPhase::Contents || phase == PaintPhase::Outlines) {
+        if(auto block = to<BlockFlowBox>(containingBlock()); block && block->style()->isVerticalWritingMode()) {
+            const auto transform = block->lineTransform();
+            info->save();
+            info->translate(offset.x, offset.y);
+            info->addTransform(transform);
+            PaintInfo logicalInfo(*info, transform.inverted().mapRect(info.rect().translated(-offset)));
+            for(const auto& line : m_lines)
+                line->paint(logicalInfo, Point(), phase);
+            info->restore();
+            return;
+        }
         for(const auto& line : m_lines) {
             line->paint(info, offset, phase);
         }

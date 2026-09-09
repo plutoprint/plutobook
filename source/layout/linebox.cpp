@@ -34,7 +34,7 @@ float LineBox::height() const
     if(isRootLineBox() || isTextLineBox())
         return style()->fontHeight();
     if(auto box = to<BoxFrame>(m_box))
-        return box->height();
+        return box->containingBlock()->style()->isVerticalWritingMode() ? box->width() : box->height();
     const auto& box = to<BoxModel>(*m_box);
     return style()->fontHeight() + box.borderAndPaddingHeight();
 }
@@ -237,11 +237,13 @@ std::unique_ptr<ReplacedLineBox> ReplacedLineBox::create(BoxFrame* box)
 
 float ReplacedLineBox::lineHeight() const
 {
-    return box()->marginBoxHeight();
+    return box()->containingBlock()->style()->isVerticalWritingMode() ? box()->marginBoxWidth() : box()->marginBoxHeight();
 }
 
 float ReplacedLineBox::baselinePosition() const
 {
+    if(box()->containingBlock()->style()->isVerticalWritingMode())
+        return lineHeight() / 2.f;
     if(auto baseline = box()->inlineBlockBaseline())
         return baseline.value() + box()->marginTop();
     return lineHeight();
@@ -255,6 +257,19 @@ BoxFrame* ReplacedLineBox::box() const
 void ReplacedLineBox::paint(const PaintInfo& info, const Point& offset, PaintPhase phase)
 {
     if(phase == PaintPhase::Contents) {
+        if(auto block = to<BlockFlowBox>(box()->containingBlock()); block && block->style()->isVerticalWritingMode()) {
+            // Cancel the logical line transform: replaced contents have physical dimensions.
+            const auto inverse = block->lineTransform().inverted();
+            info->save();
+            info->addTransform(inverse);
+            PaintInfo physicalInfo(*info, block->lineTransform().mapRect(info.rect()));
+            box()->paint(physicalInfo, Point(), PaintPhase::Decorations);
+            box()->paint(physicalInfo, Point(), PaintPhase::Floats);
+            box()->paint(physicalInfo, Point(), PaintPhase::Contents);
+            box()->paint(physicalInfo, Point(), PaintPhase::Outlines);
+            info->restore();
+            return;
+        }
         box()->paint(info, offset, PaintPhase::Decorations);
         box()->paint(info, offset, PaintPhase::Floats);
         box()->paint(info, offset, PaintPhase::Contents);
@@ -270,7 +285,7 @@ void ReplacedLineBox::serialize(std::ostream& o, int indent) const
 }
 
 ReplacedLineBox::ReplacedLineBox(BoxFrame* box)
-    : LineBox(box, box->width())
+    : LineBox(box, box->containingBlock()->style()->isVerticalWritingMode() ? box->height() : box->width())
 {
 }
 
@@ -467,11 +482,11 @@ float FlowLineBox::placeInHorizontalDirection(float offsetX, const BlockFlowBox*
             continue;
         }
 
-        offsetX += box.marginLeft();
+        offsetX += block->style()->isVerticalWritingMode() ? box.marginTop() : box.marginLeft();
         line.setX(offsetX);
         box.setX(line.x());
         offsetX += line.width();
-        offsetX += box.marginRight();
+        offsetX += block->style()->isVerticalWritingMode() ? box.marginBottom() : box.marginRight();
     }
 
     offsetX += paddingRight() + borderRight();
@@ -511,8 +526,16 @@ void FlowLineBox::placeInVerticalDirection(float y, float maxHeight, float maxAs
 
         if(child->isReplacedLineBox()) {
             auto& box = to<BoxFrame>(*child->box());
-            child->setY(child->y() + box.marginTop());
-            box.setY(child->y());
+            auto block = box.containingBlock();
+            if(block->style()->isVerticalWritingMode()) {
+                auto flow = to<BlockFlowBox>(block);
+                child->setY(child->y() + (block->style()->isFlippedBlockWritingMode() ? box.marginRight() : box.marginLeft()));
+                const auto rect = flow->lineTransform().mapRect(child->rect());
+                box.setLocation(rect.x, rect.y);
+            } else {
+                child->setY(child->y() + box.marginTop());
+                box.setY(child->y());
+            }
         } else {
             assert(child->isTextLineBox() || child->isFlowLineBox());
             auto top = child->baselinePosition() - child->style()->fontAscent();
@@ -542,6 +565,11 @@ void FlowLineBox::addOverflowRect(const BoxFrame* box, float dx, float dy)
     if(box->hasLayer())
         return;
     auto overflowRect = box->visualOverflowRect();
+    if(auto block = to<BlockFlowBox>(box->containingBlock()); block && block->style()->isVerticalWritingMode()) {
+        overflowRect.translate(box->location());
+        addOverflowRect(block->lineTransform().inverted().mapRect(overflowRect));
+        return;
+    }
     overflowRect.translate(dx, dy);
     addOverflowRect(overflowRect);
 }
