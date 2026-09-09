@@ -166,6 +166,7 @@ plutobook_sources = [
     'source/graphics/graphicscontext.cpp',
     'source/graphics/textshape.cpp',
 
+    'source/layout/annotationcollector.cpp',
     'source/layout/blockbox.cpp',
     'source/layout/borderpainter.cpp',
     'source/layout/box.cpp',
