@@ -965,7 +965,7 @@ void BoxFrame::computeHorizontalMargins(float& marginLeft, float& marginRight, f
         return;
     auto marginLeftLength = style()->marginLeft();
     auto marginRightLength = style()->marginRight();
-    if(isInline() || isFloating()) {
+    if(isInline() || isFloating() || (container && container->style()->isVerticalWritingMode())) {
         marginLeft = marginLeftLength.calcMin(containerWidth);
         marginRight = marginRightLength.calcMin(containerWidth);
         return;
