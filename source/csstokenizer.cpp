@@ -42,64 +42,49 @@ CSSTokenStream CSSTokenizer::tokenize()
     return CSSTokenStream(m_tokenList.data(), m_tokenList.size());
 }
 
-bool CSSTokenizer::isEscapeSequence(char first, char second)
-{
-    return first == '\\' && !isNewLine(second);
-}
-
-bool CSSTokenizer::isIdentSequence(char first, char second, char third)
-{
-    if(isNameStart(first) || isEscapeSequence(first, second))
-        return true;
-    if(first == '-')
-        return isNameStart(second) || second == '-' || isEscapeSequence(second, third);
-    return false;
-}
-
-bool CSSTokenizer::isNumberSequence(char first, char second, char third)
-{
-    if(isDigit(first))
-        return true;
-    if(first == '-' || first == '+')
-        return isDigit(second) || (second == '.' && isDigit(third));
-    if(first == '.')
-        return isDigit(second);
-    return false;
-}
-
 bool CSSTokenizer::isEscapeSequence() const
 {
-    if(m_input.empty())
-        return false;
-    return isEscapeSequence(*m_input, m_input.peek(1));
+    return m_input.peek() == '\\' && !isNewLine(m_input.peek(1));
 }
 
 bool CSSTokenizer::isIdentSequence() const
 {
-    if(m_input.empty())
-        return false;
-    auto second = m_input.peek(1);
-    if(second == 0)
-        return isIdentSequence(*m_input, 0, 0);
-    return isIdentSequence(*m_input, second, m_input.peek(2));
+    auto first = m_input.peek();
+    if(isNameStart(first))
+        return true;
+    if(first == '-') {
+        auto second = m_input.peek(1);
+        if(second == '-' || isNameStart(second))
+            return true;
+        return second == '\\' && !isNewLine(m_input.peek(2));
+    }
+
+    return first == '\\' && !isNewLine(m_input.peek(1));
 }
 
 bool CSSTokenizer::isNumberSequence() const
 {
-    if(m_input.empty())
-        return false;
-    auto second = m_input.peek(1);
-    if(second == 0)
-        return isNumberSequence(*m_input, 0, 0);
-    return isNumberSequence(*m_input, second, m_input.peek(2));
+    auto first = m_input.peek();
+    if(isDigit(first))
+        return true;
+    if(first == '-' || first == '+') {
+        auto second = m_input.peek(1);
+        if(isDigit(second))
+            return true;
+        return second == '.' && isDigit(m_input.peek(2));
+    }
+
+    return first == '.' && isDigit(m_input.peek(1));
 }
 
 bool CSSTokenizer::isExponentSequence() const
 {
-    if(m_input.peek() == 'E' || m_input.peek() == 'e') {
-        if(m_input.peek(1) == '+' || m_input.peek(1) == '-')
+    auto first = m_input.peek();
+    if(first == 'E' || first == 'e') {
+        auto second = m_input.peek(1);
+        if(second == '+' || second == '-')
             return isDigit(m_input.peek(2));
-        return isDigit(m_input.peek(1));
+        return isDigit(second);
     }
 
     return false;
@@ -107,8 +92,17 @@ bool CSSTokenizer::isExponentSequence() const
 
 bool CSSTokenizer::isUnicodeRangeSequence() const
 {
-    if(m_input.peek() == 'U' || m_input.peek() == 'u')
-        return m_input.peek(1) == '+' && (m_input.peek(2) == '?' || isHexDigit(m_input.peek(2)));
+    auto first = m_input.peek();
+    if(first == 'U' || first == 'u') {
+        auto second = m_input.peek(1);
+        if(second == '+') {
+            auto third = m_input.peek(2);
+            if(third == '?')
+                return true;
+            return isHexDigit(third);
+        }
+    }
+
     return false;
 }
 
@@ -262,25 +256,25 @@ CSSToken CSSTokenizer::consumeNumericToken()
     double integer = 0;
     double fraction = 0;
 
-    if(m_input.peek() == '-') {
+    auto cc = m_input.peek();
+    if(cc == '-') {
         numberSign = CSSToken::NumberSign::Minus;
-        m_input.advance();
-    } else if(m_input.peek() == '+') {
+        cc = m_input.consume();
+    } else if(cc == '+') {
         numberSign = CSSToken::NumberSign::Plus;
-        m_input.advance();
+        cc = m_input.consume();
     }
 
-    if(isDigit(m_input.peek())) {
-        auto cc = m_input.peek();
+    if(isDigit(cc)) {
         do {
             integer = 10.0 * integer + (cc - '0');
             cc = m_input.consume();
         } while(isDigit(cc));
     }
 
-    if(m_input.peek() == '.' && isDigit(m_input.peek(1))) {
+    if(cc == '.' && isDigit(m_input.peek(1))) {
         numberType = CSSToken::NumberType::Number;
-        auto cc = m_input.consume();
+        cc = m_input.consume();
         double scale = 1.0;
         do {
             scale *= 0.1;
@@ -292,18 +286,18 @@ CSSToken CSSTokenizer::consumeNumericToken()
     double value = (integer + fraction);
     if(isExponentSequence()) {
         numberType = CSSToken::NumberType::Number;
-        m_input.advance();
+        cc = m_input.consume();
 
         int expsign = 1;
-        if(m_input.peek() == '-') {
+        if(cc == '-') {
             expsign = -1;
-            m_input.advance();
-        } else if(m_input.peek() == '+') {
-            m_input.advance();
+            cc = m_input.consume();
+        } else if(cc == '+') {
+            cc = m_input.consume();
         }
 
-        auto cc = m_input.peek();
         double exponent = 0;
+        assert(isDigit(cc));
         do {
             exponent = 10.0 * exponent + (cc - '0');
             cc = m_input.consume();
@@ -314,7 +308,7 @@ CSSToken CSSTokenizer::consumeNumericToken()
     if(numberSign == CSSToken::NumberSign::Minus)
         value = -value;
     float number = clampTo<float>(value);
-    if(m_input.peek() == '%') {
+    if(cc == '%') {
         m_input.advance();
         return CSSToken(CSSToken::Type::Percentage, numberType, numberSign, number);
     }
@@ -367,8 +361,6 @@ CSSToken CSSTokenizer::consumeUnicodeRangeToken()
 
 CSSToken CSSTokenizer::consumeIdentLikeToken()
 {
-    if(isUnicodeRangeSequence())
-        return consumeUnicodeRangeToken();
     auto name = consumeName();
     if(equalsIgnoringCase(name, "url") && m_input.peek() == '(') {
         auto cc = m_input.consume();
@@ -391,9 +383,8 @@ CSSToken CSSTokenizer::consumeIdentLikeToken()
 
 CSSToken CSSTokenizer::consumeUrlToken()
 {
-    auto cc = m_input.peek();
-    while(isSpace(cc)) {
-        cc = m_input.consume();
+    while(isSpace(m_input.peek())) {
+        m_input.advance();
     }
 
     const auto offset = m_input.offset();
@@ -512,6 +503,7 @@ CSSToken CSSTokenizer::consumeCommentToken()
 
 CSSToken CSSTokenizer::consumeSolidusToken()
 {
+    assert(m_input.peek() == '/');
     auto cc = m_input.consume();
     if(cc == '*') {
         m_input.advance();
@@ -523,6 +515,7 @@ CSSToken CSSTokenizer::consumeSolidusToken()
 
 CSSToken CSSTokenizer::consumeHashToken()
 {
+    assert(m_input.peek() == '#');
     auto cc = m_input.consume();
     if(isNameChar(cc) || isEscapeSequence()) {
         if(isIdentSequence())
@@ -535,6 +528,7 @@ CSSToken CSSTokenizer::consumeHashToken()
 
 CSSToken CSSTokenizer::consumePlusSignToken()
 {
+    assert(m_input.peek() == '+');
     if(isNumberSequence())
         return consumeNumericToken();
     m_input.advance();
@@ -543,6 +537,7 @@ CSSToken CSSTokenizer::consumePlusSignToken()
 
 CSSToken CSSTokenizer::consumeHyphenMinusToken()
 {
+    assert(m_input.peek() == '-');
     if(isNumberSequence())
         return consumeNumericToken();
     if(m_input.peek(1) == '-' && m_input.peek(2) == '>') {
@@ -558,6 +553,7 @@ CSSToken CSSTokenizer::consumeHyphenMinusToken()
 
 CSSToken CSSTokenizer::consumeFullStopToken()
 {
+    assert(m_input.peek() == '.');
     if(isNumberSequence())
         return consumeNumericToken();
     m_input.advance();
@@ -566,6 +562,7 @@ CSSToken CSSTokenizer::consumeFullStopToken()
 
 CSSToken CSSTokenizer::consumeLessThanSignToken()
 {
+    assert(m_input.peek() == '<');
     auto cc = m_input.consume();
     if(cc == '!' && m_input.peek(1) == '-' && m_input.peek(2) == '-') {
         m_input.advance(3);
@@ -577,6 +574,7 @@ CSSToken CSSTokenizer::consumeLessThanSignToken()
 
 CSSToken CSSTokenizer::consumeCommercialAtToken()
 {
+    assert(m_input.peek() == '@');
     m_input.advance();
     if(isIdentSequence())
         return CSSToken(CSSToken::Type::AtKeyword, consumeName());
@@ -585,6 +583,7 @@ CSSToken CSSTokenizer::consumeCommercialAtToken()
 
 CSSToken CSSTokenizer::consumeReverseSolidusToken()
 {
+    assert(m_input.peek() == '\\');
     if(isEscapeSequence())
         return consumeIdentLikeToken();
     m_input.advance();
@@ -601,6 +600,8 @@ CSSToken CSSTokenizer::nextToken()
     if(isDigit(cc))
         return consumeNumericToken();
     if(isNameStart(cc)) {
+        if(isUnicodeRangeSequence())
+            return consumeUnicodeRangeToken();
         return consumeIdentLikeToken();
     }
 
