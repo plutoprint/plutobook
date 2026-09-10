@@ -1219,9 +1219,9 @@ bool CSSParser::consumeDeclaration(CSSTokenStream& input, CSSPropertyList& prope
         }
     }
 
-    if(important && (ruleType == CSSRuleType::FontFace || ruleType == CSSRuleType::CounterStyle))
-        return false;
     CSSTokenStream value(valueBegin, valueEnd);
+    if(value.empty() || (important && (ruleType == CSSRuleType::FontFace || ruleType == CSSRuleType::CounterStyle)))
+        return false;
     if(id == CSSPropertyID::Custom) {
         if(ruleType == CSSRuleType::FontFace || ruleType == CSSRuleType::CounterStyle)
             return false;
