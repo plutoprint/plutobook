@@ -134,6 +134,61 @@ int main()
         check(bounds(render("#flow{writing-mode:vertical-rl;padding:20px}", latin)).top >= 20, "physical top padding becomes inline-start padding");
 
         // Repeated layout/paint must not accumulate transforms or stale line positions.
+        const auto verticalCells = render(
+            "table{border-collapse:collapse;table-layout:fixed;width:200px}"
+            "th,td{writing-mode:vertical-rl;vertical-align:top;padding:0;font-weight:normal}"
+            "th{height:60px;background:red}td{height:120px;background:blue}",
+            "<table><tr><th>A</th></tr><tr><td>BCDEFGHIJKLMNOP</td></tr></table>");
+        check(bounds(verticalCells).height() == 60 && bounds(verticalCells, false).height() == 120
+            && bounds(verticalCells, false).top == 60,
+            "vertical th and td honor explicit heights and row positions");
+        const auto sharedRow = render(
+            "table{border-collapse:collapse;table-layout:fixed;width:200px}"
+            "td{writing-mode:vertical-lr;vertical-align:top;padding:0;height:60px;background:red}"
+            "td+td{height:120px;background:blue}",
+            "<table><tr><td>AB</td><td>CD</td></tr></table>");
+        check(bounds(sharedRow).height() == 120 && bounds(sharedRow, false).height() == 120,
+            "vertical cells adopt the resolved shared row height");
+        const std::string compactCellCss = "table{border-collapse:collapse}"
+            "td{writing-mode:vertical-rl;text-orientation:upright;vertical-align:top;padding:0;background:red}";
+        const auto autoCell = bounds(render(compactCellCss, "<table><tr><td>ABC</td></tr></table>"));
+        check(autoCell.height() > 40 && autoCell.height() < 120 && autoCell.width() <= 40,
+            "auto-height vertical text cells size to their text instead of the viewport");
+        const auto wrappingCell = bounds(render(compactCellCss + "td{height:96px}",
+            "<table><tr><td>一二三四五六七八九十一二</td></tr></table>"));
+        check(wrappingCell.height() == 96 && wrappingCell.width() >= 64 && wrappingCell.width() <= 128,
+            "automatic table columns measure vertical column extents rather than text advances");
+        const auto emptyCell = bounds(render(compactCellCss + "td{padding:10px}",
+            "<table><tr><td></td></tr></table>"));
+        check(emptyCell.height() == 20 && emptyCell.width() == 20,
+            "empty vertical cells retain padding without acquiring viewport height");
+        const auto spanningCells = render(
+            "table{border-collapse:collapse;table-layout:fixed;width:200px}"
+            "td{writing-mode:vertical-rl;vertical-align:top;padding:0;height:60px;background:blue}"
+            "td[rowspan]{height:120px;background:red}",
+            "<table><tr><td rowspan='2'>ABCD</td><td>EF</td></tr><tr><td>GH</td></tr></table>");
+        check(bounds(spanningCells).height() == 120 && bounds(spanningCells, false).height() == 120,
+            "vertical rowspan cells cover the combined row heights");
+        const auto paddedCell = bounds(render(compactCellCss + "td{box-sizing:border-box;height:120px;padding:10px;border:2px solid red}",
+            "<table><tr><td>ABC</td></tr></table>"));
+        // Collapsed outer borders extend one pixel beyond each cell edge.
+        check(paddedCell.height() == 122, "vertical cell border-box height includes padding and collapsed borders");
+        const auto mixedCells = render(
+            "table{border-collapse:separate;border-spacing:4px;table-layout:fixed;width:208px}"
+            "td{padding:0;vertical-align:top;height:96px;background:red;writing-mode:vertical-rl}"
+            "td+td{writing-mode:horizontal-tb;background:blue}",
+            "<table><tr><td>AB</td><td>CD</td></tr></table>");
+        check(bounds(mixedCells).height() == 96 && bounds(mixedCells, false).height() == 96
+            && bounds(mixedCells, false).left > bounds(mixedCells).right + 1,
+            "mixed horizontal and vertical cells share row height and preserve separate border spacing");
+        const auto colspans = render(
+            "table{border-collapse:collapse;table-layout:fixed;width:200px}"
+            "td{writing-mode:vertical-lr;vertical-align:top;padding:0;height:60px;background:blue}"
+            "td[colspan]{background:red}",
+            "<table><tr><td colspan='2'>AB</td></tr><tr><td>CD</td><td>EF</td></tr></table>");
+        check(bounds(colspans).width() == 200 && bounds(colspans).height() == 60
+            && bounds(colspans, false).width() == 200 && bounds(colspans, false).top == 60,
+            "vertical colspan cells preserve table column geometry");
         check(rl == render("#flow{writing-mode:vertical-rl}", lines), "repeat rendering is deterministic");
         return 0;
     } catch(const std::exception& error) {

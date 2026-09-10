@@ -80,6 +80,10 @@ std::optional<float> BlockBox::availableHeight() const
         return document()->containerHeight();
     if(hasOverrideHeight())
         return overrideHeight() - borderAndPaddingHeight();
+    if(isTableCellBox() && style()->isVerticalWritingMode()) {
+        if(auto height = computeHeightUsing(style()->height()))
+            return std::max(0.f, adjustContentBoxHeight(height.value()));
+    }
     if(isTableCellBox() || isPageMarginBox())
         return std::nullopt;
     if(isAnonymous())
@@ -1603,6 +1607,26 @@ Transform BlockFlowBox::lineTransform() const
     return Transform(0, 1, 1, 0, 0, 0);
 }
 
+float BlockFlowBox::verticalCellHeight() const
+{
+    if(hasOverrideHeight())
+        return std::max(borderAndPaddingHeight(), overrideHeight());
+    if(auto specifiedHeight = computeHeightUsing(style()->height()))
+        return std::max(borderAndPaddingHeight(), adjustBorderBoxHeight(specifiedHeight.value()));
+    if(!firstChild())
+        return borderAndPaddingHeight();
+    auto available = containingBlock()->availableHeight().value_or(document()->containerHeight());
+    if(isChildrenInline()) {
+        // Inline advances run along physical height in vertical writing. Short
+        // and empty auto-height cells must not consume an entire viewport.
+        float minAdvance = 0.f;
+        float maxAdvance = 0.f;
+        m_lineLayout->computeIntrinsicWidths(minAdvance, maxAdvance);
+        available = std::min(available, maxAdvance + borderAndPaddingHeight());
+    }
+    return std::max(borderAndPaddingHeight(), available);
+}
+
 void BlockFlowBox::layoutVertical()
 {
     updateWidth();
@@ -1610,6 +1634,11 @@ void BlockFlowBox::layoutVertical()
     // An orthogonal flow with indefinite inline size uses the viewport height.
     auto inlineSize = containingBlock()->availableHeight().value_or(document()->containerHeight());
     inlineSize -= marginTop() + marginBottom();
+    // Table height calculation normally preserves the measured content height.
+    // For vertical cells, choose the inline constraint before laying out text:
+    // first the CSS height, then the row's resolved height on the second pass.
+    if(isTableCellBox())
+        inlineSize = verticalCellHeight();
     setHeight(std::max(borderAndPaddingHeight(), inlineSize));
     updateHeight();
     const bool rightToLeft = style()->isFlippedBlockWritingMode();

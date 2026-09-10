@@ -235,6 +235,7 @@ public:
         return style()->isFlippedBlockWritingMode() ? borderAndPaddingLeft() : borderAndPaddingRight();
     }
     Transform lineTransform() const;
+    float verticalCellHeight() const;
     void layoutVertical();
 
     virtual void layoutContents(FragmentBuilder* fragmentainer);
