@@ -59,6 +59,19 @@ private:
     // into sampled stops. The returned offsets are not clamped to [0, 1].
     void buildColorStops(float lineLength, GradientStops& stops) const;
 
+    // Places every color stop on the gradient line, as a fraction of its
+    // length, applying the CSS fixup rules for missing and decreasing
+    // positions.
+    std::vector<float> resolveStopOffsets(float lineLength) const;
+
+    // Drops the transition hints from the stop list, replacing each of them
+    // with the sampled stops that approximate the ramp it describes.
+    GradientStops expandTransitionHints(const std::vector<float>& offsets) const;
+
+    // Size of the ending shape of a radial gradient, as the two radii of the
+    // ellipse centered on |center|.
+    Size resolveEndingShapeRadii(const Point& center) const;
+
     // Moves the stop offsets onto [0, 1] and reports, as fractions of the
     // gradient line, where those two ends now sit. A radial or conic gradient
     // sets |positiveOnly|, since its gradient ray starts at the center and
