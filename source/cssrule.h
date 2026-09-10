@@ -227,6 +227,7 @@ public:
     };
 
     enum class Type {
+        Unknown,
         None,
         All,
         Print,
