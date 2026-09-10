@@ -4280,9 +4280,9 @@ bool CSSParser::consumeFontVariant(CSSTokenStream& input, CSSPropertyList& prope
     RefPtr<CSSValue> emoji;
     RefPtr<CSSValue> position;
 
-    CSSValueList eastAsian;
-    CSSValueList ligatures;
-    CSSValueList numeric;
+    CSSValueList eastAsian(m_heap);
+    CSSValueList ligatures(m_heap);
+    CSSValueList numeric(m_heap);
     while(!input.empty()) {
         if(caps == nullptr && (caps = consumeFontVariantCapsIdent(input)))
             continue;
