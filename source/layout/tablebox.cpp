@@ -10,6 +10,7 @@
 #include "borderpainter.h"
 #include "fragmentbuilder.h"
 #include "boxview.h"
+#include "linelayout.h"
 
 #include <span>
 #include <ranges>
@@ -1891,6 +1892,34 @@ TableCollapsedBorderEdges::TableCollapsedBorderEdges(const TableCellBox* cellBox
 TableCellBox::TableCellBox(Node* node, const RefPtr<BoxStyle>& style)
     : BlockFlowBox(node, style)
 {
+}
+
+void TableCellBox::computeIntrinsicWidths(float& minWidth, float& maxWidth) const
+{
+    if(!style()->isVerticalWritingMode() || !isChildrenInline()) {
+        BlockFlowBox::computeIntrinsicWidths(minWidth, maxWidth);
+        return;
+    }
+    // Atomic children can depend on the column width being solved. Leave that
+    // cyclic case to the existing intrinsic sizing path for now.
+    for(const auto& item : lineLayout()->data().items) {
+        if(item.box() && item.box()->isBoxFrame()) {
+            BlockFlowBox::computeIntrinsicWidths(minWidth, maxWidth);
+            return;
+        }
+    }
+    // Measure real column extents, not text advances along the vertical axis.
+    // These provisional lines are rebuilt by the normal cell layout pass.
+    auto cell = const_cast<TableCellBox*>(this);
+    const auto oldHeight = height();
+    const auto oldOffset = lineBlockOffset();
+    cell->setHeight(verticalCellHeight());
+    const auto start = style()->isFlippedBlockWritingMode() ? borderAndPaddingRight() : borderAndPaddingLeft();
+    cell->setLineBlockOffset(start);
+    lineLayout()->layout(nullptr);
+    minWidth = maxWidth = std::max(0.f, lineBlockOffset() - borderAndPaddingWidth());
+    cell->setHeight(oldHeight);
+    cell->setLineBlockOffset(oldOffset);
 }
 
 bool TableCellBox::isBaselineAligned() const

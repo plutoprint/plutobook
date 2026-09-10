@@ -426,6 +426,8 @@ class TableCellBox final : public BlockFlowBox {
 public:
     TableCellBox(Node* node, const RefPtr<BoxStyle>& style);
 
+    void computeIntrinsicWidths(float& minWidth, float& maxWidth) const final;
+
     bool isTableCellBox() const final { return true; }
     bool avoidsFloats() const final { return true; }
 
