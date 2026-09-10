@@ -412,18 +412,19 @@ RefPtr<CSSPageRule> CSSParser::consumePageRule(CSSTokenStream& prelude, CSSToken
     return CSSPageRule::create(m_heap, std::move(selectors), std::move(margins), std::move(properties));
 }
 
+static void consumeErroneousAtRule(CSSTokenStream& input)
+{
+    input.consumeComponentsUntil<CSSToken::Type::LeftCurlyBracket, CSSToken::Type::Semicolon>();
+    if(input->type() == CSSToken::Type::LeftCurlyBracket) {
+        input.consumeBlock();
+    } else if(input->type() == CSSToken::Type::Semicolon) {
+        input.consume();
+    }
+}
+
 RefPtr<CSSPageMarginRule> CSSParser::consumePageMarginRule(CSSTokenStream& input)
 {
     assert(input->type() == CSSToken::Type::AtKeyword);
-    auto name = input->data();
-    input.consume();
-    auto prelude = input.consumeComponentsUntil<CSSToken::Type::LeftCurlyBracket>();
-    if(input.empty())
-        return nullptr;
-    auto block = input.consumeBlock();
-    prelude.consumeWhitespace();
-    if(!prelude.empty())
-        return nullptr;
     static constexpr CSSIdentEntry<PageMarginType> table[] = {
         {"top-left-corner", PageMarginType::TopLeftCorner},
         {"top-left", PageMarginType::TopLeft},
@@ -443,9 +444,19 @@ RefPtr<CSSPageMarginRule> CSSParser::consumePageMarginRule(CSSTokenStream& input
         {"right-bottom", PageMarginType::RightBottom}
     };
 
-    auto marginType = matchIdent(table, name);
-    if(marginType == std::nullopt)
+    auto marginType = matchIdent(table, input->data());
+    if(marginType == std::nullopt) {
+        consumeErroneousAtRule(input);
         return nullptr;
+    }
+
+    input.consumeIncludingWhitespace();
+    if(input->type() != CSSToken::Type::LeftCurlyBracket) {
+        consumeErroneousAtRule(input);
+        return nullptr;
+    }
+
+    auto block = input.consumeBlock();
     CSSPropertyList properties(m_heap);
     consumeDeclarationList(block, properties, CSSRuleType::PageMargin);
     return CSSPageMarginRule::create(m_heap, marginType.value(), std::move(properties));
@@ -1255,6 +1266,9 @@ void CSSParser::consumeDeclarationList(CSSTokenStream& input, CSSPropertyList& p
         case CSSToken::Type::Whitespace:
         case CSSToken::Type::Semicolon:
             input.consume();
+            break;
+        case CSSToken::Type::AtKeyword:
+            consumeErroneousAtRule(input);
             break;
         default:
             consumeDeclaration(input, properties, ruleType);
