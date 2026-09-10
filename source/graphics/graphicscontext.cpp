@@ -12,8 +12,10 @@
 
 #include <cairo.h>
 
+#include <algorithm>
 #include <cmath>
 #include <sstream>
+#include <vector>
 
 namespace plutobook {
 
