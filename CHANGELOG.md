@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- Add support for CSS gradients as background images
+- Add support for CSS gradients wherever an image is expected
 
 ## PlutoBook 0.19.0 (2026-08-04)
 

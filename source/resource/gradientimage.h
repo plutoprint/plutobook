@@ -34,7 +34,12 @@ public:
     void computeIntrinsicDimensions(float& intrinsicWidth, float& intrinsicHeight, double& intrinsicRatio) final;
 
     void setContainerSize(const Size& size) final { m_containerSize = size; }
-    Size intrinsicSize() const final { return Size(); }
+
+    // A gradient has no intrinsic size, so a replaced box showing one falls
+    // back to the default object size, as it does for an SVG that declares
+    // none. Backgrounds never reach this: they size themselves from
+    // computeIntrinsicDimensions, which reports no dimension at all.
+    Size intrinsicSize() const final { return Size(300, 150); }
     Size size() const final { return m_containerSize; }
 
 private:
