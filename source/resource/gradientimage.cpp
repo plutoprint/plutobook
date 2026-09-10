@@ -50,7 +50,56 @@ static void appendHintStops(GradientStops& stops, float fromOffset, const Color&
     }
 }
 
-void GradientImage::buildColorStops(float lineLength, GradientStops& stops) const
+// Stop positions may not decrease; a smaller one is pulled up to its
+// predecessor, which is what produces a hard color transition.
+static void makeOffsetsNonDecreasing(std::vector<float>& offsets, const std::vector<bool>& resolved)
+{
+    auto maximum = offsets.front();
+    for(size_t index = 0; index < offsets.size(); ++index) {
+        if(resolved[index]) {
+            maximum = std::max(maximum, offsets[index]);
+            offsets[index] = maximum;
+        }
+    }
+}
+
+// Runs of stops without a position spread evenly between the surrounding
+// positioned ones.
+static void spreadUnresolvedOffsets(std::vector<float>& offsets, const std::vector<bool>& resolved)
+{
+    for(size_t index = 1; index < offsets.size(); ++index) {
+        if(resolved[index])
+            continue;
+        size_t next = index;
+        while(!resolved[next])
+            ++next;
+        for(size_t current = index; current < next; ++current)
+            offsets[current] = offsets[index - 1] + (offsets[next] - offsets[index - 1]) * (current - index + 1) / (next - index + 1);
+        index = next;
+    }
+}
+
+// Cairo blends between two stops without premultiplying their alpha, so a
+// ramp towards a translucent color has to be sampled by hand to avoid the
+// color of that stop bleeding into the transparent end.
+static void appendAlphaSamples(const GradientStops& resolvedStops, GradientStops& stops)
+{
+    stops.push_back(resolvedStops.front());
+    for(size_t index = 1; index < resolvedStops.size(); ++index) {
+        const auto& from = resolvedStops[index - 1];
+        const auto& to = resolvedStops[index];
+        if(from.second.alpha() != to.second.alpha() && from.first < to.first) {
+            for(int sample = 1; sample < kAlphaSampleCount; ++sample) {
+                auto position = static_cast<float>(sample) / kAlphaSampleCount;
+                stops.emplace_back(from.first + (to.first - from.first) * position, interpolateColor(from.second, to.second, position));
+            }
+        }
+
+        stops.push_back(to);
+    }
+}
+
+std::vector<float> GradientImage::resolveStopOffsets(float lineLength) const
 {
     const auto count = m_stops.size();
     std::vector<float> offsets(count, 0.f);
@@ -78,31 +127,15 @@ void GradientImage::buildColorStops(float lineLength, GradientStops& stops) cons
         resolved.back() = true;
     }
 
-    // Stop positions may not decrease; a smaller one is pulled up to its
-    // predecessor, which is what produces a hard color transition.
-    auto maximum = offsets.front();
-    for(size_t index = 0; index < count; ++index) {
-        if(resolved[index]) {
-            maximum = std::max(maximum, offsets[index]);
-            offsets[index] = maximum;
-        }
-    }
+    makeOffsetsNonDecreasing(offsets, resolved);
+    spreadUnresolvedOffsets(offsets, resolved);
+    return offsets;
+}
 
-    // Runs of stops without a position spread evenly between the surrounding
-    // positioned ones.
-    for(size_t index = 1; index < count; ++index) {
-        if(resolved[index])
-            continue;
-        size_t next = index;
-        while(!resolved[next])
-            ++next;
-        for(size_t current = index; current < next; ++current)
-            offsets[current] = offsets[index - 1] + (offsets[next] - offsets[index - 1]) * (current - index + 1) / (next - index + 1);
-        index = next;
-    }
-
+GradientStops GradientImage::expandTransitionHints(const std::vector<float>& offsets) const
+{
     GradientStops resolvedStops;
-    for(size_t index = 0; index < count; ++index) {
+    for(size_t index = 0; index < offsets.size(); ++index) {
         if(m_stops[index].hint)
             continue;
         if(index >= 2 && m_stops[index - 1].hint) {
@@ -112,23 +145,14 @@ void GradientImage::buildColorStops(float lineLength, GradientStops& stops) cons
         resolvedStops.emplace_back(offsets[index], m_stops[index].color);
     }
 
-    // Cairo blends between two stops without premultiplying their alpha, so
-    // a ramp towards a translucent color has to be sampled by hand to avoid
-    // the color of that stop bleeding into the transparent end.
-    for(size_t index = 0; index < resolvedStops.size(); ++index) {
-        if(index > 0) {
-            const auto& from = resolvedStops[index - 1];
-            const auto& to = resolvedStops[index];
-            if(from.second.alpha() != to.second.alpha() && from.first < to.first) {
-                for(int sample = 1; sample < kAlphaSampleCount; ++sample) {
-                    auto position = static_cast<float>(sample) / kAlphaSampleCount;
-                    stops.emplace_back(from.first + (to.first - from.first) * position, interpolateColor(from.second, to.second, position));
-                }
-            }
-        }
+    return resolvedStops;
+}
 
-        stops.push_back(resolvedStops[index]);
-    }
+void GradientImage::buildColorStops(float lineLength, GradientStops& stops) const
+{
+    // The parser guarantees the list opens with a color stop, so the resolved
+    // list is never empty.
+    appendAlphaSamples(expandTransitionHints(resolveStopOffsets(lineLength)), stops);
 }
 
 static void clampColorStops(GradientStops& stops)
@@ -246,60 +270,61 @@ void GradientImage::applyLinearGradient(GraphicsContext& context) const
     context.setLinearGradient(values, gradient.stops, Transform(), gradient.method, 1.f);
 }
 
-void GradientImage::applyRadialGradient(GraphicsContext& context) const
+static Size sideEndingShape(float horizontal, float vertical, bool circle, bool closest)
+{
+    if(!circle)
+        return Size(horizontal, vertical);
+    auto radius = closest ? std::min(horizontal, vertical) : std::max(horizontal, vertical);
+    return Size(radius, radius);
+}
+
+static Size cornerEndingShape(float horizontal, float vertical, bool circle)
+{
+    if(circle) {
+        auto radius = std::hypot(horizontal, vertical);
+        return Size(radius, radius);
+    }
+
+    // The ending shape keeps the aspect ratio of the matching side sized
+    // ellipse while passing through the corner.
+    return Size(horizontal * std::numbers::sqrt2_v<float>, vertical * std::numbers::sqrt2_v<float>);
+}
+
+Size GradientImage::resolveEndingShapeRadii(const Point& center) const
 {
     auto width = m_containerSize.w;
     auto height = m_containerSize.h;
-
-    Point center(m_position.x().calc(width), m_position.y().calc(height));
-    auto left = std::abs(center.x);
-    auto right = std::abs(width - center.x);
-    auto top = std::abs(center.y);
-    auto bottom = std::abs(height - center.y);
-
-    float radiusX = 0.f;
-    float radiusY = 0.f;
-    switch(m_sizeType) {
-    case CSSValueID::ClosestSide:
-    case CSSValueID::ClosestCorner:
-        radiusX = std::min(left, right);
-        radiusY = std::min(top, bottom);
-        break;
-    case CSSValueID::FarthestSide:
-    case CSSValueID::FarthestCorner:
-        radiusX = std::max(left, right);
-        radiusY = std::max(top, bottom);
-        break;
-    default:
-        radiusX = m_radiusX.calc(width);
-        radiusY = m_radiusY.calc(height);
-        break;
+    auto closest = m_sizeType == CSSValueID::ClosestSide || m_sizeType == CSSValueID::ClosestCorner;
+    auto farthest = m_sizeType == CSSValueID::FarthestSide || m_sizeType == CSSValueID::FarthestCorner;
+    if(!closest && !farthest)
+        return Size(m_radiusX.calc(width), m_radiusY.calc(height));
+    auto horizontal = std::abs(center.x);
+    auto vertical = std::abs(center.y);
+    if(closest) {
+        horizontal = std::min(horizontal, std::abs(width - center.x));
+        vertical = std::min(vertical, std::abs(height - center.y));
+    } else {
+        horizontal = std::max(horizontal, std::abs(width - center.x));
+        vertical = std::max(vertical, std::abs(height - center.y));
     }
 
-    if(m_sizeType == CSSValueID::ClosestSide || m_sizeType == CSSValueID::FarthestSide) {
-        if(m_circle) {
-            radiusX = radiusY = m_sizeType == CSSValueID::ClosestSide
-                ? std::min(radiusX, radiusY) : std::max(radiusX, radiusY);
-        }
-    } else if(m_sizeType == CSSValueID::ClosestCorner || m_sizeType == CSSValueID::FarthestCorner) {
-        if(m_circle) {
-            radiusX = radiusY = std::hypot(radiusX, radiusY);
-        } else {
-            // The ending shape keeps the aspect ratio of the matching side
-            // sized ellipse while passing through the corner.
-            radiusX *= std::numbers::sqrt2_v<float>;
-            radiusY *= std::numbers::sqrt2_v<float>;
-        }
-    }
+    if(m_sizeType == CSSValueID::ClosestSide || m_sizeType == CSSValueID::FarthestSide)
+        return sideEndingShape(horizontal, vertical, m_circle, closest);
+    return cornerEndingShape(horizontal, vertical, m_circle);
+}
 
-    if(radiusX <= 0.f || radiusY <= 0.f) {
+void GradientImage::applyRadialGradient(GraphicsContext& context) const
+{
+    Point center(m_position.x().calc(m_containerSize.w), m_position.y().calc(m_containerSize.h));
+    auto radii = resolveEndingShapeRadii(center);
+    if(radii.w <= 0.f || radii.h <= 0.f) {
         context.setColor(m_stops.back().color);
         return;
     }
 
     // The gradient ray runs from the center towards the right edge of the
     // ending shape, so its length is the horizontal radius.
-    auto gradient = resolveGradient(radiusX, true);
+    auto gradient = resolveGradient(radii.w, true);
     if(gradient.degenerate) {
         context.setColor(gradient.color);
         return;
@@ -308,11 +333,11 @@ void GradientImage::applyRadialGradient(GraphicsContext& context) const
     // Cairo only draws circular gradients; the ellipse comes from scaling the
     // pattern space, which keeps the shading vectorial.
     auto transform = Transform::makeTranslate(center.x, center.y);
-    transform.scale(1.f, radiusY / radiusX);
+    transform.scale(1.f, radii.h / radii.w);
 
     RadialGradientValues values;
-    values.r0 = radiusX * gradient.start;
-    values.r = radiusX * gradient.end;
+    values.r0 = radii.w * gradient.start;
+    values.r = radii.w * gradient.end;
     context.setRadialGradient(values, gradient.stops, transform, gradient.method, 1.f);
 }
 
