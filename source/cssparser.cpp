@@ -373,17 +373,44 @@ RefPtr<CSSFontFaceRule> CSSParser::consumeFontFaceRule(CSSTokenStream& prelude, 
     return CSSFontFaceRule::create(m_heap, std::move(properties));
 }
 
+static std::optional<GlobalString> consumeCounterStyleNameIdent(CSSTokenStream& input, const CSSParserContext& context)
+{
+    if(input->type() != CSSToken::Type::Ident || identMatches("none", input->data()))
+        return std::nullopt;
+    GlobalString name(input->data());
+    input.consumeIncludingWhitespace();
+    if(context.origin() == CSSStyleOrigin::UserAgent) {
+        assert(name == name.foldCase());
+        return name;
+    }
+
+    auto predefinedName = name.foldCase();
+    if(userAgentCounterStyleMap()->findCounterStyle(predefinedName))
+        return predefinedName;
+    return name;
+}
+
 RefPtr<CSSCounterStyleRule> CSSParser::consumeCounterStyleRule(CSSTokenStream& prelude, CSSTokenStream& block)
 {
-    if(prelude->type() != CSSToken::Type::Ident || identMatches("none", prelude->data()))
+    auto name = consumeCounterStyleNameIdent(prelude, m_context);
+    if(name == std::nullopt)
         return nullptr;
-    GlobalString name(prelude->data());
-    prelude.consumeIncludingWhitespace();
+    if(m_context.origin() != CSSStyleOrigin::UserAgent) {
+        if(identMatches("decimal", name.value())
+            || identMatches("disc", name.value())
+            || identMatches("square", name.value())
+            || identMatches("circle", name.value())
+            || identMatches("disclosure-open", name.value())
+            || identMatches("disclosure-closed", name.value())) {
+            return nullptr;
+        }
+    }
+
     if(!prelude.empty())
         return nullptr;
     CSSPropertyList properties(m_heap);
     consumeDeclarationList(block, properties, CSSRuleType::CounterStyle);
-    return CSSCounterStyleRule::create(m_heap, name, std::move(properties));
+    return CSSCounterStyleRule::create(m_heap, name.value(), std::move(properties));
 }
 
 RefPtr<CSSPageRule> CSSParser::consumePageRule(CSSTokenStream& prelude, CSSTokenStream& block)
@@ -2288,7 +2315,9 @@ RefPtr<CSSValue> CSSParser::consumeListStyleType(CSSTokenStream& input)
 
     if(auto value = consumeIdent(input, table))
         return value;
-    return consumeStringOrCustomIdent(input);
+    if(auto name = consumeCounterStyleNameIdent(input, m_context))
+        return CSSCustomIdentValue::create(m_heap, name.value());
+    return consumeString(input);
 }
 
 RefPtr<CSSValue> CSSParser::consumeQuotes(CSSTokenStream& input)
@@ -2396,10 +2425,10 @@ RefPtr<CSSValue> CSSParser::consumeContentCounter(CSSTokenStream& input, bool co
 
     GlobalString listStyle("decimal");
     if(input.consumeCommaIncludingWhitespace()) {
-        if(input->type() != CSSToken::Type::Ident || identMatches("none", input->data()))
+        auto name = consumeCounterStyleNameIdent(input, m_context);
+        if(name == std::nullopt)
             return nullptr;
-        listStyle = GlobalString(input->data());
-        input.consumeIncludingWhitespace();
+        listStyle = name.value();
     }
 
     if(!input.empty())
@@ -4624,11 +4653,9 @@ RefPtr<CSSValue> CSSParser::consumeFontFaceUnicodeRange(CSSTokenStream& input)
 
 RefPtr<CSSValue> CSSParser::consumeCounterStyleName(CSSTokenStream& input)
 {
-    if(input->type() != CSSToken::Type::Ident || identMatches("none", input->data()))
-        return nullptr;
-    GlobalString name(input->data());
-    input.consumeIncludingWhitespace();
-    return CSSCustomIdentValue::create(m_heap, name);
+    if(auto name = consumeCounterStyleNameIdent(input, m_context))
+        return CSSCustomIdentValue::create(m_heap, name.value());
+    return nullptr;
 }
 
 RefPtr<CSSValue> CSSParser::consumeCounterStyleSystem(CSSTokenStream& input)
