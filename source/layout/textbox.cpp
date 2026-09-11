@@ -16,7 +16,6 @@
 #include <algorithm>
 #include <cmath>
 #include <limits>
-#include <stdexcept>
 #include <unicode/ubrk.h>
 
 namespace plutobook {
@@ -60,7 +59,7 @@ WordBoxList TextBox::words() const
     std::unique_ptr<UBreakIterator, decltype(&ubrk_close)> iterator(
         ubrk_open(UBRK_WORD, style()->locale()->lang(), text.getBuffer(), text.length(), &error), ubrk_close);
     if(U_FAILURE(error) || !iterator)
-        throw std::runtime_error("Cannot create ICU word iterator");
+        return result;
     auto start = ubrk_first(iterator.get());
     for(auto end = ubrk_next(iterator.get()); end != UBRK_DONE; start = end, end = ubrk_next(iterator.get())) {
         if(ubrk_getRuleStatus(iterator.get()) < UBRK_WORD_NONE_LIMIT)

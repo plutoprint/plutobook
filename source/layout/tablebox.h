@@ -70,9 +70,21 @@ public:
     float borderHorizontalSpacing() const { return m_borderHorizontalSpacing; }
     float borderVerticalSpacing() const { return m_borderVerticalSpacing; }
 
-    float availableHorizontalSpace() const;
+    /* The grid is laid out on the table's own axes: columns advance along the
+     * inline axis, rows along the block axis. In a vertical writing mode those
+     * are physically vertical and horizontal respectively, which swaps the
+     * meaning of the two border spacings as well. */
+    bool isVerticalTable() const { return style()->isVerticalWritingMode(); }
+    float inlineBorderSpacing() const { return isVerticalTable() ? m_borderVerticalSpacing : m_borderHorizontalSpacing; }
+    float blockBorderSpacing() const { return isVerticalTable() ? m_borderHorizontalSpacing : m_borderVerticalSpacing; }
+
+    float availableInlineSpace() const;
+    void computeIntrinsicInlineSizes(float& minSize, float& maxSize) const;
 
     void layoutCaption(TableCaptionBox* caption, FragmentBuilder* fragmentainer);
+    void layoutVerticalCaption(TableCaptionBox* caption, float& blockOffset);
+    void layoutVertical();
+    void flipAxes(bool flipBlock, bool flipInline);
     void layout(FragmentBuilder* fragmentainer) final;
     void build() final;
 
@@ -175,8 +187,11 @@ public:
     TableRowBox* lastRow() const;
 
     void distributeExcessHeightToRows(float distributableHeight);
+    void distributeExcessBlockSizeToRows(float distributableSize);
 
     void layoutRows(FragmentBuilder* fragmentainer, float headerHeight, float footerHeight);
+    void layoutVerticalRows();
+    void layoutVertical();
     void layout(FragmentBuilder* fragmentainer) final;
     void build() final;
 
@@ -409,10 +424,15 @@ public:
     static TableCollapsedBorderEdge getLeftEdge(TableCollapsedBorderSource source, const BoxStyle* style);
     static TableCollapsedBorderEdge getRightEdge(TableCollapsedBorderSource source, const BoxStyle* style);
 
-    static TableCollapsedBorderEdge calcTopEdge(const TableCellBox* cellBox);
-    static TableCollapsedBorderEdge calcBottomEdge(const TableCellBox* cellBox);
-    static TableCollapsedBorderEdge calcLeftEdge(const TableCellBox* cellBox);
-    static TableCollapsedBorderEdge calcRightEdge(const TableCellBox* cellBox);
+    using EdgeGetter = TableCollapsedBorderEdge(*)(TableCollapsedBorderSource source, const BoxStyle* style);
+
+    /* Resolved per logical edge: the block axis is where rows advance and the
+     * inline axis where columns do, with the physical side each one lands on
+     * chosen by the table's writing mode. */
+    static TableCollapsedBorderEdge calcBlockStartEdge(const TableCellBox* cellBox, EdgeGetter getThisEdge, EdgeGetter getOtherEdge);
+    static TableCollapsedBorderEdge calcBlockEndEdge(const TableCellBox* cellBox, EdgeGetter getThisEdge, EdgeGetter getOtherEdge);
+    static TableCollapsedBorderEdge calcInlineStartEdge(const TableCellBox* cellBox, EdgeGetter getThisEdge, EdgeGetter getOtherEdge);
+    static TableCollapsedBorderEdge calcInlineEndEdge(const TableCellBox* cellBox, EdgeGetter getThisEdge, EdgeGetter getOtherEdge);
 
 private:
     TableCollapsedBorderEdges(const TableCellBox* cellBox);
@@ -436,6 +456,11 @@ public:
     bool isBaselineAligned() const;
     float cellBaselinePosition() const;
     float heightForRowSizing() const;
+
+    /* Logical counterparts used by the grid: the size along the table's block
+     * axis that this cell needs, and its intrinsic sizes along the inline axis. */
+    float blockSizeForRowSizing() const;
+    void computeIntrinsicInlineSizes(float& minSize, float& maxSize) const;
 
     void computeBorderWidths(float& borderTop, float& borderBottom, float& borderLeft, float& borderRight) const;
 

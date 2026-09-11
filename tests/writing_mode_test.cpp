@@ -189,6 +189,56 @@ int main()
         check(bounds(colspans).width() == 200 && bounds(colspans).height() == 60
             && bounds(colspans, false).width() == 200 && bounds(colspans, false).top == 60,
             "vertical colspan cells preserve table column geometry");
+        // A table that is itself in a vertical writing mode transposes its grid:
+        // rows advance along the block axis and columns along the inline one.
+        const std::string transposedCss =
+            "table{border-collapse:collapse;height:80px}"
+            "td{padding:0;width:40px;background:red}"
+            "tr+tr td{background:blue}";
+        const auto rowsRl = render("table{writing-mode:vertical-rl}" + transposedCss,
+            "<table><tr><td>AB</td></tr><tr><td>CD</td></tr></table>");
+        check(bounds(rowsRl).left > bounds(rowsRl, false).right,
+            "a vertical-rl table stacks its rows from right to left");
+        const auto rowsLr = render("table{writing-mode:vertical-lr}" + transposedCss,
+            "<table><tr><td>AB</td></tr><tr><td>CD</td></tr></table>");
+        check(bounds(rowsLr).right < bounds(rowsLr, false).left,
+            "a vertical-lr table stacks its rows from left to right");
+        check(bounds(rowsRl).height() == bounds(rowsLr).height() && bounds(rowsRl).height() == 80,
+            "rows of a vertical table span the table's inline size");
+        const auto columnsRl = render(
+            "table{writing-mode:vertical-rl;border-collapse:collapse;height:80px}"
+            "td{padding:0;width:40px;background:red}"
+            "td+td{background:blue}",
+            "<table><tr><td>AB</td><td>CD</td></tr></table>");
+        check(bounds(columnsRl).bottom < bounds(columnsRl, false).top,
+            "columns of a vertical table advance down the page");
+        const auto verticalCaption = render(
+            "table{writing-mode:vertical-rl;border-collapse:collapse;height:80px}"
+            "caption{caption-side:bottom;padding:0;background:red}"
+            "td{padding:0;width:40px;background:blue}",
+            "<table><caption>X</caption><tr><td>AB</td></tr></table>");
+        check(bounds(verticalCaption).right < bounds(verticalCaption, false).left,
+            "caption-side bottom sits at the block-end edge of a vertical table");
+        const auto verticalRowspan = render(
+            "table{writing-mode:vertical-rl;border-collapse:collapse;height:80px}"
+            "td{padding:0;width:40px;background:blue}"
+            "td[rowspan]{background:red}",
+            "<table><tr><td rowspan='2'>AB</td><td>CD</td></tr><tr><td>EF</td></tr></table>");
+        check(bounds(verticalRowspan).width() == 80,
+            "a rowspan in a vertical table covers the rows it spans across the block axis");
+        // A cell that stays horizontal inside a vertical table is an orthogonal
+        // flow: it must be given room along the table's block axis rather than
+        // wrapping into it and spilling over the next column.
+        const auto orthogonalCell = render(
+            "table{writing-mode:vertical-rl;border-collapse:collapse;height:80px;width:30px}"
+            "td{padding:0;background:blue}"
+            "td.across{writing-mode:horizontal-tb;background:red}",
+            "<table><tr><td class='across'>ABCD</td><td>EF</td></tr></table>");
+        check(bounds(orthogonalCell).height() == 40 && bounds(orthogonalCell, false).height() == 40
+            && bounds(orthogonalCell).bottom < bounds(orthogonalCell, false).top,
+            "an orthogonal cell fills its column band without overlapping the next one");
+        check(bounds(orthogonalCell).width() == bounds(orthogonalCell, false).width(),
+            "an orthogonal cell shares the block extent its row resolved to");
         check(rl == render("#flow{writing-mode:vertical-rl}", lines), "repeat rendering is deterministic");
         return 0;
     } catch(const std::exception& error) {
