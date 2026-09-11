@@ -247,7 +247,7 @@ RefPtr<CSSRule> CSSParser::consumeAtRule(CSSTokenStream& input)
 {
     assert(input->type() == CSSToken::Type::AtKeyword);
     auto name = input->data();
-    input.consume();
+    input.consumeIncludingWhitespace();
     auto prelude = input.consumeComponentsUntil<CSSToken::Type::LeftCurlyBracket, CSSToken::Type::Semicolon>();
     if(input->type() == CSSToken::Type::LeftCurlyBracket) {
         auto block = input.consumeBlock();
@@ -325,7 +325,6 @@ static const CSSToken* consumeStringOrUrlToken(CSSTokenStream& input)
 
 RefPtr<CSSImportRule> CSSParser::consumeImportRule(CSSTokenStream& input)
 {
-    input.consumeWhitespace();
     auto token = consumeStringOrUrlToken(input);
     if(token == nullptr)
         return nullptr;
@@ -337,7 +336,6 @@ RefPtr<CSSImportRule> CSSParser::consumeImportRule(CSSTokenStream& input)
 RefPtr<CSSNamespaceRule> CSSParser::consumeNamespaceRule(CSSTokenStream& input)
 {
     GlobalString prefix;
-    input.consumeWhitespace();
     if(input->type() == CSSToken::Type::Ident) {
         prefix = GlobalString(input->data());
         input.consumeIncludingWhitespace();
@@ -368,7 +366,6 @@ RefPtr<CSSMediaRule> CSSParser::consumeMediaRule(CSSTokenStream& prelude, CSSTok
 
 RefPtr<CSSFontFaceRule> CSSParser::consumeFontFaceRule(CSSTokenStream& prelude, CSSTokenStream& block)
 {
-    prelude.consumeWhitespace();
     if(!prelude.empty())
         return nullptr;
     CSSPropertyList properties(m_heap);
@@ -378,7 +375,6 @@ RefPtr<CSSFontFaceRule> CSSParser::consumeFontFaceRule(CSSTokenStream& prelude, 
 
 RefPtr<CSSCounterStyleRule> CSSParser::consumeCounterStyleRule(CSSTokenStream& prelude, CSSTokenStream& block)
 {
-    prelude.consumeWhitespace();
     if(prelude->type() != CSSToken::Type::Ident || identMatches("none", prelude->data()))
         return nullptr;
     GlobalString name(prelude->data());
@@ -484,7 +480,6 @@ void CSSParser::consumeRuleList(CSSTokenStream& input, CSSRuleList& rules)
 
 bool CSSParser::consumePageSelectorList(CSSTokenStream& input, CSSPageSelectorList& selectors)
 {
-    input.consumeWhitespace();
     if(!input.empty()) {
         do {
             CSSPageSelector selector(m_heap);
