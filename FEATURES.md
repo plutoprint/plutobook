@@ -49,7 +49,7 @@ A linear gradient may be given an explicit `<angle>` or a `to <side-or-corner>` 
 
 Color stops support implicit positions, which spread evenly between their positioned neighbours, the two-position syntax (`red 20% 40%`), and transition hints (`red, 20%, blue`). Since a gradient is resolved against the style of the element using it, `currentColor` and font relative lengths such as `em` inside a gradient behave as expected. Gradients have no intrinsic dimensions, so they take the size of the area they are painted into and respond to `background-size`, `background-position`, and `background-repeat`.
 
-Gradients are emitted as PDF shadings rather than as bitmaps, so they stay resolution independent. PDF has no conic shading, so a conic gradient is approximated with a mesh of patches; the alternative of sampling the sweep into a bitmap can be selected at runtime with `plutobook::setConicGradientRendering()`, or `plutobook_set_conic_gradient_rendering()` from the C API.
+Gradients are emitted as PDF shadings rather than as bitmaps, so they stay resolution independent. PDF has no conic shading, so a conic gradient is approximated with a mesh of patches; the alternative of sampling the sweep into a bitmap can be selected at runtime with `plutobook::setConicGradientRendering()`, or `plutobook_set_conic_gradient_rendering()` from the C API. A repeating conic gradient whose period is too short for a mesh to carry faithfully is sampled into a bitmap either way.
 
 ## Outlines
 
