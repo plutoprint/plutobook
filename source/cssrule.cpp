@@ -219,22 +219,57 @@ enum class MatchResult : uint8_t {
     FailsCompletely
 };
 
+static MatchResult matchHasScopeRelation(const Element* element, const Element* hasScope, CSSComplexSelector::Combinator combinator)
+{
+    switch(combinator) {
+    case CSSComplexSelector::Combinator::None:
+    case CSSComplexSelector::Combinator::Descendant:
+        for(auto ancestor = element->parentElement(); ancestor; ancestor = ancestor->parentElement()) {
+            if(ancestor == hasScope) {
+                return MatchResult::Matches;
+            }
+        }
+
+        return MatchResult::FailsCompletely;
+    case CSSComplexSelector::Combinator::Child:
+        if(hasScope == element->parentElement())
+            return MatchResult::Matches;
+        return MatchResult::FailsAllSiblings;
+    case CSSComplexSelector::Combinator::DirectAdjacent:
+        if(hasScope == element->previousSiblingElement())
+            return MatchResult::Matches;
+        return MatchResult::FailsLocally;
+    case CSSComplexSelector::Combinator::InDirectAdjacent:
+        for(auto sibling = element->previousSiblingElement(); sibling; sibling = sibling->previousSiblingElement()) {
+            if(sibling == hasScope) {
+                return MatchResult::Matches;
+            }
+        }
+
+        return MatchResult::FailsAllSiblings;
+    }
+
+    return MatchResult::FailsCompletely;
+}
+
 using CSSSelectorIterator = CSSSelector::const_iterator;
 
-static MatchResult matchComplexSelector(const Element* element, PseudoType pseudoType, CSSSelectorIterator it, CSSSelectorIterator end)
+static MatchResult matchComplexSelector(const Element* element, const Element* hasScope, PseudoType pseudoType, CSSSelectorIterator it, CSSSelectorIterator end)
 {
     assert(it != end);
     if(!matchCompoundSelector(element, pseudoType, it->compoundSelector()))
         return MatchResult::FailsLocally;
     auto next = std::next(it);
     if(next == end) {
+        if(hasScope)
+            return matchHasScopeRelation(element, hasScope, it->combinator());
         return MatchResult::Matches;
     }
 
     switch(it->combinator()) {
     case CSSComplexSelector::Combinator::Descendant:
         for(auto ancestor = element->parentElement(); ancestor; ancestor = ancestor->parentElement()) {
-            auto result = matchComplexSelector(ancestor, PseudoType::None, next, end);
+            auto result = matchComplexSelector(ancestor, hasScope, PseudoType::None, next, end);
             if(result == MatchResult::Matches || result == MatchResult::FailsCompletely) {
                 return result;
             }
@@ -243,15 +278,15 @@ static MatchResult matchComplexSelector(const Element* element, PseudoType pseud
         return MatchResult::FailsCompletely;
     case CSSComplexSelector::Combinator::Child:
         if(auto parent = element->parentElement())
-            return matchComplexSelector(parent, PseudoType::None, next, end);
+            return matchComplexSelector(parent, hasScope, PseudoType::None, next, end);
         return MatchResult::FailsCompletely;
     case CSSComplexSelector::Combinator::DirectAdjacent:
         if(auto sibling = element->previousSiblingElement())
-            return matchComplexSelector(sibling, PseudoType::None, next, end);
+            return matchComplexSelector(sibling, hasScope, PseudoType::None, next, end);
         return MatchResult::FailsAllSiblings;
     case CSSComplexSelector::Combinator::InDirectAdjacent:
         for(auto sibling = element->previousSiblingElement(); sibling; sibling = sibling->previousSiblingElement()) {
-            auto result = matchComplexSelector(sibling, PseudoType::None, next, end);
+            auto result = matchComplexSelector(sibling, hasScope, PseudoType::None, next, end);
             if(result == MatchResult::Matches || result == MatchResult::FailsAllSiblings || result == MatchResult::FailsCompletely) {
                 return result;
             }
@@ -265,9 +300,9 @@ static MatchResult matchComplexSelector(const Element* element, PseudoType pseud
     return MatchResult::FailsCompletely;
 }
 
-static bool matchSelector(const Element* element, PseudoType pseudoType, const CSSSelector& selector)
+static bool matchSelector(const Element* element, const Element* hasScope, PseudoType pseudoType, const CSSSelector& selector)
 {
-    return matchComplexSelector(element, pseudoType, selector.begin(), selector.end()) == MatchResult::Matches;
+    return matchComplexSelector(element, hasScope, pseudoType, selector.begin(), selector.end()) == MatchResult::Matches;
 }
 
 static bool matchNamespaceSelector(const Element* element, const CSSSimpleSelector& selector)
@@ -354,7 +389,7 @@ static bool matchAttributeEndsWithSelector(const Element* element, const CSSSimp
 static bool matchPseudoClassIsSelector(const Element* element, const CSSSimpleSelector& selector)
 {
     for(const auto& subSelector : selector.subSelectors()) {
-        if(matchSelector(element, PseudoType::None, subSelector)) {
+        if(matchSelector(element, nullptr, PseudoType::None, subSelector)) {
             return true;
         }
     }
@@ -367,66 +402,126 @@ static bool matchPseudoClassNotSelector(const Element* element, const CSSSimpleS
     return !matchPseudoClassIsSelector(element, selector);
 }
 
-static bool matchPseudoClassHasSelector(const Element* element, const CSSSimpleSelector& selector)
+enum class HasMatchElement : uint8_t {
+    HasChild,
+    HasDescendant,
+    HasSibling,
+    HasSiblingDescendant
+};
+
+enum class HasRelation : uint8_t {
+    Subject,
+    Parent,
+    Ancestor,
+    Sibling,
+    AncestorSibling
+};
+
+static HasRelation computeNextHasRelation(HasRelation relation, CSSComplexSelector::Combinator combinator)
 {
-    for(const auto& subSelector : selector.subSelectors()) {
-        int maxDepth = 0;
-        auto combinator = CSSComplexSelector::Combinator::None;
-        for(const auto& selector : subSelector) {
-            combinator = selector.combinator();
-            ++maxDepth;
+    switch(combinator) {
+    case CSSComplexSelector::Combinator::None:
+    case CSSComplexSelector::Combinator::Descendant:
+        return HasRelation::Ancestor;
+    case CSSComplexSelector::Combinator::Child:
+        if(relation == HasRelation::Subject || relation == HasRelation::Sibling)
+            return HasRelation::Parent;
+        return HasRelation::Ancestor;
+    case CSSComplexSelector::Combinator::DirectAdjacent:
+    case CSSComplexSelector::Combinator::InDirectAdjacent:
+        if(relation == HasRelation::Subject || relation == HasRelation::Sibling)
+            return HasRelation::Sibling;
+        return HasRelation::AncestorSibling;
+    }
+
+    return relation;
+}
+
+static HasMatchElement computeHasPseudoClassMatchElement(const CSSSelector& hasSelector)
+{
+    auto relation = HasRelation::Subject;
+    for(const auto& complexSelector : hasSelector) {
+        relation = computeNextHasRelation(relation, complexSelector.combinator());
+    }
+
+    switch(relation) {
+    case HasRelation::Parent:
+        return HasMatchElement::HasChild;
+    case HasRelation::Sibling:
+        return HasMatchElement::HasSibling;
+    case HasRelation::AncestorSibling:
+        return HasMatchElement::HasSiblingDescendant;
+    case HasRelation::Subject:
+    case HasRelation::Ancestor:
+        break;
+    }
+
+    return HasMatchElement::HasDescendant;
+}
+
+static bool matchHasDescendants(const Element* element, const Element* hasScope, const CSSSelector& hasSelector)
+{
+    auto descendant = element->firstChildElement();
+    while(descendant) {
+        if(matchSelector(descendant, hasScope, PseudoType::None, hasSelector))
+            return true;
+        if(auto child = descendant->firstChildElement()) {
+            descendant = child;
+            continue;
         }
 
-        if(combinator == CSSComplexSelector::Combinator::None)
-            combinator = CSSComplexSelector::Combinator::Descendant;
-        auto checkDescendants = [&](const Element* descendant) {
-            int depth = 0;
-            do {
-                if(matchSelector(descendant, PseudoType::None, subSelector))
-                    return true;
-                if((combinator == CSSComplexSelector::Combinator::Descendant || depth < maxDepth - 1)
-                    && descendant->hasElementChildren()) {
-                    descendant = descendant->firstChildElement();
-                    ++depth;
-                    continue;
-                }
-
-                while(depth > 0) {
-                    if(descendant->nextSiblingElement()) {
-                        descendant = descendant->nextSiblingElement();
-                        break;
-                    }
-
-                    descendant = descendant->parentElement();
-                    --depth;
-                }
-            } while(descendant && depth > 0);
+        while(descendant != element && !descendant->nextSiblingElement())
+            descendant = descendant->parentElement();
+        if(descendant == element)
             return false;
-        };
+        descendant = descendant->nextSiblingElement();
+    }
 
-        switch(combinator) {
-        case CSSComplexSelector::Combinator::Descendant:
-        case CSSComplexSelector::Combinator::Child:
-            for(auto child = element->firstChildElement(); child; child = child->nextSiblingElement()) {
-                if(checkDescendants(child)) {
-                    return true;
-                }
+    return false;
+}
+
+static bool matchHasSelector(const Element* element, const CSSSelector& hasSelector)
+{
+    auto matchElement = computeHasPseudoClassMatchElement(hasSelector);
+    switch(matchElement) {
+    case HasMatchElement::HasChild:
+        for(auto child = element->firstChildElement(); child; child = child->nextSiblingElement()) {
+            if(matchSelector(child, element, PseudoType::None, hasSelector)) {
+                return true;
             }
+        }
 
-            break;
-        case CSSComplexSelector::Combinator::DirectAdjacent:
-        case CSSComplexSelector::Combinator::InDirectAdjacent:
-            for(auto sibling = element->nextSiblingElement(); sibling; sibling = sibling->nextSiblingElement()) {
-                if(checkDescendants(sibling))
-                    return true;
-                if(combinator == CSSComplexSelector::Combinator::DirectAdjacent) {
-                    break;
-                }
+        break;
+    case HasMatchElement::HasDescendant:
+        if(matchHasDescendants(element, element, hasSelector))
+            return true;
+        break;
+    case HasMatchElement::HasSibling:
+        for(auto sibling = element->nextSiblingElement(); sibling; sibling = sibling->nextSiblingElement()) {
+            if(matchSelector(sibling, element, PseudoType::None, hasSelector)) {
+                return true;
             }
+        }
 
-            break;
-        case CSSComplexSelector::Combinator::None:
-            assert(false);
+        break;
+    case HasMatchElement::HasSiblingDescendant:
+        for(auto sibling = element->nextSiblingElement(); sibling; sibling = sibling->nextSiblingElement()) {
+            if(matchHasDescendants(sibling, element, hasSelector)) {
+                return true;
+            }
+        }
+
+        break;
+    }
+
+    return false;
+}
+
+static bool matchPseudoClassHasSelector(const Element* element, const CSSSimpleSelector& selector)
+{
+    for(const auto& hasSelector : selector.subSelectors()) {
+        if(matchHasSelector(element, hasSelector)) {
+            return true;
         }
     }
 
@@ -648,7 +743,7 @@ bool CSSRuleData::match(const Element* element, PseudoType pseudoType, const Sel
         }
     }
 
-    return matchSelector(element, pseudoType, m_selector);
+    return matchSelector(element, nullptr, pseudoType, m_selector);
 }
 
 static bool matchPageSelector(const GlobalString& pageName, uint32_t pageIndex, PseudoType pseudoType, const CSSSimpleSelector& selector)
