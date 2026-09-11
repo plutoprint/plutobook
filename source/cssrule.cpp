@@ -188,20 +188,29 @@ CSSRuleData::CSSRuleData(CSSStyleRule& rule, const CSSSelector& selector, uint32
     }
 }
 
-bool CSSRuleData::match(const Element* element, PseudoType pseudoType, const SelectorFilter& selectorFilter) const
+static bool matchSimpleSelector(const Element* element, const CSSSimpleSelector& selector);
+
+static bool matchCompoundSelector(const Element* element, PseudoType pseudoType, const CSSCompoundSelector& selector)
 {
-    for(auto hash : m_hashes) {
-        if(hash == 0)
-            break;
-        if(!selectorFilter.contains(hash)) {
+    assert(!selector.empty());
+    auto it = selector.begin();
+    auto end = selector.end();
+    if(pseudoType != PseudoType::None) {
+        if(pseudoType != it->pseudoType())
+            return false;
+        ++it;
+    }
+
+    for(; it != end; ++it) {
+        if(!matchSimpleSelector(element, *it)) {
             return false;
         }
     }
 
-    return matchSelector(element, pseudoType, m_selector);
+    return true;
 }
 
-bool CSSRuleData::matchSelector(const Element* element, PseudoType pseudoType, const CSSSelector& selector)
+static bool matchSelector(const Element* element, PseudoType pseudoType, const CSSSelector& selector)
 {
     assert(!selector.empty());
     auto it = selector.begin();
@@ -241,19 +250,234 @@ bool CSSRuleData::matchSelector(const Element* element, PseudoType pseudoType, c
     return true;
 }
 
-bool CSSRuleData::matchCompoundSelector(const Element* element, PseudoType pseudoType, const CSSCompoundSelector& selector)
+static bool matchNamespaceSelector(const Element* element, const CSSSimpleSelector& selector)
 {
-    assert(!selector.empty());
-    auto it = selector.begin();
-    auto end = selector.end();
-    if(pseudoType != PseudoType::None) {
-        if(pseudoType != it->pseudoType())
-            return false;
-        ++it;
+    return selector.name() == starGlo || element->namespaceURI() == selector.name();
+}
+
+static bool matchTagSelector(const Element* element, const CSSSimpleSelector& selector)
+{
+    if(element->isCaseSensitive())
+        return element->tagName() == selector.name();
+    return equalsIgnoringCase(element->tagName(), selector.name());
+}
+
+static bool matchIdSelector(const Element* element, const CSSSimpleSelector& selector)
+{
+    return element->id() == selector.value();
+}
+
+static bool matchClassSelector(const Element* element, const CSSSimpleSelector& selector)
+{
+    for(const auto& name : element->classNames()) {
+        if(name == selector.value()) {
+            return true;
+        }
     }
 
-    for(; it != end; ++it) {
-        if(!matchSimpleSelector(element, *it)) {
+    return false;
+}
+
+static bool matchAttributeHasSelector(const Element* element, const CSSSimpleSelector& selector)
+{
+    return element->findAttributePossiblyIgnoringCase(selector.name());
+}
+
+static bool matchAttributeEqualsSelector(const Element* element, const CSSSimpleSelector& selector)
+{
+    auto attribute = element->findAttributePossiblyIgnoringCase(selector.name());
+    if(attribute == nullptr)
+        return false;
+    return equals(attribute->value(), selector.value(), selector.caseMode());
+}
+
+static bool matchAttributeIncludesSelector(const Element* element, const CSSSimpleSelector& selector)
+{
+    auto attribute = element->findAttributePossiblyIgnoringCase(selector.name());
+    if(attribute == nullptr)
+        return false;
+    return includes(attribute->value(), selector.value(), selector.caseMode());
+}
+
+static bool matchAttributeContainsSelector(const Element* element, const CSSSimpleSelector& selector)
+{
+    auto attribute = element->findAttributePossiblyIgnoringCase(selector.name());
+    if(attribute == nullptr)
+        return false;
+    return contains(attribute->value(), selector.value(), selector.caseMode());
+}
+
+static bool matchAttributeDashEqualsSelector(const Element* element, const CSSSimpleSelector& selector)
+{
+    auto attribute = element->findAttributePossiblyIgnoringCase(selector.name());
+    if(attribute == nullptr)
+        return false;
+    return dashequals(attribute->value(), selector.value(), selector.caseMode());
+}
+
+static bool matchAttributeStartsWithSelector(const Element* element, const CSSSimpleSelector& selector)
+{
+    auto attribute = element->findAttributePossiblyIgnoringCase(selector.name());
+    if(attribute == nullptr)
+        return false;
+    return startswith(attribute->value(), selector.value(), selector.caseMode());
+}
+
+static bool matchAttributeEndsWithSelector(const Element* element, const CSSSimpleSelector& selector)
+{
+    auto attribute = element->findAttributePossiblyIgnoringCase(selector.name());
+    if(attribute == nullptr)
+        return false;
+    return endswith(attribute->value(), selector.value(), selector.caseMode());
+}
+
+static bool matchPseudoClassIsSelector(const Element* element, const CSSSimpleSelector& selector)
+{
+    for(const auto& subSelector : selector.subSelectors()) {
+        if(matchSelector(element, PseudoType::None, subSelector)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+static bool matchPseudoClassNotSelector(const Element* element, const CSSSimpleSelector& selector)
+{
+    return !matchPseudoClassIsSelector(element, selector);
+}
+
+static bool matchPseudoClassHasSelector(const Element* element, const CSSSimpleSelector& selector)
+{
+    for(const auto& subSelector : selector.subSelectors()) {
+        int maxDepth = 0;
+        auto combinator = CSSComplexSelector::Combinator::None;
+        for(const auto& selector : subSelector) {
+            combinator = selector.combinator();
+            ++maxDepth;
+        }
+
+        if(combinator == CSSComplexSelector::Combinator::None)
+            combinator = CSSComplexSelector::Combinator::Descendant;
+        auto checkDescendants = [&](const Element* descendant) {
+            int depth = 0;
+            do {
+                if(matchSelector(descendant, PseudoType::None, subSelector))
+                    return true;
+                if((combinator == CSSComplexSelector::Combinator::Descendant || depth < maxDepth - 1)
+                    && descendant->hasElementChildren()) {
+                    descendant = descendant->firstChildElement();
+                    ++depth;
+                    continue;
+                }
+
+                while(depth > 0) {
+                    if(descendant->nextSiblingElement()) {
+                        descendant = descendant->nextSiblingElement();
+                        break;
+                    }
+
+                    descendant = descendant->parentElement();
+                    --depth;
+                }
+            } while(descendant && depth > 0);
+            return false;
+        };
+
+        switch(combinator) {
+        case CSSComplexSelector::Combinator::Descendant:
+        case CSSComplexSelector::Combinator::Child:
+            for(auto child = element->firstChildElement(); child; child = child->nextSiblingElement()) {
+                if(checkDescendants(child)) {
+                    return true;
+                }
+            }
+
+            break;
+        case CSSComplexSelector::Combinator::DirectAdjacent:
+        case CSSComplexSelector::Combinator::InDirectAdjacent:
+            for(auto sibling = element->nextSiblingElement(); sibling; sibling = sibling->nextSiblingElement()) {
+                if(checkDescendants(sibling))
+                    return true;
+                if(combinator == CSSComplexSelector::Combinator::DirectAdjacent) {
+                    break;
+                }
+            }
+
+            break;
+        case CSSComplexSelector::Combinator::None:
+            assert(false);
+        }
+    }
+
+    return false;
+}
+
+static bool matchPseudoClassLinkSelector(const Element* element, const CSSSimpleSelector& selector)
+{
+    return element->tagName() == aTag && element->hasAttribute(hrefAttr);
+}
+
+static bool matchPseudoClassLocalLinkSelector(const Element* element, const CSSSimpleSelector& selector)
+{
+    if(matchPseudoClassLinkSelector(element, selector)) {
+        const auto& baseUrl = element->document()->baseUrl();
+        auto completeUrl = element->getUrlAttribute(hrefAttr);
+        return baseUrl == completeUrl.base();
+    }
+
+    return false;
+}
+
+static bool matchPseudoClassEnabledSelector(const Element* element, const CSSSimpleSelector& selector)
+{
+    return element->tagName() == inputTag && element->hasAttribute(enabledAttr);
+}
+
+static bool matchPseudoClassDisabledSelector(const Element* element, const CSSSimpleSelector& selector)
+{
+    return element->tagName() == inputTag && element->hasAttribute(disabledAttr);
+}
+
+static bool matchPseudoClassCheckedSelector(const Element* element, const CSSSimpleSelector& selector)
+{
+    return element->tagName() == inputTag && element->hasAttribute(checkedAttr);
+}
+
+static bool matchPseudoClassLangSelector(const Element* element, const CSSSimpleSelector& selector)
+{
+    return dashequals(element->lang(), selector.value(), CaseMode::Ignore);
+}
+
+static bool matchPseudoClassRootSelector(const Element* element, const CSSSimpleSelector& selector)
+{
+    return !element->parentElement();
+}
+
+static bool matchPseudoClassEmptySelector(const Element* element, const CSSSimpleSelector& selector)
+{
+    return !element->firstChild();
+}
+
+static bool matchPseudoClassFirstChildSelector(const Element* element, const CSSSimpleSelector& selector)
+{
+    return !element->previousSiblingElement();
+}
+
+static bool matchPseudoClassLastChildSelector(const Element* element, const CSSSimpleSelector& selector)
+{
+    return !element->nextSiblingElement();
+}
+
+static bool matchPseudoClassOnlyChildSelector(const Element* element, const CSSSimpleSelector& selector)
+{
+    return matchPseudoClassFirstChildSelector(element, selector) && matchPseudoClassLastChildSelector(element, selector);
+}
+
+static bool matchPseudoClassFirstOfTypeSelector(const Element* element, const CSSSimpleSelector& selector)
+{
+    for(auto sibling = element->previousSiblingElement(); sibling; sibling = sibling->previousSiblingElement()) {
+        if(sibling->isOfType(element->namespaceURI(), element->tagName())) {
             return false;
         }
     }
@@ -261,7 +485,63 @@ bool CSSRuleData::matchCompoundSelector(const Element* element, PseudoType pseud
     return true;
 }
 
-bool CSSRuleData::matchSimpleSelector(const Element* element, const CSSSimpleSelector& selector)
+static bool matchPseudoClassLastOfTypeSelector(const Element* element, const CSSSimpleSelector& selector)
+{
+    for(auto sibling = element->nextSiblingElement(); sibling; sibling = sibling->nextSiblingElement()) {
+        if(sibling->isOfType(element->namespaceURI(), element->tagName())) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+static bool matchPseudoClassOnlyOfTypeSelector(const Element* element, const CSSSimpleSelector& selector)
+{
+    return matchPseudoClassFirstOfTypeSelector(element, selector) && matchPseudoClassLastOfTypeSelector(element, selector);
+}
+
+static bool matchPseudoClassNthChildSelector(const Element* element, const CSSSimpleSelector& selector)
+{
+    int index = 0;
+    for(auto sibling = element->previousSiblingElement(); sibling; sibling = sibling->previousSiblingElement())
+        ++index;
+    return selector.matchNth(index + 1);
+}
+
+static bool matchPseudoClassNthLastChildSelector(const Element* element, const CSSSimpleSelector& selector)
+{
+    int index = 0;
+    for(auto sibling = element->nextSiblingElement(); sibling; sibling = sibling->nextSiblingElement())
+        ++index;
+    return selector.matchNth(index + 1);
+}
+
+static bool matchPseudoClassNthOfTypeSelector(const Element* element, const CSSSimpleSelector& selector)
+{
+    int index = 0;
+    for(auto sibling = element->previousSiblingElement(); sibling; sibling = sibling->previousSiblingElement()) {
+        if(sibling->isOfType(element->namespaceURI(), element->tagName())) {
+            ++index;
+        }
+    }
+
+    return selector.matchNth(index + 1);
+}
+
+static bool matchPseudoClassNthLastOfTypeSelector(const Element* element, const CSSSimpleSelector& selector)
+{
+    int index = 0;
+    for(auto sibling = element->nextSiblingElement(); sibling; sibling = sibling->nextSiblingElement()) {
+        if(sibling->isOfType(element->namespaceURI(), element->tagName())) {
+            ++index;
+        }
+    }
+
+    return selector.matchNth(index + 1);
+}
+
+static bool matchSimpleSelector(const Element* element, const CSSSimpleSelector& selector)
 {
     switch(selector.matchType()) {
     case CSSSimpleSelector::MatchType::Universal:
@@ -338,311 +618,20 @@ bool CSSRuleData::matchSimpleSelector(const Element* element, const CSSSimpleSel
     }
 }
 
-bool CSSRuleData::matchNamespaceSelector(const Element* element, const CSSSimpleSelector& selector)
+bool CSSRuleData::match(const Element* element, PseudoType pseudoType, const SelectorFilter& selectorFilter) const
 {
-    return selector.name() == starGlo || element->namespaceURI() == selector.name();
-}
-
-bool CSSRuleData::matchTagSelector(const Element* element, const CSSSimpleSelector& selector)
-{
-    if(element->isCaseSensitive())
-        return element->tagName() == selector.name();
-    return equalsIgnoringCase(element->tagName(), selector.name());
-}
-
-bool CSSRuleData::matchIdSelector(const Element* element, const CSSSimpleSelector& selector)
-{
-    return element->id() == selector.value();
-}
-
-bool CSSRuleData::matchClassSelector(const Element* element, const CSSSimpleSelector& selector)
-{
-    for(const auto& name : element->classNames()) {
-        if(name == selector.value()) {
-            return true;
-        }
-    }
-
-    return false;
-}
-
-bool CSSRuleData::matchAttributeHasSelector(const Element* element, const CSSSimpleSelector& selector)
-{
-    return element->findAttributePossiblyIgnoringCase(selector.name());
-}
-
-bool CSSRuleData::matchAttributeEqualsSelector(const Element* element, const CSSSimpleSelector& selector)
-{
-    auto attribute = element->findAttributePossiblyIgnoringCase(selector.name());
-    if(attribute == nullptr)
-        return false;
-    return equals(attribute->value(), selector.value(), selector.caseMode());
-}
-
-bool CSSRuleData::matchAttributeIncludesSelector(const Element* element, const CSSSimpleSelector& selector)
-{
-    auto attribute = element->findAttributePossiblyIgnoringCase(selector.name());
-    if(attribute == nullptr)
-        return false;
-    return includes(attribute->value(), selector.value(), selector.caseMode());
-}
-
-bool CSSRuleData::matchAttributeContainsSelector(const Element* element, const CSSSimpleSelector& selector)
-{
-    auto attribute = element->findAttributePossiblyIgnoringCase(selector.name());
-    if(attribute == nullptr)
-        return false;
-    return contains(attribute->value(), selector.value(), selector.caseMode());
-}
-
-bool CSSRuleData::matchAttributeDashEqualsSelector(const Element* element, const CSSSimpleSelector& selector)
-{
-    auto attribute = element->findAttributePossiblyIgnoringCase(selector.name());
-    if(attribute == nullptr)
-        return false;
-    return dashequals(attribute->value(), selector.value(), selector.caseMode());
-}
-
-bool CSSRuleData::matchAttributeStartsWithSelector(const Element* element, const CSSSimpleSelector& selector)
-{
-    auto attribute = element->findAttributePossiblyIgnoringCase(selector.name());
-    if(attribute == nullptr)
-        return false;
-    return startswith(attribute->value(), selector.value(), selector.caseMode());
-}
-
-bool CSSRuleData::matchAttributeEndsWithSelector(const Element* element, const CSSSimpleSelector& selector)
-{
-    auto attribute = element->findAttributePossiblyIgnoringCase(selector.name());
-    if(attribute == nullptr)
-        return false;
-    return endswith(attribute->value(), selector.value(), selector.caseMode());
-}
-
-bool CSSRuleData::matchPseudoClassIsSelector(const Element* element, const CSSSimpleSelector& selector)
-{
-    for(const auto& subSelector : selector.subSelectors()) {
-        if(matchSelector(element, PseudoType::None, subSelector)) {
-            return true;
-        }
-    }
-
-    return false;
-}
-
-bool CSSRuleData::matchPseudoClassNotSelector(const Element* element, const CSSSimpleSelector& selector)
-{
-    return !matchPseudoClassIsSelector(element, selector);
-}
-
-bool CSSRuleData::matchPseudoClassHasSelector(const Element* element, const CSSSimpleSelector& selector)
-{
-    for(const auto& subSelector : selector.subSelectors()) {
-        int maxDepth = 0;
-        auto combinator = CSSComplexSelector::Combinator::None;
-        for(const auto& selector : subSelector) {
-            combinator = selector.combinator();
-            ++maxDepth;
-        }
-
-        if(combinator == CSSComplexSelector::Combinator::None)
-            combinator = CSSComplexSelector::Combinator::Descendant;
-        auto checkDescendants = [&](const Element* descendant) {
-            int depth = 0;
-            do {
-                if(matchSelector(descendant, PseudoType::None, subSelector))
-                    return true;
-                if((combinator == CSSComplexSelector::Combinator::Descendant || depth < maxDepth - 1)
-                    && descendant->hasElementChildren()) {
-                    descendant = descendant->firstChildElement();
-                    ++depth;
-                    continue;
-                }
-
-                while(depth > 0) {
-                    if(descendant->nextSiblingElement()) {
-                        descendant = descendant->nextSiblingElement();
-                        break;
-                    }
-
-                    descendant = descendant->parentElement();
-                    --depth;
-                }
-            } while(descendant && depth > 0);
-            return false;
-        };
-
-        switch(combinator) {
-        case CSSComplexSelector::Combinator::Descendant:
-        case CSSComplexSelector::Combinator::Child:
-            for(auto child = element->firstChildElement(); child; child = child->nextSiblingElement()) {
-                if(checkDescendants(child)) {
-                    return true;
-                }
-            }
-
+    for(auto hash : m_hashes) {
+        if(hash == 0)
             break;
-        case CSSComplexSelector::Combinator::DirectAdjacent:
-        case CSSComplexSelector::Combinator::InDirectAdjacent:
-            for(auto sibling = element->nextSiblingElement(); sibling; sibling = sibling->nextSiblingElement()) {
-                if(checkDescendants(sibling))
-                    return true;
-                if(combinator == CSSComplexSelector::Combinator::DirectAdjacent) {
-                    break;
-                }
-            }
-
-            break;
-        case CSSComplexSelector::Combinator::None:
-            assert(false);
-        }
-    }
-
-    return false;
-}
-
-bool CSSRuleData::matchPseudoClassLinkSelector(const Element* element, const CSSSimpleSelector& selector)
-{
-    return element->tagName() == aTag && element->hasAttribute(hrefAttr);
-}
-
-bool CSSRuleData::matchPseudoClassLocalLinkSelector(const Element* element, const CSSSimpleSelector& selector)
-{
-    if(matchPseudoClassLinkSelector(element, selector)) {
-        const auto& baseUrl = element->document()->baseUrl();
-        auto completeUrl = element->getUrlAttribute(hrefAttr);
-        return baseUrl == completeUrl.base();
-    }
-
-    return false;
-}
-
-bool CSSRuleData::matchPseudoClassEnabledSelector(const Element* element, const CSSSimpleSelector& selector)
-{
-    return element->tagName() == inputTag && element->hasAttribute(enabledAttr);
-}
-
-bool CSSRuleData::matchPseudoClassDisabledSelector(const Element* element, const CSSSimpleSelector& selector)
-{
-    return element->tagName() == inputTag && element->hasAttribute(disabledAttr);
-}
-
-bool CSSRuleData::matchPseudoClassCheckedSelector(const Element* element, const CSSSimpleSelector& selector)
-{
-    return element->tagName() == inputTag && element->hasAttribute(checkedAttr);
-}
-
-bool CSSRuleData::matchPseudoClassLangSelector(const Element* element, const CSSSimpleSelector& selector)
-{
-    return dashequals(element->lang(), selector.value(), CaseMode::Ignore);
-}
-
-bool CSSRuleData::matchPseudoClassRootSelector(const Element* element, const CSSSimpleSelector& selector)
-{
-    return !element->parentElement();
-}
-
-bool CSSRuleData::matchPseudoClassEmptySelector(const Element* element, const CSSSimpleSelector& selector)
-{
-    return !element->firstChild();
-}
-
-bool CSSRuleData::matchPseudoClassFirstChildSelector(const Element* element, const CSSSimpleSelector& selector)
-{
-    return !element->previousSiblingElement();
-}
-
-bool CSSRuleData::matchPseudoClassLastChildSelector(const Element* element, const CSSSimpleSelector& selector)
-{
-    return !element->nextSiblingElement();
-}
-
-bool CSSRuleData::matchPseudoClassOnlyChildSelector(const Element* element, const CSSSimpleSelector& selector)
-{
-    return matchPseudoClassFirstChildSelector(element, selector) && matchPseudoClassLastChildSelector(element, selector);
-}
-
-bool CSSRuleData::matchPseudoClassFirstOfTypeSelector(const Element* element, const CSSSimpleSelector& selector)
-{
-    for(auto sibling = element->previousSiblingElement(); sibling; sibling = sibling->previousSiblingElement()) {
-        if(sibling->isOfType(element->namespaceURI(), element->tagName())) {
+        if(!selectorFilter.contains(hash)) {
             return false;
         }
     }
 
-    return true;
+    return matchSelector(element, pseudoType, m_selector);
 }
 
-bool CSSRuleData::matchPseudoClassLastOfTypeSelector(const Element* element, const CSSSimpleSelector& selector)
-{
-    for(auto sibling = element->nextSiblingElement(); sibling; sibling = sibling->nextSiblingElement()) {
-        if(sibling->isOfType(element->namespaceURI(), element->tagName())) {
-            return false;
-        }
-    }
-
-    return true;
-}
-
-bool CSSRuleData::matchPseudoClassOnlyOfTypeSelector(const Element* element, const CSSSimpleSelector& selector)
-{
-    return matchPseudoClassFirstOfTypeSelector(element, selector) && matchPseudoClassLastOfTypeSelector(element, selector);
-}
-
-bool CSSRuleData::matchPseudoClassNthChildSelector(const Element* element, const CSSSimpleSelector& selector)
-{
-    int index = 0;
-    for(auto sibling = element->previousSiblingElement(); sibling; sibling = sibling->previousSiblingElement())
-        ++index;
-    return selector.matchNth(index + 1);
-}
-
-bool CSSRuleData::matchPseudoClassNthLastChildSelector(const Element* element, const CSSSimpleSelector& selector)
-{
-    int index = 0;
-    for(auto sibling = element->nextSiblingElement(); sibling; sibling = sibling->nextSiblingElement())
-        ++index;
-    return selector.matchNth(index + 1);
-}
-
-bool CSSRuleData::matchPseudoClassNthOfTypeSelector(const Element* element, const CSSSimpleSelector& selector)
-{
-    int index = 0;
-    for(auto sibling = element->previousSiblingElement(); sibling; sibling = sibling->previousSiblingElement()) {
-        if(sibling->isOfType(element->namespaceURI(), element->tagName())) {
-            ++index;
-        }
-    }
-
-    return selector.matchNth(index + 1);
-}
-
-bool CSSRuleData::matchPseudoClassNthLastOfTypeSelector(const Element* element, const CSSSimpleSelector& selector)
-{
-    int index = 0;
-    for(auto sibling = element->nextSiblingElement(); sibling; sibling = sibling->nextSiblingElement()) {
-        if(sibling->isOfType(element->namespaceURI(), element->tagName())) {
-            ++index;
-        }
-    }
-
-    return selector.matchNth(index + 1);
-}
-
-bool CSSPageRuleData::match(const GlobalString& pageName, uint32_t pageIndex, PseudoType pseudoType) const
-{
-    if(m_selector) {
-        for(const auto& sel : *m_selector) {
-            if(!matchSelector(pageName, pageIndex, pseudoType, sel)) {
-                return false;
-            }
-        }
-    }
-
-    return true;
-}
-
-bool CSSPageRuleData::matchSelector(const GlobalString& pageName, uint32_t pageIndex, PseudoType pseudoType, const CSSSimpleSelector& selector)
+static bool matchPageSelector(const GlobalString& pageName, uint32_t pageIndex, PseudoType pseudoType, const CSSSimpleSelector& selector)
 {
     switch(selector.matchType()) {
     case CSSSimpleSelector::MatchType::PseudoPageName:
@@ -662,6 +651,19 @@ bool CSSPageRuleData::matchSelector(const GlobalString& pageName, uint32_t pageI
     }
 
     return false;
+}
+
+bool CSSPageRuleData::match(const GlobalString& pageName, uint32_t pageIndex, PseudoType pseudoType) const
+{
+    if(m_selector) {
+        for(const auto& sel : *m_selector) {
+            if(!matchPageSelector(pageName, pageIndex, pseudoType, sel)) {
+                return false;
+            }
+        }
+    }
+
+    return true;
 }
 
 RefPtr<CSSCounterStyle> CSSCounterStyle::create(Heap* heap, RefPtr<CSSCounterStyleRule> rule)
