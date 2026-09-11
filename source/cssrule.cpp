@@ -15,6 +15,8 @@
 
 #include <unicode/uiter.h>
 
+#include <set>
+
 namespace plutobook {
 
 bool CSSSimpleSelector::matchNth(int count) const
