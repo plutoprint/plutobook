@@ -88,46 +88,39 @@ public:
     explicit operator bool() const { return !!m_ptr; }
 
     RefPtr<T>& operator=(std::nullptr_t) {
-        derefIfNotNull(m_ptr);
-        m_ptr = nullptr;
+        RefPtr<T>(nullptr).swap(*this);
         return *this;
     }
 
     RefPtr<T>& operator=(T* o) {
-        RefPtr<T> p = o;
-        swap(p);
+        RefPtr<T>(o).swap(*this);
         return *this;
     }
 
     RefPtr<T>& operator=(T& o) {
-        RefPtr<T> p = o;
-        swap(p);
+        RefPtr<T>(o).swap(*this);
         return *this;
     }
 
     RefPtr<T>& operator=(const RefPtr<T>& o) {
-        RefPtr<T> p = o;
-        swap(p);
+        RefPtr<T>(o).swap(*this);
         return *this;
     }
 
     RefPtr<T>& operator=(RefPtr<T>&& o) {
-        RefPtr<T> p = std::move(o);
-        swap(p);
+        RefPtr<T>(std::move(o)).swap(*this);
         return *this;
     }
 
     template<typename U>
     RefPtr<T>& operator=(const RefPtr<U>& o) {
-        RefPtr<T> p = o;
-        swap(p);
+        RefPtr<T>(o).swap(*this);
         return *this;
     }
 
     template<typename U>
     RefPtr<T>& operator=(RefPtr<U>&& o) {
-        RefPtr<T> p = std::move(o);
-        swap(p);
+        RefPtr<T>(std::move(o)).swap(*this);
         return *this;
     }
 

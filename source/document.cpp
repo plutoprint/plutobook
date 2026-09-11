@@ -951,6 +951,8 @@ bool Document::supportsMediaFeatures(const CSSMediaFeatureList& features) const
 
 bool Document::supportsMediaQuery(const CSSMediaQuery& query) const
 {
+    if(query.type() == CSSMediaQuery::Type::Unknown)
+        return query.restrictor() == CSSMediaQuery::Restrictor::Not;
     if(query.type() == CSSMediaQuery::Type::Print && m_book->mediaType() != MediaType::Print)
         return query.restrictor() == CSSMediaQuery::Restrictor::Not;
     if(query.type() == CSSMediaQuery::Type::Screen && m_book->mediaType() != MediaType::Screen) {

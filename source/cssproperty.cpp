@@ -1092,13 +1092,13 @@ CSSVariableData::CSSVariableData(Heap* heap, const CSSTokenStream& value)
     }
 }
 
-bool CSSVariableData::resolve(const BoxStyle* style, CSSTokenList& tokens, std::set<CSSVariableData*>& references) const
+bool CSSVariableData::resolve(const BoxStyle* style, CSSTokenList& tokens, std::vector<CSSVariableData *> &references) const
 {
     CSSTokenStream input(m_tokens.data(), m_tokens.size());
     return resolve(input, style, tokens, references);
 }
 
-bool CSSVariableData::resolve(CSSTokenStream input, const BoxStyle* style, CSSTokenList& tokens, std::set<CSSVariableData*>& references) const
+bool CSSVariableData::resolve(CSSTokenStream input, const BoxStyle* style, CSSTokenList& tokens, std::vector<CSSVariableData*>& references) const
 {
     while(!input.empty()) {
         if(input->type() == CSSToken::Type::Function && equalsIgnoringCase("var", input->data())) {
@@ -1115,7 +1115,7 @@ bool CSSVariableData::resolve(CSSTokenStream input, const BoxStyle* style, CSSTo
     return true;
 }
 
-bool CSSVariableData::resolveVar(CSSTokenStream input, const BoxStyle* style, CSSTokenList& tokens, std::set<CSSVariableData*>& references) const
+bool CSSVariableData::resolveVar(CSSTokenStream input, const BoxStyle* style, CSSTokenList& tokens, std::vector<CSSVariableData*>& references) const
 {
     input.consumeWhitespace();
     if(input->type() != CSSToken::Type::Ident)
@@ -1130,10 +1130,12 @@ bool CSSVariableData::resolveVar(CSSTokenStream input, const BoxStyle* style, CS
         return resolve(input, style, tokens, references);
     }
 
-    if(references.contains(data))
+    if(std::find(references.begin(), references.end(), data) != references.end())
         return false;
-    references.insert(data);
-    return data->resolve(style, tokens, references);
+    references.push_back(data);
+    auto resolved = data->resolve(style, tokens, references);
+    references.pop_back();
+    return resolved;
 }
 
 RefPtr<CSSCustomPropertyValue> CSSCustomPropertyValue::create(Heap* heap, const HeapString& name, RefPtr<CSSVariableData> value)
@@ -1162,7 +1164,7 @@ RefPtr<CSSVariableReferenceValue> CSSVariableReferenceValue::create(Heap* heap, 
 CSSPropertyList CSSVariableReferenceValue::resolve(const BoxStyle* style) const
 {
     CSSTokenList tokens;
-    std::set<CSSVariableData*> references;
+    std::vector<CSSVariableData*> references;
     if(!m_value->resolve(style, tokens, references))
         return CSSPropertyList();
     CSSTokenStream input(tokens.data(), tokens.size());

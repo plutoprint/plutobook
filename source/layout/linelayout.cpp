@@ -1465,6 +1465,7 @@ void LineBuilder::handleText(const LineItemRun& run)
 {
     auto box = to<TextBox>(run->box());
     auto line = TextLineBox::create(box, run.shape, run.width, run.expansion);
+    line->setTextStartOffset(run.startOffset);
     addLineBox(line.get());
     box->lines().push_back(std::move(line));
 }

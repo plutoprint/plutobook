@@ -100,6 +100,10 @@ public:
     float shapeWidth() const { return m_shapeWidth; }
     float expansion() const { return m_expansion; }
 
+    // Offset in the containing LineLayout's processed text, retained for inspection.
+    uint32_t textStartOffset() const { return m_textStartOffset; }
+    void setTextStartOffset(uint32_t offset) { m_textStartOffset = offset; }
+
     void paint(const PaintInfo& info, const Point& offset, PaintPhase phase) final;
     void serialize(std::ostream& o, int indent) const final;
 
@@ -112,6 +116,7 @@ private:
     TextShapeView m_shape;
     float m_shapeWidth;
     float m_expansion;
+    uint32_t m_textStartOffset{0};
 };
 
 template<>
