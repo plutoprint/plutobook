@@ -653,7 +653,8 @@ enum class ConicGradientRendering {
  * If not set, conic gradients are rendered with ConicGradientRendering::Mesh,
  * which keeps them resolution independent in the PDF output.
  * ConicGradientRendering::Raster trades that for an exact sweep, at the cost of
- * an embedded bitmap.
+ * an embedded bitmap. A repeating sweep whose period is too short for a mesh to
+ * carry faithfully is sampled into a bitmap under either setting.
  *
  * @param rendering The rendering method to use.
  */

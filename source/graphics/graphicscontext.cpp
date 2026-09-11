@@ -154,9 +154,12 @@ static void set_cairo_gradient(cairo_pattern_t* pattern, const GradientStops& st
         break;
     }
 
+    // A singular transform has no inverse, and setting one would leave the
+    // canvas in an error state that discards everything painted afterwards.
     auto matrix = to_cairo_matrix(transform);
-    cairo_matrix_invert(&matrix);
-    cairo_pattern_set_matrix(pattern, &matrix);
+    if(cairo_matrix_invert(&matrix) == CAIRO_STATUS_SUCCESS) {
+        cairo_pattern_set_matrix(pattern, &matrix);
+    }
 }
 
 GraphicsContext::GraphicsContext(cairo_t* canvas)
@@ -240,6 +243,24 @@ static Color conic_gradient_color_at(const GradientStops& stops, float offset, S
     return interpolateColor(from.second, to.second, (offset - from.first) / (to.first - from.first));
 }
 
+// Whether a mesh can carry every stop boundary of the sweep. A repeating
+// sweep of a short period crosses its stops many times over the turn, and
+// past a point there are more boundaries than a mesh should hold.
+static bool conic_gradient_fits_mesh(const GradientStops& stops, SpreadMethod method)
+{
+    if(method != SpreadMethod::Repeat)
+        return true;
+    auto span = stops.back().first - stops.front().first;
+    auto begin = std::floor(-stops.front().first / span);
+    auto end = std::ceil((1.f - stops.front().first) / span);
+
+    // The period count is tested before it is narrowed: a nearly zero span
+    // pushes the bounds far past what an int can hold, and converting that is
+    // undefined. A non-finite count fails the comparison and is rasterized.
+    auto periodCount = (end - begin + 1.f) * stops.size();
+    return periodCount > 0.f && periodCount <= kMaxConicBoundaries;
+}
+
 static std::vector<float> conic_gradient_boundaries(const GradientStops& stops, SpreadMethod method)
 {
     std::vector<float> offsets = {0.f, 1.f};
@@ -249,18 +270,11 @@ static std::vector<float> conic_gradient_boundaries(const GradientStops& stops, 
         auto span = last - first;
         auto begin = std::floor(-first / span);
         auto end = std::ceil((1.f - first) / span);
-
-        // The period count is tested before it is narrowed: a nearly zero span
-        // pushes the bounds far past what an int can hold, and converting that
-        // is undefined. A non-finite count fails the comparison and is skipped.
-        auto periodCount = (end - begin + 1.f) * stops.size();
-        if(periodCount > 0.f && periodCount <= kMaxConicBoundaries) {
-            for(int period = static_cast<int>(begin); period <= static_cast<int>(end); ++period) {
-                for(const auto& stop : stops) {
-                    auto offset = stop.first + period * span;
-                    if(offset > 0.f && offset < 1.f) {
-                        offsets.push_back(offset);
-                    }
+        for(int period = static_cast<int>(begin); period <= static_cast<int>(end); ++period) {
+            for(const auto& stop : stops) {
+                auto offset = stop.first + period * span;
+                if(offset > 0.f && offset < 1.f) {
+                    offsets.push_back(offset);
                 }
             }
         }
@@ -367,6 +381,8 @@ static cairo_pattern_t* create_conic_gradient_raster(cairo_t* canvas, const Coni
     cairo_surface_flush(surface);
 
     auto data = cairo_image_surface_get_data(surface);
+    if(data == nullptr)
+        return create_conic_gradient_mesh(values, stops, method, opacity);
     auto stride = cairo_image_surface_get_stride(surface);
     auto step = diameter / resolution;
     for(int y = 0; y < resolution; ++y) {
@@ -399,7 +415,7 @@ static cairo_pattern_t* create_conic_gradient_raster(cairo_t* canvas, const Coni
 void GraphicsContext::setConicGradient(const ConicGradientValues& values, const GradientStops& stops, const Transform& transform, SpreadMethod method, float opacity)
 {
     cairo_pattern_t* pattern = nullptr;
-    if(conicGradientRendering() == ConicGradientRendering::Raster) {
+    if(conicGradientRendering() == ConicGradientRendering::Raster || !conic_gradient_fits_mesh(stops, method)) {
         pattern = create_conic_gradient_raster(m_canvas, values, stops, method, opacity);
     } else {
         pattern = create_conic_gradient_mesh(values, stops, method, opacity);
@@ -408,10 +424,14 @@ void GraphicsContext::setConicGradient(const ConicGradientValues& values, const 
     cairo_matrix_t matrix;
     cairo_pattern_get_matrix(pattern, &matrix);
 
+    // A singular transform has no inverse, and setting one would leave the
+    // canvas in an error state that discards everything painted afterwards.
     auto userMatrix = to_cairo_matrix(transform);
-    cairo_matrix_invert(&userMatrix);
-    cairo_matrix_multiply(&matrix, &userMatrix, &matrix);
-    cairo_pattern_set_matrix(pattern, &matrix);
+    if(cairo_matrix_invert(&userMatrix) == CAIRO_STATUS_SUCCESS) {
+        cairo_matrix_multiply(&matrix, &userMatrix, &matrix);
+        cairo_pattern_set_matrix(pattern, &matrix);
+    }
+
     cairo_set_source(m_canvas, pattern);
     cairo_pattern_destroy(pattern);
 }

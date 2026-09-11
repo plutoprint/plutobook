@@ -706,7 +706,9 @@ typedef enum _plutobook_conic_gradient_rendering {
  * If not set, conic gradients are rendered with
  * PLUTOBOOK_CONIC_GRADIENT_RENDERING_MESH, which keeps them resolution
  * independent in the PDF output. PLUTOBOOK_CONIC_GRADIENT_RENDERING_RASTER
- * trades that for an exact sweep, at the cost of an embedded bitmap.
+ * trades that for an exact sweep, at the cost of an embedded bitmap. A
+ * repeating sweep whose period is too short for a mesh to carry faithfully is
+ * sampled into a bitmap under either setting.
  *
  * @param rendering The rendering method to use.
  */
