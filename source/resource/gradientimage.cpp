@@ -178,40 +178,6 @@ static void clampColorStops(GradientStops& stops)
     stops.insert(stops.begin(), GradientStop(0.f, color));
 }
 
-// The average color of a gradient, as CSS defines it: every color stop
-// weighted by half the distance to each of its neighbours, the stops being
-// evenly spaced. Averaging in premultiplied form keeps a translucent stop
-// from tinting the result with a color nothing shows.
-static Color averageColor(const GradientStops& stops)
-{
-    const auto count = stops.size();
-    if(count < 2)
-        return stops.front().second;
-    float red = 0.f;
-    float green = 0.f;
-    float blue = 0.f;
-    float alpha = 0.f;
-    for(size_t index = 0; index < count; ++index) {
-        // An end stop borders one interval, an inner stop two.
-        auto neighbours = (index == 0 || index + 1 == count) ? 1.f : 2.f;
-        auto weight = neighbours / (2.f * (count - 1));
-        const auto& color = stops[index].second;
-        auto stopAlpha = color.alpha() / 255.f;
-        red += color.red() / 255.f * stopAlpha * weight;
-        green += color.green() / 255.f * stopAlpha * weight;
-        blue += color.blue() / 255.f * stopAlpha * weight;
-        alpha += stopAlpha * weight;
-    }
-
-    if(alpha > 0.f) {
-        red /= alpha;
-        green /= alpha;
-        blue /= alpha;
-    }
-
-    return Color(red, green, blue, alpha);
-}
-
 GradientImage::ResolvedGradient GradientImage::resolveGradient(float lineLength, bool positiveOnly) const
 {
     ResolvedGradient gradient;
@@ -224,9 +190,11 @@ GradientImage::ResolvedGradient GradientImage::resolveGradient(float lineLength,
     auto span = last - first;
     if(span <= 0.f) {
         if(m_repeating) {
-            // A repeating ramp with no length has no period to repeat, so CSS
-            // asks for the average color of its stops instead.
-            gradient.color = averageColor(gradient.stops);
+            // A repeating ramp with no length has no period to repeat. CSS
+            // Images 3 asked here for the average color of the stops, but
+            // level 4 dropped the rule and no browser ever implemented it, so
+            // the last color is what an author actually sees elsewhere.
+            gradient.color = gradient.stops.back().second;
             gradient.degenerate = true;
             return gradient;
         }
@@ -401,11 +369,11 @@ void GradientImage::applyConicGradient(GraphicsContext& context) const
     GradientStops stops;
     buildColorStops(1.f, stops);
     if(m_repeating && stops.back().first <= stops.front().first) {
-        // A repeating sweep with no period has none to repeat, so CSS asks
-        // for the average color of its stops instead. A sweep that does not
+        // A repeating sweep with no period has none to repeat, and falls back
+        // to the last color the way the other two do. A sweep that does not
         // repeat needs no special case: stops that all sit on one angle are
         // the hard transition the sampling already produces.
-        context.setColor(averageColor(stops));
+        context.setColor(stops.back().second);
         return;
     }
 
