@@ -789,7 +789,7 @@ RefPtr<CSSCounterStyle> CSSCounterStyle::create(Heap* heap, RefPtr<CSSCounterSty
 static void cyclicAlgorithm(int value, size_t numSymbols, std::vector<size_t>& indexes)
 {
     assert(numSymbols > 0);
-    value %= numSymbols;
+    value %= static_cast<int>(numSymbols);
     value -= 1;
     if(value < 0) {
         value += numSymbols;
@@ -863,13 +863,15 @@ static const HeapString& counterStyleSymbol(const CSSValue& value)
     return emptyGlo;
 }
 
-std::string CSSCounterStyle::generateInitialRepresentation(unsigned int value) const
+std::string CSSCounterStyle::generateInitialRepresentation(int value) const
 {
+    auto absValue = value < 0 ? 0u - static_cast<unsigned>(value) : value;
+
     std::string representation;
     if(system() == CSSValueID::Additive) {
         if(m_additiveSymbols == nullptr)
             return representation;
-        if(value == 0) {
+        if(absValue == 0) {
             const auto& pair = to<CSSPairValue>(*m_additiveSymbols->back());
             const auto& weight = to<CSSIntegerValue>(*pair.first());
             if(weight.value() == 0) {
@@ -879,17 +881,17 @@ std::string CSSCounterStyle::generateInitialRepresentation(unsigned int value) c
             for(const auto& symbol : *m_additiveSymbols) {
                 const auto& pair = to<CSSPairValue>(*symbol);
                 const auto& weight = to<CSSIntegerValue>(*pair.first());
-                if(value == 0 || weight.value() == 0)
+                if(absValue == 0 || weight.value() == 0)
                     break;
-                size_t repetitions = value / weight.value();
+                size_t repetitions = absValue / weight.value();
                 if(repetitions > kMaxCounterRepetitions)
                     break;
                 for(size_t i = 0; i < repetitions; ++i)
                     representation += counterStyleSymbol(*pair.second());
-                value -= repetitions * weight.value();
+                absValue -= repetitions * weight.value();
             }
 
-            if(value > 0) {
+            if(absValue > 0) {
                 representation.clear();
             }
         }
@@ -908,13 +910,13 @@ std::string CSSCounterStyle::generateInitialRepresentation(unsigned int value) c
         fixedAlgorithm(value, m_fixed->value(), m_symbols->size(), indexes);
         break;
     case CSSValueID::Numeric:
-        numericAlgorithm(value, m_symbols->size(), indexes);
+        numericAlgorithm(absValue, m_symbols->size(), indexes);
         break;
     case CSSValueID::Symbolic:
-        symbolicAlgorithm(value, m_symbols->size(), indexes);
+        symbolicAlgorithm(absValue, m_symbols->size(), indexes);
         break;
     case CSSValueID::Alphabetic:
-        alphabeticAlgorithm(value, m_symbols->size(), indexes);
+        alphabeticAlgorithm(absValue, m_symbols->size(), indexes);
         break;
     default:
         assert(false);
@@ -953,7 +955,7 @@ std::string CSSCounterStyle::generateRepresentation(int value) const
 {
     if(!rangeContains(value))
         return generateFallbackRepresentation(value);
-    auto initialRepresentation = generateInitialRepresentation(std::llabs(value));
+    auto initialRepresentation = generateInitialRepresentation(value);
     if(initialRepresentation.empty()) {
         return generateFallbackRepresentation(value);
     }
@@ -1109,6 +1111,7 @@ void CSSCounterStyle::extend(const CSSCounterStyle& extended)
     if(!m_suffix) { m_suffix = extended.m_suffix; }
     if(!m_range) { m_range = extended.m_range; }
     if(!m_pad) { m_pad = extended.m_pad; }
+    if(!m_fallback) { m_fallback = extended.m_fallback; }
 }
 
 CSSCounterStyle& CSSCounterStyle::defaultStyle()
@@ -1188,7 +1191,7 @@ CSSCounterStyleMap::CSSCounterStyleMap(Heap* heap, const CSSRuleList& rules, con
 {
     for(const auto& rule : rules) {
         auto counterStyle = CSSCounterStyle::create(heap, to<CSSCounterStyleRule>(*rule));
-        m_counterStyles.emplace(counterStyle->name(), std::move(counterStyle));
+        m_counterStyles[counterStyle->name()] = std::move(counterStyle);
     }
 
     for(const auto& [name, style] : m_counterStyles) {
