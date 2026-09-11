@@ -18,7 +18,6 @@
 #include <numbers>
 #include <span>
 #include <vector>
-#include <set>
 
 namespace plutobook {
 
@@ -725,12 +724,12 @@ class CSSVariableData : public HeapMember, public RefCounted<CSSVariableData> {
 public:
     static RefPtr<CSSVariableData> create(Heap* heap, const CSSTokenStream& value);
 
-    bool resolve(const BoxStyle* style, CSSTokenList& tokens, std::set<CSSVariableData*>& references) const;
+    bool resolve(const BoxStyle* style, CSSTokenList& tokens, std::vector<CSSVariableData*>& references) const;
 
 private:
     CSSVariableData(Heap* heap, const CSSTokenStream& value);
-    bool resolve(CSSTokenStream input, const BoxStyle* style, CSSTokenList& tokens, std::set<CSSVariableData*>& references) const;
-    bool resolveVar(CSSTokenStream input, const BoxStyle* style, CSSTokenList& tokens, std::set<CSSVariableData*>& references) const;
+    bool resolve(CSSTokenStream input, const BoxStyle* style, CSSTokenList& tokens, std::vector<CSSVariableData*>& references) const;
+    bool resolveVar(CSSTokenStream input, const BoxStyle* style, CSSTokenList& tokens, std::vector<CSSVariableData*>& references) const;
     std::pmr::vector<CSSToken> m_tokens;
 };
 

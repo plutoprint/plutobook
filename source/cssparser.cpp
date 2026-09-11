@@ -113,17 +113,6 @@ static bool consumeIdentIncludingWhitespace(CSSTokenStream& input, const char(&n
     return false;
 }
 
-static CSSMediaQuery::Type consumeMediaType(CSSTokenStream& input)
-{
-    if(consumeIdentIncludingWhitespace(input, "all"))
-        return CSSMediaQuery::Type::All;
-    if(consumeIdentIncludingWhitespace(input, "print"))
-        return CSSMediaQuery::Type::Print;
-    if(consumeIdentIncludingWhitespace(input, "screen"))
-        return CSSMediaQuery::Type::Screen;
-    return CSSMediaQuery::Type::None;
-}
-
 static CSSMediaQuery::Restrictor consumeMediaRestrictor(CSSTokenStream& input)
 {
     if(consumeIdentIncludingWhitespace(input, "only"))
@@ -133,9 +122,29 @@ static CSSMediaQuery::Restrictor consumeMediaRestrictor(CSSTokenStream& input)
     return CSSMediaQuery::Restrictor::None;
 }
 
+static CSSMediaQuery::Type consumeMediaType(CSSTokenStream& input)
+{
+    if(input->type() != CSSToken::Type::Ident)
+        return CSSMediaQuery::Type::None;
+    auto name = input->data();
+    if(identMatches("only", name) || identMatches("not", name) || identMatches("and", name)
+        || identMatches("or", name) || identMatches("layer", name)) {
+        return CSSMediaQuery::Type::None;
+    }
+
+    input.consumeIncludingWhitespace();
+    if(identMatches("all", name))
+        return CSSMediaQuery::Type::All;
+    if(identMatches("print", name))
+        return CSSMediaQuery::Type::Print;
+    if(identMatches("screen", name))
+        return CSSMediaQuery::Type::Screen;
+    return CSSMediaQuery::Type::Unknown;
+}
+
 bool CSSParser::consumeMediaFeature(CSSTokenStream& input, CSSMediaFeatureList& features)
 {
-    if(input->type() != CSSToken::Type::LeftParenthesis)
+    if(input->type() != CSSToken::Type::Ident)
         return false;
     static constexpr CSSIdentEntry<CSSPropertyID> table[] = {
         {"width", CSSPropertyID::Width},
@@ -147,49 +156,47 @@ bool CSSParser::consumeMediaFeature(CSSTokenStream& input, CSSMediaFeatureList& 
         {"orientation", CSSPropertyID::Orientation}
     };
 
-    auto block = input.consumeBlock();
-    block.consumeWhitespace();
-    if(block->type() != CSSToken::Type::Ident)
-        return false;
-    auto id = matchIdent(table, block->data());
+    auto id = matchIdent(table, input->data());
     if(id == std::nullopt)
         return false;
-    block.consumeIncludingWhitespace();
-    if(block->type() == CSSToken::Type::Colon) {
-        block.consumeIncludingWhitespace();
-        RefPtr<CSSValue> value;
-        switch(id.value()) {
-        case CSSPropertyID::Width:
-        case CSSPropertyID::MinWidth:
-        case CSSPropertyID::MaxWidth:
-        case CSSPropertyID::Height:
-        case CSSPropertyID::MinHeight:
-        case CSSPropertyID::MaxHeight:
-            value = consumeLength(block, false, false);
-            break;
-        case CSSPropertyID::Orientation:
-            value = consumeOrientation(block);
-            break;
-        default:
-            assert(false);
-        }
+    input.consumeIncludingWhitespace();
+    if(input->type() != CSSToken::Type::Colon)
+        return false;
+    input.consumeIncludingWhitespace();
 
-        block.consumeWhitespace();
-        if(value && block.empty()) {
-            features.emplace_front(*id, std::move(value));
-            input.consumeWhitespace();
-            return true;
-        }
+    RefPtr<CSSValue> value;
+    switch(id.value()) {
+    case CSSPropertyID::Width:
+    case CSSPropertyID::MinWidth:
+    case CSSPropertyID::MaxWidth:
+    case CSSPropertyID::Height:
+    case CSSPropertyID::MinHeight:
+    case CSSPropertyID::MaxHeight:
+        value = consumeLength(input, false, false);
+        break;
+    case CSSPropertyID::Orientation:
+        value = consumeOrientation(input);
+        break;
+    default:
+        assert(false);
     }
 
-    return false;
+    if(value == nullptr || !input.empty())
+        return false;
+    features.emplace_front(*id, std::move(value));
+    return true;
 }
 
 bool CSSParser::consumeMediaFeatures(CSSTokenStream& input, CSSMediaFeatureList& features)
 {
     do {
-        if(!consumeMediaFeature(input, features))
+        if(input->type() != CSSToken::Type::LeftParenthesis)
             return false;
+        auto block = input.consumeBlock();
+        block.consumeWhitespace();
+        if(!consumeMediaFeature(block, features))
+            return false;
+        input.consumeWhitespace();
     } while(consumeIdentIncludingWhitespace(input, "and"));
     return true;
 }
@@ -198,19 +205,16 @@ bool CSSParser::consumeMediaQuery(CSSTokenStream& input, CSSMediaQueryList& quer
 {
     auto restrictor = consumeMediaRestrictor(input);
     auto type = consumeMediaType(input);
+    if(type == CSSMediaQuery::Type::None
+        && restrictor != CSSMediaQuery::Restrictor::None) {
+        return false;
+    }
 
     CSSMediaFeatureList features(m_heap);
-    if(type == CSSMediaQuery::Type::None) {
-        if(restrictor == CSSMediaQuery::Restrictor::Only)
-            return false;
+    if(type == CSSMediaQuery::Type::None
+        || consumeIdentIncludingWhitespace(input, "and")) {
         if(!consumeMediaFeatures(input, features)) {
             return false;
-        }
-    } else {
-        if(consumeIdentIncludingWhitespace(input, "and")) {
-            if(!consumeMediaFeatures(input, features)) {
-                return false;
-            }
         }
     }
 
@@ -243,7 +247,7 @@ RefPtr<CSSRule> CSSParser::consumeAtRule(CSSTokenStream& input)
 {
     assert(input->type() == CSSToken::Type::AtKeyword);
     auto name = input->data();
-    input.consume();
+    input.consumeIncludingWhitespace();
     auto prelude = input.consumeComponentsUntil<CSSToken::Type::LeftCurlyBracket, CSSToken::Type::Semicolon>();
     if(input->type() == CSSToken::Type::LeftCurlyBracket) {
         auto block = input.consumeBlock();
@@ -321,7 +325,6 @@ static const CSSToken* consumeStringOrUrlToken(CSSTokenStream& input)
 
 RefPtr<CSSImportRule> CSSParser::consumeImportRule(CSSTokenStream& input)
 {
-    input.consumeWhitespace();
     auto token = consumeStringOrUrlToken(input);
     if(token == nullptr)
         return nullptr;
@@ -333,7 +336,6 @@ RefPtr<CSSImportRule> CSSParser::consumeImportRule(CSSTokenStream& input)
 RefPtr<CSSNamespaceRule> CSSParser::consumeNamespaceRule(CSSTokenStream& input)
 {
     GlobalString prefix;
-    input.consumeWhitespace();
     if(input->type() == CSSToken::Type::Ident) {
         prefix = GlobalString(input->data());
         input.consumeIncludingWhitespace();
@@ -364,7 +366,6 @@ RefPtr<CSSMediaRule> CSSParser::consumeMediaRule(CSSTokenStream& prelude, CSSTok
 
 RefPtr<CSSFontFaceRule> CSSParser::consumeFontFaceRule(CSSTokenStream& prelude, CSSTokenStream& block)
 {
-    prelude.consumeWhitespace();
     if(!prelude.empty())
         return nullptr;
     CSSPropertyList properties(m_heap);
@@ -372,18 +373,44 @@ RefPtr<CSSFontFaceRule> CSSParser::consumeFontFaceRule(CSSTokenStream& prelude, 
     return CSSFontFaceRule::create(m_heap, std::move(properties));
 }
 
+static std::optional<GlobalString> consumeCounterStyleNameIdent(CSSTokenStream& input, const CSSParserContext& context)
+{
+    if(input->type() != CSSToken::Type::Ident || identMatches("none", input->data()))
+        return std::nullopt;
+    GlobalString name(input->data());
+    input.consumeIncludingWhitespace();
+    if(context.origin() == CSSStyleOrigin::UserAgent) {
+        assert(name == name.foldCase());
+        return name;
+    }
+
+    auto predefinedName = name.foldCase();
+    if(userAgentCounterStyleMap()->findCounterStyle(predefinedName))
+        return predefinedName;
+    return name;
+}
+
 RefPtr<CSSCounterStyleRule> CSSParser::consumeCounterStyleRule(CSSTokenStream& prelude, CSSTokenStream& block)
 {
-    prelude.consumeWhitespace();
-    if(prelude->type() != CSSToken::Type::Ident || identMatches("none", prelude->data()))
+    auto name = consumeCounterStyleNameIdent(prelude, m_context);
+    if(name == std::nullopt)
         return nullptr;
-    GlobalString name(prelude->data());
-    prelude.consumeIncludingWhitespace();
+    if(m_context.origin() != CSSStyleOrigin::UserAgent) {
+        if(identMatches("decimal", name.value())
+            || identMatches("disc", name.value())
+            || identMatches("square", name.value())
+            || identMatches("circle", name.value())
+            || identMatches("disclosure-open", name.value())
+            || identMatches("disclosure-closed", name.value())) {
+            return nullptr;
+        }
+    }
+
     if(!prelude.empty())
         return nullptr;
     CSSPropertyList properties(m_heap);
     consumeDeclarationList(block, properties, CSSRuleType::CounterStyle);
-    return CSSCounterStyleRule::create(m_heap, name, std::move(properties));
+    return CSSCounterStyleRule::create(m_heap, name.value(), std::move(properties));
 }
 
 RefPtr<CSSPageRule> CSSParser::consumePageRule(CSSTokenStream& prelude, CSSTokenStream& block)
@@ -412,18 +439,19 @@ RefPtr<CSSPageRule> CSSParser::consumePageRule(CSSTokenStream& prelude, CSSToken
     return CSSPageRule::create(m_heap, std::move(selectors), std::move(margins), std::move(properties));
 }
 
+static void consumeErroneousAtRule(CSSTokenStream& input)
+{
+    input.consumeComponentsUntil<CSSToken::Type::LeftCurlyBracket, CSSToken::Type::Semicolon>();
+    if(input->type() == CSSToken::Type::LeftCurlyBracket) {
+        input.consumeBlock();
+    } else if(input->type() == CSSToken::Type::Semicolon) {
+        input.consume();
+    }
+}
+
 RefPtr<CSSPageMarginRule> CSSParser::consumePageMarginRule(CSSTokenStream& input)
 {
     assert(input->type() == CSSToken::Type::AtKeyword);
-    auto name = input->data();
-    input.consume();
-    auto prelude = input.consumeComponentsUntil<CSSToken::Type::LeftCurlyBracket>();
-    if(input.empty())
-        return nullptr;
-    auto block = input.consumeBlock();
-    prelude.consumeWhitespace();
-    if(!prelude.empty())
-        return nullptr;
     static constexpr CSSIdentEntry<PageMarginType> table[] = {
         {"top-left-corner", PageMarginType::TopLeftCorner},
         {"top-left", PageMarginType::TopLeft},
@@ -443,9 +471,19 @@ RefPtr<CSSPageMarginRule> CSSParser::consumePageMarginRule(CSSTokenStream& input
         {"right-bottom", PageMarginType::RightBottom}
     };
 
-    auto marginType = matchIdent(table, name);
-    if(marginType == std::nullopt)
+    auto marginType = matchIdent(table, input->data());
+    if(marginType == std::nullopt) {
+        consumeErroneousAtRule(input);
         return nullptr;
+    }
+
+    input.consumeIncludingWhitespace();
+    if(input->type() != CSSToken::Type::LeftCurlyBracket) {
+        consumeErroneousAtRule(input);
+        return nullptr;
+    }
+
+    auto block = input.consumeBlock();
     CSSPropertyList properties(m_heap);
     consumeDeclarationList(block, properties, CSSRuleType::PageMargin);
     return CSSPageMarginRule::create(m_heap, marginType.value(), std::move(properties));
@@ -469,7 +507,6 @@ void CSSParser::consumeRuleList(CSSTokenStream& input, CSSRuleList& rules)
 
 bool CSSParser::consumePageSelectorList(CSSTokenStream& input, CSSPageSelectorList& selectors)
 {
-    input.consumeWhitespace();
     if(!input.empty()) {
         do {
             CSSPageSelector selector(m_heap);
@@ -1219,9 +1256,9 @@ bool CSSParser::consumeDeclaration(CSSTokenStream& input, CSSPropertyList& prope
         }
     }
 
-    if(important && (ruleType == CSSRuleType::FontFace || ruleType == CSSRuleType::CounterStyle))
-        return false;
     CSSTokenStream value(valueBegin, valueEnd);
+    if(value.empty() || (important && (ruleType == CSSRuleType::FontFace || ruleType == CSSRuleType::CounterStyle)))
+        return false;
     if(id == CSSPropertyID::Custom) {
         if(ruleType == CSSRuleType::FontFace || ruleType == CSSRuleType::CounterStyle)
             return false;
@@ -1255,6 +1292,9 @@ void CSSParser::consumeDeclarationList(CSSTokenStream& input, CSSPropertyList& p
         case CSSToken::Type::Whitespace:
         case CSSToken::Type::Semicolon:
             input.consume();
+            break;
+        case CSSToken::Type::AtKeyword:
+            consumeErroneousAtRule(input);
             break;
         default:
             consumeDeclaration(input, properties, ruleType);
@@ -2275,7 +2315,9 @@ RefPtr<CSSValue> CSSParser::consumeListStyleType(CSSTokenStream& input)
 
     if(auto value = consumeIdent(input, table))
         return value;
-    return consumeStringOrCustomIdent(input);
+    if(auto name = consumeCounterStyleNameIdent(input, m_context))
+        return CSSCustomIdentValue::create(m_heap, name.value());
+    return consumeString(input);
 }
 
 RefPtr<CSSValue> CSSParser::consumeQuotes(CSSTokenStream& input)
@@ -2383,10 +2425,10 @@ RefPtr<CSSValue> CSSParser::consumeContentCounter(CSSTokenStream& input, bool co
 
     GlobalString listStyle("decimal");
     if(input.consumeCommaIncludingWhitespace()) {
-        if(input->type() != CSSToken::Type::Ident || identMatches("none", input->data()))
+        auto name = consumeCounterStyleNameIdent(input, m_context);
+        if(name == std::nullopt)
             return nullptr;
-        listStyle = GlobalString(input->data());
-        input.consumeIncludingWhitespace();
+        listStyle = name.value();
     }
 
     if(!input.empty())
@@ -4281,9 +4323,9 @@ bool CSSParser::consumeFontVariant(CSSTokenStream& input, CSSPropertyList& prope
     RefPtr<CSSValue> emoji;
     RefPtr<CSSValue> position;
 
-    CSSValueList eastAsian;
-    CSSValueList ligatures;
-    CSSValueList numeric;
+    CSSValueList eastAsian(m_heap);
+    CSSValueList ligatures(m_heap);
+    CSSValueList numeric(m_heap);
     while(!input.empty()) {
         if(caps == nullptr && (caps = consumeFontVariantCapsIdent(input)))
             continue;
@@ -4612,11 +4654,9 @@ RefPtr<CSSValue> CSSParser::consumeFontFaceUnicodeRange(CSSTokenStream& input)
 
 RefPtr<CSSValue> CSSParser::consumeCounterStyleName(CSSTokenStream& input)
 {
-    if(input->type() != CSSToken::Type::Ident || identMatches("none", input->data()))
-        return nullptr;
-    GlobalString name(input->data());
-    input.consumeIncludingWhitespace();
-    return CSSCustomIdentValue::create(m_heap, name);
+    if(auto name = consumeCounterStyleNameIdent(input, m_context))
+        return CSSCustomIdentValue::create(m_heap, name.value());
+    return nullptr;
 }
 
 RefPtr<CSSValue> CSSParser::consumeCounterStyleSystem(CSSTokenStream& input)
