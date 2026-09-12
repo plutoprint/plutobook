@@ -16,7 +16,9 @@ namespace plutobook {
 enum class WritingMode : uint8_t {
     HorizontalTb,
     VerticalRl,
-    VerticalLr
+    VerticalLr,
+    SidewaysRl,
+    SidewaysLr
 };
 
 enum class Direction : uint8_t {
@@ -41,7 +43,8 @@ enum BoxCorner {
 class WritingDirection {
 public:
     constexpr WritingDirection(WritingMode mode, Direction direction)
-        : m_mode(mode), m_direction(direction)
+        : m_mode(mode == WritingMode::SidewaysRl ? WritingMode::VerticalRl : mode == WritingMode::SidewaysLr ? WritingMode::VerticalLr : mode)
+        , m_direction(mode == WritingMode::SidewaysLr ? (direction == Direction::Ltr ? Direction::Rtl : Direction::Ltr) : direction)
     {}
 
     constexpr WritingMode mode() const { return m_mode; }

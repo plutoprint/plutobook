@@ -24,6 +24,10 @@ struct TextShapeRunGlyphData : public HeapMember {
     float xOffset;
     float yOffset;
     float advance;
+    // Upright glyphs use vertical font metrics in a logical inline coordinate system.
+    bool upright{false};
+    bool verticalLr{false};
+    float crossOffset{0};
 };
 
 class TextShapeRunGlyphDataList {
@@ -72,7 +76,7 @@ class BoxStyle;
 
 class TextShape : public HeapMember, public RefCounted<TextShape> {
 public:
-    static RefPtr<TextShape> createForText(const UString& text, Direction direction, bool disableSpacing, const BoxStyle* style);
+    static RefPtr<TextShape> createForText(const UString& text, Direction direction, bool svgText, const BoxStyle* style);
     static RefPtr<TextShape> createForTabs(const UString& text, Direction direction, const BoxStyle* style);
 
     const UString& text() const { return m_text; }

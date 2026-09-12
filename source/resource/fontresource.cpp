@@ -19,6 +19,7 @@
 
 #include <cairo-ft.h>
 #include <hb-ft.h>
+#include <hb-ot.h>
 
 #include FT_MULTIPLE_MASTERS_H
 
@@ -478,10 +479,15 @@ RefPtr<SimpleFontData> SimpleFontData::create(cairo_scaled_font_t* font, FcCharS
 
     hb_font_set_funcs(hbFont, hbFunctions, font, nullptr);
     hb_font_make_immutable(hbFont);
+    // Keep horizontal Cairo metrics unchanged. OpenType supplies vmtx/VORG metrics
+    // (and synthesized vertical metrics for fonts without vertical tables).
+    auto hbVerticalFont = hb_font_create_sub_font(hbFont);
+    hb_ot_font_set_funcs(hbVerticalFont);
+    hb_font_make_immutable(hbVerticalFont);
     hb_face_destroy(hbFace);
     cairo_ft_scaled_font_unlock_face(font);
 
-    return adoptPtr(new SimpleFontData(font, hbFont, charSet, info, std::move(features)));
+    return adoptPtr(new SimpleFontData(font, hbFont, hbVerticalFont, charSet, info, std::move(features)));
 }
 
 const SimpleFontData* SimpleFontData::fontDataForCharacter(uint32_t codepoint, EmojiPolicy emojiPolicy) const
@@ -498,6 +504,7 @@ const SimpleFontData* SimpleFontData::fontDataForCharacter(uint32_t codepoint, E
 
 SimpleFontData::~SimpleFontData()
 {
+    hb_font_destroy(m_hbVerticalFont);
     hb_font_destroy(m_hbFont);
     cairo_scaled_font_destroy(m_font);
     FcCharSetDestroy(m_charSet);

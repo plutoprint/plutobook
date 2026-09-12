@@ -7,6 +7,7 @@
  */
 
 #include "blockbox.h"
+#include "graphicscontext.h"
 #include "multicolumnbox.h"
 #include "linebox.h"
 #include "linelayout.h"
@@ -79,6 +80,10 @@ std::optional<float> BlockBox::availableHeight() const
         return document()->containerHeight();
     if(hasOverrideHeight())
         return overrideHeight() - borderAndPaddingHeight();
+    if(isTableCellBox() && style()->isVerticalWritingMode()) {
+        if(auto height = computeHeightUsing(style()->height()))
+            return std::max(0.f, adjustContentBoxHeight(height.value()));
+    }
     if(isTableCellBox() || isPageMarginBox())
         return std::nullopt;
     if(isAnonymous())
@@ -567,7 +572,7 @@ BlockFlowBox::~BlockFlowBox() = default;
 
 bool BlockFlowBox::avoidsFloats() const
 {
-    return isInline() || isFloating() || isPositioned() || isOverflowHidden()
+    return style()->isVerticalWritingMode() || isInline() || isFloating() || isPositioned() || isOverflowHidden()
         || hasColumnFlowBox() || isRootBox() || isFlexItem() || isBodyBox();
 }
 
@@ -716,6 +721,8 @@ void BlockFlowBox::computeIntrinsicWidths(float& minWidth, float& maxWidth) cons
 
 std::optional<float> BlockFlowBox::firstLineBaseline() const
 {
+    if(style()->isVerticalWritingMode())
+        return std::nullopt;
     if(!isChildrenInline())
         return BlockBox::firstLineBaseline();
     const auto& lines = m_lineLayout->lines();
@@ -727,6 +734,8 @@ std::optional<float> BlockFlowBox::firstLineBaseline() const
 
 std::optional<float> BlockFlowBox::lastLineBaseline() const
 {
+    if(style()->isVerticalWritingMode())
+        return std::nullopt;
     if(!isChildrenInline())
         return BlockBox::lastLineBaseline();
     const auto& lines = m_lineLayout->lines();
@@ -738,6 +747,8 @@ std::optional<float> BlockFlowBox::lastLineBaseline() const
 
 std::optional<float> BlockFlowBox::inlineBlockBaseline() const
 {
+    if(style()->isVerticalWritingMode())
+        return std::nullopt;
     if(!isChildrenInline())
         return BlockBox::inlineBlockBaseline();
     return lastLineBaseline();
@@ -1056,11 +1067,13 @@ float BlockFlowBox::rightOffsetForFloat(float top, float bottom, float offset, f
 float BlockFlowBox::leftOffsetForLine(float y, float height, bool indent) const
 {
     auto offset = leftOffsetForFloat(y, y + height, leftOffsetForContent());
+    if(style()->isVerticalWritingMode())
+        offset = style()->writingMode() == WritingMode::SidewaysLr ? borderAndPaddingBottom() : borderAndPaddingTop();
     if(indent && style()->isLeftToRightDirection()) {
         float availableWidth = 0;
         auto textIndentLength = style()->textIndent();
         if(textIndentLength.isPercent())
-            availableWidth = containingBlockWidthForContent();
+            availableWidth = style()->isVerticalWritingMode() ? contentBoxHeight() : containingBlockWidthForContent();
         offset += textIndentLength.calcMin(availableWidth);
     }
 
@@ -1070,11 +1083,15 @@ float BlockFlowBox::leftOffsetForLine(float y, float height, bool indent) const
 float BlockFlowBox::rightOffsetForLine(float y, float height, bool indent) const
 {
     auto offset = rightOffsetForFloat(y, y + height, rightOffsetForContent());
+    if(style()->isVerticalWritingMode()) {
+        auto endPadding = style()->writingMode() == WritingMode::SidewaysLr ? borderAndPaddingTop() : borderAndPaddingBottom();
+        offset = this->height() - endPadding;
+    }
     if(indent && style()->isRightToLeftDirection()) {
         float availableWidth = 0;
         auto textIndentLength = style()->textIndent();
         if(textIndentLength.isPercent())
-            availableWidth = containingBlockWidthForContent();
+            availableWidth = style()->isVerticalWritingMode() ? contentBoxHeight() : containingBlockWidthForContent();
         offset -= textIndentLength.calcMin(availableWidth);
     }
 
@@ -1579,8 +1596,106 @@ void BlockFlowBox::layoutContents(FragmentBuilder* fragmentainer)
     }
 }
 
+Transform BlockFlowBox::lineTransform() const
+{
+    if(!style()->isVerticalWritingMode())
+        return Transform();
+    if(style()->isFlippedBlockWritingMode())
+        return Transform(0, 1, -1, 0, width(), 0);
+    if(style()->writingMode() == WritingMode::SidewaysLr)
+        return Transform(0, -1, 1, 0, 0, height());
+    return Transform(0, 1, 1, 0, 0, 0);
+}
+
+float BlockFlowBox::verticalCellHeight() const
+{
+    if(hasOverrideHeight())
+        return std::max(borderAndPaddingHeight(), overrideHeight());
+    if(auto specifiedHeight = computeHeightUsing(style()->height()))
+        return std::max(borderAndPaddingHeight(), adjustBorderBoxHeight(specifiedHeight.value()));
+    if(!firstChild())
+        return borderAndPaddingHeight();
+    auto available = containingBlock()->availableHeight().value_or(document()->containerHeight());
+    if(isChildrenInline()) {
+        // Inline advances run along physical height in vertical writing. Short
+        // and empty auto-height cells must not consume an entire viewport.
+        float minAdvance = 0.f;
+        float maxAdvance = 0.f;
+        m_lineLayout->computeIntrinsicWidths(minAdvance, maxAdvance);
+        available = std::min(available, maxAdvance + borderAndPaddingHeight());
+    }
+    return std::max(borderAndPaddingHeight(), available);
+}
+
+void BlockFlowBox::layoutVertical()
+{
+    updateWidth();
+    collectIntrudingFloats();
+    // An orthogonal flow with indefinite inline size uses the viewport height.
+    auto inlineSize = containingBlock()->availableHeight().value_or(document()->containerHeight());
+    inlineSize -= marginTop() + marginBottom();
+    // Table height calculation normally preserves the measured content height.
+    // For vertical cells, choose the inline constraint before laying out text:
+    // first the CSS height, then the row's resolved height on the second pass.
+    if(isTableCellBox())
+        inlineSize = verticalCellHeight();
+    setHeight(std::max(borderAndPaddingHeight(), inlineSize));
+    updateHeight();
+    const bool rightToLeft = style()->isFlippedBlockWritingMode();
+    m_lineBlockOffset = rightToLeft ? borderAndPaddingRight() : borderAndPaddingLeft();
+    if(isChildrenInline()) {
+        m_lineLayout->layout(nullptr);
+    } else {
+        for(auto child = firstBoxFrame(); child; child = child->nextBoxFrame()) {
+            if(child->isPositioned()) {
+                child->containingBlock()->insertPositonedBox(child);
+                continue;
+            }
+            child->updatePaddingWidths(this);
+            child->updateVerticalMargins(this);
+            child->updateHorizontalMargins(this);
+            child->layout(nullptr);
+            m_lineBlockOffset += rightToLeft ? child->marginRight() : child->marginLeft();
+            child->setX(m_lineBlockOffset);
+            child->setY(borderAndPaddingTop() + child->marginTop());
+            m_lineBlockOffset += child->width() + (rightToLeft ? child->marginLeft() : child->marginRight());
+        }
+        m_lineBlockOffset += lineBlockEndPadding();
+    }
+    if(style()->width().isAuto() && !hasOverrideWidth())
+        setWidth(constrainWidth(std::max(borderAndPaddingWidth(), m_lineBlockOffset), containingBlock(), containingBlockWidthForContent()));
+    if(!isChildrenInline() && rightToLeft) {
+        for(auto child = firstBoxFrame(); child; child = child->nextBoxFrame()) {
+            if(!child->isPositioned())
+                child->setX(width() - child->x() - child->width());
+        }
+    }
+    if(isChildrenInline()) {
+        auto child = firstChild();
+        while(child) {
+            if(auto frame = to<BoxFrame>(child); frame && frame->line()) {
+                const auto rect = lineTransform().mapRect(frame->line()->rect());
+                frame->setLocation(rect.x, rect.y);
+            } else if(child->isInlineBox() && child->firstChild()) {
+                child = child->firstChild();
+                continue;
+            }
+            while(child && child != this && !child->nextSibling())
+                child = child->parentBox();
+            child = child == this ? nullptr : child->nextSibling();
+        }
+    }
+    updateMaxMargins();
+    layoutPositionedBoxes();
+    updateOverflowRect();
+}
+
 void BlockFlowBox::layout(FragmentBuilder* fragmentainer)
 {
+    if(style()->isVerticalWritingMode()) {
+        layoutVertical();
+        return;
+    }
     if(isChildrenInline()) {
         m_lineLayout->updateWidth();
     } else {
@@ -1652,7 +1767,17 @@ void BlockFlowBox::paintFloats(const PaintInfo& info, const Point& offset)
 
 void BlockFlowBox::paintContents(const PaintInfo& info, const Point& offset, PaintPhase phase)
 {
-    if(isChildrenInline())
+    if(isChildrenInline() && style()->isVerticalWritingMode()) {
+        auto transform = lineTransform();
+        info->save();
+        info->translate(offset.x, offset.y);
+        info->addTransform(transform);
+        auto physicalClip = info.rect();
+        physicalClip.translate(-offset.x, -offset.y);
+        PaintInfo logicalInfo(*info, transform.inverted().mapRect(physicalClip));
+        m_lineLayout->paint(logicalInfo, Point(), phase);
+        info->restore();
+    } else if(isChildrenInline())
         m_lineLayout->paint(info, offset, phase);
     else
         BlockBox::paintContents(info, offset, phase);

@@ -219,6 +219,25 @@ public:
     void layoutBlockChild(BoxFrame* child, FragmentBuilder* fragmentainer, MarginInfo& marginInfo);
     void layoutBlockChildren(FragmentBuilder* fragmentainer);
 
+    // Line boxes use x for inline progression and y for block progression.
+    float lineBlockOffset() const { return style()->isVerticalWritingMode() ? m_lineBlockOffset : height(); }
+    void setLineBlockOffset(float value)
+    {
+        if(style()->isVerticalWritingMode())
+            m_lineBlockOffset = value;
+        else
+            setHeight(value);
+    }
+    float lineBlockEndPadding() const
+    {
+        if(!style()->isVerticalWritingMode())
+            return borderAndPaddingBottom();
+        return style()->isFlippedBlockWritingMode() ? borderAndPaddingLeft() : borderAndPaddingRight();
+    }
+    Transform lineTransform() const;
+    float verticalCellHeight() const;
+    void layoutVertical();
+
     virtual void layoutContents(FragmentBuilder* fragmentainer);
     void layout(FragmentBuilder* fragmentainer) override;
 
@@ -231,6 +250,7 @@ public:
     const char* name() const override { return "BlockFlowBox"; }
 
 private:
+    float m_lineBlockOffset{0};
     std::unique_ptr<LineLayout> m_lineLayout;
     std::unique_ptr<FloatingBoxList> m_floatingBoxes;
     MultiColumnFlowBox* m_columnFlowBox{nullptr};
