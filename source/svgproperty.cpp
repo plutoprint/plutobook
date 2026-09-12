@@ -74,11 +74,11 @@ constexpr bool skipString(std::string_view& input, std::string_view value)
 static bool parseNumber(std::string_view& input, float& output)
 {
     constexpr auto maxValue = std::numeric_limits<float>::max();
+
     float integer = 0;
     float fraction = 0;
     float exponent = 0;
     int sign = 1;
-    int expsign = 1;
 
     if(!input.empty() && input.front() == '+') {
         input.remove_prefix(1);
@@ -94,6 +94,9 @@ static bool parseNumber(std::string_view& input, float& output)
             integer = 10.f * integer + (input.front() - '0');
             input.remove_prefix(1);
         } while(!input.empty() && isDigit(input.front()));
+        if(integer > maxValue) {
+            return false;
+        }
     }
 
     if(!input.empty() && input.front() == '.') {
@@ -112,11 +115,12 @@ static bool parseNumber(std::string_view& input, float& output)
         && (input[1] != 'x' && input[1] != 'm'))
     {
         input.remove_prefix(1);
+        bool exponentIsNegative = false;
         if(!input.empty() && input.front() == '+')
             input.remove_prefix(1);
         else if(!input.empty() && input.front() == '-') {
             input.remove_prefix(1);
-            expsign = -1;
+            exponentIsNegative = true;
         }
 
         if(input.empty() || !isDigit(input.front()))
@@ -125,11 +129,16 @@ static bool parseNumber(std::string_view& input, float& output)
             exponent = 10.f * exponent + (input.front() - '0');
             input.remove_prefix(1);
         } while(!input.empty() && isDigit(input.front()));
+        if(exponentIsNegative)
+            exponent = -exponent;
+        if(exponent > std::numeric_limits<float>::max_exponent10) {
+            return false;
+        }
     }
 
     output = sign * (integer + fraction);
     if(exponent)
-        output *= std::pow(10.f, expsign * exponent);
+        output *= std::pow(10.f, exponent);
     return output >= -maxValue && output <= maxValue;
 }
 

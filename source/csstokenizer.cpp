@@ -257,12 +257,12 @@ CSSToken CSSTokenizer::consumeNumericToken()
     double fraction = 0;
 
     auto cc = m_input.peek();
-    if(cc == '-') {
-        numberSign = CSSToken::NumberSign::Minus;
+    if(cc == '+') {
         cc = m_input.consume();
-    } else if(cc == '+') {
         numberSign = CSSToken::NumberSign::Plus;
+    } else if(cc == '-') {
         cc = m_input.consume();
+        numberSign = CSSToken::NumberSign::Minus;
     }
 
     if(isDigit(cc)) {
@@ -270,6 +270,9 @@ CSSToken CSSTokenizer::consumeNumericToken()
             integer = 10.0 * integer + (cc - '0');
             cc = m_input.consume();
         } while(isDigit(cc));
+        if(integer > std::numeric_limits<double>::max()) {
+            integer = std::numeric_limits<double>::max();
+        }
     }
 
     if(cc == '.' && isDigit(m_input.peek(1))) {
@@ -288,12 +291,12 @@ CSSToken CSSTokenizer::consumeNumericToken()
         numberType = CSSToken::NumberType::Number;
         cc = m_input.consume();
 
-        int expsign = 1;
-        if(cc == '-') {
-            expsign = -1;
+        bool exponentIsNegative = false;
+        if(cc == '+') {
             cc = m_input.consume();
-        } else if(cc == '+') {
+        } else if(cc == '-') {
             cc = m_input.consume();
+            exponentIsNegative = true;
         }
 
         double exponent = 0;
@@ -302,7 +305,11 @@ CSSToken CSSTokenizer::consumeNumericToken()
             exponent = 10.0 * exponent + (cc - '0');
             cc = m_input.consume();
         } while(isDigit(cc));
-        value *= std::pow(10.0, exponent * expsign);
+        if(exponentIsNegative)
+            exponent = -exponent;
+        if(exponent > std::numeric_limits<double>::max_exponent10)
+            exponent = std::numeric_limits<double>::max_exponent10;
+        value *= std::pow(10.0, exponent);
     }
 
     if(numberSign == CSSToken::NumberSign::Minus)
