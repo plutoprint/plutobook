@@ -80,58 +80,37 @@ void Counters::set(const GlobalString& name, int value)
 
 void Counters::update(const Box* box)
 {
-    auto hasListItemCounter = false;
+    auto hasListReset = false;
+    auto hasListIncrement = false;
+    auto hasListSet = false;
     auto hasPageCounter = false;
-    for(auto id : { CSSPropertyID::CounterReset, CSSPropertyID::CounterIncrement, CSSPropertyID::CounterSet }) {
-        auto counters = box->style()->get(id);
-        if(counters == nullptr || counters->id() == CSSValueID::None)
-            continue;
-        for(const auto& counter : to<CSSListValue>(*counters)) {
-            const auto& pair = to<CSSPairValue>(*counter);
-            const auto& name = to<CSSCustomIdentValue>(*pair.first());
-            const auto& value = to<CSSIntegerValue>(*pair.second());
-            hasListItemCounter |= listItemGlo == name.value();
-            hasPageCounter |= pageGlo == name.value();
-            if(m_pageCount && pagesGlo == name.value())
-                continue;
-            switch(id) {
-            case CSSPropertyID::CounterReset:
-                reset(name.value(), value.value());
-                break;
-            case CSSPropertyID::CounterIncrement:
-                increment(name.value(), value.value());
-                break;
-            case CSSPropertyID::CounterSet:
-                set(name.value(), value.value());
-                break;
-            default:
-                assert(false);
-            }
-        }
-    }
+    updateCounters(box, CSSPropertyID::CounterReset, hasListReset, hasPageCounter);
 
     auto element = to<HTMLElement>(box->node());
-    if(element && !hasListItemCounter) {
+    if(element && !hasListReset) {
         if(element->tagName() == olTag) {
             auto olElement = static_cast<HTMLOLElement*>(element);
             reset(listItemGlo, olElement->start() - 1);
-            hasListItemCounter = true;
         } else if(element->tagName() == ulTag
             || element->tagName() == dirTag
             || element->tagName() == menuTag) {
             reset(listItemGlo, 0);
-            hasListItemCounter = true;
-        } else if(element->tagName() == liTag) {
-            auto liElement = static_cast<HTMLLIElement*>(element);
-            if(auto value = liElement->value()) {
-                reset(listItemGlo, *value);
-                hasListItemCounter = true;
-            }
         }
     }
 
-    if(!hasListItemCounter && box->isListItemBox())
+    updateCounters(box, CSSPropertyID::CounterIncrement, hasListIncrement, hasPageCounter);
+    if(!hasListIncrement && box->isListItemBox()) {
         increment(listItemGlo, 1);
+    }
+
+    updateCounters(box, CSSPropertyID::CounterSet, hasListSet, hasPageCounter);
+    if(element && !hasListSet && element->tagName() == liTag) {
+        auto liElement = static_cast<HTMLLIElement*>(element);
+        if(auto value = liElement->value()) {
+            set(listItemGlo, *value);
+        }
+    }
+
     if(!hasPageCounter && box->isPageBox()) {
         increment(pageGlo, 1);
     }
@@ -149,6 +128,35 @@ HeapString Counters::markerText(const GlobalString& listStyle) const
     if(it != m_values.end() && !it->second.empty())
         value = it->second.back();
     return m_document->heap()->createString(m_document->getMarkerText(value, listStyle));
+}
+
+void Counters::updateCounters(const Box* box, CSSPropertyID id, bool& hasListCounter, bool& hasPageCounter)
+{
+    auto counters = box->style()->get(id);
+    if(counters == nullptr || counters->id() == CSSValueID::None)
+        return;
+    for(const auto& counter : to<CSSListValue>(*counters)) {
+        const auto& pair = to<CSSPairValue>(*counter);
+        const auto& name = to<CSSCustomIdentValue>(*pair.first());
+        const auto& value = to<CSSIntegerValue>(*pair.second());
+        hasListCounter |= listItemGlo == name.value();
+        hasPageCounter |= pageGlo == name.value();
+        if(m_pageCount && pagesGlo == name.value())
+            continue;
+        switch(id) {
+        case CSSPropertyID::CounterReset:
+            reset(name.value(), value.value());
+            break;
+        case CSSPropertyID::CounterIncrement:
+            increment(name.value(), value.value());
+            break;
+        case CSSPropertyID::CounterSet:
+            set(name.value(), value.value());
+            break;
+        default:
+            assert(false);
+        }
+    }
 }
 
 } // namespace plutobook

@@ -21,6 +21,8 @@ class Document;
 class GlobalString;
 class HeapString;
 
+enum class CSSPropertyID : uint16_t;
+
 class Counters {
 public:
     Counters(Document* document, uint32_t pageCount);
@@ -44,6 +46,7 @@ public:
     HeapString markerText(const GlobalString& listStyle) const;
 
 private:
+    void updateCounters(const Box* box, CSSPropertyID id, bool& hasListCounter, bool& hasPageCounter);
     Document* m_document;
     std::vector<std::set<GlobalString>> m_scopes;
     std::map<GlobalString, std::vector<int>> m_values;
