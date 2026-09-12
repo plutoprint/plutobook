@@ -348,7 +348,7 @@ RefPtr<CSSNamespaceRule> CSSParser::consumeNamespaceRule(CSSTokenStream& input)
     if(prefix.isEmpty()) {
         m_defaultNamespace = uri;
     } else {
-        m_namespaces.emplace(prefix, uri);
+        m_namespaces.insert_or_assign(prefix, uri);
     }
 
     return CSSNamespaceRule::create(m_heap, prefix, uri);
