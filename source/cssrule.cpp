@@ -931,10 +931,7 @@ std::string CSSCounterStyle::generateFallbackRepresentation(int value) const
 {
     if(m_fallbackStyle == nullptr)
         return defaultStyle().generateRepresentation(value);
-    auto fallbackStyle = std::move(m_fallbackStyle);
-    auto representation = fallbackStyle->generateRepresentation(value);
-    m_fallbackStyle = std::move(fallbackStyle);
-    return representation;
+    return m_fallbackStyle->generateRepresentation(value);
 }
 
 static size_t counterStyleSymbolLength(std::string_view value)
@@ -1072,8 +1069,7 @@ const GlobalString& CSSCounterStyle::fallbackName() const
 {
     if(m_fallback)
         return m_fallback->value();
-    static const GlobalString defaultFallback("decimal");
-    return defaultFallback;
+    return emptyGlo;
 }
 
 const CSSValueID CSSCounterStyle::system() const
@@ -1117,7 +1113,7 @@ void CSSCounterStyle::extend(const CSSCounterStyle& extended)
 CSSCounterStyle& CSSCounterStyle::defaultStyle()
 {
     static auto* defaultStyle = userAgentCounterStyleMap()->findCounterStyle("decimal"_glo);
-    assert(defaultStyle && defaultStyle == defaultStyle->fallbackStyle());
+    assert(defaultStyle && !defaultStyle->fallbackStyle());
     return *defaultStyle;
 }
 
@@ -1228,11 +1224,22 @@ CSSCounterStyleMap::CSSCounterStyleMap(Heap* heap, const CSSRuleList& rules, con
             }
         }
 
-        if(auto fallbackStyle = findCounterStyle(style->fallbackName())) {
-            style->setFallbackStyle(*fallbackStyle);
-        } else {
-            assert(parent != nullptr);
-            style->setFallbackStyle(CSSCounterStyle::defaultStyle());
+        style->setFallbackStyle(findCounterStyle(style->fallbackName()));
+    }
+
+    for(const auto& [name, style] : m_counterStyles) {
+        if(auto fallbackStyle = style->fallbackStyle()) {
+            std::set<const CSSCounterStyle*> references = { style.get() };
+            do  {
+                if(references.contains(fallbackStyle)) {
+                    assert(parent != nullptr);
+                    fallbackStyle->setFallbackStyle(nullptr);
+                    break;
+                }
+
+                references.insert(fallbackStyle);
+                fallbackStyle = fallbackStyle->fallbackStyle();
+            } while(fallbackStyle);
         }
     }
 }

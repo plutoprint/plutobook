@@ -589,9 +589,10 @@ public:
     const HeapString& prefix() const;
     const HeapString& suffix() const;
 
-    void setFallbackStyle(CSSCounterStyle& fallbackStyle) { m_fallbackStyle = fallbackStyle; }
-    const RefPtr<CSSCounterStyle>& fallbackStyle() const { return m_fallbackStyle; }
     void extend(const CSSCounterStyle& extended);
+
+    void setFallbackStyle(CSSCounterStyle* fallbackStyle) { m_fallbackStyle = fallbackStyle; }
+    CSSCounterStyle* fallbackStyle() const { return m_fallbackStyle; }
 
     static CSSCounterStyle& defaultStyle();
 
@@ -609,7 +610,7 @@ private:
     RefPtr<CSSCustomIdentValue> m_fallback;
     RefPtr<CSSListValue> m_symbols;
     RefPtr<CSSListValue> m_additiveSymbols;
-    mutable RefPtr<CSSCounterStyle> m_fallbackStyle;
+    CSSCounterStyle* m_fallbackStyle = nullptr;
 };
 
 class CSSCounterStyleMap : public HeapMember {
