@@ -1100,10 +1100,16 @@ bool CSSVariableData::resolve(const BoxStyle* style, CSSTokenList& tokens, std::
 
 bool CSSVariableData::resolve(CSSTokenStream input, const BoxStyle* style, CSSTokenList& tokens, std::vector<CSSVariableData*>& references) const
 {
+    constexpr size_t kMaxSubstitutionTokens = 65536;
+
     while(!input.empty()) {
         if(input->type() == CSSToken::Type::Function && equalsIgnoringCase("var", input->data())) {
             auto block = input.consumeBlock();
+
+            const auto size = tokens.size();
             if(!resolveVar(block, style, tokens, references))
+                return false;
+            if(tokens.size() - size > kMaxSubstitutionTokens)
                 return false;
             continue;
         }
