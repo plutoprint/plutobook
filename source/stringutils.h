@@ -133,22 +133,18 @@ constexpr bool equals(uint8_t a, uint8_t b, CaseMode mode)
     return mode == CaseMode::Exact ? (a == b) : toLower(a) == toLower(b);
 }
 
-constexpr bool equals(const char* aData, size_t aLength, const char* bData, size_t bLength, CaseMode mode)
+constexpr bool equals(std::string_view a, std::string_view b, CaseMode mode)
 {
-    if(aLength != bLength)
+    auto length = a.length();
+    if(length != b.length())
         return false;
-    for(size_t i = 0; i < aLength; ++i) {
-        if(!equals(aData[i], bData[i], mode)) {
+    for(size_t i = 0; i < length; ++i) {
+        if(!equals(a[i], b[i], mode)) {
             return false;
         }
     }
 
     return true;
-}
-
-constexpr bool equals(std::string_view a, std::string_view b, CaseMode mode)
-{
-    return equals(a.data(), a.length(), b.data(), b.length(), mode);
 }
 
 constexpr bool equalsIgnoringCase(std::string_view a, std::string_view b)
