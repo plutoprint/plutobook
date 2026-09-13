@@ -399,18 +399,11 @@ q::after { content: close-quote; }
 nobr { white-space: nowrap; }
 nobr wbr { white-space: normal; }
 
-[dir=ltr i] { direction: ltr; }
-[dir=rtl i] { direction: rtl; }
-
-address, blockquote, center, div, figure, figcaption, footer, form, header, hr,
-legend, listing, main, p, plaintext, pre, summary, xmp, article, aside, h1, h2,
-h3, h4, h5, h6, hgroup, nav, section, table, caption, colgroup, col, thead,
-tbody, tfoot, tr, td, th, dir, dd, dl, dt, menu, ol, ul, li, bdi, output,
-[dir=ltr i], [dir=rtl i], [dir=auto i] {
+bdi {
     unicode-bidi: isolate;
 }
 
-bdo, bdo[dir] {
+bdo {
     unicode-bidi: isolate-override;
 }
 

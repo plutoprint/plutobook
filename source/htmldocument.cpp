@@ -190,6 +190,15 @@ void HTMLElement::collectAttributeStyle(std::string& output, const GlobalString&
         addAttributeStyle(output, "text-align", value);
     } else if(name == langAttr) {
         addAttributeStyle(output, "-pluto-lang", value);
+    } else if(name == dirAttr) {
+        auto isValidDirection = equalsIgnoringCase(value, "rtl") || equalsIgnoringCase(value, "ltr");
+        if(isValidDirection)
+            addAttributeStyle(output, "direction", value);
+        if(isValidDirection || equalsIgnoringCase(value, "auto")) {
+            if(const auto& tag = tagName(); tag != bdiTag && tag != bdoTag) {
+                addAttributeStyle(output, "unicode-bidi", "isolate");
+            }
+        }
     } else {
         Element::collectAttributeStyle(output, name, value);
     }
