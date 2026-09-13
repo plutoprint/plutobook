@@ -10,6 +10,7 @@
 #include "cssproperty.h"
 #include "document.h"
 #include "imageresource.h"
+#include "gradientimage.h"
 #include "fontresource.h"
 #include "localedata.h"
 #include "geometry.h"
@@ -2283,6 +2284,19 @@ Paint BoxStyle::convertPaint(const CSSValue& value) const
 
 RefPtr<Image> BoxStyle::convertImage(const CSSValue& value) const
 {
+    if(is<CSSGradientValue>(value)) {
+        // A gradient image is derived from this style, so it cannot be cached
+        // on the shared value the way a fetched one is. Memoize it here
+        // instead: painting asks for it once per box per page, and the heap
+        // only reclaims at document teardown.
+        if(m_gradientImages == nullptr)
+            m_gradientImages = std::make_unique<GradientImageMap>(heap());
+        auto& image = (*m_gradientImages)[&value];
+        if(image == nullptr)
+            image = GradientImage::create(*this, to<CSSGradientValue>(value));
+        return image;
+    }
+
     return to<CSSImageValue>(value).fetch(document());
 }
 
