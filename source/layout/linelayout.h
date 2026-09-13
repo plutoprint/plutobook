@@ -11,6 +11,7 @@
 
 #include "textshape.h"
 #include "textbreakiterator.h"
+#include "boxstyle.h"
 
 #include <unicode/ubidi.h>
 
@@ -170,6 +171,12 @@ struct LineItemRun {
     float expansion{0.f};
     float width{0.f};
     TextShapeView shape;
+
+    // Set when the line ends on a hyphenation opportunity (soft hyphen or, for
+    // `hyphens: auto`, an automatic break): a trailing hyphen glyph is rendered
+    // and its advance is already included in `width`.
+    RefPtr<TextShape> hyphenShape;
+    float hyphenWidth{0.f};
 };
 
 using LineItemRunList = std::vector<LineItemRun>;
@@ -285,6 +292,8 @@ private:
     void handleTrailingSpaces(const LineItem& item, const RefPtr<TextShape>& shape);
 
     void breakText(LineItemRun& run, const RefPtr<TextShape>& shape, float availableWidth);
+    uint32_t autoHyphenationBreak(const LineItemRun& run, uint32_t lowerBound, uint32_t widthLimit);
+    void appendHyphen(LineItemRun& run, const BoxStyle* style, Direction direction);
 
     void rewindOverflow(uint32_t newSize);
     void handleOverflow();
@@ -294,7 +303,7 @@ private:
 
     bool canFitOnLine() const { return m_currentWidth <= availableWidthToFit(); }
     bool canFitOnLine(float extra) const { return extra + m_currentWidth <= availableWidthToFit(); }
-    bool canBreakAfter(const LineItemRun& run) const { return m_autoWrap && m_breakIterator.isBreakable(run.endOffset); }
+    bool canBreakAfter(const LineItemRun& run) const { return m_autoWrap && m_breakIterator.isBreakable(run.endOffset, m_hyphens == Hyphens::None); }
 
     static bool isBreakableSpace(UChar cc) { return cc == kSpaceCharacter || cc == kTabulationCharacter; }
 
@@ -313,6 +322,7 @@ private:
     float m_availableWidth{0};
     float m_currentWidth{0};
     bool m_autoWrap{false};
+    Hyphens m_hyphens{Hyphens::Manual};
     bool m_skipLeadingWhitespace{true};
     bool m_hasUnpositionedFloats{false};
     bool m_hasLeaderText{false};

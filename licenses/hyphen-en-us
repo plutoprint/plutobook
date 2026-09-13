@@ -1,0 +1,15 @@
+English (US) hyphenation patterns — dicts/hyph_en_US.dic
+
+Upstream: hyphen (https://sourceforge.net/projects/hunspell/files/Hyphen/)
+Upstream-Contact: László Németh <nemeth@openoffice.org>
+
+Copyright: 1998      Raph Levien
+           2001      ALTLinux, Moscow
+           2006-2011 László Németh <nemeth@openoffice.org>
+
+License: GPL-2+ or LGPL-2.1+ or MPL-1.1+
+
+The patterns are tri-licensed; PlutoBook redistributes and uses them under the
+Mozilla Public License (MPL-1.1 or later, compatible with PlutoBook's MPL-2.0).
+The full texts of the GNU GPL v2, GNU LGPL v2.1, and the Mozilla Public License
+are available from the Free Software Foundation and https://mozilla.org/MPL/.

@@ -167,6 +167,7 @@ CSSPropertyID CSSProperty::id(std::string_view name)
         {"font-weight", CSSPropertyID::FontWeight},
         {"gap", CSSPropertyID::Gap},
         {"height", CSSPropertyID::Height},
+        {"hyphenate-character", CSSPropertyID::HyphenateCharacter},
         {"hyphens", CSSPropertyID::Hyphens},
         {"inline-size", CSSPropertyID::InlineSize},
         {"inset", CSSPropertyID::Inset},
