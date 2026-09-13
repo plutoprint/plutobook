@@ -337,8 +337,8 @@ html, body {
 
 body { margin: 8px; }
 
-address, blockquote, center, div, figure, figcaption, footer, form, header, hr,
-legend, listing, main, p, plaintext, pre, summary, xmp {
+address, blockquote, center, details, div, figure, figcaption, footer, form,
+header, hr, legend, listing, main, p, plaintext, pre, summary, xmp {
     display: block;
 }
 
@@ -450,6 +450,20 @@ dir, menu, ul { list-style-type: disc; }
     text-transform: none;
     text-indent: 0 !important;
     line-height: normal !important;
+}
+
+details > summary:first-of-type {
+    display: list-item;
+    counter-increment: list-item 0;
+    list-style: disclosure-closed inside;
+}
+
+details[open] > summary:first-of-type {
+    list-style-type: disclosure-open;
+}
+
+details:not([open]) > *:not(summary:first-of-type) {
+    display: none;
 }
 
 table { display: table; }
