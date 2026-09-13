@@ -318,13 +318,9 @@ inline constexpr char kUserAgentStyle[] = R"CSS(
 @namespace url('http://www.w3.org/1999/xhtml');
 @namespace svg url('http://www.w3.org/2000/svg');
 
-area, base, basefont, datalist, head, link, menu[type=context i], meta,
-noembed, noframes, param, rp, script, source, style, template, track, title {
+area, base, basefont, datalist, head, link, meta, noembed, noframes,
+param, rp, script, source, style, template, track, title {
     display: none;
-}
-
-embed[hidden] {
-    display: inline; height: 0; width: 0;
 }
 
 input[type=hidden i] {
@@ -351,10 +347,10 @@ blockquote, figure {
 }
 
 address { font-style: italic; }
-listing, plaintext, pre, xmp {  font-family: monospace; white-space: pre; }
+listing, plaintext, pre, xmp { font-family: monospace; white-space: pre; }
 
 dialog:not([open]) { display: none; }
- 
+
 dialog {
     position: absolute;
     inset-inline-start: 0; inset-inline-end: 0;
@@ -608,8 +604,7 @@ fieldset {
     min-width: min-content;
 }
 
-iframe:not([seamless]) { border: 2px inset; }
-iframe[seamless] { display: block; }
+iframe { border: 2px inset; }
 
 legend {
     padding-left: 2px; padding-right: 2px;
