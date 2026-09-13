@@ -272,10 +272,13 @@ CSSPropertyID CSSProperty::id(std::string_view name)
         {"text-decoration-color", CSSPropertyID::TextDecorationColor},
         {"text-decoration-line", CSSPropertyID::TextDecorationLine},
         {"text-decoration-style", CSSPropertyID::TextDecorationStyle},
+        {"text-decoration-thickness", CSSPropertyID::TextDecorationThickness},
         {"text-indent", CSSPropertyID::TextIndent},
         {"text-orientation", CSSPropertyID::TextOrientation},
         {"text-overflow", CSSPropertyID::TextOverflow},
         {"text-transform", CSSPropertyID::TextTransform},
+        {"text-underline-offset", CSSPropertyID::TextUnderlineOffset},
+        {"text-underline-position", CSSPropertyID::TextUnderlinePosition},
         {"top", CSSPropertyID::Top},
         {"transform", CSSPropertyID::Transform},
         {"transform-origin", CSSPropertyID::TransformOrigin},
@@ -747,7 +750,8 @@ CSSShorthand CSSProperty::shorthand(CSSPropertyID id)
         static const CSSPropertyID data[] = {
             CSSPropertyID::TextDecorationLine,
             CSSPropertyID::TextDecorationStyle,
-            CSSPropertyID::TextDecorationColor
+            CSSPropertyID::TextDecorationColor,
+            CSSPropertyID::TextDecorationThickness
         };
 
         return CSSShorthand(data);

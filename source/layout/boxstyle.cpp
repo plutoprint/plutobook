@@ -16,6 +16,8 @@
 
 #include "plutobook.hpp"
 
+#include <cmath>
+
 namespace plutobook {
 
 const Length Length::None(Length::Type::None);
@@ -93,6 +95,20 @@ float BoxStyle::fontLineHeight() const
 {
     if(auto fontData = m_font->primaryFont())
         return fontData->lineHeight();
+    return 0.f;
+}
+
+float BoxStyle::fontUnderlinePosition() const
+{
+    if(auto fontData = m_font->primaryFont())
+        return fontData->underlinePosition();
+    return 0.f;
+}
+
+float BoxStyle::fontUnderlineThickness() const
+{
+    if(auto fontData = m_font->primaryFont())
+        return fontData->underlineThickness();
     return 0.f;
 }
 
@@ -614,6 +630,66 @@ Color BoxStyle::textDecorationColor() const
     if(value == nullptr)
         return m_color;
     return convertColor(*value);
+}
+
+float BoxStyle::textDecorationThickness() const
+{
+    auto defaultThickness = fontSize() / 16.f;
+    auto value = get(CSSPropertyID::TextDecorationThickness);
+    if(value == nullptr || value->id() == CSSValueID::Auto)
+        return defaultThickness;
+    if(value->id() == CSSValueID::FromFont) {
+        if(auto thickness = fontUnderlineThickness())
+            return thickness;
+        return defaultThickness;
+    }
+
+    return convertLengthOrPercent(*value).calcMin(fontSize());
+}
+
+TextUnderlinePosition BoxStyle::textUnderlinePosition() const
+{
+    auto value = get(CSSPropertyID::TextUnderlinePosition);
+    if(value == nullptr)
+        return TextUnderlinePosition::Auto;
+    const auto& ident = to<CSSIdentValue>(*value);
+    switch(ident.value()) {
+    case CSSValueID::Auto:
+        return TextUnderlinePosition::Auto;
+    case CSSValueID::FromFont:
+        return TextUnderlinePosition::FromFont;
+    case CSSValueID::Under:
+        return TextUnderlinePosition::Under;
+    default:
+        assert(false);
+    }
+
+    return TextUnderlinePosition::Auto;
+}
+
+Length BoxStyle::textUnderlineOffset() const
+{
+    auto value = get(CSSPropertyID::TextUnderlineOffset);
+    if(value == nullptr)
+        return Length::Auto;
+    return convertLengthOrPercentOrAuto(*value);
+}
+
+float BoxStyle::underlineDistanceFromBaseline(float thickness) const
+{
+    auto offset = textUnderlineOffset().calcMin(fontSize());
+    switch(textUnderlinePosition()) {
+    case TextUnderlinePosition::FromFont:
+        if(auto position = fontUnderlinePosition())
+            return position + offset;
+        break;
+    case TextUnderlinePosition::Under:
+        return fontDescent() + offset;
+    default:
+        break;
+    }
+
+    return std::max(1.f, std::ceil(thickness / 2.f)) + offset;
 }
 
 Length BoxStyle::textIndent() const
@@ -3382,7 +3458,10 @@ BoxStyle::BoxStyle(Node* node, const BoxStyle* parentStyle, PseudoType pseudoTyp
             case CSSPropertyID::TextDecorationColor:
             case CSSPropertyID::TextDecorationLine:
             case CSSPropertyID::TextDecorationStyle:
+            case CSSPropertyID::TextDecorationThickness:
             case CSSPropertyID::TextIndent:
+            case CSSPropertyID::TextUnderlineOffset:
+            case CSSPropertyID::TextUnderlinePosition:
             case CSSPropertyID::Widows:
             case CSSPropertyID::WordSpacing:
                 m_properties.insert_or_assign(id, value);
