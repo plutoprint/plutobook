@@ -337,8 +337,8 @@ html, body {
 
 body { margin: 8px; }
 
-address, blockquote, center, details, div, figure, figcaption, footer, form,
-header, hr, legend, listing, main, p, plaintext, pre, summary, xmp {
+address, blockquote, center, details, dialog, div, figure, figcaption, footer,
+form, header, hr, legend, listing, main, p, plaintext, pre, summary, xmp {
     display: block;
 }
 
@@ -352,6 +352,20 @@ blockquote, figure {
 
 address { font-style: italic; }
 listing, plaintext, pre, xmp {  font-family: monospace; white-space: pre; }
+
+dialog:not([open]) { display: none; }
+ 
+dialog {
+    position: absolute;
+    inset-inline-start: 0; inset-inline-end: 0;
+    width: fit-content;
+    height: fit-content;
+    margin: auto;
+    border: solid;
+    padding: 1em;
+    background-color: white;
+    color: black;
+}
 
 cite, dfn, em, i, var { font-style: italic; }
 b, strong { font-weight: bolder; }
