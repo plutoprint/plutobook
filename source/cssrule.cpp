@@ -1191,6 +1191,8 @@ CSSCounterStyleMap::CSSCounterStyleMap(Heap* heap, const CSSRuleList& rules, con
     }
 
     for(const auto& [name, style] : m_counterStyles) {
+        style->setFallbackStyle(findCounterStyle(style->fallbackName()));
+
         if(style->system() == CSSValueID::Extends) {
             std::set<CSSCounterStyle*> unresolvedStyles;
             std::vector<CSSCounterStyle*> extendsStyles;
@@ -1223,8 +1225,6 @@ CSSCounterStyleMap::CSSCounterStyleMap(Heap* heap, const CSSRuleList& rules, con
                 currentStyle = extendsStyles.back();
             }
         }
-
-        style->setFallbackStyle(findCounterStyle(style->fallbackName()));
     }
 
     for(const auto& [name, style] : m_counterStyles) {
