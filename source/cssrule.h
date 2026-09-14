@@ -242,6 +242,10 @@ public:
     Type type() const { return m_type; }
     const CSSMediaFeatureList& features() const { return m_features; }
 
+    static CSSMediaQuery notAll() { return CSSMediaQuery(Restrictor::Not, Type::All); }
+    static CSSMediaQuery onlyPrint() { return CSSMediaQuery(Restrictor::Only, Type::Print); }
+    static CSSMediaQuery onlyScreen() { return CSSMediaQuery(Restrictor::Only, Type::Screen); }
+
 private:
     Restrictor m_restrictor;
     Type m_type;

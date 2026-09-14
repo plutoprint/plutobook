@@ -986,9 +986,17 @@ static CaseMode caseMode(const Document* document)
 
 bool Document::supportsMedia(std::string_view type, std::string_view media) const
 {
-    if(!type.empty() && !equals(type, "text/css", caseMode(this)))
+    if(!type.empty() && !equals(type, "text/css", caseMode(this))) {
         return false;
-    if(!media.empty()) {
+    }
+
+    stripLeadingAndTrailingSpaces(media);
+
+    if(!media.empty() && !equalsIgnoringCase(media, "all")) {
+        if(equalsIgnoringCase(media, "print"))
+            return supportsMediaQuery(CSSMediaQuery::onlyPrint());
+        if(equalsIgnoringCase(media, "screen"))
+            return supportsMediaQuery(CSSMediaQuery::onlyScreen());
         CSSParserContext context(this, CSSStyleOrigin::Author, m_baseUrl);
         CSSParser parser(context, m_book->heap());
         return supportsMediaQueries(parser.parseMediaQueries(media));

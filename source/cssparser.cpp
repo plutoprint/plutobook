@@ -231,7 +231,7 @@ void CSSParser::consumeMediaQueries(CSSTokenStream& input, CSSMediaQueryList& qu
         do {
             auto stream = input.consumeComponentsUntil<CSSToken::Type::Comma>();
             if(!consumeMediaQuery(stream, queries))
-                queries.emplace_front(CSSMediaQuery::Restrictor::Not, CSSMediaQuery::Type::All);
+                queries.push_front(CSSMediaQuery::notAll());
         } while(input.consumeCommaIncludingWhitespace());
     }
 }
