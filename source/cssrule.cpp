@@ -1227,19 +1227,26 @@ CSSCounterStyleMap::CSSCounterStyleMap(Heap* heap, const CSSRuleList& rules, con
         }
     }
 
+    std::set<const CSSCounterStyle*> checkedStyles;
     for(const auto& [name, style] : m_counterStyles) {
-        if(auto fallbackStyle = style->fallbackStyle()) {
+        auto fallbackStyle = style->fallbackStyle();
+        if(fallbackStyle && !checkedStyles.contains(fallbackStyle)) {
             std::set<const CSSCounterStyle*> references = { style.get() };
+            auto previousStyle = style.get();
             do  {
                 if(references.contains(fallbackStyle)) {
                     assert(parent != nullptr);
-                    fallbackStyle->setFallbackStyle(nullptr);
+                    previousStyle->setFallbackStyle(nullptr);
                     break;
                 }
 
+                if(checkedStyles.contains(fallbackStyle))
+                    break;
                 references.insert(fallbackStyle);
+                previousStyle = fallbackStyle;
                 fallbackStyle = fallbackStyle->fallbackStyle();
             } while(fallbackStyle);
+            checkedStyles.insert(references.begin(), references.end());
         }
     }
 }
