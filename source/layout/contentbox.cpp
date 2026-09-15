@@ -210,6 +210,10 @@ void ContentBoxBuilder::build(const CSSValue& content)
         }
 
         if(auto ident = to<CSSIdentValue>(listStyleType)) {
+            static const GlobalString disclosureOpen("\u25BE ");
+            static const GlobalString disclosureClosedLtr("\u25B8 ");
+            static const GlobalString disclosureClosedRtl("\u25C2 ");
+
             switch(ident->value()) {
             case CSSValueID::None:
                 return;
@@ -221,6 +225,12 @@ void ContentBoxBuilder::build(const CSSValue& content)
                 return;
             case CSSValueID::Square:
                 addText(square);
+                return;
+            case CSSValueID::DisclosureOpen:
+                addText(disclosureOpen);
+                return;
+            case CSSValueID::DisclosureClosed:
+                addText(m_style->direction() == Direction::Rtl ? disclosureClosedRtl : disclosureClosedLtr);
                 return;
             default:
                 assert(false);

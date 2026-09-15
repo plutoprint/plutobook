@@ -2322,7 +2322,9 @@ RefPtr<CSSValue> CSSParser::consumeListStyleType(CSSTokenStream& input)
         {"none", CSSValueID::None},
         {"disc", CSSValueID::Disc},
         {"circle", CSSValueID::Circle},
-        {"square", CSSValueID::Square}
+        {"square", CSSValueID::Square},
+        {"disclosure-open", CSSValueID::DisclosureOpen},
+        {"disclosure-closed", CSSValueID::DisclosureClosed}
     };
 
     if(auto value = consumeIdent(input, table))

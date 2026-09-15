@@ -386,6 +386,8 @@ enum class CSSValueID : uint16_t {
     DiagonalFractions,
     Difference,
     Disc,
+    DisclosureClosed,
+    DisclosureOpen,
     DiscretionaryLigatures,
     Dotted,
     Double,
