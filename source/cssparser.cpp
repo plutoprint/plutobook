@@ -373,6 +373,23 @@ RefPtr<CSSFontFaceRule> CSSParser::consumeFontFaceRule(CSSTokenStream& prelude, 
     return CSSFontFaceRule::create(m_heap, std::move(properties));
 }
 
+static bool isPredefinedSymbolMarkerName(const GlobalString& name)
+{
+    static const GlobalString table[] = {
+        "decimal"_glo, "disc"_glo,
+        "square"_glo, "circle"_glo,
+        "disclosure-open"_glo, "disclosure-closed"_glo
+    };
+
+    for(const auto& item : table) {
+        if(item == name) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 static std::optional<GlobalString> consumeCounterStyleNameIdent(CSSTokenStream& input, const CSSParserContext& context)
 {
     if(input->type() != CSSToken::Type::Ident || identMatches("none", input->data()))
@@ -385,6 +402,8 @@ static std::optional<GlobalString> consumeCounterStyleNameIdent(CSSTokenStream& 
     }
 
     auto predefinedName = name.foldCase();
+    if(isPredefinedSymbolMarkerName(predefinedName))
+        return predefinedName;
     if(userAgentCounterStyleMap()->findCounterStyle(predefinedName))
         return predefinedName;
     return name;
@@ -395,15 +414,8 @@ RefPtr<CSSCounterStyleRule> CSSParser::consumeCounterStyleRule(CSSTokenStream& p
     auto name = consumeCounterStyleNameIdent(prelude, m_context);
     if(name == std::nullopt)
         return nullptr;
-    if(m_context.origin() != CSSStyleOrigin::UserAgent) {
-        if(identMatches("decimal", name.value())
-            || identMatches("disc", name.value())
-            || identMatches("square", name.value())
-            || identMatches("circle", name.value())
-            || identMatches("disclosure-open", name.value())
-            || identMatches("disclosure-closed", name.value())) {
-            return nullptr;
-        }
+    if(m_context.origin() != CSSStyleOrigin::UserAgent && isPredefinedSymbolMarkerName(name.value())) {
+        return nullptr;
     }
 
     if(!prelude.empty())
