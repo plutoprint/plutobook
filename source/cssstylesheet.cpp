@@ -832,17 +832,46 @@ const CSSCounterStyle& CSSStyleSheet::getCounterStyle(const GlobalString& name)
     return CSSCounterStyle::defaultStyle();
 }
 
+template<bool isMarker>
+static std::string generateDecimalRepresentation(int value)
+{
+    auto number = static_cast<unsigned>(std::llabs(value));
+
+    constexpr size_t kSuffixLength = isMarker ? 2 : 0;
+    char buffer[sizeof(number) * 3 + 1 + kSuffixLength];
+    char* end = std::end(buffer);
+    char* p = end - kSuffixLength;
+
+    if constexpr(isMarker) {
+        p[0] = '.';
+        p[1] = ' ';
+    }
+
+    do {
+        *--p = static_cast<char>((number % 10) + '0');
+        number /= 10;
+    } while(number);
+
+    if(value < 0) {
+        *--p = '-';
+    }
+
+    return std::string(p, end - p);
+}
+
 std::string CSSStyleSheet::getCounterText(int value, const GlobalString& listType)
 {
+    if(listType == decimalGlo) {
+        return generateDecimalRepresentation<false>(value);
+    }
+
     return getCounterStyle(listType).generateRepresentation(value);
 }
 
 std::string CSSStyleSheet::getMarkerText(int value, const GlobalString& listType)
 {
     if(listType == decimalGlo) {
-        char buffer[16];
-        std::snprintf(buffer, sizeof(buffer), "%d. ", value);
-        return buffer;
+        return generateDecimalRepresentation<true>(value);
     }
 
     const auto& counterStyle = getCounterStyle(listType);
