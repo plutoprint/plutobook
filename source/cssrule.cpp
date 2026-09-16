@@ -865,7 +865,7 @@ static const HeapString& counterStyleSymbol(const CSSValue& value)
 
 std::string CSSCounterStyle::generateInitialRepresentation(int value) const
 {
-    auto absValue = value < 0 ? 0u - static_cast<unsigned>(value) : value;
+    auto absValue = static_cast<unsigned>(std::llabs(value));
 
     std::string representation;
     if(system() == CSSValueID::Additive) {
