@@ -1112,7 +1112,7 @@ void CSSCounterStyle::extend(const CSSCounterStyle& extended)
 
 CSSCounterStyle& CSSCounterStyle::defaultStyle()
 {
-    static auto* defaultStyle = userAgentCounterStyleMap()->findCounterStyle("decimal"_glo);
+    static auto* defaultStyle = userAgentCounterStyleMap()->findCounterStyle(decimalGlo);
     assert(defaultStyle && !defaultStyle->fallbackStyle());
     return *defaultStyle;
 }

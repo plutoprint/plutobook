@@ -77,6 +77,7 @@ inline const GlobalString emptyGlo("");
 inline const GlobalString starGlo("*");
 
 inline const GlobalString newLineGlo("\n");
+inline const GlobalString decimalGlo("decimal");
 inline const GlobalString listItemGlo("list-item");
 inline const GlobalString pageGlo("page");
 inline const GlobalString pagesGlo("pages");

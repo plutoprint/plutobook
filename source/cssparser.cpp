@@ -375,9 +375,10 @@ RefPtr<CSSFontFaceRule> CSSParser::consumeFontFaceRule(CSSTokenStream& prelude, 
 
 static bool isPredefinedSymbolMarkerName(const GlobalString& name)
 {
+    if(name == decimalGlo)
+        return true;
     static const GlobalString table[] = {
-        "decimal"_glo, "disc"_glo,
-        "square"_glo, "circle"_glo,
+        "disc"_glo, "square"_glo, "circle"_glo,
         "disclosure-open"_glo, "disclosure-closed"_glo
     };
 
@@ -2437,7 +2438,7 @@ RefPtr<CSSValue> CSSParser::consumeContentCounter(CSSTokenStream& input, bool co
         input.consumeIncludingWhitespace();
     }
 
-    GlobalString listStyle("decimal");
+    auto listStyle = decimalGlo;
     if(input.consumeCommaIncludingWhitespace()) {
         auto name = consumeCounterStyleNameIdent(input, m_context);
         if(name == std::nullopt)

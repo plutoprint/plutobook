@@ -839,8 +839,7 @@ std::string CSSStyleSheet::getCounterText(int value, const GlobalString& listTyp
 
 std::string CSSStyleSheet::getMarkerText(int value, const GlobalString& listType)
 {
-    static const GlobalString decimal("decimal");
-    if(listType == decimal) {
+    if(listType == decimalGlo) {
         char buffer[16];
         std::snprintf(buffer, sizeof(buffer), "%d. ", value);
         return buffer;
