@@ -49,9 +49,16 @@ void Counters::reset(const GlobalString& name, int value)
     }
 }
 
-constexpr int clampAdd(int64_t a, int64_t b)
+constexpr int clampAdd(int a, int b)
 {
-    return clampTo<int>(a + b);
+    constexpr auto min = std::numeric_limits<int>::min();
+    constexpr auto max = std::numeric_limits<int>::max();
+
+    if(b > 0 && a > max - b)
+        return max;
+    if(b < 0 && a < min - b)
+        return min;
+    return a + b;
 }
 
 void Counters::increment(const GlobalString& name, int value)
@@ -90,7 +97,7 @@ void Counters::update(const Box* box)
     if(element && !hasListReset) {
         if(element->tagName() == olTag) {
             auto olElement = static_cast<HTMLOLElement*>(element);
-            reset(listItemGlo, olElement->start() - 1);
+            reset(listItemGlo, clampAdd(olElement->start(), -1));
         } else if(element->tagName() == ulTag
             || element->tagName() == dirTag
             || element->tagName() == menuTag) {
