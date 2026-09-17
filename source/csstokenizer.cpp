@@ -286,7 +286,7 @@ CSSToken CSSTokenizer::consumeNumericToken()
         } while(isDigit(cc));
     }
 
-    double value = (integer + fraction);
+    double number = (integer + fraction);
     if(isExponentSequence()) {
         numberType = CSSToken::NumberType::Number;
         cc = m_input.consume();
@@ -309,12 +309,11 @@ CSSToken CSSTokenizer::consumeNumericToken()
             exponent = -exponent;
         if(exponent > std::numeric_limits<double>::max_exponent10)
             exponent = std::numeric_limits<double>::max_exponent10;
-        value *= std::pow(10.0, exponent);
+        number *= std::pow(10.0, exponent);
     }
 
     if(numberSign == CSSToken::NumberSign::Minus)
-        value = -value;
-    float number = clampTo<float>(value);
+        number = -number;
     if(cc == '%') {
         m_input.advance();
         return CSSToken(CSSToken::Type::Percentage, numberType, numberSign, number);

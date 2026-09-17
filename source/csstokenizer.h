@@ -18,13 +18,20 @@
 
 namespace plutobook {
 
-template<typename T, typename U>
-constexpr T clampTo(U value)
+constexpr int clampToInteger(double value)
 {
-    constexpr T min = std::numeric_limits<T>::lowest();
-    constexpr T max = std::numeric_limits<T>::max();
+    constexpr auto min = std::numeric_limits<int>::min();
+    constexpr auto max = std::numeric_limits<int>::max();
 
-    return value >= U(max) ? max : (value <= U(min) ? min : T(value));
+    return value >= double(max) ? max : (value <= double(min) ? min : int(value));
+}
+
+constexpr float clampToFloat(double value)
+{
+    constexpr auto min = std::numeric_limits<float>::lowest();
+    constexpr auto max = std::numeric_limits<float>::max();
+
+    return value >= double(max) ? max : (value <= double(min) ? min : float(value));
 }
 
 class CSSToken {
@@ -81,11 +88,11 @@ public:
     CSSToken(Type type, std::string_view data) : m_type(type), m_data(data) {}
     CSSToken(Type type, HashType hashType, std::string_view data) : m_type(type), m_hashType(hashType), m_data(data) {}
 
-    CSSToken(Type type, NumberType numberType, NumberSign numberSign, float number)
+    CSSToken(Type type, NumberType numberType, NumberSign numberSign, double number)
         : m_type(type), m_numberType(numberType), m_numberSign(numberSign), m_number(number)
     {}
 
-    CSSToken(Type type, NumberType numberType, NumberSign numberSign, float number, std::string_view unit)
+    CSSToken(Type type, NumberType numberType, NumberSign numberSign, double number, std::string_view unit)
         : m_type(type), m_numberType(numberType), m_numberSign(numberSign), m_number(number), m_data(unit)
     {}
 
@@ -94,8 +101,8 @@ public:
     NumberType numberType() const { return m_numberType; }
     NumberSign numberSign() const { return m_numberSign; }
     uint32_t delim() const { return m_delim; }
-    float number() const { return m_number; }
-    int integer() const { return clampTo<int>(m_number); }
+    float number() const { return clampToFloat(m_number); }
+    int integer() const { return clampToInteger(m_number); }
     uint32_t from() const { return m_from; }
     uint32_t to() const { return m_to; }
     std::string_view data() const { return m_data; }
@@ -121,13 +128,15 @@ private:
     HashType m_hashType{};
     NumberType m_numberType{};
     NumberSign m_numberSign{};
+    uint32_t m_delim{};
     union {
-        uint32_t m_delim{};
-        float m_number;
+        double m_number{};
+        struct {
+            uint32_t m_from;
+            uint32_t m_to;
+        };
     };
 
-    uint32_t m_from{};
-    uint32_t m_to{};
     std::string_view m_data{};
     friend class CSSVariableData;
 };

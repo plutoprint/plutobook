@@ -1005,7 +1005,7 @@ bool CSSParser::consumeMatchPattern(CSSTokenStream& input, CSSSimpleSelector::Ma
                 value = value * 10.0 + (cc - '0');
             }
 
-            pattern.second = clampTo<int>(-value);
+            pattern.second = clampToInteger(-value);
             return true;
         }
     }
