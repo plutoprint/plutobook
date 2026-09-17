@@ -1196,14 +1196,14 @@ CSSCounterStyleMap::CSSCounterStyleMap(Heap* heap, const CSSRuleList& rules, con
             std::set<CSSCounterStyle*> unresolvedStyles;
             std::vector<CSSCounterStyle*> extendsStyles;
 
-            extendsStyles.push_back(style.get());
-            auto currentStyle = extendsStyles.back();
+            auto currentStyle = style.get();
             do {
+                extendsStyles.push_back(currentStyle);
                 unresolvedStyles.insert(currentStyle);
-                extendsStyles.push_back(findCounterStyle(currentStyle->extendsName()));
-                currentStyle = extendsStyles.back();
+                currentStyle = findCounterStyle(currentStyle->extendsName());
             } while(currentStyle && currentStyle->system() == CSSValueID::Extends && !unresolvedStyles.contains(currentStyle));
 
+            extendsStyles.push_back(currentStyle);
             if(currentStyle && currentStyle->system() == CSSValueID::Extends) {
                 assert(parent != nullptr);
                 do {
