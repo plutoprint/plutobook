@@ -10,3 +10,4 @@ argparser_dep = declare_dependency(
 
 executable('html2pdf', 'html2pdf.cpp', dependencies: argparser_dep, install: true)
 executable('html2png', 'html2png.cpp', dependencies: argparser_dep, install: true)
+executable('html2yolo', 'html2yolo.cpp', dependencies: argparser_dep, install: true)

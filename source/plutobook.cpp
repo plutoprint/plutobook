@@ -14,6 +14,7 @@
 #include "fontresource.h"
 #include "replacedbox.h"
 #include "graphicscontext.h"
+#include "annotationcollector.h"
 #include "stringutils.h"
 
 #include <cmath>
@@ -390,6 +391,17 @@ PageSize Book::pageSizeAt(uint32_t pageIndex) const
     if(auto document = paginateIfNeeded())
         return document->pageSizeAt(pageIndex);
     return m_pageSize;
+}
+
+AnnotationList Book::annotationsAt(uint32_t pageIndex, const AnnotationOptions& options) const
+{
+    AnnotationList annotations;
+    if(auto document = paginateIfNeeded()) {
+        AnnotationCollector collector(document, options, annotations);
+        collector.collectPage(pageIndex);
+    }
+
+    return annotations;
 }
 
 bool Book::loadUrl(std::string_view url, std::string_view userStyle, std::string_view userScript)
