@@ -118,17 +118,17 @@ public:
 
 private:
     Type m_type;
-    HashType m_hashType;
-    NumberType m_numberType;
-    NumberSign m_numberSign;
+    HashType m_hashType{};
+    NumberType m_numberType{};
+    NumberSign m_numberSign{};
     union {
-        uint32_t m_delim;
+        uint32_t m_delim{};
         float m_number;
     };
 
-    uint32_t m_from;
-    uint32_t m_to;
-    std::string_view m_data;
+    uint32_t m_from{};
+    uint32_t m_to{};
+    std::string_view m_data{};
     friend class CSSVariableData;
 };
 

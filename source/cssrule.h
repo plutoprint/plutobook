@@ -119,9 +119,9 @@ public:
 private:
     using Value = std::variant<HeapString, MatchPattern, CSSSelectorList>;
     MatchType m_matchType;
-    CaseMode m_caseMode;
-    GlobalString m_name;
-    Value m_value;
+    CaseMode m_caseMode{};
+    GlobalString m_name{};
+    Value m_value{};
 };
 
 class CSSComplexSelector {
