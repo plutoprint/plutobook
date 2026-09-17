@@ -166,6 +166,28 @@ std::optional<float> BlockBox::computeHeightUsing(const Length& heightLength) co
     return std::nullopt;
 }
 
+float BlockBox::computeBorderBoxHeightUsingAspectRatio(const AspectRatio& aspectRatio) const
+{
+    // The ratio applies to the content box, except for a bare '<ratio>'
+    // (not 'auto'), where it applies to the box designated by 'box-sizing'.
+    if(aspectRatio.isAuto || style()->boxSizing() == BoxSizing::ContentBox) {
+        auto contentWidth = std::max(0.f, width() - borderAndPaddingWidth());
+        return contentWidth / aspectRatio.value + borderAndPaddingHeight();
+    }
+
+    return width() / aspectRatio.value;
+}
+
+float BlockBox::computeBorderBoxWidthUsingAspectRatio(const AspectRatio& aspectRatio, float borderBoxHeight) const
+{
+    if(aspectRatio.isAuto || style()->boxSizing() == BoxSizing::ContentBox) {
+        auto contentHeight = std::max(0.f, borderBoxHeight - borderAndPaddingHeight());
+        return contentHeight * aspectRatio.value + borderAndPaddingWidth();
+    }
+
+    return borderBoxHeight * aspectRatio.value;
+}
+
 float BlockBox::constrainWidth(float width, const BlockBox* container, float containerWidth) const
 {
     auto minWidthLength = style()->minWidth();
@@ -463,6 +485,14 @@ void BlockBox::computeWidth(float& x, float& width, float& marginLeft, float& ma
     auto container = containingBlock();
     auto containerWidth = std::max(0.f, containingBlockWidthForContent(container));
     width = computeWidthUsing(style()->width(), container, containerWidth);
+    if(style()->width().isAuto()) {
+        if(auto aspectRatio = style()->aspectRatio(); aspectRatio.value > 0.f) {
+            if(auto computedHeight = computeHeightUsing(style()->height())) {
+                width = computeBorderBoxWidthUsingAspectRatio(aspectRatio, adjustBorderBoxHeight(computedHeight.value()));
+            }
+        }
+    }
+
     width = constrainWidth(width, container, containerWidth);
     if(isTableBox())
         width = std::max(width, minPreferredWidth());
@@ -489,8 +519,12 @@ void BlockBox::computeHeight(float& y, float& height, float& marginTop, float& m
     computeVerticalMargins(marginTop, marginBottom);
     if(isTableBox())
         return;
-    if(auto computedHeight = computeHeightUsing(style()->height()))
+    if(auto computedHeight = computeHeightUsing(style()->height())) {
         height = adjustBorderBoxHeight(computedHeight.value());
+    } else if(auto aspectRatio = style()->aspectRatio(); aspectRatio.value > 0.f) {
+        height = computeBorderBoxHeightUsingAspectRatio(aspectRatio);
+    }
+
     height = constrainBorderBoxHeight(height);
 }
 
