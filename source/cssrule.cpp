@@ -16,6 +16,7 @@
 #include <unicode/uiter.h>
 
 #include <set>
+#include <cstdlib>
 
 namespace plutobook {
 
