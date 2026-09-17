@@ -362,7 +362,7 @@ CSSToken CSSTokenizer::consumeUnicodeRangeToken()
         } while(count < 6 && isHexDigit(cc));
     }
 
-    return CSSToken(CSSToken::Type::UnicodeRange, from, to);
+    return CSSToken(CSSToken::Type::UnicodeRange, CSSToken::Range{from, to});
 }
 
 CSSToken CSSTokenizer::consumeIdentLikeToken()

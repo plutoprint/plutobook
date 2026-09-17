@@ -4658,9 +4658,10 @@ RefPtr<CSSValue> CSSParser::consumeFontFaceUnicodeRange(CSSTokenStream& input)
     do {
         if(input->type() != CSSToken::Type::UnicodeRange)
             return nullptr;
-        if(input->to() > 0x10FFFF || input->from() > input->to())
+        const auto range = input->range();
+        if(range.to > 0x10FFFF || range.from > range.to)
             return nullptr;
-        values.push_back(CSSUnicodeRangeValue::create(m_heap, input->from(), input->to()));
+        values.push_back(CSSUnicodeRangeValue::create(m_heap, range.from, range.to));
         input.consumeIncludingWhitespace();
     } while(input.consumeCommaIncludingWhitespace());
     return CSSListValue::create(m_heap, std::move(values));

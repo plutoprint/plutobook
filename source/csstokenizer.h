@@ -82,9 +82,14 @@ public:
         Minus
     };
 
+    struct Range {
+        uint32_t from;
+        uint32_t to;
+    };
+
     explicit CSSToken(Type type) : m_type(type) {}
     CSSToken(Type type, uint32_t delim) : m_type(type), m_delim(delim) {}
-    CSSToken(Type type, uint32_t from, uint32_t to) : m_type(type), m_from(from), m_to(to) {}
+    CSSToken(Type type, Range range) : m_type(type), m_range(range) {}
     CSSToken(Type type, std::string_view data) : m_type(type), m_data(data) {}
     CSSToken(Type type, HashType hashType, std::string_view data) : m_type(type), m_hashType(hashType), m_data(data) {}
 
@@ -103,8 +108,7 @@ public:
     uint32_t delim() const { return m_delim; }
     float number() const { return clampToFloat(m_number); }
     int integer() const { return clampToInteger(m_number); }
-    uint32_t from() const { return m_from; }
-    uint32_t to() const { return m_to; }
+    Range range() const { return m_range; }
     std::string_view data() const { return m_data; }
 
     static Type closeType(Type type) {
@@ -131,10 +135,7 @@ private:
     uint32_t m_delim{};
     union {
         double m_number{};
-        struct {
-            uint32_t m_from;
-            uint32_t m_to;
-        };
+        Range m_range;
     };
 
     std::string_view m_data{};
