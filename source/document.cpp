@@ -873,28 +873,6 @@ RefPtr<BoxStyle> Document::getRunningStyle(const GlobalString& name) const
     return it->second;
 }
 
-HeapString Document::getCountersText(const CounterMap& counters, const GlobalString& name, const GlobalString& listStyle, const HeapString& separator)
-{
-    auto it = counters.find(name);
-    if(it == counters.end())
-        return m_book->heap()->createString(getCounterText(0, listStyle));
-    if(separator.empty()) {
-        int value = 0;
-        if(!it->second.empty())
-            value = it->second.back();
-        return m_book->heap()->createString(getCounterText(value, listStyle));
-    }
-
-    std::string text;
-    for(auto value : it->second) {
-        if(!text.empty())
-            text += separator.value();
-        text += getCounterText(value, listStyle);
-    }
-
-    return m_book->heap()->createString(text);
-}
-
 void Document::addAuthorStyleSheet(std::string_view content, Url baseUrl)
 {
     m_styleSheet.parseStyle(content, CSSStyleOrigin::Author, std::move(baseUrl));

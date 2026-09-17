@@ -307,8 +307,6 @@ class Font;
 struct FontDescription;
 struct FontDataDescription;
 
-using CounterMap = std::map<GlobalString, std::vector<int>>;
-
 using DocumentElementMap = std::pmr::multimap<HeapString, Element*, std::less<>>;
 using DocumentLocaleMap = std::pmr::map<GlobalString, std::unique_ptr<LocaleData>>;
 using DocumentResourceMap = std::pmr::map<Url, RefPtr<Resource>>;
@@ -376,8 +374,6 @@ public:
 
     void addRunningStyle(const GlobalString& name, RefPtr<BoxStyle> style);
     RefPtr<BoxStyle> getRunningStyle(const GlobalString& name) const;
-
-    HeapString getCountersText(const CounterMap& counters, const GlobalString& name, const GlobalString& listStyle, const HeapString& separator);
 
     void addAuthorStyleSheet(std::string_view content, Url baseUrl);
     void addUserStyleSheet(std::string_view content);

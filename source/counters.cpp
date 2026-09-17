@@ -118,7 +118,24 @@ void Counters::update(const Box* box)
 
 HeapString Counters::counterText(const GlobalString& name, const GlobalString& listStyle, const HeapString& separator) const
 {
-    return m_document->getCountersText(m_values, name, listStyle, separator);
+    auto it = m_values.find(name);
+    if(it == m_values.end())
+        return m_document->heap()->createString(m_document->getCounterText(0, listStyle));
+    if(separator.empty()) {
+        int value = 0;
+        if(!it->second.empty())
+            value = it->second.back();
+        return m_document->heap()->createString(m_document->getCounterText(value, listStyle));
+    }
+
+    std::string text;
+    for(auto value : it->second) {
+        if(!text.empty())
+            text += separator.value();
+        text += m_document->getCounterText(value, listStyle);
+    }
+
+    return m_document->heap()->createString(text);
 }
 
 HeapString Counters::markerText(const GlobalString& listStyle) const
