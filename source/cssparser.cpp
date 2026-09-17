@@ -3069,6 +3069,18 @@ RefPtr<CSSValue> CSSParser::consumeTextDecorationLine(CSSTokenStream& input)
     return CSSListValue::create(m_heap, std::move(values));
 }
 
+RefPtr<CSSValue> CSSParser::consumeTextDecorationThickness(CSSTokenStream& input)
+{
+    static constexpr CSSIdentValueEntry table[] = {
+        {"auto", CSSValueID::Auto},
+        {"from-font", CSSValueID::FromFont}
+    };
+
+    if(auto value = consumeIdent(input, table))
+        return value;
+    return consumeLengthOrPercent(input, false, false);
+}
+
 RefPtr<CSSValue> CSSParser::consumePositionComponent(CSSTokenStream& input)
 {
     static constexpr CSSIdentValueEntry table[] = {
@@ -3393,6 +3405,8 @@ RefPtr<CSSValue> CSSParser::consumeLonghand(CSSTokenStream& input, CSSPropertyID
     case CSSPropertyID::LetterSpacing:
     case CSSPropertyID::WordSpacing:
         return consumeLengthOrNormal(input, true, false);
+    case CSSPropertyID::TextUnderlineOffset:
+        return consumeLengthOrPercentOrAuto(input, true, false);
     case CSSPropertyID::OutlineWidth:
     case CSSPropertyID::ColumnRuleWidth:
         return consumeLineWidth(input);
@@ -3488,6 +3502,8 @@ RefPtr<CSSValue> CSSParser::consumeLonghand(CSSTokenStream& input, CSSPropertyID
         return consumeVerticalAlign(input);
     case CSSPropertyID::TextDecorationLine:
         return consumeTextDecorationLine(input);
+    case CSSPropertyID::TextDecorationThickness:
+        return consumeTextDecorationThickness(input);
     case CSSPropertyID::BackgroundSize:
         return consumeBackgroundSize(input);
     case CSSPropertyID::BackgroundPosition:
@@ -3875,6 +3891,16 @@ RefPtr<CSSValue> CSSParser::consumeLonghand(CSSTokenStream& input, CSSPropertyID
             {"dotted", CSSValueID::Dotted},
             {"dashed", CSSValueID::Dashed},
             {"wavy", CSSValueID::Wavy}
+        };
+
+        return consumeIdent(input, table);
+    }
+
+    case CSSPropertyID::TextUnderlinePosition: {
+        static constexpr CSSIdentValueEntry table[] = {
+            {"auto", CSSValueID::Auto},
+            {"from-font", CSSValueID::FromFont},
+            {"under", CSSValueID::Under}
         };
 
         return consumeIdent(input, table);

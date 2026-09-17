@@ -179,6 +179,12 @@ enum class TextDecorationStyle : uint8_t {
     Wavy
 };
 
+enum class TextUnderlinePosition : uint8_t {
+    Auto,
+    FromFont,
+    Under
+};
+
 enum class FontVariantEmoji : uint8_t {
     Normal,
     Text,
@@ -691,6 +697,9 @@ public:
     float fontHeight() const;
     float fontLineHeight() const;
 
+    float fontUnderlinePosition() const;
+    float fontUnderlineThickness() const;
+
     float exFontSize() const;
     float capFontSize() const;
     float chFontSize() const;
@@ -811,6 +820,12 @@ public:
     OverflowWrap overflowWrap() const { return m_overflowWrap; }
     FontVariantEmoji fontVariantEmoji() const { return m_fontVariantEmoji; }
     Hyphens hyphens() const { return m_hyphens; }
+    float textDecorationThickness() const;
+    TextUnderlinePosition textUnderlinePosition() const;
+    Length textUnderlineOffset() const;
+
+    // distance from the alphabetic baseline down to the underline
+    float underlineDistanceFromBaseline(float thickness) const;
     Length textIndent() const;
     float letterSpacing() const;
     float wordSpacing() const;
