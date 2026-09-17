@@ -11,6 +11,7 @@
 
 #include "pointer.h"
 #include "heapstring.h"
+#include "ustring.h"
 #include "writingmode.h"
 #include "color.h"
 
@@ -811,6 +812,7 @@ public:
     OverflowWrap overflowWrap() const { return m_overflowWrap; }
     FontVariantEmoji fontVariantEmoji() const { return m_fontVariantEmoji; }
     Hyphens hyphens() const { return m_hyphens; }
+    UString hyphenString() const;
     Length textIndent() const;
     float letterSpacing() const;
     float wordSpacing() const;
