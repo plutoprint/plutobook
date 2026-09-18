@@ -14,9 +14,8 @@
 #include "stringutils.h"
 
 #include <unicode/uiter.h>
-
-#include <set>
 #include <cstdlib>
+#include <set>
 
 namespace plutobook {
 
@@ -787,6 +786,36 @@ RefPtr<CSSCounterStyle> CSSCounterStyle::create(Heap* heap, RefPtr<CSSCounterSty
     return adoptPtr(new (heap) CSSCounterStyle(std::move(rule)));
 }
 
+template std::string CSSCounterStyle::generateDecimalRepresentation<false>(int);
+template std::string CSSCounterStyle::generateDecimalRepresentation<true>(int);
+
+template<bool isMarker>
+std::string CSSCounterStyle::generateDecimalRepresentation(int value)
+{
+    auto number = static_cast<unsigned>(std::llabs(value));
+
+    constexpr size_t kSuffixLength = isMarker ? 2 : 0;
+    char buffer[sizeof(number) * 3 + 1 + kSuffixLength];
+    char* end = std::end(buffer);
+    char* p = end - kSuffixLength;
+
+    if constexpr(isMarker) {
+        p[0] = '.';
+        p[1] = ' ';
+    }
+
+    do {
+        *--p = static_cast<char>((number % 10) + '0');
+        number /= 10;
+    } while(number);
+
+    if(value < 0) {
+        *--p = '-';
+    }
+
+    return std::string(p, end - p);
+}
+
 static void cyclicAlgorithm(int value, size_t numSymbols, std::vector<size_t>& indexes)
 {
     assert(numSymbols > 0);
@@ -931,7 +960,7 @@ std::string CSSCounterStyle::generateInitialRepresentation(int value) const
 std::string CSSCounterStyle::generateFallbackRepresentation(int value) const
 {
     if(m_fallbackStyle == nullptr)
-        return defaultStyle().generateRepresentation(value);
+        return generateDecimalRepresentation<false>(value);
     return m_fallbackStyle->generateRepresentation(value);
 }
 

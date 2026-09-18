@@ -578,6 +578,9 @@ class CSSCounterStyle : public HeapMember, public RefCounted<CSSCounterStyle> {
 public:
     static RefPtr<CSSCounterStyle> create(Heap* heap, RefPtr<CSSCounterStyleRule> rule);
 
+    template<bool isMarker>
+    static std::string generateDecimalRepresentation(int value);
+
     std::string generateInitialRepresentation(int value) const;
     std::string generateFallbackRepresentation(int value) const;
     std::string generateRepresentation(int value) const;
