@@ -15,23 +15,19 @@
 #include <limits>
 #include <cassert>
 #include <cstdint>
+#include <type_traits>
 
 namespace plutobook {
 
-constexpr int clampToInteger(double value)
+template<typename T, typename U>
+constexpr T clampTo(U value)
 {
-    constexpr auto min = std::numeric_limits<int>::min();
-    constexpr auto max = std::numeric_limits<int>::max();
+    static_assert(std::is_signed_v<T> && std::is_signed_v<U> && sizeof(U) > sizeof(T));
 
-    return value >= double(max) ? max : (value <= double(min) ? min : int(value));
-}
+    constexpr T min = std::numeric_limits<T>::lowest();
+    constexpr T max = std::numeric_limits<T>::max();
 
-constexpr float clampToFloat(double value)
-{
-    constexpr auto min = std::numeric_limits<float>::lowest();
-    constexpr auto max = std::numeric_limits<float>::max();
-
-    return value >= double(max) ? max : (value <= double(min) ? min : float(value));
+    return value >= U(max) ? max : (value <= U(min) ? min : T(value));
 }
 
 class CSSToken {
@@ -106,8 +102,8 @@ public:
     NumberType numberType() const { return m_numberType; }
     NumberSign numberSign() const { return m_numberSign; }
     uint32_t delim() const { return m_delim; }
-    float number() const { return clampToFloat(m_number); }
-    int integer() const { return clampToInteger(m_number); }
+    float number() const { return clampTo<float>(m_number); }
+    int integer() const { return clampTo<int>(m_number); }
     Range range() const { return m_range; }
     std::string_view data() const { return m_data; }
 
