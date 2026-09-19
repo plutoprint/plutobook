@@ -921,7 +921,7 @@ PLUTOBOOK_API void plutobook_render_document(const plutobook_t* book, plutobook_
  * @brief Renders the entire document to the given cairo context.
  *
  * @param book A pointer to a `plutobook_t` object.
- * @param canvas The cairo context to render the entire document on.
+ * @param context The cairo context to render the entire document on.
  */
 PLUTOBOOK_API void plutobook_render_document_cairo(const plutobook_t* book, cairo_t* context);
 
@@ -942,7 +942,7 @@ PLUTOBOOK_API void plutobook_render_document_rect(const plutobook_t* book, pluto
  * @brief Renders a specific rectangular portion of the document to the given cairo context.
  *
  * @param book A pointer to a `plutobook_t` object.
- * @param canvas The cairo context to render the document portion on.
+ * @param context The cairo context to render the document portion on.
  * @param x The x-coordinate of the top-left corner of the rectangle.
  * @param y The y-coordinate of the top-left corner of the rectangle.
  * @param width The width of the rectangle to render.
@@ -1079,7 +1079,7 @@ PLUTOBOOK_API void plutobook_set_error_message(const char* format, ...) PLUTOBOO
 PLUTOBOOK_API const char* plutobook_get_error_message(void);
 
 /**
- * @brief @brief Clears any previously set error message for the current thread.
+ * @brief Clears any previously set error message for the current thread.
  */
 PLUTOBOOK_API void plutobook_clear_error_message(void);
 
