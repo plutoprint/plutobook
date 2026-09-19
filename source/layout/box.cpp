@@ -924,7 +924,7 @@ void BoxFrame::computeHorizontalStaticDistance(Length& leftLength, Length& right
 
         leftLength = Length(Length::Type::Fixed, staticPosition);
     } else {
-        auto staticPosition = layer()->staticLeft() + containerWidth + container->borderRight();
+        auto staticPosition = layer()->staticLeft() + containerWidth + container->borderLeft();
         while(parent && !parent->isBoxFrame())
             parent = parent->parentBox();
         if(auto box = to<BoxFrame>(parent))
