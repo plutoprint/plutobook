@@ -118,8 +118,7 @@ void LineItemsBuilder::enterBlock(Box* box)
         enterBidi(nullptr, direction, kLeftToRightOverrideCharacter, kRightToLeftOverrideCharacter, kPopDirectionalFormattingCharacter);
         break;
     default:
-        if(direction == Direction::Rtl)
-            m_data.isBidiEnabled = true;
+        m_data.isBidiEnabled = (direction == Direction::Rtl);
         break;
     }
 }
