@@ -973,7 +973,7 @@ void BoxFrame::computeHorizontalMargins(float& marginLeft, float& marginRight, f
 
     auto containerBlock = to<BlockFlowBox>(container);
     if(containerBlock && containerBlock->containsFloats() && avoidsFloats())
-        containerWidth = containerBlock->availableWidthForLine(y(), false);
+        containerWidth = containerBlock->availableWidthForLine(y());
     if(childWidth < containerWidth) {
         if(marginLeftLength.isAuto() && marginRightLength.isAuto()) {
             marginLeft = std::max(0.f, (containerWidth - childWidth) / 2.f);
