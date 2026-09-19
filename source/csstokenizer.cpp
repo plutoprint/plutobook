@@ -10,7 +10,6 @@
 #include "stringutils.h"
 
 #include <unicode/utf8.h>
-
 #include <cmath>
 
 namespace plutobook {

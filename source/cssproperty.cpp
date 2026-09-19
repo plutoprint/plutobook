@@ -1092,7 +1092,7 @@ CSSVariableData::CSSVariableData(Heap* heap, const CSSTokenStream& value)
     }
 }
 
-bool CSSVariableData::resolve(const BoxStyle* style, CSSTokenList& tokens, std::vector<CSSVariableData *> &references) const
+bool CSSVariableData::resolve(const BoxStyle* style, CSSTokenList& tokens, std::vector<CSSVariableData*>& references) const
 {
     CSSTokenStream input(m_tokens.data(), m_tokens.size());
     return resolve(input, style, tokens, references);
