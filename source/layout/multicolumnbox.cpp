@@ -461,9 +461,9 @@ bool MultiColumnFlowBox::layoutColumns(bool balancing)
 {
     m_currentRow = firstRow();
     if(m_currentRow)
-        m_currentRow->setRowTop(height());
+        m_currentRow->setRowTop(borderAndPaddingTop());
     assert(fragmentOffset() == 0.f);
-    BlockFlowBox::layoutContents(this);
+    BlockFlowBox::layout(this);
     assert(fragmentOffset() == 0.f);
     if(m_currentRow) {
         assert(m_currentRow == lastRow());
@@ -519,7 +519,7 @@ void MultiColumnFlowBox::computeWidth(float& x, float& width, float& marginLeft,
     }
 }
 
-void MultiColumnFlowBox::layoutContents(FragmentBuilder* fragmentainer)
+void MultiColumnFlowBox::layout(FragmentBuilder* fragmentainer)
 {
     auto container = columnBlockFlow();
     auto containerStyle = container->style();
@@ -536,7 +536,6 @@ void MultiColumnFlowBox::layoutContents(FragmentBuilder* fragmentainer)
 
     auto changed = layoutColumns(false);
     while(changed) {
-        setHeight(borderAndPaddingTop());
         changed = layoutColumns(true);
     }
 }

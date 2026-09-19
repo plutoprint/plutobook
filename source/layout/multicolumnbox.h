@@ -193,7 +193,7 @@ public:
 
     void computePreferredWidths(float& minPreferredWidth, float& maxPreferredWidth) const final;
     void computeWidth(float& x, float& width, float& marginLeft, float& marginRight) const final;
-    void layoutContents(FragmentBuilder* fragmentainer) final;
+    void layout(FragmentBuilder* fragmentainer) override;
     void build() final;
 
     const char* name() const final { return "MultiColumnFlowBox"; }
