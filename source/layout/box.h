@@ -440,7 +440,7 @@ public:
     Rect borderBoxRect() const { return Rect(0, 0, borderBoxWidth(), borderBoxHeight()); }
     Rect paddingBoxRect() const { return Rect(borderLeft(), borderTop(), paddingBoxWidth(), paddingBoxHeight()); }
     Rect contentBoxRect() const { return Rect(borderLeft() + paddingLeft(), borderTop() + paddingTop(), contentBoxWidth(), contentBoxHeight()); }
-    Rect marginBoxRect() const { return Rect(-marginLeft(), -marginRight(), marginBoxWidth(), marginBoxHeight()); }
+    Rect marginBoxRect() const { return Rect(-marginLeft(), -marginTop(), marginBoxWidth(), marginBoxHeight()); }
 
     Rect visualOverflowRect() const override;
     Rect borderBoundingBox() const override;
