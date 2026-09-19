@@ -9,10 +9,12 @@
 #ifndef PLUTOBOOK_HPP
 #define PLUTOBOOK_HPP
 
-#include <cstdint>
 #include <cstddef>
-#include <string>
+#include <cstdint>
 #include <memory>
+#include <string>
+#include <string_view>
+#include <utility>
 
 #include "plutobook.h"
 
@@ -189,11 +191,11 @@ public:
     {}
 
     /**
-     * @brief Constructs a PageMargins object with vertical and horizontal margins.
+     * @brief Constructs a PageMargins object with separate top and bottom margins and a shared horizontal margin.
      *
-     * @param top The top margin in points.
+     * @param top The margin for the top side, in points.
      * @param horizontal The margin for the left and right sides, in points.
-     * @param bottom The bottom margin in points.
+     * @param bottom The margin for the bottom side, in points.
      */
     constexpr PageMargins(float top, float horizontal, float bottom)
         : PageMargins(top, horizontal, bottom, horizontal)
@@ -436,8 +438,8 @@ public:
     /**
      * @brief Copy assignment operator that shares ownership of the underlying resource.
      *
-     * This operator performs a deep copy of the underlying resource by sharing ownership with the `resource`
-     * object. The reference count of the underlying resource is incremented to reflect the new ownership.
+     * This operator does not copy the resource data. Instead, it shares ownership of the underlying resource
+     * with the `resource` object by incrementing its reference count to reflect the new ownership.
      *
      * @param resource A `ResourceData` object to copy the resource from.
      * @return A reference to the current `ResourceData` object after the assignment.
@@ -457,8 +459,8 @@ public:
     /**
      * @brief Swaps the underlying resources of two `ResourceData` objects.
      *
-     * This function swaps the resource data between the current object and the provided `resource` object.
-     * After the swap, both objects will share their respective resources.
+     * This function exchanges the underlying resources of the current object and the provided `resource` object.
+     * After the swap, each object owns the resource previously held by the other. No reference counts are changed.
      *
      * @param resource The `ResourceData` object to swap with.
      */
@@ -707,7 +709,7 @@ public:
     void transform(float a, float b, float c, float d, float e, float f);
 
     /**
-     * @brief Resets the current transformation to the identity matrix.
+     * @brief Resets the transformation matrix to the specified matrix.
      * @param a The horizontal scaling factor.
      * @param b The horizontal skewing factor.
      * @param c The vertical skewing factor.
@@ -726,8 +728,8 @@ public:
      * @brief Intersects the current clip with the specified rectangle.
      * @param x The x-coordinate of the top-left corner of the rectangle.
      * @param y The y-coordinate of the top-left corner of the rectangle.
-     * @param width width The width of the rectangle.
-     * @param height height The height of the rectangle.
+     * @param width The width of the rectangle.
+     * @param height The height of the rectangle.
      */
     void clipRect(float x, float y, float width, float height);
 
@@ -792,13 +794,16 @@ enum class ImageFormat {
     A1 = PLUTOBOOK_IMAGE_FORMAT_A1
 };
 
+/**
+ * @brief The ImageCanvas class represents a canvas for drawing to in-memory image data.
+ */
 class PLUTOBOOK_API ImageCanvas final : public Canvas {
 public:
     /**
      * @brief Constructs an ImageCanvas with the specified width, height, and optional image format.
      * @param width The width of the canvas.
      * @param height The height of the canvas.
-     * @param format The format of the image
+     * @param format The format of the image data.
      */
     ImageCanvas(int width, int height, ImageFormat format = ImageFormat::ARGB32);
 
@@ -808,7 +813,7 @@ public:
      * @param width The width of the image data.
      * @param height The height of the image data.
      * @param stride The stride of the image data.
-     * @param format The format of the image data
+     * @param format The format of the image data.
      */
     ImageCanvas(uint8_t* data, int width, int height, int stride, ImageFormat format = ImageFormat::ARGB32);
 
@@ -858,7 +863,7 @@ public:
 
     /**
      * @brief Writes the image data to a PNG file using a custom write callback.
-     * @param callback The callback function for writing data
+     * @param callback The callback function for writing data.
      * @param closure A pointer to user-defined data to be passed to the callback.
      * @return true if the image was successfully written using the callback, false otherwise.
      */
@@ -934,7 +939,7 @@ public:
     PDFString& operator=(PDFString&&) = default;
 
     /**
-     * @brief data Returns the null-terminated character data.
+     * @brief Returns the null-terminated character data.
      * @return Pointer to the character data, or `nullptr` if the string is null.
      */
     const char* data() const { return m_data.get(); }
@@ -951,7 +956,7 @@ public:
     operator std::string_view() const;
 
     /**
-     * @brief Replace the stored string.
+     * @brief Replaces the stored string.
      * @param value The new string to store. Defaults to null.
      */
     void reset(PDFString value = PDFString()) { swap(value); }
@@ -1082,6 +1087,9 @@ enum class MediaType {
     Screen = PLUTOBOOK_MEDIA_TYPE_SCREEN
 };
 
+/**
+ * @brief The Book class represents a document that can be loaded, laid out, and rendered to a canvas or written to a file.
+ */
 class PLUTOBOOK_API Book {
 public:
     /**
@@ -1322,11 +1330,11 @@ public:
     void renderPage(plutobook_canvas_t* canvas, uint32_t pageIndex) const;
 
     /**
-     * @brief Renders the specified page to the given canvas.
-     * @param canvas The canvas to render the page on.
+     * @brief Renders the specified page to the given cairo context.
+     * @param context The cairo context to render the page on.
      * @param pageIndex The index of the page to render.
      */
-    void renderPage(cairo_t* canvas, uint32_t pageIndex) const;
+    void renderPage(cairo_t* context, uint32_t pageIndex) const;
 
     /**
      * @brief Renders the entire document to the given canvas.
@@ -1361,20 +1369,20 @@ public:
     void renderDocument(plutobook_canvas_t* canvas, float x, float y, float width, float height) const;
 
     /**
-     * @brief Renders the entire document to the given canvas.
-     * @param canvas The canvas to render the entire document on.
+     * @brief Renders the entire document to the given cairo context.
+     * @param context The cairo context to render the entire document on.
      */
-    void renderDocument(cairo_t* canvas) const;
+    void renderDocument(cairo_t* context) const;
 
     /**
-     * @brief Renders a specific rectangular portion of the document to the given canvas.
-     * @param canvas The canvas to render the document portion on.
+     * @brief Renders a specific rectangular portion of the document to the given cairo context.
+     * @param context The cairo context to render the document portion on.
      * @param x The x-coordinate of the top-left corner of the rectangle.
      * @param y The y-coordinate of the top-left corner of the rectangle.
      * @param width The width of the rectangle to render.
      * @param height The height of the rectangle to render.
      */
-    void renderDocument(cairo_t* canvas, float x, float y, float width, float height) const;
+    void renderDocument(cairo_t* context, float x, float y, float width, float height) const;
 
     /**
      * @brief Writes a range of pages from the document to a PDF file.
@@ -1388,7 +1396,7 @@ public:
         uint32_t pageEnd = kMaxPageCount, int pageStep = 1) const;
 
     /**
-     * @brief Writes the entire document to a PDF stream using a callback function.
+     * @brief Writes a range of pages from the document to a PDF output stream.
      * @param output The output stream where the PDF document will be written.
      * @param pageStart The first page in the range to be written (inclusive).
      * @param pageEnd The last page in the range to be written (inclusive).
@@ -1399,7 +1407,7 @@ public:
         uint32_t pageEnd = kMaxPageCount, int pageStep = 1) const;
 
     /**
-     * @brief Writes the entire document to a PDF stream using a callback function.
+     * @brief Writes a range of pages from the document to a PDF stream using a callback function.
      * @param callback A callback function used for writing the PDF stream.
      * @param closure A user-defined pointer passed to the callback function for additional data.
      * @param pageStart The first page in the range to be written (inclusive).

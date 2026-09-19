@@ -11,8 +11,9 @@
 #include <cairo-pdf.h>
 
 #include <cstdarg>
-#include <cstring>
+#include <cstdio>
 #include <cstdlib>
+#include <cstring>
 
 int plutobook_version(void)
 {
