@@ -278,7 +278,7 @@ public:
     float containingBlockHeightForPositioned(const BoxModel* container) const;
     float containingBlockHeightForPositioned() const { return containingBlockHeightForPositioned(containingBox()); }
 
-    virtual float containingBlockWidthForContent(const BlockBox* container) const;
+    float containingBlockWidthForContent(const BlockBox* container) const;
     float containingBlockWidthForContent() const { return containingBlockWidthForContent(containingBlock()); }
 
     std::optional<float> containingBlockHeightForContent(const BlockBox* container) const;
@@ -297,9 +297,9 @@ public:
     void setMarginLeft(float value) { m_marginLeft = value; }
     void setMarginRight(float value) { m_marginRight = value; }
 
-    void updateVerticalMargins(const BlockBox* container);
-    void updateHorizontalMargins(const BlockBox* container);
-    void updateMarginWidths(const BlockBox* container);
+    void updateVerticalMargins(float containerWidth);
+    void updateHorizontalMargins(float containerWidth);
+    void updateMarginWidths(float containerWidth);
 
     float paddingTop() const { return m_paddingTop; }
     float paddingBottom() const { return m_paddingBottom; }
@@ -314,9 +314,9 @@ public:
     void setPaddingLeft(float value) { m_paddingLeft = value; }
     void setPaddingRight(float value) { m_paddingRight = value; }
 
-    void updateVerticalPaddings(const BlockBox* container);
-    void updateHorizontalPaddings(const BlockBox* container);
-    void updatePaddingWidths(const BlockBox* container);
+    void updateVerticalPaddings(float containerWidth);
+    void updateHorizontalPaddings(float containerWidth);
+    void updatePaddingWidths(float containerWidth);
 
     virtual void computeBorderWidths(float& borderTop, float& borderBottom, float& borderLeft, float& borderRight) const;
 

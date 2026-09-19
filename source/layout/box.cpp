@@ -705,9 +705,9 @@ float BoxModel::containingBlockHeightForPositioned(const BoxModel* container) co
 
 float BoxModel::containingBlockWidthForContent(const BlockBox* container) const
 {
-    if(container)
-        return container->availableWidth();
-    return 0.f;
+    if(isTableCaptionBox())
+        return container->width();
+    return container->availableWidth();
 }
 
 std::optional<float> BoxModel::containingBlockHeightForContent(const BlockBox* container) const
@@ -715,52 +715,48 @@ std::optional<float> BoxModel::containingBlockHeightForContent(const BlockBox* c
     return container->availableHeight();
 }
 
-void BoxModel::updateVerticalMargins(const BlockBox* container)
+void BoxModel::updateVerticalMargins(float containerWidth)
 {
-    auto containerWidth = containingBlockWidthForContent(container);
     m_marginTop = style()->marginTop().calcMin(containerWidth);
     m_marginBottom = style()->marginBottom().calcMin(containerWidth);
 }
 
-void BoxModel::updateHorizontalMargins(const BlockBox* container)
+void BoxModel::updateHorizontalMargins(float containerWidth)
 {
-    auto containerWidth = containingBlockWidthForContent(container);
     m_marginLeft = style()->marginLeft().calcMin(containerWidth);
     m_marginRight = style()->marginRight().calcMin(containerWidth);
 }
 
-void BoxModel::updateMarginWidths(const BlockBox* container)
+void BoxModel::updateMarginWidths(float containerWidth)
 {
-    updateVerticalMargins(container);
-    updateHorizontalMargins(container);
+    updateVerticalMargins(containerWidth);
+    updateHorizontalMargins(containerWidth);
 }
 
-void BoxModel::updateVerticalPaddings(const BlockBox* container)
+void BoxModel::updateVerticalPaddings(float containerWidth)
 {
     if(isBorderCollapsed()) {
         m_paddingTop = m_paddingBottom = 0;
     } else {
-        auto containerWidth = containingBlockWidthForContent(container);
         m_paddingTop = style()->paddingTop().calcMin(containerWidth);
         m_paddingBottom = style()->paddingBottom().calcMin(containerWidth);
     }
 }
 
-void BoxModel::updateHorizontalPaddings(const BlockBox* container)
+void BoxModel::updateHorizontalPaddings(float containerWidth)
 {
     if(isBorderCollapsed()) {
         m_paddingLeft = m_paddingRight = 0;
     } else {
-        auto containerWidth = containingBlockWidthForContent(container);
         m_paddingLeft = style()->paddingLeft().calcMin(containerWidth);
         m_paddingRight = style()->paddingRight().calcMin(containerWidth);
     }
 }
 
-void BoxModel::updatePaddingWidths(const BlockBox* container)
+void BoxModel::updatePaddingWidths(float containerWidth)
 {
-    updateVerticalPaddings(container);
-    updateHorizontalPaddings(container);
+    updateVerticalPaddings(containerWidth);
+    updateHorizontalPaddings(containerWidth);
 }
 
 void BoxModel::computeBorderWidths(float& borderTop, float& borderBottom, float& borderLeft, float& borderRight) const

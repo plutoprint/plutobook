@@ -74,7 +74,7 @@ void TableBox::computeIntrinsicWidths(float& minWidth, float& maxWidth) const
     }
 
     for(auto caption : m_captions) {
-        caption->updateHorizontalPaddings(nullptr);
+        caption->updateHorizontalPaddings(0.f);
 
         minWidth = std::max(minWidth, caption->minPreferredWidth());
         maxWidth = std::max(maxWidth, caption->minPreferredWidth());
@@ -299,8 +299,8 @@ float TableBox::availableHorizontalSpace() const
 
 void TableBox::layoutCaption(TableCaptionBox* caption, FragmentBuilder* fragmentainer)
 {
-    caption->updatePaddingWidths(this);
-    caption->updateVerticalMargins(this);
+    caption->updatePaddingWidths(width());
+    caption->updateVerticalMargins(width());
 
     auto captionTop = height() + caption->marginTop();
     if(fragmentainer) {
@@ -631,7 +631,7 @@ void FixedTableLayoutAlgorithm::build()
                 auto cellBox = cell.box();
                 auto cellStyleWidth = cellBox->style()->width();
                 if(cellStyleWidth.isFixed()) {
-                    cellBox->updateHorizontalPaddings(nullptr);
+                    cellBox->updateHorizontalPaddings(0.f);
                     cellStyleWidth = Length(Length::Type::Fixed, cellBox->adjustBorderBoxWidth(cellStyleWidth.value()) / cellBox->colSpan());
                 } else if(cellStyleWidth.isPercent()) {
                     cellStyleWidth = Length(Length::Type::Percent, cellStyleWidth.value() / cellBox->colSpan());
@@ -973,7 +973,7 @@ void AutoTableLayoutAlgorithm::computeIntrinsicWidths(float& minWidth, float& ma
                 auto cellBox = cell.box();
                 if(cell.inColOrRowSpan())
                     continue;
-                cellBox->updateHorizontalPaddings(nullptr);
+                cellBox->updateHorizontalPaddings(0.f);
                 if(cellBox->colSpan() == 1) {
                     auto& columnWidth = m_columnWidths[col];
                     columnWidth.minWidth = std::max(columnWidth.minWidth, cellBox->minPreferredWidth());
@@ -1302,7 +1302,7 @@ void TableSectionBox::layout(FragmentBuilder* fragmentainer)
 
             cellBox->clearOverrideSize();
             cellBox->setOverrideWidth(width);
-            cellBox->updatePaddingWidths(table());
+            cellBox->updatePaddingWidths(table()->availableWidth());
             cellBox->layout(fragmentainer);
 
             if(cellBox->rowSpan() == 1)
@@ -2079,13 +2079,6 @@ void TableCellBox::paintDecorations(const PaintInfo& info, const Point& offset)
 TableCaptionBox::TableCaptionBox(Node* node, const RefPtr<BoxStyle>& style)
     : BlockFlowBox(node, style)
 {
-}
-
-float TableCaptionBox::containingBlockWidthForContent(const BlockBox* container) const
-{
-    if(container)
-        return container->width();
-    return 0.f;
 }
 
 } // namespace plutobook

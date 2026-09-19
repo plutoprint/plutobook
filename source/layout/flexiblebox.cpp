@@ -259,8 +259,8 @@ void FlexibleBox::computeIntrinsicWidths(float& minWidth, float& maxWidth) const
             continue;
         }
 
-        child->updateHorizontalMargins(nullptr);
-        child->updateHorizontalPaddings(nullptr);
+        child->updateHorizontalMargins(0.f);
+        child->updateHorizontalPaddings(0.f);
 
         auto childMinWidth = child->minPreferredWidth() + child->marginWidth();
         auto childMaxWidth = child->maxPreferredWidth() + child->marginWidth();
@@ -473,8 +473,8 @@ void FlexibleBox::layout(FragmentBuilder* fragmentainer)
     for(auto& item : m_items) {
         auto child = item.box();
         child->clearOverrideSize();
-        child->updateMarginWidths(this);
-        child->updatePaddingWidths(this);
+        child->updateMarginWidths(availableWidth());
+        child->updatePaddingWidths(availableWidth());
 
         item.setFlexBaseSize(item.computeFlexBaseSize());
         item.setTargetMainSize(item.constrainMainSize(item.flexBaseSize()));
