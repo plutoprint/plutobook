@@ -53,20 +53,20 @@ void BlockBox::insertPositonedBox(BoxFrame* box)
 {
     if(m_positionedBoxes == nullptr)
         m_positionedBoxes = std::make_unique<PositionedBoxList>(heap());
-    m_positionedBoxes->insert(box);
-}
-
-void BlockBox::removePositonedBox(BoxFrame* box)
-{
-    if(m_positionedBoxes) {
-        m_positionedBoxes->erase(box);
+    for(auto positionedBox : *m_positionedBoxes) {
+        if(box == positionedBox) {
+            return;
+        }
     }
+
+    m_positionedBoxes->push_back(box);
 }
 
 void BlockBox::layoutPositionedBoxes()
 {
     if(m_positionedBoxes) {
-        for(auto box : *m_positionedBoxes) {
+        for(size_t i = 0; i < m_positionedBoxes->size(); i++) {
+            auto box = m_positionedBoxes->at(i);
             box->updatePaddingWidths(this);
             box->layout(nullptr);
         }

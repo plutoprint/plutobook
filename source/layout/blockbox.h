@@ -11,11 +11,9 @@
 
 #include "box.h"
 
-#include <set>
-
 namespace plutobook {
 
-using PositionedBoxList = std::pmr::set<BoxFrame*>;
+using PositionedBoxList = std::pmr::vector<BoxFrame*>;
 
 class BlockBox : public BoxFrame {
 public:
@@ -30,7 +28,6 @@ public:
     bool containsPositonedBoxes() const { return m_positionedBoxes && !m_positionedBoxes->empty(); }
 
     void insertPositonedBox(BoxFrame* box);
-    void removePositonedBox(BoxFrame* box);
     void layoutPositionedBoxes();
 
     float leftOffsetForContent() const { return borderLeft() + paddingLeft(); }

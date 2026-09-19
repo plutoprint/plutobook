@@ -12,6 +12,7 @@
 #include "blockbox.h"
 
 #include <list>
+#include <set>
 
 namespace plutobook {
 
