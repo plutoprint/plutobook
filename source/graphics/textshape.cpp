@@ -164,19 +164,30 @@ static hb_feature_t toHbFeature(const FontFeature& feature)
     return hbFeature;
 }
 
-RefPtr<TextShape> TextShape::createForText(const UString& text, Direction direction, bool disableSpacing, const BoxStyle* style)
+RefPtr<TextShape> TextShape::createForText(const UString& text, Direction direction, bool svgText, const BoxStyle* style)
 {
     assert(!text.isEmpty());
     const auto* font = style->font();
     const auto* locale = font->locale();
     auto fontVariantEmoji = style->fontVariantEmoji();
-    auto letterSpacing = disableSpacing ? 0 : style->letterSpacing();
-    auto wordSpacing = disableSpacing ? 0 : style->wordSpacing();
+    auto letterSpacing = svgText ? 0 : style->letterSpacing();
+    auto wordSpacing = svgText ? 0 : style->wordSpacing();
     auto heap = style->heap();
 
     thread_local hb::unique_ptr<hb_buffer_t> hbBuffer(hb_buffer_create());
     auto hbDirection = direction == Direction::Ltr ? HB_DIRECTION_LTR : HB_DIRECTION_RTL;
     auto hbLanguage = locale->language();
+    // SVG positions its own character fragments; HTML uses logical line coordinates.
+    const bool vertical = style->isVerticalWritingMode() && !svgText;
+    const bool verticalLr = vertical && style->writingMode() == WritingMode::VerticalLr;
+    auto isUpright = [&](UChar32 ch) {
+        if(!vertical || style->isSidewaysWritingMode() || style->textOrientation() == TextOrientation::Sideways)
+            return false;
+        if(style->textOrientation() == TextOrientation::Upright)
+            return true;
+        auto orientation = u_getIntPropertyValue(ch, UCHAR_VERTICAL_ORIENTATION);
+        return orientation == U_VO_UPRIGHT || orientation == U_VO_TRANSFORMED_UPRIGHT;
+    };
 
     std::vector<hb_feature_t> hbFeatures;
     for(const auto& feature : style->fontFeatures())
@@ -199,6 +210,7 @@ RefPtr<TextShape> TextShape::createForText(const UString& text, Direction direct
     while(totalLength > 0) {
         auto fontData = nextFontData;
         auto scriptCode = nextScriptCode;
+        const bool upright = isUpright(text.char32At(startIndex));
         if(!fontData || U_FAILURE(errorCode))
             break;
         auto numCharacters = nextIndex - startIndex;
@@ -212,7 +224,7 @@ RefPtr<TextShape> TextShape::createForText(const UString& text, Direction direct
             if(!treatAsZeroWidthSpace(character)) {
                 nextFontData = resolveFontData(font, textBuffer + clusterOffset, clusterLength, fontVariantEmoji);
                 nextScriptCode = uscript_getScript(character, &errorCode);
-                if(fontData != nextFontData || U_FAILURE(errorCode))
+                if(upright != isUpright(character) || fontData != nextFontData || U_FAILURE(errorCode))
                     break;
                 if(nextScriptCode != USCRIPT_INHERITED && nextScriptCode != USCRIPT_COMMON) {
                     if(scriptCode == USCRIPT_INHERITED || scriptCode == USCRIPT_COMMON) {
@@ -240,10 +252,12 @@ RefPtr<TextShape> TextShape::createForText(const UString& text, Direction direct
 
             hb_buffer_reset(hbBuffer);
             hb_buffer_add_utf16(hbBuffer, textBuffer + startIndex, itemLength, 0, itemLength);
-            hb_buffer_set_direction(hbBuffer, hbDirection);
+            hb_buffer_set_direction(hbBuffer, upright ? HB_DIRECTION_TTB : hbDirection);
             hb_buffer_set_language(hbBuffer, hbLanguage);
             hb_buffer_set_script(hbBuffer, hbScript);
-            hb_shape(fontData->hbFont(), hbBuffer, hbFeatures.data(), hbFeatures.size());
+            hb_shape(fontData->hbFont(upright), hbBuffer, hbFeatures.data(), hbFeatures.size());
+            if(upright && direction == Direction::Rtl)
+                hb_buffer_reverse_clusters(hbBuffer);
 
             auto glyphInfos = hb_buffer_get_glyph_infos(hbBuffer, nullptr);
             auto glyphPositions = hb_buffer_get_glyph_positions(hbBuffer, nullptr);
@@ -256,6 +270,9 @@ RefPtr<TextShape> TextShape::createForText(const UString& text, Direction direct
                 const auto& glyphPosition = glyphPositions[index];
 
                 auto& glyphData = glyphs[index];
+                glyphData.upright = upright;
+                glyphData.verticalLr = verticalLr;
+                glyphData.crossOffset = style->fontAscent() - style->fontHeight() / 2.f;
                 glyphData.glyphIndex = glyphInfo.codepoint;
                 glyphData.characterIndex = glyphInfo.cluster;
                 glyphData.xOffset = HB_TO_FLT(glyphPosition.x_offset);
@@ -494,10 +511,30 @@ float TextShapeView::draw(GraphicsContext& context, const Point& origin, float e
                 || (direction == Direction::Rtl && characterIndex < m_endOffset)) {
                 auto character = text.charAt(characterIndex);
                 if(!treatAsZeroWidthSpace(character)) {
-                    glyphBuffer[numGlyphs].index = glyph.glyphIndex;
-                    glyphBuffer[numGlyphs].x = offset.x + glyph.xOffset;
-                    glyphBuffer[numGlyphs].y = offset.y + glyph.yOffset;
-                    numGlyphs++;
+                    if(glyph.upright || glyph.verticalLr) {
+                        cairo_save(canvas);
+                        cairo_translate(canvas, offset.x, offset.y - (glyph.upright ? glyph.crossOffset : 2.f * glyph.crossOffset));
+                        cairo_matrix_t matrix;
+                        if(glyph.upright)
+                            cairo_matrix_init(&matrix, 0, glyph.verticalLr ? 1 : -1, 1, 0, 0, 0);
+                        else
+                            cairo_matrix_init(&matrix, 1, 0, 0, -1, 0, 0);
+                        cairo_transform(canvas, &matrix);
+                        cairo_set_scaled_font(canvas, run->fontData()->font());
+                        cairo_glyph_t uprightGlyph{glyph.glyphIndex, glyph.xOffset, glyph.yOffset};
+                        if(stroke) {
+                            cairo_glyph_path(canvas, &uprightGlyph, 1);
+                            cairo_stroke(canvas);
+                        } else {
+                            cairo_show_glyphs(canvas, &uprightGlyph, 1);
+                        }
+                        cairo_restore(canvas);
+                    } else {
+                        glyphBuffer[numGlyphs].index = glyph.glyphIndex;
+                        glyphBuffer[numGlyphs].x = offset.x + glyph.xOffset;
+                        glyphBuffer[numGlyphs].y = offset.y + glyph.yOffset;
+                        numGlyphs++;
+                    }
                 }
 
                 offset.x += glyph.advance;

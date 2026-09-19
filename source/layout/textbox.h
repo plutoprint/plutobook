@@ -10,12 +10,30 @@
 #define PLUTOBOOK_TEXTBOX_H
 
 #include "box.h"
+#include "plutobook.h"
+
+#include <string>
+#include <vector>
 
 namespace plutobook {
 
 class TextLineBox;
 
 using TextLineBoxList = std::pmr::vector<std::unique_ptr<TextLineBox>>;
+
+// Selection/advance bounds, not glyph ink bounds. Coordinates are physical CSS
+// pixels relative to the containing block, before CSS transforms and clipping.
+// Offsets address this TextBox's processed layout text in UTF-16 code units.
+struct WordBox {
+    std::string word;
+    uint32_t startOffset{0};
+    uint32_t endOffset{0};
+    Rect bounds{0, 0, 0, 0};
+    std::vector<Rect> fragments;
+};
+
+using WordBoxList = std::vector<WordBox>;
+using WordIterator = WordBoxList::const_iterator;
 
 class TextBox : public Box {
 public:
@@ -30,6 +48,11 @@ public:
 
     const TextLineBoxList& lines() const { return m_lines; }
     TextLineBoxList& lines() { return m_lines; }
+
+    // Call after layout. An owning snapshot; does not lay out, paint, or reshape.
+    // ICU word segmentation excludes standalone punctuation and whitespace.
+    // Words are local to this TextBox: adjacent DOM text nodes are not joined.
+    PLUTOBOOK_API WordBoxList words() const;
 
     const char* name() const override { return "TextBox"; }
 

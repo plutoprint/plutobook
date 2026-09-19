@@ -3,3 +3,4 @@
 !/subprojects/*.wrap
 !/subprojects/packagefiles
 *.user
+/.cache

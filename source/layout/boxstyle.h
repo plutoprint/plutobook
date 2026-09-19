@@ -132,7 +132,8 @@ enum class BackgroundAttachment : uint8_t {
 
 enum class TextOrientation : uint8_t {
     Mixed,
-    Upright
+    Upright,
+    Sideways
 };
 
 enum class TextAnchor : uint8_t {
@@ -721,7 +722,7 @@ public:
     Float floating() const { return m_floating; }
     Clear clear() const { return m_clear; }
     VerticalAlignType verticalAlignType() const { return m_verticalAlignType; }
-    Direction direction() const { return m_direction; }
+    Direction direction() const { return isVerticalWritingMode() && !isSidewaysWritingMode() && isUprightTextOrientation() ? Direction::Ltr : m_direction; }
     UnicodeBidi unicodeBidi() const { return m_unicodeBidi; }
     Visibility visibility() const { return m_visibility; }
     const Color& color() const { return m_color; }
@@ -910,12 +911,14 @@ public:
 
     bool isFloating() const { return m_floating == Float::Left || m_floating == Float::Right; }
     bool isPositioned() const { return m_position == Position::Absolute || m_position == Position::Fixed; }
-    bool isLeftToRightDirection() const { return m_direction == Direction::Ltr; }
-    bool isRightToLeftDirection() const { return m_direction == Direction::Rtl; }
+    bool isLeftToRightDirection() const { return direction() == Direction::Ltr; }
+    bool isRightToLeftDirection() const { return direction() == Direction::Rtl; }
     bool isClearLeft() const { return m_clear == Clear::Left || m_clear == Clear::Both; }
     bool isClearRight() const { return m_clear == Clear::Right || m_clear == Clear::Both; }
 
     bool isVerticalWritingMode() const { return m_writingMode != WritingMode::HorizontalTb; }
+    bool isSidewaysWritingMode() const { return m_writingMode == WritingMode::SidewaysRl || m_writingMode == WritingMode::SidewaysLr; }
+    bool isFlippedBlockWritingMode() const { return m_writingMode == WritingMode::VerticalRl || m_writingMode == WritingMode::SidewaysRl; }
     bool isUprightTextOrientation() const { return m_textOrientation == TextOrientation::Upright; }
 
     bool isOverflowHidden() const { return m_overflow != Overflow::Visible; }
@@ -1080,7 +1083,7 @@ private:
     Overflow m_overflow : 2 {Overflow::Visible};
     Visibility m_visibility : 2 {Visibility::Visible};
     BreakInside m_breakInside : 2 {BreakInside::Auto};
-    WritingMode m_writingMode : 2 {WritingMode::HorizontalTb};
+    WritingMode m_writingMode : 3 {WritingMode::HorizontalTb};
     WordBreak m_wordBreak : 2 {WordBreak::Normal};
     OverflowWrap m_overflowWrap : 2 {OverflowWrap::Normal};
     TextAnchor m_textAnchor : 2 {TextAnchor::Start};
@@ -1101,7 +1104,7 @@ private:
     MaskType m_maskType : 1 {MaskType::Luminance};
     ListStylePosition m_listStylePosition : 1 {ListStylePosition::Outside};
     TextOverflow m_textOverflow : 1 {TextOverflow::Clip};
-    TextOrientation m_textOrientation : 1 {TextOrientation::Mixed};
+    TextOrientation m_textOrientation : 2 {TextOrientation::Mixed};
     TableLayout m_tableLayout : 1 {TableLayout::Auto};
     CaptionSide m_captionSide : 1 {CaptionSide::Top};
     EmptyCells m_emptyCells : 1 {EmptyCells::Show};

@@ -10,6 +10,8 @@
 #include "borderpainter.h"
 #include "fragmentbuilder.h"
 #include "boxview.h"
+#include "linelayout.h"
+#include "document.h"
 
 #include <span>
 #include <ranges>
@@ -67,6 +69,39 @@ void TableBox::updateOverflowRect()
 
 void TableBox::computeIntrinsicWidths(float& minWidth, float& maxWidth) const
 {
+    /* For a table in a vertical writing mode the physical width is the block
+     * axis, which rows stack across, so shrink-to-fit contexts have to be told
+     * about row extents rather than column ones. Each row is estimated from the
+     * space its cells need once they are given the available inline size. */
+    if(isVerticalTable()) {
+        const auto blockSpacing = blockBorderSpacing();
+        float blockSize = m_columns.empty() ? 0.f : blockSpacing;
+        for(auto section : m_sections) {
+            for(auto row : section->rows()) {
+                float rowSize = 0.f;
+                for(const auto& [col, cell] : row->cells()) {
+                    if(cell.inColOrRowSpan() || cell->rowSpan() != 1)
+                        continue;
+                    // The estimate is a physical width, so it needs the paddings
+                    // along that axis resolved before the cell measures itself.
+                    cell->updateHorizontalPaddings(nullptr);
+                    rowSize = std::max(rowSize, cell->maxPreferredWidth());
+                }
+
+                blockSize += rowSize + blockSpacing;
+            }
+        }
+
+        for(auto caption : m_captions) {
+            caption->updateHorizontalPaddings(nullptr);
+            blockSize += caption->maxPreferredWidth();
+        }
+
+        minWidth = std::max(minWidth, blockSize);
+        maxWidth = std::max(maxWidth, blockSize);
+        return;
+    }
+
     if(!m_columns.empty()) {
         m_tableLayout->computeIntrinsicWidths(minWidth, maxWidth);
         minWidth += borderHorizontalSpacing() * (m_columns.size() + 1);
@@ -125,34 +160,54 @@ void TableBox::computeBorderWidths(float& borderTop, float& borderBottom, float&
     borderBottom = 0.f;
     borderLeft = 0.f;
     borderRight = 0.f;
+
+    /* The outermost cells hand their borders to the table, but which physical
+     * side of the table each one reaches depends on the writing mode: the first
+     * row sits at the block-start edge, the first column at the inline-start. */
+    float* sides[4] = { &borderTop, &borderRight, &borderBottom, &borderLeft };
+    auto cellBorder = [](const TableCellBox* cellBox, BoxSide side) {
+        switch(side) {
+        case BoxSideTop:
+            return cellBox->borderTop();
+        case BoxSideRight:
+            return cellBox->borderRight();
+        case BoxSideBottom:
+            return cellBox->borderBottom();
+        default:
+            return cellBox->borderLeft();
+        }
+    };
+
+    const WritingDirection writingDirection(style()->writingMode(), style()->direction());
+    const auto blockStart = writingDirection.blockStart();
+    const auto blockEnd = writingDirection.blockEnd();
+    const auto inlineStart = writingDirection.inlineStart();
+    const auto inlineEnd = writingDirection.inlineEnd();
+
     if(auto section = topSection()) {
         auto row = section->firstRow();
         for(const auto& [col, cell] : row->cells()) {
-            borderTop = std::max(borderTop, cell->borderTop());
+            *sides[blockStart] = std::max(*sides[blockStart], cellBorder(cell.box(), blockStart));
         }
     }
 
     if(auto section = bottomSection()) {
         auto row = section->lastRow();
         for(const auto& [col, cell] : row->cells()) {
-            borderBottom = std::max(borderBottom, cell->borderBottom());
+            *sides[blockEnd] = std::max(*sides[blockEnd], cellBorder(cell.box(), blockEnd));
         }
     }
 
     if(m_columns.empty())
         return;
-    size_t startColumnIndex = 0;
-    size_t endColumnIndex = m_columns.size() - 1;
-    if(style()->isRightToLeftDirection()) {
-        std::swap(startColumnIndex, endColumnIndex);
-    }
-
+    const size_t startColumnIndex = 0;
+    const size_t endColumnIndex = m_columns.size() - 1;
     for(auto section : m_sections) {
         for(auto row : section->rows()) {
             if(auto cell = row->cellAt(startColumnIndex))
-                borderLeft = std::max(borderLeft, cell->borderLeft());
+                *sides[inlineStart] = std::max(*sides[inlineStart], cellBorder(cell, inlineStart));
             if(auto cell = row->cellAt(endColumnIndex)) {
-                borderRight = std::max(borderRight, cell->borderRight());
+                *sides[inlineEnd] = std::max(*sides[inlineEnd], cellBorder(cell, inlineEnd));
             }
         }
     }
@@ -160,6 +215,8 @@ void TableBox::computeBorderWidths(float& borderTop, float& borderBottom, float&
 
 std::optional<float> TableBox::firstLineBaseline() const
 {
+    if(isVerticalTable())
+        return std::nullopt;
     if(auto section = topSection()) {
         if(auto baseline = section->firstLineBaseline()) {
             return baseline.value() + section->y();
@@ -171,6 +228,8 @@ std::optional<float> TableBox::firstLineBaseline() const
 
 std::optional<float> TableBox::lastLineBaseline() const
 {
+    if(isVerticalTable())
+        return std::nullopt;
     if(auto section = bottomSection()) {
         if(auto baseline = section->lastLineBaseline()) {
             return baseline.value() + section->y();
@@ -290,11 +349,186 @@ TableCellBox* TableBox::cellAfter(const TableCellBox* cellBox) const
     return cellBox->row()->cellAt(columnIndex);
 }
 
-float TableBox::availableHorizontalSpace() const
+float TableBox::availableInlineSpace() const
 {
+    const auto space = isVerticalTable() ? contentBoxHeight() : contentBoxWidth();
     if(!m_columns.empty() && !isBorderCollapsed())
-        return contentBoxWidth() - borderHorizontalSpacing() * (m_columns.size() + 1);
-    return contentBoxWidth();
+        return space - inlineBorderSpacing() * (m_columns.size() + 1);
+    return space;
+}
+
+void TableBox::computeIntrinsicInlineSizes(float& minSize, float& maxSize) const
+{
+    if(!isVerticalTable()) {
+        computeIntrinsicWidths(minSize, maxSize);
+        return;
+    }
+
+    minSize = 0.f;
+    maxSize = 0.f;
+    if(!m_columns.empty()) {
+        m_tableLayout->computeIntrinsicWidths(minSize, maxSize);
+        minSize += inlineBorderSpacing() * (m_columns.size() + 1);
+        maxSize += inlineBorderSpacing() * (m_columns.size() + 1);
+    }
+}
+
+/* Lays the grid out on the table's own axes, with columns advancing down the
+ * page and rows advancing across it. Everything below works in an unflipped
+ * space where the block axis grows to the right; flipBlockAxis() mirrors it
+ * afterwards for vertical-rl and sideways-rl.
+ *
+ * Fragmentation is not attempted here: the fragmentainer measures progress
+ * along the physical vertical axis, which is this table's inline axis. */
+void TableBox::layoutVertical()
+{
+    updateWidth();
+
+    float contentInlineSize = 0.f;
+    if(auto height = computeHeightUsing(style()->height())) {
+        contentInlineSize = adjustContentBoxHeight(height.value());
+    } else if(hasOverrideHeight()) {
+        contentInlineSize = std::max(0.f, overrideHeight() - borderAndPaddingHeight());
+    } else {
+        auto available = containingBlock()->availableHeight().value_or(document()->containerHeight());
+        available -= marginTop() + marginBottom() + borderAndPaddingHeight();
+
+        float minInlineSize = 0.f;
+        float maxInlineSize = 0.f;
+        computeIntrinsicInlineSizes(minInlineSize, maxInlineSize);
+        contentInlineSize = std::max(minInlineSize, std::min(available, maxInlineSize));
+    }
+
+    setHeight(std::max(borderAndPaddingHeight(), constrainContentBoxHeight(contentInlineSize) + borderAndPaddingHeight()));
+    updateHeight();
+
+    const auto blockStartPadding = style()->isFlippedBlockWritingMode() ? borderAndPaddingRight() : borderAndPaddingLeft();
+    const auto blockEndPadding = style()->isFlippedBlockWritingMode() ? borderAndPaddingLeft() : borderAndPaddingRight();
+    const auto inlineStartPadding = borderAndPaddingTop();
+
+    float blockOffset = 0.f;
+    for(auto caption : m_captions) {
+        if(caption->captionSide() == CaptionSide::Top) {
+            layoutVerticalCaption(caption, blockOffset);
+        }
+    }
+
+    blockOffset += blockStartPadding;
+
+    float contentBlockSize = 0.f;
+    if(!style()->width().isAuto())
+        contentBlockSize = adjustContentBoxWidth(computeWidthUsing(style()->width(), containingBlock(), containingBlockWidthForContent()));
+    if(hasOverrideWidth()) {
+        contentBlockSize = std::max(contentBlockSize, overrideWidth() - borderAndPaddingWidth());
+    }
+
+    if(m_columns.empty()) {
+        blockOffset += contentBlockSize;
+    } else {
+        m_tableLayout->layout();
+
+        auto columnStart = inlineBorderSpacing();
+        for(auto& column : m_columns) {
+            column.setX(columnStart);
+            columnStart += column.width() + inlineBorderSpacing();
+        }
+
+        auto totalSectionBlockSize = blockBorderSpacing();
+        for(auto section : m_sections) {
+            section->layoutVertical();
+            totalSectionBlockSize += section->width() + blockBorderSpacing();
+        }
+
+        auto distributableBlockSize = contentBlockSize - totalSectionBlockSize;
+        if(distributableBlockSize > 0.f) {
+            for(auto section : m_sections) {
+                section->distributeExcessBlockSizeToRows(distributableBlockSize / m_sections.size());
+            }
+        }
+
+        auto sectionStart = blockOffset + blockBorderSpacing();
+        for(auto section : m_sections) {
+            section->setX(sectionStart);
+            section->setY(inlineStartPadding);
+            section->layoutVerticalRows();
+            section->updateOverflowRect();
+            sectionStart += section->width() + blockBorderSpacing();
+        }
+
+        blockOffset = sectionStart;
+    }
+
+    blockOffset += blockEndPadding;
+    for(auto caption : m_captions) {
+        if(caption->captionSide() == CaptionSide::Bottom) {
+            layoutVerticalCaption(caption, blockOffset);
+        }
+    }
+
+    /* A table never shrinks below the space its grid needs, so the block extent
+     * is a floor on the physical width however the box was sized. */
+    if(style()->width().isAuto() && !hasOverrideWidth())
+        setWidth(std::max(blockOffset, constrainWidth(blockOffset, containingBlock(), containingBlockWidthForContent())));
+    else
+        setWidth(std::max(width(), blockOffset));
+    const WritingDirection writingDirection(style()->writingMode(), style()->direction());
+    flipAxes(writingDirection.blockStart() == BoxSideRight, writingDirection.inlineStart() == BoxSideBottom);
+    layoutPositionedBoxes();
+    updateOverflowRect();
+}
+
+/* Captions stack along the table's block axis, so caption-side top and bottom
+ * mean the block-start and block-end edges: the right and left of the grid in
+ * vertical-rl. Their own writing mode is whatever the caption resolved to. */
+void TableBox::layoutVerticalCaption(TableCaptionBox* caption, float& blockOffset)
+{
+    caption->updatePaddingWidths(this);
+    caption->updateHorizontalMargins(this);
+    caption->updateVerticalMargins(this);
+
+    auto captionStart = blockOffset + caption->marginLeft();
+    caption->setX(captionStart);
+    caption->layout(nullptr);
+    caption->setY(caption->marginTop());
+
+    blockOffset = captionStart + caption->width() + caption->marginRight();
+}
+
+/* Mirrors the grid where the writing mode runs against the direction it was
+ * built in: rows stack leftwards in vertical-rl, and sideways-lr advances its
+ * columns upwards. */
+void TableBox::flipAxes(bool flipBlock, bool flipInline)
+{
+    if(!flipBlock && !flipInline)
+        return;
+    for(auto caption : m_captions) {
+        if(flipBlock) {
+            caption->setX(width() - caption->x() - caption->width());
+        }
+    }
+
+    for(auto section : m_sections) {
+        if(flipBlock)
+            section->setX(width() - section->x() - section->width());
+        for(auto row : section->rows()) {
+            if(flipBlock)
+                row->setX(section->width() - row->x() - row->width());
+            for(const auto& [col, cell] : row->cells()) {
+                if(cell.inColOrRowSpan())
+                    continue;
+                auto cellBox = cell.box();
+                if(flipBlock)
+                    cellBox->setX(row->width() - cellBox->x() - cellBox->width());
+                if(flipInline) {
+                    cellBox->setY(row->height() - cellBox->y() - cellBox->height());
+                }
+            }
+
+            row->updateOverflowRect();
+        }
+
+        section->updateOverflowRect();
+    }
 }
 
 void TableBox::layoutCaption(TableCaptionBox* caption, FragmentBuilder* fragmentainer)
@@ -319,6 +553,11 @@ void TableBox::layoutCaption(TableCaptionBox* caption, FragmentBuilder* fragment
 
 void TableBox::layout(FragmentBuilder* fragmentainer)
 {
+    if(isVerticalTable()) {
+        layoutVertical();
+        return;
+    }
+
     updateWidth();
     setHeight(0.f);
     for(auto caption : m_captions) {
@@ -585,7 +824,10 @@ void TableBox::paintContents(const PaintInfo& info, const Point& offset, PaintPh
 std::unique_ptr<TableLayoutAlgorithm> TableLayoutAlgorithm::create(TableBox* table)
 {
     const auto* tableStyle = table->style();
-    if(tableStyle->tableLayout() == TableLayout::Auto || tableStyle->width().isAuto())
+    /* Fixed layout needs a definite inline size, which is the physical height
+     * when the table is in a vertical writing mode. */
+    const auto& inlineSize = table->isVerticalTable() ? tableStyle->height() : tableStyle->width();
+    if(tableStyle->tableLayout() == TableLayout::Auto || inlineSize.isAuto())
         return AutoTableLayoutAlgorithm::create(table);
     return FixedTableLayoutAlgorithm::create(table);
 }
@@ -616,7 +858,7 @@ void FixedTableLayoutAlgorithm::build()
             continue;
         }
 
-        auto columnStyleWidth = columnBox->style()->width();
+        auto columnStyleWidth = m_table->isVerticalTable() ? columnBox->style()->height() : columnBox->style()->width();
         if(columnStyleWidth.isZero()) {
             m_widths.push_back(Length::Auto);
         } else {
@@ -629,10 +871,15 @@ void FixedTableLayoutAlgorithm::build()
         for(const auto& [col, cell] : row->cells()) {
             if(!cell.inColOrRowSpan() && m_widths[col].isAuto()) {
                 auto cellBox = cell.box();
-                auto cellStyleWidth = cellBox->style()->width();
+                const auto vertical = m_table->isVerticalTable();
+                auto cellStyleWidth = vertical ? cellBox->style()->height() : cellBox->style()->width();
                 if(cellStyleWidth.isFixed()) {
-                    cellBox->updateHorizontalPaddings(nullptr);
-                    cellStyleWidth = Length(Length::Type::Fixed, cellBox->adjustBorderBoxWidth(cellStyleWidth.value()) / cellBox->colSpan());
+                    if(vertical)
+                        cellBox->updateVerticalPaddings(nullptr);
+                    else
+                        cellBox->updateHorizontalPaddings(nullptr);
+                    const auto borderBoxSize = vertical ? cellBox->adjustBorderBoxHeight(cellStyleWidth.value()) : cellBox->adjustBorderBoxWidth(cellStyleWidth.value());
+                    cellStyleWidth = Length(Length::Type::Fixed, borderBoxSize / cellBox->colSpan());
                 } else if(cellStyleWidth.isPercent()) {
                     cellStyleWidth = Length(Length::Type::Percent, cellStyleWidth.value() / cellBox->colSpan());
                 }
@@ -649,7 +896,7 @@ void FixedTableLayoutAlgorithm::build()
 
 void FixedTableLayoutAlgorithm::layout()
 {
-    auto availableWidth = m_table->availableHorizontalSpace();
+    auto availableWidth = m_table->availableInlineSpace();
     float totalFixedWidth = 0;
     float totalPercentWidth = 0;
     float totalPercent = 0;
@@ -941,8 +1188,11 @@ static void distributeSpanCellToColumns(const TableCellBox* cellBox, std::span<T
         }
     }
 
-    auto cellMinWidth = std::max(0.f, cellBox->minPreferredWidth() - borderSpacing * (cellBox->colSpan() - 1));
-    auto cellMaxWidth = std::max(0.f, cellBox->maxPreferredWidth() - borderSpacing * (cellBox->colSpan() - 1));
+    float cellMinPreferred = 0.f;
+    float cellMaxPreferred = 0.f;
+    cellBox->computeIntrinsicInlineSizes(cellMinPreferred, cellMaxPreferred);
+    auto cellMinWidth = std::max(0.f, cellMinPreferred - borderSpacing * (cellBox->colSpan() - 1));
+    auto cellMaxWidth = std::max(0.f, cellMaxPreferred - borderSpacing * (cellBox->colSpan() - 1));
 
     auto minWidths = distributeWidthToColumns(cellMinWidth, columns, true);
     for(size_t columnIndex = 0; columnIndex < columns.size(); ++columnIndex) {
@@ -973,14 +1223,20 @@ void AutoTableLayoutAlgorithm::computeIntrinsicWidths(float& minWidth, float& ma
                 auto cellBox = cell.box();
                 if(cell.inColOrRowSpan())
                     continue;
-                cellBox->updateHorizontalPaddings(nullptr);
+                if(m_table->isVerticalTable())
+                    cellBox->updateVerticalPaddings(nullptr);
+                else
+                    cellBox->updateHorizontalPaddings(nullptr);
                 if(cellBox->colSpan() == 1) {
+                    float cellMinPreferred = 0.f;
+                    float cellMaxPreferred = 0.f;
+                    cellBox->computeIntrinsicInlineSizes(cellMinPreferred, cellMaxPreferred);
                     auto& columnWidth = m_columnWidths[col];
-                    columnWidth.minWidth = std::max(columnWidth.minWidth, cellBox->minPreferredWidth());
+                    columnWidth.minWidth = std::max(columnWidth.minWidth, cellMinPreferred);
                     if(columnWidth.maxFixedWidth > 0.f) {
                         columnWidth.maxWidth = std::max(columnWidth.maxWidth, std::max(columnWidth.minWidth, columnWidth.maxFixedWidth));
                     } else {
-                        columnWidth.maxWidth = std::max(columnWidth.maxWidth, cellBox->maxPreferredWidth());
+                        columnWidth.maxWidth = std::max(columnWidth.maxWidth, cellMaxPreferred);
                     }
                 }
             }
@@ -988,7 +1244,7 @@ void AutoTableLayoutAlgorithm::computeIntrinsicWidths(float& minWidth, float& ma
     }
 
     for(auto cellBox : m_spanningCells) {
-        distributeSpanCellToColumns(cellBox, m_columnWidths, m_table->borderHorizontalSpacing());
+        distributeSpanCellToColumns(cellBox, m_columnWidths, m_table->inlineBorderSpacing());
     }
 
     float totalPercent = 0;
@@ -1015,7 +1271,7 @@ void AutoTableLayoutAlgorithm::build()
         columnWidth.maxFixedWidth = 0.f;
         columnWidth.maxPercentWidth = 0.f;
         if(auto columnBox = columns[columnIndex].box()) {
-            auto columnStyleWidth = columnBox->style()->width();
+            auto columnStyleWidth = m_table->isVerticalTable() ? columnBox->style()->height() : columnBox->style()->width();
             if(columnStyleWidth.isFixed()) {
                 columnWidth.maxFixedWidth = columnStyleWidth.value();
             } else if(columnStyleWidth.isPercent()) {
@@ -1035,10 +1291,12 @@ void AutoTableLayoutAlgorithm::build()
                     continue;
                 }
 
-                auto cellStyleWidth = cellBox->style()->width();
+                const auto vertical = m_table->isVerticalTable();
+                auto cellStyleWidth = vertical ? cellBox->style()->height() : cellBox->style()->width();
                 auto& columnWidth = m_columnWidths[col];
                 if(cellStyleWidth.isFixed()) {
-                    columnWidth.maxFixedWidth = std::max(columnWidth.maxFixedWidth, cellBox->adjustBorderBoxWidth(cellStyleWidth.value()));
+                    auto fixedSize = vertical ? cellBox->adjustBorderBoxHeight(cellStyleWidth.value()) : cellBox->adjustBorderBoxWidth(cellStyleWidth.value());
+                    columnWidth.maxFixedWidth = std::max(columnWidth.maxFixedWidth, fixedSize);
                 } else if(cellStyleWidth.isPercent()) {
                     columnWidth.maxPercentWidth = std::max(columnWidth.maxPercentWidth, cellStyleWidth.value());
                 }
@@ -1053,7 +1311,7 @@ void AutoTableLayoutAlgorithm::build()
 void AutoTableLayoutAlgorithm::layout()
 {
     auto& columns = m_table->columns();
-    auto widths = distributeWidthToColumns(m_table->availableHorizontalSpace(), m_columnWidths, true);
+    auto widths = distributeWidthToColumns(m_table->availableInlineSpace(), m_columnWidths, true);
     for(size_t columnIndex = 0; columnIndex < columns.size(); ++columnIndex) {
         columns[columnIndex].setWidth(widths[columnIndex]);
     }
@@ -1174,6 +1432,118 @@ void TableSectionBox::distributeExcessHeightToRows(float distributableHeight)
             rowBox->setHeight(delta + rowBox->height());
         }
     }
+}
+
+void TableSectionBox::distributeExcessBlockSizeToRows(float distributableSize)
+{
+    float totalSize = 0.f;
+    for(auto rowBox : m_rows)
+        totalSize += rowBox->width();
+    if(totalSize <= 0.f || m_rows.empty())
+        return;
+    for(auto rowBox : m_rows) {
+        auto delta = distributableSize * rowBox->width() / totalSize;
+        rowBox->setWidth(delta + rowBox->width());
+    }
+}
+
+/* Sizing pass for a table in a vertical writing mode: lay each cell out against
+ * its column, which constrains the cell's physical height, and take the row's
+ * block size from how far the cells grow across the page. */
+void TableSectionBox::layoutVertical()
+{
+    auto tableBox = table();
+    const auto& columns = tableBox->columns();
+    const auto inlineSpacing = tableBox->inlineBorderSpacing();
+    setHeight(tableBox->contentBoxHeight());
+
+    for(auto rowBox : m_rows) {
+        float cellMaxBlockSize = 0.f;
+        for(const auto& [col, cell] : rowBox->cells()) {
+            auto cellBox = cell.box();
+            if(cell.inColOrRowSpan())
+                continue;
+            auto inlineSize = -inlineSpacing;
+            for(size_t index = 0; index < cellBox->colSpan(); ++index) {
+                const auto& column = columns[col + index];
+                inlineSize += inlineSpacing + column.width();
+            }
+
+            cellBox->setY(columns[col].x());
+            cellBox->clearOverrideSize();
+            cellBox->setOverrideHeight(std::max(0.f, inlineSize));
+            /* A cell that keeps a horizontal writing mode inside a vertical table
+             * is an orthogonal flow: its own inline axis is the table's block
+             * axis, which is still being resolved. Give it a fit-content size
+             * there, as CSS Writing Modes prescribes, so its text does not wrap
+             * into whatever width the neighbouring cells happened to need. */
+            if(!cellBox->style()->isVerticalWritingMode()) {
+                const auto available = tableBox->containingBlockWidthForContent();
+                cellBox->setOverrideWidth(std::min(cellBox->maxPreferredWidth(), available));
+            }
+
+            cellBox->updatePaddingWidths(tableBox);
+            cellBox->layout(nullptr);
+
+            if(cellBox->rowSpan() == 1) {
+                cellMaxBlockSize = std::max(cellMaxBlockSize, cellBox->blockSizeForRowSizing());
+            }
+        }
+
+        rowBox->setHeight(height());
+        rowBox->setWidth(cellMaxBlockSize);
+        rowBox->setMaxBaseline(0.f);
+    }
+
+    const auto blockSpacing = tableBox->blockBorderSpacing();
+    for(auto cellBox : m_spanningCells) {
+        auto cellMinBlockSize = cellBox->blockSizeForRowSizing();
+        auto rows = std::span(m_rows).subspan(cellBox->rowIndex(), cellBox->rowSpan());
+        for(auto rowBox : rows)
+            cellMinBlockSize -= rowBox->width();
+        cellMinBlockSize -= blockSpacing * (rows.size() - 1);
+        if(cellMinBlockSize > 0.f) {
+            auto lastRow = rows.back();
+            lastRow->setWidth(cellMinBlockSize + lastRow->width());
+        }
+    }
+
+    auto sectionBlockSize = -blockSpacing;
+    for(auto rowBox : m_rows)
+        sectionBlockSize += blockSpacing + rowBox->width();
+    setWidth(std::max(0.f, sectionBlockSize));
+}
+
+/* Positioning pass: place the rows across the block axis and stretch each cell
+ * to the block size its rows resolved to. */
+void TableSectionBox::layoutVerticalRows()
+{
+    const auto blockSpacing = table()->blockBorderSpacing();
+    float rowStart = 0.f;
+    for(size_t rowIndex = 0; rowIndex < m_rows.size(); ++rowIndex) {
+        auto rowBox = m_rows[rowIndex];
+        rowBox->setX(rowStart);
+        rowBox->setY(0.f);
+        for(const auto& [col, cell] : rowBox->cells()) {
+            auto cellBox = cell.box();
+            if(cell.inColOrRowSpan())
+                continue;
+            auto blockSize = -blockSpacing;
+            for(size_t index = 0; index < cellBox->rowSpan(); ++index) {
+                auto row = m_rows[rowIndex + index];
+                blockSize += blockSpacing + row->width();
+            }
+
+            cellBox->setX(0.f);
+            cellBox->setOverrideWidth(std::max(0.f, blockSize));
+            cellBox->layout(nullptr);
+        }
+
+        rowBox->updateOverflowRect();
+        rowStart += blockSpacing + rowBox->width();
+    }
+
+    setWidth(std::max(0.f, rowStart - blockSpacing));
 }
 
 void TableSectionBox::layoutRows(FragmentBuilder* fragmentainer, float headerHeight, float footerHeight)
@@ -1630,57 +2000,57 @@ TableCollapsedBorderEdge TableCollapsedBorderEdges::getRightEdge(TableCollapsedB
     return TableCollapsedBorderEdge(source, borderRightStyle);
 }
 
-TableCollapsedBorderEdge TableCollapsedBorderEdges::calcTopEdge(const TableCellBox* cellBox)
+TableCollapsedBorderEdge TableCollapsedBorderEdges::calcBlockStartEdge(const TableCellBox* cellBox, EdgeGetter getThisEdge, EdgeGetter getOtherEdge)
 {
     auto table = cellBox->table();
     auto cellAbove = table->cellAbove(cellBox);
-    auto edge = getTopEdge(TableCollapsedBorderSource::Cell, cellBox->style());
+    auto edge = getThisEdge(TableCollapsedBorderSource::Cell, cellBox->style());
     if(cellAbove) {
-        edge = chooseEdge(getBottomEdge(TableCollapsedBorderSource::Cell, cellAbove->style()), edge);
+        edge = chooseEdge(getOtherEdge(TableCollapsedBorderSource::Cell, cellAbove->style()), edge);
         if(!edge.exists()) {
             return edge;
         }
     }
 
-    edge = chooseEdge(edge, getTopEdge(TableCollapsedBorderSource::Row, cellBox->row()->style()));
+    edge = chooseEdge(edge, getThisEdge(TableCollapsedBorderSource::Row, cellBox->row()->style()));
     if(!edge.exists()) {
         return edge;
     }
 
     if(cellAbove) {
-        edge = chooseEdge(getBottomEdge(TableCollapsedBorderSource::Row, cellAbove->row()->style()), edge);
+        edge = chooseEdge(getOtherEdge(TableCollapsedBorderSource::Row, cellAbove->row()->style()), edge);
         if(!edge.exists()) {
             return edge;
         }
     }
 
     if(auto section = cellBox->section(); cellBox->rowIndex() == 0) {
-        edge = chooseEdge(edge, getTopEdge(TableCollapsedBorderSource::RowGroup, section->style()));
+        edge = chooseEdge(edge, getThisEdge(TableCollapsedBorderSource::RowGroup, section->style()));
         if(!edge.exists()) {
             return edge;
         }
 
         if(auto sectionAbove = table->sectionAbove(section)) {
-            edge = chooseEdge(getBottomEdge(TableCollapsedBorderSource::RowGroup, sectionAbove->style()), edge);
+            edge = chooseEdge(getOtherEdge(TableCollapsedBorderSource::RowGroup, sectionAbove->style()), edge);
             if(!edge.exists()) {
                 return edge;
             }
         } else {
             if(auto column = cellBox->column()) {
-                edge = chooseEdge(edge, getTopEdge(TableCollapsedBorderSource::Column, column->style()));
+                edge = chooseEdge(edge, getThisEdge(TableCollapsedBorderSource::Column, column->style()));
                 if(!edge.exists()) {
                     return edge;
                 }
 
                 if(auto columnGroup = column->columnGroup()) {
-                    edge = chooseEdge(edge, getTopEdge(TableCollapsedBorderSource::ColumnGroup, columnGroup->style()));
+                    edge = chooseEdge(edge, getThisEdge(TableCollapsedBorderSource::ColumnGroup, columnGroup->style()));
                     if(!edge.exists()) {
                         return edge;
                     }
                 }
             }
 
-            edge = chooseEdge(edge, getTopEdge(TableCollapsedBorderSource::Table, table->style()));
+            edge = chooseEdge(edge, getThisEdge(TableCollapsedBorderSource::Table, table->style()));
             if(!edge.exists()) {
                 return edge;
             }
@@ -1690,57 +2060,57 @@ TableCollapsedBorderEdge TableCollapsedBorderEdges::calcTopEdge(const TableCellB
     return edge;
 }
 
-TableCollapsedBorderEdge TableCollapsedBorderEdges::calcBottomEdge(const TableCellBox* cellBox)
+TableCollapsedBorderEdge TableCollapsedBorderEdges::calcBlockEndEdge(const TableCellBox* cellBox, EdgeGetter getThisEdge, EdgeGetter getOtherEdge)
 {
     auto table = cellBox->table();
     auto cellBelow = table->cellBelow(cellBox);
-    auto edge = getBottomEdge(TableCollapsedBorderSource::Cell, cellBox->style());
+    auto edge = getThisEdge(TableCollapsedBorderSource::Cell, cellBox->style());
     if(cellBelow) {
-        edge = chooseEdge(edge, getTopEdge(TableCollapsedBorderSource::Cell, cellBelow->style()));
+        edge = chooseEdge(edge, getOtherEdge(TableCollapsedBorderSource::Cell, cellBelow->style()));
         if(!edge.exists()) {
             return edge;
         }
     }
 
-    edge = chooseEdge(edge, getBottomEdge(TableCollapsedBorderSource::Row, cellBox->row()->style()));
+    edge = chooseEdge(edge, getThisEdge(TableCollapsedBorderSource::Row, cellBox->row()->style()));
     if(!edge.exists()) {
         return edge;
     }
 
     if(cellBelow) {
-        edge = chooseEdge(edge, getTopEdge(TableCollapsedBorderSource::Row, cellBelow->row()->style()));
+        edge = chooseEdge(edge, getOtherEdge(TableCollapsedBorderSource::Row, cellBelow->row()->style()));
         if(!edge.exists()) {
             return edge;
         }
     }
 
     if(auto section = cellBox->section(); cellBox->rowIndex() + cellBox->rowSpan() == section->rowCount()) {
-        edge = chooseEdge(edge, getBottomEdge(TableCollapsedBorderSource::RowGroup, section->style()));
+        edge = chooseEdge(edge, getThisEdge(TableCollapsedBorderSource::RowGroup, section->style()));
         if(!edge.exists()) {
             return edge;
         }
 
         if(auto sectionBelow = table->sectionBelow(section)) {
-            edge = chooseEdge(edge, getTopEdge(TableCollapsedBorderSource::RowGroup, sectionBelow->style()));
+            edge = chooseEdge(edge, getOtherEdge(TableCollapsedBorderSource::RowGroup, sectionBelow->style()));
             if(!edge.exists()) {
                 return edge;
             }
         } else {
             if(auto column = cellBox->column()) {
-                edge = chooseEdge(edge, getBottomEdge(TableCollapsedBorderSource::Column, column->style()));
+                edge = chooseEdge(edge, getThisEdge(TableCollapsedBorderSource::Column, column->style()));
                 if(!edge.exists()) {
                     return edge;
                 }
 
                 if(auto columnGroup = column->columnGroup()) {
-                    edge = chooseEdge(edge, getBottomEdge(TableCollapsedBorderSource::ColumnGroup, columnGroup->style()));
+                    edge = chooseEdge(edge, getThisEdge(TableCollapsedBorderSource::ColumnGroup, columnGroup->style()));
                     if(!edge.exists()) {
                         return edge;
                     }
                 }
             }
 
-            edge = chooseEdge(edge, getBottomEdge(TableCollapsedBorderSource::Table, table->style()));
+            edge = chooseEdge(edge, getThisEdge(TableCollapsedBorderSource::Table, table->style()));
             if(!edge.exists()) {
                 return edge;
             }
@@ -1750,15 +2120,15 @@ TableCollapsedBorderEdge TableCollapsedBorderEdges::calcBottomEdge(const TableCe
     return edge;
 }
 
-TableCollapsedBorderEdge TableCollapsedBorderEdges::calcLeftEdge(const TableCellBox* cellBox)
+TableCollapsedBorderEdge TableCollapsedBorderEdges::calcInlineStartEdge(const TableCellBox* cellBox, EdgeGetter getThisEdge, EdgeGetter getOtherEdge)
 {
     auto table = cellBox->table();
     auto direction = table->style()->direction();
     auto cellBefore = direction == Direction::Ltr ? table->cellBefore(cellBox) : table->cellAfter(cellBox);
-    auto edge = getLeftEdge(TableCollapsedBorderSource::Cell, cellBox->style());
+    auto edge = getThisEdge(TableCollapsedBorderSource::Cell, cellBox->style());
     if(cellBefore) {
-        auto rightEdge = getRightEdge(TableCollapsedBorderSource::Cell, cellBefore->style());
-        edge = direction == Direction::Ltr ? chooseEdge(rightEdge, edge) : chooseEdge(edge, rightEdge);
+        auto neighborEdge = getOtherEdge(TableCollapsedBorderSource::Cell, cellBefore->style());
+        edge = direction == Direction::Ltr ? chooseEdge(neighborEdge, edge) : chooseEdge(edge, neighborEdge);
         if(!edge.exists()) {
             return edge;
         }
@@ -1772,25 +2142,25 @@ TableCollapsedBorderEdge TableCollapsedBorderEdges::calcLeftEdge(const TableCell
     }
 
     if(isStartColumn) {
-        edge = chooseEdge(edge, getLeftEdge(TableCollapsedBorderSource::Row, cellBox->row()->style()));
+        edge = chooseEdge(edge, getThisEdge(TableCollapsedBorderSource::Row, cellBox->row()->style()));
         if(!edge.exists()) {
             return edge;
         }
 
-        edge = chooseEdge(edge, getLeftEdge(TableCollapsedBorderSource::RowGroup, cellBox->section()->style()));
+        edge = chooseEdge(edge, getThisEdge(TableCollapsedBorderSource::RowGroup, cellBox->section()->style()));
         if(!edge.exists()) {
             return edge;
         }
     }
 
     if(auto column = table->columnAt(direction == Direction::Ltr ? cellBox->columnIndex() : cellBox->columnIndex() + cellBox->colSpan() - 1)) {
-        edge = chooseEdge(edge, getLeftEdge(TableCollapsedBorderSource::Column, column->style()));
+        edge = chooseEdge(edge, getThisEdge(TableCollapsedBorderSource::Column, column->style()));
         if(!edge.exists()) {
             return edge;
         }
 
         if(auto columnGroup = column->columnGroup(); columnGroup && (direction == Direction::Ltr ? !column->prevSibling() : !column->nextSibling())) {
-            edge = chooseEdge(edge, getLeftEdge(TableCollapsedBorderSource::ColumnGroup, columnGroup->style()));
+            edge = chooseEdge(edge, getThisEdge(TableCollapsedBorderSource::ColumnGroup, columnGroup->style()));
             if(!edge.exists()) {
                 return edge;
             }
@@ -1799,14 +2169,14 @@ TableCollapsedBorderEdge TableCollapsedBorderEdges::calcLeftEdge(const TableCell
 
     if(!isStartColumn) {
         if(auto column = table->columnAt(direction == Direction::Ltr ? cellBox->columnIndex() - 1 : cellBox->columnIndex() + cellBox->colSpan())) {
-            auto rightEdge = getRightEdge(TableCollapsedBorderSource::Column, column->style());
-            edge = direction == Direction::Ltr ? chooseEdge(rightEdge, edge) : chooseEdge(edge, rightEdge);
+            auto neighborEdge = getOtherEdge(TableCollapsedBorderSource::Column, column->style());
+            edge = direction == Direction::Ltr ? chooseEdge(neighborEdge, edge) : chooseEdge(edge, neighborEdge);
             if(!edge.exists()) {
                 return edge;
             }
         }
     } else {
-        edge = chooseEdge(edge, getLeftEdge(TableCollapsedBorderSource::Table, table->style()));
+        edge = chooseEdge(edge, getThisEdge(TableCollapsedBorderSource::Table, table->style()));
         if(!edge.exists()) {
             return edge;
         }
@@ -1815,15 +2185,15 @@ TableCollapsedBorderEdge TableCollapsedBorderEdges::calcLeftEdge(const TableCell
     return edge;
 }
 
-TableCollapsedBorderEdge TableCollapsedBorderEdges::calcRightEdge(const TableCellBox* cellBox)
+TableCollapsedBorderEdge TableCollapsedBorderEdges::calcInlineEndEdge(const TableCellBox* cellBox, EdgeGetter getThisEdge, EdgeGetter getOtherEdge)
 {
     auto table = cellBox->table();
     auto direction = table->style()->direction();
     auto cellAfter = direction == Direction::Ltr ? table->cellAfter(cellBox) : table->cellBefore(cellBox);
-    auto edge = getRightEdge(TableCollapsedBorderSource::Cell, cellBox->style());
+    auto edge = getThisEdge(TableCollapsedBorderSource::Cell, cellBox->style());
     if(cellAfter) {
-        auto leftEdge = getLeftEdge(TableCollapsedBorderSource::Cell, cellAfter->style());
-        edge = direction == Direction::Ltr ? chooseEdge(edge, leftEdge) : chooseEdge(leftEdge, edge);
+        auto neighborEdge = getOtherEdge(TableCollapsedBorderSource::Cell, cellAfter->style());
+        edge = direction == Direction::Ltr ? chooseEdge(edge, neighborEdge) : chooseEdge(neighborEdge, edge);
         if(!edge.exists()) {
             return edge;
         }
@@ -1837,25 +2207,25 @@ TableCollapsedBorderEdge TableCollapsedBorderEdges::calcRightEdge(const TableCel
     }
 
     if(isEndColumn) {
-        edge = chooseEdge(edge, getRightEdge(TableCollapsedBorderSource::Row, cellBox->row()->style()));
+        edge = chooseEdge(edge, getThisEdge(TableCollapsedBorderSource::Row, cellBox->row()->style()));
         if(!edge.exists()) {
             return edge;
         }
 
-        edge = chooseEdge(edge, getRightEdge(TableCollapsedBorderSource::RowGroup, cellBox->section()->style()));
+        edge = chooseEdge(edge, getThisEdge(TableCollapsedBorderSource::RowGroup, cellBox->section()->style()));
         if(!edge.exists()) {
             return edge;
         }
     }
 
     if(auto column = table->columnAt(direction == Direction::Ltr ? cellBox->columnIndex() + cellBox->colSpan() - 1 : cellBox->columnIndex())) {
-        edge = chooseEdge(edge, getRightEdge(TableCollapsedBorderSource::Column, column->style()));
+        edge = chooseEdge(edge, getThisEdge(TableCollapsedBorderSource::Column, column->style()));
         if(!edge.exists()) {
             return edge;
         }
 
         if(auto columnGroup = column->columnGroup(); columnGroup && (direction == Direction::Ltr ? !column->nextSibling() : !column->prevSibling())) {
-            edge = chooseEdge(edge, getRightEdge(TableCollapsedBorderSource::ColumnGroup, columnGroup->style()));
+            edge = chooseEdge(edge, getThisEdge(TableCollapsedBorderSource::ColumnGroup, columnGroup->style()));
             if(!edge.exists()) {
                 return edge;
             }
@@ -1864,14 +2234,14 @@ TableCollapsedBorderEdge TableCollapsedBorderEdges::calcRightEdge(const TableCel
 
     if(!isEndColumn) {
         if(auto column = table->columnAt(direction == Direction::Ltr ? cellBox->columnIndex() + cellBox->colSpan() : cellBox->columnIndex() - 1)) {
-            auto leftEdge = getLeftEdge(TableCollapsedBorderSource::Column, column->style());
-            edge = direction == Direction::Ltr ? chooseEdge(edge, leftEdge) : chooseEdge(leftEdge, edge);
+            auto neighborEdge = getOtherEdge(TableCollapsedBorderSource::Column, column->style());
+            edge = direction == Direction::Ltr ? chooseEdge(edge, neighborEdge) : chooseEdge(neighborEdge, edge);
             if(!edge.exists()) {
                 return edge;
             }
         }
     } else {
-        edge = chooseEdge(edge, getRightEdge(TableCollapsedBorderSource::Table, table->style()));
+        edge = chooseEdge(edge, getThisEdge(TableCollapsedBorderSource::Table, table->style()));
         if(!edge.exists()) {
             return edge;
         }
@@ -1880,17 +2250,67 @@ TableCollapsedBorderEdge TableCollapsedBorderEdges::calcRightEdge(const TableCel
     return edge;
 }
 
+/* Which physical side of a cell faces the previous row, and which faces the
+ * previous column, depends on the table's writing mode: in vertical-rl rows
+ * advance leftwards, so the block axis runs across the physical right and left
+ * edges while columns collapse against the top and bottom ones. */
 TableCollapsedBorderEdges::TableCollapsedBorderEdges(const TableCellBox* cellBox)
-    : m_topEdge(calcTopEdge(cellBox))
-    , m_bottomEdge(calcBottomEdge(cellBox))
-    , m_leftEdge(calcLeftEdge(cellBox))
-    , m_rightEdge(calcRightEdge(cellBox))
 {
+    switch(cellBox->table()->style()->writingMode()) {
+    case WritingMode::HorizontalTb:
+        m_topEdge = calcBlockStartEdge(cellBox, getTopEdge, getBottomEdge);
+        m_bottomEdge = calcBlockEndEdge(cellBox, getBottomEdge, getTopEdge);
+        m_leftEdge = calcInlineStartEdge(cellBox, getLeftEdge, getRightEdge);
+        m_rightEdge = calcInlineEndEdge(cellBox, getRightEdge, getLeftEdge);
+        break;
+    case WritingMode::VerticalRl:
+    case WritingMode::SidewaysRl:
+        m_rightEdge = calcBlockStartEdge(cellBox, getRightEdge, getLeftEdge);
+        m_leftEdge = calcBlockEndEdge(cellBox, getLeftEdge, getRightEdge);
+        m_topEdge = calcInlineStartEdge(cellBox, getTopEdge, getBottomEdge);
+        m_bottomEdge = calcInlineEndEdge(cellBox, getBottomEdge, getTopEdge);
+        break;
+    case WritingMode::VerticalLr:
+    case WritingMode::SidewaysLr:
+        m_leftEdge = calcBlockStartEdge(cellBox, getLeftEdge, getRightEdge);
+        m_rightEdge = calcBlockEndEdge(cellBox, getRightEdge, getLeftEdge);
+        m_topEdge = calcInlineStartEdge(cellBox, getTopEdge, getBottomEdge);
+        m_bottomEdge = calcInlineEndEdge(cellBox, getBottomEdge, getTopEdge);
+        break;
+    }
 }
 
 TableCellBox::TableCellBox(Node* node, const RefPtr<BoxStyle>& style)
     : BlockFlowBox(node, style)
 {
+}
+
+void TableCellBox::computeIntrinsicWidths(float& minWidth, float& maxWidth) const
+{
+    if(!style()->isVerticalWritingMode() || !isChildrenInline()) {
+        BlockFlowBox::computeIntrinsicWidths(minWidth, maxWidth);
+        return;
+    }
+    // Atomic children can depend on the column width being solved. Leave that
+    // cyclic case to the existing intrinsic sizing path for now.
+    for(const auto& item : lineLayout()->data().items) {
+        if(item.box() && item.box()->isBoxFrame()) {
+            BlockFlowBox::computeIntrinsicWidths(minWidth, maxWidth);
+            return;
+        }
+    }
+    // Measure real column extents, not text advances along the vertical axis.
+    // These provisional lines are rebuilt by the normal cell layout pass.
+    auto cell = const_cast<TableCellBox*>(this);
+    const auto oldHeight = height();
+    const auto oldOffset = lineBlockOffset();
+    cell->setHeight(verticalCellHeight());
+    const auto start = style()->isFlippedBlockWritingMode() ? borderAndPaddingRight() : borderAndPaddingLeft();
+    cell->setLineBlockOffset(start);
+    lineLayout()->layout(nullptr);
+    minWidth = maxWidth = std::max(0.f, lineBlockOffset() - borderAndPaddingWidth());
+    cell->setHeight(oldHeight);
+    cell->setLineBlockOffset(oldOffset);
 }
 
 bool TableCellBox::isBaselineAligned() const
@@ -1921,6 +2341,54 @@ float TableCellBox::heightForRowSizing() const
     if(cellStyleHeight.isFixed())
         return std::max(height(), adjustBorderBoxHeight(cellStyleHeight.value()));
     return height();
+}
+
+float TableCellBox::blockSizeForRowSizing() const
+{
+    if(!table()->isVerticalTable())
+        return heightForRowSizing();
+    auto cellStyleWidth = style()->width();
+    if(cellStyleWidth.isFixed())
+        return std::max(width(), adjustBorderBoxWidth(cellStyleWidth.value()));
+    return width();
+}
+
+/* Intrinsic sizes along the table's inline axis. In a vertical writing mode that
+ * axis is physically vertical, so the content extent is the line advance rather
+ * than the physical width that computeIntrinsicWidths() measures. */
+void TableCellBox::computeIntrinsicInlineSizes(float& minSize, float& maxSize) const
+{
+    if(!table()->isVerticalTable()) {
+        minSize = minPreferredWidth();
+        maxSize = maxPreferredWidth();
+        return;
+    }
+
+    if(auto height = computeHeightUsing(style()->height())) {
+        minSize = maxSize = std::max(borderAndPaddingHeight(), height.value());
+        return;
+    }
+
+    /* An orthogonal cell contributes the height its content needs at a
+     * fit-content width, not its advance: at that width inline content occupies
+     * a single line, so one line box is the estimate. */
+    if(!style()->isVerticalWritingMode()) {
+        minSize = maxSize = borderAndPaddingHeight() + (isChildrenInline() ? style()->lineHeightValue() : 0.f);
+        return;
+    }
+
+    if(isChildrenInline() && lineLayout()) {
+        float minAdvance = 0.f;
+        float maxAdvance = 0.f;
+        lineLayout()->computeIntrinsicWidths(minAdvance, maxAdvance);
+        minSize = minAdvance + borderAndPaddingHeight();
+        maxSize = maxAdvance + borderAndPaddingHeight();
+        return;
+    }
+
+    // Block children in a vertical cell have no intrinsic inline size to offer;
+    // the column then falls back to the table's available inline space.
+    minSize = maxSize = borderAndPaddingHeight();
 }
 
 float TableCellBox::computeVerticalAlignShift() const

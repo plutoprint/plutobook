@@ -371,6 +371,11 @@ float Book::documentWidth() const
     return 0.f;
 }
 
+Box* Book::rootBox() const
+{
+    return m_document ? m_document->Node::box() : nullptr;
+}
+
 float Book::documentHeight() const
 {
     if(auto document = layoutIfNeeded())

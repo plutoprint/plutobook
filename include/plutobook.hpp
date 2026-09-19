@@ -629,7 +629,7 @@ private:
     int m_maxRedirects = 30;
     int m_timeout = 30;
 
-    friend DefaultResourceFetcher* defaultResourceFetcher();
+    friend PLUTOBOOK_API DefaultResourceFetcher* defaultResourceFetcher();
 };
 
 /**
@@ -1078,6 +1078,7 @@ public:
 
 class Heap;
 class Document;
+class Box;
 
 /**
  * @brief Defines the different media types used for CSS @media queries.
@@ -1469,6 +1470,10 @@ public:
      * @internal
      */
     Document* document() const { return m_document.get(); }
+
+    // Internal inspection entry point. Does not build, lay out, or paginate.
+    // Call documentWidth()/documentHeight() or pageCount() before inspecting bounds.
+    Box* rootBox() const;
 
 private:
     Book(const Book&) = delete;

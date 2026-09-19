@@ -82,7 +82,9 @@ void LineItemsBuilder::appendReplaced(Box* box)
 void LineItemsBuilder::enterInline(Box* box)
 {
     auto direction = box->style()->direction();
-    switch(box->style()->unicodeBidi()) {
+    const auto* style = box->style();
+    const bool upright = style->isVerticalWritingMode() && !style->isSidewaysWritingMode() && style->isUprightTextOrientation();
+    switch(upright ? UnicodeBidi::BidiOverride : style->unicodeBidi()) {
     case UnicodeBidi::Normal:
         break;
     case UnicodeBidi::Embed:
@@ -112,7 +114,9 @@ void LineItemsBuilder::exitInline(Box* box)
 void LineItemsBuilder::enterBlock(Box* box)
 {
     auto direction = box->style()->direction();
-    switch(box->style()->unicodeBidi()) {
+    const auto* style = box->style();
+    const bool upright = style->isVerticalWritingMode() && !style->isSidewaysWritingMode() && style->isUprightTextOrientation();
+    switch(upright ? UnicodeBidi::BidiOverride : style->unicodeBidi()) {
     case UnicodeBidi::BidiOverride:
     case UnicodeBidi::IsolateOverride:
         enterBidi(nullptr, direction, kLeftToRightOverrideCharacter, kRightToLeftOverrideCharacter, kPopDirectionalFormattingCharacter);
@@ -595,7 +599,7 @@ LineBreaker::~LineBreaker()
 {
     if(m_hasUnpositionedFloats)
         m_block->positionNewFloats(m_fragmentainer);
-    m_block->setHeight(m_block->height() + m_block->borderAndPaddingBottom());
+    m_block->setLineBlockOffset(m_block->lineBlockOffset() + m_block->lineBlockEndPadding());
 }
 
 const LineInfo& LineBreaker::nextLine()
@@ -623,7 +627,7 @@ const LineInfo& LineBreaker::nextLine()
         m_hasUnpositionedFloats = false;
     }
 
-    m_availableWidth = m_block->availableWidthForLine(m_block->height(), m_lineHeight, m_line.isFirstLine());
+    m_availableWidth = m_block->availableWidthForLine(m_block->lineBlockOffset(), m_lineHeight, m_line.isFirstLine());
     while(m_state != LineBreakState::Done) {
         if(m_state == LineBreakState::Continue && m_autoWrap && !canFitOnLine())
             handleOverflow();
@@ -689,7 +693,7 @@ const LineInfo& LineBreaker::nextLine()
         }
     }
 
-    auto startOffset = m_block->leftOffsetForLine(m_block->height(), m_lineHeight, m_line.isFirstLine());
+    auto startOffset = m_block->leftOffsetForLine(m_block->lineBlockOffset(), m_lineHeight, m_line.isFirstLine());
     if(!m_line.endsWithBreak()) {
         const auto& runs = m_line.runs();
         auto index = runs.size();
@@ -937,7 +941,7 @@ void LineBreaker::handleFloating(const LineItem& item)
         return;
     }
 
-    auto floatTop = m_block->height();
+    auto floatTop = m_block->lineBlockOffset();
     if(m_block->containsFloats()) {
         for(const auto& floatingBox : *m_block->floatingBoxes()) {
             assert(floatingBox.isPlaced());
@@ -964,7 +968,7 @@ void LineBreaker::handleFloating(const LineItem& item)
     auto& floatingBox = m_block->insertFloatingBox(box);
     if(canFitOnLine(box->marginBoxWidth())) {
         m_block->positionFloatingBox(floatingBox, m_fragmentainer, floatTop);
-        m_availableWidth = m_block->availableWidthForLine(m_block->height(), m_lineHeight, m_line.isFirstLine());
+        m_availableWidth = m_block->availableWidthForLine(m_block->lineBlockOffset(), m_lineHeight, m_line.isFirstLine());
     } else {
         m_hasUnpositionedFloats = true;
     }
@@ -991,7 +995,7 @@ void LineBreaker::handleReplaced(const LineItem& item)
     box.layout(nullptr);
 
     run.canBreakAfter = canBreakAfter(run);
-    run.width = box.marginBoxWidth();
+    run.width = m_block->style()->isVerticalWritingMode() ? box.marginBoxHeight() : box.marginBoxWidth();
     m_line.setIsEmptyLine(false);
     m_currentWidth += run.width;
     m_skipLeadingWhitespace = false;
@@ -1293,7 +1297,7 @@ void LineBreaker::handleOverflow()
         }
 
         float newLineWidth = availableWidth;
-        float lastFloatBottom = m_block->height();
+        float lastFloatBottom = m_block->lineBlockOffset();
         float floatBottom = 0.f;
         while(true) {
             floatBottom = m_block->nextFloatBottom(lastFloatBottom);
@@ -1307,7 +1311,7 @@ void LineBreaker::handleOverflow()
         }
 
         if(newLineWidth > availableWidth) {
-            m_block->setHeight(lastFloatBottom);
+            m_block->setLineBlockOffset(lastFloatBottom);
             m_availableWidth = newLineWidth;
             return;
         }
@@ -1386,9 +1390,9 @@ void LineBuilder::buildLine(const LineInfo& info)
     rootLine->setIsEmptyLine(info.isEmptyLine());
     rootLine->setIsFirstLine(info.isFirstLine());
     rootLine->alignInHorizontalDirection(info.lineOffset());
-    auto blockHeight = rootLine->alignInVerticalDirection(m_fragmentainer, m_block->height());
+    auto blockHeight = rootLine->alignInVerticalDirection(m_fragmentainer, m_block->lineBlockOffset());
     if(!rootLine->isEmptyLine()) {
-        m_block->setHeight(blockHeight);
+        m_block->setLineBlockOffset(blockHeight);
     }
 }
 
@@ -1462,6 +1466,7 @@ void LineBuilder::handleText(const LineItemRun& run)
 {
     auto box = to<TextBox>(run->box());
     auto line = TextLineBox::create(box, run.shape, run.width, run.expansion);
+    line->setTextStartOffset(run.startOffset);
     addLineBox(line.get());
     box->lines().push_back(std::move(line));
 }
@@ -1507,7 +1512,7 @@ void LineLayout::updateOverflowRect()
 {
     for(const auto& line : m_lines) {
         line->updateOverflowRect(line->lineTop(), line->lineBottom());
-        m_block->addOverflowRect(line->visualOverflowRect());
+        m_block->addOverflowRect(m_block->lineTransform().mapRect(line->visualOverflowRect()));
     }
 }
 
@@ -1642,15 +1647,17 @@ void LineLayout::computeIntrinsicWidths(float& minWidth, float& maxWidth) const
 
 void LineLayout::layout(FragmentBuilder* fragmentainer)
 {
+    if(m_block->style()->isVerticalWritingMode())
+        m_lines.clear();
     if(!m_lines.empty()) {
         for(const auto& line : m_lines) {
-            auto blockHeight = line->alignInVerticalDirection(fragmentainer, m_block->height());
+            auto blockHeight = line->alignInVerticalDirection(fragmentainer, m_block->lineBlockOffset());
             if(!line->isEmptyLine()) {
-                m_block->setHeight(blockHeight);
+                m_block->setLineBlockOffset(blockHeight);
             }
         }
 
-        m_block->setHeight(m_block->height() + m_block->borderAndPaddingBottom());
+        m_block->setLineBlockOffset(m_block->lineBlockOffset() + m_block->lineBlockEndPadding());
         return;
     }
 

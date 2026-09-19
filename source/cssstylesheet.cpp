@@ -202,6 +202,7 @@ void StyleBuilder::buildStyle(BoxStyle* newStyle)
         case CSSPropertyID::LineHeight:
         case CSSPropertyID::Direction:
         case CSSPropertyID::WritingMode:
+        case CSSPropertyID::TextOrientation:
             newStyle->set(property.id(), property.value());
             break;
         default:
@@ -226,6 +227,7 @@ void StyleBuilder::buildStyle(BoxStyle* newStyle)
         case CSSPropertyID::LineHeight:
         case CSSPropertyID::Direction:
         case CSSPropertyID::WritingMode:
+        case CSSPropertyID::TextOrientation:
             break;
         default:
             newStyle->set(resolveDirectionAwareProperty(id, direction), property.value());
@@ -583,6 +585,8 @@ RefPtr<BoxStyle> ElementStyleBuilder::build()
     buildStyle(newStyle.get());
     if(newStyle->display() == Display::None)
         return newStyle;
+    if(newStyle->display() == Display::Inline && newStyle->writingMode() != m_parentStyle->writingMode())
+        newStyle->setDisplay(Display::InlineBlock);
     if(newStyle->position() == Position::Static && !m_parentStyle->isDisplayFlex())
         newStyle->reset(CSSPropertyID::ZIndex);
     if(m_pseudoType == PseudoType::FirstLetter) {
