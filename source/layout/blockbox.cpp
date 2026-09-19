@@ -889,51 +889,51 @@ void BlockFlowBox::positionFloatingBox(FloatingBox& floatingBox, FragmentBuilder
     floatingBox.setIsPlaced(true);
 }
 
+void BlockFlowBox::positionNewFloat(FloatingBox& floatingBox, FragmentBuilder* fragmentainer, float top)
+{
+    auto child = floatingBox.box();
+    if(child->style()->isClearLeft())
+        top = std::max(top, leftFloatBottom());
+    if(child->style()->isClearRight()) {
+        top = std::max(top, rightFloatBottom());
+    }
+
+    child->updatePaddingWidths(this);
+    child->updateVerticalMargins(this);
+
+    auto estimatedTop = top + child->marginTop();
+    if(fragmentainer)
+        fragmentainer->enterFragment(estimatedTop);
+    child->layout(fragmentainer);
+    if(fragmentainer) {
+        fragmentainer->leaveFragment(estimatedTop);
+    }
+
+    positionFloatingBox(floatingBox, fragmentainer, top);
+}
+
 void BlockFlowBox::positionNewFloats(FragmentBuilder* fragmentainer)
 {
     if(m_floatingBoxes == nullptr)
         return;
-    auto floatTop = height();
+    auto top = height();
     for(auto& floatingBox : *m_floatingBoxes) {
-        if(floatingBox.isPlaced()) {
-            floatTop = std::max(floatTop, floatingBox.y());
-            continue;
-        }
-
-        auto child = floatingBox.box();
-        if(child->style()->isClearLeft())
-            floatTop = std::max(floatTop, leftFloatBottom());
-        if(child->style()->isClearRight()) {
-            floatTop = std::max(floatTop, rightFloatBottom());
-        }
-
-        child->updatePaddingWidths(this);
-        child->updateVerticalMargins(this);
-
-        auto estimatedTop = floatTop + child->marginTop();
-        if(fragmentainer)
-            fragmentainer->enterFragment(estimatedTop);
-        child->layout(fragmentainer);
-        if(fragmentainer) {
-            fragmentainer->leaveFragment(estimatedTop);
-        }
-
-        positionFloatingBox(floatingBox, fragmentainer, floatTop);
+        if(!floatingBox.isPlaced())
+            positionNewFloat(floatingBox, fragmentainer, top);
+        top = std::max(top, floatingBox.y());
     }
 }
 
 FloatingBox& BlockFlowBox::insertFloatingBox(BoxFrame* box)
 {
-    if(m_floatingBoxes) {
-        for(auto& floatingBox : *m_floatingBoxes) {
-            if(box == floatingBox.box()) {
-                return floatingBox;
-            }
+    if(m_floatingBoxes == nullptr)
+        m_floatingBoxes = std::make_unique<FloatingBoxList>(heap());
+    for(auto& floatingBox : *m_floatingBoxes) {
+        if(box == floatingBox.box()) {
+            return floatingBox;
         }
     }
 
-    if(m_floatingBoxes == nullptr)
-        m_floatingBoxes = std::make_unique<FloatingBoxList>(heap());
     m_floatingBoxes->emplace_back(box);
     return m_floatingBoxes->back();
 }

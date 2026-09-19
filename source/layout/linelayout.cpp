@@ -937,15 +937,15 @@ void LineBreaker::handleFloating(const LineItem& item)
         return;
     }
 
-    auto floatTop = m_block->height();
+    auto top = m_block->height();
     if(m_block->containsFloats()) {
         for(const auto& floatingBox : *m_block->floatingBoxes()) {
             assert(floatingBox.isPlaced());
-            floatTop = std::max(floatTop, floatingBox.y());
+            top = std::max(top, floatingBox.y());
             if(box->style()->isClearLeft() && floatingBox.type() == Float::Left)
-                floatTop = std::max(floatTop, floatingBox.bottom());
+                top = std::max(top, floatingBox.bottom());
             if(box->style()->isClearRight() && floatingBox.type() == Float::Right) {
-                floatTop = std::max(floatTop, floatingBox.bottom());
+                top = std::max(top, floatingBox.bottom());
             }
         }
     }
@@ -953,7 +953,7 @@ void LineBreaker::handleFloating(const LineItem& item)
     box->updatePaddingWidths(m_block);
     box->updateVerticalMargins(m_block);
 
-    auto estimatedTop = floatTop + box->marginTop();
+    auto estimatedTop = top + box->marginTop();
     if(m_fragmentainer)
         m_fragmentainer->enterFragment(estimatedTop);
     box->layout(m_fragmentainer);
@@ -963,7 +963,7 @@ void LineBreaker::handleFloating(const LineItem& item)
 
     auto& floatingBox = m_block->insertFloatingBox(box);
     if(canFitOnLine(box->marginBoxWidth())) {
-        m_block->positionFloatingBox(floatingBox, m_fragmentainer, floatTop);
+        m_block->positionFloatingBox(floatingBox, m_fragmentainer, top);
         m_availableWidth = m_block->availableWidthForLine(m_block->height(), m_lineHeight, m_line.isFirstLine());
     } else {
         m_hasUnpositionedFloats = true;

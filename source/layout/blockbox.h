@@ -159,6 +159,7 @@ public:
     void addOverhangingFloats(BlockFlowBox* childBlock);
 
     void positionFloatingBox(FloatingBox& floatingBox, FragmentBuilder* fragmentainer, float top);
+    void positionNewFloat(FloatingBox& floatingBox, FragmentBuilder* fragmentainer, float top);
     void positionNewFloats(FragmentBuilder* fragmentainer);
 
     FloatingBox& insertFloatingBox(BoxFrame* box);
