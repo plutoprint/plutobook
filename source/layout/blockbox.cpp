@@ -347,6 +347,7 @@ void BlockBox::computePositionedHeightUsing(const Length& heightLength, const Bo
         heightLengthValue = adjustContentBoxHeight(heightLengthValue);
     }
 
+    auto containerWidth = containingBlockWidthForPositioned(container);
     if(!topLenghtIsAuto && !heightLenghtIsAuto && !bottomLenghtIsAuto) {
         height = heightLengthValue;
         topLengthValue = topLength.calc(containerHeight);
@@ -356,18 +357,18 @@ void BlockBox::computePositionedHeightUsing(const Length& heightLength, const Bo
             marginTop = availableSpace / 2.f;
             marginBottom = availableSpace - marginTop;
         } else if(marginTopLength.isAuto()) {
-            marginBottom = marginBottomLength.calc(containerHeight);
+            marginBottom = marginBottomLength.calc(containerWidth);
             marginTop = availableSpace - marginBottom;
         } else if(marginBottomLength.isAuto()) {
-            marginTop = marginTopLength.calc(containerHeight);
+            marginTop = marginTopLength.calc(containerWidth);
             marginBottom = availableSpace - marginTop;
         } else {
-            marginTop = marginTopLength.calc(containerHeight);
-            marginBottom = marginBottomLength.calc(containerHeight);
+            marginTop = marginTopLength.calc(containerWidth);
+            marginBottom = marginBottomLength.calc(containerWidth);
         }
     } else {
-        marginTop = marginTopLength.calcMin(containerHeight);
-        marginBottom = marginBottomLength.calcMin(containerHeight);
+        marginTop = marginTopLength.calcMin(containerWidth);
+        marginBottom = marginBottomLength.calcMin(containerWidth);
 
         auto availableSpace = containerHeight - (marginTop + marginBottom + borderAndPaddingHeight());
         if(topLenghtIsAuto && heightLenghtIsAuto && !bottomLenghtIsAuto) {
