@@ -15,6 +15,7 @@
 #include "qrcodegen.h"
 
 #include <sstream>
+#include <cstdio>
 
 namespace plutobook {
 
@@ -34,6 +35,50 @@ ContentBoxBuilder::ContentBoxBuilder(Counters& counters, Element* element, Box* 
     , m_box(box)
     , m_style(box->style())
 {
+}
+
+void ContentBoxBuilder::build(const CSSValue& content)
+{
+    if(content.id() == CSSValueID::None)
+        return;
+    if(content.id() == CSSValueID::Normal) {
+        if(m_style->pseudoType() == PseudoType::Marker)
+            addDefaultListMarker();
+        return;
+    }
+
+    for(const auto& value : to<CSSListValue>(content)) {
+        addValue(*value);
+    }
+}
+
+void ContentBoxBuilder::addValue(const CSSValue& value)
+{
+    switch(value.type()) {
+    case CSSValueType::String:
+        addText(to<CSSStringValue>(value).value());
+        break;
+    case CSSValueType::Image:
+        addImage(to<CSSImageValue>(value).fetch(m_style->document()));
+        break;
+    case CSSValueType::Counter:
+        addCounter(to<CSSCounterValue>(value));
+        break;
+    case CSSValueType::Ident:
+        addQuote(to<CSSIdentValue>(value).value());
+        break;
+    case CSSValueType::Attr:
+        addText(resolveAttr(to<CSSAttrValue>(value)));
+        break;
+    case CSSValueType::Function:
+        addQrCode(to<CSSFunctionValue>(value));
+        break;
+    case CSSValueType::UnaryFunction:
+        addFunction(to<CSSUnaryFunctionValue>(value));
+        break;
+    default:
+        assert(false);
+    }
 }
 
 void ContentBoxBuilder::addText(const HeapString& text)
@@ -108,6 +153,20 @@ void ContentBoxBuilder::addElement(const CSSValue& value)
     m_lastTextBox = nullptr;
 }
 
+void ContentBoxBuilder::addFunction(const CSSUnaryFunctionValue& function)
+{
+    switch(function.id()) {
+    case CSSFunctionID::Leader:
+        addLeader(*function.value());
+        break;
+    case CSSFunctionID::Element:
+        addElement(*function.value());
+        break;
+    default:
+        assert(false);
+    }
+}
+
 void ContentBoxBuilder::addCounter(const CSSCounterValue& counter)
 {
     addText(m_counters.counterText(counter.identifier(), counter.listStyle(), counter.separator()));
@@ -115,32 +174,32 @@ void ContentBoxBuilder::addCounter(const CSSCounterValue& counter)
 
 void ContentBoxBuilder::addQuote(CSSValueID value)
 {
-    assert(value == CSSValueID::OpenQuote || value == CSSValueID::CloseQuote || value == CSSValueID::NoOpenQuote || value == CSSValueID::NoCloseQuote);
-    auto openquote = (value == CSSValueID::OpenQuote || value == CSSValueID::NoOpenQuote);
-    auto closequote = (value == CSSValueID::CloseQuote || value == CSSValueID::NoCloseQuote);
-    auto usequote = (value == CSSValueID::OpenQuote || value == CSSValueID::CloseQuote);
-    if(closequote && m_counters.quoteDepth())
-        m_counters.decreaseQuoteDepth();
-    if(usequote)
-        addText(m_style->getQuote(openquote, m_counters.quoteDepth()));
-    if(openquote) {
+    switch(value) {
+    case CSSValueID::OpenQuote:
+        addText(m_style->getQuote(true, m_counters.quoteDepth()));
         m_counters.increaseQuoteDepth();
+        break;
+    case CSSValueID::CloseQuote:
+        if(m_counters.quoteDepth())
+            m_counters.decreaseQuoteDepth();
+        addText(m_style->getQuote(false, m_counters.quoteDepth()));
+        break;
+    case CSSValueID::NoOpenQuote:
+        m_counters.increaseQuoteDepth();
+        break;
+    case CSSValueID::NoCloseQuote:
+        if(m_counters.quoteDepth())
+            m_counters.decreaseQuoteDepth();
+        break;
+    default:
+        assert(false);
     }
 }
 
 void ContentBoxBuilder::addQrCode(const CSSFunctionValue& function)
 {
+    assert(function.id() == CSSFunctionID::Qrcode);
     std::string text(to<CSSStringValue>(*function.at(0)).value());
-
-    char fill[16] = "black";
-    if(function.size() == 2) {
-        const auto& color = to<CSSColorValue>(*function.at(1)).value();
-        if(color.alpha() == 255) {
-            std::snprintf(fill, sizeof(fill), "#%02X%02X%02X", color.red(), color.green(), color.blue());
-        } else {
-            std::snprintf(fill, sizeof(fill), "#%02X%02X%02X%02X", color.red(), color.green(), color.blue(), color.alpha());
-        }
-    }
 
     uint8_t qrcode[qrcodegen_BUFFER_LEN_MAX];
     uint8_t tempBuffer[qrcodegen_BUFFER_LEN_MAX];
@@ -156,6 +215,16 @@ void ContentBoxBuilder::addQrCode(const CSSFunctionValue& function)
                 if(qrcodegen_getModule(qrcode, x, y)) {
                     ss << 'M' << x << ',' << y << "h1v1h-1z";
                 }
+            }
+        }
+
+        char fill[16] = "black";
+        if(function.size() == 2) {
+            const auto color = m_style->convertColor(*function.at(1));
+            if(color.alpha() == 255) {
+                std::snprintf(fill, sizeof(fill), "#%02X%02X%02X", color.red(), color.green(), color.blue());
+            } else {
+                std::snprintf(fill, sizeof(fill), "#%02X%02X%02X%02X", color.red(), color.green(), color.blue(), color.alpha());
             }
         }
 
@@ -177,6 +246,63 @@ void ContentBoxBuilder::addImage(RefPtr<Image> image)
     m_lastTextBox = nullptr;
 }
 
+void ContentBoxBuilder::addDefaultListMarker()
+{
+    if(auto image = m_style->listStyleImage()) {
+        addImage(std::move(image));
+        return;
+    }
+
+    auto listStyleType = m_style->get(CSSPropertyID::ListStyleType);
+    if(listStyleType == nullptr) {
+        addText(markerText(CSSValueID::Disc));
+        return;
+    }
+
+    if(auto ident = to<CSSIdentValue>(listStyleType)) {
+        addText(markerText(ident->value()));
+        return;
+    }
+
+    if(auto string = to<CSSStringValue>(listStyleType)) {
+        addText(string->value());
+        return;
+    }
+
+    const auto& listStyle = to<CSSCustomIdentValue>(*listStyleType);
+    addText(m_counters.markerText(listStyle.value()));
+}
+
+const GlobalString& ContentBoxBuilder::markerText(CSSValueID listStyleType) const
+{
+    static const GlobalString disc("\u2022 ");
+    static const GlobalString circle("\u25E6 ");
+    static const GlobalString square("\u25AA ");
+
+    static const GlobalString disclosureOpen("\u25BE ");
+    static const GlobalString disclosureClosedLtr("\u25B8 ");
+    static const GlobalString disclosureClosedRtl("\u25C2 ");
+
+    switch(listStyleType) {
+    case CSSValueID::None:
+        return emptyGlo;
+    case CSSValueID::Disc:
+        return disc;
+    case CSSValueID::Circle:
+        return circle;
+    case CSSValueID::Square:
+        return square;
+    case CSSValueID::DisclosureOpen:
+        return disclosureOpen;
+    case CSSValueID::DisclosureClosed:
+        return m_style->direction() == Direction::Rtl ? disclosureClosedRtl : disclosureClosedLtr;
+    default:
+        assert(false);
+    }
+
+    return emptyGlo;
+}
+
 const HeapString& ContentBoxBuilder::resolveAttr(const CSSAttrValue& attr) const
 {
     if(m_element == nullptr)
@@ -185,95 +311,6 @@ const HeapString& ContentBoxBuilder::resolveAttr(const CSSAttrValue& attr) const
     if(attribute == nullptr)
         return attr.fallback();
     return attribute->value();
-}
-
-void ContentBoxBuilder::build(const CSSValue& content)
-{
-    if(content.id() == CSSValueID::None)
-        return;
-    if(content.id() == CSSValueID::Normal) {
-        if(m_style->pseudoType() != PseudoType::Marker)
-            return;
-        if(auto image = m_style->listStyleImage()) {
-            addImage(std::move(image));
-            return;
-        }
-
-        static const GlobalString disc("\u2022 ");
-        static const GlobalString circle("\u25E6 ");
-        static const GlobalString square("\u25AA ");
-
-        auto listStyleType = m_style->get(CSSPropertyID::ListStyleType);
-        if(listStyleType == nullptr) {
-            addText(disc);
-            return;
-        }
-
-        if(auto ident = to<CSSIdentValue>(listStyleType)) {
-            static const GlobalString disclosureOpen("\u25BE ");
-            static const GlobalString disclosureClosedLtr("\u25B8 ");
-            static const GlobalString disclosureClosedRtl("\u25C2 ");
-
-            switch(ident->value()) {
-            case CSSValueID::None:
-                return;
-            case CSSValueID::Disc:
-                addText(disc);
-                return;
-            case CSSValueID::Circle:
-                addText(circle);
-                return;
-            case CSSValueID::Square:
-                addText(square);
-                return;
-            case CSSValueID::DisclosureOpen:
-                addText(disclosureOpen);
-                return;
-            case CSSValueID::DisclosureClosed:
-                addText(m_style->direction() == Direction::Rtl ? disclosureClosedRtl : disclosureClosedLtr);
-                return;
-            default:
-                assert(false);
-            }
-        }
-
-        if(auto listStyle = to<CSSStringValue>(listStyleType)) {
-            addText(listStyle->value());
-            return;
-        }
-
-        const auto& listStyle = to<CSSCustomIdentValue>(*listStyleType);
-        addText(m_counters.markerText(listStyle.value()));
-        return;
-    }
-
-    for(const auto& value : to<CSSListValue>(content)) {
-        if(auto string = to<CSSStringValue>(value)) {
-            addText(string->value());
-        } else if(auto image = to<CSSImageValue>(value)) {
-            addImage(image->fetch(m_style->document()));
-        } else if(auto counter = to<CSSCounterValue>(value)) {
-            addCounter(*counter);
-        } else if(auto ident = to<CSSIdentValue>(value)) {
-            addQuote(ident->value());
-        } else if(auto attr = to<CSSAttrValue>(value)) {
-            addText(resolveAttr(*attr));
-        } else {
-            if(is<CSSFunctionValue>(value)) {
-                const auto& function = to<CSSFunctionValue>(*value);
-                assert(function.id() == CSSFunctionID::Qrcode);
-                addQrCode(function);
-            } else {
-                const auto& function = to<CSSUnaryFunctionValue>(*value);
-                if(function.id() == CSSFunctionID::Leader) {
-                    addLeader(*function.value());
-                } else {
-                    assert(function.id() == CSSFunctionID::Element);
-                    addElement(*function.value());
-                }
-            }
-        }
-    }
 }
 
 } // namespace plutobook

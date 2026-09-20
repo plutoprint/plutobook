@@ -44,6 +44,7 @@ struct is_a<LeaderBox> {
 
 class CSSCounterValue;
 class CSSFunctionValue;
+class CSSUnaryFunctionValue;
 class CSSAttrValue;
 
 class Counters;
@@ -56,15 +57,20 @@ public:
     void build(const CSSValue& content);
 
 private:
+    void addValue(const CSSValue& value);
     void addText(const HeapString& text);
     void addLeaderText(const HeapString& text);
     void addLeader(const CSSValue& value);
     void addElement(const CSSValue& value);
+    void addFunction(const CSSUnaryFunctionValue& function);
     void addCounter(const CSSCounterValue& counter);
     void addQuote(CSSValueID value);
     void addQrCode(const CSSFunctionValue& function);
     void addImage(RefPtr<Image> image);
 
+    void addDefaultListMarker();
+
+    const GlobalString& markerText(CSSValueID listStyleType) const;
     const HeapString& resolveAttr(const CSSAttrValue& attr) const;
 
     Counters& m_counters;
