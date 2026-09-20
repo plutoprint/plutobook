@@ -1543,6 +1543,8 @@ void LineLayout::computeIntrinsicWidths(float& minWidth, float& maxWidth) const
                     auto startOffset = item.startOffset();
                     while(startOffset < item.endOffset()) {
                         if(breakIterator.isBreakableSpace(m_data.text[startOffset])) {
+                            minWidth = std::max(minWidth, inlineMinWidth);
+                            inlineMinWidth = 0.f;
                             ++startOffset;
                             continue;
                         }
