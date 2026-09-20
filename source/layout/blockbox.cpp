@@ -747,8 +747,8 @@ std::optional<float> BlockFlowBox::inlineBlockBaseline() const
 
 void BlockFlowBox::collectIntrudingFloats()
 {
-    if(m_floatingBoxes)
-        m_floatingBoxes->clear();
+    assert(!containsFloats());
+
     if(isFloating() || isPositioned() || avoidsFloats()) {
         return;
     }
@@ -937,6 +937,15 @@ FloatingBox& BlockFlowBox::insertFloatingBox(BoxFrame* box)
 
     m_floatingBoxes->emplace_back(box);
     return m_floatingBoxes->back();
+}
+
+void BlockFlowBox::clearFloatingBoxes()
+{
+    if(containsFloats()) {
+        if(isChildrenInline())
+            m_lineLayout->clearLines();
+        m_floatingBoxes->clear();
+    }
 }
 
 bool BlockFlowBox::containsFloat(Box* box) const
@@ -1574,6 +1583,7 @@ void BlockFlowBox::layoutBlockChildren(FragmentBuilder* fragmentainer)
 
 void BlockFlowBox::layoutContents(FragmentBuilder* fragmentainer, float verticalShift)
 {
+    clearFloatingBoxes();
     collectIntrudingFloats();
     setHeight(verticalShift + borderAndPaddingTop());
 

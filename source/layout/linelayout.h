@@ -369,6 +369,8 @@ public:
     void paint(const PaintInfo& info, const Point& offset, PaintPhase phase);
     void serialize(std::ostream& o, int indent) const;
 
+    void clearLines();
+
 private:
     LineLayout(BlockFlowBox* block);
     BlockFlowBox* m_block;

@@ -1497,8 +1497,7 @@ void LineLayout::updateWidth()
 {
     auto blockWidth = m_block->width();
     m_block->updateWidth();
-    if(m_block->containsFloats()
-        || !isNearlyEqual(blockWidth, m_block->width())) {
+    if(!isNearlyEqual(blockWidth, m_block->width())) {
         m_lines.clear();
     }
 }
@@ -1753,6 +1752,11 @@ void LineLayout::serialize(std::ostream& o, int indent) const
     for(const auto& line : m_lines) {
         line->serialize(o, indent);
     }
+}
+
+void LineLayout::clearLines()
+{
+    m_lines.clear();
 }
 
 LineLayout::LineLayout(BlockFlowBox* block)
