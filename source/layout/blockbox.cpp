@@ -939,6 +939,18 @@ FloatingBox& BlockFlowBox::insertFloatingBox(BoxFrame* box)
     return m_floatingBoxes->back();
 }
 
+void BlockFlowBox::removeFloatingBox(Box* box)
+{
+    if(m_floatingBoxes == nullptr)
+        return;
+    for(auto it = m_floatingBoxes->begin(); it != m_floatingBoxes->end(); ++it) {
+        if(box == it->box()) {
+            m_floatingBoxes->erase(it);
+            return;
+        }
+    }
+}
+
 void BlockFlowBox::clearFloatingBoxes()
 {
     if(containsFloats()) {

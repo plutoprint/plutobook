@@ -1233,9 +1233,20 @@ void LineBreaker::rewindOverflow(uint32_t newSize)
         }
     }
 
-    while(newSize < runs.size())
+    auto hasRemovedFloats = false;
+    while(newSize < runs.size()) {
+        const auto& run = runs.back();
+        if(run->type() == LineItem::Type::Floating && run.itemIndex >= m_leadingFloatsEndIndex) {
+            m_block->removeFloatingBox(run->box());
+            hasRemovedFloats = true;
+        }
+
         runs.pop_back();
+    }
+
     moveToNextOf(runs.back());
+    if(hasRemovedFloats)
+        m_availableWidth = m_block->availableWidthForLine(m_block->height(), m_lineHeight, m_line.isFirstLine());
     m_currentWidth = 0.f;
     for(const auto& run : runs) {
         m_currentWidth += run.width;

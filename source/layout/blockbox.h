@@ -163,6 +163,7 @@ public:
     void positionNewFloats(FragmentBuilder* fragmentainer);
 
     FloatingBox& insertFloatingBox(BoxFrame* box);
+    void removeFloatingBox(Box* box);
     void clearFloatingBoxes();
 
     bool containsFloat(Box* box) const;
