@@ -428,8 +428,6 @@ void ReplacedBox::computeWidth(float& x, float& width, float& marginLeft, float&
     auto container = containingBlock();
     auto containerWidth = std::max(0.f, containingBlockWidthForContent(container));
     width = computeReplacedWidth() + borderAndPaddingWidth();
-    if(isInline())
-        width = std::max(width, minPreferredWidth());
     computeHorizontalMargins(marginLeft, marginRight, width, container, containerWidth);
 }
 
