@@ -19,8 +19,8 @@ public:
 
     bool isReplacedBox() const final { return true; }
 
-    virtual void computeIntrinsicRatioInformation(float& intrinsicWidth, float& intrinsicHeight, double& intrinsicRatio) const = 0;
-    void computeAspectRatioInformation(float& intrinsicWidth, float& intrinsicHeight, double& intrinsicRatio) const;
+    virtual void computeIntrinsicRatioInformation(float& intrinsicWidth, float& intrinsicHeight, float& intrinsicRatio) const = 0;
+    void computeAspectRatioInformation(float& intrinsicWidth, float& intrinsicHeight, float& intrinsicRatio) const;
 
     virtual float computePreferredReplacedWidth() const;
     void computePreferredWidths(float& minPreferredWidth, float& maxPreferredWidth) const override;
@@ -78,7 +78,7 @@ public:
     const RefPtr<Image>& image() const { return m_image; }
     void setImage(RefPtr<Image> image);
 
-    void computeIntrinsicRatioInformation(float& intrinsicWidth, float& intrinsicHeight, double& intrinsicRatio) const final;
+    void computeIntrinsicRatioInformation(float& intrinsicWidth, float& intrinsicHeight, float& intrinsicRatio) const final;
     void paintReplaced(const PaintInfo& info, const Point& offset) final;
 
     const char* name() const final { return "ImageBox"; }

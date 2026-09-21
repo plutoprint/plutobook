@@ -360,7 +360,7 @@ void BitmapImage::drawPattern(GraphicsContext& context, const Rect& destRect, co
     cairo_pattern_destroy(pattern);
 }
 
-void BitmapImage::computeIntrinsicDimensions(float& intrinsicWidth, float& intrinsicHeight, double& intrinsicRatio)
+void BitmapImage::computeIntrinsicDimensions(float& intrinsicWidth, float& intrinsicHeight, float& intrinsicRatio)
 {
     intrinsicWidth = cairo_image_surface_get_width(m_surface);
     intrinsicHeight = cairo_image_surface_get_height(m_surface);
@@ -458,7 +458,7 @@ void SVGImage::drawPattern(GraphicsContext& context, const Rect& destRect, const
     cairo_surface_destroy(pattern_surface);
 }
 
-void SVGImage::computeIntrinsicDimensions(float& intrinsicWidth, float& intrinsicHeight, double& intrinsicRatio)
+void SVGImage::computeIntrinsicDimensions(float& intrinsicWidth, float& intrinsicHeight, float& intrinsicRatio)
 {
     rootElement()->computeIntrinsicDimensions(intrinsicWidth, intrinsicHeight, intrinsicRatio);
 }

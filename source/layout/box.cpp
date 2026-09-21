@@ -436,7 +436,7 @@ static Size computeBackgroundImageIntrinsicSize(const RefPtr<Image>& backgroundI
 {
     float intrinsicWidth = 0;
     float intrinsicHeight = 0;
-    double intrinsicRatio = 0;
+    float intrinsicRatio = 0;
     backgroundImage->computeIntrinsicDimensions(intrinsicWidth, intrinsicHeight, intrinsicRatio);
     if(intrinsicWidth > 0 && intrinsicHeight > 0) {
         return Size(intrinsicWidth, intrinsicHeight);

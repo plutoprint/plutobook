@@ -19,7 +19,7 @@ ReplacedBox::ReplacedBox(Node* node, const RefPtr<BoxStyle>& style)
     setIsReplaced(true);
 }
 
-void ReplacedBox::computeAspectRatioInformation(float& intrinsicWidth, float& intrinsicHeight, double& intrinsicRatio) const
+void ReplacedBox::computeAspectRatioInformation(float& intrinsicWidth, float& intrinsicHeight, float& intrinsicRatio) const
 {
     computeIntrinsicRatioInformation(intrinsicWidth, intrinsicHeight, intrinsicRatio);
     if(intrinsicRatio && intrinsicWidth && intrinsicHeight && style()->width().isAuto()
@@ -40,7 +40,7 @@ float ReplacedBox::computePreferredReplacedWidth() const
 
     float intrinsicWidth = 0.f;
     float intrinsicHeight = 0.f;
-    double intrinsicRatio = 0.0;
+    float intrinsicRatio = 0.f;
     computeAspectRatioInformation(intrinsicWidth, intrinsicHeight, intrinsicRatio);
 
     auto height = computeReplacedHeightUsing(style()->height());
@@ -251,7 +251,7 @@ float ReplacedBox::computeReplacedIntrinsicWidth() const
 {
     float intrinsicWidth = 0.f;
     float intrinsicHeight = 0.f;
-    double intrinsicRatio = 0.0;
+    float intrinsicRatio = 0.f;
     computeIntrinsicRatioInformation(intrinsicWidth, intrinsicHeight, intrinsicRatio);
     if(intrinsicRatio) {
         if(auto height = computeReplacedHeightUsing(style()->height()))
@@ -332,7 +332,7 @@ float ReplacedBox::computeReplacedWidth() const
 
     float intrinsicWidth = 0.f;
     float intrinsicHeight = 0.f;
-    double intrinsicRatio = 0.0;
+    float intrinsicRatio = 0.f;
     computeAspectRatioInformation(intrinsicWidth, intrinsicHeight, intrinsicRatio);
 
     auto height = computeReplacedHeightUsing(style()->height());
@@ -361,7 +361,7 @@ float ReplacedBox::computeReplacedHeight() const
 
     float intrinsicWidth = 0.f;
     float intrinsicHeight = 0.f;
-    double intrinsicRatio = 0.0;
+    float intrinsicRatio = 0.f;
     computeAspectRatioInformation(intrinsicWidth, intrinsicHeight, intrinsicRatio);
 
     auto width = computeReplacedWidthUsing(style()->width());
@@ -489,7 +489,7 @@ void ImageBox::setImage(RefPtr<Image> image)
     m_image = std::move(image);
 }
 
-void ImageBox::computeIntrinsicRatioInformation(float& intrinsicWidth, float& intrinsicHeight, double& intrinsicRatio) const
+void ImageBox::computeIntrinsicRatioInformation(float& intrinsicWidth, float& intrinsicHeight, float& intrinsicRatio) const
 {
     if(m_image) {
         m_image->computeIntrinsicDimensions(intrinsicWidth, intrinsicHeight, intrinsicRatio);

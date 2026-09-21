@@ -118,7 +118,7 @@ public:
     Transform viewBoxToViewTransform(const Size& viewportSize) const;
 
     void computeIntrinsicSize(float& intrinsicWidth, float& intrinsicHeight) const;
-    void computeIntrinsicDimensions(float& intrinsicWidth, float& intrinsicHeight, double& intrinsicRatio) const;
+    void computeIntrinsicDimensions(float& intrinsicWidth, float& intrinsicHeight, float& intrinsicRatio) const;
 
 private:
     SVGLength m_x;

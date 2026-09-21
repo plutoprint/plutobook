@@ -91,7 +91,7 @@ float SVGRootBox::computeReplacedHeight() const
     return ReplacedBox::computeReplacedHeight();
 }
 
-void SVGRootBox::computeIntrinsicRatioInformation(float& intrinsicWidth, float& intrinsicHeight, double& intrinsicRatio) const
+void SVGRootBox::computeIntrinsicRatioInformation(float& intrinsicWidth, float& intrinsicHeight, float &intrinsicRatio) const
 {
     element()->computeIntrinsicDimensions(intrinsicWidth, intrinsicHeight, intrinsicRatio);
 }

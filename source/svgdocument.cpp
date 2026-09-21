@@ -317,7 +317,7 @@ void SVGSVGElement::computeIntrinsicSize(float& intrinsicWidth, float& intrinsic
     }
 }
 
-void SVGSVGElement::computeIntrinsicDimensions(float& intrinsicWidth, float& intrinsicHeight, double& intrinsicRatio) const
+void SVGSVGElement::computeIntrinsicDimensions(float& intrinsicWidth, float& intrinsicHeight, float& intrinsicRatio) const
 {
     computeIntrinsicSize(intrinsicWidth, intrinsicHeight);
 

@@ -54,7 +54,7 @@ public:
 
     virtual void draw(GraphicsContext& context, const Rect& dstRect, const Rect& srcRect) = 0;
     virtual void drawPattern(GraphicsContext& context, const Rect& destRect, const Size& size, const Size& scale, const Point& phase) = 0;
-    virtual void computeIntrinsicDimensions(float& intrinsicWidth, float& intrinsicHeight, double& intrinsicRatio) = 0;
+    virtual void computeIntrinsicDimensions(float& intrinsicWidth, float& intrinsicHeight, float& intrinsicRatio) = 0;
 
     virtual void setContainerSize(const Size& size) = 0;
     virtual Size intrinsicSize() const = 0;
@@ -69,7 +69,7 @@ public:
 
     void draw(GraphicsContext& context, const Rect& dstRect, const Rect& srcRect) final;
     void drawPattern(GraphicsContext& context, const Rect& destRect, const Size& size, const Size& scale, const Point& phase) final;
-    void computeIntrinsicDimensions(float& intrinsicWidth, float& intrinsicHeight, double& intrinsicRatio) final;
+    void computeIntrinsicDimensions(float& intrinsicWidth, float& intrinsicHeight, float& intrinsicRatio) final;
 
     void setContainerSize(const Size& size) final {};
     Size intrinsicSize() const final;
@@ -98,7 +98,7 @@ public:
 
     void draw(GraphicsContext& context, const Rect& dstRect, const Rect& srcRect) final;
     void drawPattern(GraphicsContext& context, const Rect& destRect, const Size& size, const Size& scale, const Point& phase) final;
-    void computeIntrinsicDimensions(float& intrinsicWidth, float& intrinsicHeight, double& intrinsicRatio) final;
+    void computeIntrinsicDimensions(float& intrinsicWidth, float& intrinsicHeight, float& intrinsicRatio) final;
 
     void setContainerSize(const Size& size) final;
     Size intrinsicSize() const final;
