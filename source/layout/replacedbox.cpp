@@ -72,15 +72,15 @@ void ReplacedBox::computePreferredWidths(float& minPreferredWidth, float& maxPre
         minPreferredWidth = 0;
     }
 
+    if(maxWidthLength.isFixed()) {
+        minPreferredWidth = std::min(minPreferredWidth, adjustContentBoxWidth(maxWidthLength.value()));
+        maxPreferredWidth = std::min(maxPreferredWidth, adjustContentBoxWidth(maxWidthLength.value()));
+    }
+
     auto minWidthLength = style()->minWidth();
     if(minWidthLength.isFixed() && minWidthLength.value() > 0) {
         minPreferredWidth = std::max(minPreferredWidth, adjustContentBoxWidth(minWidthLength.value()));
         maxPreferredWidth = std::max(maxPreferredWidth, adjustContentBoxWidth(minWidthLength.value()));
-    }
-
-    if(maxWidthLength.isFixed()) {
-        minPreferredWidth = std::min(minPreferredWidth, adjustContentBoxWidth(maxWidthLength.value()));
-        maxPreferredWidth = std::min(maxPreferredWidth, adjustContentBoxWidth(maxWidthLength.value()));
     }
 
     minPreferredWidth += borderAndPaddingWidth();
