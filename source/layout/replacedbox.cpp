@@ -284,6 +284,20 @@ float ReplacedBox::constrainReplacedHeight(float height) const
 
 float ReplacedBox::availableReplacedWidth() const
 {
+    if(isPositioned()) {
+        auto container = containingBox();
+        auto containerWidth = containingBlockWidthForPositioned(container);
+
+        auto leftLength = style()->left();
+        auto rightLength = style()->right();
+        computeHorizontalStaticDistance(leftLength, rightLength, container, containerWidth);
+
+        auto marginLeft = style()->marginLeft().calcMin(containerWidth);
+        auto marginRight = style()->marginRight().calcMin(containerWidth);
+        auto insetWidth = leftLength.calcMin(containerWidth) + rightLength.calcMin(containerWidth);
+        return std::max(0.f, containerWidth - insetWidth - marginLeft - marginRight - borderAndPaddingWidth());
+    }
+
     auto containerWidth = containingBlockWidthForContent();
     auto marginLeft = style()->marginLeft().calcMin(containerWidth);
     auto marginRight = style()->marginRight().calcMin(containerWidth);
