@@ -232,18 +232,37 @@ std::optional<float> ReplacedBox::computeReplacedWidthUsing(const Length& widthL
 {
     if(widthLength.isFixed())
         return adjustContentBoxWidth(widthLength.value());
-    if(widthLength.isPercent() || widthLength.isIntrinsic()) {
+    if(widthLength.isPercent()) {
         float containerWidth = 0;
         if(isPositioned())
             containerWidth = containingBlockWidthForPositioned();
         else
             containerWidth = containingBlockWidthForContent();
-        if(widthLength.isPercent())
-            return adjustContentBoxWidth(widthLength.calcMin(containerWidth));
-        return computeIntrinsicWidthUsing(widthLength, containerWidth) - borderAndPaddingWidth();
+        return adjustContentBoxWidth(widthLength.calcMin(containerWidth));
     }
 
+    if(widthLength.isIntrinsic())
+        return computeReplacedIntrinsicWidth();
     return std::nullopt;
+}
+
+float ReplacedBox::computeReplacedIntrinsicWidth() const
+{
+    float intrinsicWidth = 0.f;
+    float intrinsicHeight = 0.f;
+    double intrinsicRatio = 0.0;
+    computeIntrinsicRatioInformation(intrinsicWidth, intrinsicHeight, intrinsicRatio);
+    if(intrinsicRatio) {
+        if(auto height = computeReplacedHeightUsing(style()->height()))
+            return intrinsicRatio * constrainReplacedHeight(height.value());
+        if(intrinsicHeight) {
+            return intrinsicRatio * constrainReplacedHeight(intrinsicHeight);
+        }
+    }
+
+    if(intrinsicWidth > 0.f)
+        return intrinsicWidth;
+    return intrinsicReplacedWidth();
 }
 
 std::optional<float> ReplacedBox::computeReplacedHeightUsing(const Length& heightLength) const
