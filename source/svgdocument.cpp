@@ -289,7 +289,7 @@ Rect SVGSVGElement::currentViewBoxRect() const
     const auto& viewBoxRect = viewBox();
     if(viewBoxRect.isEmpty() && isSVGRootNode() && document()->isSVGDocument()) {
         float intrinsicWidth, intrinsicHeight;
-        computeintrinsicSize(intrinsicWidth, intrinsicHeight);
+        computeIntrinsicSize(intrinsicWidth, intrinsicHeight);
         return Rect(intrinsicWidth, intrinsicHeight);
     }
 
@@ -304,7 +304,7 @@ Transform SVGSVGElement::viewBoxToViewTransform(const Size& viewportSize) const
     return SVGFitToViewBox::viewBoxToViewTransform(viewBoxRect, viewportSize);
 }
 
-void SVGSVGElement::computeintrinsicSize(float& intrinsicWidth, float& intrinsicHeight) const
+void SVGSVGElement::computeIntrinsicSize(float& intrinsicWidth, float& intrinsicHeight) const
 {
     intrinsicWidth = 0.f;
     intrinsicHeight = 0.f;
@@ -319,7 +319,7 @@ void SVGSVGElement::computeintrinsicSize(float& intrinsicWidth, float& intrinsic
 
 void SVGSVGElement::computeIntrinsicDimensions(float& intrinsicWidth, float& intrinsicHeight, double& intrinsicRatio) const
 {
-    computeintrinsicSize(intrinsicWidth, intrinsicHeight);
+    computeIntrinsicSize(intrinsicWidth, intrinsicHeight);
 
     if(intrinsicWidth > 0.f && intrinsicHeight > 0.f) {
         intrinsicRatio = intrinsicWidth / intrinsicHeight;

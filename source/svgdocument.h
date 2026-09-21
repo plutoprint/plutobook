@@ -117,7 +117,7 @@ public:
     Rect currentViewBoxRect() const;
     Transform viewBoxToViewTransform(const Size& viewportSize) const;
 
-    void computeintrinsicSize(float& intrinsicWidth, float& intrinsicHeight) const;
+    void computeIntrinsicSize(float& intrinsicWidth, float& intrinsicHeight) const;
     void computeIntrinsicDimensions(float& intrinsicWidth, float& intrinsicHeight, double& intrinsicRatio) const;
 
 private:
