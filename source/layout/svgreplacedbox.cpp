@@ -15,7 +15,12 @@ namespace plutobook {
 SVGRootBox::SVGRootBox(SVGSVGElement* element, const RefPtr<BoxStyle>& style)
     : ReplacedBox(element, style)
 {
-    setIntrinsicSize(Size(300, 150));
+    Size intrinsicSize(300, 150);
+    if(auto intrinsicWidth = element->intrinsicWidth())
+        intrinsicSize.w = intrinsicWidth.value();
+    if(auto intrinsicHeight = element->intrinsicHeight())
+        intrinsicSize.h = intrinsicHeight.value();
+    setIntrinsicSize(intrinsicSize);
 }
 
 bool SVGRootBox::requiresLayer() const

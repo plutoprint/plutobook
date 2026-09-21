@@ -330,6 +330,27 @@ void SVGSVGElement::computeIntrinsicDimensions(float& intrinsicWidth, float& int
     }
 }
 
+std::optional<float> SVGSVGElement::intrinsicWidth() const
+{
+    if(m_width.type() == SVGLengthType::Percentage)
+        return std::nullopt;
+    return SVGLengthContext(this).valueForLength(m_width);
+}
+
+std::optional<float> SVGSVGElement::intrinsicHeight() const
+{
+    if(m_height.type() == SVGLengthType::Percentage)
+        return std::nullopt;
+    return SVGLengthContext(this).valueForLength(m_height);
+}
+
+std::optional<float> SVGSVGElement::intrinsicRatio() const
+{
+    if(const auto& viewBoxRect = viewBox(); !viewBoxRect.isEmpty())
+        return viewBoxRect.w / viewBoxRect.h;
+    return std::nullopt;
+}
+
 SVGUseElement::SVGUseElement(Document* document)
     : SVGGraphicsElement(document, useTag)
     , SVGURIReference(this)

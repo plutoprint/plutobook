@@ -473,27 +473,37 @@ void SVGImage::setContainerSize(const Size& size)
 
 Size SVGImage::intrinsicSize() const
 {
-    float intrinsicWidth = 0.f;
-    float intrinsicHeight = 0.f;
-    double intrinsicRatio = 0.0;
+    constexpr float defaultWidth = 300;
+    constexpr float defaultHeight = 150;
+    constexpr float defaultRatio = defaultWidth / defaultHeight;
 
-    rootElement()->computeIntrinsicDimensions(intrinsicWidth, intrinsicHeight, intrinsicRatio);
-    if(intrinsicRatio && (!intrinsicWidth || !intrinsicHeight)) {
-        if(!intrinsicWidth && intrinsicHeight)
-            intrinsicWidth = intrinsicHeight * intrinsicRatio;
-        else if(intrinsicWidth && !intrinsicHeight) {
-            intrinsicHeight = intrinsicWidth / intrinsicRatio;
+    const auto* element = rootElement();
+
+    auto intrinsicWidth = element->intrinsicWidth();
+    auto intrinsicHeight = element->intrinsicHeight();
+    auto intrinsicRatio = element->intrinsicRatio();
+
+    float width = defaultWidth;
+    float height = defaultHeight;
+    if(intrinsicWidth.has_value()) {
+        width = intrinsicWidth.value();
+        if(intrinsicHeight.has_value())
+            height = intrinsicHeight.value();
+        else if(intrinsicRatio.has_value())
+            height = width / intrinsicRatio.value();
+    } else if(intrinsicHeight.has_value()) {
+        height = intrinsicHeight.value();
+        if(intrinsicRatio.has_value())
+            width = height * intrinsicRatio.value();
+    } else if(intrinsicRatio.has_value()) {
+        if(defaultRatio <= intrinsicRatio.value()) {
+            height = width / intrinsicRatio.value();
+        } else {
+            width = height * intrinsicRatio.value();
         }
     }
 
-    if(intrinsicWidth > 0 && intrinsicHeight > 0) {
-        return Size(intrinsicWidth, intrinsicHeight);
-    }
-
-    auto viewBoxRect = rootElement()->viewBox();
-    if(viewBoxRect.isValid())
-        return viewBoxRect.size();
-    return Size(300, 150);
+    return Size(width, height);
 }
 
 Size SVGImage::size() const
