@@ -22,7 +22,8 @@ ReplacedBox::ReplacedBox(Node* node, const RefPtr<BoxStyle>& style)
 void ReplacedBox::computeAspectRatioInformation(float& intrinsicWidth, float& intrinsicHeight, double& intrinsicRatio) const
 {
     computeIntrinsicRatioInformation(intrinsicWidth, intrinsicHeight, intrinsicRatio);
-    if(intrinsicRatio && intrinsicWidth && intrinsicHeight && style()->height().isAuto() && style()->width().isAuto()) {
+    if(intrinsicRatio && intrinsicWidth && intrinsicHeight && style()->width().isAuto()
+        && !computeReplacedHeightUsing(style()->height())) {
         auto constrainedWidth = constrainReplacedWidth(intrinsicWidth);
         auto constrainedHeight = constrainReplacedHeight(intrinsicHeight);
         intrinsicWidth = constrainedHeight * intrinsicRatio;
