@@ -336,6 +336,8 @@ float ReplacedBox::computeReplacedWidth() const
     computeAspectRatioInformation(intrinsicWidth, intrinsicHeight, intrinsicRatio);
 
     auto height = computeReplacedHeightUsing(style()->height());
+    if(hasOverrideHeight())
+        height = std::max(0.f, overrideHeight() - borderAndPaddingHeight());
     if(intrinsicWidth && !height)
         return constrainReplacedWidth(intrinsicWidth);
     if(intrinsicRatio && height)
@@ -363,6 +365,8 @@ float ReplacedBox::computeReplacedHeight() const
     computeAspectRatioInformation(intrinsicWidth, intrinsicHeight, intrinsicRatio);
 
     auto width = computeReplacedWidthUsing(style()->width());
+    if(hasOverrideWidth())
+        width = std::max(0.f, overrideWidth() - borderAndPaddingWidth());
     if(intrinsicHeight && !width)
         return constrainReplacedHeight(intrinsicHeight);
     if(intrinsicRatio && width)
