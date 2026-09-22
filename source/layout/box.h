@@ -249,6 +249,7 @@ public:
     bool isBoxModel() const final { return true; }
     void addChild(Box* newChild) override;
 
+    void paintBackgroundImage(const PaintInfo& info, const Rect& borderRect, const BoxStyle* backgroundStyle, const RefPtr<Image>& backgroundImage) const;
     void paintBackgroundStyle(const PaintInfo& info, const Rect& borderRect, const BoxStyle* backgroundStyle, bool includeLeftEdge = true, bool includeRightEdge = true) const;
     void paintBackground(const PaintInfo& info, const Rect& borderRect, bool includeLeftEdge = true, bool includeRightEdge = true) const;
 
