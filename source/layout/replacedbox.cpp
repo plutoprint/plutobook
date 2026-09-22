@@ -169,6 +169,7 @@ void ReplacedBox::computePositionedReplacedWidth(float& x, float& width, float& 
 void ReplacedBox::computePositionedReplacedHeight(float& y, float& height, float& marginTop, float& marginBottom) const
 {
     auto container = containingBox();
+    auto containerWidth = containingBlockWidthForPositioned(container);
     auto containerHeight = containingBlockHeightForPositioned(container);
 
     auto marginTopLength = style()->marginTop();
@@ -198,30 +199,30 @@ void ReplacedBox::computePositionedReplacedHeight(float& y, float& height, float
         marginTop = availableHeight / 2.f;
         marginBottom = availableHeight - marginTop;
     } else if(topLength.isAuto()) {
-        marginTop = marginTopLength.calc(containerHeight);
-        marginBottom = marginBottomLength.calc(containerHeight);
+        marginTop = marginTopLength.calc(containerWidth);
+        marginBottom = marginBottomLength.calc(containerWidth);
         bottomLengthValue = bottomLength.calc(containerHeight);
 
         topLengthValue = availableSpace - (bottomLengthValue + marginTop + marginBottom);
     } else if(bottomLength.isAuto()) {
-        marginTop = marginTopLength.calc(containerHeight);
-        marginBottom = marginBottomLength.calc(containerHeight);
+        marginTop = marginTopLength.calc(containerWidth);
+        marginBottom = marginBottomLength.calc(containerWidth);
         topLengthValue = topLength.calc(containerHeight);
     } else if(marginTopLength.isAuto()) {
-        marginBottom = marginBottomLength.calc(containerHeight);
+        marginBottom = marginBottomLength.calc(containerWidth);
         topLengthValue = topLength.calc(containerHeight);
         bottomLengthValue = bottomLength.calc(containerHeight);
 
         marginTop = availableSpace - (topLengthValue + bottomLengthValue + marginBottom);
     } else if(marginBottomLength.isAuto()) {
-        marginTop = marginTopLength.calc(containerHeight);
+        marginTop = marginTopLength.calc(containerWidth);
         topLengthValue = topLength.calc(containerHeight);
         bottomLengthValue = bottomLength.calc(containerHeight);
 
         marginBottom = availableSpace - (topLengthValue + bottomLengthValue + marginTop);
     } else {
-        marginTop = marginTopLength.calc(containerHeight);
-        marginBottom = marginBottomLength.calc(containerHeight);
+        marginTop = marginTopLength.calc(containerWidth);
+        marginBottom = marginBottomLength.calc(containerWidth);
         topLengthValue = topLength.calc(containerHeight);
     }
 
