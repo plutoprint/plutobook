@@ -232,28 +232,7 @@ std::optional<float> ReplacedBox::computeReplacedWidthUsing(const Length& widthL
         return adjustContentBoxWidth(widthLength.calcMin(containerWidth));
     }
 
-    if(widthLength.isIntrinsic())
-        return computeReplacedIntrinsicWidth();
     return std::nullopt;
-}
-
-float ReplacedBox::computeReplacedIntrinsicWidth() const
-{
-    float intrinsicWidth = 0.f;
-    float intrinsicHeight = 0.f;
-    float intrinsicRatio = 0.f;
-    computeIntrinsicRatioInformation(intrinsicWidth, intrinsicHeight, intrinsicRatio);
-    if(intrinsicRatio > 0.f) {
-        if(auto height = computeReplacedHeightUsing(style()->height()))
-            return intrinsicRatio * constrainReplacedHeight(height.value());
-        if(intrinsicHeight > 0.f) {
-            return intrinsicRatio * constrainReplacedHeight(intrinsicHeight);
-        }
-    }
-
-    if(intrinsicWidth > 0.f)
-        return intrinsicWidth;
-    return intrinsicReplacedWidth();
 }
 
 std::optional<float> ReplacedBox::computeReplacedHeightUsing(const Length& heightLength) const

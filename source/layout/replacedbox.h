@@ -30,8 +30,6 @@ public:
     std::optional<float> computeReplacedWidthUsing(const Length& widthLength) const;
     std::optional<float> computeReplacedHeightUsing(const Length& heightLength) const;
 
-    float computeReplacedIntrinsicWidth() const;
-
     float constrainReplacedWidth(float width) const;
     float constrainReplacedHeight(float height) const;
 
