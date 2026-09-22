@@ -20,7 +20,6 @@ public:
     bool isReplacedBox() const final { return true; }
 
     virtual void computeIntrinsicRatioInformation(float& intrinsicWidth, float& intrinsicHeight, float& intrinsicRatio) const = 0;
-    void computeAspectRatioInformation(float& intrinsicWidth, float& intrinsicHeight, float& intrinsicRatio) const;
 
     virtual float computePreferredReplacedWidth() const;
     void computePreferredWidths(float& minPreferredWidth, float& maxPreferredWidth) const override;
