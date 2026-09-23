@@ -63,7 +63,7 @@ const FontDescription& BoxStyle::fontDescription() const
 
 void BoxStyle::setFontDescription(const FontDescription& description)
 {
-    if(!m_font || description != m_font->description()) {
+    if(m_font == nullptr || description != m_font->description()) {
         m_font = document()->createFont(description);
     }
 }
