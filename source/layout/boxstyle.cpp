@@ -498,13 +498,13 @@ BackgroundSize BoxStyle::backgroundSize() const
 {
     auto value = get(CSSPropertyID::BackgroundSize);
     if(value == nullptr)
-        return BackgroundSize();
+        return BackgroundSize(Length::Auto, Length::Auto);
     if(auto ident = to<CSSIdentValue>(value)) {
         switch(ident->value()) {
         case CSSValueID::Contain:
-            return BackgroundSize(BackgroundSize::Type::Contain);
+            return BackgroundSize::Type::Contain;
         case CSSValueID::Cover:
-            return BackgroundSize(BackgroundSize::Type::Cover);
+            return BackgroundSize::Type::Cover;
         default:
             assert(false);
         }
@@ -661,10 +661,13 @@ std::optional<int> BoxStyle::zIndex() const
 
 VerticalAlign BoxStyle::verticalAlign() const
 {
-    if(m_verticalAlignType != VerticalAlignType::Length)
-        return VerticalAlign(m_verticalAlignType);
-    auto value = get(CSSPropertyID::VerticalAlign);
-    return VerticalAlign(m_verticalAlignType, convertLengthOrPercent(*value));
+    if(m_verticalAlignType == VerticalAlignType::Length) {
+        if(auto value = get(CSSPropertyID::VerticalAlign))
+            return VerticalAlign(convertLengthOrPercent(*value));
+        assert(false);
+    }
+
+    return m_verticalAlignType;
 }
 
 LengthBox BoxStyle::clip() const
@@ -997,21 +1000,21 @@ BaselineShift BoxStyle::baselineShift() const
 {
     auto value = get(CSSPropertyID::BaselineShift);
     if(value == nullptr)
-        return BaselineShiftType::Baseline;
+        return BaselineShift::Type::Baseline;
     if(auto ident = to<CSSIdentValue>(value)) {
         switch(ident->value()) {
         case CSSValueID::Baseline:
-            return BaselineShiftType::Baseline;
+            return BaselineShift::Type::Baseline;
         case CSSValueID::Sub:
-            return BaselineShiftType::Sub;
+            return BaselineShift::Type::Sub;
         case CSSValueID::Super:
-            return BaselineShiftType::Super;
+            return BaselineShift::Type::Super;
         default:
             assert(false);
         }
     }
 
-    return BaselineShift(BaselineShiftType::Length, convertLengthOrPercent(*value));
+    return BaselineShift(convertLengthOrPercent(*value));
 }
 
 Point BoxStyle::getTransformOrigin(float width, float height) const

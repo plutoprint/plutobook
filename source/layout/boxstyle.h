@@ -510,8 +510,7 @@ public:
         Length
     };
 
-    BackgroundSize() = default;
-    explicit BackgroundSize(Type type) : m_type(type) {}
+    BackgroundSize(Type type) : m_type(type) {}
     BackgroundSize(const Length& width, const Length& height)
         : m_type(Type::Length), m_width(width), m_height(height)
     {}
@@ -521,9 +520,9 @@ public:
     const Length& height() const { return m_height; }
 
 private:
-    Type m_type = Type::Length;
-    Length m_width = Length::Auto;
-    Length m_height = Length::Auto;
+    Type m_type;
+    Length m_width;
+    Length m_height;
 };
 
 class BorderEdge {
@@ -575,24 +574,25 @@ enum class DominantBaseline : uint8_t {
     TextBeforeEdge
 };
 
-enum class BaselineShiftType : uint8_t {
-    Baseline,
-    Sub,
-    Super,
-    Length
-};
-
 class BaselineShift {
 public:
-    BaselineShift(BaselineShiftType type, const Length& length = Length::Auto)
-        : m_type(type), m_length(length)
+    enum class Type : uint8_t {
+        Baseline,
+        Sub,
+        Super,
+        Length
+    };
+
+    BaselineShift(Type type) : m_type(type) {}
+    explicit BaselineShift(const Length& length)
+        : m_type(Type::Length), m_length(length)
     {}
 
-    BaselineShiftType type() const { return m_type; }
+    Type type() const { return m_type; }
     const Length& length() const { return m_length; }
 
 private:
-    BaselineShiftType m_type;
+    Type m_type;
     Length m_length;
 };
 
@@ -610,8 +610,9 @@ enum class VerticalAlignType : uint8_t {
 
 class VerticalAlign {
 public:
-    VerticalAlign(VerticalAlignType type, const Length& length = Length::Auto)
-        : m_type(type), m_length(length)
+    VerticalAlign(VerticalAlignType type) : m_type(type) {}
+    explicit VerticalAlign(const Length& length)
+        : m_type(VerticalAlignType::Length), m_length(length)
     {}
 
     VerticalAlignType type() const { return m_type; }

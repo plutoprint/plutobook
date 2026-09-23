@@ -272,11 +272,11 @@ void SVGTextFragmentsBuilder::handleInlineEnd(const LineItem& item)
 static float calculateBaselineShift(const BoxStyle* style)
 {
     auto baselineShift = style->baselineShift();
-    if(baselineShift.type() == BaselineShiftType::Baseline)
+    if(baselineShift.type() == BaselineShift::Type::Baseline)
         return 0.f;
-    if(baselineShift.type() == BaselineShiftType::Sub)
+    if(baselineShift.type() == BaselineShift::Type::Sub)
         return -style->fontHeight() / 2.f;
-    if(baselineShift.type() == BaselineShiftType::Super)
+    if(baselineShift.type() == BaselineShift::Type::Super)
         return style->fontHeight() / 2.f;
     return baselineShift.length().calc(style->fontSize());
 }
