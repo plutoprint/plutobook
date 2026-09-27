@@ -58,7 +58,7 @@ float FlexItem::constrainWidth(float width) const
     if(auto minWidth = computeWidthUsing(m_box->style()->minWidth()))
         width = std::max(width, *minWidth);
     if(m_box->isTableBox())
-        width = std::max(width, m_box->minPreferredWidth());
+        width = std::max(width, m_box->minPreferredWidth() - m_box->borderAndPaddingWidth());
     return std::max(0.f, width);
 }
 
