@@ -514,6 +514,10 @@ void FlexibleBox::layout(FragmentBuilder* fragmentainer)
         maxHypotheticalMainSize += m_gapBetweenItems + item.targetMainMarginBoxSize();
     }
 
+    if(!m_items.empty()) {
+        maxHypotheticalMainSize -= m_gapBetweenItems;
+    }
+
     const auto lineBreakLength = computeMainContentSize(maxHypotheticalMainSize);
     const auto flexDirection = style()->flexDirection();
     const auto flexWrap = style()->flexWrap();
