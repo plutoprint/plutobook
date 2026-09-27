@@ -911,8 +911,8 @@ void FlexibleBox::layout(FragmentBuilder* fragmentainer)
     for(auto child = firstBoxFrame(); child; child = child->nextBoxFrame()) {
         if(child->isPositioned()) {
             auto childLayer = child->layer();
-            childLayer->setStaticLeft(borderAndPaddingStart());
-            childLayer->setStaticTop(borderAndPaddingBefore());
+            childLayer->setStaticLeft(borderAndPaddingLeft());
+            childLayer->setStaticTop(borderAndPaddingTop());
             child->containingBlock()->insertPositonedBox(child);
         } else if(style()->isRightToLeftDirection()) {
             child->setX(width() - child->width() - child->x());
