@@ -295,7 +295,7 @@ void FlexibleBox::computeIntrinsicWidths(float& minWidth, float& maxWidth) const
 std::optional<float> FlexibleBox::firstLineBaseline() const
 {
     const BoxFrame* baselineChild = nullptr;
-    for(const auto& item : m_items) {
+    for(auto& item : m_items) {
         auto child = item.box();
         if(baselineChild == nullptr)
             baselineChild = child;
@@ -315,7 +315,7 @@ std::optional<float> FlexibleBox::firstLineBaseline() const
 std::optional<float> FlexibleBox::lastLineBaseline() const
 {
     const BoxFrame* baselineChild = nullptr;
-    for(const auto& item : m_items | std::views::reverse) {
+    for(auto& item : m_items | std::views::reverse) {
         auto child = item.box();
         if(baselineChild == nullptr)
             baselineChild = child;
@@ -588,7 +588,7 @@ void FlexibleBox::layout(FragmentBuilder* fragmentainer)
             }
 
             float totalViolation = 0;
-            for(const auto& item : unfrozenItems) {
+            for(auto* item : unfrozenItems) {
                 if(remainingFreeSpace > 0.f && totalFlexGrow > 0.f && sign == FlexSign::Positive) {
                     auto extraSpace = remainingFreeSpace * item->flexGrow() / totalFlexGrow;
                     item->setTargetMainSize(extraSpace + item->flexBaseSize());
@@ -636,13 +636,13 @@ void FlexibleBox::layout(FragmentBuilder* fragmentainer)
         const auto itemCount = items.size();
 
         auto availableSpace = mainContentSize;
-        for(const auto& item : items)
+        for(auto& item : items)
             availableSpace -= item.targetMainMarginBoxSize();
         availableSpace -= m_gapBetweenItems * (itemCount - 1);
 
         size_t autoMarginCount = 0;
         if(availableSpace > 0.f) {
-            for(const auto& item : items) {
+            for(auto& item : items) {
                 auto child = item.box();
                 auto childStyle = child->style();
                 if(isHorizontalFlow()) {
@@ -671,7 +671,7 @@ void FlexibleBox::layout(FragmentBuilder* fragmentainer)
 
         auto mainOffset = borderAndPaddingStart() + initialAlignmentOffset(justifyContent, availableSpace, itemCount);
         for(size_t i = 0; i < itemCount; i++) {
-            const auto& item = items[i];
+            auto& item = items[i];
             auto child = item.box();
             if(isHorizontalFlow()) {
                 child->setOverrideWidth(item.targetMainBorderBoxSize());
@@ -731,7 +731,7 @@ void FlexibleBox::layout(FragmentBuilder* fragmentainer)
         float crossSize = 0;
         float crossAscent = 0;
         float crossDescent = 0;
-        for(const auto& item : line.items()) {
+        for(auto& item : line.items()) {
             auto child = item.box();
             if(isHorizontalFlow()) {
                 child->setY(crossOffset + item.marginBefore());
@@ -775,7 +775,7 @@ void FlexibleBox::layout(FragmentBuilder* fragmentainer)
         auto lineOffset = initialAlignmentOffset(alignContent, availableSpace, lines.size());
         for(auto& line : lines) {
             line.setCrossOffset(lineOffset + line.crossOffset());
-            for(const auto& item : line.items()) {
+            for(auto& item : line.items()) {
                 auto child = item.box();
                 if(isHorizontalFlow()) {
                     child->setY(lineOffset + child->y());
@@ -796,8 +796,8 @@ void FlexibleBox::layout(FragmentBuilder* fragmentainer)
         }
     }
 
-    for(const auto& line : lines) {
-        for(const auto& item : line.items()) {
+    for(auto& line : lines) {
+        for(auto& item : line.items()) {
             auto child = item.box();
             auto childStyle = child->style();
             if(isHorizontalFlow()) {
@@ -903,7 +903,7 @@ void FlexibleBox::layout(FragmentBuilder* fragmentainer)
             auto originalOffset = line.crossOffset() - borderAndPaddingBefore();
             auto newOffset = availableSpace - originalOffset - line.crossSize();
             auto delta = newOffset - originalOffset;
-            for(const auto& item : line.items()) {
+            for(auto& item : line.items()) {
                 auto child = item.box();
                 if(isHorizontalFlow()) {
                     child->setY(delta + child->y());
@@ -961,7 +961,7 @@ void FlexibleBox::build()
 void FlexibleBox::paintContents(const PaintInfo& info, const Point& offset, PaintPhase phase)
 {
     if(phase == PaintPhase::Contents) {
-        for(const auto& item : m_items) {
+        for(auto& item : m_items) {
             auto child = item.box();
             if(!child->hasLayer()) {
                 child->paint(info, offset, PaintPhase::Decorations);
