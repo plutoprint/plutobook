@@ -800,7 +800,7 @@ void FlexibleBox::layout(FragmentBuilder* fragmentainer)
                 auto marginBottomLength = childStyle->marginBottom();
                 if(marginTopLength.isAuto() || marginBottomLength.isAuto()) {
                     float autoMarginOffset = 0;
-                    auto availableSpace = line.crossSize() - item.marginBoxCrossSize();
+                    auto availableSpace = std::max(0.f, line.crossSize() - item.marginBoxCrossSize());
                     if(marginTopLength.isAuto() && marginBottomLength.isAuto()) {
                         autoMarginOffset += availableSpace / 2.f;
                     } else {
@@ -822,7 +822,7 @@ void FlexibleBox::layout(FragmentBuilder* fragmentainer)
                 auto marginRightLength = childStyle->marginRight();
                 if(marginLeftLength.isAuto() || marginRightLength.isAuto()) {
                     float autoMarginOffset = 0;
-                    auto availableSpace = line.crossSize() - item.marginBoxCrossSize();
+                    auto availableSpace = std::max(0.f, line.crossSize() - item.marginBoxCrossSize());
                     if(marginLeftLength.isAuto() && marginRightLength.isAuto()) {
                         autoMarginOffset += availableSpace / 2.f;
                     } else {
