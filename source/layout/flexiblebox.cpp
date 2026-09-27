@@ -571,8 +571,9 @@ void FlexibleBox::layout(FragmentBuilder* fragmentainer)
             }
         }
 
-        auto remainingFreeSpace = initialFreeSpace;
+        float frozenFreeSpace = 0;
         while(!unfrozenItems.empty()) {
+            auto remainingFreeSpace = initialFreeSpace - frozenFreeSpace;
             auto totalFlexFactor = sign == FlexSign::Positive ? totalFlexGrow : totalFlexShrink;
             if(totalFlexFactor > 0.f && totalFlexFactor < 1.f) {
                 auto scaledInitialFreeSpace = initialFreeSpace * totalFlexFactor;
@@ -621,7 +622,7 @@ void FlexibleBox::layout(FragmentBuilder* fragmentainer)
                     totalFlexGrow -= item->flexGrow();
                     totalFlexShrink -= item->flexShrink();
                     totalScaledFlexShrink -= item->flexShrink() * item->flexBaseSize();
-                    remainingFreeSpace -= item->targetMainSize() - item->flexBaseSize();
+                    frozenFreeSpace += item->targetMainSize() - item->flexBaseSize();
                     unfrozenItems.erase(currentIterator);
                 }
             }
