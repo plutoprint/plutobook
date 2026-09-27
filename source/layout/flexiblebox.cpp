@@ -483,6 +483,11 @@ static float initialAlignmentOffset(AlignContent alignment, float availableSpace
         }
     }
 
+    if(alignment == AlignContent::SpaceAround
+        || alignment == AlignContent::SpaceEvenly) {
+        return availableSpace / 2.f;
+    }
+
     return 0.f;
 }
 
