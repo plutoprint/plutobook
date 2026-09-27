@@ -148,7 +148,8 @@ float FlexItem::marginBoxCrossSize() const
 
 float FlexItem::marginBoxCrossBaseline() const
 {
-    assert(isHorizontalFlow());
+    if(isVerticalFlow())
+        return 0.f;
     if(auto baseline = m_box->firstLineBaseline())
         return baseline.value() + m_box->marginTop();
     return m_box->height() + m_box->marginTop();
@@ -450,17 +451,20 @@ public:
 
     float crossOffset() const { return m_crossOffset; }
     float crossSize() const { return m_crossSize; }
-    float crossBaseline() const { return m_crossBaseline; }
+    float crossAscent() const { return m_crossAscent; }
+    float crossDescent() const { return m_crossDescent; }
 
     void setCrossOffset(float offset) { m_crossOffset = offset; }
     void setCrossSize(float size) { m_crossSize = size; }
-    void setCrossBaseline(float baseline) { m_crossBaseline = baseline; }
+    void setCrossAscent(float ascent) { m_crossAscent = ascent; }
+    void setCrossDescent(float descent) { m_crossDescent = descent; }
 
 private:
     FlexItemSpan m_items;
     float m_crossOffset = 0;
     float m_crossSize = 0;
-    float m_crossBaseline = 0;
+    float m_crossAscent = 0;
+    float m_crossDescent = 0;
 };
 
 using FlexLineList = std::vector<FlexLine>;
@@ -719,8 +723,8 @@ void FlexibleBox::layout(FragmentBuilder* fragmentainer)
     auto crossOffset = borderAndPaddingBefore();
     for(auto& line : lines) {
         float crossSize = 0;
-        float maxCrossAscent = 0;
-        float maxCrossDescent = 0;
+        float crossAscent = 0;
+        float crossDescent = 0;
         for(const auto& item : line.items()) {
             auto child = item.box();
             if(isHorizontalFlow()) {
@@ -732,9 +736,9 @@ void FlexibleBox::layout(FragmentBuilder* fragmentainer)
             if(item.alignSelf() == AlignItem::Baseline && isHorizontalFlow()) {
                 auto ascent = item.marginBoxCrossBaseline();
                 auto descent = item.marginBoxCrossSize() - ascent;
-                maxCrossAscent = std::max(maxCrossAscent, ascent);
-                maxCrossDescent = std::max(maxCrossDescent, descent);
-                crossSize = std::max(crossSize, maxCrossAscent + maxCrossDescent);
+                crossAscent = std::max(crossAscent, ascent);
+                crossDescent = std::max(crossDescent, descent);
+                crossSize = std::max(crossSize, crossAscent + crossDescent);
             } else {
                 crossSize = std::max(crossSize, item.marginBoxCrossSize());
             }
@@ -742,7 +746,8 @@ void FlexibleBox::layout(FragmentBuilder* fragmentainer)
 
         line.setCrossOffset(crossOffset);
         line.setCrossSize(crossSize);
-        line.setCrossBaseline(maxCrossAscent);
+        line.setCrossAscent(crossAscent);
+        line.setCrossDescent(crossDescent);
         crossOffset += crossSize;
     }
 
@@ -855,7 +860,7 @@ void FlexibleBox::layout(FragmentBuilder* fragmentainer)
                 }
             }
 
-            if(align == AlignItem::Stretch || (align == AlignItem::Baseline && !isHorizontalFlow()))
+            if(align == AlignItem::Stretch)
                 align = AlignItem::FlexStart;
             if(flexWrap == FlexWrap::WrapReverse) {
                 if(align == AlignItem::FlexStart) {
@@ -872,7 +877,10 @@ void FlexibleBox::layout(FragmentBuilder* fragmentainer)
             } else if(align == AlignItem::Center) {
                 alignOffset += availableSpace / 2.f;
             } else if(align == AlignItem::Baseline) {
-                alignOffset += line.crossBaseline() - item.marginBoxCrossBaseline();
+                alignOffset += line.crossAscent() - item.marginBoxCrossBaseline();
+                if(flexWrap == FlexWrap::WrapReverse) {
+                    alignOffset += line.crossSize() - line.crossAscent() - line.crossDescent();
+                }
             }
 
             if(isHorizontalFlow()) {
