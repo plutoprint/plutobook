@@ -893,7 +893,7 @@ void FlexibleBox::layout(FragmentBuilder* fragmentainer)
 
     if(flexWrap == FlexWrap::WrapReverse) {
         auto availableSpace = availableCrossSize();
-        for(const auto& line : lines) {
+        for(auto& line : lines) {
             auto originalOffset = line.crossOffset() - borderAndPaddingBefore();
             auto newOffset = availableSpace - originalOffset - line.crossSize();
             auto delta = newOffset - originalOffset;
@@ -905,6 +905,8 @@ void FlexibleBox::layout(FragmentBuilder* fragmentainer)
                     child->setX(delta + child->x());
                 }
             }
+
+            line.setCrossOffset(delta + line.crossOffset());
         }
     }
 
