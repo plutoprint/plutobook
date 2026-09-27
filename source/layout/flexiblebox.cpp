@@ -308,7 +308,7 @@ std::optional<float> FlexibleBox::firstLineBaseline() const
         return std::nullopt;
     if(auto baseline = baselineChild->firstLineBaseline())
         return baseline.value() + baselineChild->y();
-    return height() + baselineChild->y();
+    return baselineChild->y() + baselineChild->height();
 }
 
 std::optional<float> FlexibleBox::lastLineBaseline() const
@@ -328,7 +328,7 @@ std::optional<float> FlexibleBox::lastLineBaseline() const
         return std::nullopt;
     if(auto baseline = baselineChild->lastLineBaseline())
         return baseline.value() + baselineChild->y();
-    return height() + baselineChild->y();
+    return baselineChild->y() + baselineChild->height();
 }
 
 std::optional<float> FlexibleBox::inlineBlockBaseline() const
