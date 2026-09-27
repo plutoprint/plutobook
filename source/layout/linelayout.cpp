@@ -984,6 +984,7 @@ void LineBreaker::handleReplaced(const LineItem& item)
     moveToNextOf(item);
 
     box.updatePaddingWidths(m_block->availableWidth());
+    box.updateVerticalMargins(m_block->availableWidth());
     if(box.isOutsideListMarkerBox()) {
         return;
     }

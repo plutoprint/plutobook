@@ -69,6 +69,7 @@ void BlockBox::layoutPositionedBoxes()
             auto box = m_positionedBoxes->at(i);
             auto containerWidth = box->containingBlockWidthForPositioned();
             box->updatePaddingWidths(containerWidth);
+            box->updateVerticalMargins(containerWidth);
             box->layout(nullptr);
         }
     }
