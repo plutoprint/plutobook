@@ -506,16 +506,20 @@ void MultiColumnFlowBox::computeWidth(float& x, float& width, float& marginLeft,
     auto columnCount = containerStyle->columnCount();
     auto columnWidth = containerStyle->columnWidth();
 
+    assert(columnCount.has_value() || columnWidth.has_value());
+    auto columnWidthValue = std::max(1.f, columnWidth.value_or(1.f));
+    auto columnCountValue = std::max(1, columnCount.value_or(1));
+
     m_columnGap = columnGap.value_or(containerStyle->fontSize());
     if(!columnWidth.has_value() && columnCount.has_value()) {
-        m_columnCount = columnCount.value();
-        width = std::max(0.f, (containerWidth - ((columnCount.value() - 1) * m_columnGap)) / columnCount.value());
+        m_columnCount = columnCountValue;
+        width = std::max(0.f, (containerWidth - ((columnCountValue - 1) * m_columnGap)) / columnCountValue);
     } else if(columnWidth.has_value() && !columnCount.has_value()) {
-        m_columnCount = std::max(1.f, std::floor((containerWidth + m_columnGap) / (columnWidth.value() + m_columnGap)));
+        m_columnCount = std::max(1.f, std::floor((containerWidth + m_columnGap) / (columnWidthValue + m_columnGap)));
         width = ((containerWidth + m_columnGap) / m_columnCount) - m_columnGap;
     } else {
-        int count = std::floor((containerWidth + m_columnGap) / (columnWidth.value() + m_columnGap));
-        m_columnCount = std::max(1, std::min(count, columnCount.value()));
+        int count = std::floor((containerWidth + m_columnGap) / (columnWidthValue + m_columnGap));
+        m_columnCount = std::max(1, std::min(count, columnCountValue));
         width = ((containerWidth + m_columnGap) / m_columnCount) - m_columnGap;
     }
 }
