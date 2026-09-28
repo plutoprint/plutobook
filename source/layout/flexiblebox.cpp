@@ -955,7 +955,7 @@ bool FlexibleBox::alignItemAutoMargins(FlexItem& item, const FlexLine& line) con
             return false;
         auto autoMarginOffset = availableSpace;
         if(marginTopLength.isAuto() && marginBottomLength.isAuto())
-            autoMarginOffset = availableSpace / 2.f;
+            autoMarginOffset /= 2.f;
         if(marginTopLength.isAuto())
             child->setMarginTop(autoMarginOffset);
         if(marginBottomLength.isAuto())
@@ -970,7 +970,7 @@ bool FlexibleBox::alignItemAutoMargins(FlexItem& item, const FlexLine& line) con
         return false;
     auto autoMarginOffset = availableSpace;
     if(marginLeftLength.isAuto() && marginRightLength.isAuto())
-        autoMarginOffset = availableSpace / 2.f;
+        autoMarginOffset /= 2.f;
     if(marginLeftLength.isAuto())
         child->setMarginLeft(autoMarginOffset);
     if(marginRightLength.isAuto())
