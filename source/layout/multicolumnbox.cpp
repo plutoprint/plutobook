@@ -566,10 +566,10 @@ void MultiColumnFlowBox::build()
             spannerParent->removeChild(spanner);
             container->appendChild(spanner);
             if(currentRow)
-               currentRow->setColumnFill(ColumnFill::Balance);
+                currentRow->setColumnFill(ColumnFill::Balance);
             child = spannerPlaceholder;
             currentRow = nullptr;
-        } else if(!child->isFloatingOrPositioned()) {
+        } else {
             if(currentRow == nullptr) {
                 auto newRow = MultiColumnRowBox::create(this, containerStyle);
                 container->appendChild(newRow);
@@ -577,8 +577,8 @@ void MultiColumnFlowBox::build()
                 currentRow = newRow;
             }
 
-            if(child->firstChild() && child->isBlockFlowBox() && !child->isChildrenInline()
-                && !child->style()->hasColumns()) {
+            if(child->firstChild() && !child->isFloatingOrPositioned() && child->isBlockFlowBox()
+                && !child->isChildrenInline() && !child->style()->hasColumns()) {
                 child = child->firstChild();
                 continue;
             }
