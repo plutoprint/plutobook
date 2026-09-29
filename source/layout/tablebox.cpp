@@ -1101,6 +1101,7 @@ void AutoTableLayoutAlgorithm::build()
                 auto cellStyleWidth = cellBox->style()->width();
                 auto& columnWidth = m_columnWidths[col];
                 if(cellStyleWidth.isFixed()) {
+                    cellBox->updateHorizontalPaddings(0.f);
                     columnWidth.maxFixedWidth = std::max(columnWidth.maxFixedWidth, cellBox->adjustBorderBoxWidth(cellStyleWidth.value()));
                 } else if(cellStyleWidth.isPercent()) {
                     columnWidth.maxPercentWidth = std::max(columnWidth.maxPercentWidth, cellStyleWidth.value());
