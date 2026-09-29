@@ -597,7 +597,7 @@ void FlexibleBox::layout(FragmentBuilder* fragmentainer)
             }
 
             float totalViolation = 0;
-            for(auto* item : unfrozenItems) {
+            for(auto item : unfrozenItems) {
                 if(remainingFreeSpace > 0.f && totalFlexGrow > 0.f && sign == FlexSign::Positive) {
                     auto extraSpace = remainingFreeSpace * item->flexGrow() / totalFlexGrow;
                     item->setTargetMainSize(extraSpace + item->flexBaseSize());
