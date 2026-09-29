@@ -1168,10 +1168,14 @@ void TableSectionBox::distributeExcessHeightToRows(float distributableHeight)
                 rowBox->setHeight(delta + rowBox->height());
             }
         }
-    } else {
+    } else if(totalHeight > 0.f) {
         for(auto rowBox : m_rows) {
             auto delta = distributableHeight * rowBox->height() / totalHeight;
             rowBox->setHeight(delta + rowBox->height());
+        }
+    } else {
+        for(auto rowBox : m_rows) {
+            rowBox->setHeight(rowBox->height() + distributableHeight / m_rows.size());
         }
     }
 }
