@@ -80,7 +80,7 @@ public:
     void updateMinimumColumnHeight(float height);
     void addContentRun(float endOffset);
 
-    void resetColumnHeight(float availableHeight);
+    void resetColumnHeight(float availableColumnHeight, float maxColumnHeight);
     bool recalculateColumnHeight(bool balancing);
 
     const char* name() const final { return "MultiColumnRowBox"; }

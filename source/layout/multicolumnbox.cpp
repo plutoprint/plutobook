@@ -196,11 +196,11 @@ void MultiColumnRowBox::addContentRun(float endOffset)
     }
 }
 
-void MultiColumnRowBox::resetColumnHeight(float availableColumnHeight)
+void MultiColumnRowBox::resetColumnHeight(float availableColumnHeight, float maxColumnHeight)
 {
     m_runs.clear();
     m_minimumColumnHeight = 0.f;
-    m_maxColumnHeight = availableColumnHeight;
+    m_maxColumnHeight = maxColumnHeight;
     if(m_columnFill == ColumnFill::Auto && availableColumnHeight > 0.f) {
         m_columnHeight = availableColumnHeight;
         m_requiresBalancing = false;
@@ -530,13 +530,17 @@ void MultiColumnFlowBox::layout(FragmentBuilder* fragmentainer)
     auto containerStyle = container->style();
 
     float availableColumnHeight = 0.f;
+    float maxColumnHeight = 0.f;
     if(auto height = container->computeHeightUsing(containerStyle->height())) {
         auto columnHeight = container->constrainBorderBoxHeight(container->adjustBorderBoxHeight(height.value()));
         availableColumnHeight = std::max(0.f, columnHeight - container->borderAndPaddingHeight());
+        maxColumnHeight = availableColumnHeight;
+    } else if(auto maxHeight = container->computeHeightUsing(containerStyle->maxHeight())) {
+        maxColumnHeight = std::max(0.f, container->adjustBorderBoxHeight(maxHeight.value()) - container->borderAndPaddingHeight());
     }
 
     for(auto row = firstRow(); row; row = row->nextRow()) {
-        row->resetColumnHeight(availableColumnHeight);
+        row->resetColumnHeight(availableColumnHeight, maxColumnHeight);
     }
 
     auto changed = layoutColumns(false);
