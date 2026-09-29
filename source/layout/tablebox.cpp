@@ -531,25 +531,30 @@ void TableBox::paintContents(const PaintInfo& info, const Point& offset, PaintPh
         if(auto footer = footerSection()) {
             const auto& rect = info.rect();
             if(rect.bottom() < offset.y + footer->y()) {
-                float sectionBottom = 0.f;
+                std::optional<float> rowBottom;
                 for(auto section : m_sections) {
+                    if(section->isTableHeader() || section->isTableFooter())
+                        continue;
                     auto sectionTop = offset.y + section->y();
-                    if(sectionTop < rect.bottom()) {
-                        for(auto row : section->rows() | std::views::reverse) {
-                            auto rowBottom = sectionTop + row->y() + row->height();
-                            if(rowBottom < rect.bottom()) {
-                                sectionBottom = rowBottom;
-                                break;
-                            }
+                    if(sectionTop >= rect.bottom())
+                        break;
+                    for(auto row : section->rows() | std::views::reverse) {
+                        auto bottom = sectionTop + row->y() + row->height();
+                        if(bottom < rect.bottom()) {
+                            if(bottom > rect.y)
+                                rowBottom = bottom;
+                            break;
                         }
                     }
                 }
 
-                Point footerOffset(offset.x, sectionBottom - footer->y());
-                footer->paint(info, footerOffset, phase);
-                if(shouldPaintCollapsedBorders) {
-                    for(const auto& edge : *m_collapsedBorderEdges) {
-                        footer->paintCollapsedBorders(info, footerOffset, edge);
+                if(rowBottom.has_value()) {
+                    Point footerOffset(offset.x, rowBottom.value() - footer->y());
+                    footer->paint(info, footerOffset, phase);
+                    if(shouldPaintCollapsedBorders) {
+                        for(const auto& edge : *m_collapsedBorderEdges) {
+                            footer->paintCollapsedBorders(info, footerOffset, edge);
+                        }
                     }
                 }
             }
