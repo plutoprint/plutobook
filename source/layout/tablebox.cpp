@@ -1030,19 +1030,43 @@ void AutoTableLayoutAlgorithm::computeIntrinsicWidths(float& minWidth, float& ma
         distributeSpanCellToColumns(cellBox, m_columnWidths, m_table->borderHorizontalSpacing());
     }
 
-    float totalPercent = 0;
+    constexpr auto kMaxTableWidth = 1000000.f;
+
+    float totalMinWidth = 0.f;
+    float totalMaxWidth = 0.f;
+    float totalPercent = 0.f;
+    float totalNonPercentMaxWidth = 0.f;
+    float maxPercentWidth = 0.f;
     for(auto& columnWidth : m_columnWidths) {
-        if(columnWidth.width.isPercent()) {
+        totalMinWidth += columnWidth.minWidth;
+        totalMaxWidth += columnWidth.maxWidth;
+        if(!columnWidth.width.isPercent()) {
+            totalNonPercentMaxWidth += columnWidth.maxWidth;
+        } else {
             if(totalPercent + columnWidth.width.value() > 100.f)
                 columnWidth.width = Length(Length::Type::Percent, 100.f - totalPercent);
+            if(columnWidth.width.value() > 0.f) {
+                maxPercentWidth = std::max(maxPercentWidth, columnWidth.maxWidth * 100.f / columnWidth.width.value());
+            } else if(columnWidth.maxWidth > 0.f) {
+                maxPercentWidth = kMaxTableWidth;
+            }
+
             totalPercent += columnWidth.width.value();
         }
     }
 
-    for(const auto& columnWidth : m_columnWidths) {
-        minWidth += columnWidth.minWidth;
-        maxWidth += columnWidth.maxWidth;
+    if(totalNonPercentMaxWidth > 0.f) {
+        if(totalPercent < 100.f) {
+            totalMaxWidth = std::max(totalMaxWidth, totalNonPercentMaxWidth * 100.f / (100.f - totalPercent));
+        } else {
+            totalMaxWidth = kMaxTableWidth;
+        }
     }
+
+    totalMaxWidth = std::min(kMaxTableWidth, std::max(totalMaxWidth, maxPercentWidth));
+
+    minWidth += totalMinWidth;
+    maxWidth += totalMaxWidth;
 }
 
 void AutoTableLayoutAlgorithm::build()
