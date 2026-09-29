@@ -383,7 +383,8 @@ MultiColumnRowBox* MultiColumnFlowBox::lastRow() const
 
 MultiColumnRowBox* MultiColumnFlowBox::columnRowAtOffset(float offset) const
 {
-    assert(m_currentRow && offset >= fragmentOffset());
+    if(m_currentRow == nullptr)
+        return nullptr;
     auto row = m_currentRow;
     while(row->rowTop() > offset) {
         auto prevRow = row->prevRow();
