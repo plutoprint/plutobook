@@ -573,13 +573,28 @@ void TableBox::paintContents(const PaintInfo& info, const Point& offset, PaintPh
         if(auto header = headerSection()) {
             const auto& rect = info.rect();
             if(rect.y > offset.y + header->y()) {
-                Point headerOffset(offset.x, rect.y - header->y());
-                if(isBorderCollapsed())
-                    headerOffset.y += borderTop();
-                header->paint(info, headerOffset, phase);
-                if(shouldPaintCollapsedBorders) {
-                    for(const auto& edge : *m_collapsedBorderEdges) {
-                        header->paintCollapsedBorders(info, headerOffset, edge);
+                bool hasRowsOnPage = false;
+                for(auto section : m_sections) {
+                    if(section->isTableHeader())
+                        continue;
+                    auto sectionTop = offset.y + section->y();
+                    if(sectionTop >= rect.bottom())
+                        break;
+                    if(sectionTop + section->height() > rect.y) {
+                        hasRowsOnPage = true;
+                        break;
+                    }
+                }
+
+                if(hasRowsOnPage) {
+                    Point headerOffset(offset.x, rect.y - header->y());
+                    if(isBorderCollapsed())
+                        headerOffset.y += borderTop();
+                    header->paint(info, headerOffset, phase);
+                    if(shouldPaintCollapsedBorders) {
+                        for(const auto& edge : *m_collapsedBorderEdges) {
+                            header->paintCollapsedBorders(info, headerOffset, edge);
+                        }
                     }
                 }
             }
