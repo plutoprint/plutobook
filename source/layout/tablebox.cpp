@@ -1307,14 +1307,33 @@ void TableSectionBox::layoutRows(FragmentBuilder* fragmentainer, float headerHei
 
 static void distributeSpanCellToRows(TableCellBox* cellBox, std::span<TableRowBox*> allRows, float borderSpacing)
 {
-    auto cellMinHeight = cellBox->heightForRowSizing();
     auto rows = allRows.subspan(cellBox->rowIndex(), cellBox->rowSpan());
-    for(auto rowBox : rows)
-        cellMinHeight -= rowBox->height();
-    cellMinHeight -= borderSpacing * (rows.size() - 1);
-    if(cellMinHeight > 0.f) {
+    auto extraHeight = cellBox->heightForRowSizing() - borderSpacing * (rows.size() - 1);
+    float totalHeight = 0.f;
+    float totalAutoHeight = 0.f;
+    for(auto rowBox : rows) {
+        extraHeight -= rowBox->height();
+        totalHeight += rowBox->height();
+        if(!rowBox->maxFixedHeight() && !rowBox->maxPercentHeight()) {
+            totalAutoHeight += rowBox->height();
+        }
+    }
+
+    if(extraHeight <= 0.f)
+        return;
+    if(totalAutoHeight > 0.f) {
+        for(auto rowBox : rows) {
+            if(!rowBox->maxFixedHeight() && !rowBox->maxPercentHeight()) {
+                rowBox->setHeight(rowBox->height() + extraHeight * rowBox->height() / totalAutoHeight);
+            }
+        }
+    } else if(totalHeight > 0.f) {
+        for(auto rowBox : rows) {
+            rowBox->setHeight(rowBox->height() + extraHeight * rowBox->height() / totalHeight);
+        }
+    } else {
         auto lastRow = rows.back();
-        lastRow->setHeight(cellMinHeight + lastRow->height());
+        lastRow->setHeight(lastRow->height() + extraHeight);
     }
 }
 
