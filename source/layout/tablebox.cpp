@@ -964,7 +964,7 @@ void AutoTableLayoutAlgorithm::computeIntrinsicWidths(float& minWidth, float& ma
         if(columnWidth.maxPercentWidth > 0.f)
             columnWidth.width = Length(Length::Type::Percent, columnWidth.maxPercentWidth);
         columnWidth.minWidth = 0.f;
-        columnWidth.maxWidth = 0.f;
+        columnWidth.maxWidth = columnWidth.maxFixedWidth;
     }
 
     for(auto section : m_table->sections()) {
