@@ -352,16 +352,33 @@ void TableBox::layout(FragmentBuilder* fragmentainer)
             }
         }
 
-        auto totalSectionHeight = borderVerticalSpacing();
+        size_t sectionCount = 0;
+        size_t bodySectionCount = 0;
+        float totalSectionHeight = 0.f;
+        float totalBodySectionHeight = 0.f;
         for(auto section : m_sections) {
             section->layout(nullptr);
-            totalSectionHeight += section->height() + borderVerticalSpacing();
+            totalSectionHeight += section->height();
+            ++sectionCount;
+            if(!section->isTableHeader() && !section->isTableFooter()) {
+                totalBodySectionHeight += section->height();
+                ++bodySectionCount;
+            }
         }
 
-        auto distributableTableHeight = tableHeight - totalSectionHeight;
+        auto distributableTableHeight = tableHeight - totalSectionHeight - (borderVerticalSpacing() * (sectionCount + 1));
         if(distributableTableHeight > 0.f) {
+            auto hasBodySections = bodySectionCount > 0;
+            auto distributableSectionCount = hasBodySections ? bodySectionCount : sectionCount;
+            auto distributableSectionHeight = hasBodySections ? totalBodySectionHeight : totalSectionHeight;
             for(auto section : m_sections) {
-                section->distributeExcessHeightToRows(distributableTableHeight / m_sections.size());
+                if(hasBodySections && (section->isTableHeader() || section->isTableFooter()))
+                    continue;
+                if(distributableSectionHeight > 0.f) {
+                    section->distributeExcessHeightToRows(distributableTableHeight * section->height() / distributableSectionHeight);
+                } else {
+                    section->distributeExcessHeightToRows(distributableTableHeight / distributableSectionCount);
+                }
             }
         }
 
