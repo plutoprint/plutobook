@@ -627,7 +627,7 @@ void FixedTableLayoutAlgorithm::build()
     if(auto section = m_table->topSection()) {
         auto row = section->firstRow();
         for(const auto& [col, cell] : row->cells()) {
-            if(!cell.inColOrRowSpan() && m_widths[col].isAuto()) {
+            if(!cell.inColOrRowSpan()) {
                 auto cellBox = cell.box();
                 auto cellStyleWidth = cellBox->style()->width();
                 if(cellStyleWidth.isFixed()) {
@@ -639,7 +639,9 @@ void FixedTableLayoutAlgorithm::build()
 
                 if(!cellStyleWidth.isZero()) {
                     for(size_t index = 0; index < cellBox->colSpan(); ++index) {
-                        m_widths[col + index] = cellStyleWidth;
+                        if(m_widths[col + index].isAuto()) {
+                            m_widths[col + index] = cellStyleWidth;
+                        }
                     }
                 }
             }
