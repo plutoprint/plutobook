@@ -980,8 +980,13 @@ static void distributeSpanCellToColumns(const TableCellBox* cellBox, std::span<T
         }
     }
 
-    auto cellMinWidth = std::max(0.f, cellBox->minPreferredWidth() - borderSpacing * (cellBox->colSpan() - 1));
-    auto cellMaxWidth = std::max(0.f, cellBox->maxPreferredWidth() - borderSpacing * (cellBox->colSpan() - 1));
+    const auto innerBorderSpacing = borderSpacing * (cellBox->colSpan() - 1);
+
+    auto cellMinWidth = std::max(0.f, cellBox->minPreferredWidth() - innerBorderSpacing);
+    auto cellMaxWidth = std::max(0.f, cellBox->maxPreferredWidth() - innerBorderSpacing);
+    if(cellStyleWidth.isFixed()) {
+        cellMaxWidth = std::max(cellMinWidth, cellBox->adjustBorderBoxWidth(cellStyleWidth.value()) - innerBorderSpacing);
+    }
 
     auto minWidths = distributeWidthToColumns(cellMinWidth, columns, true);
     for(size_t columnIndex = 0; columnIndex < columns.size(); ++columnIndex) {
