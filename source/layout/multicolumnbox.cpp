@@ -529,12 +529,12 @@ void MultiColumnFlowBox::layout(FragmentBuilder* fragmentainer)
     auto container = columnBlockFlow();
     auto containerStyle = container->style();
 
-    float columnHeight = 0.f;
-    if(auto height = container->computeHeightUsing(containerStyle->height()))
-        columnHeight = container->adjustBorderBoxHeight(height.value());
-    columnHeight = container->constrainBorderBoxHeight(columnHeight);
+    float availableColumnHeight = 0.f;
+    if(auto height = container->computeHeightUsing(containerStyle->height())) {
+        auto columnHeight = container->constrainBorderBoxHeight(container->adjustBorderBoxHeight(height.value()));
+        availableColumnHeight = std::max(0.f, columnHeight - container->borderAndPaddingHeight());
+    }
 
-    auto availableColumnHeight = std::max(0.f, columnHeight - container->borderAndPaddingHeight());
     for(auto row = firstRow(); row; row = row->nextRow()) {
         row->resetColumnHeight(availableColumnHeight);
     }
