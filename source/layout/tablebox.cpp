@@ -1200,7 +1200,8 @@ void TableSectionBox::layoutRows(FragmentBuilder* fragmentainer, float headerHei
                 }
 
                 auto remainingHeight = fragmentainer->fragmentRemainingHeightForOffset(rowTop, AssociateWithLatterFragment);
-                if(maxRowHeight >= remainingHeight - footerHeight - verticalSpacing && maxRowHeight < fragmentHeight) {
+                if(maxRowHeight > remainingHeight - footerHeight - verticalSpacing && maxRowHeight < fragmentHeight) {
+                    fragmentainer->setFragmentBreak(rowTop, maxRowHeight - (remainingHeight - footerHeight - verticalSpacing));
                     rowTop += remainingHeight + headerHeight;
                     if(table()->isBorderCollapsed()) {
                         if(headerHeight) {
