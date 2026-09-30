@@ -1582,9 +1582,14 @@ void BlockFlowBox::layoutBlockChildren(FragmentBuilder* fragmentainer)
             marginInfo.clearMargin();
         } else if(child->isMultiColumnFlowBox()) {
             assert(child == m_columnFlowBox);
-            child->setY(height());
+            auto columnTop = height();
+            if(fragmentainer)
+                fragmentainer->enterFragment(columnTop);
+            child->setY(columnTop);
             child->updatePaddingWidths(availableWidth());
             child->layout(fragmentainer);
+            if(fragmentainer)
+                fragmentainer->leaveFragment(columnTop);
             determineHorizontalPosition(child);
         } else {
             layoutBlockChild(child, fragmentainer, marginInfo);
