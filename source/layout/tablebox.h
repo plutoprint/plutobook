@@ -50,6 +50,7 @@ public:
     const TableColumnList& columns() const { return m_columns; }
 
     TableColumnBox* columnAt(size_t index) const;
+    TableColumnBox* columnGroupAt(size_t index) const;
     size_t columnCount() const;
 
     const TableSectionBoxList& sections() const { return m_sections; }
@@ -174,6 +175,9 @@ public:
     TableBox* table() const;
     TableRowBox* firstRow() const;
     TableRowBox* lastRow() const;
+
+    TableRowBox* rowAbove(const TableRowBox* rowBox) const;
+    TableRowBox* rowBelow(const TableRowBox* rowBox) const;
 
     void distributeExcessHeightToRows(float distributableHeight);
 
@@ -321,6 +325,7 @@ private:
 
 inline TableColumnBox* TableBox::columnAt(size_t index) const
 {
+    assert(index < m_columns.size());
     return m_columns[index].box();
 }
 
@@ -337,6 +342,8 @@ public:
 
     uint32_t span() const { return m_span; }
     void setSpan(uint32_t span) { m_span = span; }
+
+    bool isColumnGroup() const;
     TableColumnBox* columnGroup() const;
 
     const char* name() const final { return "TableColumnBox"; }
@@ -344,6 +351,11 @@ public:
 private:
     uint32_t m_span{1};
 };
+
+inline bool TableColumnBox::isColumnGroup() const
+{
+    return style()->display() == Display::TableColumnGroup;
+}
 
 template<>
 struct is_a<TableColumnBox> {
@@ -452,7 +464,6 @@ public:
     TableCellBox* nextCell() const;
 
     TableRowBox* row() const;
-    TableColumnBox* column() const;
     TableSectionBox* section() const { return row()->section(); }
     TableBox* table() const { return section()->table(); }
 
@@ -497,11 +508,6 @@ inline TableCellBox* TableRowBox::lastCell() const
 inline TableRowBox* TableCellBox::row() const
 {
     return static_cast<TableRowBox*>(parentBox());
-}
-
-inline TableColumnBox* TableCellBox::column() const
-{
-    return table()->columnAt(m_columnIndex);
 }
 
 class TableCaptionBox final : public BlockFlowBox {

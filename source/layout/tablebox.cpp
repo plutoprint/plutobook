@@ -245,33 +245,32 @@ TableSectionBox* TableBox::sectionBelow(const TableSectionBox* sectionBox) const
     return footerSection();
 }
 
+TableColumnBox* TableBox::columnGroupAt(size_t index) const
+{
+    auto column = columnAt(index);
+    if(column == nullptr)
+        return nullptr;
+    if(column->isColumnGroup())
+        return column;
+    return column->columnGroup();
+}
+
 TableCellBox* TableBox::cellAbove(const TableCellBox* cellBox) const
 {
-    const TableRowBox* rowBox = nullptr;
-    if(auto rowIndex = cellBox->rowIndex()) {
-        rowBox = cellBox->section()->rowAt(rowIndex - 1);
-    } else if(auto section = sectionAbove(cellBox->section())) {
-        rowBox = section->lastRow();
-    }
-
-    if(rowBox == nullptr)
-        return nullptr;
-    return rowBox->cellAt(cellBox->columnIndex());
+    auto section = cellBox->section();
+    auto firstRow = section->rowAt(cellBox->rowIndex());
+    if(auto rowBox = section->rowAbove(firstRow))
+        return rowBox->cellAt(cellBox->columnIndex());
+    return nullptr;
 }
 
 TableCellBox* TableBox::cellBelow(const TableCellBox* cellBox) const
 {
-    const TableRowBox* rowBox = nullptr;
-    auto rowIndex = cellBox->rowIndex() + cellBox->rowSpan() - 1;
-    if(rowIndex < cellBox->section()->rowCount() - 1) {
-        rowBox = cellBox->section()->rowAt(rowIndex + 1);
-    } else if(auto section = sectionBelow(cellBox->section())) {
-        rowBox = section->firstRow();
-    }
-
-    if(rowBox == nullptr)
-        return nullptr;
-    return rowBox->cellAt(cellBox->columnIndex());
+    auto section = cellBox->section();
+    auto lastRow = section->rowAt(cellBox->rowIndex() + cellBox->rowSpan() - 1);
+    if(auto rowBox = section->rowBelow(lastRow))
+        return rowBox->cellAt(cellBox->columnIndex());
+    return nullptr;
 }
 
 TableCellBox* TableBox::cellBefore(const TableCellBox* cellBox) const
@@ -1206,6 +1205,24 @@ std::optional<float> TableSectionBox::lastLineBaseline() const
     return baseline;
 }
 
+TableRowBox* TableSectionBox::rowAbove(const TableRowBox* rowBox) const
+{
+    if(auto prevRow = rowBox->prevRow())
+        return prevRow;
+    if(auto sectionAbove = table()->sectionAbove(this))
+        return sectionAbove->lastRow();
+    return nullptr;
+}
+
+TableRowBox* TableSectionBox::rowBelow(const TableRowBox* rowBox) const
+{
+    if(auto nextRow = rowBox->nextRow())
+        return nextRow;
+    if(auto sectionBelow = table()->sectionBelow(this))
+        return sectionBelow->firstRow();
+    return nullptr;
+}
+
 void TableSectionBox::distributeExcessHeightToRows(float distributableHeight)
 {
     float totalHeight = 0;
@@ -1647,7 +1664,7 @@ TableColumnBox::TableColumnBox(Node* node, const RefPtr<BoxStyle>& style)
 TableColumnBox* TableColumnBox::columnGroup() const
 {
     auto column = to<TableColumnBox>(parentBox());
-    if(column && column->style()->display() == Display::TableColumnGroup)
+    if(column && column->isColumnGroup())
         return column;
     return nullptr;
 }
@@ -1735,19 +1752,21 @@ TableCollapsedBorderEdge TableCollapsedBorderEdges::calcTopEdge(const TableCellB
         }
     }
 
-    edge = chooseEdge(edge, getTopEdge(TableCollapsedBorderSource::Row, cellBox->row()->style()));
+    auto section = cellBox->section();
+    auto firstRow = section->rowAt(cellBox->rowIndex());
+    edge = chooseEdge(edge, getTopEdge(TableCollapsedBorderSource::Row, firstRow->style()));
     if(!edge.exists()) {
         return edge;
     }
 
-    if(cellAbove) {
-        edge = chooseEdge(getBottomEdge(TableCollapsedBorderSource::Row, cellAbove->row()->style()), edge);
+    if(auto rowAbove = section->rowAbove(firstRow)) {
+        edge = chooseEdge(getBottomEdge(TableCollapsedBorderSource::Row, rowAbove->style()), edge);
         if(!edge.exists()) {
             return edge;
         }
     }
 
-    if(auto section = cellBox->section(); cellBox->rowIndex() == 0) {
+    if(firstRow == section->firstRow()) {
         edge = chooseEdge(edge, getTopEdge(TableCollapsedBorderSource::RowGroup, section->style()));
         if(!edge.exists()) {
             return edge;
@@ -1759,17 +1778,17 @@ TableCollapsedBorderEdge TableCollapsedBorderEdges::calcTopEdge(const TableCellB
                 return edge;
             }
         } else {
-            if(auto column = cellBox->column()) {
+            if(auto column = table->columnAt(cellBox->columnIndex()); column && !column->isColumnGroup()) {
                 edge = chooseEdge(edge, getTopEdge(TableCollapsedBorderSource::Column, column->style()));
                 if(!edge.exists()) {
                     return edge;
                 }
+            }
 
-                if(auto columnGroup = column->columnGroup()) {
-                    edge = chooseEdge(edge, getTopEdge(TableCollapsedBorderSource::ColumnGroup, columnGroup->style()));
-                    if(!edge.exists()) {
-                        return edge;
-                    }
+            if(auto columnGroup = table->columnGroupAt(cellBox->columnIndex())) {
+                edge = chooseEdge(edge, getTopEdge(TableCollapsedBorderSource::ColumnGroup, columnGroup->style()));
+                if(!edge.exists()) {
+                    return edge;
                 }
             }
 
@@ -1795,19 +1814,21 @@ TableCollapsedBorderEdge TableCollapsedBorderEdges::calcBottomEdge(const TableCe
         }
     }
 
-    edge = chooseEdge(edge, getBottomEdge(TableCollapsedBorderSource::Row, cellBox->row()->style()));
+    auto section = cellBox->section();
+    auto lastRow = section->rowAt(cellBox->rowIndex() + cellBox->rowSpan() - 1);
+    edge = chooseEdge(edge, getBottomEdge(TableCollapsedBorderSource::Row, lastRow->style()));
     if(!edge.exists()) {
         return edge;
     }
 
-    if(cellBelow) {
-        edge = chooseEdge(edge, getTopEdge(TableCollapsedBorderSource::Row, cellBelow->row()->style()));
+    if(auto rowBelow = section->rowBelow(lastRow)) {
+        edge = chooseEdge(edge, getTopEdge(TableCollapsedBorderSource::Row, rowBelow->style()));
         if(!edge.exists()) {
             return edge;
         }
     }
 
-    if(auto section = cellBox->section(); cellBox->rowIndex() + cellBox->rowSpan() == section->rowCount()) {
+    if(lastRow == section->lastRow()) {
         edge = chooseEdge(edge, getBottomEdge(TableCollapsedBorderSource::RowGroup, section->style()));
         if(!edge.exists()) {
             return edge;
@@ -1819,17 +1840,17 @@ TableCollapsedBorderEdge TableCollapsedBorderEdges::calcBottomEdge(const TableCe
                 return edge;
             }
         } else {
-            if(auto column = cellBox->column()) {
+            if(auto column = table->columnAt(cellBox->columnIndex()); column && !column->isColumnGroup()) {
                 edge = chooseEdge(edge, getBottomEdge(TableCollapsedBorderSource::Column, column->style()));
                 if(!edge.exists()) {
                     return edge;
                 }
+            }
 
-                if(auto columnGroup = column->columnGroup()) {
-                    edge = chooseEdge(edge, getBottomEdge(TableCollapsedBorderSource::ColumnGroup, columnGroup->style()));
-                    if(!edge.exists()) {
-                        return edge;
-                    }
+            if(auto columnGroup = table->columnGroupAt(cellBox->columnIndex())) {
+                edge = chooseEdge(edge, getBottomEdge(TableCollapsedBorderSource::ColumnGroup, columnGroup->style()));
+                if(!edge.exists()) {
+                    return edge;
                 }
             }
 
@@ -1841,23 +1862,6 @@ TableCollapsedBorderEdge TableCollapsedBorderEdges::calcBottomEdge(const TableCe
     }
 
     return edge;
-}
-
-static bool isColumnGroupBox(const TableColumnBox* column)
-{
-    return column->style()->display() == Display::TableColumnGroup;
-}
-
-static TableColumnBox* columnGroupAt(const TableBox* table, size_t index)
-{
-    if(index >= table->columnCount())
-        return nullptr;
-    auto column = table->columnAt(index);
-    if(column == nullptr)
-        return nullptr;
-    if(isColumnGroupBox(column))
-        return column;
-    return column->columnGroup();
 }
 
 TableCollapsedBorderEdge TableCollapsedBorderEdges::calcLeftEdge(const TableCellBox* cellBox)
@@ -1895,15 +1899,15 @@ TableCollapsedBorderEdge TableCollapsedBorderEdges::calcLeftEdge(const TableCell
 
     auto columnIndex = direction == Direction::Ltr ? cellBox->columnIndex() : cellBox->columnIndex() + cellBox->colSpan() - 1;
     auto prevColumnIndex = direction == Direction::Ltr ? columnIndex - 1 : columnIndex + 1;
-    if(auto column = table->columnAt(columnIndex); column && !isColumnGroupBox(column)) {
+    if(auto column = table->columnAt(columnIndex); column && !column->isColumnGroup()) {
         edge = chooseEdge(edge, getLeftEdge(TableCollapsedBorderSource::Column, column->style()));
         if(!edge.exists()) {
             return edge;
         }
     }
 
-    auto columnGroup = columnGroupAt(table, columnIndex);
-    auto prevColumnGroup = isStartColumn ? nullptr : columnGroupAt(table, prevColumnIndex);
+    auto columnGroup = table->columnGroupAt(columnIndex);
+    auto prevColumnGroup = isStartColumn ? nullptr : table->columnGroupAt(prevColumnIndex);
     if(columnGroup && columnGroup != prevColumnGroup) {
         edge = chooseEdge(edge, getLeftEdge(TableCollapsedBorderSource::ColumnGroup, columnGroup->style()));
         if(!edge.exists()) {
@@ -1912,7 +1916,7 @@ TableCollapsedBorderEdge TableCollapsedBorderEdges::calcLeftEdge(const TableCell
     }
 
     if(!isStartColumn) {
-        if(auto column = table->columnAt(prevColumnIndex); column && !isColumnGroupBox(column)) {
+        if(auto column = table->columnAt(prevColumnIndex); column && !column->isColumnGroup()) {
             auto rightEdge = getRightEdge(TableCollapsedBorderSource::Column, column->style());
             edge = direction == Direction::Ltr ? chooseEdge(rightEdge, edge) : chooseEdge(edge, rightEdge);
             if(!edge.exists()) {
@@ -1972,15 +1976,15 @@ TableCollapsedBorderEdge TableCollapsedBorderEdges::calcRightEdge(const TableCel
 
     auto columnIndex = direction == Direction::Ltr ? cellBox->columnIndex() + cellBox->colSpan() - 1 : cellBox->columnIndex();
     auto nextColumnIndex = direction == Direction::Ltr ? columnIndex + 1 : columnIndex - 1;
-    if(auto column = table->columnAt(columnIndex); column && !isColumnGroupBox(column)) {
+    if(auto column = table->columnAt(columnIndex); column && !column->isColumnGroup()) {
         edge = chooseEdge(edge, getRightEdge(TableCollapsedBorderSource::Column, column->style()));
         if(!edge.exists()) {
             return edge;
         }
     }
 
-    auto columnGroup = columnGroupAt(table, columnIndex);
-    auto nextColumnGroup = isEndColumn ? nullptr : columnGroupAt(table, nextColumnIndex);
+    auto columnGroup = table->columnGroupAt(columnIndex);
+    auto nextColumnGroup = isEndColumn ? nullptr : table->columnGroupAt(nextColumnIndex);
     if(columnGroup && columnGroup != nextColumnGroup) {
         edge = chooseEdge(edge, getRightEdge(TableCollapsedBorderSource::ColumnGroup, columnGroup->style()));
         if(!edge.exists()) {
@@ -1989,7 +1993,7 @@ TableCollapsedBorderEdge TableCollapsedBorderEdges::calcRightEdge(const TableCel
     }
 
     if(!isEndColumn) {
-        if(auto column = table->columnAt(nextColumnIndex); column && !isColumnGroupBox(column)) {
+        if(auto column = table->columnAt(nextColumnIndex); column && !column->isColumnGroup()) {
             auto leftEdge = getLeftEdge(TableCollapsedBorderSource::Column, column->style());
             edge = direction == Direction::Ltr ? chooseEdge(edge, leftEdge) : chooseEdge(leftEdge, edge);
             if(!edge.exists()) {
