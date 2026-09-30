@@ -870,11 +870,12 @@ void FlexibleBox::paintContents(const PaintInfo& info, const Point& offset, Pain
 
 void FlexibleBox::layoutItem(BoxFrame* child, FragmentBuilder* fragmentainer) const
 {
+    auto itemTop = child->y();
     if(fragmentainer)
-        fragmentainer->enterFragment(child->y());
+        fragmentainer->enterFragment(itemTop);
     child->layout(fragmentainer);
     if(fragmentainer) {
-        fragmentainer->leaveFragment(child->y());
+        fragmentainer->leaveFragment(itemTop);
     }
 }
 
