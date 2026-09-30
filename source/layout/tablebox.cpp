@@ -69,8 +69,8 @@ void TableBox::computeIntrinsicWidths(float& minWidth, float& maxWidth) const
 {
     if(!m_columns.empty()) {
         m_tableLayout->computeIntrinsicWidths(minWidth, maxWidth);
-        minWidth += borderHorizontalSpacing() * (m_columns.size() + 1);
-        maxWidth += borderHorizontalSpacing() * (m_columns.size() + 1);
+        minWidth += m_borderHorizontalSpacing * (m_columns.size() + 1);
+        maxWidth += m_borderHorizontalSpacing * (m_columns.size() + 1);
     }
 
     for(auto caption : m_captions) {
@@ -293,7 +293,7 @@ TableCellBox* TableBox::cellAfter(const TableCellBox* cellBox) const
 float TableBox::availableHorizontalSpace() const
 {
     if(!m_columns.empty() && !isBorderCollapsed())
-        return contentBoxWidth() - borderHorizontalSpacing() * (m_columns.size() + 1);
+        return contentBoxWidth() - m_borderHorizontalSpacing * (m_columns.size() + 1);
     return contentBoxWidth();
 }
 
@@ -340,10 +340,10 @@ void TableBox::layout(FragmentBuilder* fragmentainer)
         setHeight(tableHeight + height());
     } else {
         m_tableLayout->layout();
-        auto columnLeft = borderHorizontalSpacing();
+        auto columnLeft = m_borderHorizontalSpacing;
         for(auto& column : m_columns) {
             column.setX(columnLeft);
-            columnLeft += column.width() + borderHorizontalSpacing();
+            columnLeft += m_borderHorizontalSpacing + column.width();
         }
 
         if(style()->isRightToLeftDirection()) {
@@ -366,7 +366,7 @@ void TableBox::layout(FragmentBuilder* fragmentainer)
             }
         }
 
-        auto distributableTableHeight = tableHeight - totalSectionHeight - (borderVerticalSpacing() * (sectionCount + 1));
+        auto distributableTableHeight = tableHeight - totalSectionHeight - m_borderVerticalSpacing * (sectionCount + 1);
         if(distributableTableHeight > 0.f) {
             auto hasBodySections = bodySectionCount > 0;
             auto distributableSectionCount = hasBodySections ? bodySectionCount : sectionCount;
@@ -385,7 +385,7 @@ void TableBox::layout(FragmentBuilder* fragmentainer)
         const auto* header = headerSection();
         const auto* footer = footerSection();
 
-        auto sectionTop = height() + borderVerticalSpacing();
+        auto sectionTop = m_borderVerticalSpacing + height();
         for(auto section : m_sections) {
             if(fragmentainer) {
                 fragmentainer->enterFragment(sectionTop);
@@ -394,9 +394,9 @@ void TableBox::layout(FragmentBuilder* fragmentainer)
             float headerHeight = 0;
             float footerHeight = 0;
             if(header && header != section)
-                headerHeight += borderVerticalSpacing() + header->height();
+                headerHeight += m_borderVerticalSpacing + header->height();
             if(footer && footer != section) {
-                footerHeight += borderVerticalSpacing() + footer->height();
+                footerHeight += m_borderVerticalSpacing + footer->height();
             }
 
             section->setY(sectionTop);
@@ -407,7 +407,7 @@ void TableBox::layout(FragmentBuilder* fragmentainer)
                 fragmentainer->leaveFragment(sectionTop);
             }
 
-            sectionTop += section->height() + borderVerticalSpacing();
+            sectionTop += m_borderVerticalSpacing + section->height();
         }
 
         setHeight(sectionTop);
