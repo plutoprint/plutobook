@@ -482,8 +482,10 @@ float FlowLineBox::placeInHorizontalDirection(float offsetX, const BlockFlowBox*
 
 void FlowLineBox::placeInVerticalDirection(float y, float maxHeight, float maxAscent, RootLineBox* rootLine)
 {
-    if(rootLine == this)
-        rootLine->setY(y + maxAscent - baselinePosition());
+    if(rootLine == this) {
+        rootLine->setY(y + maxAscent - style()->fontAscent());
+    }
+
     for(auto child : m_children) {
         if(child->box()->isPositioned()) {
             const auto& box = to<BoxFrame>(*child->box());
