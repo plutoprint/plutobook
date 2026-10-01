@@ -335,6 +335,18 @@ std::optional<float> FlexibleBox::inlineBlockBaseline() const
     return firstLineBaseline();
 }
 
+float FlexibleBox::firstBreakOffset(const FragmentBuilder* fragmentainer, float offset) const
+{
+    if(m_items.empty())
+        return borderAndPaddingHeight();
+    auto leadingHeight = borderAndPaddingTop();
+    auto& item = isColumnReverse() ? m_items.back() : m_items.front();
+    auto child = item.box();
+    if(child->marginTop() > 0.f)
+        return leadingHeight;
+    return leadingHeight + fragmentainer->unbreakableHeight(child, offset + leadingHeight);
+}
+
 float FlexibleBox::computeMainContentSize(float hypotheticalMainSize) const
 {
     if(isHorizontalFlow())
@@ -424,6 +436,16 @@ bool FlexibleBox::isVerticalFlow() const
     default:
         return false;
     }
+}
+
+bool FlexibleBox::isColumnReverse() const
+{
+    return style()->flexDirection() == FlexDirection::ColumnReverse;
+}
+
+bool FlexibleBox::isRowReverse() const
+{
+    return style()->flexDirection() == FlexDirection::RowReverse;
 }
 
 bool FlexibleBox::isWrapReverse() const
@@ -983,7 +1005,7 @@ bool FlexibleBox::alignItemAutoMargins(FlexItem& item, const FlexLine& line) con
 static bool lineAvoidsBreakInside(const FlexLine& line, const FragmentBuilder* fragmentainer)
 {
     for(auto& item : line.items()) {
-        if(fragmentainer->needsBreakInside(item.box())) {
+        if(fragmentainer->avoidsBreakInside(item.box())) {
             return true;
         }
     }
@@ -991,11 +1013,25 @@ static bool lineAvoidsBreakInside(const FlexLine& line, const FragmentBuilder* f
     return false;
 }
 
-static const BoxFrame* itemNeedingBreakBefore(const FlexLine& line, const FragmentBuilder* fragmentainer)
+static float lineUnbreakableHeight(const FlexLine& line, const FragmentBuilder* fragmentainer, float offset)
+{
+    if(lineAvoidsBreakInside(line, fragmentainer))
+        return line.crossSize();
+    float unbreakableHeight = 0.f;
+    for(auto& item : line.items()) {
+        auto child = item.box();
+        auto itemTop = child->y() - line.crossOffset();
+        unbreakableHeight = std::max(unbreakableHeight, itemTop + fragmentainer->unbreakableHeight(child, offset + itemTop));
+    }
+
+    return unbreakableHeight;
+}
+
+static const BoxFrame* itemAlwaysBreakBefore(const FlexLine& line, const FragmentBuilder* fragmentainer)
 {
     for(auto& item : line.items()) {
         auto child = item.box();
-        if(fragmentainer->needsBreakBefore(child)) {
+        if(fragmentainer->alwaysBreakBefore(child)) {
             return child;
         }
     }
@@ -1003,35 +1039,16 @@ static const BoxFrame* itemNeedingBreakBefore(const FlexLine& line, const Fragme
     return nullptr;
 }
 
-static const BoxFrame* itemNeedingBreakAfter(const FlexLine& line, const FragmentBuilder* fragmentainer)
+static const BoxFrame* itemAlwaysBreakAfter(const FlexLine& line, const FragmentBuilder* fragmentainer)
 {
     for(auto& item : line.items()) {
         auto child = item.box();
-        if(fragmentainer->needsBreakAfter(child)) {
+        if(fragmentainer->alwaysBreakAfter(child)) {
             return child;
         }
     }
 
     return nullptr;
-}
-
-float FlexibleBox::adjustOffsetInFragmentFlow(FragmentBuilder* fragmentainer, float offset, float height, bool avoidBreakInside) const
-{
-    auto fragmentHeight = fragmentainer->fragmentHeightForOffset(offset);
-    if(avoidBreakInside)
-        fragmentainer->updateMinimumFragmentHeight(offset, height);
-    if(fragmentHeight <= 0.f)
-        return offset;
-    auto remainingHeight = fragmentainer->fragmentRemainingHeightForOffset(offset, AssociateWithLatterFragment);
-    if(height > remainingHeight) {
-        fragmentainer->setFragmentBreak(offset, height - remainingHeight);
-        if(avoidBreakInside && remainingHeight < fragmentHeight)
-            return offset + remainingHeight;
-    } else if(isNearlyEqual(fragmentHeight, remainingHeight) && !isNearlyZero(offset + fragmentainer->fragmentOffset())) {
-        fragmentainer->setFragmentBreak(offset, height);
-    }
-
-    return offset;
 }
 
 static float fragmentationGrowth(float layoutHeight, float naturalHeight, float fragmentedHeight)
@@ -1046,9 +1063,10 @@ float FlexibleBox::adjustLineInFragmentFlow(FlexLine& line, FragmentBuilder* fra
     auto lineHeight = line.crossSize();
 
     auto newTop = lineTop;
-    if(auto child = itemNeedingBreakBefore(line, fragmentainer))
+    if(auto child = itemAlwaysBreakBefore(line, fragmentainer))
         newTop = fragmentainer->applyFragmentBreakBefore(child, newTop);
-    newTop = adjustOffsetInFragmentFlow(fragmentainer, newTop, lineHeight, lineAvoidsBreakInside(line, fragmentainer));
+    auto unbreakableHeight = lineUnbreakableHeight(line, fragmentainer, newTop);
+    newTop = fragmentainer->adjustOffsetInFragmentFlow(newTop, lineHeight, unbreakableHeight);
 
     float crossAscent = 0;
     float crossDescent = 0;
@@ -1094,7 +1112,7 @@ float FlexibleBox::adjustLineInFragmentFlow(FlexLine& line, FragmentBuilder* fra
 
     auto lineBottom = newTop + lineHeight;
     auto newBottom = lineBottom;
-    if(auto child = itemNeedingBreakAfter(line, fragmentainer))
+    if(auto child = itemAlwaysBreakAfter(line, fragmentainer))
         newBottom = fragmentainer->applyFragmentBreakAfter(child, newBottom);
     return (newTop - lineTop) + growth + (newBottom - lineBottom);
 }
@@ -1107,7 +1125,8 @@ float FlexibleBox::adjustItemInFragmentFlow(FlexItem& item, FragmentBuilder* fra
     auto height = child->height();
 
     auto newTop = fragmentainer->applyFragmentBreakBefore(child, top);
-    newTop = adjustOffsetInFragmentFlow(fragmentainer, newTop, height, fragmentainer->needsBreakInside(child));
+    auto unbreakableHeight = fragmentainer->unbreakableHeight(child, newTop);
+    newTop = fragmentainer->adjustOffsetInFragmentFlow(newTop, height, unbreakableHeight);
 
     child->setY(newTop);
     child->setOverrideHeight(-1);

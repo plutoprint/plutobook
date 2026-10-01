@@ -746,6 +746,30 @@ std::optional<float> BlockFlowBox::inlineBlockBaseline() const
     return lastLineBaseline();
 }
 
+float BlockFlowBox::firstBreakOffset(const FragmentBuilder* fragmentainer, float offset) const
+{
+    auto leadingHeight = borderAndPaddingTop();
+    if(isChildrenInline()) {
+        const auto& lines = m_lineLayout->lines();
+        if(lines.empty())
+            return leadingHeight + borderAndPaddingBottom();
+        const auto& line = lines.front();
+        return leadingHeight + (line->lineBoxBottom() - line->lineBoxTop());
+    }
+
+    for(auto child = firstBoxFrame(); child; child = child->nextBoxFrame()) {
+        if(child->isFloatingOrPositioned() || child->isMultiColumnSpanBox())
+            continue;
+        auto marginTop = std::max(0.f, child->marginTop());
+        if(leadingHeight == 0.f && !avoidsFloats())
+            marginTop = 0.f;
+        auto childOffset = leadingHeight + marginTop;
+        return childOffset + fragmentainer->unbreakableHeight(child, offset + childOffset);
+    }
+
+    return leadingHeight + borderAndPaddingBottom();
+}
+
 void BlockFlowBox::collectIntrudingFloats()
 {
     assert(!containsFloats());
@@ -1292,6 +1316,16 @@ void BlockFlowBox::handleBottomOfBlock(MarginInfo& marginInfo, FragmentBuilder* 
         setHeight(margin + height());
     }
 
+    if(fragmentainer && bottom > 0.f && height() > top) {
+        auto fragmentHeight = fragmentainer->fragmentHeightForOffset(height());
+        if(fragmentHeight > 0.f) {
+            auto remainingHeight = fragmentainer->fragmentRemainingHeightForOffset(height(), AssociateWithLatterFragment);
+            if(bottom > remainingHeight && remainingHeight < fragmentHeight) {
+                setHeight(height() + remainingHeight);
+            }
+        }
+    }
+
     setHeight(bottom + height());
     setHeight(std::max(top + bottom, height()));
     if(marginInfo.canCollapseWithMarginBottom() && !marginInfo.canCollapseWithMarginTop()) {
@@ -1502,25 +1536,10 @@ void BlockFlowBox::determineHorizontalPosition(BoxFrame* child) const
 float BlockFlowBox::adjustBlockChildInFragmentFlow(BoxFrame* child, FragmentBuilder* fragmentainer, float top)
 {
     auto newTop = fragmentainer->applyFragmentBreakBefore(child, top);
-    auto adjustedTop = fragmentainer->applyFragmentBreakInside(child, newTop);
-
+    auto unbreakableHeight = fragmentainer->unbreakableHeight(child, newTop);
     auto childHeight = child->height();
-    if(adjustedTop > newTop) {
-        auto delta = adjustedTop - newTop;
-        fragmentainer->setFragmentBreak(newTop, childHeight - delta);
-        newTop += delta;
-    } else {
-        auto fragmentHeight = fragmentainer->fragmentHeightForOffset(newTop);
-        if(fragmentHeight > 0.f) {
-            auto remainingHeight = fragmentainer->fragmentRemainingHeightForOffset(newTop, AssociateWithLatterFragment);
-            if(childHeight > remainingHeight) {
-                fragmentainer->setFragmentBreak(newTop, childHeight - remainingHeight);
-            } else if(isNearlyEqual(fragmentHeight, remainingHeight) && !isNearlyZero(top + fragmentainer->fragmentOffset())) {
-                fragmentainer->setFragmentBreak(newTop, childHeight);
-            }
-        }
-    }
 
+    newTop = fragmentainer->adjustOffsetInFragmentFlow(newTop, childHeight, unbreakableHeight);
     setHeight(height() + (newTop - top));
     return newTop;
 }

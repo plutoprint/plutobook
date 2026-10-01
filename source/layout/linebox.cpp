@@ -685,28 +685,13 @@ float RootLineBox::alignInVerticalDirection(FragmentBuilder* fragmentainer, floa
 
     auto maxHeight = maxAscent + maxDescent;
     if(fragmentainer && maxHeight > 0.f)
-        blockHeight += adjustLineBoxInFragmentFlow(fragmentainer, blockHeight, maxHeight);
+        blockHeight = fragmentainer->adjustOffsetInFragmentFlow(blockHeight, maxHeight, maxHeight);
     m_lineTop = blockHeight;
     m_lineBottom = blockHeight;
     placeInVerticalDirection(blockHeight, maxHeight, maxAscent, this);
-    return blockHeight + maxHeight;
-}
-
-float RootLineBox::adjustLineBoxInFragmentFlow(FragmentBuilder* fragmentainer, float offset, float lineHeight) const
-{
-    auto fragmentHeight = fragmentainer->fragmentHeightForOffset(offset);
-    fragmentainer->updateMinimumFragmentHeight(offset, lineHeight);
-    if(fragmentHeight == 0.f || lineHeight > fragmentHeight)
-        return 0.f;
-    auto remainingHeight = fragmentainer->fragmentRemainingHeightForOffset(offset, AssociateWithLatterFragment);
-    if(remainingHeight < lineHeight) {
-        fragmentainer->setFragmentBreak(offset, lineHeight - remainingHeight);
-        return remainingHeight;
-    }
-
-    if(!isFirstLine() && isNearlyEqual(remainingHeight, fragmentHeight))
-        fragmentainer->setFragmentBreak(offset, lineHeight);
-    return 0.f;
+    m_lineBoxTop = blockHeight;
+    m_lineBoxBottom = blockHeight + maxHeight;
+    return m_lineBoxBottom;
 }
 
 RootLineBox::RootLineBox(BlockFlowBox* box)

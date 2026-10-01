@@ -152,6 +152,8 @@ public:
     std::optional<float> lastLineBaseline() const override;
     std::optional<float> inlineBlockBaseline() const override;
 
+    float firstBreakOffset(const FragmentBuilder* fragmentainer, float offset) const override;
+
     void collectIntrudingFloats();
     void collectOverhangingFloats();
 

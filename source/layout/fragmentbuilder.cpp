@@ -7,6 +7,7 @@
  */
 
 #include "fragmentbuilder.h"
+#include "geometry.h"
 
 #include <cmath>
 
@@ -59,24 +60,31 @@ static bool hasInFlowContentAfter(const Box* box)
     return false;
 }
 
-bool FragmentBuilder::needsBreakBefore(const BoxFrame* child) const
+bool FragmentBuilder::alwaysBreakBefore(const BoxFrame* child) const
 {
-    return needsBreakBetween(child->style()->breakBefore()) && hasInFlowContentBefore(child);
+    return alwaysBreakBetween(child->style()->breakBefore()) && hasInFlowContentBefore(child);
 }
 
-bool FragmentBuilder::needsBreakAfter(const BoxFrame* child) const
+bool FragmentBuilder::alwaysBreakAfter(const BoxFrame* child) const
 {
-    return needsBreakBetween(child->style()->breakAfter()) && hasInFlowContentAfter(child);
+    return alwaysBreakBetween(child->style()->breakAfter()) && hasInFlowContentAfter(child);
 }
 
-bool FragmentBuilder::needsBreakInside(const BoxFrame* child) const
+bool FragmentBuilder::avoidsBreakInside(const BoxFrame* child) const
 {
-    return child->isReplaced() || needsBreakInside(child->style()->breakInside());
+    return child->isReplaced() || avoidsBreakInside(child->style()->breakInside());
+}
+
+float FragmentBuilder::unbreakableHeight(const BoxFrame* child, float offset) const
+{
+    if(avoidsBreakInside(child))
+        return child->height();
+    return child->firstBreakOffset(this, offset);
 }
 
 float FragmentBuilder::applyFragmentBreakBefore(const BoxFrame* child, float offset)
 {
-    if(!needsBreakBefore(child))
+    if(!alwaysBreakBefore(child))
         return offset;
     auto fragmentHeight = fragmentHeightForOffset(offset);
     addForcedFragmentBreak(offset);
@@ -87,7 +95,7 @@ float FragmentBuilder::applyFragmentBreakBefore(const BoxFrame* child, float off
 
 float FragmentBuilder::applyFragmentBreakAfter(const BoxFrame* child, float offset)
 {
-    if(!needsBreakAfter(child))
+    if(!alwaysBreakAfter(child))
         return offset;
     auto fragmentHeight = fragmentHeightForOffset(offset);
     addForcedFragmentBreak(offset);
@@ -98,18 +106,30 @@ float FragmentBuilder::applyFragmentBreakAfter(const BoxFrame* child, float offs
 
 float FragmentBuilder::applyFragmentBreakInside(const BoxFrame* child, float offset)
 {
-    if(!needsBreakInside(child))
+    if(!avoidsBreakInside(child))
         return offset;
     auto childHeight = child->height();
     if(child->isFloating())
         childHeight += child->marginHeight();
+    return adjustOffsetInFragmentFlow(offset, childHeight, childHeight);
+}
+
+float FragmentBuilder::adjustOffsetInFragmentFlow(float offset, float height, float unbreakableHeight)
+{
     auto fragmentHeight = fragmentHeightForOffset(offset);
-    updateMinimumFragmentHeight(offset, childHeight);
-    if(fragmentHeight == 0.f)
+    if(unbreakableHeight > 0.f)
+        updateMinimumFragmentHeight(offset, unbreakableHeight);
+    if(fragmentHeight <= 0.f)
         return offset;
     auto remainingHeight = fragmentRemainingHeightForOffset(offset, AssociateWithLatterFragment);
-    if(remainingHeight < childHeight && remainingHeight < fragmentHeight)
-        return offset + remainingHeight;
+    if(height > remainingHeight) {
+        setFragmentBreak(offset, height - remainingHeight);
+        if(unbreakableHeight > remainingHeight && remainingHeight < fragmentHeight)
+            return offset + remainingHeight;
+    } else if(isNearlyEqual(fragmentHeight, remainingHeight) && !isNearlyZero(offset + fragmentOffset())) {
+        setFragmentBreak(offset, height);
+    }
+
     return offset;
 }
 
@@ -130,14 +150,14 @@ float FragmentBuilder::fragmentOffset() const
     return m_fragmentOffset / kFragmentFixedScale;
 }
 
-bool FragmentBuilder::needsBreakBetween(BreakBetween between) const
+bool FragmentBuilder::alwaysBreakBetween(BreakBetween between) const
 {
     if(fragmentType() == FragmentType::Column)
         return between == BreakBetween::Column;
     return between >= BreakBetween::Page;
 }
 
-bool FragmentBuilder::needsBreakInside(BreakInside inside) const
+bool FragmentBuilder::avoidsBreakInside(BreakInside inside) const
 {
     if(fragmentType() == FragmentType::Page)
         return inside == BreakInside::Avoid || inside == BreakInside::AvoidPage;

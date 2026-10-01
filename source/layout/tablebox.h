@@ -46,6 +46,8 @@ public:
     std::optional<float> lastLineBaseline() const final;
     std::optional<float> inlineBlockBaseline() const final;
 
+    float firstBreakOffset(const FragmentBuilder* fragmentainer, float offset) const final;
+
     TableColumnList& columns() { return m_columns; }
     const TableColumnList& columns() const { return m_columns; }
 

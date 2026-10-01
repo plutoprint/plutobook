@@ -495,6 +495,8 @@ public:
     virtual std::optional<float> lastLineBaseline() const { return std::nullopt; }
     virtual std::optional<float> inlineBlockBaseline() const { return std::nullopt; }
 
+    virtual float firstBreakOffset(const FragmentBuilder* fragmentainer, float offset) const { return height(); }
+
     float overflowTop() const { return m_overflowTop; }
     float overflowBottom() const { return m_overflowBottom; }
     float overflowLeft() const { return m_overflowLeft; }

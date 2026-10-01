@@ -121,6 +121,8 @@ public:
     std::optional<float> lastLineBaseline() const final;
     std::optional<float> inlineBlockBaseline() const final;
 
+    float firstBreakOffset(const FragmentBuilder* fragmentainer, float offset) const final;
+
     float computeMainContentSize(float hypotheticalMainSize) const;
     float availableCrossSize() const;
 
@@ -131,6 +133,8 @@ public:
 
     bool isHorizontalFlow() const;
     bool isVerticalFlow() const;
+    bool isColumnReverse() const;
+    bool isRowReverse() const;
     bool isWrapReverse() const;
     bool isMultiLine() const;
 
@@ -148,7 +152,6 @@ private:
 
     bool alignItemAutoMargins(FlexItem& item, const FlexLine& line) const;
 
-    float adjustOffsetInFragmentFlow(FragmentBuilder* fragmentainer, float offset, float height, bool avoidBreakInside) const;
     float adjustLineInFragmentFlow(FlexLine& line, FragmentBuilder* fragmentainer, float offset) const;
     float adjustItemInFragmentFlow(FlexItem& item, FragmentBuilder* fragmentainer, float offset) const;
 

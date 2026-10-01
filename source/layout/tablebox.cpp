@@ -185,6 +185,29 @@ std::optional<float> TableBox::inlineBlockBaseline() const
     return firstLineBaseline();
 }
 
+float TableBox::firstBreakOffset(const FragmentBuilder* fragmentainer, float offset) const
+{
+    for(auto caption : m_captions) {
+        if(caption->captionSide() == CaptionSide::Top) {
+            auto marginTop = std::max(0.f, caption->marginTop());
+            return marginTop + fragmentainer->unbreakableHeight(caption, offset + marginTop);
+        }
+    }
+
+    for(auto section : m_sections) {
+        if(auto row = section->firstRow()) {
+            auto rowHeight = row->height();
+            auto fragmentHeight = fragmentainer->fragmentHeightForOffset(offset);
+            auto leadingHeight = m_borderVerticalSpacing + borderAndPaddingTop();
+            if(fragmentHeight > 0.f && rowHeight >= fragmentHeight)
+                return leadingHeight;
+            return leadingHeight + rowHeight;
+        }
+    }
+
+    return borderAndPaddingHeight();
+}
+
 TableSectionBox* TableBox::headerSection() const
 {
     auto section = topSection();

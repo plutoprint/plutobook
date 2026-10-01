@@ -34,21 +34,25 @@ public:
     virtual void setFragmentBreak(float offset, float spaceShortage) {}
     virtual void updateMinimumFragmentHeight(float offset, float minHeight) {}
 
+    float unbreakableHeight(const BoxFrame* child, float offset) const;
+
     float applyFragmentBreakBefore(const BoxFrame* child, float offset);
     float applyFragmentBreakAfter(const BoxFrame* child, float offset);
     float applyFragmentBreakInside(const BoxFrame* child, float offset);
+
+    float adjustOffsetInFragmentFlow(float offset, float height, float unbreakableHeight);
 
     void enterFragment(float offset);
     void leaveFragment(float offset);
 
     float fragmentOffset() const;
 
-    bool needsBreakBefore(const BoxFrame* child) const;
-    bool needsBreakAfter(const BoxFrame* child) const;
-    bool needsBreakInside(const BoxFrame* child) const;
+    bool alwaysBreakBefore(const BoxFrame* child) const;
+    bool alwaysBreakAfter(const BoxFrame* child) const;
+    bool avoidsBreakInside(const BoxFrame* child) const;
 
-    bool needsBreakBetween(BreakBetween between) const;
-    bool needsBreakInside(BreakInside inside) const;
+    bool alwaysBreakBetween(BreakBetween between) const;
+    bool avoidsBreakInside(BreakInside inside) const;
 
 private:
     int64_t m_fragmentOffset = 0;
