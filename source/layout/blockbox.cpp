@@ -1227,20 +1227,7 @@ void BlockFlowBox::adjustPositionedBox(BoxFrame* child, const MarginInfo& margin
     }
 }
 
-void BlockFlowBox::handleBottomOfBlock(float top, float bottom, MarginInfo& marginInfo)
-{
-    marginInfo.setAtBottomOfBlock(true);
-    if(!marginInfo.canCollapseWithMarginBottom() && !marginInfo.canCollapseWithMarginTop())
-        setHeight(height() + marginInfo.margin());
-    setHeight(bottom + height());
-    setHeight(std::max(top + bottom, height()));
-    if(marginInfo.canCollapseWithMarginBottom() && !marginInfo.canCollapseWithMarginTop()) {
-        m_maxPositiveMarginBottom = std::max(m_maxPositiveMarginBottom, marginInfo.positiveMargin());
-        m_maxNegativeMarginBottom = std::max(m_maxNegativeMarginBottom, marginInfo.negativeMargin());
-    }
-}
-
-float BlockFlowBox::collapseMargins(BoxFrame* child, FragmentBuilder* fragmentainer, MarginInfo& marginInfo)
+float BlockFlowBox::collapseMargins(MarginInfo& marginInfo, FragmentBuilder* fragmentainer, BoxFrame* child)
 {
     auto posTop = child->maxMarginTop(true);
     auto negTop = child->maxMarginTop(false);
@@ -1288,6 +1275,19 @@ float BlockFlowBox::collapseMargins(BoxFrame* child, FragmentBuilder* fragmentai
     }
 
     return top;
+}
+
+void BlockFlowBox::handleBottomOfBlock(MarginInfo& marginInfo, float top, float bottom)
+{
+    marginInfo.setAtBottomOfBlock(true);
+    if(!marginInfo.canCollapseWithMarginBottom() && !marginInfo.canCollapseWithMarginTop())
+        setHeight(height() + marginInfo.margin());
+    setHeight(bottom + height());
+    setHeight(std::max(top + bottom, height()));
+    if(marginInfo.canCollapseWithMarginBottom() && !marginInfo.canCollapseWithMarginTop()) {
+        m_maxPositiveMarginBottom = std::max(m_maxPositiveMarginBottom, marginInfo.positiveMargin());
+        m_maxNegativeMarginBottom = std::max(m_maxNegativeMarginBottom, marginInfo.negativeMargin());
+    }
 }
 
 void BlockFlowBox::updateMaxMargins()
@@ -1436,7 +1436,7 @@ float BlockFlowBox::determineVerticalPosition(BoxFrame* child, FragmentBuilder* 
     auto posTop = m_maxPositiveMarginTop;
     auto negTop = m_maxNegativeMarginTop;
 
-    auto offset = collapseMargins(child, fragmentainer, marginInfo);
+    auto offset = collapseMargins(marginInfo, fragmentainer, child);
     auto clearDelta = getClearDelta(child, offset);
     if(clearDelta == 0.f) {
         return offset;
@@ -1596,7 +1596,7 @@ void BlockFlowBox::layoutBlockChildren(FragmentBuilder* fragmentainer)
         }
     }
 
-    handleBottomOfBlock(top, bottom, marginInfo);
+    handleBottomOfBlock(marginInfo, top, bottom);
 }
 
 void BlockFlowBox::layoutContents(FragmentBuilder* fragmentainer, float verticalShift)
