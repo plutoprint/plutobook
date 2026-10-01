@@ -1277,11 +1277,21 @@ float BlockFlowBox::collapseMargins(MarginInfo& marginInfo, FragmentBuilder* fra
     return top;
 }
 
-void BlockFlowBox::handleBottomOfBlock(MarginInfo& marginInfo, float top, float bottom)
+void BlockFlowBox::handleBottomOfBlock(MarginInfo& marginInfo, FragmentBuilder* fragmentainer, float top, float bottom)
 {
     marginInfo.setAtBottomOfBlock(true);
-    if(!marginInfo.canCollapseWithMarginBottom() && !marginInfo.canCollapseWithMarginTop())
-        setHeight(height() + marginInfo.margin());
+    if(!marginInfo.canCollapseWithMarginBottom() && !marginInfo.canCollapseWithMarginTop()) {
+        auto margin = marginInfo.margin();
+        if(fragmentainer && margin > 0.f) {
+            auto fragmentHeight = fragmentainer->fragmentHeightForOffset(height());
+            if(fragmentHeight > 0.f) {
+                margin = std::min(margin, fragmentainer->fragmentRemainingHeightForOffset(height(), AssociateWithFormerFragment));
+            }
+        }
+
+        setHeight(margin + height());
+    }
+
     setHeight(bottom + height());
     setHeight(std::max(top + bottom, height()));
     if(marginInfo.canCollapseWithMarginBottom() && !marginInfo.canCollapseWithMarginTop()) {
@@ -1596,7 +1606,7 @@ void BlockFlowBox::layoutBlockChildren(FragmentBuilder* fragmentainer)
         }
     }
 
-    handleBottomOfBlock(marginInfo, top, bottom);
+    handleBottomOfBlock(marginInfo, fragmentainer, top, bottom);
 }
 
 void BlockFlowBox::layoutContents(FragmentBuilder* fragmentainer, float verticalShift)

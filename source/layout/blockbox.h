@@ -192,7 +192,7 @@ public:
     void adjustPositionedBox(BoxFrame* child, const MarginInfo& marginInfo);
 
     float collapseMargins(MarginInfo& marginInfo, FragmentBuilder* fragmentainer, BoxFrame* child);
-    void handleBottomOfBlock(MarginInfo& marginInfo, float top, float bottom);
+    void handleBottomOfBlock(MarginInfo& marginInfo, FragmentBuilder* fragmentainer, float top, float bottom);
 
     void updateMaxMargins();
 
