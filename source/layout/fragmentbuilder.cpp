@@ -12,9 +12,71 @@
 
 namespace plutobook {
 
+static bool isBreakPropagatingContainer(const Box* box)
+{
+    return box->isBlockFlowBox() || box->isFlexibleBox()
+        || box->isTableBox() || box->isTableSectionBox() || box->isTableRowBox();
+}
+
+static bool isInFlowContent(const Box* box)
+{
+    return !box->isFloatingOrPositioned() && !box->isTableColumnBox();
+}
+
+static bool hasInFlowContentBefore(const Box* box)
+{
+    for(; box && !box->isBoxView(); box = box->parentBox()) {
+        for(auto sibling = box->prevSibling(); sibling; sibling = sibling->prevSibling()) {
+            if(isInFlowContent(sibling)) {
+                return true;
+            }
+        }
+
+        auto parent = box->parentBox();
+        if(parent == nullptr || !isBreakPropagatingContainer(parent)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+static bool hasInFlowContentAfter(const Box* box)
+{
+    for(; box && !box->isBoxView(); box = box->parentBox()) {
+        for(auto sibling = box->nextSibling(); sibling; sibling = sibling->nextSibling()) {
+            if(isInFlowContent(sibling)) {
+                return true;
+            }
+        }
+
+        auto parent = box->parentBox();
+        if(parent == nullptr || !isBreakPropagatingContainer(parent)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool FragmentBuilder::needsBreakBefore(const BoxFrame* child) const
+{
+    return needsBreakBetween(child->style()->breakBefore()) && hasInFlowContentBefore(child);
+}
+
+bool FragmentBuilder::needsBreakAfter(const BoxFrame* child) const
+{
+    return needsBreakBetween(child->style()->breakAfter()) && hasInFlowContentAfter(child);
+}
+
+bool FragmentBuilder::needsBreakInside(const BoxFrame* child) const
+{
+    return child->isReplaced() || needsBreakInside(child->style()->breakInside());
+}
+
 float FragmentBuilder::applyFragmentBreakBefore(const BoxFrame* child, float offset)
 {
-    if(!needsBreakBetween(child->style()->breakBefore()))
+    if(!needsBreakBefore(child))
         return offset;
     auto fragmentHeight = fragmentHeightForOffset(offset);
     addForcedFragmentBreak(offset);
@@ -25,7 +87,7 @@ float FragmentBuilder::applyFragmentBreakBefore(const BoxFrame* child, float off
 
 float FragmentBuilder::applyFragmentBreakAfter(const BoxFrame* child, float offset)
 {
-    if(!needsBreakBetween(child->style()->breakAfter()))
+    if(!needsBreakAfter(child))
         return offset;
     auto fragmentHeight = fragmentHeightForOffset(offset);
     addForcedFragmentBreak(offset);
@@ -36,7 +98,7 @@ float FragmentBuilder::applyFragmentBreakAfter(const BoxFrame* child, float offs
 
 float FragmentBuilder::applyFragmentBreakInside(const BoxFrame* child, float offset)
 {
-    if(!child->isReplaced() && !needsBreakInside(child->style()->breakInside()))
+    if(!needsBreakInside(child))
         return offset;
     auto childHeight = child->height();
     if(child->isFloating())

@@ -43,6 +43,10 @@ public:
 
     float fragmentOffset() const;
 
+    bool needsBreakBefore(const BoxFrame* child) const;
+    bool needsBreakAfter(const BoxFrame* child) const;
+    bool needsBreakInside(const BoxFrame* child) const;
+
     bool needsBreakBetween(BreakBetween between) const;
     bool needsBreakInside(BreakInside inside) const;
 

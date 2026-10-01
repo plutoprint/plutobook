@@ -980,16 +980,10 @@ bool FlexibleBox::alignItemAutoMargins(FlexItem& item, const FlexLine& line) con
     return true;
 }
 
-static bool itemAvoidsBreakInside(const BoxFrame* child, const FragmentBuilder* fragmentainer)
-{
-    return child->isReplaced() || fragmentainer->needsBreakInside(child->style()->breakInside());
-}
-
 static bool lineAvoidsBreakInside(const FlexLine& line, const FragmentBuilder* fragmentainer)
 {
     for(auto& item : line.items()) {
-        auto child = item.box();
-        if(itemAvoidsBreakInside(child, fragmentainer)) {
+        if(fragmentainer->needsBreakInside(item.box())) {
             return true;
         }
     }
@@ -1001,7 +995,7 @@ static const BoxFrame* itemNeedingBreakBefore(const FlexLine& line, const Fragme
 {
     for(auto& item : line.items()) {
         auto child = item.box();
-        if(fragmentainer->needsBreakBetween(child->style()->breakBefore())) {
+        if(fragmentainer->needsBreakBefore(child)) {
             return child;
         }
     }
@@ -1013,7 +1007,7 @@ static const BoxFrame* itemNeedingBreakAfter(const FlexLine& line, const Fragmen
 {
     for(auto& item : line.items()) {
         auto child = item.box();
-        if(fragmentainer->needsBreakBetween(child->style()->breakAfter())) {
+        if(fragmentainer->needsBreakAfter(child)) {
             return child;
         }
     }
@@ -1113,7 +1107,7 @@ float FlexibleBox::adjustItemInFragmentFlow(FlexItem& item, FragmentBuilder* fra
     auto height = child->height();
 
     auto newTop = fragmentainer->applyFragmentBreakBefore(child, top);
-    newTop = adjustOffsetInFragmentFlow(fragmentainer, newTop, height, itemAvoidsBreakInside(child, fragmentainer));
+    newTop = adjustOffsetInFragmentFlow(fragmentainer, newTop, height, fragmentainer->needsBreakInside(child));
 
     child->setY(newTop);
     child->setOverrideHeight(-1);
