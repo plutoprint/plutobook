@@ -52,6 +52,9 @@ public:
     void setFlexBaseSize(float value) { m_flexBaseSize = value; }
     void setTargetMainSize(float value) { m_targetMainSize = value; }
 
+    float naturalTop() const { return m_naturalTop; }
+    void setNaturalTop(float value) { m_naturalTop = value; }
+
     float naturalHeight() const { return m_naturalHeight; }
     void setNaturalHeight(float value) { m_naturalHeight = value; }
 
@@ -102,6 +105,7 @@ private:
     float m_flexShrink;
     float m_flexBaseSize{0};
     float m_targetMainSize{0};
+    float m_naturalTop{0};
     float m_naturalHeight{-1};
 };
 
@@ -133,8 +137,6 @@ public:
 
     bool isHorizontalFlow() const;
     bool isVerticalFlow() const;
-    bool isColumnReverse() const;
-    bool isRowReverse() const;
     bool isWrapReverse() const;
     bool isMultiLine() const;
 

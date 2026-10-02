@@ -340,11 +340,15 @@ float FlexibleBox::firstBreakOffset(const FragmentBuilder* fragmentainer, float 
     if(m_items.empty())
         return borderAndPaddingHeight();
     auto leadingHeight = borderAndPaddingTop();
-    auto& item = isColumnReverse() ? m_items.back() : m_items.front();
-    auto child = item.box();
-    if(child->marginTop() > 0.f)
-        return leadingHeight;
-    return leadingHeight + fragmentainer->unbreakableHeight(child, offset + leadingHeight);
+    float unbreakableHeight = 0.f;
+    for(auto& item : m_items) {
+        auto child = item.box();
+        if(item.naturalTop() > leadingHeight + kLayoutEpsilon)
+            continue;
+        unbreakableHeight = std::max(unbreakableHeight, fragmentainer->unbreakableHeight(child, offset + leadingHeight));
+    }
+
+    return leadingHeight + unbreakableHeight;
 }
 
 float FlexibleBox::computeMainContentSize(float hypotheticalMainSize) const
@@ -436,16 +440,6 @@ bool FlexibleBox::isVerticalFlow() const
     default:
         return false;
     }
-}
-
-bool FlexibleBox::isColumnReverse() const
-{
-    return style()->flexDirection() == FlexDirection::ColumnReverse;
-}
-
-bool FlexibleBox::isRowReverse() const
-{
-    return style()->flexDirection() == FlexDirection::RowReverse;
 }
 
 bool FlexibleBox::isWrapReverse() const
@@ -541,6 +535,7 @@ void FlexibleBox::layout(FragmentBuilder* fragmentainer)
         child->updateMarginWidths(availableWidth());
         child->updatePaddingWidths(availableWidth());
 
+        item.setNaturalTop(0);
         if(auto flexBaseSize = item.computeFlexBaseSize()) {
             item.setFlexBaseSize(flexBaseSize.value());
             item.setNaturalHeight(-1);
@@ -825,7 +820,9 @@ void FlexibleBox::layout(FragmentBuilder* fragmentainer)
 
     for(auto& line : lines) {
         for(auto& item : line.items()) {
+            auto child = item.box();
             alignItem(item, line, nullptr);
+            item.setNaturalTop(child->y());
         }
     }
 
@@ -1017,11 +1014,17 @@ static float lineUnbreakableHeight(const FlexLine& line, const FragmentBuilder* 
 {
     if(lineAvoidsBreakInside(line, fragmentainer))
         return line.crossSize();
+    float remainingHeight = 0.f;
+    auto fragmentHeight = fragmentainer->fragmentHeightForOffset(offset);
+    if(fragmentHeight > 0.f)
+        remainingHeight = fragmentainer->fragmentRemainingHeightForOffset(offset, AssociateWithLatterFragment);
     float unbreakableHeight = 0.f;
     for(auto& item : line.items()) {
         auto child = item.box();
-        auto itemTop = child->y() - line.crossOffset();
-        unbreakableHeight = std::max(unbreakableHeight, itemTop + fragmentainer->unbreakableHeight(child, offset + itemTop));
+        auto itemOffset = item.naturalTop() - line.crossOffset();
+        if(fragmentHeight > 0.f && remainingHeight <= itemOffset)
+            continue;
+        unbreakableHeight = std::max(unbreakableHeight, itemOffset + fragmentainer->unbreakableHeight(child, offset + itemOffset));
     }
 
     return unbreakableHeight;
