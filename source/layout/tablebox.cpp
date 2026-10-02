@@ -357,7 +357,7 @@ void TableBox::layout(FragmentBuilder* fragmentainer)
     }
 
     setHeight(height() + borderAndPaddingTop());
-    if(m_columns.empty()) {
+    if(m_columns.empty() || m_sections.empty()) {
         setHeight(tableHeight + height());
     } else {
         m_tableLayout->layout();
