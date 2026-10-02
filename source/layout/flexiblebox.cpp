@@ -999,21 +999,8 @@ bool FlexibleBox::alignItemAutoMargins(FlexItem& item, const FlexLine& line) con
     return true;
 }
 
-static bool lineAvoidsBreakInside(const FlexLine& line, const FragmentBuilder* fragmentainer)
-{
-    for(auto& item : line.items()) {
-        if(fragmentainer->avoidsBreakInside(item.box())) {
-            return true;
-        }
-    }
-
-    return false;
-}
-
 static float lineUnbreakableHeight(const FlexLine& line, const FragmentBuilder* fragmentainer, float offset)
 {
-    if(lineAvoidsBreakInside(line, fragmentainer))
-        return line.crossSize();
     float remainingHeight = 0.f;
     auto fragmentHeight = fragmentainer->fragmentHeightForOffset(offset);
     if(fragmentHeight > 0.f)
