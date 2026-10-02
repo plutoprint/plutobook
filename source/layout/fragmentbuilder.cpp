@@ -71,7 +71,7 @@ float FragmentBuilder::adjustOffsetInFragmentFlow(float offset, float height, fl
     return offset;
 }
 
-constexpr double kFragmentFixedScale = 1000;
+constexpr double kFragmentFixedScale = 65536;
 
 void FragmentBuilder::enterFragment(float offset)
 {
