@@ -13,68 +13,6 @@
 
 namespace plutobook {
 
-static bool isBreakPropagatingContainer(const Box* box)
-{
-    return box->isBlockFlowBox() || box->isFlexibleBox()
-        || box->isTableBox() || box->isTableSectionBox() || box->isTableRowBox();
-}
-
-static bool isInFlowContent(const Box* box)
-{
-    return !box->isFloatingOrPositioned() && !box->isTableColumnBox();
-}
-
-static bool hasInFlowContentBefore(const Box* box)
-{
-    for(; box && !box->isBoxView(); box = box->parentBox()) {
-        for(auto sibling = box->prevSibling(); sibling; sibling = sibling->prevSibling()) {
-            if(isInFlowContent(sibling)) {
-                return true;
-            }
-        }
-
-        auto parent = box->parentBox();
-        if(parent == nullptr || !isBreakPropagatingContainer(parent)) {
-            return true;
-        }
-    }
-
-    return false;
-}
-
-static bool hasInFlowContentAfter(const Box* box)
-{
-    for(; box && !box->isBoxView(); box = box->parentBox()) {
-        for(auto sibling = box->nextSibling(); sibling; sibling = sibling->nextSibling()) {
-            if(isInFlowContent(sibling)) {
-                return true;
-            }
-        }
-
-        auto parent = box->parentBox();
-        if(parent == nullptr || !isBreakPropagatingContainer(parent)) {
-            return true;
-        }
-    }
-
-    return false;
-}
-
-bool FragmentBuilder::alwaysBreakBefore(const BoxFrame* child) const
-{
-    return alwaysBreakBetween(child->style()->breakBefore()) && hasInFlowContentBefore(child);
-}
-
-bool FragmentBuilder::alwaysBreakAfter(const BoxFrame* child) const
-{
-    return alwaysBreakBetween(child->style()->breakAfter()) && hasInFlowContentAfter(child);
-}
-
-bool FragmentBuilder::avoidsBreakInside(const BoxFrame* child) const
-{
-    return child->isReplaced() || avoidsBreakInside(child->style()->breakInside());
-}
-
 float FragmentBuilder::unbreakableHeight(const BoxFrame* child, float offset) const
 {
     if(avoidsBreakInside(child))
@@ -148,6 +86,68 @@ void FragmentBuilder::leaveFragment(float offset)
 float FragmentBuilder::fragmentOffset() const
 {
     return m_fragmentOffset / kFragmentFixedScale;
+}
+
+static bool isBreakPropagatingContainer(const Box* box)
+{
+    return box->isBlockFlowBox() || box->isFlexibleBox()
+        || box->isTableBox() || box->isTableSectionBox() || box->isTableRowBox();
+}
+
+static bool isInFlowContent(const Box* box)
+{
+    return !box->isFloatingOrPositioned() && !box->isTableColumnBox();
+}
+
+static bool hasInFlowContentBefore(const Box* box)
+{
+    for(; box && !box->isBoxView(); box = box->parentBox()) {
+        for(auto sibling = box->prevSibling(); sibling; sibling = sibling->prevSibling()) {
+            if(isInFlowContent(sibling)) {
+                return true;
+            }
+        }
+
+        auto parent = box->parentBox();
+        if(parent == nullptr || !isBreakPropagatingContainer(parent)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+static bool hasInFlowContentAfter(const Box* box)
+{
+    for(; box && !box->isBoxView(); box = box->parentBox()) {
+        for(auto sibling = box->nextSibling(); sibling; sibling = sibling->nextSibling()) {
+            if(isInFlowContent(sibling)) {
+                return true;
+            }
+        }
+
+        auto parent = box->parentBox();
+        if(parent == nullptr || !isBreakPropagatingContainer(parent)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool FragmentBuilder::alwaysBreakBefore(const BoxFrame* child) const
+{
+    return alwaysBreakBetween(child->style()->breakBefore()) && hasInFlowContentBefore(child);
+}
+
+bool FragmentBuilder::alwaysBreakAfter(const BoxFrame* child) const
+{
+    return alwaysBreakBetween(child->style()->breakAfter()) && hasInFlowContentAfter(child);
+}
+
+bool FragmentBuilder::avoidsBreakInside(const BoxFrame* child) const
+{
+    return child->isReplaced() || avoidsBreakInside(child->style()->breakInside());
 }
 
 bool FragmentBuilder::alwaysBreakBetween(BreakBetween between) const
