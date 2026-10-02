@@ -185,6 +185,50 @@ std::optional<float> TableBox::inlineBlockBaseline() const
     return firstLineBaseline();
 }
 
+std::optional<float> TableBox::repeatedHeaderTop(const Rect& pageRect, const Point& offset) const
+{
+    for(auto section : m_sections) {
+        if(section->isTableHeader() || section->isTableFooter())
+            continue;
+        auto sectionTop = offset.y + section->y();
+        if(sectionTop >= pageRect.bottom())
+            break;
+        for(auto row : section->rows()) {
+            auto rowTop = sectionTop + row->y();
+            if(rowTop + row->height() <= pageRect.y)
+                continue;
+            if(rowTop < pageRect.y || rowTop >= pageRect.bottom())
+                return std::nullopt;
+            if(isBorderCollapsed())
+                return pageRect.y + borderTop();
+            return pageRect.y;
+        }
+    }
+
+    return std::nullopt;
+}
+
+std::optional<float> TableBox::repeatedFooterTop(const Rect& pageRect, const Point& offset) const
+{
+    for(auto section : m_sections | std::views::reverse) {
+        if(section->isTableHeader() || section->isTableFooter())
+            continue;
+        auto sectionTop = offset.y + section->y();
+        if(sectionTop >= pageRect.bottom())
+            continue;
+        for(auto row : section->rows() | std::views::reverse) {
+            auto rowBottom = sectionTop + row->y() + row->height();
+            if(rowBottom < pageRect.bottom()) {
+                if(rowBottom > pageRect.y)
+                    return rowBottom;
+                return std::nullopt;
+            }
+        }
+    }
+
+    return std::nullopt;
+}
+
 float TableBox::firstBreakOffset(const FragmentBuilder* fragmentainer, float offset) const
 {
     for(auto caption : m_captions) {
@@ -195,13 +239,22 @@ float TableBox::firstBreakOffset(const FragmentBuilder* fragmentainer, float off
     }
 
     if(auto section = topSection()) {
-        auto row = section->firstRow();
-        auto rowHeight = row->height();
-        auto fragmentHeight = fragmentainer->fragmentHeightForOffset(offset);
         auto leadingHeight = m_borderVerticalSpacing + borderAndPaddingTop();
+        if(section->isTableHeader()) {
+            if(auto sectionBelow = TableBox::sectionBelow(section)) {
+                leadingHeight += m_borderVerticalSpacing + section->height();
+                section = sectionBelow;
+            }
+        }
+
+        auto rowHeight = section->unbreakableRowHeightAt(0);
+        auto fragmentHeight = fragmentainer->fragmentHeightForOffset(offset);
         if(fragmentHeight > 0.f && rowHeight >= fragmentHeight)
             return leadingHeight;
-        return leadingHeight + rowHeight;
+        auto trailingHeight = m_borderVerticalSpacing;
+        if(auto footer = footerSection(); footer && !section->isTableFooter())
+            trailingHeight += m_borderVerticalSpacing + footer->height();
+        return leadingHeight + rowHeight + trailingHeight;
     }
 
     return borderAndPaddingHeight();
@@ -567,27 +620,10 @@ void TableBox::paintContents(const PaintInfo& info, const Point& offset, PaintPh
     auto shouldPaintCollapsedBorders = phase == PaintPhase::Decorations && m_collapsedBorderEdges && isBorderCollapsed();
     if(view()->isPrinting()) {
         if(auto footer = footerSection()) {
-            const auto& rect = info.rect();
-            if(rect.bottom() < offset.y + footer->y()) {
-                std::optional<float> rowBottom;
-                for(auto section : m_sections) {
-                    if(section->isTableHeader() || section->isTableFooter())
-                        continue;
-                    auto sectionTop = offset.y + section->y();
-                    if(sectionTop >= rect.bottom())
-                        break;
-                    for(auto row : section->rows() | std::views::reverse) {
-                        auto bottom = sectionTop + row->y() + row->height();
-                        if(bottom < rect.bottom()) {
-                            if(bottom > rect.y)
-                                rowBottom = bottom;
-                            break;
-                        }
-                    }
-                }
-
-                if(rowBottom.has_value()) {
-                    Point footerOffset(offset.x, rowBottom.value() - footer->y());
+            const auto& pageRect = info.rect();
+            if(pageRect.bottom() < offset.y + footer->y()) {
+                if(auto footerTop = repeatedFooterTop(pageRect, offset)) {
+                    Point footerOffset(offset.x, footerTop.value() - footer->y());
                     footer->paint(info, footerOffset, phase);
                     if(shouldPaintCollapsedBorders) {
                         for(const auto& edge : *m_collapsedBorderEdges) {
@@ -609,25 +645,10 @@ void TableBox::paintContents(const PaintInfo& info, const Point& offset, PaintPh
 
     if(view()->isPrinting()) {
         if(auto header = headerSection()) {
-            const auto& rect = info.rect();
-            if(rect.y > offset.y + header->y()) {
-                bool hasRowsOnPage = false;
-                for(auto section : m_sections) {
-                    if(section->isTableHeader())
-                        continue;
-                    auto sectionTop = offset.y + section->y();
-                    if(sectionTop >= rect.bottom())
-                        break;
-                    if(sectionTop + section->height() > rect.y) {
-                        hasRowsOnPage = true;
-                        break;
-                    }
-                }
-
-                if(hasRowsOnPage) {
-                    Point headerOffset(offset.x, rect.y - header->y());
-                    if(isBorderCollapsed())
-                        headerOffset.y += borderTop();
+            const auto& pageRect = info.rect();
+            if(pageRect.y > offset.y + header->y()) {
+                if(auto headerTop = repeatedHeaderTop(pageRect, offset)) {
+                    Point headerOffset(offset.x, headerTop.value() - header->y());
                     header->paint(info, headerOffset, phase);
                     if(shouldPaintCollapsedBorders) {
                         for(const auto& edge : *m_collapsedBorderEdges) {
@@ -1227,6 +1248,27 @@ std::optional<float> TableSectionBox::lastLineBaseline() const
     return baseline;
 }
 
+float TableSectionBox::unbreakableRowHeightAt(size_t rowIndex) const
+{
+    auto rowBox = m_rows[rowIndex];
+    auto verticalSpacing = table()->borderVerticalSpacing();
+    auto unbreakableHeight = rowBox->height();
+    for(const auto& [col, cell] : rowBox->cells()) {
+        auto cellBox = cell.box();
+        if(cell.inColOrRowSpan())
+            continue;
+        auto rowHeight = -verticalSpacing;
+        for(size_t index = 0; index < cellBox->rowSpan(); ++index) {
+            auto row = m_rows[rowIndex + index];
+            rowHeight += verticalSpacing + row->height();
+        }
+
+        unbreakableHeight = std::max(rowHeight, unbreakableHeight);
+    }
+
+    return unbreakableHeight;
+}
+
 TableRowBox* TableSectionBox::rowAbove(const TableRowBox* rowBox) const
 {
     if(auto prevRow = rowBox->prevRow())
@@ -1297,24 +1339,17 @@ void TableSectionBox::layoutRows(FragmentBuilder* fragmentainer, float headerHei
         if(fragmentainer) {
             auto fragmentHeight = fragmentainer->fragmentHeightForOffset(rowTop);
             if(fragmentHeight > 0.f) {
-                auto maxRowHeight = rowBox->height();
-                for(const auto& [col, cell] : rowBox->cells()) {
-                    auto cellBox = cell.box();
-                    if(cell.inColOrRowSpan())
-                        continue;
-                    auto rowHeight = -verticalSpacing;
-                    for(size_t index = 0; index < cellBox->rowSpan(); ++index) {
-                        auto row = m_rows[rowIndex + index];
-                        rowHeight += verticalSpacing + row->height();
-                    }
-
-                    maxRowHeight = std::max(rowHeight, maxRowHeight);
+                auto maxRowHeight = unbreakableRowHeightAt(rowIndex);
+                auto remainingHeight = fragmentainer->fragmentRemainingHeightForOffset(rowTop, AssociateWithLatterFragment);
+                auto availableHeight = remainingHeight - footerHeight - verticalSpacing;
+                if(maxRowHeight > availableHeight && maxRowHeight < fragmentHeight) {
+                    fragmentainer->setFragmentBreak(rowTop, maxRowHeight - availableHeight);
+                    rowTop += remainingHeight;
+                    remainingHeight = fragmentHeight;
                 }
 
-                auto remainingHeight = fragmentainer->fragmentRemainingHeightForOffset(rowTop, AssociateWithLatterFragment);
-                if(maxRowHeight > remainingHeight - footerHeight - verticalSpacing && maxRowHeight < fragmentHeight) {
-                    fragmentainer->setFragmentBreak(rowTop, maxRowHeight - (remainingHeight - footerHeight - verticalSpacing));
-                    rowTop += remainingHeight + headerHeight;
+                if(isNearlyEqual(remainingHeight, fragmentHeight)) {
+                    rowTop += headerHeight;
                     if(table()->isBorderCollapsed()) {
                         if(headerHeight) {
                             rowTop += table()->borderTop();

@@ -46,6 +46,9 @@ public:
     std::optional<float> lastLineBaseline() const final;
     std::optional<float> inlineBlockBaseline() const final;
 
+    std::optional<float> repeatedHeaderTop(const Rect& pageRect, const Point& offset) const;
+    std::optional<float> repeatedFooterTop(const Rect& pageRect, const Point& offset) const;
+
     float firstBreakOffset(const FragmentBuilder* fragmentainer, float offset) const final;
 
     TableColumnList& columns() { return m_columns; }
@@ -168,6 +171,8 @@ public:
 
     std::optional<float> firstLineBaseline() const final;
     std::optional<float> lastLineBaseline() const final;
+
+    float unbreakableRowHeightAt(size_t rowIndex) const;
 
     const TableRowBoxList& rows() const { return m_rows; }
     TableRowBoxList& rows() { return m_rows; }
