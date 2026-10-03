@@ -99,11 +99,20 @@ static bool isInFlowContent(const Box* box)
     return !box->isFloatingOrPositioned() && !box->isTableColumnBox();
 }
 
+static bool isListMarkerWrapper(const Box* box)
+{
+    if(!box->isAnonymousBlock())
+        return false;
+    if(auto child = box->firstChild())
+        return child == box->lastChild() && child->isOutsideListMarkerBox();
+    return false;
+}
+
 static bool hasInFlowContentBefore(const Box* box)
 {
     for(; box && !box->isBoxView(); box = box->parentBox()) {
         for(auto sibling = box->prevSibling(); sibling; sibling = sibling->prevSibling()) {
-            if(isInFlowContent(sibling)) {
+            if(isInFlowContent(sibling) && !isListMarkerWrapper(sibling)) {
                 return true;
             }
         }
@@ -111,6 +120,10 @@ static bool hasInFlowContentBefore(const Box* box)
         auto parent = box->parentBox();
         if(parent == nullptr || !isBreakPropagatingContainer(parent)) {
             return true;
+        }
+
+        if(parent->isMultiColumnFlowBox() || !isInFlowContent(parent)) {
+            return false;
         }
     }
 
@@ -130,6 +143,86 @@ static bool hasInFlowContentAfter(const Box* box)
         if(parent == nullptr || !isBreakPropagatingContainer(parent)) {
             return true;
         }
+
+        if(parent->isMultiColumnFlowBox() || !isInFlowContent(parent)) {
+            return false;
+        }
+    }
+
+    return false;
+}
+
+static bool receivesPropagatedBreaks(const Box* box)
+{
+    if(box->isBoxView())
+        return true;
+    if(!box->isBlockFlowBox() || box->isChildrenInline() || box->isMultiColumnFlowBox() || box->isTableCellBox())
+        return false;
+    if(!isInFlowContent(box))
+        return false;
+    auto parent = box->parentBox();
+    if(parent == nullptr)
+        return false;
+    return (parent->isBlockFlowBox() && !parent->isChildrenInline()) || parent->isFlexibleBox();
+}
+
+static const Box* firstInFlowChild(const Box* box)
+{
+    for(auto child = box->firstChild(); child; child = child->nextSibling()) {
+        if(isInFlowContent(child) && !isListMarkerWrapper(child)) {
+            return child;
+        }
+    }
+
+    return nullptr;
+}
+
+static const Box* lastInFlowChild(const Box* box)
+{
+    for(auto child = box->lastChild(); child; child = child->prevSibling()) {
+        if(isInFlowContent(child)) {
+            return child;
+        }
+    }
+
+    return nullptr;
+}
+
+static bool propagatesBreakBefore(const Box* box)
+{
+    if(auto parent = box->parentBox())
+        return receivesPropagatedBreaks(parent) && box == firstInFlowChild(parent);
+    return false;
+}
+
+static bool propagatesBreakAfter(const Box* box)
+{
+    if(auto parent = box->parentBox())
+        return receivesPropagatedBreaks(parent) && box == lastInFlowChild(parent);
+    return false;
+}
+
+bool FragmentBuilder::hasForcedBreakBefore(const Box* box) const
+{
+    for(; box; box = firstInFlowChild(box)) {
+        if(alwaysBreakBetween(box->style()->breakBefore()))
+            return true;
+        if(!receivesPropagatedBreaks(box)) {
+            break;
+        }
+    }
+
+    return false;
+}
+
+bool FragmentBuilder::hasForcedBreakAfter(const Box* box) const
+{
+    for(; box; box = lastInFlowChild(box)) {
+        if(alwaysBreakBetween(box->style()->breakAfter()))
+            return true;
+        if(!receivesPropagatedBreaks(box)) {
+            break;
+        }
     }
 
     return false;
@@ -137,12 +230,12 @@ static bool hasInFlowContentAfter(const Box* box)
 
 bool FragmentBuilder::alwaysBreakBefore(const BoxFrame* child) const
 {
-    return alwaysBreakBetween(child->style()->breakBefore()) && hasInFlowContentBefore(child);
+    return !propagatesBreakBefore(child) && hasForcedBreakBefore(child) && hasInFlowContentBefore(child);
 }
 
 bool FragmentBuilder::alwaysBreakAfter(const BoxFrame* child) const
 {
-    return alwaysBreakBetween(child->style()->breakAfter()) && hasInFlowContentAfter(child);
+    return !propagatesBreakAfter(child) && hasForcedBreakAfter(child) && hasInFlowContentAfter(child);
 }
 
 bool FragmentBuilder::avoidsBreakInside(const BoxFrame* child) const

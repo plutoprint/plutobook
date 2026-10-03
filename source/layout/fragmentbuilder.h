@@ -51,6 +51,9 @@ public:
     bool alwaysBreakAfter(const BoxFrame* child) const;
     bool avoidsBreakInside(const BoxFrame* child) const;
 
+    bool hasForcedBreakBefore(const Box* box) const;
+    bool hasForcedBreakAfter(const Box* box) const;
+
     bool alwaysBreakBetween(BreakBetween between) const;
     bool avoidsBreakInside(BreakInside inside) const;
 
