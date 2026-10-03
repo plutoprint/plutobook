@@ -16,6 +16,7 @@
 #include <unicode/brkiter.h>
 
 #include <memory>
+#include <string>
 
 typedef const struct hb_language_impl_t* hb_language_t;
 
@@ -32,6 +33,9 @@ public:
     hb_language_t language() const { return m_language; }
     const GlobalString& getQuote(bool open, size_t depth) const;
     const char* lang() const;
+
+    // ICU-style name of the locale (e.g. "en_US"), as expected by `Hyphenator::get`.
+    std::string localeName() const { return locale().getName(); }
 
 private:
     LocaleData(hb_language_t language) : m_language(language) {}

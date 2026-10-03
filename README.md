@@ -466,7 +466,11 @@ To build and install **PlutoBook**, you will need [Meson](http://mesonbuild.com)
 PlutoBook depends on the following external libraries:
 
 - **Required:** `cairo`, `freetype`, `harfbuzz`, `fontconfig`, `expat`, `icu`
-- **Optional:** `curl`, `turbojpeg`, `webp` (enable additional features)
+- **Optional:** `curl`, `turbojpeg`, `webp`, `hyphen` (enable additional features)
+
+`hyphen` (libhyphen) enables automatic hyphenation (`hyphens: auto`). When it is
+not available, `hyphens: auto` gracefully degrades to `hyphens: manual`, and
+`none`/`manual` keep working with no extra dependency.
 
 > [!NOTE]
 > For faster builds, it is recommended to install precompiled versions of these libraries through your system's package manager. Otherwise, Meson will build them from source, which may significantly increase build time.
@@ -476,7 +480,7 @@ For **Ubuntu/Debian** users, use the following command to install both required 
 ```bash
 sudo apt-get install -y libcairo2-dev libexpat1-dev libicu-dev \
     libfreetype6-dev libfontconfig1-dev libharfbuzz-dev \
-    libcurl4-openssl-dev libturbojpeg0-dev libwebp-dev \
+    libcurl4-openssl-dev libturbojpeg0-dev libwebp-dev libhyphen-dev \
     ninja-build meson
 ```
 
@@ -498,6 +502,44 @@ On **macOS** and **Linux**, you can also install PlutoBook directly with [Homebr
 brew update
 brew install plutobook
 ```
+
+### Hyphenation Dictionaries
+
+Automatic hyphenation (`hyphens: auto`) is powered by `libhyphen` and needs a
+hyphenation dictionary for the document's language (selected via `lang`). At
+runtime, dictionaries are resolved in this order:
+
+1. the directories listed in the `PLUTOBOOK_HYPHEN_PATH` environment variable
+   (colon-separated), searched for `hyph_<locale>.dic`;
+2. the system directory `/usr/share/hyphen`;
+3. the dictionaries embedded into the library at build time.
+
+The same Hunspell/LibreOffice hyphenation dictionaries used by LibreOffice and
+Firefox work as-is. On **Ubuntu/Debian**, install the language packs you need:
+
+```bash
+# e.g. French, German and British English
+sudo apt-get install -y hyphen-fr hyphen-de hyphen-en-gb
+```
+
+Each package installs `hyph_<locale>.dic` under `/usr/share/hyphen`. A full
+locale such as `en_US` falls back to the bare language (`en`) when only the
+latter is available.
+
+#### Embedding dictionaries at build time
+
+For deployments that cannot rely on system dictionaries, dictionaries can be
+compiled directly into the library. American English (`en-US`) is embedded by
+default. Select the set to embed with the `hyphen-embed-dicts` option:
+
+```bash
+meson setup build -Dhyphen-embed-dicts=en-US,fr,de
+```
+
+Each entry `xx-YY` must have a matching `dicts/hyph_xx_YY.dic` file in the source
+tree (dashes map to underscores). To embed a language not already bundled, drop
+its `.dic` file into `dicts/` first, then add it to the option. Pass an empty
+list (`-Dhyphen-embed-dicts=`) to embed none.
 
 ---
 
