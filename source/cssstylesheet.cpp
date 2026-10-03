@@ -60,18 +60,18 @@ public:
         : m_parentStyle(parentStyle), m_pseudoType(pseudoType)
     {}
 
-    void merge(uint32_t specificity, uint32_t position, const CSSPropertyList& properties);
-    void buildStyle(BoxStyle* newStyle);
+    void cascade(uint32_t specificity, uint32_t position, const CSSPropertyList& properties);
 
+    void buildStyle(BoxStyle* newStyle);
     FontDescription fontDescription() const;
 
 protected:
+    CSSPropertyDataList m_properties;
     const BoxStyle* m_parentStyle;
     PseudoType m_pseudoType;
-    CSSPropertyDataList m_properties;
 };
 
-void StyleBuilder::merge(uint32_t specificity, uint32_t position, const CSSPropertyList& properties)
+void StyleBuilder::cascade(uint32_t specificity, uint32_t position, const CSSPropertyList& properties)
 {
     for(const auto& property : properties) {
         CSSPropertyData data(specificity, position, property);
@@ -191,11 +191,10 @@ void StyleBuilder::buildStyle(BoxStyle* newStyle)
 
     for(const auto& variable : variables) {
         const auto& value = to<CSSVariableReferenceValue>(*variable.value());
-        merge(variable.specificity(), variable.position(), value.resolve(newStyle));
+        cascade(variable.specificity(), variable.position(), value.resolve(newStyle));
     }
 
     newStyle->setFontDescription(fontDescription());
-
     for(const auto& property : m_properties) {
         switch(property.id()) {
         case CSSPropertyID::Color:
@@ -554,7 +553,7 @@ void ElementStyleBuilder::add(const CSSRuleDataList* rules)
     if(rules) {
         for(const auto& rule : *rules) {
             if(rule.match(m_element, m_pseudoType, m_selectorFilter)) {
-                merge(rule.specificity(), rule.position(), rule.properties());
+                cascade(rule.specificity(), rule.position(), rule.properties());
             }
         }
     }
@@ -563,8 +562,8 @@ void ElementStyleBuilder::add(const CSSRuleDataList* rules)
 RefPtr<BoxStyle> ElementStyleBuilder::build()
 {
     if(m_pseudoType == PseudoType::None) {
-        merge(0, 0, m_element->presentationAttributeStyle());
-        merge(0, 0, m_element->inlineStyle());
+        cascade(0, 0, m_element->presentationAttributeStyle());
+        cascade(0, 0, m_element->inlineStyle());
     }
 
     if(m_properties.empty()) {
@@ -652,11 +651,11 @@ void PageStyleBuilder::add(const CSSPageRuleDataList& rules)
     for(const auto& rule : rules) {
         if(rule.match(m_pageName, m_pageIndex, m_pseudoType)) {
             if(m_marginType == PageMarginType::None) {
-                merge(rule.specificity(), rule.position(), rule.properties());
+                cascade(rule.specificity(), rule.position(), rule.properties());
             } else {
                 for(const auto& margin : rule.margins()) {
                     if(m_marginType == margin->marginType()) {
-                        merge(rule.specificity(), rule.position(), margin->properties());
+                        cascade(rule.specificity(), rule.position(), margin->properties());
                     }
                 }
             }
