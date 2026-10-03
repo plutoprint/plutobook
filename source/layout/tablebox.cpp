@@ -229,12 +229,14 @@ std::optional<float> TableBox::repeatedFooterTop(const Rect& pageRect, const Poi
     return std::nullopt;
 }
 
-float TableBox::firstBreakOffset(const FragmentBuilder* fragmentainer, float offset) const
+float TableBox::unbreakableHeight(const FragmentBuilder* fragmentainer, float offset) const
 {
+    if(fragmentainer->avoidsBreakInside(this))
+        return height();
     for(auto caption : m_captions) {
         if(caption->captionSide() == CaptionSide::Top) {
             auto marginTop = std::max(0.f, caption->marginTop());
-            return marginTop + fragmentainer->unbreakableHeight(caption, offset + marginTop);
+            return marginTop + caption->unbreakableHeight(fragmentainer, offset + marginTop);
         }
     }
 

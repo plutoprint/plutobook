@@ -49,7 +49,7 @@ public:
     void computeHeight(float& y, float& height, float& marginTop, float& marginBottom) const final;
     void layout(FragmentBuilder* fragmentainer) final;
 
-    float firstBreakOffset(const FragmentBuilder* fragmentainer, float offset) const final { return 0.f; }
+    float unbreakableHeight(const FragmentBuilder* fragmentainer, float offset) const final { return 0.f; }
 
     void paint(const PaintInfo& info, const Point& offset, PaintPhase phase) final;
     void paintColumnRules(GraphicsContext& context, const Point& offset);

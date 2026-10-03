@@ -746,8 +746,10 @@ std::optional<float> BlockFlowBox::inlineBlockBaseline() const
     return lastLineBaseline();
 }
 
-float BlockFlowBox::firstBreakOffset(const FragmentBuilder* fragmentainer, float offset) const
+float BlockFlowBox::unbreakableHeight(const FragmentBuilder* fragmentainer, float offset) const
 {
+    if(fragmentainer->avoidsBreakInside(this))
+        return height();
     auto leadingHeight = borderAndPaddingTop();
     if(isChildrenInline()) {
         const auto& lines = m_lineLayout->lines();
@@ -764,7 +766,7 @@ float BlockFlowBox::firstBreakOffset(const FragmentBuilder* fragmentainer, float
         if(leadingHeight == 0.f && !avoidsFloats())
             marginTop = 0.f;
         auto childOffset = leadingHeight + marginTop;
-        return childOffset + fragmentainer->unbreakableHeight(child, offset + childOffset);
+        return childOffset + child->unbreakableHeight(fragmentainer, offset + childOffset);
     }
 
     return leadingHeight + borderAndPaddingBottom();
@@ -1536,7 +1538,7 @@ void BlockFlowBox::determineHorizontalPosition(BoxFrame* child) const
 float BlockFlowBox::adjustBlockChildInFragmentFlow(BoxFrame* child, FragmentBuilder* fragmentainer, float top)
 {
     auto newTop = fragmentainer->applyFragmentBreakBefore(child, top);
-    auto unbreakableHeight = fragmentainer->unbreakableHeight(child, newTop);
+    auto unbreakableHeight = child->unbreakableHeight(fragmentainer, newTop);
     auto childHeight = child->height();
 
     newTop = fragmentainer->adjustOffsetInFragmentFlow(newTop, childHeight, unbreakableHeight);

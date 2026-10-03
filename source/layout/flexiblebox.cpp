@@ -335,8 +335,10 @@ std::optional<float> FlexibleBox::inlineBlockBaseline() const
     return firstLineBaseline();
 }
 
-float FlexibleBox::firstBreakOffset(const FragmentBuilder* fragmentainer, float offset) const
+float FlexibleBox::unbreakableHeight(const FragmentBuilder* fragmentainer, float offset) const
 {
+    if(fragmentainer->avoidsBreakInside(this))
+        return height();
     if(m_items.empty())
         return borderAndPaddingHeight();
     auto leadingHeight = borderAndPaddingTop();
@@ -345,7 +347,7 @@ float FlexibleBox::firstBreakOffset(const FragmentBuilder* fragmentainer, float 
         auto child = item.box();
         if(item.naturalTop() > leadingHeight + kLayoutEpsilon)
             continue;
-        unbreakableHeight = std::max(unbreakableHeight, fragmentainer->unbreakableHeight(child, offset + leadingHeight));
+        unbreakableHeight = std::max(unbreakableHeight, child->unbreakableHeight(fragmentainer, offset + leadingHeight));
     }
 
     return leadingHeight + unbreakableHeight;
@@ -1011,7 +1013,7 @@ static float lineUnbreakableHeight(const FlexLine& line, const FragmentBuilder* 
         auto itemOffset = item.naturalTop() - line.crossOffset();
         if(fragmentHeight > 0.f && remainingHeight <= itemOffset)
             continue;
-        unbreakableHeight = std::max(unbreakableHeight, itemOffset + fragmentainer->unbreakableHeight(child, offset + itemOffset));
+        unbreakableHeight = std::max(unbreakableHeight, itemOffset + child->unbreakableHeight(fragmentainer, offset + itemOffset));
     }
 
     return unbreakableHeight;
@@ -1115,7 +1117,7 @@ float FlexibleBox::adjustItemInFragmentFlow(FlexItem& item, FragmentBuilder* fra
     auto height = child->height();
 
     auto newTop = fragmentainer->applyFragmentBreakBefore(child, top);
-    auto unbreakableHeight = fragmentainer->unbreakableHeight(child, newTop);
+    auto unbreakableHeight = child->unbreakableHeight(fragmentainer, newTop);
     newTop = fragmentainer->adjustOffsetInFragmentFlow(newTop, height, unbreakableHeight);
 
     child->setY(newTop);

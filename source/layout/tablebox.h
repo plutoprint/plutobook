@@ -49,7 +49,7 @@ public:
     std::optional<float> repeatedHeaderTop(const Rect& pageRect, const Point& offset) const;
     std::optional<float> repeatedFooterTop(const Rect& pageRect, const Point& offset) const;
 
-    float firstBreakOffset(const FragmentBuilder* fragmentainer, float offset) const final;
+    float unbreakableHeight(const FragmentBuilder* fragmentainer, float offset) const final;
 
     TableColumnList& columns() { return m_columns; }
     const TableColumnList& columns() const { return m_columns; }

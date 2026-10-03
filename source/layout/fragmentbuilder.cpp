@@ -13,13 +13,6 @@
 
 namespace plutobook {
 
-float FragmentBuilder::unbreakableHeight(const BoxFrame* child, float offset) const
-{
-    if(avoidsBreakInside(child))
-        return child->height();
-    return child->firstBreakOffset(this, offset);
-}
-
 float FragmentBuilder::applyFragmentBreakBefore(const BoxFrame* child, float offset)
 {
     if(!alwaysBreakBefore(child))
