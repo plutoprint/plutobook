@@ -1348,18 +1348,12 @@ bool BoxStyle::apply(CSSPropertyID id, const CSSValue& value)
         m_columnFill = convertColumnFill(value);
         break;
     case CSSPropertyID::BreakAfter:
-    case CSSPropertyID::ColumnBreakAfter:
-    case CSSPropertyID::PageBreakAfter:
         m_breakAfter = convertBreakBetween(value);
         break;
     case CSSPropertyID::BreakBefore:
-    case CSSPropertyID::ColumnBreakBefore:
-    case CSSPropertyID::PageBreakBefore:
         m_breakBefore = convertBreakBetween(value);
         break;
     case CSSPropertyID::BreakInside:
-    case CSSPropertyID::ColumnBreakInside:
-    case CSSPropertyID::PageBreakInside:
         m_breakInside = convertBreakInside(value);
         break;
     case CSSPropertyID::StrokeLinecap:
@@ -1538,18 +1532,12 @@ void BoxStyle::reset(CSSPropertyID id)
         m_columnFill = ColumnFill::Balance;
         break;
     case CSSPropertyID::BreakAfter:
-    case CSSPropertyID::ColumnBreakAfter:
-    case CSSPropertyID::PageBreakAfter:
         m_breakAfter = BreakBetween::Auto;
         break;
     case CSSPropertyID::BreakBefore:
-    case CSSPropertyID::ColumnBreakBefore:
-    case CSSPropertyID::PageBreakBefore:
         m_breakBefore = BreakBetween::Auto;
         break;
     case CSSPropertyID::BreakInside:
-    case CSSPropertyID::ColumnBreakInside:
-    case CSSPropertyID::PageBreakInside:
         m_breakInside = BreakInside::Auto;
         break;
     case CSSPropertyID::StrokeLinecap:

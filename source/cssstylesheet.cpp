@@ -18,16 +18,19 @@ namespace plutobook {
 
 class CSSPropertyData {
 public:
-    CSSPropertyData(uint32_t specificity, uint32_t position, const CSSProperty& property)
+    CSSPropertyData(uint32_t specificity, uint32_t position, uint32_t sequence, const CSSProperty& property)
         : m_id(property.id()), m_origin(property.origin()), m_important(property.important())
-        , m_specificity(specificity), m_position(position), m_value(property.value())
+        , m_specificity(specificity), m_position(position), m_sequence(sequence), m_value(property.value())
     {}
 
     CSSPropertyID id() const { return m_id; }
+    void setId(CSSPropertyID id) { m_id = id; }
+
     CSSStyleOrigin origin() const { return m_origin; }
     bool important() const { return m_important; }
     uint32_t specificity() const { return m_specificity; }
     uint32_t position() const { return m_position; }
+    uint32_t sequence() const { return m_sequence; }
     const RefPtr<CSSValue>& value() const { return m_value; }
 
     bool isLessThan(const CSSPropertyData& data) const;
@@ -38,6 +41,7 @@ private:
     bool m_important;
     uint32_t m_specificity;
     uint32_t m_position;
+    uint32_t m_sequence;
     RefPtr<CSSValue> m_value;
 };
 
@@ -49,7 +53,9 @@ inline bool CSSPropertyData::isLessThan(const CSSPropertyData& data) const
         return m_origin < data.origin();
     if(m_specificity != data.specificity())
         return m_specificity < data.specificity();
-    return m_position < data.position();
+    if(m_position != data.position())
+        return m_position < data.position();
+    return m_sequence < data.sequence();
 }
 
 using CSSPropertyDataList = std::vector<CSSPropertyData>;
@@ -61,6 +67,8 @@ public:
     {}
 
     void cascade(uint32_t specificity, uint32_t position, const CSSPropertyList& properties);
+    void cascade(uint32_t specificity, uint32_t position, uint32_t sequence, const CSSPropertyList& properties);
+    void cascade(uint32_t specificity, uint32_t position, uint32_t sequence, const CSSProperty& property);
 
     void buildStyle(BoxStyle* newStyle);
     FontDescription fontDescription() const;
@@ -69,28 +77,41 @@ protected:
     CSSPropertyDataList m_properties;
     const BoxStyle* m_parentStyle;
     PseudoType m_pseudoType;
+    uint32_t m_sequence = 0;
 };
 
 void StyleBuilder::cascade(uint32_t specificity, uint32_t position, const CSSPropertyList& properties)
 {
     for(const auto& property : properties) {
-        CSSPropertyData data(specificity, position, property);
-        auto predicate_func = [&property](const CSSPropertyData& item) {
-            if(property.id() == CSSPropertyID::Custom && item.id() == CSSPropertyID::Custom) {
-                const auto& a = to<CSSCustomPropertyValue>(*property.value());
-                const auto& b = to<CSSCustomPropertyValue>(*item.value());
-                return a.name() == b.name();
-            }
+        cascade(specificity, position, m_sequence++, property);
+    }
+}
 
-            return property.id() == item.id();
-        };
+void StyleBuilder::cascade(uint32_t specificity, uint32_t position, uint32_t sequence, const CSSPropertyList& properties)
+{
+    for(const auto& property : properties) {
+        cascade(specificity, position, sequence, property);
+    }
+}
 
-        auto it = std::find_if(m_properties.begin(), m_properties.end(), predicate_func);
-        if(it == m_properties.end()) {
-            m_properties.push_back(std::move(data));
-        } else if(!data.isLessThan(*it)) {
-            *it = std::move(data);
+void StyleBuilder::cascade(uint32_t specificity, uint32_t position, uint32_t sequence, const CSSProperty& property)
+{
+    CSSPropertyData data(specificity, position, sequence, property);
+    auto predicate_func = [&property](const CSSPropertyData& item) {
+        if(property.id() == CSSPropertyID::Custom && item.id() == CSSPropertyID::Custom) {
+            const auto& a = to<CSSCustomPropertyValue>(*property.value());
+            const auto& b = to<CSSCustomPropertyValue>(*item.value());
+            return a.name() == b.name();
         }
+
+        return property.id() == item.id();
+    };
+
+    auto it = std::find_if(m_properties.begin(), m_properties.end(), predicate_func);
+    if(it == m_properties.end()) {
+        m_properties.push_back(std::move(data));
+    } else if(!data.isLessThan(*it)) {
+        *it = std::move(data);
     }
 }
 
@@ -177,6 +198,25 @@ static CSSPropertyID resolveDirectionAwareProperty(CSSPropertyID id, WritingDire
     }
 }
 
+static CSSPropertyID resolveCascadeTarget(CSSPropertyID id, WritingDirection direction)
+{
+    switch(id) {
+    case CSSPropertyID::Unknown:
+        return CSSPropertyID::Unknown;
+    case CSSPropertyID::ColumnBreakAfter:
+    case CSSPropertyID::PageBreakAfter:
+        return CSSPropertyID::BreakAfter;
+    case CSSPropertyID::ColumnBreakBefore:
+    case CSSPropertyID::PageBreakBefore:
+        return CSSPropertyID::BreakBefore;
+    case CSSPropertyID::ColumnBreakInside:
+    case CSSPropertyID::PageBreakInside:
+        return CSSPropertyID::BreakInside;
+    default:
+        return resolveDirectionAwareProperty(id, direction);
+    }
+}
+
 void StyleBuilder::buildStyle(BoxStyle* newStyle)
 {
     CSSPropertyDataList variables;
@@ -191,7 +231,7 @@ void StyleBuilder::buildStyle(BoxStyle* newStyle)
 
     for(const auto& variable : variables) {
         const auto& value = to<CSSVariableReferenceValue>(*variable.value());
-        cascade(variable.specificity(), variable.position(), value.resolve(newStyle));
+        cascade(variable.specificity(), variable.position(), variable.sequence(), value.resolve(newStyle));
     }
 
     newStyle->setFontDescription(fontDescription());
@@ -209,10 +249,29 @@ void StyleBuilder::buildStyle(BoxStyle* newStyle)
     }
 
     const WritingDirection direction(newStyle->writingMode(), newStyle->direction());
+    for(auto& property : m_properties) {
+        auto target = resolveCascadeTarget(property.id(), direction);
+        if(target == property.id())
+            continue;
+        auto predicate_func = [target](const CSSPropertyData& item) {
+            return target == item.id();
+        };
+
+        auto it = std::find_if(m_properties.begin(), m_properties.end(), predicate_func);
+        if(it != m_properties.end()) {
+            if(property.isLessThan(*it)) {
+                target = CSSPropertyID::Unknown;
+            } else {
+                it->setId(CSSPropertyID::Unknown);
+            }
+        }
+
+        property.setId(target);
+    }
 
     for(const auto& property : m_properties) {
-        const auto id = property.id();
-        switch(id) {
+        switch(property.id()) {
+        case CSSPropertyID::Unknown:
         case CSSPropertyID::Custom:
         case CSSPropertyID::FontFamily:
         case CSSPropertyID::FontSize:
@@ -227,7 +286,7 @@ void StyleBuilder::buildStyle(BoxStyle* newStyle)
         case CSSPropertyID::WritingMode:
             break;
         default:
-            newStyle->set(resolveDirectionAwareProperty(id, direction), property.value());
+            newStyle->set(property.id(), property.value());
             break;
         }
     }
