@@ -48,10 +48,17 @@ CSSMediaQueryList CSSParser::parseMediaQueries(std::string_view content)
     return queries;
 }
 
-CSSPropertyList CSSParser::parsePropertyValue(CSSTokenStream input, CSSPropertyID id, bool important)
+CSSPropertyList CSSParser::parseSubstitutedValue(CSSTokenStream input, CSSPropertyID id, bool important)
 {
     CSSPropertyList properties(m_heap);
-    consumeDescriptor(input, properties, id, important);
+    input.consumeWhitespace();
+    if(!input.empty()) {
+        if(consumeDescriptor(input, properties, id, important))
+            return properties;
+        properties.clear();
+    }
+
+    addExpandedProperty(properties, id, important, CSSUnsetValue::create());
     return properties;
 }
 
@@ -1270,8 +1277,6 @@ bool CSSParser::consumeDeclaration(CSSTokenStream& input, CSSPropertyList& prope
     }
 
     CSSTokenStream value(valueBegin, valueEnd);
-    if(value.empty() || (important && (ruleType == CSSRuleType::FontFace || ruleType == CSSRuleType::CounterStyle)))
-        return false;
     if(id == CSSPropertyID::Custom) {
         if(ruleType == CSSRuleType::FontFace || ruleType == CSSRuleType::CounterStyle)
             return false;
@@ -1280,6 +1285,8 @@ bool CSSParser::consumeDeclaration(CSSTokenStream& input, CSSPropertyList& prope
         return true;
     }
 
+    if(value.empty() || (important && (ruleType == CSSRuleType::FontFace || ruleType == CSSRuleType::CounterStyle)))
+        return false;
     if(containsVariableReferences(value)) {
         if(ruleType == CSSRuleType::FontFace || ruleType == CSSRuleType::CounterStyle)
             return false;

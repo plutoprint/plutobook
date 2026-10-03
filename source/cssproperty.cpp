@@ -1172,10 +1172,10 @@ CSSPropertyList CSSVariableReferenceValue::resolve(const BoxStyle* style) const
     CSSTokenList tokens;
     std::vector<CSSVariableData*> references;
     if(!m_value->resolve(style, tokens, references))
-        return CSSPropertyList();
+        tokens.clear();
     CSSTokenStream input(tokens.data(), tokens.size());
     CSSParser parser(m_context, style->heap());
-    return parser.parsePropertyValue(input, m_id, m_important);
+    return parser.parseSubstitutedValue(input, m_id, m_important);
 }
 
 CSSVariableReferenceValue::CSSVariableReferenceValue(const CSSParserContext& context, CSSPropertyID id, bool important, RefPtr<CSSVariableData> value)
