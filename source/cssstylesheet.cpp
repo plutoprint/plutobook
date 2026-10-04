@@ -220,9 +220,10 @@ static CSSPropertyID resolveCascadeTarget(CSSPropertyID id, WritingDirection dir
 void StyleBuilder::buildStyle(BoxStyle* newStyle)
 {
     CSSPropertyDataList variables;
-    for(const auto& property : m_properties) {
+    for(auto& property : m_properties) {
         if(is<CSSVariableReferenceValue>(*property.value())) {
             variables.push_back(property);
+            property.setId(CSSPropertyID::Unknown);
         } else if(property.id() == CSSPropertyID::Custom) {
             const auto& custom = to<CSSCustomPropertyValue>(*property.value());
             newStyle->setCustom(custom.name(), custom.value());
@@ -322,8 +323,7 @@ FontDescriptionBuilder::FontDescriptionBuilder(const BoxStyle* parentStyle, cons
 {
     for(const auto& property : properties) {
         if(is<CSSInheritValue>(*property.value())
-            || is<CSSUnsetValue>(*property.value())
-            || is<CSSVariableReferenceValue>(*property.value())) {
+            || is<CSSUnsetValue>(*property.value())) {
             continue;
         }
 

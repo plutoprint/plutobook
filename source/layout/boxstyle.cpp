@@ -1180,7 +1180,6 @@ void BoxStyle::set(CSSPropertyID id, RefPtr<CSSValue> value)
     case CSSValueType::Inherit:
         return inherit(id);
     case CSSValueType::Unset:
-    case CSSValueType::VariableReference:
         return;
     case CSSValueType::Length:
         value = resolveLength(value);

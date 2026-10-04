@@ -21,7 +21,7 @@ public:
     CSSPropertyList parseStyle(std::string_view content);
     CSSMediaQueryList parseMediaQueries(std::string_view content);
 
-    CSSPropertyList parsePropertyValue(CSSTokenStream input, CSSPropertyID id, bool important);
+    CSSPropertyList parseSubstitutedValue(CSSTokenStream input, CSSPropertyID id, bool important);
 
 private:
     bool consumeMediaFeature(CSSTokenStream& input, CSSMediaFeatureList& features);
