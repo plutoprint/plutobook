@@ -1076,72 +1076,125 @@ RefPtr<CSSIdentValue> CSSIdentValue::create(CSSValueID value)
     return cssValuePool()->identValue(value);
 }
 
-RefPtr<CSSVariableData> CSSVariableData::create(Heap* heap, const CSSTokenStream& value)
+static bool hasValidVariables(CSSTokenStream input);
+
+static bool isValidVariableRef(CSSTokenStream input)
 {
-    return adoptPtr(new (heap) CSSVariableData(heap, value));
+    input.consumeWhitespace();
+    if(input->type() != CSSToken::Type::Ident || !isCustomPropertyName(input->data()))
+        return false;
+    input.consumeIncludingWhitespace();
+    if(input.consumeCommaIncludingWhitespace())
+        return hasValidVariables(input);
+    return input.empty();
 }
 
-CSSVariableData::CSSVariableData(Heap* heap, const CSSTokenStream& value)
-    : m_tokens(heap)
+static bool hasValidVariables(CSSTokenStream input)
 {
-    m_tokens.assign(value.begin(), value.end());
-    for(auto& token : m_tokens) {
-        if(!token.m_data.empty()) {
-            token.m_data = heap->createString(token.data());
-        }
-    }
-}
-
-bool CSSVariableData::resolve(const BoxStyle* style, CSSTokenList& tokens, std::vector<CSSVariableData*>& references) const
-{
-    CSSTokenStream input(m_tokens.data(), m_tokens.size());
-    return resolve(input, style, tokens, references);
-}
-
-bool CSSVariableData::resolve(CSSTokenStream input, const BoxStyle* style, CSSTokenList& tokens, std::vector<CSSVariableData*>& references) const
-{
-    constexpr size_t kMaxSubstitutionTokens = 65536;
-
     while(!input.empty()) {
         if(input->type() == CSSToken::Type::Function && equalsIgnoringCase("var", input->data())) {
             auto block = input.consumeBlock();
-
-            const auto size = tokens.size();
-            if(!resolveVar(block, style, tokens, references))
-                return false;
-            if(tokens.size() - size > kMaxSubstitutionTokens)
+            if(!isValidVariableRef(block))
                 return false;
             continue;
         }
 
-        tokens.push_back(*input);
         input.consume();
     }
 
     return true;
 }
 
-bool CSSVariableData::resolveVar(CSSTokenStream input, const BoxStyle* style, CSSTokenList& tokens, std::vector<CSSVariableData*>& references) const
+RefPtr<CSSVariableData> CSSVariableData::create(Heap* heap, const CSSTokenStream& value, bool containsVariables)
 {
-    input.consumeWhitespace();
-    if(input->type() != CSSToken::Type::Ident)
-        return false;
-    auto data = style->getCustom(input->data());
-    input.consumeIncludingWhitespace();
-    if(!input.empty() && input->type() != CSSToken::Type::Comma)
-        return false;
-    if(data == nullptr) {
-        if(!input.consumeCommaIncludingWhitespace())
-            return false;
-        return resolve(input, style, tokens, references);
+    if(containsVariables && !hasValidVariables(value))
+        return nullptr;
+    CSSVariableTokenList tokens(heap);
+    tokens.assign(value.begin(), value.end());
+    for(auto& token : tokens) {
+        if(!token.m_data.empty()) {
+            token.m_data = heap->createString(token.data());
+        }
     }
 
-    if(std::find(references.begin(), references.end(), data) != references.end())
-        return false;
-    references.push_back(data);
-    auto resolved = data->resolve(style, tokens, references);
-    references.pop_back();
-    return resolved;
+    return adoptPtr(new (heap) CSSVariableData(containsVariables, std::move(tokens)));
+}
+
+enum class CSSVariableResult : uint8_t {
+    Valid,
+    Invalid,
+    Cyclic
+};
+
+using CSSVariableReferences = std::vector<const CSSVariableData*>;
+
+static CSSVariableResult substituteVariableTokens(CSSTokenStream input, const BoxStyle* style, CSSVariableTokenList& output, CSSVariableReferences& references);
+
+static CSSVariableResult substituteVariableData(const CSSVariableData* variable, const BoxStyle* style, CSSVariableTokenList& output, CSSVariableReferences& references)
+{
+    const auto& tokens = variable->tokens();
+    if(!variable->containsVariables()) {
+        output.insert(output.end(), tokens.begin(), tokens.end());
+        return CSSVariableResult::Valid;
+    }
+
+    CSSTokenStream input(tokens.data(), tokens.size());
+    return substituteVariableTokens(input, style, output, references);
+}
+
+static CSSVariableResult substituteVariableReference(CSSTokenStream input, const BoxStyle* style, CSSVariableTokenList& output, CSSVariableReferences& references)
+{
+    input.consumeWhitespace();
+    assert(input->type() == CSSToken::Type::Ident && isCustomPropertyName(input->data()));
+
+    auto name = input->data();
+    input.consumeIncludingWhitespace();
+    assert(input.empty() || input->type() == CSSToken::Type::Comma);
+
+    if(auto reference = style->getCustom(name)) {
+        if(std::find(references.begin(), references.end(), reference) != references.end())
+            return CSSVariableResult::Cyclic;
+        auto mark = output.size();
+        references.push_back(reference);
+        auto result = substituteVariableData(reference, style, output, references);
+        references.pop_back();
+
+        if(result != CSSVariableResult::Invalid)
+            return result;
+        output.erase(output.begin() + mark, output.end());
+    }
+
+    if(!input.consumeCommaIncludingWhitespace())
+        return CSSVariableResult::Invalid;
+    return substituteVariableTokens(input, style, output, references);
+}
+
+static CSSVariableResult substituteVariableTokens(CSSTokenStream input, const BoxStyle* style, CSSVariableTokenList& output, CSSVariableReferences& references)
+{
+    constexpr size_t kMaxSubstitutionTokens = 65536;
+
+    while(!input.empty()) {
+        if(input->type() == CSSToken::Type::Function && equalsIgnoringCase("var", input->data())) {
+            auto block = input.consumeBlock();
+            auto result = substituteVariableReference(block, style, output, references);
+            if(result != CSSVariableResult::Valid)
+                return result;
+            if(output.size() > kMaxSubstitutionTokens)
+                return CSSVariableResult::Invalid;
+            continue;
+        }
+
+        output.push_back(*input);
+        input.consume();
+    }
+
+    return CSSVariableResult::Valid;
+}
+
+bool CSSVariableData::substitute(const BoxStyle* style, CSSVariableTokenList& output) const
+{
+    CSSVariableReferences references;
+    return substituteVariableData(this, style, output, references) == CSSVariableResult::Valid;
 }
 
 RefPtr<CSSCustomPropertyValue> CSSCustomPropertyValue::create(Heap* heap, const HeapString& name, RefPtr<CSSVariableData> value)
@@ -1152,6 +1205,15 @@ RefPtr<CSSCustomPropertyValue> CSSCustomPropertyValue::create(Heap* heap, const 
 CSSCustomPropertyValue::CSSCustomPropertyValue(const HeapString& name, RefPtr<CSSVariableData> value)
     : m_name(name), m_value(std::move(value))
 {
+}
+
+RefPtr<CSSVariableData> CSSCustomPropertyValue::resolve(const BoxStyle* style) const
+{
+    assert(m_value->containsVariables());
+    CSSVariableTokenList tokens;
+    if(!m_value->substitute(style, tokens))
+        return nullptr;
+    return CSSVariableData::create(style->heap(), std::move(tokens));
 }
 
 CSSParserContext::CSSParserContext(const Node* node, CSSStyleOrigin origin, Url baseUrl)
@@ -1169,9 +1231,8 @@ RefPtr<CSSVariableReferenceValue> CSSVariableReferenceValue::create(Heap* heap, 
 
 CSSPropertyList CSSVariableReferenceValue::resolve(const BoxStyle* style) const
 {
-    CSSTokenList tokens;
-    std::vector<CSSVariableData*> references;
-    if(!m_value->resolve(style, tokens, references))
+    CSSVariableTokenList tokens;
+    if(!m_value->substitute(style, tokens))
         tokens.clear();
     CSSTokenStream input(tokens.data(), tokens.size());
     CSSParser parser(m_context, style->heap());

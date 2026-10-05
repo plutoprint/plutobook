@@ -719,18 +719,30 @@ struct is_a<CSSCustomIdentValue> {
 
 class BoxStyle;
 
+using CSSVariableTokenList = std::pmr::vector<CSSToken>;
+
 class CSSVariableData : public HeapMember, public RefCounted<CSSVariableData> {
 public:
-    static RefPtr<CSSVariableData> create(Heap* heap, const CSSTokenStream& value);
+    static RefPtr<CSSVariableData> create(Heap* heap, CSSVariableTokenList tokens);
+    static RefPtr<CSSVariableData> create(Heap* heap, const CSSTokenStream& value, bool containsVariables);
 
-    bool resolve(const BoxStyle* style, CSSTokenList& tokens, std::vector<CSSVariableData*>& references) const;
+    bool substitute(const BoxStyle* style, CSSVariableTokenList& output) const;
+    bool containsVariables() const { return m_containsVariables; }
+    const CSSVariableTokenList& tokens() const { return m_tokens; }
 
 private:
-    CSSVariableData(Heap* heap, const CSSTokenStream& value);
-    bool resolve(CSSTokenStream input, const BoxStyle* style, CSSTokenList& tokens, std::vector<CSSVariableData*>& references) const;
-    bool resolveVar(CSSTokenStream input, const BoxStyle* style, CSSTokenList& tokens, std::vector<CSSVariableData*>& references) const;
-    std::pmr::vector<CSSToken> m_tokens;
+    CSSVariableData(bool containsVariables, CSSVariableTokenList tokens)
+        : m_containsVariables(containsVariables), m_tokens(std::move(tokens))
+    {}
+
+    bool m_containsVariables;
+    CSSVariableTokenList m_tokens;
 };
+
+inline RefPtr<CSSVariableData> CSSVariableData::create(Heap* heap, CSSVariableTokenList tokens)
+{
+    return adoptPtr(new (heap) CSSVariableData(false, std::move(tokens)));
+}
 
 class CSSCustomPropertyValue final : public CSSValue {
 public:
@@ -739,6 +751,9 @@ public:
     const HeapString& name() const { return m_name; }
     const RefPtr<CSSVariableData>& value() const { return m_value; }
     CSSValueType type() const final { return CSSValueType::CustomProperty; }
+
+    RefPtr<CSSVariableData> resolve(const BoxStyle* style) const;
+    bool containsVariables() const { return m_value->containsVariables(); }
 
 private:
     CSSCustomPropertyValue(const HeapString& name, RefPtr<CSSVariableData> value);

@@ -220,6 +220,7 @@ static CSSPropertyID resolveCascadeTarget(CSSPropertyID id, WritingDirection dir
 void StyleBuilder::buildStyle(BoxStyle* newStyle)
 {
     CSSPropertyDataList variables;
+    std::vector<const CSSCustomPropertyValue*> customs;
     for(auto& property : m_properties) {
         if(is<CSSVariableReferenceValue>(*property.value())) {
             variables.push_back(property);
@@ -227,7 +228,14 @@ void StyleBuilder::buildStyle(BoxStyle* newStyle)
         } else if(property.id() == CSSPropertyID::Custom) {
             const auto& custom = to<CSSCustomPropertyValue>(*property.value());
             newStyle->setCustom(custom.name(), custom.value());
+            if(custom.containsVariables()) {
+                customs.push_back(&custom);
+            }
         }
+    }
+
+    for(auto custom : customs) {
+        newStyle->setCustom(custom->name(), custom->resolve(newStyle));
     }
 
     for(const auto& variable : variables) {

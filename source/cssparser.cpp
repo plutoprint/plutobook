@@ -1278,24 +1278,27 @@ bool CSSParser::consumeDeclaration(CSSTokenStream& input, CSSPropertyList& prope
     }
 
     CSSTokenStream value(valueBegin, valueEnd);
-    if(id == CSSPropertyID::Custom) {
+
+    auto containsVariables = containsVariableReferences(value);
+    if(containsVariables || id == CSSPropertyID::Custom) {
         if(ruleType == CSSRuleType::FontFace || ruleType == CSSRuleType::CounterStyle)
             return false;
-        auto custom = CSSCustomPropertyValue::create(m_heap, m_heap->createString(name), CSSVariableData::create(m_heap, value));
-        addProperty(properties, id, important, std::move(custom));
+        auto data = CSSVariableData::create(m_heap, value, containsVariables);
+        if(data == nullptr)
+            return false;
+        if(id == CSSPropertyID::Custom) {
+            auto custom = CSSCustomPropertyValue::create(m_heap, m_heap->createString(name), std::move(data));
+            addProperty(properties, id, important, std::move(custom));
+        } else {
+            auto variable = CSSVariableReferenceValue::create(m_heap, m_context, id, important, std::move(data));
+            addProperty(properties, id, important, std::move(variable));
+        }
+
         return true;
     }
 
     if(value.empty() || (important && (ruleType == CSSRuleType::FontFace || ruleType == CSSRuleType::CounterStyle)))
         return false;
-    if(containsVariableReferences(value)) {
-        if(ruleType == CSSRuleType::FontFace || ruleType == CSSRuleType::CounterStyle)
-            return false;
-        auto variable = CSSVariableReferenceValue::create(m_heap, m_context, id, important, CSSVariableData::create(m_heap, value));
-        addProperty(properties, id, important, std::move(variable));
-        return true;
-    }
-
     switch(ruleType) {
     case CSSRuleType::FontFace:
         return consumeFontFaceDescriptor(value, properties, id);
