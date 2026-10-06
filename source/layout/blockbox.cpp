@@ -755,8 +755,8 @@ float BlockFlowBox::unbreakableHeight(const FragmentBuilder* fragmentainer, floa
         const auto& lines = m_lineLayout->lines();
         if(lines.empty())
             return leadingHeight + borderAndPaddingBottom();
-        const auto& line = lines.front();
-        return leadingHeight + (line->lineBoxBottom() - line->lineBoxTop());
+        const auto& firstLine = lines.front();
+        return leadingHeight + (firstLine->lineBoxBottom() - firstLine->lineBoxTop());
     }
 
     for(auto child = firstBoxFrame(); child; child = child->nextBoxFrame()) {
