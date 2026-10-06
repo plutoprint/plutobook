@@ -1492,7 +1492,7 @@ float BlockFlowBox::determineVerticalPosition(BoxFrame* child, FragmentBuilder* 
         marginInfo.setPositiveMargin(std::max(child->maxMarginTop(true), child->maxMarginBottom(true)));
         marginInfo.setNegativeMargin(std::max(child->maxMarginTop(false), child->maxMarginBottom(false)));
 
-        setHeight(child->y() + child->maxMarginTop(false));
+        setHeight(child->y() - child->maxMarginTop(true) + child->maxMarginTop(false));
     } else {
         setHeight(clearDelta + height());
     }
