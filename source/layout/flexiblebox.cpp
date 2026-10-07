@@ -9,10 +9,12 @@
 #include "flexiblebox.h"
 #include "boxlayer.h"
 #include "fragmentbuilder.h"
+#include "replacedbox.h"
 
 #include <span>
 #include <ranges>
 #include <list>
+#include <limits>
 
 namespace plutobook {
 
@@ -72,11 +74,16 @@ float FlexItem::constrainHeight(float height) const
     return std::max(0.f, height);
 }
 
-float FlexItem::constrainMainSize(float size) const
+std::optional<float> FlexItem::computeMainSizeUsing(const Length& length) const
 {
     if(isHorizontalFlow())
-        return constrainWidth(size);
-    return constrainHeight(size);
+        return computeWidthUsing(length);
+    return computeHeightUsing(length);
+}
+
+float FlexItem::constrainMainSize(float size) const
+{
+    return std::max(m_minMainSize, std::min(size, m_maxMainSize));
 }
 
 float FlexItem::constrainCrossSize(float size) const
@@ -86,20 +93,87 @@ float FlexItem::constrainCrossSize(float size) const
     return constrainWidth(size);
 }
 
-std::optional<float> FlexItem::computeFlexBaseSize() const
+std::optional<float> FlexItem::definiteCrossSize() const
 {
-    auto flexBasis = m_box->style()->flexBasis();
-    if(isHorizontalFlow()) {
-        if(flexBasis.isAuto())
-            flexBasis = m_box->style()->width();
-        if(auto width = computeWidthUsing(flexBasis))
-            return width.value();
-        return m_box->maxPreferredWidth() - m_box->borderAndPaddingWidth();
+    if(isHorizontalFlow())
+        return computeHeightUsing(m_box->style()->height());
+    return computeWidthUsing(m_box->style()->width());
+}
+
+float FlexItem::computeContentHeight()
+{
+    if(!hasNaturalHeight()) {
+        m_box->layout(nullptr);
+        m_naturalHeight = m_box->height();
     }
 
+    return std::max(0.f, m_naturalHeight - m_box->borderAndPaddingHeight());
+}
+
+float FlexItem::computeMinContentMainSize()
+{
+    if(auto box = to<ReplacedBox>(m_box)) {
+        float intrinsicWidth = 0;
+        float intrinsicHeight = 0;
+        float intrinsicRatio = 0;
+        box->computeIntrinsicRatioInformation(intrinsicWidth, intrinsicHeight, intrinsicRatio);
+        if(intrinsicRatio > 0.f) {
+            if(auto crossSize = definiteCrossSize()) {
+                auto size = constrainCrossSize(crossSize.value());
+                if(isHorizontalFlow())
+                    return size * intrinsicRatio;
+                return size / intrinsicRatio;
+            }
+        }
+    }
+
+    if(isHorizontalFlow())
+        return std::max(0.f, m_box->minPreferredWidth() - m_box->borderAndPaddingWidth());
+    return computeContentHeight();
+}
+
+void FlexItem::computeHypotheticalMainSize()
+{
+    auto style = m_box->style();
+    auto mainLength = isHorizontalFlow() ? style->width() : style->height();
+    auto maxLength = isHorizontalFlow() ? style->maxWidth() : style->maxHeight();
+    auto minLength = isHorizontalFlow() ? style->minWidth() : style->minHeight();
+
+    auto flexBasis = style->flexBasis();
     if(flexBasis.isAuto())
-        flexBasis = m_box->style()->height();
-    return computeHeightUsing(flexBasis);
+        flexBasis = mainLength;
+    if(auto baseSize = computeMainSizeUsing(flexBasis)) {
+        m_flexBaseSize = baseSize.value();
+    } else if(isHorizontalFlow()) {
+        m_flexBaseSize = std::max(0.f, m_box->maxPreferredWidth() - m_box->borderAndPaddingWidth());
+    } else {
+        m_flexBaseSize = computeContentHeight();
+    }
+
+    m_maxMainSize = std::numeric_limits<float>::max();
+    if(!maxLength.isNone() && !maxLength.isAuto()) {
+        if(auto size = computeMainSizeUsing(maxLength)) {
+            m_maxMainSize = std::max(0.f, size.value());
+        }
+    }
+
+    if(!minLength.isAuto()) {
+        m_minMainSize = std::max(0.f, computeMainSizeUsing(minLength).value_or(0.f));
+    } else if(style->isOverflowHidden()) {
+        m_minMainSize = 0.f;
+    } else {
+        auto contentSize = std::min(m_maxMainSize, computeMinContentMainSize());
+        if(auto mainSize = computeMainSizeUsing(mainLength)) {
+            auto specifiedSize = std::min(m_maxMainSize, mainSize.value());
+            m_minMainSize = std::min(specifiedSize, contentSize);
+        } else {
+            m_minMainSize = contentSize;
+        }
+    }
+
+    if(isHorizontalFlow() && m_box->isTableBox())
+        m_minMainSize = std::max(m_minMainSize, m_box->minPreferredWidth() - m_box->borderAndPaddingWidth());
+    m_targetMainSize = constrainMainSize(m_flexBaseSize);
 }
 
 float FlexItem::flexBaseMarginBoxSize() const
@@ -538,17 +612,9 @@ void FlexibleBox::layout(FragmentBuilder* fragmentainer)
         child->updatePaddingWidths(availableWidth());
 
         item.setNaturalTop(0);
-        if(auto flexBaseSize = item.computeFlexBaseSize()) {
-            item.setFlexBaseSize(flexBaseSize.value());
-            item.setNaturalHeight(-1);
-        } else {
-            assert(isVerticalFlow());
-            child->layout(nullptr);
-            item.setFlexBaseSize(child->height() - child->borderAndPaddingHeight());
-            item.setNaturalHeight(child->height());
-        }
+        item.setNaturalHeight(-1);
 
-        item.setTargetMainSize(item.constrainMainSize(item.flexBaseSize()));
+        item.computeHypotheticalMainSize();
         maxHypotheticalMainSize += m_gapBetweenItems + item.targetMainMarginBoxSize();
     }
 

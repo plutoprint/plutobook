@@ -66,10 +66,17 @@ public:
     float constrainWidth(float width) const;
     float constrainHeight(float height) const;
 
+    std::optional<float> computeMainSizeUsing(const Length& length) const;
+
     float constrainMainSize(float size) const;
     float constrainCrossSize(float size) const;
 
-    std::optional<float> computeFlexBaseSize() const;
+    std::optional<float> definiteCrossSize() const;
+
+    float computeContentHeight();
+    float computeMinContentMainSize();
+
+    void computeHypotheticalMainSize();
 
     FlexibleBox* flexBox() const;
     FlexDirection flexDirection() const;
@@ -106,7 +113,9 @@ private:
     float m_flexBaseSize{0};
     float m_targetMainSize{0};
     float m_naturalTop{0};
-    float m_naturalHeight{-1};
+    float m_naturalHeight{0};
+    float m_minMainSize{0};
+    float m_maxMainSize{0};
 };
 
 using FlexItemList = std::pmr::vector<FlexItem>;
