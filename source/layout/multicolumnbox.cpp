@@ -462,7 +462,7 @@ bool MultiColumnFlowBox::layoutColumns(FragmentBuilder* fragmentainer, bool bala
 {
     m_currentRow = firstRow();
     if(m_currentRow)
-        m_currentRow->setRowTop(borderAndPaddingTop());
+        m_currentRow->setRowTop(0.f);
     BlockFlowBox::layout(fragmentainer);
     if(m_currentRow) {
         assert(m_currentRow == lastRow());

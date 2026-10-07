@@ -1617,7 +1617,6 @@ void BlockFlowBox::layoutBlockChildren(FragmentBuilder* fragmentainer)
             if(fragmentainer)
                 fragmentainer->enterFragment(columnTop);
             child->setY(columnTop);
-            child->updatePaddingWidths(availableWidth());
             child->layout(fragmentainer);
             if(fragmentainer)
                 fragmentainer->leaveFragment(columnTop);
