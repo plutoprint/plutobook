@@ -157,7 +157,7 @@ uint32_t MultiColumnRowBox::numberOfColumns() const
     if(m_columnHeight <= 0.f)
         return 1;
     auto height = rowHeight();
-    if(height == 0.f)
+    if(height <= 0.f)
         return 1;
     auto count = std::floor(height / m_columnHeight);
     if(count * m_columnHeight < height)
