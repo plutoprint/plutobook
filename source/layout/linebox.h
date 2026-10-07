@@ -100,6 +100,9 @@ public:
     float shapeWidth() const { return m_shapeWidth; }
     float expansion() const { return m_expansion; }
 
+    // A trailing hyphen glyph drawn at a hyphenation break (see LineItemRun).
+    void setHyphen(const TextShapeView& shape, float width) { m_hyphenShape = shape; m_hyphenWidth = width; }
+
     void paint(const PaintInfo& info, const Point& offset, PaintPhase phase) final;
     void serialize(std::ostream& o, int indent) const final;
 
@@ -112,6 +115,8 @@ private:
     TextShapeView m_shape;
     float m_shapeWidth;
     float m_expansion;
+    TextShapeView m_hyphenShape;
+    float m_hyphenWidth{0.f};
 };
 
 template<>

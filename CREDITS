@@ -10,6 +10,7 @@ expat         licenses/expat
 fontconfig    licenses/fontconfig
 freetype      licenses/freetype
 harfbuzz      licenses/harfbuzz
+hyphen-en-us  licenses/hyphen-en-us
 icu           licenses/icu
 libjpeg-turbo licenses/libjpeg-turbo
 libwebp       licenses/libwebp
