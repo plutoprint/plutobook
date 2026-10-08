@@ -99,43 +99,6 @@ std::optional<float> BlockBox::availableHeight() const
     return std::nullopt;
 }
 
-bool BlockBox::shrinkToAvoidFloats() const
-{
-    if(isInline() || isFloating() || !avoidsFloats())
-        return false;
-    return style()->width().isAuto();
-}
-
-float BlockBox::shrinkWidthToAvoidFloats(float marginLeft, float marginRight, const BlockFlowBox* container) const
-{
-    auto availableWidth = container->availableWidthForLine(y()) - marginLeft - marginRight;
-    auto marginStart = style()->isLeftToRightDirection() ? marginLeft : marginRight;
-    auto marginEnd = style()->isLeftToRightDirection() ? marginRight : marginLeft;
-    if(marginStart > 0) {
-        auto lineStartOffset = container->startOffsetForLine(y());
-        auto contentStartOffset = container->startOffsetForContent();
-        auto marginStartOffset = contentStartOffset + marginStart;
-        if(lineStartOffset > marginStartOffset) {
-            availableWidth += marginStart;
-        } else {
-            availableWidth += lineStartOffset - contentStartOffset;
-        }
-    }
-
-    if(marginEnd > 0) {
-        auto lineEndOffset = container->endOffsetForLine(y());
-        auto contentEndOffset = container->endOffsetForContent();
-        auto marginEndOffset = contentEndOffset + marginEnd;
-        if(lineEndOffset > marginEndOffset) {
-            availableWidth += marginEnd;
-        } else {
-            availableWidth += lineEndOffset - contentEndOffset;
-        }
-    }
-
-    return availableWidth;
-}
-
 bool BlockBox::sizesWidthToFitContent() const
 {
     if(isFloating() || isInline())
@@ -155,8 +118,8 @@ float BlockBox::computeMainWidth(const BlockBox* container, float containerWidth
     auto width = containerWidth - marginLeft - marginRight;
 
     if(auto block = to<BlockFlowBox>(container)) {
-        if(block->containsFloats() && shrinkToAvoidFloats()) {
-            width = std::min(width, shrinkWidthToAvoidFloats(marginLeft, marginRight, block));
+        if(!isInline() && !isFloating() && avoidsFloats()) {
+            width = block->shrinkWidthToAvoidFloats(width, marginLeft, marginRight, y());
         }
     }
 
@@ -1180,6 +1143,38 @@ float BlockFlowBox::startAlignedOffsetForLine(float y, float height, bool indent
     if(style()->isLeftToRightDirection())
         return leftOffset + lineOffsetForAlignment(rightOffset - leftOffset);
     return width() - leftOffset - lineOffsetForAlignment(rightOffset - leftOffset);
+}
+
+float BlockFlowBox::shrinkWidthToAvoidFloats(float width, float marginLeft, float marginRight, float y) const
+{
+    if(!containsFloats())
+        return width;
+    auto availableWidth = availableWidthForLine(y) - marginLeft - marginRight;
+    auto marginStart = style()->isLeftToRightDirection() ? marginLeft : marginRight;
+    auto marginEnd = style()->isLeftToRightDirection() ? marginRight : marginLeft;
+    if(marginStart > 0) {
+        auto lineStartOffset = startOffsetForLine(y);
+        auto contentStartOffset = startOffsetForContent();
+        auto marginStartOffset = contentStartOffset + marginStart;
+        if(lineStartOffset > marginStartOffset) {
+            availableWidth += marginStart;
+        } else {
+            availableWidth += lineStartOffset - contentStartOffset;
+        }
+    }
+
+    if(marginEnd > 0) {
+        auto lineEndOffset = endOffsetForLine(y);
+        auto contentEndOffset = endOffsetForContent();
+        auto marginEndOffset = contentEndOffset + marginEnd;
+        if(lineEndOffset > marginEndOffset) {
+            availableWidth += marginEnd;
+        } else {
+            availableWidth += lineEndOffset - contentEndOffset;
+        }
+    }
+
+    return std::min(width, availableWidth);
 }
 
 class MarginInfo {

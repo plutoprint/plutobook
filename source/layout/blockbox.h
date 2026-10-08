@@ -40,9 +40,6 @@ public:
     float availableWidth() const { return contentBoxWidth(); }
     std::optional<float> availableHeight() const;
 
-    bool shrinkToAvoidFloats() const;
-    float shrinkWidthToAvoidFloats(float marginLeft, float marginRight, const BlockFlowBox* container) const;
-
     bool sizesWidthToFitContent() const;
     float computeMainWidth(const BlockBox* container, float containerWidth) const;
 
@@ -192,6 +189,7 @@ public:
     float endOffsetForLine(float y, float height = 0, bool indent = false) const;
 
     float availableWidthForLine(float y, float height = 0, bool indent = false) const;
+    float shrinkWidthToAvoidFloats(float width, float marginLeft, float marginRight, float y) const;
 
     void adjustFloatingBox(FragmentBuilder* fragmentainer, const MarginInfo& marginInfo);
     void adjustPositionedBox(BoxFrame* child, const MarginInfo& marginInfo);
