@@ -667,22 +667,14 @@ void BlockFlowBox::computeIntrinsicWidths(float& minWidth, float& maxWidth) cons
 
     float floatLeftWidth = 0;
     float floatRightWidth = 0;
-    const auto nowrap = style()->whiteSpace() == WhiteSpace::Nowrap;
     for(auto child = firstBoxFrame(); child; child = child->nextBoxFrame()) {
         if(child->isPositioned())
             continue;
         auto childStyle = child->style();
-        if(child->isFloating() || child->avoidsFloats()) {
-            auto floatWidth = floatLeftWidth + floatRightWidth;
-            if(childStyle->isClearLeft()) {
-                maxWidth = std::max(floatWidth, maxWidth);
-                floatLeftWidth = 0;
-            }
-
-            if(childStyle->isClearRight()) {
-                maxWidth = std::max(floatWidth, maxWidth);
-                floatRightWidth = 0;
-            }
+        if(childStyle->isClearLeft())
+            floatLeftWidth = 0;
+        if(childStyle->isClearRight()) {
+            floatRightWidth = 0;
         }
 
         child->updateHorizontalMargins(0.f);
@@ -694,46 +686,40 @@ void BlockFlowBox::computeIntrinsicWidths(float& minWidth, float& maxWidth) cons
         auto marginLeft = child->marginLeft();
         auto marginRight = child->marginRight();
 
-        auto marginWidth = marginLeft + marginRight;
-        auto width = childMinWidth + marginWidth;
-
-        minWidth = std::max(width, minWidth);
-        if(nowrap && !child->isTableBox())
-            maxWidth = std::max(width, maxWidth);
-        width = childMaxWidth + marginWidth;
+        minWidth = std::max(minWidth, childMinWidth + marginLeft + marginRight);
         if(child->isFloating()) {
-            if(childStyle->floating() == Float::Left) {
-                floatLeftWidth += width;
-            } else {
-                floatRightWidth += width;
-            }
-        } else {
-            if(child->avoidsFloats()) {
-                if(marginLeft > 0) {
-                    marginLeft = std::max(floatLeftWidth, marginLeft);
+            auto floatWidth = childMaxWidth + marginLeft + marginRight;
+            if(floatWidth > 0.f) {
+                if(childStyle->floating() == Float::Left) {
+                    floatLeftWidth += floatWidth;
                 } else {
-                    marginLeft += floatLeftWidth;
+                    floatRightWidth += floatWidth;
                 }
-
-                if(marginRight > 0)
-                    marginRight = std::max(floatRightWidth, marginRight);
-                else
-                    marginRight += floatRightWidth;
-                width = std::max(childMaxWidth + marginLeft + marginRight, floatLeftWidth + floatRightWidth);
-            } else {
-                maxWidth = std::max(maxWidth, floatLeftWidth + floatRightWidth);
             }
 
-            maxWidth = std::max(width, maxWidth);
-            floatLeftWidth = 0;
-            floatRightWidth = 0;
+            maxWidth = std::max(maxWidth, floatLeftWidth + floatRightWidth);
+            continue;
         }
+
+        if(child->avoidsFloats()) {
+            if(marginLeft > 0) {
+                marginLeft = std::max(marginLeft, floatLeftWidth);
+            } else {
+                marginLeft += floatLeftWidth;
+            }
+
+            if(marginRight > 0) {
+                marginRight = std::max(marginRight, floatRightWidth);
+            } else {
+                marginRight += floatRightWidth;
+            }
+        }
+
+        maxWidth = std::max(maxWidth, childMaxWidth + marginLeft + marginRight);
+        floatLeftWidth = 0;
+        floatRightWidth = 0;
     }
 
-    minWidth = std::max(0.f, minWidth);
-    maxWidth = std::max(0.f, maxWidth);
-
-    maxWidth = std::max(maxWidth, floatLeftWidth + floatRightWidth);
     maxWidth = std::max(maxWidth, minWidth);
 }
 
