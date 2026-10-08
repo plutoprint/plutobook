@@ -43,6 +43,9 @@ public:
     bool shrinkToAvoidFloats() const;
     float shrinkWidthToAvoidFloats(float marginLeft, float marginRight, const BlockFlowBox* container) const;
 
+    bool sizesWidthToFitContent() const;
+    float computeMainWidth(const BlockBox* container, float containerWidth) const;
+
     float computeWidthUsing(const Length& widthLength, const BlockBox* container, float containerWidth) const;
     std::optional<float> computeHeightUsing(const Length& heightLength) const;
 

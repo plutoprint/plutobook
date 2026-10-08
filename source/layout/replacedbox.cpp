@@ -33,8 +33,8 @@ float ReplacedBox::computePreferredReplacedWidth() const
 
     if(intrinsicRatio > 0.f) {
         float height = 0.f;
-        if(auto specifiedHeight = computeReplacedHeightUsing(style()->height()))
-            height = specifiedHeight.value();
+        if(auto mainHeight = computeMainReplacedHeight())
+            height = mainHeight.value();
         else if(intrinsicHeight > 0.f)
             height = intrinsicHeight;
         else if(intrinsicWidth > 0.f)
@@ -293,9 +293,33 @@ float ReplacedBox::availableReplacedWidth() const
     return std::max(0.f, containerWidth - marginLeft - marginRight - borderAndPaddingWidth());
 }
 
+std::optional<float> ReplacedBox::computeMainReplacedWidth() const
+{
+    auto widthLength = style()->width();
+    if(!widthLength.isAuto())
+        return computeReplacedWidthUsing(widthLength);
+    if(isFlexItem() && isStretchedColumnFlexItem())
+        return availableReplacedWidth();
+    return std::nullopt;
+}
+
+std::optional<float> ReplacedBox::computeMainReplacedHeight() const
+{
+    auto heightLength = style()->height();
+    if(!heightLength.isAuto())
+        return computeReplacedHeightUsing(heightLength);
+    if(isFlexItem() && isStretchedRowFlexItem()) {
+        if(auto containerHeight = containingBlockHeightForContent()) {
+            return std::max(0.f, containerHeight.value() - marginHeight() - borderAndPaddingHeight());
+        }
+    }
+
+    return std::nullopt;
+}
+
 float ReplacedBox::computeReplacedWidth() const
 {
-    if(auto width = computeReplacedWidthUsing(style()->width())) {
+    if(auto width = computeMainReplacedWidth()) {
         return constrainReplacedWidth(*width);
     }
 
@@ -308,8 +332,8 @@ float ReplacedBox::computeReplacedWidth() const
         float height = 0.f;
         if(hasOverrideHeight())
             height = std::max(0.f, overrideHeight() - borderAndPaddingHeight());
-        else if(auto specifiedHeight = computeReplacedHeightUsing(style()->height()))
-            height = specifiedHeight.value();
+        else if(auto mainHeight = computeMainReplacedHeight())
+            height = mainHeight.value();
         else if(intrinsicHeight > 0.f)
             height = intrinsicHeight;
         else if(intrinsicWidth > 0.f)
@@ -326,7 +350,7 @@ float ReplacedBox::computeReplacedWidth() const
 
 float ReplacedBox::computeReplacedHeight() const
 {
-    if(auto height = computeReplacedHeightUsing(style()->height())) {
+    if(auto height = computeMainReplacedHeight()) {
         return constrainReplacedHeight(*height);
     }
 
@@ -339,8 +363,8 @@ float ReplacedBox::computeReplacedHeight() const
         float width = 0.f;
         if(hasOverrideWidth())
             width = std::max(0.f, overrideWidth() - borderAndPaddingWidth());
-        else if(auto specifiedWidth = computeReplacedWidthUsing(style()->width()))
-            width = specifiedWidth.value();
+        else if(auto mainWidth = computeMainReplacedWidth())
+            width = mainWidth.value();
         else if(intrinsicWidth > 0.f)
             width = intrinsicWidth;
         else if(intrinsicHeight > 0.f)

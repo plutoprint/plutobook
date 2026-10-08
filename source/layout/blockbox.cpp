@@ -136,23 +136,43 @@ float BlockBox::shrinkWidthToAvoidFloats(float marginLeft, float marginRight, co
     return availableWidth;
 }
 
-float BlockBox::computeWidthUsing(const Length& widthLength, const BlockBox* container, float containerWidth) const
+bool BlockBox::sizesWidthToFitContent() const
 {
-    if(widthLength.isIntrinsic())
-        return computeIntrinsicWidthUsing(widthLength, containerWidth);
+    if(isFloating() || isInline())
+        return true;
+    if(isFlexItem())
+        return !isStretchedColumnFlexItem();
+    return isTableBox();
+}
+
+float BlockBox::computeMainWidth(const BlockBox* container, float containerWidth) const
+{
+    auto widthLength = style()->width();
     if(!widthLength.isAuto())
-        return adjustBorderBoxWidth(widthLength.calc(containerWidth));
+        return computeWidthUsing(widthLength, container, containerWidth);
     auto marginLeft = style()->marginLeft().calcMin(containerWidth);
     auto marginRight = style()->marginRight().calcMin(containerWidth);
     auto width = containerWidth - marginLeft - marginRight;
-    if(auto block = to<BlockFlowBox>(container); block && block->containsFloats() && shrinkToAvoidFloats())
-        width = std::min(width, shrinkWidthToAvoidFloats(marginLeft, marginRight, block));
-    if(isFloating() || isInline() || isFlexItem() || isTableBox()) {
+
+    if(auto block = to<BlockFlowBox>(container)) {
+        if(block->containsFloats() && shrinkToAvoidFloats()) {
+            width = std::min(width, shrinkWidthToAvoidFloats(marginLeft, marginRight, block));
+        }
+    }
+
+    if(sizesWidthToFitContent()) {
         width = std::min(width, maxPreferredWidth());
         width = std::max(width, minPreferredWidth());
     }
 
     return width;
+}
+
+float BlockBox::computeWidthUsing(const Length& widthLength, const BlockBox* container, float containerWidth) const
+{
+    if(widthLength.isIntrinsic())
+        return computeIntrinsicWidthUsing(widthLength, containerWidth);
+    return adjustBorderBoxWidth(widthLength.calc(containerWidth));
 }
 
 std::optional<float> BlockBox::computeHeightUsing(const Length& heightLength) const
@@ -465,7 +485,7 @@ void BlockBox::computeWidth(float& x, float& width, float& marginLeft, float& ma
 
     auto container = containingBlock();
     auto containerWidth = std::max(0.f, containingBlockWidthForContent(container));
-    width = computeWidthUsing(style()->width(), container, containerWidth);
+    width = computeMainWidth(container, containerWidth);
     width = constrainWidth(width, container, containerWidth);
     if(isTableBox())
         width = std::max(width, minPreferredWidth());

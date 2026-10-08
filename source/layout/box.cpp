@@ -862,6 +862,52 @@ bool BoxFrame::requiresLayer() const
         || style()->hasOpacity() || style()->hasBlendMode() || style()->zIndex();
 }
 
+bool BoxFrame::isStretchedRowFlexItem() const
+{
+    auto parent = parentBox();
+    assert(parent && parent->isFlexibleBox());
+    auto parentStyle = parent->style();
+    switch(parentStyle->flexDirection()) {
+    case FlexDirection::Row:
+    case FlexDirection::RowReverse:
+        break;
+    default:
+        return false;
+    }
+
+    if(parentStyle->flexWrap() != FlexWrap::Nowrap)
+        return false;
+    if(style()->marginTop().isAuto() || style()->marginBottom().isAuto())
+        return false;
+    auto alignSelf = style()->alignSelf();
+    if(alignSelf == AlignItem::Auto)
+        alignSelf = parentStyle->alignItems();
+    return alignSelf == AlignItem::Stretch;
+}
+
+bool BoxFrame::isStretchedColumnFlexItem() const
+{
+    auto parent = parentBox();
+    assert(parent && parent->isFlexibleBox());
+    auto parentStyle = parent->style();
+    switch(parentStyle->flexDirection()) {
+    case FlexDirection::Column:
+    case FlexDirection::ColumnReverse:
+        break;
+    default:
+        return false;
+    }
+
+    if(parentStyle->flexWrap() != FlexWrap::Nowrap)
+        return false;
+    if(style()->marginLeft().isAuto() || style()->marginRight().isAuto())
+        return false;
+    auto alignSelf = style()->alignSelf();
+    if(alignSelf == AlignItem::Auto)
+        alignSelf = parentStyle->alignItems();
+    return alignSelf == AlignItem::Stretch;
+}
+
 BoxFrame::~BoxFrame() = default;
 
 void BoxFrame::setLine(std::unique_ptr<ReplacedLineBox> line)

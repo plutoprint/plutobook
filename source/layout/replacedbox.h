@@ -35,6 +35,9 @@ public:
 
     float availableReplacedWidth() const;
 
+    std::optional<float> computeMainReplacedWidth() const;
+    std::optional<float> computeMainReplacedHeight() const;
+
     virtual float computeReplacedWidth() const;
     virtual float computeReplacedHeight() const;
 
