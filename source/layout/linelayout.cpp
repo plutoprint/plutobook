@@ -13,6 +13,7 @@
 #include "inlinebox.h"
 #include "blockbox.h"
 #include "document.h"
+#include "localedata.h"
 
 #include <ranges>
 
@@ -39,6 +40,19 @@ LineItemsBuilder::LineItemsBuilder(LineItemsData& data)
 {
 }
 
+static UChar32 previousCharacter(const UString& text)
+{
+    auto index = text.length();
+    while(index > 0) {
+        auto cc = text.char32At(index - 1);
+        if(!u_hasBinaryProperty(cc, UCHAR_BIDI_CONTROL))
+            return cc;
+        index -= U16_LENGTH(cc);
+    }
+
+    return kSpaceCharacter;
+}
+
 void LineItemsBuilder::appendText(Box* box, const HeapString& data)
 {
     if(box->isWordBreakBox()) {
@@ -46,19 +60,21 @@ void LineItemsBuilder::appendText(Box* box, const HeapString& data)
         return;
     }
 
+    const auto* locale = box->style()->locale();
+
     auto text = UString::fromUTF8(icu::StringPiece(data.data(), data.size()));
     switch(box->style()->textTransform()) {
     case TextTransform::None:
         appendText(box, text);
         break;
     case TextTransform::Capitalize:
-        appendText(box, text.toTitle(nullptr));
+        appendText(box, locale->toTitle(text, previousCharacter(m_data.text)));
         break;
     case TextTransform::Uppercase:
-        appendText(box, text.toUpper());
+        appendText(box, locale->toUpper(text));
         break;
     case TextTransform::Lowercase:
-        appendText(box, text.toLower());
+        appendText(box, locale->toLower(text));
         break;
     }
 }

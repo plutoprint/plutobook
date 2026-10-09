@@ -29,6 +29,10 @@ public:
     int nextCharacterBreak(uint64_t id, const UString& text, int offset) const;
     int nextLineBreak(uint64_t id, const UString& text, int offset) const;
 
+    UString toUpper(UString text) const;
+    UString toLower(UString text) const;
+    UString toTitle(UString text, UChar32 previousCharacter) const;
+
     hb_language_t language() const { return m_language; }
     const GlobalString& getQuote(bool open, size_t depth) const;
     const char* lang() const;
@@ -39,6 +43,7 @@ private:
     hb_language_t m_language;
 
     mutable std::unique_ptr<icu::BreakIterator> m_characterIterator;
+    mutable std::unique_ptr<icu::BreakIterator> m_wordIterator;
     mutable std::unique_ptr<icu::BreakIterator> m_lineIterator;
 
     mutable uint64_t m_iteratorIdCounter = 0;

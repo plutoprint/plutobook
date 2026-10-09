@@ -58,6 +58,32 @@ int LocaleData::nextLineBreak(uint64_t id, const UString& text, int offset) cons
     return m_lineIterator->following(offset);
 }
 
+UString LocaleData::toUpper(UString text) const
+{
+    return text.toUpper(locale());
+}
+
+UString LocaleData::toLower(UString text) const
+{
+    return text.toLower(locale());
+}
+
+UString LocaleData::toTitle(UString text, UChar32 previousCharacter) const
+{
+    if(m_wordIterator == nullptr) {
+        UErrorCode status = U_ZERO_ERROR;
+        m_wordIterator.reset(icu::BreakIterator::createWordInstance(locale(), status));
+        assert(m_wordIterator && U_SUCCESS(status));
+    }
+
+    constexpr uint32_t options = U_TITLECASE_NO_LOWERCASE | U_TITLECASE_NO_BREAK_ADJUSTMENT;
+
+    text.insert(0, previousCharacter);
+    text.toTitle(m_wordIterator.get(), locale(), options);
+    text.remove(0, U16_LENGTH(previousCharacter));
+    return text;
+}
+
 const GlobalString& LocaleData::getQuote(bool open, size_t depth) const
 {
     if(!m_quotes)
