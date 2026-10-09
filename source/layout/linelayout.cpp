@@ -40,19 +40,6 @@ LineItemsBuilder::LineItemsBuilder(LineItemsData& data)
 {
 }
 
-static UChar32 previousCharacter(const UString& text)
-{
-    auto index = text.length();
-    while(index > 0) {
-        auto cc = text.char32At(index - 1);
-        if(cc != kZeroWidthSpaceCharacter && !u_hasBinaryProperty(cc, UCHAR_BIDI_CONTROL))
-            return cc;
-        index -= U16_LENGTH(cc);
-    }
-
-    return kSpaceCharacter;
-}
-
 void LineItemsBuilder::appendText(Box* box, const HeapString& data)
 {
     if(box->isWordBreakBox()) {
@@ -68,7 +55,7 @@ void LineItemsBuilder::appendText(Box* box, const HeapString& data)
         appendText(box, text);
         break;
     case TextTransform::Capitalize:
-        appendText(box, locale->toTitle(text, previousCharacter(m_data.text)));
+        appendText(box, locale->toTitle(text, lastCharacterToCapitalizeWith()));
         break;
     case TextTransform::Uppercase:
         appendText(box, locale->toUpper(text));
@@ -252,9 +239,9 @@ LineItem& LineItemsBuilder::appendTextItem(LineItem::Type type, Box* box, const 
     return appendItem(type, box, offset, offset + text.length());
 }
 
-static LineItem* lastItemToCollapseWith(LineItemsData& data)
+LineItem* LineItemsBuilder::lastItemToCollapseWith() const
 {
-    for(auto& item : data.items | std::views::reverse) {
+    for(auto& item : m_data.items | std::views::reverse) {
         if(item.collapseType() != LineItem::CollapseType::OpaqueToCollapsing) {
             return &item;
         }
@@ -263,9 +250,22 @@ static LineItem* lastItemToCollapseWith(LineItemsData& data)
     return nullptr;
 }
 
+UChar32 LineItemsBuilder::lastCharacterToCapitalizeWith() const
+{
+    auto index = m_data.text.length();
+    while(index > 0) {
+        auto cc = m_data.text.char32At(index - 1);
+        if(cc != kZeroWidthSpaceCharacter && !u_hasBinaryProperty(cc, UCHAR_BIDI_CONTROL))
+            return cc;
+        index -= U16_LENGTH(cc);
+    }
+
+    return kSpaceCharacter;
+}
+
 void LineItemsBuilder::removeTrailingCollapsibleSpaceIfExists()
 {
-    if(auto item = lastItemToCollapseWith(m_data)) {
+    if(auto item = lastItemToCollapseWith()) {
         if(item->collapseType() == LineItem::CollapseType::Collapsible) {
             removeTrailingCollapsibleSpace(item);
         }
@@ -274,7 +274,7 @@ void LineItemsBuilder::removeTrailingCollapsibleSpaceIfExists()
 
 void LineItemsBuilder::restoreTrailingCollapsibleSpaceIfRemoved()
 {
-    if(auto item = lastItemToCollapseWith(m_data)) {
+    if(auto item = lastItemToCollapseWith()) {
         if(item->collapseType() == LineItem::CollapseType::Collapsed) {
             restoreTrailingCollapsibleSpace(item);
         }
@@ -385,7 +385,7 @@ void LineItemsBuilder::appendTextCollapseWhitespace(Box* box, const UString& tex
 
     auto cc = text.charAt(index);
     if(!isCollapsibleSpaceCharacter(cc)) {
-        if(auto item = lastItemToCollapseWith(m_data)) {
+        if(auto item = lastItemToCollapseWith()) {
             if(item->collapseType() == LineItem::CollapseType::Collapsible && item->hasCollapsibleNewline()
                 && shouldRemoveNewline(m_data.text, item->endOffset() - 1, text.charAt(index))) {
                 removeTrailingCollapsibleSpace(item);
@@ -405,7 +405,7 @@ void LineItemsBuilder::appendTextCollapseWhitespace(Box* box, const UString& tex
 
         if(index == text.length())
             collapseType = LineItem::CollapseType::Collapsible;
-        if(auto item = lastItemToCollapseWith(m_data)) {
+        if(auto item = lastItemToCollapseWith()) {
             if(item->collapseType() == LineItem::CollapseType::NotCollapsible) {
                 insertSpace = true;
             } else {

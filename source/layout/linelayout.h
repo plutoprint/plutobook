@@ -125,6 +125,9 @@ protected:
     LineItem& appendOpaqueItem(LineItem::Type type, Box* box);
     LineItem& appendTextItem(LineItem::Type type, Box* box, const UString& text);
 
+    LineItem* lastItemToCollapseWith() const;
+    UChar32 lastCharacterToCapitalizeWith() const;
+
     void removeTrailingCollapsibleSpaceIfExists();
     void restoreTrailingCollapsibleSpaceIfRemoved();
 
