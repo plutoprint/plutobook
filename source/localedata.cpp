@@ -80,7 +80,11 @@ UString LocaleData::toTitle(UString text, UChar32 previousCharacter) const
 
     text.insert(0, previousCharacter);
     text.toTitle(m_wordIterator.get(), locale(), options);
-    text.remove(0, U16_LENGTH(previousCharacter));
+
+    UString prefix(previousCharacter);
+    if(u_hasBinaryProperty(previousCharacter, UCHAR_CHANGES_WHEN_TITLECASED))
+        prefix.toTitle(m_wordIterator.get(), locale(), options);
+    text.remove(0, prefix.length());
     return text;
 }
 

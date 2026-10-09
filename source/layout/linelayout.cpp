@@ -45,7 +45,7 @@ static UChar32 previousCharacter(const UString& text)
     auto index = text.length();
     while(index > 0) {
         auto cc = text.char32At(index - 1);
-        if(!u_hasBinaryProperty(cc, UCHAR_BIDI_CONTROL))
+        if(cc != kZeroWidthSpaceCharacter && !u_hasBinaryProperty(cc, UCHAR_BIDI_CONTROL))
             return cc;
         index -= U16_LENGTH(cc);
     }
@@ -81,12 +81,12 @@ void LineItemsBuilder::appendText(Box* box, const HeapString& data)
 
 void LineItemsBuilder::appendFloating(Box* box)
 {
-    appendOpaqueItem(LineItem::Type::Floating, box, kObjectReplacementCharacter);
+    appendOpaqueItem(LineItem::Type::Floating, box);
 }
 
 void LineItemsBuilder::appendPositioned(Box* box)
 {
-    appendOpaqueItem(LineItem::Type::Positioned, box, kObjectReplacementCharacter);
+    appendOpaqueItem(LineItem::Type::Positioned, box);
 }
 
 void LineItemsBuilder::appendReplaced(Box* box)
