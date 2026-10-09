@@ -1325,7 +1325,8 @@ void LineBreaker::handleOverflow()
         }
     }
 
-    m_state = LineBreakState::Trailing;
+    if(breakBefore > 0 || m_line.canBreakAfterLastRun())
+        m_state = LineBreakState::Trailing;
     if(breakBefore > 0) {
         rewindOverflow(breakBefore);
     }
