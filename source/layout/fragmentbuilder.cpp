@@ -53,14 +53,17 @@ float FragmentBuilder::adjustOffsetInFragmentFlow(float offset, float height, fl
     if(fragmentHeight <= 0.f)
         return offset;
     auto remainingHeight = fragmentRemainingHeightForOffset(offset, AssociateWithLatterFragment);
-    if(height > remainingHeight) {
-        setFragmentBreak(offset, height - remainingHeight);
-        if(unbreakableHeight > remainingHeight && remainingHeight < fragmentHeight)
-            return offset + remainingHeight;
-    } else if(isNearlyEqual(fragmentHeight, remainingHeight) && !isNearlyZero(offset + fragmentOffset())) {
-        setFragmentBreak(offset, height);
+
+    auto isAtFragmentStart = isNearlyEqual(remainingHeight, fragmentHeight);
+    if(height <= remainingHeight) {
+        if(isAtFragmentStart && !isNearlyZero(offset + fragmentOffset()))
+            setFragmentBreak(offset, height);
+        return offset;
     }
 
+    setFragmentBreak(offset, height - remainingHeight);
+    if(unbreakableHeight > remainingHeight && !isAtFragmentStart)
+        return offset + remainingHeight;
     return offset;
 }
 
