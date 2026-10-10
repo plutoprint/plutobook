@@ -587,6 +587,23 @@ void TableBox::build()
             }
         }
     }
+
+    bool hasContentBefore = false;
+    for(auto child = firstChild(); child; child = child->nextSibling()) {
+        child->setIsInFlowChild(!child->isTableColumnBox());
+        child->setHasBreakPointBefore(hasContentBefore);
+        if(child->isInFlowChild()) {
+            hasContentBefore = true;
+        }
+    }
+
+    bool hasContentAfter = false;
+    for(auto child = lastChild(); child; child = child->prevSibling()) {
+        child->setHasBreakPointAfter(hasContentAfter);
+        if(child->isInFlowChild()) {
+            hasContentAfter = true;
+        }
+    }
 }
 
 void TableBox::paintDecorations(const PaintInfo& info, const Point& offset)
@@ -1528,6 +1545,10 @@ void TableSectionBox::build()
     const uint32_t rowCount = m_rows.size();
     for(uint32_t rowIndex = 0; rowIndex < rowCount; ++rowIndex) {
         auto rowBox = m_rows[rowIndex];
+        rowBox->setIsInFlowChild(true);
+        rowBox->setHasBreakPointBefore(rowIndex == 0);
+        rowBox->setHasBreakPointAfter(rowIndex + 1 < rowCount);
+
         uint32_t columnIndex = 0;
         for(auto cellBox = rowBox->firstCell(); cellBox; cellBox = cellBox->nextCell()) {
             auto rowSpan = rowCount - rowIndex;

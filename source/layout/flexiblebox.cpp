@@ -901,6 +901,7 @@ void FlexibleBox::build()
     for(auto child = firstBoxFrame(); child; child = child->nextBoxFrame()) {
         if(child->isPositioned())
             continue;
+        child->setIsInFlowChild(true);
         auto childStyle = child->style();
         auto order = childStyle->order();
         auto flexGrow = childStyle->flexGrow();
@@ -1189,6 +1190,33 @@ float FlexibleBox::adjustItemInFragmentFlow(FlexItem& item, FragmentBuilder* fra
 
 void FlexibleBox::adjustLinesInFragmentFlow(FlexLineList& lines, FragmentBuilder* fragmentainer)
 {
+    const auto lineCount = lines.size();
+    for(size_t lineIndex = 0; lineIndex < lineCount; ++lineIndex) {
+        const auto& items = lines[lineIndex].items();
+        const auto itemCount = items.size();
+        for(size_t itemIndex = 0; itemIndex < itemCount; ++itemIndex) {
+            bool isFirst = false;
+            bool isLast = false;
+            if(isHorizontalFlow()) {
+                isFirst = lineIndex == 0;
+                isLast = lineIndex + 1 == lineCount;
+                if(style()->flexWrap() == FlexWrap::WrapReverse) {
+                    std::swap(isFirst, isLast);
+                }
+            } else {
+                isFirst = itemIndex == 0;
+                isLast = itemIndex + 1 == itemCount;
+                if(style()->flexDirection() == FlexDirection::ColumnReverse) {
+                    std::swap(isFirst, isLast);
+                }
+            }
+
+            auto child = items[itemIndex].box();
+            child->setHasBreakPointBefore(!isFirst);
+            child->setHasBreakPointAfter(!isLast);
+        }
+    }
+
     float offset = 0;
     if(isHorizontalFlow()) {
         if(style()->flexWrap() == FlexWrap::WrapReverse) {

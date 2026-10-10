@@ -1647,6 +1647,20 @@ void BlockFlowBox::layoutContents(FragmentBuilder* fragmentainer, float vertical
     }
 }
 
+static bool isListMarkerWrapper(const Box* box)
+{
+    if(!box->isAnonymousBlock())
+        return false;
+    if(auto child = box->firstChild())
+        return child == box->lastChild() && child->isOutsideListMarkerBox();
+    return false;
+}
+
+static bool isInFlowBox(const Box* box)
+{
+    return !box->isFloatingOrPositioned() && !box->isMultiColumnFlowBox() && !isListMarkerWrapper(box);
+}
+
 void BlockFlowBox::layout(FragmentBuilder* fragmentainer)
 {
     if(isChildrenInline()) {
@@ -1688,6 +1702,23 @@ void BlockFlowBox::build()
     if(isChildrenInline()) {
         m_lineLayout = LineLayout::create(this);
         m_lineLayout->build();
+    } else {
+        bool hasContentBefore = false;
+        for(auto child = firstChild(); child; child = child->nextSibling()) {
+            child->setIsInFlowChild(isInFlowBox(child));
+            child->setHasBreakPointBefore(hasContentBefore);
+            if(child->isInFlowChild()) {
+                hasContentBefore = true;
+            }
+        }
+
+        bool hasContentAfter = false;
+        for(auto child = lastChild(); child; child = child->prevSibling()) {
+            child->setHasBreakPointAfter(hasContentAfter);
+            if(child->isInFlowChild()) {
+                hasContentAfter = true;
+            }
+        }
     }
 }
 

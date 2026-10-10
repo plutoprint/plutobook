@@ -196,6 +196,16 @@ public:
     void setHasTransform(bool value) { m_hasTransform = value; }
     void setHasLayer(bool value) { m_hasLayer = value; }
 
+    bool isInFlowChild() const { return m_isInFlowChild; }
+
+    bool hasBreakPointBefore() const { return m_hasBreakPointBefore; }
+    bool hasBreakPointAfter() const { return m_hasBreakPointAfter; }
+
+    void setIsInFlowChild(bool value) { m_isInFlowChild = value; }
+
+    void setHasBreakPointBefore(bool value) { m_hasBreakPointBefore = value; }
+    void setHasBreakPointAfter(bool value) { m_hasBreakPointAfter = value; }
+
     Heap* heap() const { return m_style->heap(); }
     Document* document() const { return m_style->document(); }
 
@@ -240,6 +250,9 @@ private:
     bool m_isTableFooter : 1 {false};
     bool m_isListMarker : 1 {false};
     bool m_isFlexItem : 1 {false};
+    bool m_isInFlowChild : 1 {false};
+    bool m_hasBreakPointBefore : 1 {false};
+    bool m_hasBreakPointAfter : 1 {false};
     bool m_hasColumnFlowBox : 1 {false};
     bool m_hasTransform : 1 {false};
     bool m_hasLayer : 1 {false};
