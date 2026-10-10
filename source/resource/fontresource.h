@@ -318,6 +318,8 @@ struct FontDataInfo {
     float lineHeight;
     float xHeight;
     float capHeight;
+    float underlinePosition;
+    float underlineThickness;
     float zeroWidth;
     float spaceWidth;
     float ideogramWidth;
@@ -345,6 +347,8 @@ public:
     float lineHeight() const { return m_info.lineHeight; }
     float xHeight() const { return m_info.xHeight; }
     float capHeight() const { return m_info.capHeight; }
+    float underlinePosition() const { return m_info.underlinePosition; }
+    float underlineThickness() const { return m_info.underlineThickness; }
     float zeroWidth() const { return m_info.zeroWidth; }
     float spaceWidth() const { return m_info.spaceWidth; }
     float ideogramWidth() const { return m_info.ideogramWidth; }
