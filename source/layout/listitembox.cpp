@@ -18,11 +18,13 @@ ListItemBox::ListItemBox(Node* node, const RefPtr<BoxStyle>& style)
 InsideListMarkerBox::InsideListMarkerBox(const RefPtr<BoxStyle>& style)
     : InlineBox(nullptr, style)
 {
+    setIsListMarker(true);
 }
 
 OutsideListMarkerBox::OutsideListMarkerBox(const RefPtr<BoxStyle>& style)
     : BlockFlowBox(nullptr, style)
 {
+    setIsListMarker(true);
 }
 
 } // namespace plutobook

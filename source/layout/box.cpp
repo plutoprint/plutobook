@@ -269,11 +269,6 @@ bool Box::isRootBox() const
     return m_node && m_node->isRootNode();
 }
 
-bool Box::isFlexItem() const
-{
-    return m_parentBox && m_parentBox->isFlexibleBox();
-}
-
 void Box::paintAnnotation(GraphicsContext& context, const Rect& rect) const
 {
     if(m_node == nullptr || !m_node->isElementNode())

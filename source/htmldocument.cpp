@@ -101,7 +101,7 @@ void HTMLElement::buildFirstLetterPseudoBox(SelectorFilter& selectorFilter, Box*
             }
         }
 
-        if(!child->isFloatingOrPositioned() && !child->isListMarkerBox()
+        if(!child->isFloatingOrPositioned() && !child->isListMarker()
             && !child->isTableBox() && !child->isFlexibleBox()) {
             if(child->firstChild()) {
                 child = child->firstChild();

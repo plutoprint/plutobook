@@ -93,8 +93,6 @@ public:
 
     bool isBodyBox() const;
     bool isRootBox() const;
-    bool isListMarkerBox() const { return isInsideListMarkerBox() || isOutsideListMarkerBox(); }
-    bool isFlexItem() const;
 
     virtual bool isBoxModel() const { return false; }
     virtual bool isBoxFrame() const { return false; }
@@ -170,6 +168,8 @@ public:
     bool isTableHeader() const { return m_isTableHeader; }
     bool isTableFooter() const { return m_isTableFooter; }
     bool isColumnSpanner() const { return m_isColumnSpanner; }
+    bool isListMarker() const { return m_isListMarker; }
+    bool isFlexItem() const { return m_isFlexItem; }
 
     void setIsAnonymous(bool value) { m_isAnonymous = value; }
     void setIsAnonymousBlock(bool value) { m_isAnonymousBlock = value; }
@@ -185,6 +185,8 @@ public:
     void setIsTableHeader(bool value) { m_isTableHeader = value; }
     void setIsTableFooter(bool value) { m_isTableFooter = value; }
     void setIsColumnSpanner(bool value) { m_isColumnSpanner = value; }
+    void setIsListMarker(bool value) { m_isListMarker = value; }
+    void setIsFlexItem(bool value) { m_isFlexItem = value; }
 
     bool hasColumnFlowBox() const { return m_hasColumnFlowBox; }
     bool hasTransform() const { return m_hasTransform; }
@@ -236,6 +238,8 @@ private:
     bool m_isBorderCollapsed : 1 {false};
     bool m_isTableHeader : 1 {false};
     bool m_isTableFooter : 1 {false};
+    bool m_isListMarker : 1 {false};
+    bool m_isFlexItem : 1 {false};
     bool m_hasColumnFlowBox : 1 {false};
     bool m_hasTransform : 1 {false};
     bool m_hasLayer : 1 {false};

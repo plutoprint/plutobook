@@ -24,6 +24,7 @@ FlexItem::FlexItem(BoxFrame* box, int order, float flexGrow, float flexShrink, A
     , m_flexGrow(flexGrow)
     , m_flexShrink(flexShrink)
 {
+    box->setIsFlexItem(true);
 }
 
 std::optional<float> FlexItem::computeWidthUsing(const Length& widthLength) const
