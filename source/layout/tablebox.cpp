@@ -1546,7 +1546,7 @@ void TableSectionBox::build()
     for(uint32_t rowIndex = 0; rowIndex < rowCount; ++rowIndex) {
         auto rowBox = m_rows[rowIndex];
         rowBox->setIsInFlowChild(true);
-        rowBox->setHasBreakPointBefore(rowIndex == 0);
+        rowBox->setHasBreakPointBefore(rowIndex > 0);
         rowBox->setHasBreakPointAfter(rowIndex + 1 < rowCount);
 
         uint32_t columnIndex = 0;
@@ -1565,6 +1565,7 @@ void TableSectionBox::build()
 
             cellBox->setRowSpan(rowSpan);
             cellBox->setColumnIndex(columnIndex);
+            cellBox->setIsInFlowChild(true);
             if(cellBox->rowSpan() > 1) {
                 m_spanningCells.push_back(cellBox);
             } else {
