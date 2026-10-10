@@ -87,36 +87,46 @@ static bool isBreakPropagatingContainer(const Box* box)
         || box->isTableBox() || box->isTableSectionBox() || box->isTableRowBox();
 }
 
-static bool isInFlowContent(const Box* box)
-{
-    return !box->isFloatingOrPositioned() && !box->isTableColumnBox();
-}
-
 static bool isListMarkerWrapper(const Box* box)
 {
-    if(!box->isAnonymousBlock())
-        return false;
-    if(auto child = box->firstChild())
-        return child == box->lastChild() && child->isOutsideListMarkerBox();
+    if(box->isAnonymousBlock()) {
+        if(auto child = box->firstChild()) {
+            return child == box->lastChild() && child->isOutsideListMarkerBox();
+        }
+    }
+
     return false;
+}
+
+static bool isInFlowContentBefore(const Box* box)
+{
+    return !box->isFloatingOrPositioned() && !box->isTableColumnBox() && !isListMarkerWrapper(box);
+}
+
+static bool isInFlowContentAfter(const Box* box)
+{
+    return !box->isFloatingOrPositioned() && !box->isTableColumnBox();
 }
 
 static bool hasInFlowContentBefore(const Box* box)
 {
     for(; box && !box->isBoxView(); box = box->parentBox()) {
-        for(auto sibling = box->prevSibling(); sibling; sibling = sibling->prevSibling()) {
-            if(isInFlowContent(sibling) && !isListMarkerWrapper(sibling)) {
-                return true;
+        if(box->hasFlexItemBefore())
+            return true;
+        if(!box->isTableCellBox() && !box->isFlexItem()) {
+            for(auto sibling = box->prevSibling(); sibling; sibling = sibling->prevSibling()) {
+                if(isInFlowContentBefore(sibling)) {
+                    return true;
+                }
             }
         }
 
-        auto parent = box->parentBox();
-        if(parent == nullptr || !isBreakPropagatingContainer(parent)) {
-            return true;
-        }
-
-        if(parent->isMultiColumnFlowBox() || !isInFlowContent(parent)) {
-            return false;
+        if(auto parent = box->parentBox()) {
+            if(!isBreakPropagatingContainer(parent))
+                return true;
+            if(parent->isFloatingOrPositioned() || parent->isMultiColumnFlowBox()) {
+                return false;
+            }
         }
     }
 
@@ -126,19 +136,22 @@ static bool hasInFlowContentBefore(const Box* box)
 static bool hasInFlowContentAfter(const Box* box)
 {
     for(; box && !box->isBoxView(); box = box->parentBox()) {
-        for(auto sibling = box->nextSibling(); sibling; sibling = sibling->nextSibling()) {
-            if(isInFlowContent(sibling)) {
-                return true;
+        if(box->hasFlexItemAfter())
+            return true;
+        if(!box->isTableCellBox() && !box->isFlexItem()) {
+            for(auto sibling = box->nextSibling(); sibling; sibling = sibling->nextSibling()) {
+                if(isInFlowContentAfter(sibling)) {
+                    return true;
+                }
             }
         }
 
-        auto parent = box->parentBox();
-        if(parent == nullptr || !isBreakPropagatingContainer(parent)) {
-            return true;
-        }
-
-        if(parent->isMultiColumnFlowBox() || !isInFlowContent(parent)) {
-            return false;
+        if(auto parent = box->parentBox()) {
+            if(!isBreakPropagatingContainer(parent))
+                return true;
+            if(parent->isFloatingOrPositioned() || parent->isMultiColumnFlowBox()) {
+                return false;
+            }
         }
     }
 
@@ -147,22 +160,20 @@ static bool hasInFlowContentAfter(const Box* box)
 
 static bool receivesPropagatedBreaks(const Box* box)
 {
-    if(box->isBoxView())
-        return true;
-    if(!box->isBlockFlowBox() || box->isChildrenInline() || box->isMultiColumnFlowBox() || box->isTableCellBox())
-        return false;
-    if(!isInFlowContent(box))
-        return false;
-    auto parent = box->parentBox();
-    if(parent == nullptr)
-        return false;
-    return (parent->isBlockFlowBox() && !parent->isChildrenInline()) || parent->isFlexibleBox();
+    if(box->isBlockFlowBox() && !box->isFloatingOrPositioned() && !box->isChildrenInline()
+        && !box->isTableCellBox() && !box->isMultiColumnFlowBox()) {
+        if(auto parent = box->parentBox()) {
+            return parent->isFlexibleBox() || (parent->isBlockFlowBox() && !parent->isChildrenInline());
+        }
+    }
+
+    return box->isBoxView();
 }
 
 static const Box* firstInFlowChild(const Box* box)
 {
     for(auto child = box->firstChild(); child; child = child->nextSibling()) {
-        if(isInFlowContent(child) && !isListMarkerWrapper(child)) {
+        if(isInFlowContentBefore(child)) {
             return child;
         }
     }
@@ -173,7 +184,7 @@ static const Box* firstInFlowChild(const Box* box)
 static const Box* lastInFlowChild(const Box* box)
 {
     for(auto child = box->lastChild(); child; child = child->prevSibling()) {
-        if(isInFlowContent(child)) {
+        if(isInFlowContentAfter(child)) {
             return child;
         }
     }
