@@ -58,6 +58,11 @@ public:
     TableColumnBox* columnGroupAt(size_t index) const;
     size_t columnCount() const;
 
+    const TableCaptionBoxList& captions() const { return m_captions; }
+
+    TableCaptionBox* topCaption() const;
+    TableCaptionBox* bottomCaption() const;
+
     const TableSectionBoxList& sections() const { return m_sections; }
 
     TableSectionBox* headerSection() const;

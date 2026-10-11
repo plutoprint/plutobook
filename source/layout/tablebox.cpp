@@ -332,6 +332,20 @@ TableColumnBox* TableBox::columnGroupAt(size_t index) const
     return column->columnGroup();
 }
 
+TableCaptionBox* TableBox::topCaption() const
+{
+    if(m_captions.empty())
+        return nullptr;
+    return m_captions.front();
+}
+
+TableCaptionBox* TableBox::bottomCaption() const
+{
+    if(m_captions.empty())
+        return nullptr;
+    return m_captions.back();
+}
+
 TableCellBox* TableBox::cellAbove(const TableCellBox* cellBox) const
 {
     auto section = cellBox->section();
@@ -586,6 +600,18 @@ void TableBox::build()
                 }
             }
         }
+    }
+
+    if(auto caption = topCaption()) {
+        caption->setIsFirstInFlowChild(true);
+    } else if(auto section = topSection()) {
+        section->setIsFirstInFlowChild(true);
+    }
+
+    if(auto caption = bottomCaption()) {
+        caption->setIsLastInFlowChild(true);
+    } else if(auto section = bottomSection()) {
+        section->setIsLastInFlowChild(true);
     }
 }
 
@@ -1528,8 +1554,12 @@ void TableSectionBox::build()
     const uint32_t rowCount = m_rows.size();
     for(uint32_t rowIndex = 0; rowIndex < rowCount; ++rowIndex) {
         auto rowBox = m_rows[rowIndex];
+        rowBox->setIsFirstInFlowChild(rowIndex == 0);
+        rowBox->setIsLastInFlowChild(rowIndex + 1 == rowCount);
         uint32_t columnIndex = 0;
         for(auto cellBox = rowBox->firstCell(); cellBox; cellBox = cellBox->nextCell()) {
+            cellBox->setIsFirstInFlowChild(true);
+            cellBox->setIsLastInFlowChild(true);
             auto rowSpan = rowCount - rowIndex;
             if(cellBox->rowSpan() > 0) {
                 rowSpan = std::min(rowSpan, cellBox->rowSpan());

@@ -196,6 +196,12 @@ public:
     void setHasTransform(bool value) { m_hasTransform = value; }
     void setHasLayer(bool value) { m_hasLayer = value; }
 
+    bool isFirstInFlowChild() const { return m_isFirstInFlowChild; }
+    bool isLastInFlowChild() const { return m_isLastInFlowChild; }
+
+    void setIsFirstInFlowChild(bool value) { m_isFirstInFlowChild = value; }
+    void setIsLastInFlowChild(bool value) { m_isLastInFlowChild = value; }
+
     Heap* heap() const { return m_style->heap(); }
     Document* document() const { return m_style->document(); }
 
@@ -240,6 +246,8 @@ private:
     bool m_isTableFooter : 1 {false};
     bool m_isListMarker : 1 {false};
     bool m_isFlexItem : 1 {false};
+    bool m_isFirstInFlowChild : 1 {false};
+    bool m_isLastInFlowChild : 1 {false};
     bool m_hasColumnFlowBox : 1 {false};
     bool m_hasTransform : 1 {false};
     bool m_hasLayer : 1 {false};
