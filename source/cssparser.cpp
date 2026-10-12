@@ -1233,17 +1233,6 @@ bool CSSParser::consumeDescriptor(CSSTokenStream& input, CSSPropertyList& proper
     return false;
 }
 
-static bool containsVariableReferences(CSSTokenStream input)
-{
-    while(!input.empty()) {
-        if(input->type() == CSSToken::Type::Function && identMatches("var", input->data()))
-            return true;
-        input.consumeIncludingWhitespace();
-    }
-
-    return false;
-}
-
 bool CSSParser::consumeDeclaration(CSSTokenStream& input, CSSPropertyList& properties, CSSRuleType ruleType)
 {
     auto stream = input.consumeComponentsUntil<CSSToken::Type::Semicolon>();
@@ -1277,9 +1266,15 @@ bool CSSParser::consumeDeclaration(CSSTokenStream& input, CSSPropertyList& prope
         }
     }
 
-    CSSTokenStream value(valueBegin, valueEnd);
+    bool containsVariables = false;
+    for(auto it = valueBegin; it < valueEnd; ++it) {
+        if(it->type() == CSSToken::Type::Function && identMatches("var", it->data())) {
+            containsVariables = true;
+            break;
+        }
+    }
 
-    auto containsVariables = containsVariableReferences(value);
+    CSSTokenStream value(valueBegin, valueEnd);
     if(containsVariables || id == CSSPropertyID::Custom) {
         if(ruleType == CSSRuleType::FontFace || ruleType == CSSRuleType::CounterStyle)
             return false;
