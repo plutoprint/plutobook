@@ -1667,7 +1667,7 @@ void BlockFlowBox::layout(FragmentBuilder* fragmentainer)
     updateOverflowRect();
 }
 
-static bool isInFlowBox(const Box* box)
+static bool isInFlowChild(const Box* box)
 {
     return !box->isFloatingOrPositioned() && !box->isMultiColumnFlowBox();
 }
@@ -1695,14 +1695,14 @@ void BlockFlowBox::build()
         m_lineLayout->build();
     } else {
         for(auto child = firstChild(); child; child = child->nextSibling()) {
-            child->setIsFirstInFlowChild(isInFlowBox(child));
+            child->setIsFirstInFlowChild(isInFlowChild(child));
             if(child->isFirstInFlowChild()) {
                 break;
             }
         }
 
         for(auto child = lastChild(); child; child = child->prevSibling()) {
-            child->setIsLastInFlowChild(isInFlowBox(child));
+            child->setIsLastInFlowChild(isInFlowChild(child));
             if(child->isLastInFlowChild()) {
                 break;
             }
