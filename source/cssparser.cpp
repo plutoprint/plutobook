@@ -1249,20 +1249,21 @@ bool CSSParser::consumeDeclaration(CSSTokenStream& input, CSSPropertyList& prope
 
     auto valueBegin = stream.begin();
     auto valueEnd = stream.end();
-
-    auto it = valueEnd - 1;
-    while(it->type() == CSSToken::Type::Whitespace) {
-        --it;
+    while(valueEnd > valueBegin && valueEnd[-1].type() == CSSToken::Type::Whitespace) {
+        --valueEnd;
     }
 
     bool important = false;
-    if(it->type() == CSSToken::Type::Ident && identMatches("important", it->data())) {
-        do {
+    if(valueEnd > valueBegin && valueEnd[-1].type() == CSSToken::Type::Ident && identMatches("important", valueEnd[-1].data())) {
+        auto it = valueEnd - 1;
+        while(it > valueBegin && it[-1].type() == CSSToken::Type::Whitespace)
             --it;
-        } while(it->type() == CSSToken::Type::Whitespace);
-        if(it->type() == CSSToken::Type::Delim && it->delim() == '!') {
+        if(it > valueBegin && it[-1].type() == CSSToken::Type::Delim && it[-1].delim() == '!') {
             important = true;
-            valueEnd = it;
+            valueEnd = it - 1;
+            while(valueEnd > valueBegin && valueEnd[-1].type() == CSSToken::Type::Whitespace) {
+                --valueEnd;
+            }
         }
     }
 
