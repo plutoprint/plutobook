@@ -51,13 +51,11 @@ CSSMediaQueryList CSSParser::parseMediaQueries(std::string_view content)
 CSSPropertyList CSSParser::parseSubstitutedValue(CSSTokenStream input, CSSPropertyID id, bool important)
 {
     CSSPropertyList properties(m_heap);
-    input.consumeWhitespace();
-    if(!input.empty()) {
-        if(consumeDescriptor(input, properties, id, important))
-            return properties;
-        properties.clear();
+    if(consumeDescriptor(input, properties, id, important)) {
+        return properties;
     }
 
+    assert(properties.empty());
     addExpandedProperty(properties, id, important, CSSUnsetValue::create());
     return properties;
 }
@@ -1154,7 +1152,11 @@ static RefPtr<CSSValue> consumeWideKeyword(CSSTokenStream& input)
 
 bool CSSParser::consumeDescriptor(CSSTokenStream& input, CSSPropertyList& properties, CSSPropertyID id, bool important)
 {
-    assert(!input.empty() && input->type() != CSSToken::Type::Whitespace);
+    input.consumeWhitespace();
+    if(input.empty()) {
+        return false;
+    }
+
     if(auto value = consumeWideKeyword(input)) {
         if(!input.empty())
             return false;
