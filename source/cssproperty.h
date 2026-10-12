@@ -730,6 +730,12 @@ public:
     bool containsVariables() const { return m_containsVariables; }
     const CSSVariableTokenList& tokens() const { return m_tokens; }
 
+    bool isKeyword(std::string_view name) const;
+
+    bool isInitial() const;
+    bool isInherit() const;
+    bool isUnset() const;
+
 private:
     CSSVariableData(bool containsVariables, CSSVariableTokenList tokens)
         : m_containsVariables(containsVariables), m_tokens(std::move(tokens))
@@ -753,7 +759,6 @@ public:
     CSSValueType type() const final { return CSSValueType::CustomProperty; }
 
     RefPtr<CSSVariableData> resolve(const BoxStyle* style) const;
-    bool containsVariables() const { return m_value->containsVariables(); }
 
 private:
     CSSCustomPropertyValue(const HeapString& name, RefPtr<CSSVariableData> value);

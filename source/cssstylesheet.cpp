@@ -227,9 +227,15 @@ void StyleBuilder::buildStyle(BoxStyle* newStyle)
             property.setId(CSSPropertyID::Unknown);
         } else if(property.id() == CSSPropertyID::Custom) {
             const auto& custom = to<CSSCustomPropertyValue>(*property.value());
-            newStyle->setCustom(custom.name(), custom.value());
-            if(custom.containsVariables()) {
-                customs.push_back(&custom);
+            const auto& name = custom.name();
+            const auto& value = custom.value();
+            if(value->isInitial()) {
+                newStyle->setCustom(name, nullptr);
+            } else if(!value->isInherit() && !value->isUnset()) {
+                newStyle->setCustom(name, value);
+                if(value->containsVariables()) {
+                    customs.push_back(&custom);
+                }
             }
         }
     }

@@ -1197,6 +1197,30 @@ bool CSSVariableData::substitute(const BoxStyle* style, CSSVariableTokenList& ou
     return substituteVariableData(this, style, output, references) == CSSVariableResult::Valid;
 }
 
+bool CSSVariableData::isKeyword(std::string_view name) const
+{
+    if(m_containsVariables || m_tokens.size() != 1)
+        return false;
+    const auto& token = m_tokens.front();
+    return token.type() == CSSToken::Type::Ident
+        && equalsIgnoringCase(name, token.data());
+}
+
+bool CSSVariableData::isInitial() const
+{
+    return isKeyword("initial");
+}
+
+bool CSSVariableData::isInherit() const
+{
+    return isKeyword("inherit");
+}
+
+bool CSSVariableData::isUnset() const
+{
+    return isKeyword("unset");
+}
+
 RefPtr<CSSCustomPropertyValue> CSSCustomPropertyValue::create(Heap* heap, const HeapString& name, RefPtr<CSSVariableData> value)
 {
     return adoptPtr(new (heap) CSSCustomPropertyValue(name, std::move(value)));
