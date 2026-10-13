@@ -121,8 +121,8 @@ void FlexItem::computeHypotheticalMainSize()
 {
     auto style = m_box->style();
     auto mainLength = isHorizontalFlow() ? style->width() : style->height();
-    auto maxLength = isHorizontalFlow() ? style->maxWidth() : style->maxHeight();
     auto minLength = isHorizontalFlow() ? style->minWidth() : style->minHeight();
+    auto maxLength = isHorizontalFlow() ? style->maxWidth() : style->maxHeight();
 
     auto flexBasis = style->flexBasis();
     if(flexBasis.isAuto())

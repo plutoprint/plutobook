@@ -262,6 +262,30 @@ float TableBox::unbreakableHeight(const FragmentBuilder* fragmentainer, float of
     return borderAndPaddingHeight();
 }
 
+TableColumnBox* TableBox::columnGroupAt(size_t index) const
+{
+    auto column = columnAt(index);
+    if(column == nullptr)
+        return nullptr;
+    if(column->isColumnGroup())
+        return column;
+    return column->columnGroup();
+}
+
+TableCaptionBox* TableBox::topCaption() const
+{
+    if(m_captions.empty())
+        return nullptr;
+    return m_captions.front();
+}
+
+TableCaptionBox* TableBox::bottomCaption() const
+{
+    if(m_captions.empty())
+        return nullptr;
+    return m_captions.back();
+}
+
 TableSectionBox* TableBox::headerSection() const
 {
     auto section = topSection();
@@ -320,30 +344,6 @@ TableSectionBox* TableBox::sectionBelow(const TableSectionBox* sectionBox) const
     }
 
     return footerSection();
-}
-
-TableColumnBox* TableBox::columnGroupAt(size_t index) const
-{
-    auto column = columnAt(index);
-    if(column == nullptr)
-        return nullptr;
-    if(column->isColumnGroup())
-        return column;
-    return column->columnGroup();
-}
-
-TableCaptionBox* TableBox::topCaption() const
-{
-    if(m_captions.empty())
-        return nullptr;
-    return m_captions.front();
-}
-
-TableCaptionBox* TableBox::bottomCaption() const
-{
-    if(m_captions.empty())
-        return nullptr;
-    return m_captions.back();
 }
 
 TableCellBox* TableBox::cellAbove(const TableCellBox* cellBox) const
