@@ -157,13 +157,10 @@ protected:
 
 struct LineItemRun {
     LineItemRun(const LineItem& item, uint32_t index, uint32_t start, uint32_t end)
-        : item(&item), itemIndex(index), startOffset(start), endOffset(end)
+        : item(item), itemIndex(index), startOffset(start), endOffset(end)
     {}
 
-    const LineItem& operator*() const { return *item; }
-    const LineItem* operator->() const { return item; }
-
-    const LineItem* item;
+    const LineItem& item;
     uint32_t itemIndex;
     uint32_t startOffset;
     uint32_t endOffset;
