@@ -350,9 +350,11 @@ std::optional<float> FlexibleBox::firstLineBaseline() const
 {
     const BoxFrame* baselineChild = nullptr;
     for(auto& item : m_items) {
+        if(!item->isFirstInFlowChild())
+            continue;
         if(baselineChild == nullptr)
             baselineChild = item.box();
-        if(item.alignSelf() == AlignItem::Baseline) {
+        if(isHorizontalFlow() && item.alignSelf() == AlignItem::Baseline) {
             baselineChild = item.box();
             break;
         }
@@ -369,9 +371,11 @@ std::optional<float> FlexibleBox::lastLineBaseline() const
 {
     const BoxFrame* baselineChild = nullptr;
     for(auto& item : m_items | std::views::reverse) {
+        if(!item->isLastInFlowChild())
+            continue;
         if(baselineChild == nullptr)
             baselineChild = item.box();
-        if(item.alignSelf() == AlignItem::Baseline) {
+        if(isHorizontalFlow() && item.alignSelf() == AlignItem::Baseline) {
             baselineChild = item.box();
             break;
         }
@@ -869,6 +873,33 @@ void FlexibleBox::layout(FragmentBuilder* fragmentainer)
         }
     }
 
+    const auto lineCount = lines.size();
+    for(size_t lineIndex = 0; lineIndex < lineCount; ++lineIndex) {
+        const auto& items = lines[lineIndex].items();
+        const auto itemCount = items.size();
+        for(size_t itemIndex = 0; itemIndex < itemCount; ++itemIndex) {
+            bool isFirst = false;
+            bool isLast = false;
+            if(isHorizontalFlow()) {
+                isFirst = lineIndex == 0;
+                isLast = lineIndex + 1 == lineCount;
+                if(style()->flexWrap() == FlexWrap::WrapReverse) {
+                    std::swap(isFirst, isLast);
+                }
+            } else {
+                isFirst = itemIndex == 0;
+                isLast = itemIndex + 1 == itemCount;
+                if(style()->flexDirection() == FlexDirection::ColumnReverse) {
+                    std::swap(isFirst, isLast);
+                }
+            }
+
+            auto& item = items[itemIndex];
+            item->setIsFirstInFlowChild(isFirst);
+            item->setIsLastInFlowChild(isLast);
+        }
+    }
+
     if(fragmentainer) {
         adjustLinesInFragmentFlow(lines, fragmentainer);
     }
@@ -1174,33 +1205,6 @@ float FlexibleBox::adjustItemInFragmentFlow(FlexItem& item, FragmentBuilder* fra
 
 void FlexibleBox::adjustLinesInFragmentFlow(FlexLineList& lines, FragmentBuilder* fragmentainer)
 {
-    const auto lineCount = lines.size();
-    for(size_t lineIndex = 0; lineIndex < lineCount; ++lineIndex) {
-        const auto& items = lines[lineIndex].items();
-        const auto itemCount = items.size();
-        for(size_t itemIndex = 0; itemIndex < itemCount; ++itemIndex) {
-            bool isFirst = false;
-            bool isLast = false;
-            if(isHorizontalFlow()) {
-                isFirst = lineIndex == 0;
-                isLast = lineIndex + 1 == lineCount;
-                if(style()->flexWrap() == FlexWrap::WrapReverse) {
-                    std::swap(isFirst, isLast);
-                }
-            } else {
-                isFirst = itemIndex == 0;
-                isLast = itemIndex + 1 == itemCount;
-                if(style()->flexDirection() == FlexDirection::ColumnReverse) {
-                    std::swap(isFirst, isLast);
-                }
-            }
-
-            auto& item = items[itemIndex];
-            item->setIsFirstInFlowChild(isFirst);
-            item->setIsLastInFlowChild(isLast);
-        }
-    }
-
     float offset = 0;
     if(isHorizontalFlow()) {
         if(style()->flexWrap() == FlexWrap::WrapReverse) {
