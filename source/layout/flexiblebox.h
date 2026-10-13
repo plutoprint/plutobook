@@ -101,6 +101,8 @@ public:
     float marginBefore() const;
     float marginAfter() const;
 
+    BoxFrame* operator->() const { return m_box; }
+
 private:
     BoxFrame* m_box;
     AlignItem m_alignSelf;
@@ -155,7 +157,7 @@ public:
     const char* name() const final { return "FlexibleBox"; }
 
 private:
-    void layoutItem(BoxFrame* child, FragmentBuilder* fragmentainer) const;
+    void layoutItem(FlexItem& item, FragmentBuilder* fragmentainer) const;
     void stretchItem(FlexItem& item, const FlexLine& line, FragmentBuilder* fragmentainer) const;
     void alignItem(FlexItem& item, const FlexLine& line, FragmentBuilder* fragmentainer) const;
 
