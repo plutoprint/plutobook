@@ -408,6 +408,7 @@ public:
     bool isBoxFrame() const final { return true; }
     bool requiresLayer() const override;
 
+    bool isStretchedFlexItem(bool isRowDirection) const;
     bool isStretchedRowFlexItem() const;
     bool isStretchedColumnFlexItem() const;
 

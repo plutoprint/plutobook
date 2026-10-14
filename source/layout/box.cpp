@@ -857,50 +857,41 @@ bool BoxFrame::requiresLayer() const
         || style()->hasOpacity() || style()->hasBlendMode() || style()->zIndex();
 }
 
-bool BoxFrame::isStretchedRowFlexItem() const
+bool BoxFrame::isStretchedFlexItem(bool isRowDirection) const
 {
+    if(!isFlexItem())
+        return false;
     auto parent = parentBox();
     assert(parent && parent->isFlexibleBox());
     auto parentStyle = parent->style();
-    switch(parentStyle->flexDirection()) {
-    case FlexDirection::Row:
-    case FlexDirection::RowReverse:
-        break;
-    default:
+
+    auto direction = parentStyle->flexDirection();
+    if(isRowDirection != (direction == FlexDirection::Row || direction == FlexDirection::RowReverse))
+        return false;
+    if(parentStyle->flexWrap() != FlexWrap::Nowrap) {
         return false;
     }
 
-    if(parentStyle->flexWrap() != FlexWrap::Nowrap)
+    auto marginStartLength = isRowDirection ? style()->marginTop() : style()->marginLeft();
+    auto marginEndLength = isRowDirection ? style()->marginBottom(): style()->marginRight();
+    if(marginStartLength.isAuto() || marginEndLength.isAuto()) {
         return false;
-    if(style()->marginTop().isAuto() || style()->marginBottom().isAuto())
-        return false;
+    }
+
     auto alignSelf = style()->alignSelf();
     if(alignSelf == AlignItem::Auto)
         alignSelf = parentStyle->alignItems();
     return alignSelf == AlignItem::Stretch;
 }
 
+bool BoxFrame::isStretchedRowFlexItem() const
+{
+    return isStretchedFlexItem(true);
+}
+
 bool BoxFrame::isStretchedColumnFlexItem() const
 {
-    auto parent = parentBox();
-    assert(parent && parent->isFlexibleBox());
-    auto parentStyle = parent->style();
-    switch(parentStyle->flexDirection()) {
-    case FlexDirection::Column:
-    case FlexDirection::ColumnReverse:
-        break;
-    default:
-        return false;
-    }
-
-    if(parentStyle->flexWrap() != FlexWrap::Nowrap)
-        return false;
-    if(style()->marginLeft().isAuto() || style()->marginRight().isAuto())
-        return false;
-    auto alignSelf = style()->alignSelf();
-    if(alignSelf == AlignItem::Auto)
-        alignSelf = parentStyle->alignItems();
-    return alignSelf == AlignItem::Stretch;
+    return isStretchedFlexItem(false);
 }
 
 BoxFrame::~BoxFrame() = default;
