@@ -112,7 +112,7 @@ float BlockBox::computeMainWidth(const BlockBox* container, float containerWidth
 {
     auto widthLength = style()->width();
     if(!widthLength.isAuto())
-        return computeWidthUsing(widthLength, container, containerWidth);
+        return computeWidthUsing(widthLength, containerWidth);
     auto marginLeft = style()->marginLeft().calcMin(containerWidth);
     auto marginRight = style()->marginRight().calcMin(containerWidth);
     auto width = containerWidth - marginLeft - marginRight;
@@ -131,7 +131,7 @@ float BlockBox::computeMainWidth(const BlockBox* container, float containerWidth
     return width;
 }
 
-float BlockBox::computeWidthUsing(const Length& widthLength, const BlockBox* container, float containerWidth) const
+float BlockBox::computeWidthUsing(const Length& widthLength, float containerWidth) const
 {
     if(widthLength.isIntrinsic())
         return computeIntrinsicWidthUsing(widthLength, containerWidth);
@@ -151,15 +151,15 @@ std::optional<float> BlockBox::computeHeightUsing(const Length& heightLength) co
     return std::nullopt;
 }
 
-float BlockBox::constrainWidth(float width, const BlockBox* container, float containerWidth) const
+float BlockBox::constrainWidth(float width, float containerWidth) const
 {
     auto minWidthLength = style()->minWidth();
     auto maxWidthLength = style()->maxWidth();
 
     if(!maxWidthLength.isNone())
-        width = std::min(width, computeWidthUsing(maxWidthLength, container, containerWidth));
+        width = std::min(width, computeWidthUsing(maxWidthLength, containerWidth));
     if(!minWidthLength.isAuto())
-        return std::max(width, computeWidthUsing(minWidthLength, container, containerWidth));
+        return std::max(width, computeWidthUsing(minWidthLength, containerWidth));
     return std::max(width, adjustBorderBoxWidth(0));
 }
 
@@ -449,7 +449,7 @@ void BlockBox::computeWidth(float& x, float& width, float& marginLeft, float& ma
     auto container = containingBlock();
     auto containerWidth = std::max(0.f, containingBlockWidthForContent(container));
     width = computeMainWidth(container, containerWidth);
-    width = constrainWidth(width, container, containerWidth);
+    width = constrainWidth(width, containerWidth);
     if(isTableBox())
         width = std::max(width, minPreferredWidth());
     computeHorizontalMargins(marginLeft, marginRight, width, container, containerWidth);

@@ -43,10 +43,10 @@ public:
     bool sizesWidthToFitContent() const;
     float computeMainWidth(const BlockBox* container, float containerWidth) const;
 
-    float computeWidthUsing(const Length& widthLength, const BlockBox* container, float containerWidth) const;
+    float computeWidthUsing(const Length& widthLength, float containerWidth) const;
     std::optional<float> computeHeightUsing(const Length& heightLength) const;
 
-    float constrainWidth(float width, const BlockBox* container, float containerWidth) const;
+    float constrainWidth(float width, float containerWidth) const;
     float constrainBorderBoxHeight(float height) const;
     float constrainContentBoxHeight(float height) const;
 
