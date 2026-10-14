@@ -865,8 +865,7 @@ bool BoxFrame::isStretchedFlexItem(bool isRowDirection) const
     assert(parent && parent->isFlexibleBox());
     auto parentStyle = parent->style();
 
-    auto direction = parentStyle->flexDirection();
-    if(isRowDirection != (direction == FlexDirection::Row || direction == FlexDirection::RowReverse))
+    if(isRowDirection != parentStyle->isRowFlexDirection())
         return false;
     if(parentStyle->flexWrap() != FlexWrap::Nowrap) {
         return false;

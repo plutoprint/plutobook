@@ -837,6 +837,9 @@ public:
     AlignItem alignItems() const { return m_alignItems; }
     AlignItem alignSelf() const { return m_alignSelf; }
 
+    bool isRowFlexDirection() const;
+    bool isColumnFlexDirection() const;
+
     float outlineOffset() const;
     Color outlineColor() const;
     float outlineWidth() const;
@@ -1115,6 +1118,18 @@ private:
     Color m_color{Color::Black};
     Length m_lineHeight{Length::Auto};
 };
+
+inline bool BoxStyle::isRowFlexDirection() const
+{
+    return m_flexDirection == FlexDirection::Row
+        || m_flexDirection == FlexDirection::RowReverse;
+}
+
+inline bool BoxStyle::isColumnFlexDirection() const
+{
+    return m_flexDirection == FlexDirection::Column
+        || m_flexDirection == FlexDirection::ColumnReverse;
+}
 
 inline bool BoxStyle::isDisplayBlockType(Display display)
 {

@@ -481,24 +481,17 @@ float FlexibleBox::borderAndPaddingAfter() const
 
 bool FlexibleBox::isHorizontalFlow() const
 {
-    switch(style()->flexDirection()) {
-    case FlexDirection::Row:
-    case FlexDirection::RowReverse:
-        return true;
-    default:
-        return false;
-    }
+    return style()->isRowFlexDirection();
 }
 
 bool FlexibleBox::isVerticalFlow() const
 {
-    switch(style()->flexDirection()) {
-    case FlexDirection::Column:
-    case FlexDirection::ColumnReverse:
-        return true;
-    default:
-        return false;
-    }
+    return style()->isColumnFlexDirection();
+}
+
+bool FlexibleBox::isColumnReverse() const
+{
+    return style()->flexDirection() == FlexDirection::ColumnReverse;
 }
 
 bool FlexibleBox::isWrapReverse() const
@@ -508,13 +501,7 @@ bool FlexibleBox::isWrapReverse() const
 
 bool FlexibleBox::isMultiLine() const
 {
-    switch(style()->flexWrap()) {
-    case FlexWrap::Wrap:
-    case FlexWrap::WrapReverse:
-        return true;
-    default:
-        return false;
-    }
+    return style()->flexWrap() != FlexWrap::Nowrap;
 }
 
 using FlexItemSpan = std::span<FlexItem>;
@@ -605,7 +592,6 @@ void FlexibleBox::layout(FragmentBuilder* fragmentainer)
     }
 
     const auto lineBreakLength = computeMainContentSize(maxHypotheticalMainSize);
-    const auto flexDirection = style()->flexDirection();
     const auto justifyContent = style()->justifyContent();
     const auto alignContent = style()->alignContent();
 
@@ -777,7 +763,7 @@ void FlexibleBox::layout(FragmentBuilder* fragmentainer)
             }
 
             mainOffset += item.marginStart();
-            switch(flexDirection) {
+            switch(style()->flexDirection()) {
             case FlexDirection::Row:
                 item->setX(mainOffset);
                 break;
@@ -883,13 +869,13 @@ void FlexibleBox::layout(FragmentBuilder* fragmentainer)
             if(isHorizontalFlow()) {
                 isFirst = lineIndex == 0;
                 isLast = lineIndex + 1 == lineCount;
-                if(style()->flexWrap() == FlexWrap::WrapReverse) {
+                if(isWrapReverse()) {
                     std::swap(isFirst, isLast);
                 }
             } else {
                 isFirst = itemIndex == 0;
                 isLast = itemIndex + 1 == itemCount;
-                if(style()->flexDirection() == FlexDirection::ColumnReverse) {
+                if(isColumnReverse()) {
                     std::swap(isFirst, isLast);
                 }
             }
@@ -1207,7 +1193,7 @@ void FlexibleBox::adjustLinesInFragmentFlow(FlexLineList& lines, FragmentBuilder
 {
     float offset = 0;
     if(isHorizontalFlow()) {
-        if(style()->flexWrap() == FlexWrap::WrapReverse) {
+        if(isWrapReverse()) {
             for(auto& line : lines | std::views::reverse) {
                 offset += adjustLineInFragmentFlow(line, fragmentainer, offset);
             }
@@ -1219,7 +1205,7 @@ void FlexibleBox::adjustLinesInFragmentFlow(FlexLineList& lines, FragmentBuilder
     } else {
         for(auto& line : lines) {
             float lineOffset = 0;
-            if(style()->flexDirection() == FlexDirection::ColumnReverse) {
+            if(isColumnReverse()) {
                 for(auto& item : line.items() | std::views::reverse) {
                     lineOffset += adjustItemInFragmentFlow(item, fragmentainer, lineOffset);
                 }

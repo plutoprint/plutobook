@@ -146,6 +146,7 @@ public:
 
     bool isHorizontalFlow() const;
     bool isVerticalFlow() const;
+    bool isColumnReverse() const;
     bool isWrapReverse() const;
     bool isMultiLine() const;
 
