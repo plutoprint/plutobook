@@ -202,8 +202,7 @@ float FlexItem::marginBoxCrossSize() const
 
 float FlexItem::marginBoxCrossBaseline() const
 {
-    if(isVerticalFlow())
-        return 0.f;
+    assert(isHorizontalFlow());
     if(auto baseline = m_box->firstLineBaseline())
         return baseline.value() + m_box->marginTop();
     return m_box->height() + m_box->marginTop();
@@ -354,7 +353,7 @@ std::optional<float> FlexibleBox::firstLineBaseline() const
             continue;
         if(baselineChild == nullptr)
             baselineChild = item.box();
-        if(isHorizontalFlow() && item.alignSelf() == AlignItem::Baseline) {
+        if(item.alignSelf() == AlignItem::Baseline) {
             baselineChild = item.box();
             break;
         }
@@ -375,7 +374,7 @@ std::optional<float> FlexibleBox::lastLineBaseline() const
             continue;
         if(baselineChild == nullptr)
             baselineChild = item.box();
-        if(isHorizontalFlow() && item.alignSelf() == AlignItem::Baseline) {
+        if(item.alignSelf() == AlignItem::Baseline) {
             baselineChild = item.box();
             break;
         }
@@ -796,7 +795,7 @@ void FlexibleBox::layout(FragmentBuilder* fragmentainer)
         float crossAscent = 0;
         float crossDescent = 0;
         for(auto& item : line.items()) {
-            if(item.alignSelf() == AlignItem::Baseline && isHorizontalFlow()) {
+            if(item.alignSelf() == AlignItem::Baseline) {
                 auto ascent = item.marginBoxCrossBaseline();
                 auto descent = item.marginBoxCrossSize() - ascent;
                 crossAscent = std::max(crossAscent, ascent);
@@ -918,6 +917,8 @@ void FlexibleBox::build()
         auto alignSelf = childStyle->alignSelf();
         if(alignSelf == AlignItem::Auto)
             alignSelf = alignItems;
+        if(alignSelf == AlignItem::Baseline && isVerticalFlow())
+            alignSelf = AlignItem::FlexStart;
         m_items.emplace_back(child, order, flexGrow, flexShrink, alignSelf);
     }
 
@@ -989,7 +990,7 @@ void FlexibleBox::alignItem(FlexItem& item, const FlexLine& line, FragmentBuilde
     auto align = item.alignSelf();
     if(align == AlignItem::Stretch)
         stretchItem(item, line, fragmentainer);
-    if(align == AlignItem::Stretch || (align == AlignItem::Baseline && isVerticalFlow()))
+    if(align == AlignItem::Stretch)
         align = AlignItem::FlexStart;
     if(isWrapReverse()) {
         if(align == AlignItem::FlexStart) {
