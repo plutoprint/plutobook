@@ -319,8 +319,8 @@ public:
     float paddingLeft() const { return m_paddingLeft; }
     float paddingRight() const { return m_paddingRight; }
 
-    float paddingWidth() const { return paddingLeft() + paddingRight(); }
-    float paddingHeight() const { return paddingTop() + paddingBottom(); }
+    float paddingWidth() const { return m_paddingLeft + m_paddingRight; }
+    float paddingHeight() const { return m_paddingTop + m_paddingBottom; }
 
     void setPaddingTop(float value) { m_paddingTop = value; }
     void setPaddingBottom(float value) { m_paddingBottom = value; }
@@ -352,20 +352,20 @@ public:
     float marginStart(Direction direction) const { return direction == Direction::Ltr ? m_marginLeft : m_marginRight; }
     float marginEnd(Direction direction) const { return direction == Direction::Ltr ? m_marginRight : m_marginLeft; }
 
+    float paddingStart(Direction direction) const { return direction == Direction::Ltr ? m_paddingLeft : m_paddingRight; }
+    float paddingEnd(Direction direction) const { return direction == Direction::Ltr ? m_paddingRight : m_paddingLeft; }
+
     float borderStart(Direction direction) const { return direction == Direction::Ltr ? borderLeft() : borderRight(); }
     float borderEnd(Direction direction) const { return direction == Direction::Ltr ? borderRight() : borderLeft(); }
-
-    float paddingStart(Direction direction) const { return direction == Direction::Ltr ? paddingLeft() : paddingRight(); }
-    float paddingEnd(Direction direction) const { return direction == Direction::Ltr ? paddingRight() : paddingLeft(); }
 
     float marginStart() const { return marginStart(style()->direction()); }
     float marginEnd() const { return marginEnd(style()->direction()); }
 
-    float borderStart() const { return borderStart(style()->direction()); }
-    float borderEnd() const { return borderEnd(style()->direction()); }
-
     float paddingStart() const { return paddingStart(style()->direction()); }
     float paddingEnd() const { return paddingEnd(style()->direction()); }
+
+    float borderStart() const { return borderStart(style()->direction()); }
+    float borderEnd() const { return borderEnd(style()->direction()); }
 
     void build() override;
 
