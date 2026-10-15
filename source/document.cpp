@@ -96,27 +96,27 @@ void TextNode::appendData(std::string_view data)
     m_data = heap()->concatenateString(m_data, data);
 }
 
-bool TextNode::isHidden(const Box* parent) const
+bool TextNode::shouldCreateBox(const Box* parent) const
 {
     if(m_data.empty())
-        return true;
+        return false;
     for(auto cc : m_data) {
         if(!isSpace(cc)) {
-            return false;
+            return true;
         }
     }
 
     if(parent->isFlexibleBox() || parent->isTableBox()
         || parent->isTableSectionBox() || parent->isTableRowBox()
         || parent->isTableColumnBox()) {
-        return true;
+        return false;
     }
 
     if(parent->style()->preserveNewline())
-        return false;
+        return true;
     if(auto prevBox = previousSiblingBox())
-        return !prevBox->isInline() || prevBox->isLineBreakBox();
-    return !parent->isInlineBox();
+        return prevBox->isInline() && !prevBox->isLineBreakBox();
+    return parent->isInlineBox();
 }
 
 Node* TextNode::cloneNode(bool deep)
@@ -135,10 +135,10 @@ Box* TextNode::createBox(const RefPtr<BoxStyle>& style)
 
 void TextNode::buildBox(Counters& counters, SelectorFilter& selectorFilter, Box* parent)
 {
-    if(isHidden(parent))
-        return;
-    if(auto box = createBox(parent->style())) {
-        parent->addChild(box);
+    if(shouldCreateBox(parent)) {
+        if(auto box = createBox(parent->style())) {
+            parent->addChild(box);
+        }
     }
 }
 

@@ -88,7 +88,7 @@ public:
     void setData(const HeapString& data) { m_data = data; }
     void appendData(std::string_view data);
 
-    bool isHidden(const Box* parent) const;
+    bool shouldCreateBox(const Box* parent) const;
 
     Node* cloneNode(bool deep) final;
     Box* createBox(const RefPtr<BoxStyle>& style) final;
