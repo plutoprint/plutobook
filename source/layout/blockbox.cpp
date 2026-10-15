@@ -482,6 +482,8 @@ void BlockBox::computeHeight(float& y, float& height, float& marginTop, float& m
 
 std::optional<float> BlockBox::firstLineBaseline() const
 {
+    assert(!isChildrenInline());
+
     for(auto child = firstBoxFrame(); child; child = child->nextBoxFrame()) {
         if(child->isFloatingOrPositioned())
             continue;
@@ -495,6 +497,8 @@ std::optional<float> BlockBox::firstLineBaseline() const
 
 std::optional<float> BlockBox::lastLineBaseline() const
 {
+    assert(!isChildrenInline());
+
     for(auto child = lastBoxFrame(); child; child = child->prevBoxFrame()) {
         if(child->isFloatingOrPositioned())
             continue;
@@ -508,6 +512,8 @@ std::optional<float> BlockBox::lastLineBaseline() const
 
 std::optional<float> BlockBox::inlineBlockBaseline() const
 {
+    assert(!isChildrenInline());
+
     for(auto child = lastBoxFrame(); child; child = child->prevBoxFrame()) {
         if(child->isFloatingOrPositioned() || child->isTableBox())
             continue;
