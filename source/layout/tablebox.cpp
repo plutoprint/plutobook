@@ -274,16 +274,24 @@ TableColumnBox* TableBox::columnGroupAt(size_t index) const
 
 TableCaptionBox* TableBox::topCaption() const
 {
-    if(m_captions.empty())
-        return nullptr;
-    return m_captions.front();
+    for(auto caption : m_captions) {
+        if(caption->captionSide() == CaptionSide::Top) {
+            return caption;
+        }
+    }
+
+    return nullptr;
 }
 
 TableCaptionBox* TableBox::bottomCaption() const
 {
-    if(m_captions.empty())
-        return nullptr;
-    return m_captions.back();
+    for(auto caption : m_captions | std::views::reverse) {
+        if(caption->captionSide() == CaptionSide::Bottom) {
+            return caption;
+        }
+    }
+
+    return nullptr;
 }
 
 TableSectionBox* TableBox::headerSection() const
@@ -606,12 +614,16 @@ void TableBox::build()
         caption->setIsFirstInFlowChild(true);
     } else if(auto section = topSection()) {
         section->setIsFirstInFlowChild(true);
+    } else if(auto caption = bottomCaption()) {
+        caption->setIsFirstInFlowChild(true);
     }
 
     if(auto caption = bottomCaption()) {
         caption->setIsLastInFlowChild(true);
     } else if(auto section = bottomSection()) {
         section->setIsLastInFlowChild(true);
+    } else if(auto caption = topCaption()) {
+        caption->setIsLastInFlowChild(true);
     }
 }
 
