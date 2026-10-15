@@ -88,18 +88,6 @@ SVGBoxModel::SVGBoxModel(SVGElement* element, const RefPtr<BoxStyle>& style)
     setIsInline(false);
 }
 
-void SVGBoxModel::layout()
-{
-    m_paintBoundingBox = Rect::Invalid;
-}
-
-void SVGBoxModel::build()
-{
-    m_clipper = element()->getClipper(style()->clipPath());
-    m_masker = element()->getMasker(style()->mask());
-    Box::build();
-}
-
 Rect SVGBoxModel::paintBoundingBox() const
 {
     if(m_paintBoundingBox.isValid())
@@ -113,6 +101,23 @@ Rect SVGBoxModel::paintBoundingBox() const
     }
 
     return m_paintBoundingBox;
+}
+
+void SVGBoxModel::build()
+{
+    m_clipper = element()->getClipper(style()->clipPath());
+    m_masker = element()->getMasker(style()->mask());
+    Box::build();
+}
+
+void SVGBoxModel::layout()
+{
+    m_paintBoundingBox = Rect::Invalid;
+    for(auto child = firstChild(); child; child = child->nextSibling()) {
+        if(auto box = to<SVGBoxModel>(child)) {
+            box->layout();
+        }
+    }
 }
 
 } // namespace plutobook
