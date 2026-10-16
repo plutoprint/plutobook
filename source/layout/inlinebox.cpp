@@ -107,8 +107,8 @@ float InlineBox::innerPaddingBoxWidth() const
     const auto& firstLine = m_lines.front();
     const auto& lastLine = m_lines.back();
     if(style()->isLeftToRightDirection())
-        return lastLine->right() - firstLine->x() - borderLeft() - borderRight();
-    return firstLine->right() - lastLine->x() - borderLeft() - borderRight();
+        return std::max(0.f, lastLine->right() - firstLine->x() - borderLeft() - borderRight());
+    return std::max(0.f, firstLine->right() - lastLine->x() - borderLeft() - borderRight());
 }
 
 float InlineBox::innerPaddingBoxHeight() const
@@ -119,7 +119,7 @@ float InlineBox::innerPaddingBoxHeight() const
 
     const auto& firstLine = m_lines.front();
     const auto& lastLine = m_lines.back();
-    return lastLine->bottom() - firstLine->y() - borderTop() - borderBottom();
+    return std::max(0.f, lastLine->bottom() - firstLine->y() - borderTop() - borderBottom());
 }
 
 void InlineBox::addChild(Box* newChild)
@@ -134,53 +134,41 @@ void InlineBox::addChild(Box* newChild)
         return;
     }
 
-    BlockBox* preBlock = nullptr;
-    BlockBox* middleBlock = nullptr;
-    BlockBox* postBlock = nullptr;
-
     auto container = containingBlock();
-    if(container->isAnonymousBlock()) {
-        preBlock = container;
-        middleBlock = createAnonymousBlock(style());
-        postBlock = createAnonymousBlock(container->style());
+    if(isContinuation() && !firstChild()) {
+        auto prevBlock = container->prevSibling();
+        assert(prevBlock && prevBlock->isContinuation());
+        prevBlock->addChild(newChild);
+        return;
+    }
 
+    auto preBlock = container;
+    if(container->isAnonymousBlock()) {
         container = container->containingBlock();
         assert(container->lastChild() == preBlock);
-        container->appendChild(middleBlock);
-        container->appendChild(postBlock);
     } else {
         preBlock = createAnonymousBlock(container->style());
-        middleBlock = createAnonymousBlock(style());
-        postBlock = createAnonymousBlock(container->style());
-
         container->moveChildrenTo(preBlock);
         preBlock->setIsChildrenInline(container->isChildrenInline());
         container->setIsChildrenInline(false);
-
         container->appendChild(preBlock);
-        container->appendChild(middleBlock);
-        container->appendChild(postBlock);
     }
 
+    auto middleBlock = createAnonymousBlock(style());
+    middleBlock->setIsContinuation(true);
+    container->appendChild(middleBlock);
     middleBlock->addChild(newChild);
 
-    auto clone = new (heap()) InlineBox(nullptr, style());
-    auto currentParent = parentBox();
-    auto currentClone = clone;
-    while(currentParent != preBlock) {
-        auto parentClone = new (heap()) InlineBox(nullptr, currentParent->style());
-        parentClone->appendChild(currentClone);
-        currentClone = parentClone;
-
-        auto parent = to<InlineBox>(currentParent);
-        assert(parent && !parent->continuation());
-        parent->setContinuation(parentClone);
-
-        currentParent = currentParent->parentBox();
+    auto continuation = createContinuation();
+    for(auto parent = parentBox(); parent != preBlock; parent = parent->parentBox()) {
+        auto parentContinuation = to<InlineBox>(*parent).createContinuation();
+        parentContinuation->appendChild(continuation);
+        continuation = parentContinuation;
     }
 
-    postBlock->appendChild(currentClone);
-    setContinuation(clone);
+    auto postBlock = createAnonymousBlock(container->style());
+    container->appendChild(postBlock);
+    postBlock->appendChild(continuation);
 }
 
 void InlineBox::paint(const PaintInfo& info, const Point& offset, PaintPhase phase)
@@ -190,6 +178,14 @@ void InlineBox::paint(const PaintInfo& info, const Point& offset, PaintPhase pha
             line->paint(info, offset, phase);
         }
     }
+}
+
+InlineBox* InlineBox::createContinuation()
+{
+    assert(m_continuation == nullptr);
+    m_continuation = new (heap()) InlineBox(nullptr, style());
+    m_continuation->setIsContinuation(true);
+    return m_continuation;
 }
 
 } // namespace plutobook

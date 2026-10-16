@@ -880,9 +880,12 @@ void LineBreaker::handleInlineStart(const LineItem& item)
     box.updatePaddingWidths(m_block->availableWidth());
 
     auto& run = addItemRun(item);
-    run.width += box.marginLeft();
-    run.width += box.paddingLeft();
-    run.width += box.borderLeft();
+    if(!box.isContinuation()) {
+        run.width += box.marginStart();
+        run.width += box.paddingStart();
+        run.width += box.borderStart();
+    }
+
     if(run.width && m_line.isEmptyLine()) {
         m_line.setIsEmptyLine(false);
     }
@@ -910,9 +913,12 @@ void LineBreaker::handleInlineEnd(const LineItem& item)
 {
     const auto& box = to<InlineBox>(*item.box());
     auto& run = addItemRun(item);
-    run.width += box.marginRight();
-    run.width += box.paddingRight();
-    run.width += box.borderRight();
+    if(!box.continuation()) {
+        run.width += box.marginEnd();
+        run.width += box.paddingEnd();
+        run.width += box.borderEnd();
+    }
+
     if(run.width && m_line.isEmptyLine()) {
         m_line.setIsEmptyLine(false);
     }
@@ -1371,7 +1377,8 @@ void LineBuilder::buildLine(const LineInfo& info)
             break;
         case LineItem::Type::InlineStart:
         case LineItem::Type::InlineEnd:
-            handleInline(run);
+            if(!info.isEmptyLine())
+                handleInline(run);
             break;
         case LineItem::Type::Replaced:
         case LineItem::Type::Positioned:
@@ -1379,31 +1386,6 @@ void LineBuilder::buildLine(const LineInfo& info)
             break;
         default:
             break;
-        }
-    }
-
-    if(!info.isEmptyLine()) {
-        for(const auto& run : info.runs()) {
-            if(run.item.type() == LineItem::Type::InlineStart
-                || run.item.type() == LineItem::Type::InlineEnd) {
-                const auto& box = to<InlineBox>(*run.item.box());
-                const auto& lines = box.lines();
-                if(run.item.type() == LineItem::Type::InlineStart) {
-                    const auto& firstLine = lines.front();
-                    if(box.style()->direction() == Direction::Ltr) {
-                        firstLine->setHasLeftEdge(true);
-                    } else {
-                        firstLine->setHasRightEdge(true);
-                    }
-                } else {
-                    const auto& lastLine = lines.back();
-                    if(box.style()->direction() == Direction::Ltr) {
-                        lastLine->setHasRightEdge(true);
-                    } else {
-                        lastLine->setHasLeftEdge(true);
-                    }
-                }
-            }
         }
     }
 
@@ -1421,7 +1403,7 @@ void LineBuilder::buildLine(const LineInfo& info)
     }
 }
 
-static bool needsLineBox(const InlineBox* box, size_t lineIndex)
+static bool needsLineBox(const InlineBox* box, uint32_t lineIndex)
 {
     const auto& lines = box->lines();
     if(!lines.empty()) {
@@ -1498,11 +1480,32 @@ void LineBuilder::handleText(const LineItemRun& run)
 void LineBuilder::handleInline(const LineItemRun& run)
 {
     auto box = to<InlineBox>(run.item.box());
-    if(!needsLineBox(box, m_lineIndex))
-        return;
-    auto line = FlowLineBox::create(box);
-    addLineBox(line.get());
-    box->lines().push_back(std::move(line));
+    if(needsLineBox(box, m_lineIndex)) {
+        auto line = FlowLineBox::create(box);
+        addLineBox(line.get());
+        box->lines().push_back(std::move(line));
+    }
+
+    const auto& lines = box->lines();
+    if(run.item.type() == LineItem::Type::InlineStart) {
+        if(box->isContinuation())
+            return;
+        const auto& firstLine = lines.front();
+        if(box->style()->direction() == Direction::Ltr) {
+            firstLine->setHasLeftEdge(true);
+        } else {
+            firstLine->setHasRightEdge(true);
+        }
+    } else {
+        if(box->continuation())
+            return;
+        const auto& lastLine = lines.back();
+        if(box->style()->direction() == Direction::Ltr) {
+            lastLine->setHasRightEdge(true);
+        } else {
+            lastLine->setHasLeftEdge(true);
+        }
+    }
 }
 
 void LineBuilder::handleReplaced(const LineItemRun& run)
@@ -1598,12 +1601,18 @@ void LineLayout::computeIntrinsicWidths(float& minWidth, float& maxWidth) const
             if(item.type() == LineItem::Type::InlineStart) {
                 child.updateHorizontalMargins(0.f);
                 child.updateHorizontalPaddings(0.f);
-                inlineMinWidth += child.marginLeft() + child.paddingLeft() + child.borderLeft();
-                inlineMaxWidth += child.marginLeft() + child.paddingLeft() + child.borderLeft();
+                if(!child.isContinuation()) {
+                    inlineMinWidth += child.marginStart() + child.paddingStart() + child.borderStart();
+                    inlineMaxWidth += child.marginStart() + child.paddingStart() + child.borderStart();
+                }
+
                 currentStyle = child.style();
             } else {
-                inlineMinWidth += child.marginRight() + child.paddingRight() + child.borderRight();
-                inlineMaxWidth += child.marginRight() + child.paddingRight() + child.borderRight();
+                if(!child.continuation()) {
+                    inlineMinWidth += child.marginEnd() + child.paddingEnd() + child.borderEnd();
+                    inlineMaxWidth += child.marginEnd() + child.paddingEnd() + child.borderEnd();
+                }
+
                 currentStyle = child.parentBox()->style();
             }
         } else if(item.type() == LineItem::Type::Floating || item.type() == LineItem::Type::Replaced) {

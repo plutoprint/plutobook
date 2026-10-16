@@ -38,15 +38,14 @@ public:
 
     const FlowLineBoxList& lines() const { return m_lines; }
     FlowLineBoxList& lines() { return m_lines; }
-
     InlineBox* continuation() const { return m_continuation; }
-    void setContinuation(InlineBox* continuation) { m_continuation = continuation; }
 
     void paint(const PaintInfo& info, const Point& offset, PaintPhase phase) override;
 
     const char* name() const override { return "InlineBox"; }
 
 private:
+    InlineBox* createContinuation();
     FlowLineBoxList m_lines;
     InlineBox* m_continuation{nullptr};
 };
