@@ -525,15 +525,6 @@ std::optional<float> BlockBox::inlineBlockBaseline() const
     return std::nullopt;
 }
 
-void BlockBox::paintContents(const PaintInfo& info, const Point& offset, PaintPhase phase)
-{
-    for(auto child = firstBoxFrame(); child; child = child->nextBoxFrame()) {
-        if(!child->isFloating() && !child->hasLayer()) {
-            child->paint(info, offset, phase);
-        }
-    }
-}
-
 void BlockBox::paint(const PaintInfo& info, const Point& offset, PaintPhase phase)
 {
     Point adjustedOffset(offset + location());
@@ -1695,7 +1686,6 @@ void BlockFlowBox::build()
         m_columnFlowBox = columnFlowBox;
     }
 
-    BlockBox::build();
     if(isChildrenInline()) {
         m_lineLayout = LineLayout::create(this);
         m_lineLayout->build();
@@ -1714,36 +1704,37 @@ void BlockFlowBox::build()
             }
         }
     }
-}
 
-void BlockFlowBox::paintFloats(const PaintInfo& info, const Point& offset)
-{
-    if(m_floatingBoxes == nullptr)
-        return;
-    for(const auto& item : *m_floatingBoxes) {
-        auto child = item.box();
-        if(!item.isIntruding() && !child->hasLayer()) {
-            Point adjustedOffset = {
-                offset.x + item.x() - child->x() + child->marginLeft(),
-                offset.y + item.y() - child->y() + child->marginTop()
-            };
-
-            child->paint(info, adjustedOffset, PaintPhase::Decorations);
-            child->paint(info, adjustedOffset, PaintPhase::Floats);
-            child->paint(info, adjustedOffset, PaintPhase::Contents);
-            child->paint(info, adjustedOffset, PaintPhase::Outlines);
-        }
-    }
+    BlockBox::build();
 }
 
 void BlockFlowBox::paintContents(const PaintInfo& info, const Point& offset, PaintPhase phase)
 {
-    if(isChildrenInline())
+    if(isChildrenInline()) {
         m_lineLayout->paint(info, offset, phase);
-    else
-        BlockBox::paintContents(info, offset, phase);
-    if(phase == PaintPhase::Floats) {
-        paintFloats(info, offset);
+    } else {
+        for(auto child = firstBoxFrame(); child; child = child->nextBoxFrame()) {
+            if(!child->isFloating() && !child->hasLayer()) {
+                child->paint(info, offset, phase);
+            }
+        }
+    }
+
+    if(phase == PaintPhase::Floats && containsFloats()) {
+        for(const auto& item : *m_floatingBoxes) {
+            auto child = item.box();
+            if(!item.isIntruding() && !child->hasLayer()) {
+                Point adjustedOffset = {
+                    offset.x + item.x() - child->x() + child->marginLeft(),
+                    offset.y + item.y() - child->y() + child->marginTop()
+                };
+
+                child->paint(info, adjustedOffset, PaintPhase::Decorations);
+                child->paint(info, adjustedOffset, PaintPhase::Floats);
+                child->paint(info, adjustedOffset, PaintPhase::Contents);
+                child->paint(info, adjustedOffset, PaintPhase::Outlines);
+            }
+        }
     }
 }
 

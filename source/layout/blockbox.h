@@ -69,7 +69,7 @@ public:
     std::optional<float> lastLineBaseline() const override;
     std::optional<float> inlineBlockBaseline() const override;
 
-    virtual void paintContents(const PaintInfo& info, const Point& offset, PaintPhase phase);
+    virtual void paintContents(const PaintInfo& info, const Point& offset, PaintPhase phase) = 0;
     void paint(const PaintInfo& info, const Point& offset, PaintPhase phase) override;
 
     const char* name() const override { return "BlockBox"; }
@@ -224,10 +224,8 @@ public:
 
     void layoutContents(FragmentBuilder* fragmentainer, float verticalShift);
     void layout(FragmentBuilder* fragmentainer) override;
-
     void build() override;
 
-    void paintFloats(const PaintInfo& info, const Point& offset);
     void paintContents(const PaintInfo& info, const Point& offset, PaintPhase phase) override;
     void serializeChildren(std::ostream& o, int indent) const override;
 
