@@ -54,16 +54,15 @@ public:
     bool isSelectBox() const final { return true; }
 
     HTMLSelectElement* element() const;
-    uint32_t size() const { return m_size; }
-
     std::optional<float> inlineBlockBaseline() const final;
+    uint32_t size() const { return m_size; }
 
     void addChild(Box* newChild) final;
     void updateOverflowRect() final;
     void computeIntrinsicWidths(float& minWidth, float& maxWidth) const final;
-    void computeHeight(float& y, float& height, float& marginTop, float& marginBottom) const final;
     void paintContents(const PaintInfo& info, const Point& offset, PaintPhase phase) final;
     void layout(FragmentBuilder* fragmentainer) final;
+    void build() final;
 
     const char* name() const final { return "SelectBox"; }
 

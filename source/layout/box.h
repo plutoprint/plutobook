@@ -169,6 +169,7 @@ public:
     bool isTableFooter() const { return m_isTableFooter; }
     bool isColumnSpanner() const { return m_isColumnSpanner; }
     bool isListMarker() const { return m_isListMarker; }
+    bool isSelectItem() const { return m_isSelectItem; }
     bool isFlexItem() const { return m_isFlexItem; }
 
     void setIsAnonymous(bool value) { m_isAnonymous = value; }
@@ -186,6 +187,7 @@ public:
     void setIsTableFooter(bool value) { m_isTableFooter = value; }
     void setIsColumnSpanner(bool value) { m_isColumnSpanner = value; }
     void setIsListMarker(bool value) { m_isListMarker = value; }
+    void setIsSelectItem(bool value) { m_isSelectItem = value; }
     void setIsFlexItem(bool value) { m_isFlexItem = value; }
 
     bool hasColumnFlowBox() const { return m_hasColumnFlowBox; }
@@ -245,6 +247,7 @@ private:
     bool m_isTableHeader : 1 {false};
     bool m_isTableFooter : 1 {false};
     bool m_isListMarker : 1 {false};
+    bool m_isSelectItem : 1 {false};
     bool m_isFlexItem : 1 {false};
     bool m_isFirstInFlowChild : 1 {false};
     bool m_isLastInFlowChild : 1 {false};

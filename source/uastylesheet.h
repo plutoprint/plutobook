@@ -527,6 +527,7 @@ optgroup > option::before {
 
 select {
     background-color: lightgray;
+    overflow: hidden;
 }
 
 input, select, button, textarea {
