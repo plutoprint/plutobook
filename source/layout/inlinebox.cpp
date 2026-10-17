@@ -154,17 +154,24 @@ void InlineBox::addChild(Box* newChild)
         container->appendChild(preBlock);
     }
 
-    auto middleBlock = createAnonymousBlock(style());
-    middleBlock->setIsContinuation(true);
-    container->appendChild(middleBlock);
-    middleBlock->addChild(newChild);
+    auto isRelative = isRelativePositioned();
 
     auto continuation = createContinuation();
     for(auto parent = parentBox(); parent != preBlock; parent = parent->parentBox()) {
         auto parentContinuation = to<InlineBox>(*parent).createContinuation();
         parentContinuation->appendChild(continuation);
         continuation = parentContinuation;
+        isRelative |= parent->isRelativePositioned();
     }
+
+    auto middleBlock = createAnonymousBlock(style());
+    middleBlock->setIsContinuation(true);
+    if(isRelative) {
+        middleBlock->style()->setPosition(Position::Relative);
+    }
+
+    container->appendChild(middleBlock);
+    middleBlock->addChild(newChild);
 
     auto postBlock = createAnonymousBlock(container->style());
     container->appendChild(postBlock);

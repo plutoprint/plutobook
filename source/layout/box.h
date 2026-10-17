@@ -287,8 +287,6 @@ public:
     void paintLayer(GraphicsContext& context, const Rect& rect);
     void updateLayerPosition();
 
-    float relativePositionOffsetX() const;
-    float relativePositionOffsetY() const;
     Point relativePositionOffset() const;
 
     float containingBlockWidthForPositioned(const BoxModel* container) const;
