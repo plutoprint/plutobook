@@ -25,9 +25,9 @@ public:
     void computePreferredWidths(float& minPreferredWidth, float& maxPreferredWidth) const override;
 
     const PositionedBoxList* positionedBoxes() const { return m_positionedBoxes.get(); }
-    bool containsPositonedBoxes() const { return m_positionedBoxes && !m_positionedBoxes->empty(); }
+    bool containsPositionedBoxes() const { return m_positionedBoxes && !m_positionedBoxes->empty(); }
 
-    void insertPositonedBox(BoxFrame* box);
+    void insertPositionedBox(BoxFrame* box);
     void layoutPositionedBoxes();
 
     float leftOffsetForContent() const { return borderLeft() + paddingLeft(); }

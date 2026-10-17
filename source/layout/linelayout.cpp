@@ -1512,7 +1512,7 @@ void LineBuilder::handleReplaced(const LineItemRun& run)
 {
     auto box = to<BoxFrame>(run.item.box());
     if(box->isPositioned())
-        box->containingBlock()->insertPositonedBox(box);
+        box->containingBlock()->insertPositionedBox(box);
     if(box->isOutsideListMarkerBox())
         box->layout(nullptr);
     auto line = ReplacedLineBox::create(box);

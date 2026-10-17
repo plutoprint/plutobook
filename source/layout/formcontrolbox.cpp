@@ -130,7 +130,7 @@ void SelectBox::layout(FragmentBuilder* fragmentainer)
             auto childLayer = child->layer();
             childLayer->setStaticTop(optionTop);
             childLayer->setStaticLeft(startOffsetForContent());
-            child->containingBlock()->insertPositonedBox(child);
+            child->containingBlock()->insertPositionedBox(child);
             continue;
         }
 

@@ -49,7 +49,7 @@ void BlockBox::computePreferredWidths(float& minPreferredWidth, float& maxPrefer
     maxPreferredWidth += borderAndPaddingWidth();
 }
 
-void BlockBox::insertPositonedBox(BoxFrame* box)
+void BlockBox::insertPositionedBox(BoxFrame* box)
 {
     if(m_positionedBoxes == nullptr)
         m_positionedBoxes = std::make_unique<PositionedBoxList>(heap());
@@ -1599,7 +1599,7 @@ void BlockFlowBox::layoutBlockChildren(FragmentBuilder* fragmentainer)
     MarginInfo marginInfo(this, top, bottom);
     for(auto child = firstBoxFrame(); child; child = child->nextBoxFrame()) {
         if(child->isPositioned()) {
-            child->containingBlock()->insertPositonedBox(child);
+            child->containingBlock()->insertPositionedBox(child);
             adjustPositionedBox(child, marginInfo);
         } else if(child->isFloating()) {
             insertFloatingBox(child);
