@@ -586,8 +586,8 @@ void MultiColumnFlowBox::build()
                 currentRow = newRow;
             }
 
-            if(child->firstChild() && !child->isFloatingOrPositioned() && child->isBlockFlowBox()
-                && !child->isChildrenInline() && !child->style()->hasColumns()) {
+            if(child->firstChild() && !child->isInline() && !child->isFloatingOrPositioned()
+                && child->isBlockFlowBox() && !child->isChildrenInline() && !child->style()->hasColumns()) {
                 child = child->firstChild();
                 continue;
             }
