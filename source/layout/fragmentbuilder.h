@@ -56,7 +56,7 @@ public:
     bool avoidsBreakInside(BreakInside inside) const;
 
 private:
-    int64_t m_fragmentOffset = 0;
+    double m_fragmentOffset = 0;
 };
 
 } // namespace plutobook

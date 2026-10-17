@@ -9,8 +9,6 @@
 #include "fragmentbuilder.h"
 #include "geometry.h"
 
-#include <cmath>
-
 namespace plutobook {
 
 float FragmentBuilder::applyFragmentBreakBefore(const BoxFrame* child, float offset)
@@ -67,21 +65,19 @@ float FragmentBuilder::adjustOffsetInFragmentFlow(float offset, float height, fl
     return offset;
 }
 
-constexpr double kFragmentFixedScale = 65536;
-
 void FragmentBuilder::enterFragment(float offset)
 {
-    m_fragmentOffset += llround(offset * kFragmentFixedScale);
+    m_fragmentOffset += offset;
 }
 
 void FragmentBuilder::leaveFragment(float offset)
 {
-    m_fragmentOffset -= llround(offset * kFragmentFixedScale);
+    m_fragmentOffset -= offset;
 }
 
 float FragmentBuilder::fragmentOffset() const
 {
-    return m_fragmentOffset / kFragmentFixedScale;
+    return m_fragmentOffset;
 }
 
 static bool isBreakPropagatingContainer(const Box* box)
