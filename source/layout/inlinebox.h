@@ -38,7 +38,9 @@ public:
 
     const FlowLineBoxList& lines() const { return m_lines; }
     FlowLineBoxList& lines() { return m_lines; }
+
     InlineBox* continuation() const { return m_continuation; }
+    bool hasContinuation() const { return m_continuation != nullptr; }
 
     void paint(const PaintInfo& info, const Point& offset, PaintPhase phase) override;
 

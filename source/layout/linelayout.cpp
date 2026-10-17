@@ -913,7 +913,7 @@ void LineBreaker::handleInlineEnd(const LineItem& item)
 {
     const auto& box = to<InlineBox>(*item.box());
     auto& run = addItemRun(item);
-    if(!box.continuation()) {
+    if(!box.hasContinuation()) {
         run.width += box.marginEnd();
         run.width += box.paddingEnd();
         run.width += box.borderEnd();
@@ -1497,7 +1497,7 @@ void LineBuilder::handleInline(const LineItemRun& run)
             firstLine->setHasRightEdge(true);
         }
     } else {
-        if(box->continuation())
+        if(box->hasContinuation())
             return;
         const auto& lastLine = lines.back();
         if(box->style()->direction() == Direction::Ltr) {
@@ -1608,7 +1608,7 @@ void LineLayout::computeIntrinsicWidths(float& minWidth, float& maxWidth) const
 
                 currentStyle = child.style();
             } else {
-                if(!child.continuation()) {
+                if(!child.hasContinuation()) {
                     inlineMinWidth += child.marginEnd() + child.paddingEnd() + child.borderEnd();
                     inlineMaxWidth += child.marginEnd() + child.paddingEnd() + child.borderEnd();
                 }
