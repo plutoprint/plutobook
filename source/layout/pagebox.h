@@ -43,7 +43,7 @@ public:
     void computeHeight(float& y, float& height, float& marginTop, float& marginBottom) const final;
     void layout(FragmentBuilder* fragmentainer) final;
 
-    void paintRootBackground(const PaintInfo& info) const final;
+    void paintDecorations(const PaintInfo& info, const Point& offset) final;
     void paintContents(const PaintInfo& info, const Point& offset, PaintPhase phase) final;
 
     const char* name() const final { return "PageBox"; }

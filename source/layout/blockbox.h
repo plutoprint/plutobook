@@ -70,6 +70,7 @@ public:
     std::optional<float> inlineBlockBaseline() const override;
 
     virtual void paintContents(const PaintInfo& info, const Point& offset, PaintPhase phase) = 0;
+    void paintLayerDecorations(const PaintInfo& info, const Point& offset) override;
     void paint(const PaintInfo& info, const Point& offset, PaintPhase phase) override;
 
     const char* name() const override { return "BlockBox"; }

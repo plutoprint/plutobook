@@ -25,7 +25,7 @@ public:
     BoxStyle* backgroundStyle() const { return m_backgroundStyle; }
     Rect backgroundRect() const;
 
-    void paintRootBackground(const PaintInfo& info) const final;
+    void paintLayerDecorations(const PaintInfo& info, const Point& offset) final;
 
     void setCurrentPage(PageBox* page) { m_currentPage = page; }
     PageBox* currentPage() const { return m_currentPage; }

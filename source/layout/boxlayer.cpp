@@ -161,18 +161,18 @@ void BoxLayer::paintLayerContents(BoxLayer* rootLayer, GraphicsContext& context,
         context.pushGroup();
     }
 
-    PaintInfo paintInfo(context, rect);
-    m_box->paintRootBackground(paintInfo);
-    for(auto child : m_children) {
-        if(child->zIndex() < 0) {
-            child->paintLayer(rootLayer, context, rect);
-        }
-    }
-
     Point adjustedOffset(offset);
     if(m_box->isBoxFrame() && !m_box->isPageBox()) {
         const auto& box = to<BoxFrame>(*m_box);
         adjustedOffset.translate(-box.location());
+    }
+
+    PaintInfo paintInfo(context, rect);
+    m_box->paintLayerDecorations(paintInfo, adjustedOffset);
+    for(auto child : m_children) {
+        if(child->zIndex() < 0) {
+            child->paintLayer(rootLayer, context, rect);
+        }
     }
 
     m_box->paint(paintInfo, adjustedOffset, PaintPhase::Decorations);
@@ -225,7 +225,7 @@ BoxLayer::BoxLayer(BoxModel* box, BoxLayer* parent)
     : m_box(box)
     , m_parent(parent)
     , m_children(box->heap())
-    , m_zIndex(box->style()->zIndex().value_or(0))
+    , m_zIndex(box->style()->zIndex())
     , m_opacity(box->style()->opacity())
 {
     if(parent) {

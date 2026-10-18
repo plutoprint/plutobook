@@ -271,11 +271,10 @@ public:
     void paintBackgroundStyle(const PaintInfo& info, const Rect& borderRect, const BoxStyle* backgroundStyle, bool includeLeftEdge = true, bool includeRightEdge = true) const;
     void paintBackground(const PaintInfo& info, const Rect& borderRect, bool includeLeftEdge = true, bool includeRightEdge = true) const;
 
-    virtual void paintRootBackground(const PaintInfo& info) const {}
-
     void paintBorder(const PaintInfo& info, const Rect& borderRect, bool includeLeftEdge = true, bool includeRightEdge = true) const;
     void paintOutline(const PaintInfo& info, const Rect& borderRect) const;
 
+    virtual void paintLayerDecorations(const PaintInfo& info, const Point& offset) {}
     virtual void paint(const PaintInfo& info, const Point& offset, PaintPhase phase);
 
     virtual Rect visualOverflowRect() const = 0;

@@ -24,7 +24,7 @@ Rect BoxView::backgroundRect() const
     return Rect(0, 0, document()->width(), document()->height());
 }
 
-void BoxView::paintRootBackground(const PaintInfo& info) const
+void BoxView::paintLayerDecorations(const PaintInfo& info, const Point& offset)
 {
     if(m_backgroundStyle) {
         paintBackgroundStyle(info, backgroundRect(), m_backgroundStyle);

@@ -1084,6 +1084,7 @@ void Document::buildBox(Counters& counters, SelectorFilter& selectorFilter, Box*
     auto rootStyle = BoxStyle::create(this, nullptr, PseudoType::None, Display::Block);
     rootStyle->setPosition(Position::Absolute);
     rootStyle->setFontDescription(FontDescription());
+    rootStyle->setIsStackingContext(true);
 
     auto rootBox = createBox(rootStyle);
     counters.push();

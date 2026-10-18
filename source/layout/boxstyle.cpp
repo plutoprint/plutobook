@@ -651,14 +651,6 @@ float BoxStyle::tabWidth(float spaceWidth) const
     return convertLengthValue(length);
 }
 
-std::optional<int> BoxStyle::zIndex() const
-{
-    auto value = get(CSSPropertyID::ZIndex);
-    if(value == nullptr)
-        return std::nullopt;
-    return convertIntegerOrAuto(*value);
-}
-
 VerticalAlign BoxStyle::verticalAlign() const
 {
     if(m_verticalAlignType == VerticalAlignType::Length) {
@@ -681,6 +673,23 @@ LengthBox BoxStyle::clip() const
     auto top = convertLengthOrPercentOrAuto(*rect.top());
     auto bottom = convertLengthOrPercentOrAuto(*rect.bottom());
     return LengthBox(left, right, top, bottom);
+}
+
+bool BoxStyle::hasZIndex() const
+{
+    auto value = get(CSSPropertyID::ZIndex);
+    return value && value->id() != CSSValueID::Auto;
+}
+
+int BoxStyle::zIndex() const
+{
+    if(m_hasEffectiveZIndex && m_isStackingContext) {
+        if(auto value = get(CSSPropertyID::ZIndex))
+            return convertInteger(*value);
+        assert(false);
+    }
+
+    return 0;
 }
 
 Length BoxStyle::flexBasis() const

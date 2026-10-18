@@ -525,6 +525,16 @@ std::optional<float> BlockBox::inlineBlockBaseline() const
     return std::nullopt;
 }
 
+void BlockBox::paintLayerDecorations(const PaintInfo& info, const Point& offset)
+{
+    Point adjustedOffset(offset + location());
+    if(!info.shouldPaintBox(this, adjustedOffset))
+        return;
+    if(style()->visibility() == Visibility::Visible && style()->isStackingContext()) {
+        paintDecorations(info, adjustedOffset);
+    }
+}
+
 void BlockBox::paint(const PaintInfo& info, const Point& offset, PaintPhase phase)
 {
     Point adjustedOffset(offset + location());
@@ -532,7 +542,7 @@ void BlockBox::paint(const PaintInfo& info, const Point& offset, PaintPhase phas
         return;
     }
 
-    if(phase == PaintPhase::Decorations && style()->visibility() == Visibility::Visible)
+    if(phase == PaintPhase::Decorations && style()->visibility() == Visibility::Visible && !style()->isStackingContext())
         paintDecorations(info, adjustedOffset);
     paintContents(info, adjustedOffset, phase);
     if(phase == PaintPhase::Outlines && style()->visibility() == Visibility::Visible) {

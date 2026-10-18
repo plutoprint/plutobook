@@ -655,8 +655,6 @@ RefPtr<BoxStyle> ElementStyleBuilder::build()
     buildStyle(newStyle.get());
     if(newStyle->display() == Display::None)
         return newStyle;
-    if(newStyle->position() == Position::Static && !m_parentStyle->isDisplayFlex())
-        newStyle->reset(CSSPropertyID::ZIndex);
     if(m_pseudoType == PseudoType::FirstLetter) {
         newStyle->setPosition(Position::Static);
         if(newStyle->isFloating()) {
@@ -664,6 +662,13 @@ RefPtr<BoxStyle> ElementStyleBuilder::build()
         } else {
             newStyle->setDisplay(Display::Inline);
         }
+    }
+
+    if(newStyle->hasZIndex() && (newStyle->position() != Position::Static || m_parentStyle->isDisplayFlex()))
+        newStyle->setHasEffectiveZIndex(true);
+    if(newStyle->hasEffectiveZIndex() || m_element->isRootNode() || newStyle->position() == Position::Fixed
+        || newStyle->hasBlendMode() || newStyle->hasTransform() || newStyle->hasOpacity()) {
+        newStyle->setIsStackingContext(true);
     }
 
     if(newStyle->isFloating() || newStyle->isPositioned() || m_element->isRootNode() || m_parentStyle->isDisplayFlex()) {
@@ -818,6 +823,9 @@ RefPtr<BoxStyle> PageStyleBuilder::build()
     newStyle->setPosition(Position::Static);
     newStyle->setDisplay(Display::Block);
     newStyle->setFloating(Float::None);
+    if(m_marginType != PageMarginType::None && newStyle->hasZIndex())
+        newStyle->setHasEffectiveZIndex(true);
+    newStyle->setIsStackingContext(true);
     return newStyle;
 }
 

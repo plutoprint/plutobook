@@ -431,9 +431,10 @@ void PageBox::layout(FragmentBuilder* fragmentainer)
     updateLayerPosition();
 }
 
-void PageBox::paintRootBackground(const PaintInfo& info) const
+void PageBox::paintDecorations(const PaintInfo& info, const Point& offset)
 {
     paintBackgroundStyle(info, pageRect(), style());
+    paintBorder(info, Rect(offset, size()));
 }
 
 void PageBox::paintContents(const PaintInfo& info, const Point& offset, PaintPhase phase)
@@ -458,7 +459,6 @@ PageBox::PageBox(const RefPtr<BoxStyle>& style, const GlobalString& pageName, ui
     , m_pageHeight(pageHeight)
     , m_pageScale(pageScale)
 {
-    setIsBackgroundStolen(true);
 }
 
 PageMarginBox::PageMarginBox(const RefPtr<BoxStyle>& style, PageMarginType marginType)

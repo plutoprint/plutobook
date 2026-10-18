@@ -822,9 +822,18 @@ public:
     BlendMode blendMode() const { return m_blendMode; }
     MaskType maskType() const { return m_maskType; }
     Overflow overflow() const { return m_overflow; }
-    std::optional<int> zIndex() const;
     VerticalAlign verticalAlign() const;
     LengthBox clip() const;
+
+    bool hasZIndex() const;
+
+    bool hasEffectiveZIndex() const { return m_hasEffectiveZIndex; }
+    void setHasEffectiveZIndex(bool value) { m_hasEffectiveZIndex = value; }
+
+    bool isStackingContext() const { return m_isStackingContext; }
+    void setIsStackingContext(bool value) { m_isStackingContext = value; }
+
+    int zIndex() const;
 
     Length flexBasis() const;
     float flexGrow() const;
@@ -1114,6 +1123,9 @@ private:
     FillRule m_clipRule : 1 {FillRule::NonZero};
     ColumnSpan m_columnSpan : 1 {ColumnSpan::None};
     ColumnFill m_columnFill : 1 {ColumnFill::Balance};
+
+    bool m_hasEffectiveZIndex : 1 {false};
+    bool m_isStackingContext : 1 {false};
 
     Color m_color{Color::Black};
     Length m_lineHeight{Length::Auto};

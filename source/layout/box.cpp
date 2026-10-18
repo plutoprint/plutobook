@@ -850,8 +850,7 @@ BoxFrame::BoxFrame(Node* node, const RefPtr<BoxStyle>& style)
 
 bool BoxFrame::requiresLayer() const
 {
-    return isPositioned() || isRelativePositioned() || isOverflowHidden() || hasTransform() || hasColumnFlowBox()
-        || style()->hasOpacity() || style()->hasBlendMode() || style()->zIndex();
+    return isPositioned() || isRelativePositioned() || isOverflowHidden() || hasColumnFlowBox() || style()->isStackingContext();
 }
 
 bool BoxFrame::isStretchedFlexItem(bool isRowDirection) const
