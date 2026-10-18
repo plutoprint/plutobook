@@ -548,33 +548,23 @@ float BoxStyle::borderVerticalSpacing() const
     return convertLengthValue(*value);
 }
 
-constexpr TextDecorationLine operator|(TextDecorationLine a, TextDecorationLine b)
-{
-    return static_cast<TextDecorationLine>(static_cast<int>(a) | static_cast<int>(b));
-}
-
-constexpr TextDecorationLine& operator|=(TextDecorationLine& a, TextDecorationLine b)
-{
-    return a = a | b;
-}
-
 TextDecorationLine BoxStyle::textDecorationLine() const
 {
     auto value = get(CSSPropertyID::TextDecorationLine);
     if(value == nullptr || value->id() == CSSValueID::None)
-        return TextDecorationLine::None;
-    TextDecorationLine decorations = TextDecorationLine::None;
+        return TextDecorationLine();
+    TextDecorationLine decorations;
     for(const auto& decoration : to<CSSListValue>(*value)) {
         const auto& ident = to<CSSIdentValue>(*decoration);
         switch(ident.value()) {
         case CSSValueID::Underline:
-            decorations |= TextDecorationLine::Underline;
+            decorations.add(TextDecorationLine::Underline);
             break;
         case CSSValueID::Overline:
-            decorations |= TextDecorationLine::Overline;
+            decorations.add(TextDecorationLine::Overline);
             break;
         case CSSValueID::LineThrough:
-            decorations |= TextDecorationLine::LineThrough;
+            decorations.add(TextDecorationLine::LineThrough);
             break;
         default:
             assert(false);

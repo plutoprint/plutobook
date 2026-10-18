@@ -173,22 +173,22 @@ static void paintTextDecoration(GraphicsContext& context, const Point& origin, f
 static void paintTextDecorations(GraphicsContext& context, const Point& offset, float width, const BoxStyle* style)
 {
     auto decorations = style->textDecorationLine();
-    if(decorations == TextDecorationLine::None)
+    if(decorations.isEmpty())
         return;
     auto baseline = style->fontAscent();
     auto thickness = style->fontSize() / 16.f;
     auto doubleOffset = thickness + 1.f;
     auto decorationStyle = style->textDecorationStyle();
     context.setColor(style->textDecorationColor());
-    if(decorations & TextDecorationLine::Underline) {
+    if(decorations.contains(TextDecorationLine::Underline)) {
         auto gap = std::max(1.f, std::ceil(thickness / 2.f));
         Point origin(offset.x, offset.y + baseline + gap);
         paintTextDecoration(context, origin, width, thickness, doubleOffset, 0, decorationStyle);
     }
 
-    if(decorations & TextDecorationLine::Overline)
+    if(decorations.contains(TextDecorationLine::Overline))
         paintTextDecoration(context, offset, width, thickness, -doubleOffset, 1, decorationStyle);
-    if(decorations & TextDecorationLine::LineThrough) {
+    if(decorations.contains(TextDecorationLine::LineThrough)) {
         Point origin(offset.x, offset.y + 2.f * baseline / 3.f);
         paintTextDecoration(context, origin, width, thickness, doubleOffset, 0, decorationStyle);
     }
