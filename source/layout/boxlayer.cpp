@@ -69,7 +69,10 @@ void BoxLayer::updateLayerPosition()
         child->updateLayerPosition();
         if(!m_box->isOverflowHidden() && !child->box()->isFixedPositioned()
             && !child->box()->isMultiColumnFlowBox()) {
+            auto container = child->containingLayer();
             auto overflowRect = child->transform().mapRect(child->overflowRect());
+            for(auto layer = this; layer && layer != container; layer = layer->containingLayer())
+                overflowRect.translate(-layer->location());
             overflowRect.translate(child->location());
             m_overflowRect.unite(overflowRect);
         }
