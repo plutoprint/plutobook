@@ -14,8 +14,19 @@
 
 namespace plutobook {
 
-std::unique_ptr<BoxLayer> BoxLayer::create(BoxModel* box, BoxLayer* parent)
+std::unique_ptr<BoxLayer> BoxLayer::create(BoxModel* box)
 {
+    auto parent = box->enclosingLayer();
+    if(box->isPositioned()) {
+        for(auto current = parent; current; current = current->parent()) {
+            if(current->box()->canContainPositionedBox(box))
+                break;
+            if(current->box()->isMultiColumnFlowBox()) {
+                parent = current->parent();
+            }
+        }
+    }
+
     return std::unique_ptr<BoxLayer>(new (box->heap()) BoxLayer(box, parent));
 }
 

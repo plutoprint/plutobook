@@ -802,7 +802,7 @@ void BoxModel::build()
 {
     if(requiresLayer()) {
         assert(!hasLayer());
-        m_layer = BoxLayer::create(this, enclosingLayer());
+        m_layer = BoxLayer::create(this);
         setHasLayer(true);
     }
 

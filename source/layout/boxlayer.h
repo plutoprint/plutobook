@@ -24,7 +24,7 @@ using BoxLayerList = std::pmr::vector<BoxLayer*>;
 
 class BoxLayer : public HeapMember {
 public:
-    static std::unique_ptr<BoxLayer> create(BoxModel* box, BoxLayer* parent);
+    static std::unique_ptr<BoxLayer> create(BoxModel* box);
 
     BoxModel* box() const { return m_box; }
     BoxLayer* parent() const { return m_parent; }
