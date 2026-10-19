@@ -465,6 +465,7 @@ PageMarginBox::PageMarginBox(const RefPtr<BoxStyle>& style, PageMarginType margi
     : BlockFlowBox(nullptr, style)
     , m_marginType(marginType)
 {
+    setCanContainFixedPositionedBoxes(true);
 }
 
 bool PageMarginBox::isHorizontalFlow() const

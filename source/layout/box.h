@@ -83,8 +83,10 @@ public:
     static Box* createAnonymous(Display display, const BoxStyle* parentStyle);
     static BlockFlowBox* createAnonymousBlock(const BoxStyle* parentStyle);
 
-    bool canContainFixedPositionedBoxes() const;
-    bool canContainAbsolutePositionedBoxes() const;
+    bool canContainFixedPositionedBoxes() const { return m_canContainFixedPositionedBoxes; }
+    void setCanContainFixedPositionedBoxes(bool value) { m_canContainFixedPositionedBoxes = value; }
+
+    bool canContainPositionedBox(const Box* box) const;
 
     BlockBox* containingBlock() const;
     BoxModel* containingBox() const;
@@ -254,6 +256,7 @@ private:
     bool m_isFlexItem : 1 {false};
     bool m_isFirstInFlowChild : 1 {false};
     bool m_isLastInFlowChild : 1 {false};
+    bool m_canContainFixedPositionedBoxes : 1 {false};
     bool m_hasColumnFlowBox : 1 {false};
     bool m_hasTransform : 1 {false};
     bool m_hasLayer : 1 {false};

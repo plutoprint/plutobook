@@ -189,33 +189,25 @@ BlockFlowBox* Box::createAnonymousBlock(const BoxStyle* parentStyle)
     return newBlock;
 }
 
-bool Box::canContainFixedPositionedBoxes() const
+bool Box::canContainPositionedBox(const Box* box) const
 {
-    return (hasTransform() && isBlockBox()) || !parentBox() || isPageMarginBox();
-}
-
-bool Box::canContainAbsolutePositionedBoxes() const
-{
-    return style()->position() != Position::Static || canContainFixedPositionedBoxes();
+    if(box->style()->position() == Position::Absolute)
+        return m_canContainFixedPositionedBoxes || style()->position() != Position::Static;
+    assert(box->style()->position() == Position::Fixed);
+    return m_canContainFixedPositionedBoxes;
 }
 
 BlockBox* Box::containingBlock() const
 {
     auto parent = parentBox();
-    if(style()->position() == Position::Static || style()->position() == Position::Relative || isTextBox()) {
+    if(!isPositioned()) {
         while(parent && !parent->isBlockBox())
             parent = parent->parentBox();
         return to<BlockBox>(parent);
     }
 
-    if(style()->position() == Position::Fixed) {
-        while(parent && !parent->canContainFixedPositionedBoxes()) {
-            parent = parent->parentBox();
-        }
-    } else {
-        while(parent && !parent->canContainAbsolutePositionedBoxes()) {
-            parent = parent->parentBox();
-        }
+    while(parent && !parent->canContainPositionedBox(this)) {
+        parent = parent->parentBox();
     }
 
     if(parent && !parent->isBlockBox())
@@ -228,15 +220,9 @@ BlockBox* Box::containingBlock() const
 BoxModel* Box::containingBox() const
 {
     auto parent = parentBox();
-    if(!isTextBox()) {
-        if(style()->position() == Position::Fixed) {
-            while(parent && !parent->canContainFixedPositionedBoxes()) {
-                parent = parent->parentBox();
-            }
-        } else if(style()->position() == Position::Absolute) {
-            while(parent && !parent->canContainAbsolutePositionedBoxes()) {
-                parent = parent->parentBox();
-            }
+    if(isPositioned()) {
+        while(parent && !parent->canContainPositionedBox(this)) {
+            parent = parent->parentBox();
         }
     }
 

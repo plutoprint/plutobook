@@ -15,6 +15,7 @@ namespace plutobook {
 BoxView::BoxView(Document* document, const RefPtr<BoxStyle>& style)
     : BlockFlowBox(document, style)
 {
+    setCanContainFixedPositionedBoxes(true);
 }
 
 Rect BoxView::backgroundRect() const

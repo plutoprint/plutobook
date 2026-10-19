@@ -22,12 +22,8 @@ std::unique_ptr<BoxLayer> BoxLayer::create(BoxModel* box, BoxLayer* parent)
 BoxLayer* BoxLayer::containingLayer() const
 {
     auto parentLayer = parent();
-    if(m_box->style()->position() == Position::Fixed) {
-        while(parentLayer && !parentLayer->box()->canContainFixedPositionedBoxes()) {
-            parentLayer = parentLayer->parent();
-        }
-    } else if(m_box->style()->position() == Position::Absolute) {
-        while(parentLayer && !parentLayer->box()->canContainAbsolutePositionedBoxes()) {
+    if(m_box->isPositioned()) {
+        while(parentLayer && !parentLayer->box()->canContainPositionedBox(m_box)) {
             parentLayer = parentLayer->parent();
         }
     }
