@@ -789,75 +789,6 @@ void FlexibleBox::layout(FragmentBuilder* fragmentainer)
         lines.emplace_back(items);
     }
 
-    auto crossOffset = borderAndPaddingBefore();
-    for(auto& line : lines) {
-        float crossSize = 0;
-        float crossAscent = 0;
-        float crossDescent = 0;
-        for(auto& item : line.items()) {
-            if(item.alignSelf() == AlignItem::Baseline) {
-                auto ascent = item.marginBoxCrossBaseline();
-                auto descent = item.marginBoxCrossSize() - ascent;
-                crossAscent = std::max(crossAscent, ascent);
-                crossDescent = std::max(crossDescent, descent);
-                crossSize = std::max(crossSize, crossAscent + crossDescent);
-            } else {
-                crossSize = std::max(crossSize, item.marginBoxCrossSize());
-            }
-        }
-
-        line.setCrossOffset(crossOffset);
-        line.setCrossSize(crossSize);
-        line.setCrossAscent(crossAscent);
-        line.setCrossDescent(crossDescent);
-        crossOffset += crossSize;
-    }
-
-    if(lines.size() > 1)
-        crossOffset += m_gapBetweenLines * (lines.size() - 1);
-    crossOffset += borderAndPaddingAfter();
-    if(isHorizontalFlow())
-        setHeight(std::max(crossOffset, height()));
-    updateHeight();
-
-    if(!isMultiLine() && !lines.empty())
-        lines.front().setCrossSize(availableCrossSize());
-    if(isMultiLine() && !lines.empty()) {
-        auto availableSpace = availableCrossSize();
-        for(const auto& line : lines)
-            availableSpace -= line.crossSize();
-        availableSpace -= m_gapBetweenLines * (lines.size() - 1);
-
-        auto lineOffset = initialAlignmentOffset(alignContent, availableSpace, lines.size());
-        for(auto& line : lines) {
-            line.setCrossOffset(lineOffset + line.crossOffset());
-            if(alignContent == AlignContent::Stretch && availableSpace > 0) {
-                auto lineSize = availableSpace / lines.size();
-                line.setCrossSize(lineSize + line.crossSize());
-                lineOffset += lineSize;
-            }
-
-            if(lines.size() > 1) {
-                lineOffset += m_gapBetweenLines + alignmentSpacing(alignContent, availableSpace, lines.size());
-            }
-        }
-    }
-
-    if(isWrapReverse()) {
-        auto crossStart = borderAndPaddingBefore();
-        auto crossEnd = crossStart + availableCrossSize();
-        for(auto& line : lines) {
-            line.setCrossOffset(crossStart + crossEnd - line.crossOffset() - line.crossSize());
-        }
-    }
-
-    for(auto& line : lines) {
-        for(auto& item : line.items()) {
-            alignItem(item, line, nullptr);
-            item.setNaturalTop(item->y());
-        }
-    }
-
     const auto lineCount = lines.size();
     for(size_t lineIndex = 0; lineIndex < lineCount; ++lineIndex) {
         const auto& items = lines[lineIndex].items();
@@ -882,6 +813,75 @@ void FlexibleBox::layout(FragmentBuilder* fragmentainer)
             auto& item = items[itemIndex];
             item->setIsFirstInFlowChild(isFirst);
             item->setIsLastInFlowChild(isLast);
+        }
+    }
+
+    auto crossOffset = borderAndPaddingBefore();
+    for(auto& line : lines) {
+        float crossSize = 0;
+        float crossAscent = 0;
+        float crossDescent = 0;
+        for(auto& item : line.items()) {
+            if(item.alignSelf() == AlignItem::Baseline) {
+                auto ascent = item.marginBoxCrossBaseline();
+                auto descent = item.marginBoxCrossSize() - ascent;
+                crossAscent = std::max(crossAscent, ascent);
+                crossDescent = std::max(crossDescent, descent);
+                crossSize = std::max(crossSize, crossAscent + crossDescent);
+            } else {
+                crossSize = std::max(crossSize, item.marginBoxCrossSize());
+            }
+        }
+
+        line.setCrossOffset(crossOffset);
+        line.setCrossSize(crossSize);
+        line.setCrossAscent(crossAscent);
+        line.setCrossDescent(crossDescent);
+        crossOffset += crossSize;
+    }
+
+    if(lineCount > 1)
+        crossOffset += m_gapBetweenLines * (lineCount - 1);
+    crossOffset += borderAndPaddingAfter();
+    if(isHorizontalFlow())
+        setHeight(std::max(crossOffset, height()));
+    updateHeight();
+
+    if(lineCount && !isMultiLine())
+        lines.front().setCrossSize(availableCrossSize());
+    if(lineCount && isMultiLine()) {
+        auto availableSpace = availableCrossSize();
+        for(const auto& line : lines)
+            availableSpace -= line.crossSize();
+        availableSpace -= m_gapBetweenLines * (lineCount - 1);
+
+        auto lineOffset = initialAlignmentOffset(alignContent, availableSpace, lineCount);
+        for(auto& line : lines) {
+            line.setCrossOffset(lineOffset + line.crossOffset());
+            if(alignContent == AlignContent::Stretch && availableSpace > 0) {
+                auto lineSize = availableSpace / lineCount;
+                line.setCrossSize(lineSize + line.crossSize());
+                lineOffset += lineSize;
+            }
+
+            if(lineCount > 1) {
+                lineOffset += m_gapBetweenLines + alignmentSpacing(alignContent, availableSpace, lineCount);
+            }
+        }
+    }
+
+    if(isWrapReverse()) {
+        auto crossStart = borderAndPaddingBefore();
+        auto crossEnd = crossStart + availableCrossSize();
+        for(auto& line : lines) {
+            line.setCrossOffset(crossStart + crossEnd - line.crossOffset() - line.crossSize());
+        }
+    }
+
+    for(auto& line : lines) {
+        for(auto& item : line.items()) {
+            alignItem(item, line, nullptr);
+            item.setNaturalTop(item->y());
         }
     }
 
