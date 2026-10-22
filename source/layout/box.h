@@ -153,6 +153,7 @@ public:
     virtual bool isSVGResourceRadialGradientBox() const { return false; }
 
     bool isRelativePositioned() const { return m_style->position() == Position::Relative; }
+    bool isAbsolutePositioned() const { return m_style->position() == Position::Absolute; }
     bool isFixedPositioned() const { return m_style->position() == Position::Fixed; }
 
     bool isAnonymous() const { return m_isAnonymous; }
@@ -493,6 +494,8 @@ public:
 
     void computeHorizontalStaticDistance(Length& leftLength, Length& rightLength, const BoxModel* container, float containerWidth) const;
     void computeVerticalStaticDistance(Length& topLength, Length& bottomLength, const BoxModel* container) const;
+
+    float computeStaticTop(const BoxModel* container) const;
 
     void computeHorizontalMargins(float& marginLeft, float& marginRight, float childWidth, const BlockBox* container, float containerWidth) const;
     void computeVerticalMargins(float& marginTop, float& marginBottom) const;

@@ -967,8 +967,26 @@ void BoxFrame::computeHorizontalStaticDistance(Length& leftLength, Length& right
 
 void BoxFrame::computeVerticalStaticDistance(Length& topLength, Length& bottomLength, const BoxModel* container) const
 {
-    if(!topLength.isAuto() || !bottomLength.isAuto())
-        return;
+    if(topLength.isAuto() && bottomLength.isAuto()) {
+        topLength = Length(Length::Type::Fixed, computeStaticTop(container));
+    } else if(isAbsolutePositioned() && container->isBoxView()) {
+        auto pageHeight = document()->containerHeight();
+        if(pageHeight > 0.f) {
+            auto staticTop = computeStaticTop(container);
+            auto pageOffset = std::floor(staticTop / pageHeight) * pageHeight;
+            if(pageOffset > 0) {
+                if(!topLength.isAuto())
+                    topLength = Length(Length::Type::Fixed, topLength.calc(pageHeight) + pageOffset);
+                if(!bottomLength.isAuto()) {
+                    bottomLength = Length(Length::Type::Fixed, bottomLength.calc(pageHeight) - pageOffset);
+                }
+            }
+        }
+    }
+}
+
+float BoxFrame::computeStaticTop(const BoxModel* container) const
+{
     auto staticTop = layer()->staticTop() - container->borderTop();
     for(auto parent = parentBox(); parent && parent != container; parent = parent->containingBox()) {
         if(auto box = to<BoxFrame>(parent)) {
@@ -979,7 +997,7 @@ void BoxFrame::computeVerticalStaticDistance(Length& topLength, Length& bottomLe
         }
     }
 
-    topLength = Length(Length::Type::Fixed, staticTop);
+    return staticTop;
 }
 
 void BoxFrame::computeHorizontalMargins(float& marginLeft, float& marginRight, float childWidth, const BlockBox* container, float containerWidth) const
