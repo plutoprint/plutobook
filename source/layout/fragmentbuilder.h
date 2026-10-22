@@ -34,6 +34,8 @@ public:
     virtual void setFragmentBreak(float offset, float spaceShortage) {}
     virtual void updateMinimumFragmentHeight(float offset, float minHeight) {}
 
+    float applyForcedFragmentBreak(float offset);
+
     float applyFragmentBreakBefore(const BoxFrame* child, float offset);
     float applyFragmentBreakAfter(const BoxFrame* child, float offset);
     float applyFragmentBreakInside(const BoxFrame* child, float offset);

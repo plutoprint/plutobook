@@ -11,26 +11,32 @@
 
 namespace plutobook {
 
+float FragmentBuilder::applyForcedFragmentBreak(float offset)
+{
+    auto fragmentHeight = fragmentHeightForOffset(offset);
+    addForcedFragmentBreak(offset);
+    if(fragmentHeight > 0.f) {
+        auto rule = AssociateWithFormerFragment;
+        if(isNearlyZero(offset + fragmentOffset()))
+            rule = AssociateWithLatterFragment;
+        offset += fragmentRemainingHeightForOffset(offset, rule);
+    }
+
+    return offset;
+}
+
 float FragmentBuilder::applyFragmentBreakBefore(const BoxFrame* child, float offset)
 {
     if(!alwaysBreakBefore(child))
         return offset;
-    auto fragmentHeight = fragmentHeightForOffset(offset);
-    addForcedFragmentBreak(offset);
-    if(fragmentHeight > 0.f)
-        offset += fragmentRemainingHeightForOffset(offset, AssociateWithFormerFragment);
-    return offset;
+    return applyForcedFragmentBreak(offset);
 }
 
 float FragmentBuilder::applyFragmentBreakAfter(const BoxFrame* child, float offset)
 {
     if(!alwaysBreakAfter(child))
         return offset;
-    auto fragmentHeight = fragmentHeightForOffset(offset);
-    addForcedFragmentBreak(offset);
-    if(fragmentHeight > 0.f)
-        offset += fragmentRemainingHeightForOffset(offset, AssociateWithFormerFragment);
-    return offset;
+    return applyForcedFragmentBreak(offset);
 }
 
 float FragmentBuilder::applyFragmentBreakInside(const BoxFrame* child, float offset)
