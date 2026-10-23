@@ -42,14 +42,6 @@ PseudoType CSSSimpleSelector::pseudoType() const
         return PseudoType::FirstLetter;
     case MatchType::PseudoElementFirstLine:
         return PseudoType::FirstLine;
-    case MatchType::PseudoPageFirst:
-        return PseudoType::FirstPage;
-    case MatchType::PseudoPageLeft:
-        return PseudoType::LeftPage;
-    case MatchType::PseudoPageRight:
-        return PseudoType::RightPage;
-    case MatchType::PseudoPageBlank:
-        return PseudoType::BlankPage;
     default:
         return PseudoType::None;
     }
@@ -746,19 +738,25 @@ bool CSSRuleData::match(const Element* element, PseudoType pseudoType, const Sel
     return matchSelector(element, nullptr, pseudoType, *m_selector);
 }
 
-static bool matchPageSelector(const GlobalString& pageName, uint32_t pageIndex, PseudoType pseudoType, const CSSSimpleSelector& selector)
+static bool isLeftPage(uint32_t pageIndex, Direction direction)
+{
+    if(direction == Direction::Rtl)
+        return pageIndex % 2 == 0;
+    return pageIndex % 2 == 1;
+}
+
+static bool matchPageSelector(uint32_t pageIndex, Direction direction, const CSSSimpleSelector& selector)
 {
     switch(selector.matchType()) {
     case CSSSimpleSelector::MatchType::PseudoPageName:
-        return pageName == selector.name();
-    case CSSSimpleSelector::MatchType::PseudoPageFirst:
-        return pseudoType == PseudoType::FirstPage;
-    case CSSSimpleSelector::MatchType::PseudoPageLeft:
-        return pseudoType == PseudoType::LeftPage;
-    case CSSSimpleSelector::MatchType::PseudoPageRight:
-        return pseudoType == PseudoType::RightPage;
     case CSSSimpleSelector::MatchType::PseudoPageBlank:
-        return pseudoType == PseudoType::BlankPage;
+        return false;
+    case CSSSimpleSelector::MatchType::PseudoPageFirst:
+        return pageIndex == 0;
+    case CSSSimpleSelector::MatchType::PseudoPageLeft:
+        return isLeftPage(pageIndex, direction);
+    case CSSSimpleSelector::MatchType::PseudoPageRight:
+        return !isLeftPage(pageIndex, direction);
     case CSSSimpleSelector::MatchType::PseudoPageNth:
         return selector.matchNth(pageIndex + 1);
     default:
@@ -768,11 +766,11 @@ static bool matchPageSelector(const GlobalString& pageName, uint32_t pageIndex, 
     return false;
 }
 
-bool CSSPageRuleData::match(const GlobalString& pageName, uint32_t pageIndex, PseudoType pseudoType) const
+bool CSSPageRuleData::match(uint32_t pageIndex, Direction direction) const
 {
     if(m_selector) {
         for(const auto& sel : *m_selector) {
-            if(!matchPageSelector(pageName, pageIndex, pseudoType, sel)) {
+            if(!matchPageSelector(pageIndex, direction, sel)) {
                 return false;
             }
         }

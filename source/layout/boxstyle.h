@@ -668,11 +668,7 @@ enum class PseudoType : uint8_t {
     After,
     Marker,
     FirstLetter,
-    FirstLine,
-    FirstPage,
-    LeftPage,
-    RightPage,
-    BlankPage
+    FirstLine
 };
 
 struct FontDescription;

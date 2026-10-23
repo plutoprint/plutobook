@@ -389,8 +389,8 @@ public:
     RefPtr<BoxStyle> styleForElement(Element* element, const SelectorFilter& selectorFilter, const BoxStyle* parentStyle) const;
     RefPtr<BoxStyle> pseudoStyleForElement(Element* element, PseudoType pseudoType, const SelectorFilter& selectorFilter, const BoxStyle* parentStyle) const;
 
-    RefPtr<BoxStyle> styleForPage(const GlobalString& pageName, uint32_t pageIndex, PseudoType pseudoType) const;
-    RefPtr<BoxStyle> styleForPageMargin(const GlobalString& pageName, uint32_t pageIndex, PageMarginType marginType, const BoxStyle* pageStyle) const;
+    RefPtr<BoxStyle> styleForPage(uint32_t pageIndex) const;
+    RefPtr<BoxStyle> styleForPageMargin(uint32_t pageIndex, PageMarginType marginType, const BoxStyle* pageStyle) const;
 
     std::string getCounterText(int value, const GlobalString& listType);
     std::string getMarkerText(int value, const GlobalString& listType);

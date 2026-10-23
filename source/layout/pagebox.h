@@ -9,7 +9,6 @@
 #ifndef PLUTOBOOK_PAGEBOX_H
 #define PLUTOBOOK_PAGEBOX_H
 
-#include "globalstring.h"
 #include "fragmentbuilder.h"
 #include "blockbox.h"
 
@@ -19,14 +18,13 @@ class PageMarginBox;
 
 class PageBox final : public BlockBox {
 public:
-    static std::unique_ptr<PageBox> create(const RefPtr<BoxStyle>& style, const GlobalString& pageName, uint32_t pageIndex, float pageWidth, float pageHeight, float pageScale);
+    static std::unique_ptr<PageBox> create(const RefPtr<BoxStyle>& style, uint32_t pageIndex, float pageWidth, float pageHeight, float pageScale);
 
     bool isPageBox() const final { return true; }
     bool requiresLayer() const final { return true; }
 
     Rect borderBoundingBox() const final;
 
-    const GlobalString& pageName() const { return m_pageName; }
     uint32_t pageIndex() const { return m_pageIndex; }
     float pageWidth() const { return m_pageWidth; }
     float pageHeight() const { return m_pageHeight; }
@@ -49,8 +47,7 @@ public:
     const char* name() const final { return "PageBox"; }
 
 private:
-    PageBox(const RefPtr<BoxStyle>& style, const GlobalString& pageName, uint32_t pageIndex, float pageWidth, float pageHeight, float pageScale);
-    GlobalString m_pageName;
+    PageBox(const RefPtr<BoxStyle>& style, uint32_t pageIndex, float pageWidth, float pageHeight, float pageScale);
     uint32_t m_pageIndex;
     float m_pageWidth;
     float m_pageHeight;

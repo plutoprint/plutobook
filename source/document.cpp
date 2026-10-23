@@ -993,14 +993,14 @@ RefPtr<BoxStyle> Document::pseudoStyleForElement(Element* element, PseudoType ps
     return m_styleSheet.pseudoStyleForElement(element, pseudoType, selectorFilter, parentStyle);
 }
 
-RefPtr<BoxStyle> Document::styleForPage(const GlobalString& pageName, uint32_t pageIndex, PseudoType pseudoType) const
+RefPtr<BoxStyle> Document::styleForPage(uint32_t pageIndex) const
 {
-    return m_styleSheet.styleForPage(pageName, pageIndex, pseudoType);
+    return m_styleSheet.styleForPage(pageIndex);
 }
 
-RefPtr<BoxStyle> Document::styleForPageMargin(const GlobalString& pageName, uint32_t pageIndex, PageMarginType marginType, const BoxStyle* pageStyle) const
+RefPtr<BoxStyle> Document::styleForPageMargin(uint32_t pageIndex, PageMarginType marginType, const BoxStyle* pageStyle) const
 {
-    return m_styleSheet.styleForPageMargin(pageName, pageIndex, marginType, pageStyle);
+    return m_styleSheet.styleForPageMargin(pageIndex, marginType, pageStyle);
 }
 
 std::string Document::getCounterText(int value, const GlobalString& listType)

@@ -18,9 +18,9 @@
 
 namespace plutobook {
 
-std::unique_ptr<PageBox> PageBox::create(const RefPtr<BoxStyle>& style, const GlobalString& pageName, uint32_t pageIndex, float pageWidth, float pageHeight, float pageScale)
+std::unique_ptr<PageBox> PageBox::create(const RefPtr<BoxStyle>& style, uint32_t pageIndex, float pageWidth, float pageHeight, float pageScale)
 {
-    return std::unique_ptr<PageBox>(new (style->heap()) PageBox(style, pageName, pageIndex, pageWidth, pageHeight, pageScale));
+    return std::unique_ptr<PageBox>(new (style->heap()) PageBox(style, pageIndex, pageWidth, pageHeight, pageScale));
 }
 
 PageSize PageBox::pageSize() const
@@ -451,9 +451,8 @@ void PageBox::paintContents(const PaintInfo& info, const Point& offset, PaintPha
     }
 }
 
-PageBox::PageBox(const RefPtr<BoxStyle>& style, const GlobalString& pageName, uint32_t pageIndex, float pageWidth, float pageHeight, float pageScale)
+PageBox::PageBox(const RefPtr<BoxStyle>& style, uint32_t pageIndex, float pageWidth, float pageHeight, float pageScale)
     : BlockBox(nullptr, style)
-    , m_pageName(pageName)
     , m_pageIndex(pageIndex)
     , m_pageWidth(pageWidth)
     , m_pageHeight(pageHeight)
@@ -629,15 +628,6 @@ PageLayout::PageLayout(Document* document)
 {
 }
 
-constexpr PseudoType pagePseudoType(uint32_t pageIndex)
-{
-    if(pageIndex == 0)
-        return PseudoType::FirstPage;
-    if(pageIndex % 2 == 0)
-        return PseudoType::RightPage;
-    return PseudoType::LeftPage;
-}
-
 constexpr auto kMinPageScaleFactor = 10.f / 100.f;
 
 void PageLayout::layout()
@@ -652,7 +642,7 @@ void PageLayout::layout()
         return;
     }
 
-    auto pageStyle = m_document->styleForPage(emptyGlo, 0, PseudoType::FirstPage);
+    auto pageStyle = m_document->styleForPage(0);
     auto pageSize = pageStyle->getPageSize(m_document->book()->pageSize());
     auto pageScale = pageStyle->pageScale();
 
@@ -695,8 +685,8 @@ void PageLayout::layout()
     if(m_document->containerHeight()) {
         Counters counters(m_document, std::ceil(m_document->height() / m_document->containerHeight()));
         for(uint32_t pageIndex = 0; pageIndex < counters.pageCount(); ++pageIndex) {
-            if(pageIndex > 0) pageStyle = m_document->styleForPage(emptyGlo, pageIndex, pagePseudoType(pageIndex));
-            auto pageBox = PageBox::create(pageStyle, emptyGlo, pageIndex, pageWidth, pageHeight, pageScaleFactor);
+            if(pageIndex > 0) pageStyle = m_document->styleForPage(pageIndex);
+            auto pageBox = PageBox::create(pageStyle, pageIndex, pageWidth, pageHeight, pageScaleFactor);
 
             pageBox->setX(marginLeft);
             pageBox->setY(marginTop);
@@ -727,7 +717,7 @@ void PageLayout::layout()
 
 void PageLayout::buildPageMargin(const Counters& counters, PageBox* pageBox, PageMarginType marginType)
 {
-    auto marginStyle = m_document->styleForPageMargin(pageBox->pageName(), pageBox->pageIndex(), marginType, pageBox->style());
+    auto marginStyle = m_document->styleForPageMargin(pageBox->pageIndex(), marginType, pageBox->style());
     if(marginStyle == nullptr) {
         return;
     }

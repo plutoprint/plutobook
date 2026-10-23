@@ -32,6 +32,7 @@ using CSSPageSelectorList = CSSCompoundSelectorList;
 
 enum class PseudoType : uint8_t;
 enum class CaseMode : uint8_t;
+enum class Direction : uint8_t;
 
 class CSSSimpleSelector {
 public:
@@ -565,7 +566,7 @@ public:
     const uint32_t specificity() const { return m_specificity; }
     const uint32_t position() const { return m_position; }
 
-    bool match(const GlobalString& pageName, uint32_t pageIndex, PseudoType pseudoType) const;
+    bool match(uint32_t pageIndex, Direction direction) const;
 
 private:
     RefPtr<CSSPageRule> m_rule;
