@@ -42,7 +42,7 @@ BoxLayer* BoxLayer::containingLayer() const
     return parentLayer;
 }
 
-void BoxLayer::updateLayerPosition()
+void BoxLayer::updateGeometry()
 {
     m_borderRect = m_box->borderBoundingBox();
     if(m_box->isPositioned()) {
@@ -71,7 +71,7 @@ void BoxLayer::updateLayerPosition()
 
     m_overflowRect = m_box->visualOverflowRect();
     for(auto child : m_children) {
-        child->updateLayerPosition();
+        child->updateGeometry();
         if(!m_box->isOverflowHidden() && !child->box()->isFixedPositioned()
             && !child->box()->isMultiColumnFlowBox()) {
             auto container = child->containingLayer();

@@ -633,9 +633,9 @@ void BoxModel::paintLayer(GraphicsContext& context, const Rect& rect)
     m_layer->paint(context, rect);
 }
 
-void BoxModel::updateLayerPosition()
+void BoxModel::updateLayerGeometry()
 {
-    m_layer->updateLayerPosition();
+    m_layer->updateGeometry();
 }
 
 Point BoxModel::relativePositionOffset() const

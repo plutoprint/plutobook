@@ -428,7 +428,7 @@ void PageBox::layout(FragmentBuilder* fragmentainer)
     layoutEdgePageMargins(margins[PageMarginType::LeftTop], margins[PageMarginType::LeftMiddle], margins[PageMarginType::LeftBottom], leftEdgeRect, BoxSideLeft);
 
     updateOverflowRect();
-    updateLayerPosition();
+    updateLayerGeometry();
 }
 
 void PageBox::paintDecorations(const PaintInfo& info, const Point& offset)

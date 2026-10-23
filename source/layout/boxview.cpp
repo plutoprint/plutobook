@@ -45,7 +45,7 @@ void BoxView::layout(FragmentBuilder* fragmentainer)
     setWidth(document()->containerWidth());
     setIsPaginatedView(isPageFragmentainer(fragmentainer));
     BlockFlowBox::layout(fragmentainer);
-    updateLayerPosition();
+    updateLayerGeometry();
 }
 
 void BoxView::build()
