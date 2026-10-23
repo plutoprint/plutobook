@@ -69,8 +69,6 @@ void BoxLayer::updateLayerPosition()
         m_transform = m_box->style()->getTransform(m_borderRect.w, m_borderRect.h);
     }
 
-    auto compare_func = [](const auto& a, const auto& b) { return a->zIndex() < b->zIndex(); };
-    std::stable_sort(m_children.begin(), m_children.end(), compare_func);
     m_overflowRect = m_box->visualOverflowRect();
     for(auto child : m_children) {
         child->updateLayerPosition();
@@ -239,7 +237,9 @@ BoxLayer::BoxLayer(BoxModel* box, BoxLayer* parent)
     , m_opacity(box->style()->opacity())
 {
     if(parent) {
-        parent->m_children.push_back(this);
+        auto compare_func = [](const BoxLayer* a, const BoxLayer* b) { return a->zIndex() < b->zIndex(); };
+        auto it = std::upper_bound(parent->m_children.begin(), parent->m_children.end(), this, compare_func);
+        parent->m_children.insert(it, this);
     }
 }
 
