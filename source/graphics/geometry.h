@@ -18,9 +18,14 @@ namespace plutobook {
 
 constexpr auto kLayoutEpsilon = 1e-3f;
 
+constexpr float absFloat(float v)
+{
+    return v < 0.f ? -v : v;
+}
+
 constexpr bool isNearlyZero(float v, float epsilon = kLayoutEpsilon)
 {
-    return std::abs(v) <= epsilon;
+    return absFloat(v) <= epsilon;
 }
 
 constexpr bool isNearlyEqual(float a, float b, float epsilon = kLayoutEpsilon)
