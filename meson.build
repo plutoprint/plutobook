@@ -1,5 +1,5 @@
 project('plutobook', 'cpp', 'c',
-    version: '0.18.0',
+    version: '0.20.0',
     license: 'MIT',
     meson_version: '>=0.64.0',
     default_options: ['cpp_std=c++20']
@@ -8,7 +8,8 @@ project('plutobook', 'cpp', 'c',
 expat_dep = dependency('expat',
     required: true,
     version: '>=2.1.0',
-    fallback: ['expat', 'expat_dep']
+    fallback: ['expat', 'expat_dep'],
+    default_options: ['default_library=static']
 )
 
 icu_required_version = '>=57.0'
@@ -18,20 +19,21 @@ icuuc_dep = dependency('icu-uc',
     fallback: ['icu', 'icuuc_dep']
 )
 
-icui18n_dep = dependency('icu-i18n',
-    required: true,
-    version: icu_required_version,
-    fallback: ['icu', 'icui18n_dep']
-)
+freetype_default_options = [
+    'default_library=static',
+    'harfbuzz=disabled',
+    'error_strings=true'
+]
 
 freetype_dep = dependency('freetype2',
     required: true,
     version: '>=9.7.3',
-    default_options: ['harfbuzz=disabled', 'error_strings=true'],
+    default_options: freetype_default_options,
     fallback: ['freetype2', 'freetype_dep']
 )
 
 fontconfig_default_options = [
+    'default_library=static',
     'doc=disabled',
     'tests=disabled',
     'tools=disabled',
@@ -46,12 +48,19 @@ fontconfig_dep = dependency('fontconfig',
 )
 
 harfbuzz_default_options = [
+    'default_library=static',
     'glib=disabled',
+    'gobject=disabled',
     'cairo=disabled',
     'icu=enabled',
     'freetype=enabled',
+    'raster=disabled',
+    'vector=disabled',
+    'subset=disabled',
+    'introspection=disabled',
     'tests=disabled',
-    'docs=disabled'
+    'docs=disabled',
+    'utilities=disabled'
 ]
 
 harfbuzz_dep = dependency('harfbuzz',
@@ -63,6 +72,7 @@ harfbuzz_dep = dependency('harfbuzz',
 
 cairo_required_version = '>=1.15.10'
 cairo_default_options = [
+    'default_library=static',
     'freetype=enabled',
     'fontconfig=enabled',
     'png=enabled',
@@ -86,7 +96,6 @@ cairo_dep = dependency('cairo',
 plutobook_deps = [
     expat_dep,
     icuuc_dep,
-    icui18n_dep,
     freetype_dep,
     fontconfig_dep,
     harfbuzz_dep,
@@ -132,7 +141,7 @@ endif
 
 jpeg_dep = dependency('libturbojpeg',
     required: get_option('turbojpeg'),
-    default_options: ['tests=disabled'],
+    default_options: ['tests=disabled', 'turbojpeg=enabled'],
     fallback: ['libjpeg-turbo', 'turbojpeg_dep']
 )
 
@@ -189,7 +198,7 @@ plutobook_sources = [
     'source/resource/imageresource.cpp',
     'source/resource/resource.cpp',
     'source/resource/textresource.cpp',
-    'source/resource/url.cpp',
+    'source/resource/ada.cpp',
 
     'source/counters.cpp',
     'source/cssparser.cpp',
@@ -206,7 +215,6 @@ plutobook_sources = [
     'source/localedata.cpp',
     'source/plutobook.cc',
     'source/plutobook.cpp',
-    'source/stringutils.cpp',
     'source/svgdocument.cpp',
     'source/svgproperty.cpp',
     'source/textbreakiterator.cpp',
@@ -232,7 +240,10 @@ cpp = meson.get_compiler('cpp')
 plutobook_cpp_args += cpp.get_supported_arguments(
     '-Wno-sign-compare',
     '-Wno-unused-function',
-    '-Wno-unused-variable'
+    '-Wno-unused-variable',
+    '-fvisibility=hidden',
+    '-fvisibility-inlines-hidden',
+    '-fno-exceptions'
 )
 
 plutobook_compile_args = []
@@ -269,5 +280,6 @@ pkgmod.generate(plutobook_lib,
     name: 'PlutoBook',
     description: 'Paged HTML rendering library',
     filebase: 'plutobook',
-    subdirs: 'plutobook'
+    subdirs: 'plutobook',
+    extra_cflags: plutobook_compile_args
 )

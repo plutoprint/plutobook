@@ -178,11 +178,9 @@ PlutoBook also supports page counters, which let authors output the current page
 
 Leaders, such as repeating dots or lines often used in tables of contents, are supported through the `leader()` function in generated content. This provides an easy way to fill space between elements with consistent patterns.
 
-Cross-referencing is possible with the `target-counter()` and `target-counters()` functions, which allow you to show counter values from linked elements, such as displaying the page number where a section starts.
-
 PlutoBook also supports running elements, which make it possible to reuse document content inside headers or footers. Running headers and footers can be created using CSS `position: running(NAME)` on the source element and `content: element(NAME)` inside margin boxes.
 
-Some limits currently exist. PlutoBook uses only the page size and margin defined for the first page, and `@page :first` is the only pseudo-page selector that works reliably for now. Named pages created with the `@page name` syntax are not fully implemented yet, so custom page styles may not apply as expected.
+Some limits currently exist. PlutoBook uses only the page size and margin defined for the first page. The `:first`, `:left`, `:right` and `:nth()` pseudo-page selectors are supported, and the first page is a right page in a left-to-right document and a left page in a right-to-left document, so `@page :first:right` and `@page :first:left` match as expected. Blank pages (`:blank`) are not generated yet. Named pages created with the `@page name` syntax are not fully implemented yet, so custom page styles may not apply as expected.
 
 ## Scalable Vector Graphics
 

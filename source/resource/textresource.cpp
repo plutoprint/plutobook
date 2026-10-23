@@ -41,9 +41,9 @@ std::string_view TextResource::decode(const char* data, size_t length, std::stri
 
 bool TextResource::isXMLMIMEType(std::string_view mimeType)
 {
-    if(equals(mimeType, "text/xml", false)
-        || equals(mimeType, "application/xml", false)
-        || equals(mimeType, "text/xsl", false)) {
+    if(equalsIgnoringCase(mimeType, "text/xml")
+        || equalsIgnoringCase(mimeType, "application/xml")
+        || equalsIgnoringCase(mimeType, "text/xsl")) {
         return true;
     }
 
@@ -52,12 +52,12 @@ bool TextResource::isXMLMIMEType(std::string_view mimeType)
         return false;
     }
 
-    if(mimeType[0] == '/' || mimeType[length - 5] == '/' || !endswith(mimeType, "+xml", false)) {
+    if(mimeType[0] == '/' || mimeType[length - 5] == '/' || !endswith(mimeType, "+xml", CaseMode::Ignore)) {
         return false;
     }
 
     bool hasSlash = false;
-    for(int i = 0; i < length - 4; ++i) {
+    for(size_t i = 0; i < length - 4; ++i) {
         auto cc = mimeType[i];
         if(isAlnum(cc))
             continue;

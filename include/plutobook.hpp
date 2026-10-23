@@ -9,10 +9,12 @@
 #ifndef PLUTOBOOK_HPP
 #define PLUTOBOOK_HPP
 
-#include <cstdint>
 #include <cstddef>
-#include <string>
+#include <cstdint>
 #include <memory>
+#include <string>
+#include <string_view>
+#include <utility>
 
 #include "plutobook.h"
 
@@ -189,11 +191,11 @@ public:
     {}
 
     /**
-     * @brief Constructs a PageMargins object with vertical and horizontal margins.
+     * @brief Constructs a PageMargins object with separate top and bottom margins and a shared horizontal margin.
      *
-     * @param top The top margin in points.
+     * @param top The margin for the top side, in points.
      * @param horizontal The margin for the left and right sides, in points.
-     * @param bottom The bottom margin in points.
+     * @param bottom The margin for the bottom side, in points.
      */
     constexpr PageMargins(float top, float horizontal, float bottom)
         : PageMargins(top, horizontal, bottom, horizontal)
@@ -316,6 +318,16 @@ public:
      */
     static const PageMargins Moderate;
 
+    /**
+     * @brief Represents wide page margins.
+     *
+     * - Top: 72 points (1 inch)
+     * - Right: 144 points (2 inches)
+     * - Bottom: 72 points (1 inch)
+     * - Left: 144 points (2 inches)
+     */
+    static const PageMargins Wide;
+
 private:
     float m_top{0};
     float m_right{0};
@@ -327,6 +339,7 @@ inline const PageMargins PageMargins::None = PLUTOBOOK_PAGE_MARGINS_NONE;
 inline const PageMargins PageMargins::Normal = PLUTOBOOK_PAGE_MARGINS_NORMAL;
 inline const PageMargins PageMargins::Narrow = PLUTOBOOK_PAGE_MARGINS_NARROW;
 inline const PageMargins PageMargins::Moderate = PLUTOBOOK_PAGE_MARGINS_MODERATE;
+inline const PageMargins PageMargins::Wide = PLUTOBOOK_PAGE_MARGINS_WIDE;
 
 /**
  * Defines conversion factors for various units to points (pt) and vice versa.
@@ -355,15 +368,15 @@ public:
     /**
      * @brief Constructs a ResourceData object by initializing the underlying resource with a null pointer.
      */
-    ResourceData() : m_data(nullptr) {}
+    ResourceData() : m_resource(nullptr) {}
 
     /**
      * @brief Constructs a `ResourceData` object by adopting a bare pointer to the resource without
      * modifying the reference count.
      *
-     * @param data A bare pointer to a `plutobook_resource_data_t` object.
+     * @param resource A bare pointer to a `plutobook_resource_data_t` object.
      */
-    explicit ResourceData(plutobook_resource_data_t* data) : m_data(data) {}
+    explicit ResourceData(plutobook_resource_data_t* resource) : m_resource(resource) {}
 
     /**
      * @brief Constructs a ResourceData object by copying the provided content.
@@ -402,7 +415,7 @@ public:
      *
      * @param resource A `ResourceData` object.
      */
-    ResourceData(ResourceData&& resource) : m_data(resource.release()) {}
+    ResourceData(ResourceData&& resource) : m_resource(resource.release()) {}
 
     /**
      * @brief Constructs a ResourceData object by sharing the underlying resource.
@@ -425,8 +438,8 @@ public:
     /**
      * @brief Copy assignment operator that shares ownership of the underlying resource.
      *
-     * This operator performs a deep copy of the underlying resource by sharing ownership with the `resource`
-     * object. The reference count of the underlying resource is incremented to reflect the new ownership.
+     * This operator does not copy the resource data. Instead, it shares ownership of the underlying resource
+     * with the `resource` object by incrementing its reference count to reflect the new ownership.
      *
      * @param resource A `ResourceData` object to copy the resource from.
      * @return A reference to the current `ResourceData` object after the assignment.
@@ -446,8 +459,8 @@ public:
     /**
      * @brief Swaps the underlying resources of two `ResourceData` objects.
      *
-     * This function swaps the resource data between the current object and the provided `resource` object.
-     * After the swap, both objects will share their respective resources.
+     * This function exchanges the underlying resources of the current object and the provided `resource` object.
+     * After the swap, each object owns the resource previously held by the other. No reference counts are changed.
      *
      * @param resource The `ResourceData` object to swap with.
      */
@@ -485,9 +498,9 @@ public:
 
     /**
      * @brief Retrieves the underlying resource.
-     * @return A pointer to the underlying `plutobook_resource_data_t` resource.
+     * @return A pointer to the underlying `plutobook_resource_data_t` object.
      */
-    plutobook_resource_data_t* get() const { return m_data; }
+    plutobook_resource_data_t* get() const { return m_resource; }
 
     /**
      * @brief Checks if the resource is null.
@@ -496,10 +509,10 @@ public:
      *
      * @return `true` if the resource is null, otherwise `false`.
      */
-    bool isNull() const { return m_data == nullptr; }
+    bool isNull() const { return m_resource == nullptr; }
 
 private:
-    plutobook_resource_data_t* m_data;
+    plutobook_resource_data_t* m_resource;
 };
 
 /**
@@ -587,7 +600,7 @@ public:
     /**
      * @brief Sets the maximum time allowed for a request.
      *
-     * If not set, the default timeout is 300 seconds.
+     * If not set, the default timeout is 30 seconds.
      *
      * @param timeout Timeout duration in seconds.
      */
@@ -603,6 +616,8 @@ public:
 
 private:
     DefaultResourceFetcher();
+    DefaultResourceFetcher(const DefaultResourceFetcher&) = delete;
+    DefaultResourceFetcher& operator=(const DefaultResourceFetcher&) = delete;
 
     std::string m_caInfo;
     std::string m_caPath;
@@ -612,7 +627,7 @@ private:
 
     bool m_followRedirects = true;
     int m_maxRedirects = 30;
-    int m_timeout = 300;
+    int m_timeout = 30;
 
     friend DefaultResourceFetcher* defaultResourceFetcher();
 };
@@ -621,7 +636,7 @@ private:
  * @brief Returns a singleton instance of DefaultResourceFetcher.
  * @return A pointer to the singleton DefaultResourceFetcher instance.
  */
-DefaultResourceFetcher* defaultResourceFetcher();
+PLUTOBOOK_API DefaultResourceFetcher* defaultResourceFetcher();
 
 /**
  * @brief The OutputStream is an abstract base class for writing data to an output stream.
@@ -694,7 +709,7 @@ public:
     void transform(float a, float b, float c, float d, float e, float f);
 
     /**
-     * @brief Resets the current transformation to the identity matrix.
+     * @brief Resets the transformation matrix to the specified matrix.
      * @param a The horizontal scaling factor.
      * @param b The horizontal skewing factor.
      * @param c The vertical skewing factor.
@@ -713,8 +728,8 @@ public:
      * @brief Intersects the current clip with the specified rectangle.
      * @param x The x-coordinate of the top-left corner of the rectangle.
      * @param y The y-coordinate of the top-left corner of the rectangle.
-     * @param width width The width of the rectangle.
-     * @param height height The height of the rectangle.
+     * @param width The width of the rectangle.
+     * @param height The height of the rectangle.
      */
     void clipRect(float x, float y, float width, float height);
 
@@ -753,7 +768,7 @@ public:
      * @brief Gets the underlying canvas.
      * @return A pointer to the underlying `plutobook_canvas_t` object.
      */
-    plutobook_canvas_t* canvas() const { return m_canvas; }
+    plutobook_canvas_t* get() const { return m_canvas; }
 
     /**
      * @brief Checks if the canvas is null.
@@ -779,13 +794,16 @@ enum class ImageFormat {
     A1 = PLUTOBOOK_IMAGE_FORMAT_A1
 };
 
+/**
+ * @brief The ImageCanvas class represents a canvas for drawing to in-memory image data.
+ */
 class PLUTOBOOK_API ImageCanvas final : public Canvas {
 public:
     /**
      * @brief Constructs an ImageCanvas with the specified width, height, and optional image format.
      * @param width The width of the canvas.
      * @param height The height of the canvas.
-     * @param format The format of the image
+     * @param format The format of the image data.
      */
     ImageCanvas(int width, int height, ImageFormat format = ImageFormat::ARGB32);
 
@@ -795,7 +813,7 @@ public:
      * @param width The width of the image data.
      * @param height The height of the image data.
      * @param stride The stride of the image data.
-     * @param format The format of the image data
+     * @param format The format of the image data.
      */
     ImageCanvas(uint8_t* data, int width, int height, int stride, ImageFormat format = ImageFormat::ARGB32);
 
@@ -845,12 +863,131 @@ public:
 
     /**
      * @brief Writes the image data to a PNG file using a custom write callback.
-     * @param callback The callback function for writing data
+     * @param callback The callback function for writing data.
      * @param closure A pointer to user-defined data to be passed to the callback.
      * @return true if the image was successfully written using the callback, false otherwise.
      */
     bool writeToPng(plutobook_stream_write_callback_t callback, void* closure) const;
 };
+
+/**
+ * @brief An immutable, heap-owned, null-terminated string used for PDF metadata.
+ *
+ * A `PDFString` is either null (unset) or holds its own copy of the character
+ * data. The null state lets callers distinguish "no value provided" from an
+ * explicitly empty value when setting document metadata.
+ */
+class PLUTOBOOK_API PDFString {
+public:
+    /**
+     * @brief Constructs a null string.
+     */
+    PDFString() = default;
+
+    /**
+     * @brief Constructs a null string.
+     */
+    PDFString(std::nullptr_t);
+
+    /**
+     * @brief Constructs from a null-terminated C string.
+     * @param data Pointer to a null-terminated string, or `nullptr` to construct a null string.
+     */
+    PDFString(const char* data);
+
+    /**
+     * @brief Constructs by copying the first `length` bytes of a character buffer.
+     * @param data Pointer to the character data to copy.
+     * @param length Number of bytes to copy.
+     */
+    PDFString(const char* data, size_t length);
+
+    /**
+     * @brief Constructs from a `std::string`.
+     * @param value The string to copy.
+     */
+    PDFString(const std::string& value);
+
+    /**
+     * @brief Constructs from a `std::string_view`.
+     * @param value The string view to copy.
+     */
+    PDFString(std::string_view value);
+
+    /**
+     * @brief Copy constructor
+     * @param value The string to copy.
+     */
+    PDFString(const PDFString& value);
+
+    /**
+     * @brief Move constructor
+     */
+    PDFString(PDFString&&) = default;
+
+    /**
+     * @brief Copy assignment
+     * @param value String to copy.
+     * @return Reference to this string.
+     */
+    PDFString& operator=(const PDFString& value);
+
+    /**
+     * @brief Move assignment
+     * @return Reference to this string.
+     */
+    PDFString& operator=(PDFString&&) = default;
+
+    /**
+     * @brief Returns the null-terminated character data.
+     * @return Pointer to the character data, or `nullptr` if the string is null.
+     */
+    const char* data() const { return m_data.get(); }
+
+    /**
+     * @brief Returns the length in bytes, excluding the null terminator.
+     * @return The number of bytes, or 0 if the string is null or empty.
+     */
+    size_t size() const { return length(m_data.get()); }
+
+    /**
+     * @brief Converts to a `std::string_view` over the contents.
+     */
+    operator std::string_view() const;
+
+    /**
+     * @brief Replaces the stored string.
+     * @param value The new string to store. Defaults to null.
+     */
+    void reset(PDFString value = PDFString()) { swap(value); }
+
+    /**
+     * @brief Swaps contents with another string.
+     * @param value String to swap with.
+     */
+    void swap(PDFString& value) { m_data.swap(value.m_data); }
+
+    /**
+     * @brief Checks whether the string is null or has zero length.
+     * @return true if null or empty, false otherwise.
+     */
+    bool isEmpty() const { return m_data == nullptr || m_data[0] == '\0'; }
+
+    /**
+     * @brief Checks whether the string is null (unset).
+     * @return true if null, false otherwise.
+     */
+    bool isNull() const { return m_data == nullptr; }
+
+private:
+    static size_t length(const char* data);
+    std::unique_ptr<char[]> m_data;
+};
+
+inline PDFString::operator std::string_view() const
+{
+    return m_data == nullptr ? std::string_view() : std::string_view(data());
+}
 
 /**
  * @brief The PDFCanvas class represents a canvas for creating PDF documents.
@@ -883,31 +1020,31 @@ public:
      * @brief Sets the title of the PDF document.
      * @param title The title of the PDF document.
      */
-    void setTitle(const std::string& title);
+    void setTitle(const PDFString& title);
 
     /**
      * @brief Sets the author of the PDF document.
      * @param author The author of the PDF document.
      */
-    void setAuthor(const std::string& author);
+    void setAuthor(const PDFString& author);
 
     /**
      * @brief Sets the subject of the PDF document.
      * @param subject The subject of the PDF document.
      */
-    void setSubject(const std::string& subject);
+    void setSubject(const PDFString& subject);
 
     /**
      * @brief Sets the keywords associated with the PDF document.
      * @param keywords The keywords associated with the PDF document.
      */
-    void setKeywords(const std::string& keywords);
+    void setKeywords(const PDFString& keywords);
 
     /**
      * @brief Sets the creator of the PDF document.
      * @param creator The creator of the PDF document.
      */
-    void setCreator(const std::string& creator);
+    void setCreator(const PDFString& creator);
 
     /**
      * @brief Sets the creation date of the PDF document.
@@ -916,7 +1053,7 @@ public:
      *
      * @param creationDate The creation date of the PDF document.
      */
-    void setCreationDate(const std::string& creationDate);
+    void setCreationDate(const PDFString& creationDate);
 
     /**
      * @brief Sets the modification date of the PDF document.
@@ -925,7 +1062,7 @@ public:
      *
      * @param modificationDate The modification date of the PDF document.
      */
-    void setModificationDate(const std::string& modificationDate);
+    void setModificationDate(const PDFString& modificationDate);
 
     /**
      * @brief Sets the page size of the PDF document.
@@ -950,6 +1087,9 @@ enum class MediaType {
     Screen = PLUTOBOOK_MEDIA_TYPE_SCREEN
 };
 
+/**
+ * @brief The Book class represents a document that can be loaded, laid out, and rendered to a canvas or written to a file.
+ */
 class PLUTOBOOK_API Book {
 public:
     /**
@@ -970,61 +1110,61 @@ public:
      * @brief Sets the title of the document.
      * @param title The title of the document.
      */
-    void setTitle(std::string title) { m_title = std::move(title); }
+    void setTitle(PDFString title) { m_title = std::move(title); }
 
     /**
      * @brief Gets the title of the document.
      * @return The title of the document.
      */
-    const std::string& title() const { return m_title; }
+    const PDFString& title() const { return m_title; }
 
     /**
      * @brief Sets the author of the document.
      * @param author The author of the document.
      */
-    void setAuthor(std::string author) { m_author = std::move(author); }
+    void setAuthor(PDFString author) { m_author = std::move(author); }
 
     /**
      * @brief Gets the author of the document.
      * @return The author of the document.
      */
-    const std::string& author() const { return m_author; }
+    const PDFString& author() const { return m_author; }
 
     /**
      * @brief Sets the subject of the document.
      * @param subject The subject of the document.
      */
-    void setSubject(std::string subject) { m_subject = std::move(subject); }
+    void setSubject(PDFString subject) { m_subject = std::move(subject); }
 
     /**
      * @brief Gets the subject of the document.
      * @return The subject of the document.
      */
-    const std::string& subject() const { return m_subject; }
+    const PDFString& subject() const { return m_subject; }
 
     /**
      * @brief Sets the keywords associated with the document.
      * @param keywords The keywords associated with the document.
      */
-    void setKeywords(std::string keywords) { m_keywords = std::move(keywords); }
+    void setKeywords(PDFString keywords) { m_keywords = std::move(keywords); }
 
     /**
      * @brief Gets the keywords associated with the document.
      * @return The keywords associated with the document.
      */
-    const std::string& keywords() const { return m_keywords; }
+    const PDFString& keywords() const { return m_keywords; }
 
     /**
      * @brief Sets the creator of the document.
      * @param creator The creator of the document.
      */
-    void setCreator(std::string creator) { m_creator = std::move(creator); }
+    void setCreator(PDFString creator) { m_creator = std::move(creator); }
 
     /**
      * @brief Gets the creator of the document.
      * @return The creator of the document.
      */
-    const std::string& creator() const { return m_creator; }
+    const PDFString& creator() const { return m_creator; }
 
     /**
      * @brief Sets the creation date of the document.
@@ -1033,13 +1173,13 @@ public:
      *
      * @param creationDate The creation date of the document.
      */
-    void setCreationDate(std::string creationDate) { m_creationDate = std::move(creationDate); }
+    void setCreationDate(PDFString creationDate) { m_creationDate = std::move(creationDate); }
 
     /**
      * @brief Gets the creation date of the document.
      * @return The creation date of the document.
      */
-    const std::string& creationDate() const { return m_creationDate; }
+    const PDFString& creationDate() const { return m_creationDate; }
 
     /**
      * @brief Sets the modification date of the document.
@@ -1048,13 +1188,13 @@ public:
      *
      * @param modificationDate The modification date of the document.
      */
-    void setModificationDate(std::string modificationDate) { m_modificationDate = std::move(modificationDate); }
+    void setModificationDate(PDFString modificationDate) { m_modificationDate = std::move(modificationDate); }
 
     /**
      * @brief Gets the modification date of the document.
      * @return The modification date of the document.
      */
-    const std::string& modificationDate() const { return m_modificationDate; }
+    const PDFString& modificationDate() const { return m_modificationDate; }
 
     /**
      * @brief Returns the width of the viewport.
@@ -1190,11 +1330,11 @@ public:
     void renderPage(plutobook_canvas_t* canvas, uint32_t pageIndex) const;
 
     /**
-     * @brief Renders the specified page to the given canvas.
-     * @param canvas The canvas to render the page on.
+     * @brief Renders the specified page to the given cairo context.
+     * @param context The cairo context to render the page on.
      * @param pageIndex The index of the page to render.
      */
-    void renderPage(cairo_t* canvas, uint32_t pageIndex) const;
+    void renderPage(cairo_t* context, uint32_t pageIndex) const;
 
     /**
      * @brief Renders the entire document to the given canvas.
@@ -1229,20 +1369,20 @@ public:
     void renderDocument(plutobook_canvas_t* canvas, float x, float y, float width, float height) const;
 
     /**
-     * @brief Renders the entire document to the given canvas.
-     * @param canvas The canvas to render the entire document on.
+     * @brief Renders the entire document to the given cairo context.
+     * @param context The cairo context to render the entire document on.
      */
-    void renderDocument(cairo_t* canvas) const;
+    void renderDocument(cairo_t* context) const;
 
     /**
-     * @brief Renders a specific rectangular portion of the document to the given canvas.
-     * @param canvas The canvas to render the document portion on.
+     * @brief Renders a specific rectangular portion of the document to the given cairo context.
+     * @param context The cairo context to render the document portion on.
      * @param x The x-coordinate of the top-left corner of the rectangle.
      * @param y The y-coordinate of the top-left corner of the rectangle.
      * @param width The width of the rectangle to render.
      * @param height The height of the rectangle to render.
      */
-    void renderDocument(cairo_t* canvas, float x, float y, float width, float height) const;
+    void renderDocument(cairo_t* context, float x, float y, float width, float height) const;
 
     /**
      * @brief Writes a range of pages from the document to a PDF file.
@@ -1256,7 +1396,7 @@ public:
         uint32_t pageEnd = kMaxPageCount, int pageStep = 1) const;
 
     /**
-     * @brief Writes the entire document to a PDF stream using a callback function.
+     * @brief Writes a range of pages from the document to a PDF output stream.
      * @param output The output stream where the PDF document will be written.
      * @param pageStart The first page in the range to be written (inclusive).
      * @param pageEnd The last page in the range to be written (inclusive).
@@ -1267,7 +1407,7 @@ public:
         uint32_t pageEnd = kMaxPageCount, int pageStep = 1) const;
 
     /**
-     * @brief Writes the entire document to a PDF stream using a callback function.
+     * @brief Writes a range of pages from the document to a PDF stream using a callback function.
      * @param callback A callback function used for writing the PDF stream.
      * @param closure A user-defined pointer passed to the callback function for additional data.
      * @param pageStart The first page in the range to be written (inclusive).
@@ -1331,6 +1471,12 @@ public:
     Document* document() const { return m_document.get(); }
 
 private:
+    Book(const Book&) = delete;
+    Book& operator=(const Book&) = delete;
+    template<typename DocumentType>
+    bool loadDocument(std::string_view content, std::string_view userStyle,
+        std::string_view userScript, std::string_view baseUrl);
+
     Document* buildIfNeeded() const;
     Document* layoutIfNeeded() const;
     Document* paginateIfNeeded() const;
@@ -1343,15 +1489,16 @@ private:
     mutable bool m_needsLayout{true};
     mutable bool m_needsPagination{true};
 
-    std::string m_title;
-    std::string m_author;
-    std::string m_subject;
-    std::string m_keywords;
-    std::string m_creator;
-    std::string m_creationDate;
-    std::string m_modificationDate;
+    PDFString m_title;
+    PDFString m_author;
+    PDFString m_subject;
+    PDFString m_keywords;
+    PDFString m_creator;
+    PDFString m_creationDate;
+    PDFString m_modificationDate;
 
     ResourceFetcher* m_customResourceFetcher{nullptr};
+
     std::unique_ptr<Heap> m_heap;
     std::unique_ptr<Document> m_document;
 };

@@ -1,14 +1,14 @@
 [wrap-file]
 directory = icu
-source_url = https://github.com/unicode-org/icu/releases/download/release-78.1/icu4c-78.1-sources.tgz
-source_filename = icu4c-78.1-sources.tgz
-source_hash = 6217f58ca39b23127605cfc6c7e0d3475fe4b0d63157011383d716cb41617886
-source_fallback_url = https://wrapdb.mesonbuild.com/v2/icu_78.1-1/get_source/icu4c-78.1-sources.tgz
-patch_filename = icu_78.1-1_patch.zip
-patch_url = https://wrapdb.mesonbuild.com/v2/icu_78.1-1/get_patch
-patch_fallback_url = https://github.com/mesonbuild/wrapdb/releases/download/icu_78.1-1/icu_78.1-1_patch.zip
-patch_hash = 0f998d1b9b3620fe5ee9e1f2bdecca31cead47b4eff023897965a2a02136f983
-wrapdb_version = 78.1-1
+source_url = https://github.com/unicode-org/icu/releases/download/release-78.2/icu4c-78.2-sources.tgz
+source_filename = icu4c-78.2-sources.tgz
+source_hash = 3e99687b5c435d4b209630e2d2ebb79906c984685e78635078b672e03c89df35
+source_fallback_url = https://wrapdb.mesonbuild.com/v2/icu_78.2-1/get_source/icu4c-78.2-sources.tgz
+patch_filename = icu_78.2-1_patch.zip
+patch_url = https://wrapdb.mesonbuild.com/v2/icu_78.2-1/get_patch
+patch_fallback_url = https://github.com/mesonbuild/wrapdb/releases/download/icu_78.2-1/icu_78.2-1_patch.zip
+patch_hash = a21033c878bf6f09a11888038add7cc070ed6d7e146fc6b4061b547722fc7925
+wrapdb_version = 78.2-1
 
 [provide]
 dependency_names = icu-data, icu-i18n, icu-io, icu-uc

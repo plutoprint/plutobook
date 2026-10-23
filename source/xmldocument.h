@@ -15,13 +15,13 @@ namespace plutobook {
 
 class XMLDocument : public Document {
 public:
-    static std::unique_ptr<XMLDocument> create(Book* book, Heap* heap, ResourceFetcher* fetcher, Url baseUrl);
+    static std::unique_ptr<XMLDocument> create(Book* book, Url baseUrl);
 
     bool isXMLDocument() const final { return true; }
     bool parse(std::string_view content) override;
 
 protected:
-    XMLDocument(Book* book, Heap* heap, ResourceFetcher* fetcher, Url baseUrl);
+    XMLDocument(Book* book, Url baseUrl);
 };
 
 template<>

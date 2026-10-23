@@ -24,7 +24,7 @@ using BoxLayerList = std::pmr::vector<BoxLayer*>;
 
 class BoxLayer : public HeapMember {
 public:
-    static std::unique_ptr<BoxLayer> create(BoxModel* box, BoxLayer* parent);
+    static std::unique_ptr<BoxLayer> create(BoxModel* box);
 
     BoxModel* box() const { return m_box; }
     BoxLayer* parent() const { return m_parent; }
@@ -50,7 +50,7 @@ public:
     Point location() const { return m_borderRect.origin(); }
     Size size() const { return m_borderRect.size(); }
 
-    void updateLayerPosition();
+    void updateGeometry();
 
     void paint(GraphicsContext& context, const Rect& rect);
     void paintLayer(BoxLayer* rootLayer, GraphicsContext& context, const Rect& rect);

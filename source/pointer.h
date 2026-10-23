@@ -9,7 +9,7 @@
 #ifndef PLUTOBOOK_POINTER_H
 #define PLUTOBOOK_POINTER_H
 
-#include <algorithm>
+#include <utility>
 #include <cstdint>
 #include <cassert>
 #include <atomic>
@@ -85,49 +85,42 @@ public:
         return m_ptr;
     }
 
-    operator T*() const { return m_ptr; }
-    operator bool() const { return !!m_ptr; }
+    explicit operator bool() const { return !!m_ptr; }
 
     RefPtr<T>& operator=(std::nullptr_t) {
-        clear();
+        RefPtr<T>(nullptr).swap(*this);
         return *this;
     }
 
     RefPtr<T>& operator=(T* o) {
-        RefPtr<T> p = o;
-        swap(p);
+        RefPtr<T>(o).swap(*this);
         return *this;
     }
 
     RefPtr<T>& operator=(T& o) {
-        RefPtr<T> p = o;
-        swap(p);
+        RefPtr<T>(o).swap(*this);
         return *this;
     }
 
     RefPtr<T>& operator=(const RefPtr<T>& o) {
-        RefPtr<T> p = o;
-        swap(p);
+        RefPtr<T>(o).swap(*this);
         return *this;
     }
 
     RefPtr<T>& operator=(RefPtr<T>&& o) {
-        RefPtr<T> p = std::move(o);
-        swap(p);
+        RefPtr<T>(std::move(o)).swap(*this);
         return *this;
     }
 
     template<typename U>
     RefPtr<T>& operator=(const RefPtr<U>& o) {
-        RefPtr<T> p = o;
-        swap(p);
+        RefPtr<T>(o).swap(*this);
         return *this;
     }
 
     template<typename U>
     RefPtr<T>& operator=(RefPtr<U>&& o) {
-        RefPtr<T> p = std::move(o);
-        swap(p);
+        RefPtr<T>(std::move(o)).swap(*this);
         return *this;
     }
 
@@ -141,9 +134,13 @@ public:
         return ptr;
     }
 
-    void clear() {
-        derefIfNotNull(m_ptr);
-        m_ptr = nullptr;
+    bool operator==(std::nullptr_t) const {
+        return m_ptr == nullptr;
+    }
+
+    template<typename U>
+    bool operator==(const U* o) const {
+        return m_ptr == o;
     }
 
     template<typename U>
@@ -156,17 +153,17 @@ public:
         return m_ptr < o.get();
     }
 
-    friend RefPtr<T> adoptPtr<T>(T*);
-
 private:
-    RefPtr(T* ptr, std::nullptr_t) : m_ptr(ptr) {}
+    enum AdoptTag { Adopt };
+    RefPtr(T* ptr, AdoptTag) : m_ptr(ptr) {}
+    friend RefPtr<T> adoptPtr<T>(T*);
     T* m_ptr{nullptr};
 };
 
 template<typename T>
 inline RefPtr<T> adoptPtr(T* ptr)
 {
-    return RefPtr<T>(ptr, nullptr);
+    return RefPtr<T>(ptr, RefPtr<T>::Adopt);
 }
 
 template<class T>
@@ -176,88 +173,76 @@ inline void swap(RefPtr<T>& a, RefPtr<T>& b)
 }
 
 template<typename T>
-inline bool operator==(const RefPtr<T>& a, std::nullptr_t)
-{
-    return a.get() == nullptr;
-}
-
-template<typename T>
-inline bool operator==(std::nullptr_t, const RefPtr<T>& a)
-{
-    return nullptr == a.get();
-}
-
-template<typename T>
 struct is_a {
     template<typename U>
     static bool check(const U& value);
 };
 
 template<typename T, typename U>
-constexpr bool is(U& value) {
+inline bool is(U& value) {
     return is_a<T>::check(value);
 }
 
 template<typename T, typename U>
-constexpr bool is(const U& value) {
+inline bool is(const U& value) {
     return is_a<T>::check(value);
 }
 
 template<typename T, typename U>
-constexpr bool is(U* value) {
+inline bool is(U* value) {
     return value && is_a<T>::check(*value);
 }
 
 template<typename T, typename U>
-constexpr bool is(const U* value) {
+inline bool is(const U* value) {
     return value && is_a<T>::check(*value);
 }
 
 template<typename T, typename U>
-constexpr bool is(RefPtr<U>& value) {
+inline bool is(RefPtr<U>& value) {
     return value && is_a<T>::check(*value);
 }
 
 template<typename T, typename U>
-constexpr bool is(const RefPtr<U>& value) {
+inline bool is(const RefPtr<U>& value) {
     return value && is_a<T>::check(*value);
 }
 
 template<typename T, typename U>
-constexpr T& to(U& value) {
+inline T& to(U& value) {
     assert(is<T>(value));
     return static_cast<T&>(value);
 }
 
 template<typename T, typename U>
-constexpr const T& to(const U& value) {
+inline const T& to(const U& value) {
     assert(is<T>(value));
     return static_cast<const T&>(value);
 }
 
 template<typename T, typename U>
-constexpr T* to(U* value) {
+inline T* to(U* value) {
     if(!is<T>(value))
         return nullptr;
     return static_cast<T*>(value);
 }
 
 template<typename T, typename U>
-constexpr const T* to(const U* value) {
+inline const T* to(const U* value) {
     if(!is<T>(value))
         return nullptr;
     return static_cast<const T*>(value);
 }
 
 template<typename T, typename U>
-constexpr RefPtr<T> to(const RefPtr<U>& value) {
+inline RefPtr<T> to(const RefPtr<U>& value) {
     if(!is<T>(value))
         return nullptr;
     return static_cast<T&>(*value);
 }
 
 template<typename T, typename U>
-constexpr RefPtr<T> to(RefPtr<U>& value) {
+inline RefPtr<T> to(RefPtr<U>& value) {
     if(!is<T>(value))
         return nullptr;
     return static_cast<T&>(*value);

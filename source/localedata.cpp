@@ -8,88 +8,263 @@
 
 #include "localedata.h"
 
-#include <unicode/ulocdata.h>
 #include <cassert>
-#include <map>
+#include <algorithm>
+
+#include <hb.h>
 
 namespace plutobook {
 
-const LocaleData* LocaleData::get(const GlobalString& lang)
+std::unique_ptr<LocaleData> LocaleData::create(const GlobalString& lang)
 {
-    if(lang.isEmpty()) {
-        thread_local std::unique_ptr<LocaleData> locale(new LocaleData(icu::Locale::getDefault()));
-        return locale.get();
+    auto language = hb_language_from_string(lang.data(), lang.size());
+    if(language == nullptr) {
+        const char* name = icu::Locale::getDefault().getName();
+        language = hb_language_from_string(name, std::strlen(name));
     }
 
-    thread_local std::map<GlobalString, std::unique_ptr<LocaleData>> table;
-
-    auto& locale = table[lang];
-    if(!locale) {
-        std::string language(lang.value());
-        icu::Locale loc(language.data());
-        if(loc.isBogus())
-            loc = icu::Locale::getDefault();
-        locale.reset(new LocaleData(loc));
-    }
-
-    return locale.get();
+    return std::unique_ptr<LocaleData>(new LocaleData(language));
 }
 
-icu::BreakIterator* LocaleData::characterIterator() const
+int LocaleData::nextCharacterBreak(uint64_t id, const UString& text, int offset) const
 {
-    if(!m_characterIterator) {
-        UErrorCode status = U_ZERO_ERROR;
-        m_characterIterator.reset(icu::BreakIterator::createCharacterInstance(m_locale, status));
-        assert(m_characterIterator && U_SUCCESS(status));
-    }
-
-    return m_characterIterator.get();
-}
-
-icu::BreakIterator* LocaleData::lineIterator() const
-{
-    if(!m_lineIterator) {
-        UErrorCode status = U_ZERO_ERROR;
-        m_lineIterator.reset(icu::BreakIterator::createLineInstance(m_locale, status));
-        assert(m_lineIterator && U_SUCCESS(status));
-    }
-
-    return m_lineIterator.get();
-}
-
-std::unique_ptr<LocaleData::Quotes> LocaleData::Quotes::create(const char* locale)
-{
-    constexpr auto MAX_QUOTE_SIZE = U8_MAX_LENGTH + 1;
-
-    char open1[MAX_QUOTE_SIZE] = {};
-    char close1[MAX_QUOTE_SIZE] = {};
-    char open2[MAX_QUOTE_SIZE] = {};
-    char close2[MAX_QUOTE_SIZE] = {};
-
-    UErrorCode status = U_ZERO_ERROR;
-    ULocaleData* uld = ulocdata_open(locale, &status);
-    if(U_SUCCESS(status)) {
-        struct {
-            ULocaleDataDelimiterType type;
-            char* value;
-        } delimiters[] = {
-            {ULOCDATA_QUOTATION_START, open1},
-            {ULOCDATA_QUOTATION_END, close1},
-            {ULOCDATA_ALT_QUOTATION_START, open2},
-            {ULOCDATA_ALT_QUOTATION_END, close2}
-        };
-
-        for(auto& delim : delimiters) {
-            UChar result;
-            auto length = ulocdata_getDelimiter(uld, delim.type, &result, 1, &status);
-            if(length == 1 && U_SUCCESS(status)) {
-                int len = 0;
-                U8_APPEND_UNSAFE(delim.value, len, result);
-                delim.value[len] = '\0';
-            }
+    if(m_characterIteratorId != id) {
+        if(m_characterIterator == nullptr) {
+            UErrorCode status = U_ZERO_ERROR;
+            m_characterIterator.reset(icu::BreakIterator::createCharacterInstance(locale(), status));
+            assert(m_characterIterator && U_SUCCESS(status));
         }
 
-        ulocdata_close(uld);
+        m_characterIterator->setText(text);
+        m_characterIteratorId = id;
+    }
+
+    return m_characterIterator->following(offset);
+}
+
+int LocaleData::nextLineBreak(uint64_t id, const UString& text, int offset) const
+{
+    if(m_lineIteratorId != id) {
+        if(m_lineIterator == nullptr) {
+            UErrorCode status = U_ZERO_ERROR;
+            m_lineIterator.reset(icu::BreakIterator::createLineInstance(locale(), status));
+            assert(m_lineIterator && U_SUCCESS(status));
+        }
+
+        m_lineIterator->setText(text);
+        m_lineIteratorId = id;
+    }
+
+    return m_lineIterator->following(offset);
+}
+
+UString LocaleData::toUpper(UString text) const
+{
+    return text.toUpper(locale());
+}
+
+UString LocaleData::toLower(UString text) const
+{
+    return text.toLower(locale());
+}
+
+UString LocaleData::toTitle(UString text, UChar32 previousCharacter) const
+{
+    if(m_wordIterator == nullptr) {
+        UErrorCode status = U_ZERO_ERROR;
+        m_wordIterator.reset(icu::BreakIterator::createWordInstance(locale(), status));
+        assert(m_wordIterator && U_SUCCESS(status));
+    }
+
+    constexpr uint32_t options = U_TITLECASE_NO_LOWERCASE | U_TITLECASE_NO_BREAK_ADJUSTMENT;
+
+    text.insert(0, previousCharacter);
+    text.toTitle(m_wordIterator.get(), locale(), options);
+
+    UString prefix(previousCharacter);
+    if(u_hasBinaryProperty(previousCharacter, UCHAR_CHANGES_WHEN_TITLECASED))
+        prefix.toTitle(m_wordIterator.get(), locale(), options);
+    text.remove(0, prefix.length());
+    return text;
+}
+
+const GlobalString& LocaleData::getQuote(bool open, size_t depth) const
+{
+    if(!m_quotes)
+        m_quotes = Quotes::create(lang());
+    return m_quotes->getQuote(open, depth);
+}
+
+const char* LocaleData::lang() const
+{
+    return hb_language_to_string(m_language);
+}
+
+icu::Locale LocaleData::locale() const
+{
+    auto locale = icu::Locale(lang());
+    if(locale.isBogus())
+        return icu::Locale::getRoot();
+    return locale;
+}
+
+std::unique_ptr<LocaleData::Quotes> LocaleData::Quotes::create(std::string_view lang)
+{
+    static const struct {
+        UChar open1;
+        UChar close1;
+        UChar open2;
+        UChar close2;
+        const char* lang;
+    } quotes[] = {
+        {0x201e, 0x201d, 0x201a, 0x2019, "agq"},
+        {0x00ab, 0x00bb, 0x2039, 0x203a, "am"},
+        {0x201d, 0x201c, 0x2019, 0x2018, "ar"},
+        {0x00ab, 0x00bb, 0x201c, 0x201d, "ast"},
+        {0x00ab, 0x00bb, 0x2039, 0x203a, "az-cyrl"},
+        {0x00ab, 0x00bb, 0x201e, 0x201c, "bas"},
+        {0x00ab, 0x00bb, 0x201e, 0x201c, "be"},
+        {0x201e, 0x201c, 0x201e, 0x201c, "bg"},
+        {0x00ab, 0x00bb, 0x201c, 0x201d, "blo"},
+        {0x00ab, 0x00bb, 0x201c, 0x201d, "bm"},
+        {0x00ab, 0x00bb, 0x201c, 0x201d, "br"},
+        {0x201e, 0x201d, 0x2018, 0x2019, "bs"},
+        {0x201e, 0x201c, 0x201a, 0x2018, "bs-cyrl"},
+        {0x00ab, 0x00bb, 0x201c, 0x201d, "ca"},
+        {0x201e, 0x201c, 0x201a, 0x2018, "cs"},
+        {0x00ab, 0x00bb, 0x201e, 0x201c, "cv"},
+        {0x201e, 0x201c, 0x201a, 0x2018, "de"},
+        {0x201e, 0x201c, 0x201a, 0x2018, "dsb"},
+        {0x00ab, 0x00bb, 0x2018, 0x2019, "dua"},
+        {0x00ab, 0x00bb, 0x201c, 0x201d, "dyo"},
+        {0x00ab, 0x00bb, 0x201c, 0x201d, "el"},
+        {0x201e, 0x201c, 0x201a, 0x2018, "et"},
+        {0x00ab, 0x00bb, 0x201c, 0x201d, "eu"},
+        {0x00ab, 0x00bb, 0x201c, 0x201d, "ewo"},
+        {0x00ab, 0x00bb, 0x2039, 0x203a, "fa"},
+        {0x201e, 0x201d, 0x201a, 0x2019, "ff"},
+        {0x201d, 0x201d, 0x2019, 0x2019, "fi"},
+        {0x00ab, 0x00bb, 0x00ab, 0x00bb, "fr"},
+        {0x00ab, 0x00bb, 0x201d, 0x201c, "fr-ca"},
+        {0x00ab, 0x00bb, 0x2039, 0x203a, "fr-ch"},
+        {0x2018, 0x2019, 0x201c, 0x201d, "fur"},
+        {0x00ab, 0x00bb, 0x2039, 0x203a, "gsw"},
+        {0x201d, 0x201d, 0x2019, 0x2019, "he"},
+        {0x201e, 0x201c, 0x201a, 0x2018, "hr"},
+        {0x201e, 0x201c, 0x201a, 0x2018, "hsb"},
+        {0x201e, 0x201d, 0x00bb, 0x00ab, "hu"},
+        {0x00ab, 0x00bb, 0x00ab, 0x00bb, "hy"},
+        {0x2018, 0x2019, 0x201c, 0x201d, "ia"},
+        {0x00ab, 0x00bb, 0x201c, 0x201d, "ie"},
+        {0x201e, 0x201c, 0x201a, 0x2018, "is"},
+        {0x00ab, 0x00bb, 0x201c, 0x201d, "it"},
+        {0x300c, 0x300d, 0x300e, 0x300f, "ja"},
+        {0x00ab, 0x00bb, 0x2039, 0x203a, "jgo"},
+        {0x201e, 0x201c, 0x00ab, 0x00bb, "ka"},
+        {0x00ab, 0x00bb, 0x201c, 0x201d, "kab"},
+        {0x00ab, 0x00bb, 0x201c, 0x201d, "kk"},
+        {0x00ab, 0x00bb, 0x2039, 0x203a, "kkj"},
+        {0x00ab, 0x00bb, 0x2018, 0x2019, "ksf"},
+        {0x201e, 0x201c, 0x201a, 0x2018, "ksh"},
+        {0x00ab, 0x00bb, 0x201e, 0x201c, "ky"},
+        {0x201d, 0x201d, 0x2019, 0x2019, "lag"},
+        {0x201e, 0x201c, 0x201a, 0x2018, "lb"},
+        {0x00ab, 0x00bb, 0x201c, 0x201d, "lij"},
+        {0x201e, 0x201c, 0x201e, 0x201c, "lt"},
+        {0x201e, 0x201c, 0x201a, 0x2018, "luy"},
+        {0x00ab, 0x00bb, 0x201c, 0x201d, "mg"},
+        {0x201e, 0x201c, 0x201a, 0x2018, "mk"},
+        {0x00ab, 0x00bb, 0x201c, 0x201d, "mua"},
+        {0x00ab, 0x00bb, 0x2039, 0x203a, "mzn"},
+        {0x00ab, 0x00bb, 0x2018, 0x2019, "nb"},
+        {0x201e, 0x201c, 0x201a, 0x2018, "nds"},
+        {0x2018, 0x2019, 0x2018, 0x2019, "nl"},
+        {0x201e, 0x201d, 0x00ab, 0x00bb, "nmg"},
+        {0x00ab, 0x00bb, 0x2018, 0x2019, "nn"},
+        {0x00ab, 0x00bb, 0x201c, 0x201d, "nnh"},
+        {0x00ab, 0x00bb, 0x2018, 0x2019, "no"},
+        {0x2018, 0x2019, 0x201c, 0x201d, "nso"},
+        {0x00ab, 0x00bb, 0x00ab, 0x00bb, "oc"},
+        {0x00ab, 0x00bb, 0x201e, 0x201c, "os"},
+        {0x201e, 0x201d, 0x00ab, 0x00bb, "pl"},
+        {0x201e, 0x201c, 0x201e, 0x201c, "prg"},
+        {0x00ab, 0x00bb, 0x201c, 0x201d, "pt-ao"},
+        {0x00ab, 0x00bb, 0x201c, 0x201d, "pt-ch"},
+        {0x00ab, 0x00bb, 0x201c, 0x201d, "pt-cv"},
+        {0x00ab, 0x00bb, 0x201c, 0x201d, "pt-gq"},
+        {0x00ab, 0x00bb, 0x201c, 0x201d, "pt-gw"},
+        {0x00ab, 0x00bb, 0x201c, 0x201d, "pt-lu"},
+        {0x00ab, 0x00bb, 0x201c, 0x201d, "pt-mo"},
+        {0x00ab, 0x00bb, 0x201c, 0x201d, "pt-mz"},
+        {0x00ab, 0x00bb, 0x201c, 0x201d, "pt-pt"},
+        {0x00ab, 0x00bb, 0x201c, 0x201d, "pt-st"},
+        {0x00ab, 0x00bb, 0x201c, 0x201d, "pt-tl"},
+        {0x00ab, 0x00bb, 0x2039, 0x203a, "rm"},
+        {0x201d, 0x201d, 0x2019, 0x2019, "rn"},
+        {0x201e, 0x201d, 0x00ab, 0x00bb, "ro"},
+        {0x00ab, 0x00bb, 0x201e, 0x201c, "ru"},
+        {0x00ab, 0x00bb, 0x2018, 0x2019, "rw"},
+        {0x00ab, 0x00bb, 0x201e, 0x201c, "sah"},
+        {0x00ab, 0x00bb, 0x201c, 0x201d, "sc"},
+        {0x201d, 0x201d, 0x2019, 0x2019, "se"},
+        {0x00ab, 0x00bb, 0x201c, 0x201d, "sg"},
+        {0x00ab, 0x00bb, 0x201e, 0x201d, "shi"},
+        {0x201e, 0x201c, 0x201a, 0x2018, "sk"},
+        {0x201e, 0x201c, 0x201a, 0x2018, "sl"},
+        {0x201d, 0x201d, 0x2019, 0x2019, "sn"},
+        {0x00ab, 0x00bb, 0x201c, 0x201d, "sq"},
+        {0x201e, 0x201d, 0x2019, 0x2019, "sr"},
+        {0x201c, 0x2019, 0x201c, 0x201d, "st"},
+        {0x201d, 0x201d, 0x2019, 0x2019, "sv"},
+        {0x201d, 0x201c, 0x2019, 0x2018, "syr"},
+        {0x201e, 0x201d, 0x00bb, 0x00ab, "szl"},
+        {0x00ab, 0x00bb, 0x201c, 0x201d, "ti"},
+        {0x2018, 0x2019, 0x201c, 0x201d, "ti-er"},
+        {0x201c, 0x201d, 0x201c, 0x201d, "tk"},
+        {0x2018, 0x2019, 0x201c, 0x201d, "tn"},
+        {0x00bb, 0x00ab, 0x203a, 0x2039, "ug"},
+        {0x00ab, 0x00bb, 0x201e, 0x201c, "uk"},
+        {0x201d, 0x201c, 0x2019, 0x2018, "ur"},
+        {0x201c, 0x201d, 0x2019, 0x2018, "uz"},
+        {0x00ab, 0x00bb, 0x2039, 0x203a, "wae"},
+        {0x00ab, 0x00bb, 0x00ab, 0x00bb, "yav"},
+        {0x201d, 0x201d, 0x2019, 0x2019, "yi"},
+        {0x300c, 0x300d, 0x300e, 0x300f, "yue"},
+        {0x00ab, 0x00bb, 0x201e, 0x201d, "zgh"},
+        {0x300c, 0x300d, 0x300e, 0x300f, "zh-hant"}
+    };
+
+    constexpr auto MAX_QUOTE_SIZE = U8_MAX_LENGTH + 1;
+
+    char open1[MAX_QUOTE_SIZE]  = "\u201c";
+    char close1[MAX_QUOTE_SIZE] = "\u201d";
+    char open2[MAX_QUOTE_SIZE]  = "\u2018";
+    char close2[MAX_QUOTE_SIZE] = "\u2019";
+
+    auto encode_quote = [](char* dest, UChar value) {
+        int len = 0;
+        U8_APPEND_UNSAFE(dest, len, value);
+        dest[len] = '\0';
+    };
+
+    auto compare_func = [](const auto& quote, std::string_view lang) {
+        return quote.lang < lang;
+    };
+
+    while(!lang.empty()) {
+        auto quote = std::lower_bound(quotes, std::end(quotes), lang, compare_func);
+        if(quote != std::end(quotes) && quote->lang == lang) {
+            encode_quote(open1, quote->open1);
+            encode_quote(close1, quote->close1);
+            encode_quote(open2, quote->open2);
+            encode_quote(close2, quote->close2);
+            break;
+        }
+
+        auto pos = lang.find_last_of('-', lang.length() - 1);
+        if(pos == std::string_view::npos)
+            break;
+        lang.remove_suffix(lang.length() - pos);
     }
 
     return std::unique_ptr<Quotes>(new Quotes(open1, close1, open2, close2));
@@ -100,13 +275,6 @@ const GlobalString& LocaleData::Quotes::getQuote(bool open, size_t depth) const
     if(!depth)
         return open ? m_open1 : m_close1;
     return open ? m_open2 : m_close2;
-}
-
-const GlobalString& LocaleData::getQuote(bool open, size_t depth) const
-{
-    if(!m_quotes)
-        m_quotes = Quotes::create(m_locale.getName());
-    return m_quotes->getQuote(open, depth);
 }
 
 } // namespace plutobook

@@ -20,11 +20,12 @@ namespace plutobook {
 
 class Image;
 class Document;
+class Book;
 
 class ImageResource final : public Resource {
 public:
     static RefPtr<ImageResource> create(Document* document, const Url& url);
-    static RefPtr<Image> decode(const char* data, size_t size, std::string_view mimeType, std::string_view textEncoding, std::string_view baseUrl, ResourceFetcher* fetcher);
+    static RefPtr<Image> decode(Book* book, const char* data, size_t size, std::string_view mimeType, std::string_view textEncoding, std::string_view baseUrl);
     static bool supportsMimeType(std::string_view mimeType);
     const RefPtr<Image>& image() const { return m_image; }
     Type type() const final { return Type::Image; }
@@ -41,7 +42,7 @@ struct is_a<ImageResource> {
 
 class GraphicsContext;
 
-class Image : public RefCounted<Image> {
+class Image : public HeapMember, public RefCounted<Image> {
 public:
     Image() = default;
     virtual ~Image() = default;
@@ -53,7 +54,7 @@ public:
 
     virtual void draw(GraphicsContext& context, const Rect& dstRect, const Rect& srcRect) = 0;
     virtual void drawPattern(GraphicsContext& context, const Rect& destRect, const Size& size, const Size& scale, const Point& phase) = 0;
-    virtual void computeIntrinsicDimensions(float& intrinsicWidth, float& intrinsicHeight, double& intrinsicRatio) = 0;
+    virtual void computeIntrinsicDimensions(float& intrinsicWidth, float& intrinsicHeight, float& intrinsicRatio) = 0;
 
     virtual void setContainerSize(const Size& size) = 0;
     virtual Size intrinsicSize() const = 0;
@@ -62,24 +63,23 @@ public:
 
 class BitmapImage final : public Image {
 public:
-    static RefPtr<BitmapImage> create(const char* data, size_t size);
+    static RefPtr<BitmapImage> create(Book* book, const char* data, size_t size);
 
     bool isBitmapImage() const final { return true; }
 
     void draw(GraphicsContext& context, const Rect& dstRect, const Rect& srcRect) final;
     void drawPattern(GraphicsContext& context, const Rect& destRect, const Size& size, const Size& scale, const Point& phase) final;
-    void computeIntrinsicDimensions(float& intrinsicWidth, float& intrinsicHeight, double& intrinsicRatio) final;
+    void computeIntrinsicDimensions(float& intrinsicWidth, float& intrinsicHeight, float& intrinsicRatio) final;
 
-    void setContainerSize(const Size& size) final {}
-    Size intrinsicSize() const final { return m_intrinsicSize; }
-    Size size() const final { return m_intrinsicSize; }
+    void setContainerSize(const Size& size) final {};
+    Size intrinsicSize() const final;
+    Size size() const final;
 
     ~BitmapImage() final;
 
 private:
     BitmapImage(cairo_surface_t* surface);
     cairo_surface_t* m_surface;
-    Size m_intrinsicSize;
 };
 
 template<>
@@ -88,17 +88,17 @@ struct is_a<BitmapImage> {
 };
 
 class SVGDocument;
-class Heap;
+class SVGSVGElement;
 
 class SVGImage final : public Image {
 public:
-    static RefPtr<SVGImage> create(std::string_view content, std::string_view baseUrl, ResourceFetcher* fetcher);
+    static RefPtr<SVGImage> create(Book* book, std::string_view content, std::string_view baseUrl);
 
     bool isSVGImage() const final { return true; }
 
     void draw(GraphicsContext& context, const Rect& dstRect, const Rect& srcRect) final;
     void drawPattern(GraphicsContext& context, const Rect& destRect, const Size& size, const Size& scale, const Point& phase) final;
-    void computeIntrinsicDimensions(float& intrinsicWidth, float& intrinsicHeight, double& intrinsicRatio) final;
+    void computeIntrinsicDimensions(float& intrinsicWidth, float& intrinsicHeight, float& intrinsicRatio) final;
 
     void setContainerSize(const Size& size) final;
     Size intrinsicSize() const final;
@@ -107,8 +107,8 @@ public:
     ~SVGImage() final;
 
 private:
-    SVGImage(std::unique_ptr<Heap> heap, std::unique_ptr<SVGDocument> document);
-    std::unique_ptr<Heap> m_heap;
+    SVGImage(std::unique_ptr<SVGDocument> document);
+    SVGSVGElement* rootElement() const;
     std::unique_ptr<SVGDocument> m_document;
     Size m_containerSize;
 };

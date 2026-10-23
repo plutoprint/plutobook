@@ -25,6 +25,9 @@ enum class FlexViolation : uint8_t {
 };
 
 class FlexibleBox;
+class FlexLine;
+
+using FlexLineList = std::vector<FlexLine>;
 
 class FlexItem {
 public:
@@ -46,8 +49,15 @@ public:
     float flexBaseSize() const { return m_flexBaseSize; }
     float targetMainSize() const { return m_targetMainSize; }
 
-    void setFlexBaseSize(float value) { m_flexBaseSize = value; }
     void setTargetMainSize(float value) { m_targetMainSize = value; }
+
+    float naturalTop() const { return m_naturalTop; }
+    void setNaturalTop(float value) { m_naturalTop = value; }
+
+    float naturalHeight() const { return m_naturalHeight; }
+    void setNaturalHeight(float value) { m_naturalHeight = value; }
+
+    bool hasNaturalHeight() const { return m_naturalHeight >= 0.f; }
 
     std::optional<float> computeWidthUsing(const Length& widthLength) const;
     std::optional<float> computeHeightUsing(const Length& heightLength) const;
@@ -55,9 +65,16 @@ public:
     float constrainWidth(float width) const;
     float constrainHeight(float height) const;
 
+    std::optional<float> computeMainSizeUsing(const Length& length) const;
+
     float constrainMainSize(float size) const;
     float constrainCrossSize(float size) const;
-    float computeFlexBaseSize() const;
+
+    float computeContentHeight();
+    float computeMinContentMainSize();
+    float computeMaxContentMainSize();
+
+    void computeHypotheticalMainSize();
 
     FlexibleBox* flexBox() const;
     FlexDirection flexDirection() const;
@@ -84,15 +101,21 @@ public:
     float marginBefore() const;
     float marginAfter() const;
 
+    BoxFrame* operator->() const { return m_box; }
+
 private:
     BoxFrame* m_box;
+    AlignItem m_alignSelf;
+    FlexViolation m_violation{FlexViolation::None};
     int m_order;
     float m_flexGrow;
     float m_flexShrink;
-    AlignItem m_alignSelf;
-    FlexViolation m_violation{FlexViolation::None};
     float m_flexBaseSize{0};
     float m_targetMainSize{0};
+    float m_naturalTop{0};
+    float m_naturalHeight{0};
+    float m_minMainSize{0};
+    float m_maxMainSize{0};
 };
 
 using FlexItemList = std::pmr::vector<FlexItem>;
@@ -111,6 +134,8 @@ public:
     std::optional<float> lastLineBaseline() const final;
     std::optional<float> inlineBlockBaseline() const final;
 
+    float unbreakableHeight(const FragmentBuilder* fragmentainer, float offset) const final;
+
     float computeMainContentSize(float hypotheticalMainSize) const;
     float availableCrossSize() const;
 
@@ -121,6 +146,8 @@ public:
 
     bool isHorizontalFlow() const;
     bool isVerticalFlow() const;
+    bool isColumnReverse() const;
+    bool isWrapReverse() const;
     bool isMultiLine() const;
 
     void layout(FragmentBuilder* fragmentainer) final;
@@ -131,6 +158,17 @@ public:
     const char* name() const final { return "FlexibleBox"; }
 
 private:
+    void layoutItem(FlexItem& item, FragmentBuilder* fragmentainer) const;
+    void stretchItem(FlexItem& item, const FlexLine& line, FragmentBuilder* fragmentainer) const;
+    void alignItem(FlexItem& item, const FlexLine& line, FragmentBuilder* fragmentainer) const;
+
+    bool alignItemAutoMargins(FlexItem& item, const FlexLine& line) const;
+
+    float adjustLineInFragmentFlow(FlexLine& line, FragmentBuilder* fragmentainer, float offset) const;
+    float adjustItemInFragmentFlow(FlexItem& item, FragmentBuilder* fragmentainer, float offset) const;
+
+    void adjustLinesInFragmentFlow(FlexLineList& lines, FragmentBuilder* fragmentainer);
+
     FlexItemList m_items;
     float m_gapBetweenItems = 0;
     float m_gapBetweenLines = 0;

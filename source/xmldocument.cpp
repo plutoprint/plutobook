@@ -9,11 +9,13 @@
 #include "xmldocument.h"
 #include "xmlparser.h"
 
+#include "plutobook.hpp"
+
 namespace plutobook {
 
-std::unique_ptr<XMLDocument> XMLDocument::create(Book* book, Heap* heap, ResourceFetcher* fetcher, Url baseUrl)
+std::unique_ptr<XMLDocument> XMLDocument::create(Book* book, Url baseUrl)
 {
-    return std::unique_ptr<XMLDocument>(new (heap) XMLDocument(book, heap, fetcher, std::move(baseUrl)));
+    return std::unique_ptr<XMLDocument>(new (book->heap()) XMLDocument(book, std::move(baseUrl)));
 }
 
 bool XMLDocument::parse(std::string_view content)
@@ -21,8 +23,8 @@ bool XMLDocument::parse(std::string_view content)
     return XMLParser(this).parse(content);
 }
 
-XMLDocument::XMLDocument(Book* book, Heap* heap, ResourceFetcher* fetcher, Url baseUrl)
-    : Document(book, heap, fetcher, std::move(baseUrl))
+XMLDocument::XMLDocument(Book* book, Url baseUrl)
+    : Document(book, std::move(baseUrl))
 {
 }
 

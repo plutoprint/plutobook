@@ -13,6 +13,10 @@
 #include "heapstring.h"
 #include "url.h"
 
+#include <cstdio>
+#include <memory>
+#include <vector>
+
 namespace plutobook {
 
 class Resource : public HeapMember, public RefCounted<Resource> {
@@ -30,14 +34,29 @@ protected:
     Resource() = default;
 };
 
+struct FileCloser {
+    void operator()(FILE* file) const { fclose(file); }
+};
+
+using File = std::unique_ptr<FILE, FileCloser>;
+
+enum class FileMode {
+    Read,
+    Write
+};
+
+using ByteArray = std::vector<char>;
+
+File openFile(const std::string& filename, FileMode mode);
+bool loadFile(const std::string& filename, ByteArray& output);
+
 class ResourceData;
 class ResourceFetcher;
 
 class ResourceLoader {
 public:
     static ResourceData loadUrl(const Url& url, ResourceFetcher* customFetcher = nullptr);
-    static Url completeUrl(std::string_view value);
-    static Url baseUrl();
+    static Url completeUrl(std::string_view input);
 };
 
 } // namespace plutobook

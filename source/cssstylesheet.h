@@ -10,7 +10,10 @@
 #define PLUTOBOOK_CSSSTYLESHEET_H
 
 #include "pointer.h"
+#include "globalstring.h"
+#include "url.h"
 
+#include <string>
 #include <vector>
 #include <memory>
 #include <map>
@@ -36,8 +39,6 @@ enum class CSSStyleOrigin : uint8_t;
 using CSSRuleList = std::pmr::vector<RefPtr<CSSRule>>;
 using CSSRuleDataList = std::pmr::vector<CSSRuleData>;
 using CSSPageRuleDataList = std::pmr::vector<CSSPageRuleData>;
-
-class Heap;
 
 template<typename T>
 class CSSRuleDataMap {
@@ -69,26 +70,20 @@ const CSSRuleDataList* CSSRuleDataMap<T>::get(const T& name) const
     return &it->second;
 }
 
-class HeapString;
-class GlobalString;
-
 class FontData;
 class SegmentedFontFace;
+class SelectorFilter;
+class BoxStyle;
+class Document;
+class Element;
 
 struct FontDataDescription;
 struct FontSelectionDescription;
 
-using CSSFontFaceMap = std::pmr::map<GlobalString, std::map<FontSelectionDescription, RefPtr<SegmentedFontFace>>>;
-
-class BoxStyle;
-class Document;
-class Element;
-class Url;
-
 enum class PseudoType : uint8_t;
 enum class PageMarginType : uint8_t;
 
-class SelectorFilter;
+using CSSFontFaceMap = std::pmr::map<GlobalString, std::map<FontSelectionDescription, RefPtr<SegmentedFontFace>>>;
 
 class CSSStyleSheet {
 public:
@@ -98,8 +93,8 @@ public:
     RefPtr<BoxStyle> styleForElement(Element* element, const SelectorFilter& selectorFilter, const BoxStyle* parentStyle) const;
     RefPtr<BoxStyle> pseudoStyleForElement(Element* element, PseudoType pseudoType, const SelectorFilter& selectorFilter, const BoxStyle* parentStyle) const;
 
-    RefPtr<BoxStyle> styleForPage(const GlobalString& pageName, uint32_t pageIndex, PseudoType pseudoType) const;
-    RefPtr<BoxStyle> styleForPageMargin(const GlobalString& pageName, uint32_t pageIndex, PageMarginType marginType, const BoxStyle* pageStyle) const;
+    RefPtr<BoxStyle> styleForPage(uint32_t pageIndex) const;
+    RefPtr<BoxStyle> styleForPageMargin(uint32_t pageIndex, PageMarginType marginType, const BoxStyle* pageStyle) const;
 
     RefPtr<FontData> getFontData(const GlobalString& family, const FontDataDescription& description) const;
 
@@ -110,13 +105,15 @@ public:
     void parseStyle(std::string_view content, CSSStyleOrigin origin, Url baseUrl);
 
 private:
-    void addRuleList(const CSSRuleList& rules);
+    void addRules(const CSSRuleList& rules);
     void addStyleRule(CSSStyleRule& rule);
     void addImportRule(CSSImportRule& rule);
     void addPageRule(CSSPageRule& rule);
     void addFontFaceRule(CSSFontFaceRule& rule);
     void addCounterStyleRule(CSSCounterStyleRule& rule);
     void addMediaRule(CSSMediaRule& rule);
+
+    void addUserAgentRules();
 
     Document* m_document;
     uint32_t m_ruleCount{0};
@@ -134,6 +131,8 @@ private:
 
     std::unique_ptr<CSSRuleList> m_counterStyleRules;
     std::unique_ptr<CSSCounterStyleMap> m_counterStyleMap;
+
+    friend class Document;
 };
 
 } // namespace plutobook

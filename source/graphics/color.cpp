@@ -10,6 +10,7 @@
 #include "stringutils.h"
 
 #include <cmath>
+#include <cstring>
 
 namespace plutobook {
 
@@ -17,52 +18,46 @@ const Color Color::Transparent(0x00000000);
 const Color Color::Black(0xFF000000);
 const Color Color::White(0xFFFFFFFF);
 
-Color Color::lighten() const
+Color Color::lightened() const
 {
-    if(m_value == 0xFF000000) {
+    if(*this == Color::Black) {
         return Color(0xFF545454);
     }
-
-    const float scale = std::nextafter(256.0f, 0.0f);
 
     auto redF = red() / 255.f;
     auto greenF = green() / 255.f;
     auto blueF = blue() / 255.f;
+    auto alphaF = alpha() / 255.f;
+
     auto value = std::max(redF, std::max(greenF, blueF));
     if(value == 0.0f)
         return Color(0x54, 0x54, 0x54, alpha());
     auto multiplier = std::min(1.0f, value + 0.33f) / value;
-    auto red = static_cast<int>(multiplier * redF * scale);
-    auto green = static_cast<int>(multiplier * greenF * scale);
-    auto blue = static_cast<int>(multiplier * blueF * scale);
-    return Color(red, green, blue, alpha());
+    return Color(redF * multiplier, greenF * multiplier, blueF * multiplier, alphaF);
 }
 
-Color Color::darken() const
+Color Color::darkened() const
 {
-    if(m_value == 0xFFFFFFFF) {
+    if(*this == Color::White) {
         return Color(0xFFABABAB);
     }
-
-    const float scale = std::nextafter(256.0f, 0.0f);
 
     auto redF = red() / 255.f;
     auto greenF = green() / 255.f;
     auto blueF = blue() / 255.f;
+    auto alphaF = alpha() / 255.f;
+
     auto value = std::max(redF, std::max(greenF, blueF));
     if(value == 0.0f)
         return Color(0, 0, 0, alpha());
     auto multiplier = std::max(0.0f, (value - 0.33f) / value);
-    auto red = static_cast<int>(multiplier * redF * scale);
-    auto green = static_cast<int>(multiplier * greenF * scale);
-    auto blue = static_cast<int>(multiplier * blueF * scale);
-    return Color(red, green, blue, alpha());
+    return Color(redF * multiplier, greenF * multiplier, blueF * multiplier, alphaF);
 }
 
 std::optional<Color> Color::fromName(std::string_view name)
 {
     static const struct {
-        std::string_view name;
+        const char* name;
         uint32_t value;
     } table[] = {
         {"aliceblue", 0xF0F8FF},
@@ -215,18 +210,21 @@ std::optional<Color> Color::fromName(std::string_view name)
         {"yellowgreen", 0x9ACD32}
     };
 
-    char buffer[32];
-    if(name.length() > sizeof(buffer))
+    char lowerName[64];
+    if(name.length() >= sizeof(lowerName))
         return std::nullopt;
-    for(size_t i = 0; i < name.length(); ++i) {
-        buffer[i] = toLower(name[i]);
-    }
+    for(size_t i = 0; i < name.length(); ++i)
+        lowerName[i] = toLower(name[i]);
+    lowerName[name.length()] = '\0';
 
-    std::string_view lowerName(buffer, name.length());
-    auto it = std::lower_bound(table, std::end(table), lowerName, [](const auto& item, const auto& name) { return item.name < name; });
-    if(it == std::end(table) || it->name != lowerName)
-        return std::nullopt;
-    return Color(it->value | 0xFF000000);
+    auto compare_func = [](const auto& item, const char* name) {
+        return std::strcmp(item.name, name) < 0;
+    };
+
+    auto it = std::lower_bound(table, std::end(table), lowerName, compare_func);
+    if(it != std::end(table) && std::strcmp(it->name, lowerName) == 0)
+        return Color(it->value | 0xFF000000);
+    return std::nullopt;
 }
 
 } // namespace plutobook

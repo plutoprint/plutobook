@@ -34,10 +34,11 @@ inline bool isImpliedEndTag(const GlobalString& tagName)
         || tagName == rtTag;
 }
 
-inline bool isFosterRedirectingTag(const GlobalString& tagName)
+inline bool causesFosterParenting(const GlobalString& tagName)
 {
     return tagName == tableTag
         || tagName == tbodyTag
+        || tagName == tfootTag
         || tagName == theadTag
         || tagName == trTag;
 }
@@ -149,8 +150,8 @@ inline bool isHTMLIntegrationPoint(const Element* element)
         if(attribute == nullptr)
             return false;
         const auto& encoding = attribute->value();
-        return equals(encoding, "text/html", false)
-            || equals(encoding, "application/xhtml+xml", false);
+        return equalsIgnoringCase(encoding, "text/html")
+            || equalsIgnoringCase(encoding, "application/xhtml+xml");
     }
 
     if(element->namespaceURI() == svgNs) {
@@ -277,9 +278,9 @@ void HTMLElementList::insert(size_t index, Element* element)
 
 size_t HTMLElementList::index(const Element* element) const
 {
-    for(int i = m_elements.size() - 1; i >= 0; --i) {
-        if(element == m_elements.at(i)) {
-            return i;
+    for(size_t i = m_elements.size(); i > 0; --i) {
+        if(element == m_elements.at(i - 1)) {
+            return i - 1;
         }
     }
 
@@ -652,21 +653,22 @@ bool HTMLParser::parse()
         auto token = m_tokenizer.nextToken();
         if(token.type() == HTMLToken::Type::DOCTYPE) {
             handleDoctypeToken(token);
-            continue;
-        }
-
-        if(token.type() == HTMLToken::Type::Comment) {
+        } else if(token.type() == HTMLToken::Type::Comment) {
             handleCommentToken(token);
-            continue;
+        } else {
+            if(m_skipLeadingNewline) {
+                if(token.type() == HTMLToken::Type::SpaceCharacter)
+                    token.skipLeadingNewLine();
+                m_skipLeadingNewline = false;
+            }
+
+            handleToken(token, currentInsertionMode(token));
         }
 
-        if(m_skipLeadingNewline
-            && token.type() == HTMLToken::Type::SpaceCharacter) {
-            token.skipLeadingNewLine();
-        }
-
-        m_skipLeadingNewline = false;
-        handleToken(token, currentInsertionMode(token));
+        auto shouldAllowCDATA = false;
+        if(!m_openElements.empty())
+            shouldAllowCDATA = currentElement()->namespaceURI() != xhtmlNs;
+        m_tokenizer.setShouldAllowCDATA(shouldAllowCDATA);
     }
 
     assert(!m_openElements.empty());
@@ -722,7 +724,7 @@ void HTMLParser::insertElement(Element* child)
 
 bool HTMLParser::shouldFosterParent() const
 {
-    return m_fosterRedirecting && isFosterRedirectingTag(currentElement()->tagName());
+    return m_fosterRedirecting && causesFosterParenting(currentElement()->tagName());
 }
 
 void HTMLParser::findFosterLocation(InsertionLocation& location) const
@@ -1020,10 +1022,10 @@ void HTMLParser::insertTextNode(std::string_view data)
 
 void HTMLParser::resetInsertionModeAppropriately()
 {
-    for(int i = m_openElements.size() - 1; i >= 0; --i) {
-        auto element = m_openElements.at(i);
+    for(size_t i = m_openElements.size(); i > 0; --i) {
+        auto element = m_openElements.at(i - 1);
         if(element->tagName() == selectTag) {
-            for(int j = i; j > 0; --j) {
+            for(size_t j = i - 1; j > 0; --j) {
                 auto ancestor = m_openElements.at(j - 1);
                 if(ancestor->tagName() == tableTag) {
                     m_insertionMode = InsertionMode::InSelectInTable;
@@ -1148,9 +1150,9 @@ void HTMLParser::handleBeforeHTMLMode(HTMLTokenView& token)
         }
     } else if(token.type() == HTMLToken::Type::EndTag) {
         if(token.tagName() != headTag
-            || token.tagName() != bodyTag
-            || token.tagName() != htmlTag
-            || token.tagName() != brTag) {
+            && token.tagName() != bodyTag
+            && token.tagName() != htmlTag
+            && token.tagName() != brTag) {
             handleErrorToken(token);
             return;
         }
@@ -1177,9 +1179,9 @@ void HTMLParser::handleBeforeHeadMode(HTMLTokenView& token)
         }
     } else if(token.type() == HTMLToken::Type::EndTag) {
         if(token.tagName() != headTag
-            || token.tagName() != bodyTag
-            || token.tagName() != htmlTag
-            || token.tagName() != brTag) {
+            && token.tagName() != bodyTag
+            && token.tagName() != htmlTag
+            && token.tagName() != brTag) {
             handleErrorToken(token);
             return;
         }
@@ -1243,8 +1245,8 @@ void HTMLParser::handleInHeadMode(HTMLTokenView& token)
         }
 
         if(token.tagName() != bodyTag
-            || token.tagName() != htmlTag
-            || token.tagName() != brTag) {
+            && token.tagName() != htmlTag
+            && token.tagName() != brTag) {
             handleErrorToken(token);
             return;
         }
@@ -1346,8 +1348,8 @@ void HTMLParser::handleAfterHeadMode(HTMLTokenView& token)
         }
     } else if(token.type() == HTMLToken::Type::EndTag) {
         if(token.tagName() != bodyTag
-            || token.tagName() != htmlTag
-            || token.tagName() != brTag) {
+            && token.tagName() != htmlTag
+            && token.tagName() != brTag) {
             handleErrorToken(token);
             return;
         }
@@ -1478,8 +1480,8 @@ void HTMLParser::handleInBodyMode(HTMLTokenView& token)
 
         if(token.tagName() == liTag) {
             m_framesetOk = false;
-            for(int i = m_openElements.size() - 1; i >= 0; --i) {
-                auto element = m_openElements.at(i);
+            for(size_t i = m_openElements.size(); i > 0; --i) {
+                auto element = m_openElements.at(i - 1);
                 if(element->tagName() == liTag) {
                     handleFakeEndTagToken(liTag);
                     break;
@@ -1502,8 +1504,8 @@ void HTMLParser::handleInBodyMode(HTMLTokenView& token)
         if(token.tagName() == ddTag
             || token.tagName() == dtTag) {
             m_framesetOk = false;
-            for(int i = m_openElements.size() - 1; i >= 0; --i) {
-                auto element = m_openElements.at(i);
+            for(size_t i = m_openElements.size(); i > 0; --i) {
+                auto element = m_openElements.at(i - 1);
                 if(element->tagName() == ddTag
                     || element->tagName() == dtTag) {
                     handleFakeEndTagToken(element->tagName());
@@ -1626,7 +1628,7 @@ void HTMLParser::handleInBodyMode(HTMLTokenView& token)
             reconstructActiveFormattingElements();
             insertSelfClosingHTMLElement(token);
             auto typeAttribute = token.findAttribute(typeAttr);
-            if(typeAttribute == nullptr || !equals(typeAttribute->value(), "hidden", false))
+            if(typeAttribute == nullptr || !equalsIgnoringCase("hidden", typeAttribute->value()))
                 m_framesetOk = false;
             return;
         }
@@ -1941,20 +1943,20 @@ void HTMLParser::handleInBodyMode(HTMLTokenView& token)
     }
 
     if(token.type() == HTMLToken::Type::EndOfFile) {
-        for(int i = m_openElements.size() - 1; i >= 0; --i) {
-            auto element = m_openElements.at(i);
+        for(size_t i = m_openElements.size(); i > 0; --i) {
+            auto element = m_openElements.at(i - 1);
             if(element->tagName() != ddTag
-                || element->tagName() != dtTag
-                || element->tagName() != liTag
-                || element->tagName() != pTag
-                || element->tagName() != tbodyTag
-                || element->tagName() != tdTag
-                || element->tagName() != tfootTag
-                || element->tagName() != thTag
-                || element->tagName() != theadTag
-                || element->tagName() != trTag
-                || element->tagName() != bodyTag
-                || element->tagName() != htmlTag) {
+                && element->tagName() != dtTag
+                && element->tagName() != liTag
+                && element->tagName() != pTag
+                && element->tagName() != tbodyTag
+                && element->tagName() != tdTag
+                && element->tagName() != tfootTag
+                && element->tagName() != thTag
+                && element->tagName() != theadTag
+                && element->tagName() != trTag
+                && element->tagName() != bodyTag
+                && element->tagName() != htmlTag) {
                 handleErrorToken(token);
                 return;
             }
@@ -2049,7 +2051,7 @@ void HTMLParser::handleInTableMode(HTMLTokenView& token)
 
         if(token.tagName() == inputTag) {
             auto typeAttribute = token.findAttribute(typeAttr);
-            if(typeAttribute && equals(typeAttribute->value(), "hidden", false)) {
+            if(typeAttribute && equalsIgnoringCase("hidden", typeAttribute->value())) {
                 handleErrorToken(token);
                 insertSelfClosingHTMLElement(token);
                 return;
@@ -2751,13 +2753,14 @@ void HTMLParser::handleInForeignContentMode(HTMLTokenView& token)
             handleErrorToken(token);
         }
 
-        for(int i = m_openElements.size() - 1; i >= 0; --i) {
+        for(size_t i = m_openElements.size(); i > 0; --i) {
+            assert(node == m_openElements.at(i - 1));
             if(node->tagName() == token.tagName()) {
                 m_openElements.popUntilPopped(node);
                 return;
             }
 
-            node = m_openElements.at(i - 1);
+            node = m_openElements.at(i - 2);
             if(node->namespaceURI() == xhtmlNs) {
                 handleToken(token);
                 return;
@@ -2838,7 +2841,7 @@ void HTMLParser::handleFormattingEndTagToken(HTMLTokenView& token)
 
         lastNode->remove();
 
-        if(isFosterRedirectingTag(commonAncestor->tagName())) {
+        if(causesFosterParenting(commonAncestor->tagName())) {
             fosterParent(lastNode);
         } else {
             commonAncestor->appendChild(lastNode);
@@ -2848,8 +2851,8 @@ void HTMLParser::handleFormattingEndTagToken(HTMLTokenView& token)
         furthestBlock->reparentChildren(newNode);
         furthestBlock->appendChild(newNode);
 
-        m_activeFormattingElements.remove(formattingElement);
         m_activeFormattingElements.insert(bookmark, newNode);
+        m_activeFormattingElements.remove(formattingElement);
 
         m_openElements.remove(formattingElement);
         m_openElements.insertAfter(furthestBlock, newNode);
@@ -2858,8 +2861,8 @@ void HTMLParser::handleFormattingEndTagToken(HTMLTokenView& token)
 
 void HTMLParser::handleOtherFormattingEndTagToken(HTMLTokenView& token)
 {
-    for(int i = m_openElements.size() - 1; i >= 0; --i) {
-        auto element = m_openElements.at(i);
+    for(size_t i = m_openElements.size(); i > 0; --i) {
+        auto element = m_openElements.at(i - 1);
         if(element->tagName() == token.tagName()) {
             m_openElements.generateImpliedEndTagsExcept(token.tagName());
             if(currentElement()->tagName() != token.tagName())

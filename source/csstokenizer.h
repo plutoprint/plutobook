@@ -12,10 +12,23 @@
 #include <list>
 #include <vector>
 #include <string>
+#include <limits>
 #include <cassert>
 #include <cstdint>
+#include <type_traits>
 
 namespace plutobook {
+
+template<typename T, typename U>
+constexpr T clampTo(U value)
+{
+    static_assert(std::is_signed_v<T> && std::is_signed_v<U> && sizeof(U) > sizeof(T));
+
+    constexpr T min = std::numeric_limits<T>::lowest();
+    constexpr T max = std::numeric_limits<T>::max();
+
+    return value >= U(max) ? max : (value <= U(min) ? min : T(value));
+}
 
 class CSSToken {
 public:
@@ -65,17 +78,22 @@ public:
         Minus
     };
 
+    struct Range {
+        uint32_t from;
+        uint32_t to;
+    };
+
     explicit CSSToken(Type type) : m_type(type) {}
     CSSToken(Type type, uint32_t delim) : m_type(type), m_delim(delim) {}
-    CSSToken(Type type, uint32_t from, uint32_t to) : m_type(type), m_from(from), m_to(to) {}
+    CSSToken(Type type, Range range) : m_type(type), m_range(range) {}
     CSSToken(Type type, std::string_view data) : m_type(type), m_data(data) {}
     CSSToken(Type type, HashType hashType, std::string_view data) : m_type(type), m_hashType(hashType), m_data(data) {}
 
-    CSSToken(Type type, NumberType numberType, NumberSign numberSign, float number)
+    CSSToken(Type type, NumberType numberType, NumberSign numberSign, double number)
         : m_type(type), m_numberType(numberType), m_numberSign(numberSign), m_number(number)
     {}
 
-    CSSToken(Type type, NumberType numberType, NumberSign numberSign, float number, std::string_view unit)
+    CSSToken(Type type, NumberType numberType, NumberSign numberSign, double number, std::string_view unit)
         : m_type(type), m_numberType(numberType), m_numberSign(numberSign), m_number(number), m_data(unit)
     {}
 
@@ -84,10 +102,9 @@ public:
     NumberType numberType() const { return m_numberType; }
     NumberSign numberSign() const { return m_numberSign; }
     uint32_t delim() const { return m_delim; }
-    float number() const { return m_number; }
-    int integer() const { return static_cast<int>(m_number); }
-    uint32_t from() const { return m_from; }
-    uint32_t to() const { return m_to; }
+    float number() const { return clampTo<float>(m_number); }
+    int integer() const { return clampTo<int>(m_number); }
+    Range range() const { return m_range; }
     std::string_view data() const { return m_data; }
 
     static Type closeType(Type type) {
@@ -108,17 +125,16 @@ public:
 
 private:
     Type m_type;
-    HashType m_hashType;
-    NumberType m_numberType;
-    NumberSign m_numberSign;
+    HashType m_hashType{};
+    NumberType m_numberType{};
+    NumberSign m_numberSign{};
+    uint32_t m_delim{};
     union {
-        uint32_t m_delim;
-        float m_number;
+        double m_number{};
+        Range m_range;
     };
 
-    uint32_t m_from;
-    uint32_t m_to;
-    std::string_view m_data;
+    std::string_view m_data{};
     friend class CSSVariableData;
 };
 
@@ -192,6 +208,14 @@ public:
         }
     }
 
+    template<CSSToken::Type... Types>
+    CSSTokenStream consumeComponentsUntil() {
+        auto begin = m_begin;
+        while(m_begin < m_end && ((m_begin->type() != Types) && ...))
+            consumeComponent();
+        return CSSTokenStream(begin, m_begin);
+    }
+
     CSSTokenStream consumeBlock() {
         assert(m_begin < m_end);
         auto closeType = CSSToken::closeType(m_begin->type());
@@ -205,10 +229,8 @@ public:
         return CSSTokenStream(blockBegin, blockEnd);
     }
 
-    const CSSToken& get() const { return m_begin < m_end ? *m_begin : eofToken; }
-
-    const CSSToken& operator*() const { return get(); }
-    const CSSToken* operator->() const { return &get(); }
+    const CSSToken& operator*() const { return m_begin < m_end ? *m_begin : eofToken; }
+    const CSSToken* operator->() const { return m_begin < m_end ? m_begin : &eofToken; }
 
     const CSSToken* begin() const { return m_begin; }
     const CSSToken* end() const { return m_end; }
@@ -268,16 +290,9 @@ public:
         return std::string_view(m_data + offset, count);
     }
 
-    const char& operator*() const {
-        assert(m_offset < m_length);
-        return m_data[m_offset];
-    }
-
     const char* data() const { return m_data; }
     size_t length() const { return m_length; }
     size_t offset() const { return m_offset; }
-
-    bool empty() const { return m_offset == m_length; }
 
 private:
     const char* m_data;
@@ -292,10 +307,6 @@ public:
     CSSTokenStream tokenize();
 
 private:
-    static bool isEscapeSequence(char first, char second);
-    static bool isIdentSequence(char first, char second, char third);
-    static bool isNumberSequence(char first, char second, char third);
-
     bool isEscapeSequence() const;
     bool isIdentSequence() const;
     bool isNumberSequence() const;

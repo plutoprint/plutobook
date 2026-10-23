@@ -95,8 +95,8 @@ void SelectBox::computeIntrinsicWidths(float& minWidth, float& maxWidth) const
             continue;
         }
 
-        child->updateHorizontalMargins(nullptr);
-        child->updateHorizontalPaddings(nullptr);
+        child->updateHorizontalMargins(0.f);
+        child->updateHorizontalPaddings(0.f);
 
         auto childMinWidth = child->minPreferredWidth() + child->marginWidth();
         auto childMaxWidth = child->maxPreferredWidth() + child->marginWidth();
@@ -109,51 +109,35 @@ void SelectBox::computeIntrinsicWidths(float& minWidth, float& maxWidth) const
     maxWidth = std::max(minWidth, maxWidth);
 }
 
-void SelectBox::computeHeight(float& y, float& height, float& marginTop, float& marginBottom) const
-{
-    unsigned int index = 0;
-    auto child = firstBoxFrame();
-
-    height = borderAndPaddingHeight();
-    while(child && index < m_size) {
-        if(!child->isPositioned())
-            height += child->marginBoxHeight();
-        child = child->nextBoxFrame();
-        ++index;
-    }
-
-    BlockBox::computeHeight(y, height, marginTop, marginBottom);
-}
-
 void SelectBox::paintContents(const PaintInfo& info, const Point& offset, PaintPhase phase)
 {
-    unsigned int index = 0;
-    auto child = firstBoxFrame();
-    while(child && index < m_size) {
-        if(!child->hasLayer())
+    for(auto child = firstBoxFrame(); child; child = child->nextBoxFrame()) {
+        if(!child->hasLayer()) {
             child->paint(info, offset, phase);
-        child = child->nextBoxFrame();
-        ++index;
+        }
     }
 }
 
 void SelectBox::layout(FragmentBuilder* fragmentainer)
 {
     updateWidth();
-    setHeight(borderAndPaddingTop());
+    setHeight(borderAndPaddingHeight());
+
+    unsigned int index = 0;
+    auto optionTop = borderAndPaddingTop();
     for(auto child = firstBoxFrame(); child; child = child->nextBoxFrame()) {
         if(child->isPositioned()) {
             auto childLayer = child->layer();
-            childLayer->setStaticTop(height());
+            childLayer->setStaticTop(optionTop);
             childLayer->setStaticLeft(startOffsetForContent());
-            child->containingBlock()->insertPositonedBox(child);
+            child->containingBlock()->insertPositionedBox(child);
             continue;
         }
 
-        child->updatePaddingWidths(this);
-        child->updateVerticalMargins(this);
+        child->updatePaddingWidths(availableWidth());
+        child->updateVerticalMargins(availableWidth());
 
-        auto optionTop = height() + child->marginTop();
+        optionTop += child->marginTop();
         if(fragmentainer)
             fragmentainer->enterFragment(optionTop);
         child->setY(optionTop);
@@ -165,13 +149,45 @@ void SelectBox::layout(FragmentBuilder* fragmentainer)
         child->setX(borderStart() + paddingStart() + child->marginStart(style()->direction()));
         if(style()->isRightToLeftDirection())
             child->setX(width() - child->x() - child->width());
-        setHeight(child->y() + child->height() + child->marginBottom());
+        optionTop += child->height() + child->marginBottom();
+        if(index < m_size)
+            setHeight(height() + child->marginBoxHeight());
+        if(child->isSelectItem()) {
+            ++index;
+        }
     }
 
-    setHeight(height() + borderAndPaddingBottom());
     updateHeight();
     layoutPositionedBoxes();
     updateOverflowRect();
+}
+
+void SelectBox::build()
+{
+    for(auto child = firstChild(); child; child = child->nextSibling()) {
+        if(child->isPositioned())
+            continue;
+        auto element = to<HTMLElement>(child->node());
+        if(element && (element->tagName() == optionTag || element->tagName() == optgroupTag)) {
+            child->setIsSelectItem(true);
+        }
+    }
+
+    for(auto child = firstChild(); child; child = child->nextSibling()) {
+        child->setIsFirstInFlowChild(child->isSelectItem());
+        if(child->isFirstInFlowChild()) {
+            break;
+        }
+    }
+
+    for(auto child = lastChild(); child; child = child->prevSibling()) {
+        child->setIsLastInFlowChild(child->isSelectItem());
+        if(child->isLastInFlowChild()) {
+            break;
+        }
+    }
+
+    BlockBox::build();
 }
 
 } // namespace plutobook

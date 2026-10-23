@@ -9,32 +9,103 @@
 #ifndef PLUTOBOOK_STRINGUTILS_H
 #define PLUTOBOOK_STRINGUTILS_H
 
+#include <array>
 #include <string>
 #include <cstdint>
+#include <cassert>
 
 namespace plutobook {
 
-constexpr bool isSpace(uint8_t cc) { return (cc == ' ' || cc == '\n' || cc == '\t' || cc == '\r' || cc == '\f'); }
-constexpr bool isDigit(uint8_t cc) { return (cc >= '0' && cc <= '9'); }
-constexpr bool isUpper(uint8_t cc) { return (cc >= 'A' && cc <= 'Z'); }
-constexpr bool isLower(uint8_t cc) { return (cc >= 'a' && cc <= 'z'); }
-constexpr bool isAlpha(uint8_t cc) { return isUpper(cc) || isLower(cc); }
-constexpr bool isAlnum(uint8_t cc) { return isDigit(cc) || isAlpha(cc); }
+enum AsciiCharFlags : uint8_t {
+    Space    = 1 << 0,
+    Digit    = 1 << 1,
+    Upper    = 1 << 2,
+    Lower    = 1 << 3,
+    HexUpper = 1 << 4,
+    HexLower = 1 << 5
+};
 
-constexpr bool isHexUpper(uint8_t cc) { return (cc >= 'A' && cc <= 'F'); }
-constexpr bool isHexLower(uint8_t cc) { return (cc >= 'a' && cc <= 'f'); }
-constexpr bool isHexAlpha(uint8_t cc) { return isHexUpper(cc) || isHexLower(cc); }
-constexpr bool isHexDigit(uint8_t cc) { return isDigit(cc) || isHexAlpha(cc); }
+constexpr std::array<uint8_t, 256> createAsciiCharTable()
+{
+    std::array<uint8_t, 256> table{};
+
+    table[' ']  |= Space;
+    table['\n'] |= Space;
+    table['\t'] |= Space;
+    table['\r'] |= Space;
+    table['\f'] |= Space;
+
+    for(uint8_t c = '0'; c <= '9'; ++c)
+        table[c] |= Digit;
+    for(uint8_t c = 'A'; c <= 'Z'; ++c)
+        table[c] |= Upper;
+    for(uint8_t c = 'a'; c <= 'z'; ++c)
+        table[c] |= Lower;
+    for(uint8_t c = 'A'; c <= 'F'; ++c)
+        table[c] |= HexUpper;
+    for(uint8_t c = 'a'; c <= 'f'; ++c)
+        table[c] |= HexLower;
+    return table;
+}
+
+inline constexpr auto kAsciiCharTable = createAsciiCharTable();
+
+constexpr bool isSpace(uint8_t c)
+{
+    return kAsciiCharTable[c] & Space;
+}
+
+constexpr bool isDigit(uint8_t c)
+{
+    return kAsciiCharTable[c] & Digit;
+}
+
+constexpr bool isUpper(uint8_t c)
+{
+    return kAsciiCharTable[c] & Upper;
+}
+
+constexpr bool isLower(uint8_t c)
+{
+    return kAsciiCharTable[c] & Lower;
+}
+
+constexpr bool isAlpha(uint8_t c)
+{
+    return kAsciiCharTable[c] & (Upper | Lower);
+}
+
+constexpr bool isAlnum(uint8_t c)
+{
+    return kAsciiCharTable[c] & (Digit | Upper | Lower);
+}
+
+constexpr bool isHexUpper(uint8_t c)
+{
+    return kAsciiCharTable[c] & HexUpper;
+}
+
+constexpr bool isHexLower(uint8_t c)
+{
+    return kAsciiCharTable[c] & HexLower;
+}
+
+constexpr bool isHexAlpha(uint8_t c)
+{
+    return kAsciiCharTable[c] & (HexUpper | HexLower);
+}
+
+constexpr bool isHexDigit(uint8_t c)
+{
+    return kAsciiCharTable[c] & (Digit | HexUpper | HexLower);
+}
 
 constexpr uint8_t toHexDigit(uint8_t cc)
 {
-    if(isDigit(cc))
+    assert(isHexDigit(cc));
+    if(cc < 'A')
         return cc - '0';
-    if(isHexUpper(cc))
-        return 10 + cc - 'A';
-    if(isHexLower(cc))
-        return 10 + cc - 'a';
-    return 0;
+    return (cc - 'A' + 10) & 0xF;
 }
 
 constexpr uint8_t toHexByte(uint8_t a, uint8_t b)
@@ -42,24 +113,33 @@ constexpr uint8_t toHexByte(uint8_t a, uint8_t b)
     return toHexDigit(a) << 4 | toHexDigit(b);
 }
 
-extern const uint8_t kAsciiCaseFoldTable[256];
-
-inline char toLower(uint8_t cc)
+constexpr char toLower(uint8_t cc)
 {
-    return kAsciiCaseFoldTable[cc];
+    return cc | (isUpper(cc) << 5);
 }
 
-constexpr bool equals(uint8_t a, uint8_t b, bool caseSensitive)
+constexpr char toUpper(uint8_t cc)
 {
-    return caseSensitive ? (a == b) : toLower(a) == toLower(b);
+    return cc & ~(isLower(cc) << 5);
 }
 
-constexpr bool equals(const char* aData, size_t aLength, const char* bData, size_t bLength, bool caseSensitive)
+enum class CaseMode : uint8_t {
+    Ignore,
+    Exact
+};
+
+constexpr bool equals(uint8_t a, uint8_t b, CaseMode mode)
 {
-    if(aLength != bLength)
+    return mode == CaseMode::Exact ? (a == b) : toLower(a) == toLower(b);
+}
+
+constexpr bool equals(std::string_view a, std::string_view b, CaseMode mode)
+{
+    auto length = a.length();
+    if(length != b.length())
         return false;
-    for(size_t i = 0; i < aLength; ++i) {
-        if(!equals(aData[i], bData[i], caseSensitive)) {
+    for(size_t i = 0; i < length; ++i) {
+        if(!equals(a[i], b[i], mode)) {
             return false;
         }
     }
@@ -67,23 +147,18 @@ constexpr bool equals(const char* aData, size_t aLength, const char* bData, size
     return true;
 }
 
-constexpr bool equals(std::string_view a, std::string_view b, bool caseSensitive)
-{
-    return equals(a.data(), a.length(), b.data(), b.length(), caseSensitive);
-}
-
 constexpr bool equalsIgnoringCase(std::string_view a, std::string_view b)
 {
-    return equals(a, b, false);
+    return equals(a, b, CaseMode::Ignore);
 }
 
-constexpr bool contains(std::string_view haystack, std::string_view needle, bool caseSensitive)
+constexpr bool contains(std::string_view haystack, std::string_view needle, CaseMode mode)
 {
     if(needle.empty() || needle.length() > haystack.length())
         return false;
     const auto limit = haystack.length() - needle.length();
     for(size_t i = 0; i <= limit; ++i) {
-        if(equals(haystack.substr(i, needle.length()), needle, caseSensitive)) {
+        if(equals(haystack.substr(i, needle.length()), needle, mode)) {
             return true;
         }
     }
@@ -91,7 +166,7 @@ constexpr bool contains(std::string_view haystack, std::string_view needle, bool
     return false;
 }
 
-constexpr bool includes(std::string_view haystack, std::string_view needle, bool caseSensitive)
+constexpr bool includes(std::string_view haystack, std::string_view needle, CaseMode mode)
 {
     if(needle.empty() || needle.length() > haystack.length())
         return false;
@@ -104,7 +179,7 @@ constexpr bool includes(std::string_view haystack, std::string_view needle, bool
         size_t end = begin + 1;
         while(end < haystack.length() && !isSpace(haystack[end]))
             ++end;
-        if(equals(haystack.substr(begin, end - begin), needle, caseSensitive))
+        if(equals(haystack.substr(begin, end - begin), needle, mode))
             return true;
         begin = end + 1;
     }
@@ -112,23 +187,23 @@ constexpr bool includes(std::string_view haystack, std::string_view needle, bool
     return false;
 }
 
-constexpr bool startswith(std::string_view input, std::string_view prefix, bool caseSensitive)
+constexpr bool startswith(std::string_view input, std::string_view prefix, CaseMode mode)
 {
     if(prefix.empty() || prefix.length() > input.length())
         return false;
-    return equals(input.substr(0, prefix.length()), prefix, caseSensitive);
+    return equals(input.substr(0, prefix.length()), prefix, mode);
 }
 
-constexpr bool endswith(std::string_view input, std::string_view suffix, bool caseSensitive)
+constexpr bool endswith(std::string_view input, std::string_view suffix, CaseMode mode)
 {
     if(suffix.empty() || suffix.length() > input.length())
         return false;
-    return equals(input.substr(input.length() - suffix.length(), suffix.length()), suffix, caseSensitive);
+    return equals(input.substr(input.length() - suffix.length(), suffix.length()), suffix, mode);
 }
 
-constexpr bool dashequals(std::string_view input, std::string_view prefix, bool caseSensitive)
+constexpr bool dashequals(std::string_view input, std::string_view prefix, CaseMode mode)
 {
-    if(startswith(input, prefix, caseSensitive))
+    if(startswith(input, prefix, mode))
         return (input.length() == prefix.length() || input.at(prefix.length()) == '-');
     return false;
 }
@@ -153,9 +228,50 @@ constexpr void stripLeadingAndTrailingSpaces(std::string_view& input)
     stripTrailingSpaces(input);
 }
 
-std::string toString(int value);
-std::string toString(float value);
-std::string toUtf8(uint32_t codepoint);
+static std::string ellipsize(std::string_view input, size_t maxLength = 1024)
+{
+    constexpr std::string_view ellipsis = "...";
+    if(input.length() <= maxLength)
+        return std::string(input);
+    if(maxLength <= ellipsis.length()) {
+        return std::string(input.substr(0, maxLength));
+    }
+
+    const size_t remainingLength = maxLength - ellipsis.length();
+    const size_t leftLength = remainingLength - remainingLength / 2;
+    const size_t rightLength = remainingLength / 2;
+
+    std::string output;
+    output.reserve(maxLength);
+    output.append(input.substr(0, leftLength));
+    output.append(ellipsis);
+    output.append(input.substr(input.length() - rightLength));
+    return output;
+}
+
+static std::string toUtf8(uint32_t codepoint)
+{
+    char buffer[4];
+    size_t length = 0;
+
+    if(codepoint <= 0x7F) {
+        buffer[length++] = char(codepoint);
+    } else if(codepoint <= 0x7FF) {
+        buffer[length++] = char(0xC0 | (codepoint >> 6));
+        buffer[length++] = char(0x80 | (codepoint & 0x3F));
+    } else if(codepoint <= 0xFFFF) {
+        buffer[length++] = char(0xE0 | (codepoint >> 12));
+        buffer[length++] = char(0x80 | ((codepoint >> 6) & 0x3F));
+        buffer[length++] = char(0x80 | (codepoint & 0x3F));
+    } else {
+        buffer[length++] = char(0xF0 | (codepoint >> 18));
+        buffer[length++] = char(0x80 | ((codepoint >> 12) & 0x3F));
+        buffer[length++] = char(0x80 | ((codepoint >> 6) & 0x3F));
+        buffer[length++] = char(0x80 | (codepoint & 0x3F));
+    }
+
+    return std::string(buffer, length);
+}
 
 } // namespace plutobook
 

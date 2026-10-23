@@ -15,8 +15,6 @@
 
 namespace plutobook {
 
-class HTMLDocument;
-
 class HTMLElement : public Element {
 public:
     HTMLElement(Document* document, const GlobalString& tagName);
@@ -253,6 +251,16 @@ public:
     void finishParsingDocument() final;
 };
 
+class HTMLMetaElement final : public HTMLElement {
+public:
+    HTMLMetaElement(Document* document);
+
+    const HeapString& name() const;
+    const HeapString& content() const;
+
+    void finishParsingDocument() final;
+};
+
 class HTMLBaseElement final : public HTMLElement {
 public:
     HTMLBaseElement(Document* document);
@@ -262,13 +270,13 @@ public:
 
 class HTMLDocument final : public Document {
 public:
-    static std::unique_ptr<HTMLDocument> create(Book* book, Heap* heap, ResourceFetcher* fetcher, Url baseUrl);
+    static std::unique_ptr<HTMLDocument> create(Book* book, Url baseUrl);
 
     bool isHTMLDocument() const final { return true; }
     bool parse(std::string_view content) final;
 
 private:
-    HTMLDocument(Book* book, Heap* heap, ResourceFetcher* fetcher, Url baseUrl);
+    HTMLDocument(Book* book, Url baseUrl);
 };
 
 template<>

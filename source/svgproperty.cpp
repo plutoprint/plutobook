@@ -8,26 +8,23 @@
 
 #include "svgproperty.h"
 #include "svgdocument.h"
+#include "stringutils.h"
 #include "boxstyle.h"
 
 #include <cmath>
 
 namespace plutobook {
 
-constexpr bool IS_NUM(int cc) { return cc >= '0' && cc <= '9'; }
-constexpr bool IS_ALPHA(int cc) { return (cc >= 'a' && cc <= 'z') || (cc >= 'A' && cc <= 'Z'); }
-constexpr bool IS_WS(int cc) { return cc == ' ' || cc == '\t' || cc == '\n' || cc == '\r'; }
-
 constexpr void skipLeadingSpaces(std::string_view& input)
 {
-    while(!input.empty() && IS_WS(input.front())) {
+    while(!input.empty() && isSpace(input.front())) {
         input.remove_prefix(1);
     }
 }
 
 constexpr void skipTrailingSpaces(std::string_view& input)
 {
-    while(!input.empty() && IS_WS(input.back())) {
+    while(!input.empty() && isSpace(input.back())) {
         input.remove_suffix(1);
     }
 }
@@ -40,14 +37,14 @@ constexpr void skipLeadingAndTrailingSpaces(std::string_view& input)
 
 constexpr bool skipOptionalSpaces(std::string_view& input)
 {
-    while(!input.empty() && IS_WS(input.front()))
+    while(!input.empty() && isSpace(input.front()))
         input.remove_prefix(1);
     return !input.empty();
 }
 
 constexpr bool skipOptionalSpacesOrDelimiter(std::string_view& input, char delimiter)
 {
-    if(!input.empty() && !IS_WS(input.front()) && delimiter != input.front())
+    if(!input.empty() && !isSpace(input.front()) && delimiter != input.front())
         return false;
     if(skipOptionalSpaces(input)) {
         if(delimiter == input.front()) {
@@ -74,15 +71,14 @@ constexpr bool skipString(std::string_view& input, std::string_view value)
     return false;
 }
 
-template<typename T>
-static bool parseNumber(std::string_view& input, T& output)
+static bool parseNumber(std::string_view& input, float& output)
 {
-    constexpr T maxValue = std::numeric_limits<T>::max();
-    T integer = 0;
-    T fraction = 0;
-    int exponent = 0;
+    constexpr auto maxValue = std::numeric_limits<float>::max();
+
+    float integer = 0;
+    float fraction = 0;
+    float exponent = 0;
     int sign = 1;
-    int expsign = 1;
 
     if(!input.empty() && input.front() == '+') {
         input.remove_prefix(1);
@@ -91,50 +87,58 @@ static bool parseNumber(std::string_view& input, T& output)
         sign = -1;
     }
 
-    if(input.empty() || (!IS_NUM(input.front()) && input.front() != '.'))
+    if(input.empty() || (!isDigit(input.front()) && input.front() != '.'))
         return false;
-    if(IS_NUM(input.front())) {
+    if(isDigit(input.front())) {
         do {
-            integer = static_cast<T>(10) * integer + (input.front() - '0');
+            integer = 10.f * integer + (input.front() - '0');
             input.remove_prefix(1);
-        } while(!input.empty() && IS_NUM(input.front()));
+        } while(!input.empty() && isDigit(input.front()));
+        if(integer > maxValue) {
+            return false;
+        }
     }
 
     if(!input.empty() && input.front() == '.') {
         input.remove_prefix(1);
-        if(input.empty() || !IS_NUM(input.front()))
+        if(input.empty() || !isDigit(input.front()))
             return false;
-        T divisor = static_cast<T>(1);
+        float scale = 1.f;
         do {
-            fraction = static_cast<T>(10) * fraction + (input.front() - '0');
-            divisor *= static_cast<T>(10);
+            scale *= 0.1f;
+            fraction += scale * (input.front() - '0');
             input.remove_prefix(1);
-        } while(!input.empty() && IS_NUM(input.front()));
-        fraction /= divisor;
+        } while(!input.empty() && isDigit(input.front()));
     }
 
     if(input.size() > 1 && (input[0] == 'e' || input[0] == 'E')
         && (input[1] != 'x' && input[1] != 'm'))
     {
         input.remove_prefix(1);
+        bool exponentIsNegative = false;
         if(!input.empty() && input.front() == '+')
             input.remove_prefix(1);
         else if(!input.empty() && input.front() == '-') {
             input.remove_prefix(1);
-            expsign = -1;
+            exponentIsNegative = true;
         }
 
-        if(input.empty() || !IS_NUM(input.front()))
+        if(input.empty() || !isDigit(input.front()))
             return false;
         do {
-            exponent = 10 * exponent + (input.front() - '0');
+            exponent = 10.f * exponent + (input.front() - '0');
             input.remove_prefix(1);
-        } while(!input.empty() && IS_NUM(input.front()));
+        } while(!input.empty() && isDigit(input.front()));
+        if(exponentIsNegative)
+            exponent = -exponent;
+        if(exponent > std::numeric_limits<float>::max_exponent10) {
+            return false;
+        }
     }
 
     output = sign * (integer + fraction);
     if(exponent)
-        output *= std::pow<T>(10, expsign * exponent);
+        output *= std::pow(10.f, exponent);
     return output >= -maxValue && output <= maxValue;
 }
 
@@ -352,7 +356,7 @@ float SVGLengthContext::viewportDimension(SVGLengthDirection direction) const
     case SVGLengthDirection::Vertical:
         return viewportSize.h;
     default:
-        return std::sqrt(viewportSize.w * viewportSize.w + viewportSize.h * viewportSize.h) / kSqrt2;
+        return std::hypot(viewportSize.w, viewportSize.h) / kSqrt2;
     }
 }
 
@@ -362,7 +366,7 @@ bool SVGLengthList::parse(std::string_view input)
     skipLeadingSpaces(input);
     while(!input.empty()) {
         size_t count = 0;
-        while(count < input.length() && input[count] != ',' && !IS_WS(input[count]))
+        while(count < input.length() && input[count] != ',' && !isSpace(input[count]))
             ++count;
         if(count == 0)
             break;
@@ -371,7 +375,7 @@ bool SVGLengthList::parse(std::string_view input)
             return false;
         input.remove_prefix(count);
         skipOptionalSpacesOrComma(input);
-        m_values.push_back(std::move(value));
+        m_values.push_back(value);
     }
 
     return true;
@@ -568,7 +572,7 @@ bool SVGPath::parse(std::string_view input)
     int command = 0;
     int lastCommand = 0;
     while(!input.empty()) {
-        if(IS_ALPHA(input.front())) {
+        if(isAlpha(input.front())) {
             command = input.front();
             input.remove_prefix(1);
             skipOptionalSpaces(input);

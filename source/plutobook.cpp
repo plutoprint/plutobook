@@ -14,17 +14,11 @@
 #include "fontresource.h"
 #include "replacedbox.h"
 #include "graphicscontext.h"
+#include "stringutils.h"
 
 #include <cmath>
 #include <utility>
-#include <cstdio>
-
-#ifdef _WIN32
-#ifndef NOMINMAX
-#define NOMINMAX
-#endif
-#include <windows.h>
-#endif
+#include <algorithm>
 
 namespace plutobook {
 
@@ -32,48 +26,22 @@ class FileOutputStream final : public OutputStream {
 public:
     explicit FileOutputStream(const std::string& filename);
 
-    bool isOpen() const { return m_handle; }
+    bool isOpen() const { return m_file != nullptr; }
+
     bool write(const char* data, size_t length) final;
 
-    ~FileOutputStream() final;
-
 private:
-    FILE* m_handle;
+    File m_file;
 };
 
-static FILE* output_stream_fopen(const char* filename)
-{
-#ifdef _WIN32
-    wchar_t wfilename[1024];
-    if(!MultiByteToWideChar(CP_UTF8, 0, filename, -1, wfilename, sizeof(wfilename) / sizeof(wchar_t))) {
-        errno = EINVAL;
-        return NULL;
-    }
-
-    return _wfopen(wfilename, L"wb");
-#else
-    return fopen(filename, "wb");
-#endif
-}
-
 FileOutputStream::FileOutputStream(const std::string& filename)
-    : m_handle(output_stream_fopen(filename.data()))
+    : m_file(openFile(filename, FileMode::Write))
 {
-    if(m_handle == NULL) {
-        plutobook_set_error_message("Unable to open file '%s': %s", filename.data(), std::strerror(errno));
-    }
 }
 
 bool FileOutputStream::write(const char* data, size_t length)
 {
-    return length == fwrite(data, 1, length, m_handle);
-}
-
-FileOutputStream::~FileOutputStream()
-{
-    if(m_handle) {
-        fclose(m_handle);
-    }
+    return m_file && length == fwrite(data, 1, length, m_file.get());
 }
 
 static plutobook_stream_status_t stream_write_func(void* closure, const char* data, unsigned int length)
@@ -212,6 +180,48 @@ bool ImageCanvas::writeToPng(plutobook_stream_write_callback_t callback, void* c
     return plutobook_image_canvas_write_to_png_stream(m_canvas, callback, closure);
 }
 
+PDFString::PDFString(std::nullptr_t) {}
+
+PDFString::PDFString(const char* data)
+    : PDFString(data, length(data))
+{
+}
+
+PDFString::PDFString(const char* data, size_t length)
+{
+    if(data == nullptr)
+        return;
+    m_data = std::make_unique<char[]>(length + 1);
+    std::copy_n(data, length, m_data.get());
+    m_data[length] = '\0';
+}
+
+PDFString::PDFString(const std::string& value)
+    : PDFString(value.data(), value.size())
+{
+}
+
+PDFString::PDFString(std::string_view value)
+    : PDFString(value.data(), value.size())
+{
+}
+
+PDFString::PDFString(const PDFString& value)
+    : PDFString(value.data(), value.size())
+{
+}
+
+PDFString& PDFString::operator=(const PDFString& value)
+{
+    PDFString(value).swap(*this);
+    return *this;
+}
+
+size_t PDFString::length(const char* data)
+{
+    return data == nullptr ? 0 : std::strlen(data);
+}
+
 PDFCanvas::PDFCanvas(const std::string& filename, const PageSize& pageSize)
     : Canvas(plutobook_pdf_canvas_create(filename.data(), (plutobook_page_size_t)(pageSize)))
 {
@@ -227,37 +237,37 @@ PDFCanvas::PDFCanvas(plutobook_stream_write_callback_t callback, void* closure, 
 {
 }
 
-void PDFCanvas::setTitle(const std::string& title)
+void PDFCanvas::setTitle(const PDFString& title)
 {
     plutobook_pdf_canvas_set_metadata(m_canvas, PLUTOBOOK_PDF_METADATA_TITLE, title.data());
 }
 
-void PDFCanvas::setAuthor(const std::string& author)
+void PDFCanvas::setAuthor(const PDFString& author)
 {
     plutobook_pdf_canvas_set_metadata(m_canvas, PLUTOBOOK_PDF_METADATA_AUTHOR, author.data());
 }
 
-void PDFCanvas::setSubject(const std::string& subject)
+void PDFCanvas::setSubject(const PDFString& subject)
 {
     plutobook_pdf_canvas_set_metadata(m_canvas, PLUTOBOOK_PDF_METADATA_SUBJECT, subject.data());
 }
 
-void PDFCanvas::setKeywords(const std::string& keywords)
+void PDFCanvas::setKeywords(const PDFString& keywords)
 {
     plutobook_pdf_canvas_set_metadata(m_canvas, PLUTOBOOK_PDF_METADATA_KEYWORDS, keywords.data());
 }
 
-void PDFCanvas::setCreator(const std::string& creator)
+void PDFCanvas::setCreator(const PDFString& creator)
 {
     plutobook_pdf_canvas_set_metadata(m_canvas, PLUTOBOOK_PDF_METADATA_CREATOR, creator.data());
 }
 
-void PDFCanvas::setCreationDate(const std::string& creationDate)
+void PDFCanvas::setCreationDate(const PDFString& creationDate)
 {
     plutobook_pdf_canvas_set_metadata(m_canvas, PLUTOBOOK_PDF_METADATA_CREATION_DATE, creationDate.data());
 }
 
-void PDFCanvas::setModificationDate(const std::string& modificationDate)
+void PDFCanvas::setModificationDate(const PDFString& modificationDate)
 {
     plutobook_pdf_canvas_set_metadata(m_canvas, PLUTOBOOK_PDF_METADATA_MODIFICATION_DATE, modificationDate.data());
 }
@@ -273,23 +283,23 @@ void PDFCanvas::showPage()
 }
 
 ResourceData::ResourceData(const char* content, size_t contentLength, const std::string& mimeType, const std::string& textEncoding)
-    : m_data(plutobook_resource_data_create(content, contentLength, mimeType.data(), textEncoding.data()))
+    : m_resource(plutobook_resource_data_create(content, contentLength, mimeType.data(), textEncoding.data()))
 {
 }
 
 ResourceData::ResourceData(const char* content, size_t contentLength, const std::string& mimeType, const std::string& textEncoding, plutobook_resource_destroy_callback_t destroyCallback, void* closure)
-    : m_data(plutobook_resource_data_create_without_copy(content, contentLength, mimeType.data(), textEncoding.data(), destroyCallback, closure))
+    : m_resource(plutobook_resource_data_create_without_copy(content, contentLength, mimeType.data(), textEncoding.data(), destroyCallback, closure))
 {
 }
 
 ResourceData::ResourceData(const ResourceData& resource)
-    : m_data(plutobook_resource_data_reference(resource.get()))
+    : m_resource(plutobook_resource_data_reference(resource.get()))
 {
 }
 
 ResourceData::~ResourceData()
 {
-    plutobook_resource_data_destroy(m_data);
+    plutobook_resource_data_destroy(m_resource);
 }
 
 ResourceData& ResourceData::operator=(const ResourceData& resource)
@@ -306,32 +316,32 @@ ResourceData& ResourceData::operator=(ResourceData&& resource)
 
 void ResourceData::swap(ResourceData& resource)
 {
-    std::swap(m_data, resource.m_data);
+    std::swap(m_resource, resource.m_resource);
 }
 
 const char* ResourceData::content() const
 {
-    return plutobook_resource_data_get_content(m_data);
+    return plutobook_resource_data_get_content(m_resource);
 }
 
 size_t ResourceData::contentLength() const
 {
-    return plutobook_resource_data_get_content_length(m_data);
+    return plutobook_resource_data_get_content_length(m_resource);
 }
 
 std::string_view ResourceData::mimeType() const
 {
-    return plutobook_resource_data_get_mime_type(m_data);
+    return plutobook_resource_data_get_mime_type(m_resource);
 }
 
 std::string_view ResourceData::textEncoding() const
 {
-    return plutobook_resource_data_get_text_encoding(m_data);
+    return plutobook_resource_data_get_text_encoding(m_resource);
 }
 
 plutobook_resource_data_t* ResourceData::release()
 {
-    return std::exchange(m_data, nullptr);
+    return std::exchange(m_resource, nullptr);
 }
 
 Book::Book(const PageSize& size, const PageMargins& margins, MediaType media)
@@ -392,7 +402,7 @@ bool Book::loadUrl(std::string_view url, std::string_view userStyle, std::string
         return true;
     }
 
-    plutobook_set_error_message("Unable to load URL '%s': %s", completeUrl.value().data(), plutobook_get_error_message());
+    plutobook_set_error_message("Unable to load URL '%s': %s", ellipsize(completeUrl.value()).data(), plutobook_get_error_message());
     return false;
 }
 
@@ -407,11 +417,6 @@ bool Book::loadData(const char* data, size_t length, std::string_view mimeType, 
 
 bool Book::loadImage(const char* data, size_t length, std::string_view mimeType, std::string_view textEncoding, std::string_view userStyle, std::string_view userScript, std::string_view baseUrl)
 {
-    auto image = ImageResource::decode(data, length, mimeType, textEncoding, baseUrl, m_customResourceFetcher);
-    if(image == nullptr) {
-        return false;
-    }
-
     loadHtml("<img>", userStyle, userScript, baseUrl);
 
     auto document = buildIfNeeded();
@@ -431,6 +436,11 @@ bool Book::loadImage(const char* data, size_t length, std::string_view mimeType,
         return false;
     }
 
+    auto image = ImageResource::decode(this, data, length, mimeType, textEncoding, baseUrl);
+    if(image == nullptr) {
+        return false;
+    }
+
     auto& imageBox = to<ImageBox>(*box);
     imageBox.setImage(std::move(image));
     return true;
@@ -438,29 +448,12 @@ bool Book::loadImage(const char* data, size_t length, std::string_view mimeType,
 
 bool Book::loadXml(std::string_view content, std::string_view userStyle, std::string_view userScript, std::string_view baseUrl)
 {
-    clearContent();
-    m_document = XMLDocument::create(this, m_heap.get(), m_customResourceFetcher, ResourceLoader::completeUrl(baseUrl));
-    if(!m_document->parse(content)) {
-        clearContent();
-        return false;
-    }
-
-    m_document->addUserStyleSheet(userStyle);
-    m_document->runJavaScript(userScript);
-    return true;
+    return loadDocument<XMLDocument>(content, userStyle, userScript, baseUrl);
 }
 
 bool Book::loadHtml(std::string_view content, std::string_view userStyle, std::string_view userScript, std::string_view baseUrl)
 {
-    clearContent();
-    m_document = HTMLDocument::create(this, m_heap.get(), m_customResourceFetcher, ResourceLoader::completeUrl(baseUrl));
-    if(!m_document->parse(content)) {
-        assert(false);
-    }
-
-    m_document->addUserStyleSheet(userStyle);
-    m_document->runJavaScript(userScript);
-    return true;
+    return loadDocument<HTMLDocument>(content, userStyle, userScript, baseUrl);
 }
 
 void Book::clearContent()
@@ -470,6 +463,10 @@ void Book::clearContent()
     m_needsBuild = true;
     m_needsLayout = true;
     m_needsPagination = true;
+    for(auto value : {&m_title, &m_author, &m_subject, &m_keywords,
+        &m_creator, &m_creationDate, &m_modificationDate}) {
+        value->reset();
+    }
 }
 
 void Book::renderPage(Canvas& canvas, uint32_t pageIndex) const
@@ -486,11 +483,11 @@ void Book::renderPage(plutobook_canvas_t* canvas, uint32_t pageIndex) const
     }
 }
 
-void Book::renderPage(cairo_t* canvas, uint32_t pageIndex) const
+void Book::renderPage(cairo_t* context, uint32_t pageIndex) const
 {
     if(auto document = paginateIfNeeded()) {
-        GraphicsContext context(canvas);
-        document->renderPage(context, pageIndex);
+        GraphicsContext gc(context);
+        document->renderPage(gc, pageIndex);
     }
 }
 
@@ -522,19 +519,19 @@ void Book::renderDocument(plutobook_canvas_t* canvas, float x, float y, float wi
     }
 }
 
-void Book::renderDocument(cairo_t* canvas) const
+void Book::renderDocument(cairo_t* context) const
 {
     if(auto document = layoutIfNeeded()) {
-        GraphicsContext context(canvas);
-        document->render(context, Rect::Infinite);
+        GraphicsContext gc(context);
+        document->render(gc, Rect::Infinite);
     }
 }
 
-void Book::renderDocument(cairo_t* canvas, float x, float y, float width, float height) const
+void Book::renderDocument(cairo_t* context, float x, float y, float width, float height) const
 {
     if(auto document = layoutIfNeeded()) {
-        GraphicsContext context(canvas);
-        document->render(context, Rect(x, y, width, height));
+        GraphicsContext gc(context);
+        document->render(gc, Rect(x, y, width, height));
     }
 }
 
@@ -577,10 +574,15 @@ bool Book::writeToPdf(plutobook_stream_write_callback_t callback, void* closure,
     canvas.setTitle(m_title);
     canvas.setSubject(m_subject);
     canvas.setAuthor(m_author);
-    canvas.setCreator("PlutoBook " PLUTOBOOK_VERSION_STRING " (https://github.com/plutoprint)");
     canvas.setKeywords(m_keywords);
-    canvas.setCreationDate(m_creationDate);
-    canvas.setModificationDate(m_modificationDate);
+    canvas.setCreator("PlutoBook " PLUTOBOOK_VERSION_STRING " (https://github.com/plutoprint)");
+
+    if(!m_creationDate.isNull())
+        canvas.setCreationDate(m_creationDate);
+    if(!m_modificationDate.isNull()) {
+        canvas.setModificationDate(m_modificationDate);
+    }
+
     for(auto pageNum = pageStart; pageStep > 0 ? pageNum <= pageEnd : pageNum >= pageEnd; pageNum += pageStep) {
         canvas.setPageSize(pageSizeAt(pageNum - 1));
         renderPage(canvas, pageNum - 1);
@@ -636,6 +638,21 @@ bool Book::writeToPng(plutobook_stream_write_callback_t callback, void* closure,
     canvas.scale(xScale, yScale);
     renderDocument(canvas, 0, 0, docWidth, docHeight);
     return canvas.writeToPng(callback, closure);
+}
+
+template<typename DocumentType>
+bool Book::loadDocument(std::string_view content, std::string_view userStyle, std::string_view userScript, std::string_view baseUrl)
+{
+    clearContent();
+    m_document = DocumentType::create(this, ResourceLoader::completeUrl(baseUrl));
+    if(!m_document->parse(content)) {
+        clearContent();
+        return false;
+    }
+
+    m_document->addUserStyleSheet(userStyle);
+    m_document->runJavaScript(userScript);
+    return true;
 }
 
 Document* Book::buildIfNeeded() const

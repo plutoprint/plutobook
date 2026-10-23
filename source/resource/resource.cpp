@@ -8,32 +8,108 @@
 
 #include "resource.h"
 #include "stringutils.h"
-
 #include "plutobook.hpp"
+
+#include <filesystem>
 
 #ifdef PLUTOBOOK_HAS_CURL
 #include <curl/curl.h>
-#else
-#include <fstream>
 #endif
 
-#include <filesystem>
-#include <cstring>
-#include <vector>
-#include <map>
+#ifdef _WIN32
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <windows.h>
+#else
+#include <sys/stat.h>
+#endif
 
 namespace plutobook {
 
-using ByteArray = std::vector<char>;
-
-static ByteArray* ByteArrayCreate(size_t size = 0)
+static FILE* openStream(const char* filename, FileMode mode)
 {
-    return new ByteArray(size);
+#ifdef _WIN32
+    wchar_t wfilename[1024];
+    MultiByteToWideChar(CP_UTF8, 0, filename, -1, wfilename, sizeof(wfilename) / sizeof(wchar_t));
+
+    return _wfopen(wfilename, mode == FileMode::Read ? L"rb" : L"wb");
+#else
+    return fopen(filename, mode == FileMode::Read ? "rb" : "wb");
+#endif
+}
+
+File openFile(const std::string& filename, FileMode mode)
+{
+    File file(openStream(filename.data(), mode));
+    if(file == nullptr)
+        plutobook_set_error_message("Unable to open file '%s': %s", filename.data(), strerror(errno));
+    return file;
+}
+
+static bool loadStream(FILE* stream, ByteArray& output)
+{
+#ifndef _WIN32
+    struct stat st;
+    if(fstat(fileno(stream), &st) != 0)
+        return false;
+    if(S_ISDIR(st.st_mode)) {
+        errno = EISDIR;
+        return false;
+    }
+#endif
+
+    if(fseek(stream, 0, SEEK_END) != 0)
+        return false;
+    auto size = ftell(stream);
+    if(size == -1L)
+        return false;
+    if(fseek(stream, 0, SEEK_SET) != 0)
+        return false;
+    output.resize(size);
+
+    auto data = output.data();
+    if(fread(data, 1, size, stream) == output.size())
+        return ferror(stream) == 0;
+    return false;
+}
+
+bool loadFile(const std::string& filename, ByteArray& output)
+{
+    auto file = openFile(filename, FileMode::Read);
+    if(file == nullptr) {
+        return false;
+    }
+
+    if(loadStream(file.get(), output))
+        return true;
+    plutobook_set_error_message("Unable to load file '%s': %s", filename.data(), strerror(errno));
+    return false;
+}
+
+static ByteArray* ByteArrayCreate(void)
+{
+    return new ByteArray();
 }
 
 static void ByteArrayDestroy(void* data)
 {
     delete (ByteArray*)(data);
+}
+
+#define MAX_RESOURCE_SIZE 0xFFFFFFFFU
+
+static ResourceData createResourceData(ByteArray* content, const std::string& mimeType, const std::string& textEncoding)
+{
+    auto data = content->data();
+    auto size = content->size();
+    if(size > MAX_RESOURCE_SIZE) {
+        plutobook_set_error_message("maximum resource size exceeded");
+        ByteArrayDestroy(content);
+        return ResourceData();
+    }
+
+    return ResourceData(data, size, mimeType, textEncoding, ByteArrayDestroy, content);
 }
 
 static void parseContentType(std::string_view input, std::string& mimeType, std::string& textEncoding)
@@ -50,7 +126,7 @@ static void parseContentType(std::string_view input, std::string& mimeType, std:
         auto name = parameter.substr(0, parameter.find('='));
         parameter.remove_prefix(name.size());
         stripLeadingAndTrailingSpaces(name);
-        if(!parameter.empty() && equals(name, "charset", false)) {
+        if(!parameter.empty() && equalsIgnoringCase(name, "charset")) {
             parameter.remove_prefix(1);
             if(!parameter.empty() && parameter.front() == '\"')
                 parameter.remove_prefix(1);
@@ -88,7 +164,7 @@ static bool base64Decode(std::string_view input, ByteArray& output)
     output.resize(input.length());
     size_t equalsSignCount = 0;
     size_t outputLength = 0;
-    for(int cc : input) {
+    for(unsigned char cc : input) {
         if(cc == '=') {
             ++equalsSignCount;
         } else if(cc == '+' || cc == '/' || isAlpha(cc) || isDigit(cc)) {
@@ -148,10 +224,12 @@ static std::string percentDecode(std::string_view input)
     return output;
 }
 
+constexpr std::string_view kDataUrlPrefix = "data:";
+
 static ResourceData loadDataUrl(std::string_view input)
 {
-    assert(startswith(input, "data:", false));
-    input.remove_prefix(5);
+    assert(startswith(input, kDataUrlPrefix, CaseMode::Ignore));
+    input.remove_prefix(kDataUrlPrefix.length());
 
     auto headerEnd = input.find(',');
     if(headerEnd == std::string_view::npos) {
@@ -160,18 +238,10 @@ static ResourceData loadDataUrl(std::string_view input)
     }
 
     auto header = input.substr(0, headerEnd);
+
     auto mediaTypeEnd = header.rfind(';');
     if(mediaTypeEnd == std::string_view::npos) {
         mediaTypeEnd = header.length();
-    }
-
-    std::string mimeType;
-    std::string textEncoding;
-    auto mediaType = header.substr(0, mediaTypeEnd);
-    parseContentType(mediaType, mimeType, textEncoding);
-    if(mimeType.empty() && textEncoding.empty()) {
-        mimeType.assign("text/plain");
-        textEncoding.assign("US-ASCII");
     }
 
     std::string_view formatType;
@@ -180,28 +250,46 @@ static ResourceData loadDataUrl(std::string_view input)
         stripLeadingAndTrailingSpaces(formatType);
     }
 
-    auto content = ByteArrayCreate();
-    input.remove_prefix(headerEnd + 1);
-    if(!equals(formatType, "base64", false)) {
-        content->reserve(input.length());
-        content->assign(input.begin(), input.end());
-    } else {
-        if(!base64Decode(input, *content)) {
-            plutobook_set_error_message("invalid data URL: base64 decoding failed");
-            ByteArrayDestroy(content);
-            return ResourceData();
-        }
+    bool isBase64 = equalsIgnoringCase(formatType, "base64");
+
+    std::string mimeType;
+    std::string textEncoding;
+    auto mediaType = !isBase64 ? header : header.substr(0, mediaTypeEnd);
+    parseContentType(mediaType, mimeType, textEncoding);
+    if(mimeType.empty() && textEncoding.empty()) {
+        mimeType.assign("text/plain");
+        textEncoding.assign("US-ASCII");
     }
 
-    return ResourceData(content->data(), content->size(), mimeType, textEncoding, ByteArrayDestroy, content);
+    auto data = percentDecode(input.substr(headerEnd + 1));
+
+    auto content = ByteArrayCreate();
+    if(!isBase64) {
+        content->reserve(data.length());
+        content->assign(data.begin(), data.end());
+    } else if(!base64Decode(data, *content)) {
+        plutobook_set_error_message("invalid data URL: base64 decoding failed");
+        ByteArrayDestroy(content);
+        return ResourceData();
+    }
+
+    return createResourceData(content, mimeType, textEncoding);
 }
 
 static bool mimeTypeFromPath(std::string& mimeType, std::string_view path)
 {
-    auto index = path.rfind('.');
-    if(index == std::string_view::npos)
+    auto dot = path.rfind('.');
+    if(dot == std::string_view::npos)
         return false;
-    static std::map<std::string_view, std::string_view> table = {
+    auto slash = path.find_last_of("/\\");
+    if(slash != std::string_view::npos && dot < slash) {
+        return false;
+    }
+
+    static const struct {
+        std::string_view ext;
+        std::string_view mime;
+    } table[] = {
         {"xhtml", "application/xhtml+xml"},
         {"html", "text/html"},
         {"htm", "text/html"},
@@ -217,11 +305,43 @@ static bool mimeTypeFromPath(std::string& mimeType, std::string_view path)
         {"bmp", "image/bmp"}
     };
 
-    auto it = table.find(path.substr(index + 1));
-    if(it == table.end())
-        return false;
-    mimeType.assign(it->second);
-    return true;
+    const auto ext = path.substr(dot + 1);
+    for(const auto& entry : table) {
+        if(equalsIgnoringCase(entry.ext, ext)) {
+            mimeType.assign(entry.mime);
+            return true;
+        }
+    }
+
+    return false;
+}
+
+constexpr std::string_view kFileUrlPrefix = "file://";
+
+static ResourceData loadLocalFile(std::string_view input)
+{
+    assert(startswith(input, kFileUrlPrefix, CaseMode::Ignore));
+    input.remove_prefix(kFileUrlPrefix.length());
+    if(input.size() >= 3 && input[0] == '/' && isAlpha(input[1]) && input[2] == ':') {
+        input.remove_prefix(1);
+    }
+
+    auto filename = percentDecode(input.substr(0, input.find('?')));
+#ifdef _WIN32
+    std::replace(filename.begin(), filename.end(), '/', '\\');
+#endif
+
+    auto content = ByteArrayCreate();
+    if(!loadFile(filename, *content)) {
+        ByteArrayDestroy(content);
+        return ResourceData();
+    }
+
+    std::string mimeType;
+    std::string textEncoding;
+    mimeTypeFromPath(mimeType, filename);
+
+    return createResourceData(content, mimeType, textEncoding);
 }
 
 #ifdef PLUTOBOOK_HAS_CURL
@@ -274,8 +394,12 @@ static size_t writeCallback(const char* contents, size_t blockSize, size_t numbe
 
 ResourceData DefaultResourceFetcher::fetchUrl(const std::string& url)
 {
-    if(startswith(url, "data:", false))
-        return loadDataUrl(percentDecode(url));
+    if(startswith(url, kDataUrlPrefix, CaseMode::Ignore))
+        return loadDataUrl(url);
+    if(startswith(url, kFileUrlPrefix, CaseMode::Ignore)) {
+        return loadLocalFile(url);
+    }
+
     std::string mimeType;
     std::string textEncoding;
     auto content = ByteArrayCreate();
@@ -285,6 +409,9 @@ ResourceData DefaultResourceFetcher::fetchUrl(const std::string& url)
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, writeCallback);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, content);
     curl_easy_setopt(curl, CURLOPT_USERAGENT, "PlutoBook/" PLUTOBOOK_VERSION_STRING);
+    curl_easy_setopt(curl, CURLOPT_MAXFILESIZE_LARGE, MAX_RESOURCE_SIZE);
+    curl_easy_setopt(curl, CURLOPT_ACCEPT_ENCODING, "");
+    curl_easy_setopt(curl, CURLOPT_FAILONERROR, 1L);
 
     if(!m_caInfo.empty())
         curl_easy_setopt(curl, CURLOPT_CAINFO, m_caInfo.data());
@@ -305,20 +432,26 @@ ResourceData DefaultResourceFetcher::fetchUrl(const std::string& url)
     auto response = curl_easy_perform(curl);
     if(response == CURLE_OK) {
         const char* contentType = nullptr;
-        auto response = curl_easy_getinfo(curl, CURLINFO_CONTENT_TYPE, &contentType);
-        if(response == CURLE_OK && contentType) {
+        curl_easy_getinfo(curl, CURLINFO_CONTENT_TYPE, &contentType);
+        if(contentType)
             parseContentType(contentType, mimeType, textEncoding);
-        }
+        if(mimeType.empty())
+            mimeTypeFromPath(mimeType, percentDecode(url.substr(0, url.find('?'))));
+        curl_easy_cleanup(curl);
 
-        if(mimeType.empty()) {
-            mimeTypeFromPath(mimeType, percentDecode(url.substr(0, url.rfind('?'))));
-        }
+        return createResourceData(content, mimeType, textEncoding);
+    }
+
+    const char* message = curl_easy_strerror(response);
+    if(response == CURLE_HTTP_RETURNED_ERROR) {
+        long code = 0;
+        curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &code);
+        plutobook_set_error_message("Unable to fetch URL '%s': %s (%ld)", url.data(), message, code);
+    } else {
+        plutobook_set_error_message("Unable to fetch URL '%s': %s", url.data(), message);
     }
 
     curl_easy_cleanup(curl);
-    if(response == CURLE_OK)
-        return ResourceData(content->data(), content->size(), mimeType, textEncoding, ByteArrayDestroy, content);
-    plutobook_set_error_message("Unable to fetch URL '%s': %s", url.data(), curl_easy_strerror(response));
     ByteArrayDestroy(content);
     return ResourceData();
 }
@@ -330,40 +463,12 @@ DefaultResourceFetcher::~DefaultResourceFetcher() = default;
 
 ResourceData DefaultResourceFetcher::fetchUrl(const std::string& url)
 {
-    if(startswith(url, "data:", false))
-        return loadDataUrl(percentDecode(url));
-    std::string_view input(url);
-    if(!startswith(input, "file://", false)) {
-        plutobook_set_error_message("Unable to fetch URL '%s': Unsupported protocol", url.data());
-        return ResourceData();
-    }
-
-    input.remove_prefix(7);
-    if(input.size() >= 3 && input[0] == '/' && isAlpha(input[1]) && input[2] == ':') {
-        input.remove_prefix(1);
-    }
-
-    auto filename = percentDecode(input.substr(0, input.rfind('?')));
-#ifdef _WIN32
-    std::replace(filename.begin(), filename.end(), '/', '\\');
-#endif
-
-    std::ifstream in(filename, std::ios::ate | std::ios::binary);
-    if(!in.is_open()) {
-        plutobook_set_error_message("Unable to fetch URL '%s': %s", url.data(), std::strerror(errno));
-        return ResourceData();
-    }
-
-    std::string mimeType;
-    std::string textEncoding;
-    mimeTypeFromPath(mimeType, filename);
-
-    auto content = ByteArrayCreate(in.tellg());
-    in.seekg(0, std::ios::beg);
-    in.read(content->data(), content->size());
-    in.close();
-
-    return ResourceData(content->data(), content->size(), mimeType, textEncoding, ByteArrayDestroy, content);
+    if(startswith(url, kDataUrlPrefix, CaseMode::Ignore))
+        return loadDataUrl(url);
+    if(startswith(url, kFileUrlPrefix, CaseMode::Ignore))
+        return loadLocalFile(url);
+    plutobook_set_error_message("Unable to fetch URL '%s': Unsupported protocol", url.data());
+    return ResourceData();
 }
 
 #endif // PLUTOBOOK_HAS_CURL
@@ -371,23 +476,34 @@ ResourceData DefaultResourceFetcher::fetchUrl(const std::string& url)
 ResourceData ResourceLoader::loadUrl(const Url& url, ResourceFetcher* customFetcher)
 {
     if(url.protocolIs("data"))
-        return loadDataUrl(percentDecode(url.value()));
+        return loadDataUrl(url.value());
     if(customFetcher == nullptr)
         customFetcher = defaultResourceFetcher();
     return customFetcher->fetchUrl(url.value());
 }
 
-Url ResourceLoader::baseUrl()
+Url ResourceLoader::completeUrl(std::string_view input)
 {
-    auto path = std::filesystem::current_path().generic_string();
-    if(!path.empty() && path.front() != '/')
-        path.insert(path.begin(), '/');
-    return Url("file://" + path + "/");
-}
+    stripLeadingAndTrailingSpaces(input);
+    if(input.empty()) {
+        return Url();
+    }
 
-Url ResourceLoader::completeUrl(std::string_view value)
-{
-    return baseUrl().complete(value);
+    Url completeUrl(input);
+    if(completeUrl.isValid()) {
+        return completeUrl;
+    }
+
+    std::error_code ec;
+    auto abspath = std::filesystem::absolute(input, ec);
+    if(ec) {
+        return Url();
+    }
+
+    auto u8string = abspath.u8string();
+    std::string path(u8string.begin(), u8string.end());
+
+    return Url(ada::href_from_file(path));
 }
 
 DefaultResourceFetcher* defaultResourceFetcher()

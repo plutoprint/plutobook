@@ -63,7 +63,7 @@ const FontDescription& BoxStyle::fontDescription() const
 
 void BoxStyle::setFontDescription(const FontDescription& description)
 {
-    if(!m_font || description != m_font->description()) {
+    if(m_font == nullptr || description != m_font->description()) {
         m_font = document()->createFont(description);
     }
 }
@@ -498,13 +498,13 @@ BackgroundSize BoxStyle::backgroundSize() const
 {
     auto value = get(CSSPropertyID::BackgroundSize);
     if(value == nullptr)
-        return BackgroundSize();
+        return BackgroundSize(Length::Auto, Length::Auto);
     if(auto ident = to<CSSIdentValue>(value)) {
         switch(ident->value()) {
         case CSSValueID::Contain:
-            return BackgroundSize(BackgroundSize::Type::Contain);
+            return BackgroundSize::Type::Contain;
         case CSSValueID::Cover:
-            return BackgroundSize(BackgroundSize::Type::Cover);
+            return BackgroundSize::Type::Cover;
         default:
             assert(false);
         }
@@ -548,33 +548,23 @@ float BoxStyle::borderVerticalSpacing() const
     return convertLengthValue(*value);
 }
 
-constexpr TextDecorationLine operator|(TextDecorationLine a, TextDecorationLine b)
-{
-    return static_cast<TextDecorationLine>(static_cast<int>(a) | static_cast<int>(b));
-}
-
-constexpr TextDecorationLine& operator|=(TextDecorationLine& a, TextDecorationLine b)
-{
-    return a = a | b;
-}
-
 TextDecorationLine BoxStyle::textDecorationLine() const
 {
     auto value = get(CSSPropertyID::TextDecorationLine);
     if(value == nullptr || value->id() == CSSValueID::None)
-        return TextDecorationLine::None;
-    TextDecorationLine decorations = TextDecorationLine::None;
+        return TextDecorationLine();
+    TextDecorationLine decorations;
     for(const auto& decoration : to<CSSListValue>(*value)) {
         const auto& ident = to<CSSIdentValue>(*decoration);
         switch(ident.value()) {
         case CSSValueID::Underline:
-            decorations |= TextDecorationLine::Underline;
+            decorations.add(TextDecorationLine::Underline);
             break;
         case CSSValueID::Overline:
-            decorations |= TextDecorationLine::Overline;
+            decorations.add(TextDecorationLine::Overline);
             break;
         case CSSValueID::LineThrough:
-            decorations |= TextDecorationLine::LineThrough;
+            decorations.add(TextDecorationLine::LineThrough);
             break;
         default:
             assert(false);
@@ -651,20 +641,15 @@ float BoxStyle::tabWidth(float spaceWidth) const
     return convertLengthValue(length);
 }
 
-std::optional<int> BoxStyle::zIndex() const
-{
-    auto value = get(CSSPropertyID::ZIndex);
-    if(value == nullptr)
-        return std::nullopt;
-    return convertIntegerOrAuto(*value);
-}
-
 VerticalAlign BoxStyle::verticalAlign() const
 {
-    if(m_verticalAlignType != VerticalAlignType::Length)
-        return VerticalAlign(m_verticalAlignType);
-    auto value = get(CSSPropertyID::VerticalAlign);
-    return VerticalAlign(m_verticalAlignType, convertLengthOrPercent(*value));
+    if(m_verticalAlignType == VerticalAlignType::Length) {
+        if(auto value = get(CSSPropertyID::VerticalAlign))
+            return VerticalAlign(convertLengthOrPercent(*value));
+        assert(false);
+    }
+
+    return m_verticalAlignType;
 }
 
 LengthBox BoxStyle::clip() const
@@ -678,6 +663,23 @@ LengthBox BoxStyle::clip() const
     auto top = convertLengthOrPercentOrAuto(*rect.top());
     auto bottom = convertLengthOrPercentOrAuto(*rect.bottom());
     return LengthBox(left, right, top, bottom);
+}
+
+bool BoxStyle::hasZIndex() const
+{
+    auto value = get(CSSPropertyID::ZIndex);
+    return value && value->id() != CSSValueID::Auto;
+}
+
+int BoxStyle::zIndex() const
+{
+    if(m_hasEffectiveZIndex && m_isStackingContext) {
+        if(auto value = get(CSSPropertyID::ZIndex))
+            return convertInteger(*value);
+        assert(false);
+    }
+
+    return 0;
 }
 
 Length BoxStyle::flexBasis() const
@@ -997,21 +999,21 @@ BaselineShift BoxStyle::baselineShift() const
 {
     auto value = get(CSSPropertyID::BaselineShift);
     if(value == nullptr)
-        return BaselineShiftType::Baseline;
+        return BaselineShift::Type::Baseline;
     if(auto ident = to<CSSIdentValue>(value)) {
         switch(ident->value()) {
         case CSSValueID::Baseline:
-            return BaselineShiftType::Baseline;
+            return BaselineShift::Type::Baseline;
         case CSSValueID::Sub:
-            return BaselineShiftType::Sub;
+            return BaselineShift::Type::Sub;
         case CSSValueID::Super:
-            return BaselineShiftType::Super;
+            return BaselineShift::Type::Super;
         default:
             assert(false);
         }
     }
 
-    return BaselineShift(BaselineShiftType::Length, convertLengthOrPercent(*value));
+    return BaselineShift(convertLengthOrPercent(*value));
 }
 
 Point BoxStyle::getTransformOrigin(float width, float height) const
@@ -1177,7 +1179,6 @@ void BoxStyle::set(CSSPropertyID id, RefPtr<CSSValue> value)
     case CSSValueType::Inherit:
         return inherit(id);
     case CSSValueType::Unset:
-    case CSSValueType::VariableReference:
         return;
     case CSSValueType::Length:
         value = resolveLength(value);
@@ -1345,18 +1346,12 @@ bool BoxStyle::apply(CSSPropertyID id, const CSSValue& value)
         m_columnFill = convertColumnFill(value);
         break;
     case CSSPropertyID::BreakAfter:
-    case CSSPropertyID::ColumnBreakAfter:
-    case CSSPropertyID::PageBreakAfter:
         m_breakAfter = convertBreakBetween(value);
         break;
     case CSSPropertyID::BreakBefore:
-    case CSSPropertyID::ColumnBreakBefore:
-    case CSSPropertyID::PageBreakBefore:
         m_breakBefore = convertBreakBetween(value);
         break;
     case CSSPropertyID::BreakInside:
-    case CSSPropertyID::ColumnBreakInside:
-    case CSSPropertyID::PageBreakInside:
         m_breakInside = convertBreakInside(value);
         break;
     case CSSPropertyID::StrokeLinecap:
@@ -1535,18 +1530,12 @@ void BoxStyle::reset(CSSPropertyID id)
         m_columnFill = ColumnFill::Balance;
         break;
     case CSSPropertyID::BreakAfter:
-    case CSSPropertyID::ColumnBreakAfter:
-    case CSSPropertyID::PageBreakAfter:
         m_breakAfter = BreakBetween::Auto;
         break;
     case CSSPropertyID::BreakBefore:
-    case CSSPropertyID::ColumnBreakBefore:
-    case CSSPropertyID::PageBreakBefore:
         m_breakBefore = BreakBetween::Auto;
         break;
     case CSSPropertyID::BreakInside:
-    case CSSPropertyID::ColumnBreakInside:
-    case CSSPropertyID::PageBreakInside:
         m_breakInside = BreakInside::Auto;
         break;
     case CSSPropertyID::StrokeLinecap:

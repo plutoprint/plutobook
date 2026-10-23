@@ -8,7 +8,6 @@
 
 #include "fontresource.h"
 #include "document.h"
-#include "localedata.h"
 #include "stringutils.h"
 
 #include "plutobook.hpp"
@@ -74,15 +73,15 @@ RefPtr<FontResource> FontResource::create(Document* document, const Url& url)
         return nullptr;
     auto fontData = FTFontData::create(std::move(resource));
     if(fontData == nullptr) {
-        plutobook_set_error_message("Unable to load font '%s': %s", url.value().data(), plutobook_get_error_message());
+        plutobook_set_error_message("Unable to load font '%s': %s", ellipsize(url.value()).data(), plutobook_get_error_message());
         return nullptr;
     }
 
     static cairo_user_data_key_t key;
     auto face = cairo_ft_font_face_create_for_ft_face(fontData->face(), FT_LOAD_DEFAULT);
-    cairo_font_face_set_user_data(face, &key, fontData, FTFontDataDestroy);
-    if(auto status = cairo_font_face_status(face)) {
-        plutobook_set_error_message("Unable to load font '%s': %s", url.value().data(), cairo_status_to_string(status));
+    if(auto status = cairo_font_face_set_user_data(face, &key, fontData, FTFontDataDestroy)) {
+        plutobook_set_error_message("Unable to load font '%s': %s", ellipsize(url.value()).data(), cairo_status_to_string(status));
+        cairo_font_face_destroy(face);
         FTFontDataDestroy(fontData);
         return nullptr;
     }
@@ -92,16 +91,16 @@ RefPtr<FontResource> FontResource::create(Document* document, const Url& url)
 
 bool FontResource::supportsFormat(std::string_view format)
 {
-    return equals(format, "opentype", false)
-        || equals(format, "opentype-variations", false)
-        || equals(format, "truetype", false)
-        || equals(format, "truetype-variations", false)
+    return equalsIgnoringCase(format, "opentype")
+        || equalsIgnoringCase(format, "opentype-variations")
+        || equalsIgnoringCase(format, "truetype")
+        || equalsIgnoringCase(format, "truetype-variations")
 #ifdef FT_CONFIG_OPTION_USE_BROTLI
-        || equals(format, "woff2", false)
-        || equals(format, "woff2-variations", false)
+        || equalsIgnoringCase(format, "woff2")
+        || equalsIgnoringCase(format, "woff2-variations")
 #endif
-        || equals(format, "woff", false)
-        || equals(format, "woff-variations", false);
+        || equalsIgnoringCase(format, "woff")
+        || equalsIgnoringCase(format, "woff-variations");
 }
 
 FontResource::~FontResource()
@@ -260,9 +259,9 @@ static std::string buildVariationSettings(const FontDataDescription& description
 
         if(!output.empty())
             output += ',';
-        output.append(name, 4);
+        output.append(name, sizeof(name));
         output += '=';
-        output += toString(value);
+        output += std::to_string(value);
     }
 
     return output;
@@ -312,10 +311,13 @@ RefPtr<FontData> SimpleFontFace::getFontData(Document* document, const FontDataD
 RefPtr<FontData> SegmentedFontFace::getFontData(Document* document, const FontDataDescription& description)
 {
     auto& fontData = m_table[description];
-    if(fontData != nullptr) {
-        return fontData;
-    }
+    if(fontData == nullptr)
+        fontData = createFontData(document, description);
+    return fontData;
+}
 
+RefPtr<FontData> SegmentedFontFace::createFontData(Document* document, const FontDataDescription& description) const
+{
     const auto syntheticOblique = !m_description.slope
         || description.request.slope < m_description.slope.minimum
         || description.request.slope > m_description.slope.maximum;
@@ -334,9 +336,7 @@ RefPtr<FontData> SegmentedFontFace::getFontData(Document* document, const FontDa
         }
     }
 
-    if(!fonts.empty())
-        fontData = SegmentedFontData::create(std::move(fonts));
-    return fontData;
+    return SegmentedFontData::create(std::move(fonts));
 }
 
 const SimpleFontData* FontData::fontDataForCharacters(const uint16_t* characters, int length, EmojiPolicy emojiPolicy) const
@@ -640,13 +640,13 @@ static RefPtr<SimpleFontData> createFontDataFromPattern(FcPattern* pattern, cons
 
 constexpr bool isGenericFamilyName(std::string_view familyName)
 {
-    return equals(familyName, "sans", false)
-        || equals(familyName, "sans-serif", false)
-        || equals(familyName, "serif", false)
-        || equals(familyName, "monospace", false)
-        || equals(familyName, "fantasy", false)
-        || equals(familyName, "cursive", false)
-        || equals(familyName, "emoji", false);
+    return equalsIgnoringCase(familyName, "sans")
+        || equalsIgnoringCase(familyName, "sans-serif")
+        || equalsIgnoringCase(familyName, "serif")
+        || equalsIgnoringCase(familyName, "monospace")
+        || equalsIgnoringCase(familyName, "fantasy")
+        || equalsIgnoringCase(familyName, "cursive")
+        || equalsIgnoringCase(familyName, "emoji");
 }
 
 static FcPattern* createFontPattern(const FontDataDescription& description)
@@ -817,6 +817,13 @@ Heap* Font::heap() const
     return m_document->heap();
 }
 
+const LocaleData* Font::locale() const
+{
+    if(m_locale == nullptr)
+        m_locale = m_document->getLocaleData(m_description.data.lang);
+    return m_locale;
+}
+
 const SimpleFontData* Font::fontDataForCharacters(const uint16_t* characters, int length, EmojiPolicy emojiPolicy) const
 {
     for(const auto& font : m_fonts) {
@@ -839,7 +846,6 @@ Font::Font(Document* document, const FontDescription& description)
     : m_document(document)
     , m_description(description)
     , m_fonts(document->heap())
-    , m_locale(LocaleData::get(description.data.lang))
 {
     for(const auto& family : description.families) {
         if(auto font = document->getFontData(family, description.data)) {

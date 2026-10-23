@@ -29,6 +29,7 @@
 #endif
 
 #define STB_IMAGE_IMPLEMENTATION
+#define STBI_NO_STDIO
 #include "stb_image.h"
 
 #include <cstring>
@@ -41,124 +42,178 @@ RefPtr<ImageResource> ImageResource::create(Document* document, const Url& url)
     auto resource = ResourceLoader::loadUrl(url, document->customResourceFetcher());
     if(resource.isNull())
         return nullptr;
-    auto image = decode(resource.content(), resource.contentLength(), resource.mimeType(), resource.textEncoding(), url.base(), document->customResourceFetcher());
+    auto image = decode(document->book(), resource.content(), resource.contentLength(), resource.mimeType(), resource.textEncoding(), url.base());
     if(image == nullptr) {
-        plutobook_set_error_message("Unable to load image '%s': %s", url.value().data(), plutobook_get_error_message());
+        plutobook_set_error_message("Unable to load image '%s': %s", ellipsize(url.value()).data(), plutobook_get_error_message());
         return nullptr;
     }
 
     return adoptPtr(new (document->heap()) ImageResource(std::move(image)));
 }
 
-RefPtr<Image> ImageResource::decode(const char* data, size_t size, std::string_view mimeType, std::string_view textEncoding, std::string_view baseUrl, ResourceFetcher* fetcher)
+RefPtr<Image> ImageResource::decode(Book* book, const char* data, size_t size, std::string_view mimeType, std::string_view textEncoding, std::string_view baseUrl)
 {
-    if(equals(mimeType, "image/svg+xml", false))
-        return SVGImage::create(TextResource::decode(data, size, mimeType, textEncoding), baseUrl, fetcher);
-    return BitmapImage::create(data, size);
+    if(equalsIgnoringCase(mimeType, "image/svg+xml"))
+        return SVGImage::create(book, TextResource::decode(data, size, mimeType, textEncoding), baseUrl);
+    return BitmapImage::create(book, data, size);
 }
 
 bool ImageResource::supportsMimeType(std::string_view mimeType)
 {
-    return equals(mimeType, "image/jpeg", false)
-        || equals(mimeType, "image/png", false)
+    return equalsIgnoringCase(mimeType, "image/jpeg")
+        || equalsIgnoringCase(mimeType, "image/png")
 #ifdef PLUTOBOOK_HAS_WEBP
-        || equals(mimeType, "image/webp", false)
+        || equalsIgnoringCase(mimeType, "image/webp")
 #endif
-        || equals(mimeType, "image/svg+xml", false)
-        || equals(mimeType, "image/gif", false)
-        || equals(mimeType, "image/bmp", false);
+        || equalsIgnoringCase(mimeType, "image/svg+xml")
+        || equalsIgnoringCase(mimeType, "image/gif")
+        || equalsIgnoringCase(mimeType, "image/bmp");
 }
 
-#ifdef CAIRO_HAS_PNG_FUNCTIONS
-
-struct png_read_stream_t {
-    const char* data;
-    size_t size;
-};
-
-static cairo_status_t png_read_function(void* closure, uint8_t* data, uint32_t length)
+static cairo_surface_t* createImageSurface(cairo_format_t format, int width, int height)
 {
-    auto stream = static_cast<png_read_stream_t*>(closure);
-    if(length > stream->size)
-        return CAIRO_STATUS_READ_ERROR;
-    std::memcpy(data, stream->data, length);
-    stream->data += length;
-    stream->size -= length;
-    return CAIRO_STATUS_SUCCESS;
-}
-
-#endif // CAIRO_HAS_PNG_FUNCTIONS
-
-static cairo_surface_t* decodeBitmapImage(const char* data, size_t size)
-{
-#ifdef CAIRO_HAS_PNG_FUNCTIONS
-    if(size > 8 && std::memcmp(data, "\x89PNG\r\n\x1A\n", 8) == 0) {
-        png_read_stream_t stream = { data, size };
-        return cairo_image_surface_create_from_png_stream(png_read_function, &stream);
+    auto surface = cairo_image_surface_create(format, width, height);
+    if(auto status = cairo_surface_status(surface)) {
+        plutobook_set_error_message("image decode error: %s", cairo_status_to_string(status));
+        return nullptr;
     }
+
+    return surface;
+}
+
+inline bool matchesPngSignature(const char* data, size_t size)
+{
+    return size >= 8 && std::memcmp(data, "\x89PNG\r\n\x1A\n", 8) == 0;
+}
+
+inline bool matchesJpegSignature(const char* data, size_t size)
+{
+    return size >= 3 && std::memcmp(data, "\xFF\xD8\xFF", 3) == 0;
+}
+
+inline bool matchesWebpSignature(const char* data, size_t size)
+{
+    return size >= 14 && std::memcmp(data, "RIFF", 4) == 0 && std::memcmp(data + 8, "WEBPVP", 6) == 0;
+}
+
+static void attachMimeData(cairo_surface_t* surface, const char* data, size_t size)
+{
+    if(!matchesJpegSignature(data, size))
+        return;
+    auto destroy_func = [](void* data) {
+        delete[] static_cast<uint8_t*>(data);
+    };
+
+    auto mimeData = new uint8_t[size];
+    std::memcpy(mimeData, data, size);
+    if(cairo_surface_set_mime_data(surface, CAIRO_MIME_TYPE_JPEG, mimeData, size, destroy_func, mimeData)) {
+        destroy_func(mimeData);
+    }
+}
+
+#ifdef CAIRO_HAS_PNG_FUNCTIONS
+static cairo_surface_t* decodePngImage(const char* data, size_t size)
+{
+    struct ReadStream {
+        const char* data;
+        size_t size;
+    };
+
+    auto read_func = [](void* closure, uint8_t* data, uint32_t length) -> cairo_status_t {
+        auto stream = static_cast<ReadStream*>(closure);
+        if(length > stream->size)
+            return CAIRO_STATUS_READ_ERROR;
+        std::memcpy(data, stream->data, length);
+        stream->data += length;
+        stream->size -= length;
+        return CAIRO_STATUS_SUCCESS;
+    };
+
+    ReadStream stream = { data, size };
+    return cairo_image_surface_create_from_png_stream(read_func, &stream);
+}
 #endif // CAIRO_HAS_PNG_FUNCTIONS
+
 #ifdef PLUTOBOOK_HAS_TURBOJPEG
-    if(size > 3 && std::memcmp(data, "\xFF\xD8\xFF", 3) == 0) {
-        int width, height;
-        auto tj = tjInitDecompress();
-        if(!tj || tjDecompressHeader(tj, (uint8_t*)(data), size, &width, &height) == -1) {
-            plutobook_set_error_message("image decode error: %s", tjGetErrorStr());
-            tjDestroy(tj);
-            return nullptr;
-        }
+static cairo_surface_t* decodeJpegImage(const char* data, size_t size)
+{
+    auto tj = tjInitDecompress();
+    if(tj == nullptr) {
+        plutobook_set_error_message("image decode error: %s", tjGetErrorStr());
+        return nullptr;
+    }
 
-        auto surface = cairo_image_surface_create(CAIRO_FORMAT_RGB24, width, height);
-        auto surfaceData = cairo_image_surface_get_data(surface);
-        auto surfaceWidth = cairo_image_surface_get_width(surface);
-        auto surfaceStride = cairo_image_surface_get_stride(surface);
-        auto surfaceHeight = cairo_image_surface_get_height(surface);
-        tjDecompress2(tj, (uint8_t*)(data), size, surfaceData, surfaceWidth, surfaceStride, surfaceHeight, TJPF_BGRX, 0);
+    int width, height;
+    if(tjDecompressHeader(tj, (uint8_t*)(data), size, &width, &height) == -1) {
+        plutobook_set_error_message("image decode error: %s", tjGetErrorStr());
         tjDestroy(tj);
-
-        auto mimeData = (uint8_t*)std::malloc(size);
-        std::memcpy(mimeData, data, size);
-
-        cairo_surface_mark_dirty(surface);
-        cairo_surface_set_mime_data(surface, CAIRO_MIME_TYPE_JPEG, mimeData, size, std::free, mimeData);
-        return surface;
+        return nullptr;
     }
+
+    auto surface = createImageSurface(CAIRO_FORMAT_RGB24, width, height);
+    if(surface == nullptr) {
+        tjDestroy(tj);
+        return nullptr;
+    }
+
+    auto pixels = cairo_image_surface_get_data(surface);
+    auto stride = cairo_image_surface_get_stride(surface);
+    if(tjDecompress2(tj, (uint8_t*)(data), size, pixels, width, stride, height, TJPF_BGRX, 0) == -1) {
+        plutobook_set_error_message("image decode error: %s", tjGetErrorStr());
+        cairo_surface_destroy(surface);
+        tjDestroy(tj);
+        return nullptr;
+    }
+
+    cairo_surface_mark_dirty(surface);
+    attachMimeData(surface, data, size);
+    tjDestroy(tj);
+    return surface;
+}
 #endif // PLUTOBOOK_HAS_TURBOJPEG
+
 #ifdef PLUTOBOOK_HAS_WEBP
-    if(size > 14 && std::memcmp(data, "RIFF", 4) == 0 && std::memcmp(data + 8, "WEBPVP", 6) == 0) {
-        WebPDecoderConfig config;
-        if(!WebPInitDecoderConfig(&config)) {
-            plutobook_set_error_message("image decode error: WebPInitDecoderConfig failed");
-            return nullptr;
-        }
-
-        if(WebPGetFeatures((const uint8_t*)(data), size, &config.input) != VP8_STATUS_OK) {
-            plutobook_set_error_message("image decode error: WebPGetFeatures failed");
-            return nullptr;
-        }
-
-        auto surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, config.input.width, config.input.height);
-        auto surfaceData = cairo_image_surface_get_data(surface);
-        auto surfaceWidth = cairo_image_surface_get_width(surface);
-        auto surfaceHeight = cairo_image_surface_get_height(surface);
-        auto surfaceStride = cairo_image_surface_get_stride(surface);
-
-        config.output.colorspace = MODE_bgrA;
-        config.output.u.RGBA.rgba = surfaceData;
-        config.output.u.RGBA.stride = surfaceStride;
-        config.output.u.RGBA.size = surfaceStride * surfaceHeight;
-        config.output.width = surfaceWidth;
-        config.output.height = surfaceHeight;
-        config.output.is_external_memory = 1;
-        if(WebPDecode((const uint8_t*)(data), size, &config) != VP8_STATUS_OK) {
-            plutobook_set_error_message("image decode error: WebPDecode failed");
-            return nullptr;
-        }
-
-        cairo_surface_mark_dirty(surface);
-        return surface;
+static cairo_surface_t* decodeWebpImage(const char* data, size_t size)
+{
+    WebPDecoderConfig config;
+    if(!WebPInitDecoderConfig(&config)) {
+        plutobook_set_error_message("image decode error: WebPInitDecoderConfig failed");
+        return nullptr;
     }
+
+    if(WebPGetFeatures((const uint8_t*)(data), size, &config.input) != VP8_STATUS_OK) {
+        plutobook_set_error_message("image decode error: WebPGetFeatures failed");
+        return nullptr;
+    }
+
+    auto surface = createImageSurface(CAIRO_FORMAT_ARGB32, config.input.width, config.input.height);
+    if(surface == nullptr)
+        return nullptr;
+    auto surfaceData = cairo_image_surface_get_data(surface);
+    auto surfaceWidth = cairo_image_surface_get_width(surface);
+    auto surfaceHeight = cairo_image_surface_get_height(surface);
+    auto surfaceStride = cairo_image_surface_get_stride(surface);
+
+    config.output.colorspace = MODE_bgrA;
+    config.output.u.RGBA.rgba = surfaceData;
+    config.output.u.RGBA.stride = surfaceStride;
+    config.output.u.RGBA.size = surfaceStride * surfaceHeight;
+    config.output.width = surfaceWidth;
+    config.output.height = surfaceHeight;
+    config.output.is_external_memory = 1;
+    if(WebPDecode((const uint8_t*)(data), size, &config) != VP8_STATUS_OK) {
+        plutobook_set_error_message("image decode error: WebPDecode failed");
+        cairo_surface_destroy(surface);
+        return nullptr;
+    }
+
+    cairo_surface_mark_dirty(surface);
+    return surface;
+}
 #endif // PLUTOBOOK_HAS_WEBP
 
+static cairo_surface_t* decodeGenericImage(const char* data, size_t size)
+{
     int width, height, channels;
     auto imageData = stbi_load_from_memory((const stbi_uc*)(data), size, &width, &height, &channels, STBI_rgb_alpha);
     if(imageData == nullptr) {
@@ -166,19 +221,25 @@ static cairo_surface_t* decodeBitmapImage(const char* data, size_t size)
         return nullptr;
     }
 
-    auto surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, width, height);
+    auto surface = createImageSurface(CAIRO_FORMAT_ARGB32, width, height);
+    if(surface == nullptr) {
+        stbi_image_free(imageData);
+        return nullptr;
+    }
+
     auto surfaceData = cairo_image_surface_get_data(surface);
-    auto surfaceWidth = cairo_image_surface_get_width(surface);
-    auto surfaceHeight = cairo_image_surface_get_height(surface);
     auto surfaceStride = cairo_image_surface_get_stride(surface);
-    for(int y = 0; y < surfaceHeight; y++) {
-        uint32_t* src = (uint32_t*)(imageData + surfaceStride * y);
-        uint32_t* dst = (uint32_t*)(surfaceData + surfaceStride * y);
-        for(int x = 0; x < surfaceWidth; x++) {
-            uint32_t a = (src[x] >> 24) & 0xFF;
-            uint32_t b = (src[x] >> 16) & 0xFF;
-            uint32_t g = (src[x] >> 8) & 0xFF;
-            uint32_t r = (src[x] >> 0) & 0xFF;
+
+    const auto imageStride = width * 4;
+    for(int y = 0; y < height; y++) {
+        auto src = (const uint32_t*)(imageData + imageStride * y);
+        auto dst = (uint32_t*)(surfaceData + surfaceStride * y);
+        for(int x = 0; x < width; x++) {
+            uint32_t pixel = src[x];
+            uint32_t r = (pixel >> 0) & 0xFF;
+            uint32_t g = (pixel >> 8) & 0xFF;
+            uint32_t b = (pixel >> 16) & 0xFF;
+            uint32_t a = (pixel >> 24) & 0xFF;
 
             uint32_t pr = (r * a) / 255;
             uint32_t pg = (g * a) / 255;
@@ -187,22 +248,41 @@ static cairo_surface_t* decodeBitmapImage(const char* data, size_t size)
         }
     }
 
-    stbi_image_free(imageData);
     cairo_surface_mark_dirty(surface);
+    attachMimeData(surface, data, size);
+    stbi_image_free(imageData);
     return surface;
 }
 
-RefPtr<BitmapImage> BitmapImage::create(const char* data, size_t size)
+static cairo_surface_t* decodeBitmapImage(const char* data, size_t size)
+{
+#ifdef CAIRO_HAS_PNG_FUNCTIONS
+    if(matchesPngSignature(data, size))
+        return decodePngImage(data, size);
+#endif
+#ifdef PLUTOBOOK_HAS_TURBOJPEG
+    if(matchesJpegSignature(data, size))
+        return decodeJpegImage(data, size);
+#endif
+#ifdef PLUTOBOOK_HAS_WEBP
+    if(matchesWebpSignature(data, size))
+        return decodeWebpImage(data, size);
+#endif
+    return decodeGenericImage(data, size);
+}
+
+RefPtr<BitmapImage> BitmapImage::create(Book* book, const char* data, size_t size)
 {
     auto surface = decodeBitmapImage(data, size);
     if(surface == nullptr)
         return nullptr;
     if(auto status = cairo_surface_status(surface)) {
         plutobook_set_error_message("image decode error: %s", cairo_status_to_string(status));
+        cairo_surface_destroy(surface);
         return nullptr;
     }
 
-    return adoptPtr(new BitmapImage(surface));
+    return adoptPtr(new (book->heap()) BitmapImage(surface));
 }
 
 void Image::drawTiled(GraphicsContext& context, const Rect& destRect, const Rect& tileRect)
@@ -280,15 +360,28 @@ void BitmapImage::drawPattern(GraphicsContext& context, const Rect& destRect, co
     cairo_pattern_destroy(pattern);
 }
 
-void BitmapImage::computeIntrinsicDimensions(float& intrinsicWidth, float& intrinsicHeight, double& intrinsicRatio)
+void BitmapImage::computeIntrinsicDimensions(float& intrinsicWidth, float& intrinsicHeight, float& intrinsicRatio)
 {
-    intrinsicWidth = m_intrinsicSize.w;
-    intrinsicHeight = m_intrinsicSize.h;
+    intrinsicWidth = cairo_image_surface_get_width(m_surface);
+    intrinsicHeight = cairo_image_surface_get_height(m_surface);
     if(intrinsicHeight > 0) {
         intrinsicRatio = intrinsicWidth / intrinsicHeight;
     } else {
         intrinsicRatio = 0;
     }
+}
+
+Size BitmapImage::intrinsicSize() const
+{
+    auto width = cairo_image_surface_get_width(m_surface);
+    auto height = cairo_image_surface_get_height(m_surface);
+
+    return Size(width, height);
+}
+
+Size BitmapImage::size() const
+{
+    return intrinsicSize();
 }
 
 BitmapImage::~BitmapImage()
@@ -297,14 +390,13 @@ BitmapImage::~BitmapImage()
 }
 
 BitmapImage::BitmapImage(cairo_surface_t* surface)
-    : m_surface(surface), m_intrinsicSize(cairo_image_surface_get_width(m_surface), cairo_image_surface_get_height(m_surface))
+    : m_surface(surface)
 {
 }
 
-RefPtr<SVGImage> SVGImage::create(std::string_view content, std::string_view baseUrl, ResourceFetcher* fetcher)
+RefPtr<SVGImage> SVGImage::create(Book* book, std::string_view content, std::string_view baseUrl)
 {
-    std::unique_ptr<Heap> heap(new Heap(1024 * 24));
-    auto document = SVGDocument::create(nullptr, heap.get(), fetcher, ResourceLoader::completeUrl(baseUrl));
+    auto document = SVGDocument::create(book, ResourceLoader::completeUrl(baseUrl));
     if(!document->parse(content))
         return nullptr;
     if(!document->rootElement()->isOfType(svgNs, svgTag)) {
@@ -312,7 +404,7 @@ RefPtr<SVGImage> SVGImage::create(std::string_view content, std::string_view bas
         return nullptr;
     }
 
-    return adoptPtr(new SVGImage(std::move(heap), std::move(document)));
+    return adoptPtr(new (book->heap()) SVGImage(std::move(document)));
 }
 
 void SVGImage::draw(GraphicsContext& context, const Rect& dstRect, const Rect& srcRect)
@@ -366,16 +458,9 @@ void SVGImage::drawPattern(GraphicsContext& context, const Rect& destRect, const
     cairo_surface_destroy(pattern_surface);
 }
 
-static SVGSVGElement* toSVGRootElement(Element* element)
+void SVGImage::computeIntrinsicDimensions(float& intrinsicWidth, float& intrinsicHeight, float& intrinsicRatio)
 {
-    assert(element && element->isOfType(svgNs, svgTag));
-    return static_cast<SVGSVGElement*>(element);
-}
-
-void SVGImage::computeIntrinsicDimensions(float& intrinsicWidth, float& intrinsicHeight, double& intrinsicRatio)
-{
-    auto rootElement = toSVGRootElement(m_document->rootElement());
-    rootElement->computeIntrinsicDimensions(intrinsicWidth, intrinsicHeight, intrinsicRatio);
+    rootElement()->computeIntrinsicDimensions(intrinsicWidth, intrinsicHeight, intrinsicRatio);
 }
 
 void SVGImage::setContainerSize(const Size& size)
@@ -388,28 +473,37 @@ void SVGImage::setContainerSize(const Size& size)
 
 Size SVGImage::intrinsicSize() const
 {
-    float intrinsicWidth = 0.f;
-    float intrinsicHeight = 0.f;
-    double intrinsicRatio = 0.0;
+    constexpr float defaultWidth = 300;
+    constexpr float defaultHeight = 150;
+    constexpr float defaultRatio = defaultWidth / defaultHeight;
 
-    auto rootElement = toSVGRootElement(m_document->rootElement());
-    rootElement->computeIntrinsicDimensions(intrinsicWidth, intrinsicHeight, intrinsicRatio);
-    if(intrinsicRatio && (!intrinsicWidth || !intrinsicHeight)) {
-        if(!intrinsicWidth && intrinsicHeight)
-            intrinsicWidth = intrinsicHeight * intrinsicRatio;
-        else if(intrinsicWidth && !intrinsicHeight) {
-            intrinsicHeight = intrinsicWidth / intrinsicRatio;
+    const auto* element = rootElement();
+
+    auto intrinsicWidth = element->intrinsicWidth();
+    auto intrinsicHeight = element->intrinsicHeight();
+    auto intrinsicRatio = element->intrinsicRatio();
+
+    float width = defaultWidth;
+    float height = defaultHeight;
+    if(intrinsicWidth.has_value()) {
+        width = intrinsicWidth.value();
+        if(intrinsicHeight.has_value())
+            height = intrinsicHeight.value();
+        else if(intrinsicRatio.has_value())
+            height = width / intrinsicRatio.value();
+    } else if(intrinsicHeight.has_value()) {
+        height = intrinsicHeight.value();
+        if(intrinsicRatio.has_value())
+            width = height * intrinsicRatio.value();
+    } else if(intrinsicRatio.has_value()) {
+        if(defaultRatio <= intrinsicRatio.value()) {
+            height = width / intrinsicRatio.value();
+        } else {
+            width = height * intrinsicRatio.value();
         }
     }
 
-    if(intrinsicWidth > 0 && intrinsicHeight > 0) {
-        return Size(intrinsicWidth, intrinsicHeight);
-    }
-
-    const auto& viewBoxRect = rootElement->viewBox();
-    if(viewBoxRect.isValid())
-        return viewBoxRect.size();
-    return Size(300, 150);
+    return Size(width, height);
 }
 
 Size SVGImage::size() const
@@ -419,10 +513,17 @@ Size SVGImage::size() const
 
 SVGImage::~SVGImage() = default;
 
-SVGImage::SVGImage(std::unique_ptr<Heap> heap, std::unique_ptr<SVGDocument> document)
-    : m_heap(std::move(heap)), m_document(std::move(document))
+SVGImage::SVGImage(std::unique_ptr<SVGDocument> document)
+    : m_document(std::move(document))
 {
     m_document->build();
+}
+
+SVGSVGElement* SVGImage::rootElement() const
+{
+    auto element = m_document->rootElement();
+    assert(element && element->isOfType(svgNs, svgTag));
+    return static_cast<SVGSVGElement*>(element);
 }
 
 } // namespace plutobook

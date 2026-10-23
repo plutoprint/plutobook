@@ -110,9 +110,9 @@ LineBox::LineBox(Box* box, float width)
 {
 }
 
-std::unique_ptr<TextLineBox> TextLineBox::create(TextBox* box, const TextShapeView& shape, float expansion, float width)
+std::unique_ptr<TextLineBox> TextLineBox::create(TextBox* box, const TextShapeView& shape, float width, float expansion)
 {
-    return std::unique_ptr<TextLineBox>(new (box->heap()) TextLineBox(box, shape, expansion, width));
+    return std::unique_ptr<TextLineBox>(new (box->heap()) TextLineBox(box, shape, width, expansion));
 }
 
 float TextLineBox::lineHeight() const
@@ -173,22 +173,22 @@ static void paintTextDecoration(GraphicsContext& context, const Point& origin, f
 static void paintTextDecorations(GraphicsContext& context, const Point& offset, float width, const BoxStyle* style)
 {
     auto decorations = style->textDecorationLine();
-    if(decorations == TextDecorationLine::None)
+    if(decorations.isEmpty())
         return;
     auto baseline = style->fontAscent();
     auto thickness = style->fontSize() / 16.f;
     auto doubleOffset = thickness + 1.f;
     auto decorationStyle = style->textDecorationStyle();
     context.setColor(style->textDecorationColor());
-    if(decorations & TextDecorationLine::Underline) {
+    if(decorations.contains(TextDecorationLine::Underline)) {
         auto gap = std::max(1.f, std::ceil(thickness / 2.f));
         Point origin(offset.x, offset.y + baseline + gap);
         paintTextDecoration(context, origin, width, thickness, doubleOffset, 0, decorationStyle);
     }
 
-    if(decorations & TextDecorationLine::Overline)
+    if(decorations.contains(TextDecorationLine::Overline))
         paintTextDecoration(context, offset, width, thickness, -doubleOffset, 1, decorationStyle);
-    if(decorations & TextDecorationLine::LineThrough) {
+    if(decorations.contains(TextDecorationLine::LineThrough)) {
         Point origin(offset.x, offset.y + 2.f * baseline / 3.f);
         paintTextDecoration(context, origin, width, thickness, doubleOffset, 0, decorationStyle);
     }
@@ -482,8 +482,10 @@ float FlowLineBox::placeInHorizontalDirection(float offsetX, const BlockFlowBox*
 
 void FlowLineBox::placeInVerticalDirection(float y, float maxHeight, float maxAscent, RootLineBox* rootLine)
 {
-    if(rootLine == this)
-        rootLine->setY(y + maxAscent - baselinePosition());
+    if(rootLine == this) {
+        rootLine->setY(y + maxAscent - style()->fontAscent());
+    }
+
     for(auto child : m_children) {
         if(child->box()->isPositioned()) {
             const auto& box = to<BoxFrame>(*child->box());
@@ -683,28 +685,13 @@ float RootLineBox::alignInVerticalDirection(FragmentBuilder* fragmentainer, floa
 
     auto maxHeight = maxAscent + maxDescent;
     if(fragmentainer && maxHeight > 0.f)
-        blockHeight += adjustLineBoxInFragmentFlow(fragmentainer, blockHeight, maxHeight);
+        blockHeight = fragmentainer->adjustOffsetInFragmentFlow(blockHeight, maxHeight, maxHeight);
     m_lineTop = blockHeight;
     m_lineBottom = blockHeight;
     placeInVerticalDirection(blockHeight, maxHeight, maxAscent, this);
-    return blockHeight + maxHeight;
-}
-
-float RootLineBox::adjustLineBoxInFragmentFlow(FragmentBuilder* fragmentainer, float offset, float lineHeight) const
-{
-    auto fragmentHeight = fragmentainer->fragmentHeightForOffset(offset);
-    fragmentainer->updateMinimumFragmentHeight(offset, lineHeight);
-    if(fragmentHeight == 0.f || lineHeight > fragmentHeight)
-        return 0.f;
-    auto remainingHeight = fragmentainer->fragmentRemainingHeightForOffset(offset, AssociateWithLatterFragment);
-    if(remainingHeight < lineHeight) {
-        fragmentainer->setFragmentBreak(offset, lineHeight - remainingHeight);
-        return remainingHeight;
-    }
-
-    if(!isFirstLine() && isNearlyEqual(remainingHeight, fragmentHeight))
-        fragmentainer->setFragmentBreak(offset, lineHeight);
-    return 0.f;
+    m_lineBoxTop = blockHeight;
+    m_lineBoxBottom = blockHeight + maxHeight;
+    return m_lineBoxBottom;
 }
 
 RootLineBox::RootLineBox(BlockFlowBox* box)

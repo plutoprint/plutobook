@@ -10,33 +10,51 @@
 #define PLUTOBOOK_LOCALE_DATA_H
 
 #include "globalstring.h"
+#include "ustring.h"
 
 #include <unicode/locid.h>
 #include <unicode/brkiter.h>
+
 #include <memory>
+
+typedef const struct hb_language_impl_t* hb_language_t;
 
 namespace plutobook {
 
 class LocaleData {
 public:
-    static const LocaleData* get(const GlobalString& lang);
+    static std::unique_ptr<LocaleData> create(const GlobalString& lang);
 
-    icu::BreakIterator* characterIterator() const;
-    icu::BreakIterator* lineIterator() const;
+    uint64_t nextIteratorId() const { return ++m_iteratorIdCounter; }
+    int nextCharacterBreak(uint64_t id, const UString& text, int offset) const;
+    int nextLineBreak(uint64_t id, const UString& text, int offset) const;
 
+    UString toUpper(UString text) const;
+    UString toLower(UString text) const;
+    UString toTitle(UString text, UChar32 previousCharacter) const;
+
+    hb_language_t language() const { return m_language; }
     const GlobalString& getQuote(bool open, size_t depth) const;
+    const char* lang() const;
 
-public:
-    LocaleData(const icu::Locale& locale) : m_locale(locale) {}
+private:
+    LocaleData(hb_language_t language) : m_language(language) {}
 
-    icu::Locale m_locale;
+    hb_language_t m_language;
 
     mutable std::unique_ptr<icu::BreakIterator> m_characterIterator;
+    mutable std::unique_ptr<icu::BreakIterator> m_wordIterator;
     mutable std::unique_ptr<icu::BreakIterator> m_lineIterator;
+
+    mutable uint64_t m_iteratorIdCounter = 0;
+    mutable uint64_t m_characterIteratorId = 0;
+    mutable uint64_t m_lineIteratorId = 0;
+
+    icu::Locale locale() const;
 
     class Quotes {
     public:
-        static std::unique_ptr<Quotes> create(const char* locale);
+        static std::unique_ptr<Quotes> create(std::string_view lang);
 
         const GlobalString& getQuote(bool open, size_t depth) const;
 

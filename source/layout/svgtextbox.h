@@ -42,7 +42,7 @@ public:
 
     bool isSVGInlineBox() const final { return true; }
     SVGTextContentElement* element() const;
-    void build() final;
+    void build() override;
 
     const SVGPaintServer& fill() const { return m_fill; }
     const SVGPaintServer& stroke() const { return m_stroke; }

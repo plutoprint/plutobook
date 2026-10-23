@@ -38,8 +38,11 @@ extern "C" {
 #define PLUTOBOOK_PRINTF_FORMAT(fmt_index, va_index)
 #endif
 
+#define PLUTOBOOK_XSTRINGIZE(x) #x
+#define PLUTOBOOK_STRINGIZE(x) PLUTOBOOK_XSTRINGIZE(x)
+
 #define PLUTOBOOK_VERSION_MAJOR 0
-#define PLUTOBOOK_VERSION_MINOR 18
+#define PLUTOBOOK_VERSION_MINOR 20
 #define PLUTOBOOK_VERSION_MICRO 0
 
 #define PLUTOBOOK_VERSION_ENCODE(major, minor, micro) (((major) * 10000) + ((minor) * 100) + ((micro) * 1))
@@ -476,8 +479,8 @@ PLUTOBOOK_API plutobook_canvas_t* plutobook_pdf_canvas_create_for_stream(
  * An optional timezone of the form "[+/-]hh:mm" or "Z" for UTC time can be appended. All other metadata values can be any string.
  *
  * @param canvas A pointer to a `plutobook_canvas_t` object.
- * @param metadata The metadata type to set.
- * @param value The value of the metadata field.
+ * @param metadata The metadata field to set.
+ * @param value The value of the metadata field, or `NULL` to unset it.
  */
 PLUTOBOOK_API void plutobook_pdf_canvas_set_metadata(plutobook_canvas_t* canvas, plutobook_pdf_metadata_t metadata, const char* value);
 
@@ -680,7 +683,7 @@ PLUTOBOOK_API void plutobook_set_http_max_redirects(int amount);
 /**
  * @brief Sets the maximum time allowed for an HTTP request.
  *
- * If not set, the default timeout is 300 seconds.
+ * If not set, the default timeout is 30 seconds.
  *
  * @param timeout Timeout duration in seconds.
  */
@@ -730,17 +733,17 @@ PLUTOBOOK_API void plutobook_clear_content(plutobook_t* book);
  * An optional timezone of the form "[+/-]hh:mm" or "Z" for UTC time can be appended. All other metadata values can be any string.
  *
  * @param book A pointer to a `plutobook_t` object.
- * @param metadata The metadata type to set.
- * @param value The value of the metadata field.
+ * @param metadata The metadata field to set.
+ * @param value The value of the metadata field, or `NULL` to unset it.
  */
 PLUTOBOOK_API void plutobook_set_metadata(plutobook_t* book, plutobook_pdf_metadata_t metadata, const char* value);
 
 /**
- * @brief Gets the value of the specified metadata.
+ * @brief Gets the value of the metadata field.
  *
  * @param book A pointer to a `plutobook_t` object.
- * @param metadata The type of metadata to get.
- * @return The value of the specified metadata.
+ * @param metadata The metadata field to get.
+ * @return The value of the metadata field, or `NULL` if it is not set.
  */
 PLUTOBOOK_API const char* plutobook_get_metadata(const plutobook_t* book, plutobook_pdf_metadata_t metadata);
 
@@ -918,7 +921,7 @@ PLUTOBOOK_API void plutobook_render_document(const plutobook_t* book, plutobook_
  * @brief Renders the entire document to the given cairo context.
  *
  * @param book A pointer to a `plutobook_t` object.
- * @param canvas The cairo context to render the entire document on.
+ * @param context The cairo context to render the entire document on.
  */
 PLUTOBOOK_API void plutobook_render_document_cairo(const plutobook_t* book, cairo_t* context);
 
@@ -939,7 +942,7 @@ PLUTOBOOK_API void plutobook_render_document_rect(const plutobook_t* book, pluto
  * @brief Renders a specific rectangular portion of the document to the given cairo context.
  *
  * @param book A pointer to a `plutobook_t` object.
- * @param canvas The cairo context to render the document portion on.
+ * @param context The cairo context to render the document portion on.
  * @param x The x-coordinate of the top-left corner of the rectangle.
  * @param y The y-coordinate of the top-left corner of the rectangle.
  * @param width The width of the rectangle to render.
@@ -1076,7 +1079,7 @@ PLUTOBOOK_API void plutobook_set_error_message(const char* format, ...) PLUTOBOO
 PLUTOBOOK_API const char* plutobook_get_error_message(void);
 
 /**
- * @brief @brief Clears any previously set error message for the current thread.
+ * @brief Clears any previously set error message for the current thread.
  */
 PLUTOBOOK_API void plutobook_clear_error_message(void);
 

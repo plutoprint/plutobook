@@ -11,8 +11,9 @@
 #include <cairo-pdf.h>
 
 #include <cstdarg>
-#include <cstring>
+#include <cstdio>
 #include <cstdlib>
+#include <cstring>
 
 int plutobook_version(void)
 {
@@ -24,61 +25,74 @@ const char* plutobook_version_string(void)
     return PLUTOBOOK_VERSION_STRING;
 }
 
-#if defined(_WIN32)
-#define SYSTEM_NAME "Windows"
-#elif defined(__APPLE__) && defined(__MACH__)
-#define SYSTEM_NAME "macOS"
-#elif defined(__linux__)
-#define SYSTEM_NAME "Linux"
-#elif defined(__unix__)
-#define SYSTEM_NAME "Unix"
-#else
-#define SYSTEM_NAME "Unknown"
-#endif
-
-#if defined(__x86_64__) || defined(_M_X64)
-#define MACHINE_NAME "x86_64"
-#elif defined(__aarch64__) || defined(_M_ARM64)
-#define MACHINE_NAME "ARM64"
-#elif defined(__i386__) || defined(_M_IX86)
-#define MACHINE_NAME "x86"
-#elif defined(__arm__) || defined(_M_ARM)
-#define MACHINE_NAME "ARM"
-#else
-#define MACHINE_NAME "Unknown"
+#ifndef PLUTOBOOK_BUILD_DATE
+#define PLUTOBOOK_BUILD_DATE __DATE__ ", " __TIME__
 #endif
 
 #if defined(__clang__)
-#define COMPILER_NAME "Clang " __clang_version__
+#define PLUTOBOOK_COMPILER "Clang " __clang_version__
 #elif defined(__GNUC__)
-#define COMPILER_NAME "GCC " __VERSION__
+#define PLUTOBOOK_COMPILER "GCC " __VERSION__
 #elif defined(_MSC_VER)
-#define STRINGIZE(x) #x
-#define STRINGIFY(x) STRINGIZE(x)
-#define COMPILER_NAME "MSVC " STRINGIFY(_MSC_VER)
+#define PLUTOBOOK_COMPILER "MSVC " PLUTOBOOK_STRINGIZE(_MSC_VER)
 #else
-#define COMPILER_NAME "Unknown"
+#define PLUTOBOOK_COMPILER "Unknown"
 #endif
+
+#if defined(_WIN32)
+#define PLUTOBOOK_SYSTEM "Windows"
+#elif defined(__APPLE__) && defined(__MACH__)
+#define PLUTOBOOK_SYSTEM "Darwin"
+#elif defined(__linux__)
+#define PLUTOBOOK_SYSTEM "Linux"
+#elif defined(__unix__)
+#define PLUTOBOOK_SYSTEM "Unix"
+#else
+#define PLUTOBOOK_SYSTEM "Unknown"
+#endif
+
+#if defined(__x86_64__) || defined(_M_X64)
+#define PLUTOBOOK_MACHINE "x86_64"
+#elif defined(__i386__) || defined(_M_IX86)
+#define PLUTOBOOK_MACHINE "x86"
+#elif defined(__aarch64__) || defined(_M_ARM64)
+#define PLUTOBOOK_MACHINE "arm64"
+#elif defined(__arm__) || defined(_M_ARM)
+#define PLUTOBOOK_MACHINE "arm"
+#else
+#define PLUTOBOOK_MACHINE "unknown"
+#endif
+
+#ifdef PLUTOBOOK_HAS_CURL
+#define PLUTOBOOK_FEAT_CURL "+curl"
+#else
+#define PLUTOBOOK_FEAT_CURL "-curl"
+#endif
+
+#ifdef PLUTOBOOK_HAS_TURBOJPEG
+#define PLUTOBOOK_FEAT_TURBOJPEG "+turbojpeg"
+#else
+#define PLUTOBOOK_FEAT_TURBOJPEG "-turbojpeg"
+#endif
+
+#ifdef PLUTOBOOK_HAS_WEBP
+#define PLUTOBOOK_FEAT_WEBP "+webp"
+#else
+#define PLUTOBOOK_FEAT_WEBP "-webp"
+#endif
+
+#define PLUTOBOOK_FEATURES PLUTOBOOK_FEAT_CURL " " PLUTOBOOK_FEAT_TURBOJPEG " " PLUTOBOOK_FEAT_WEBP
 
 const char* plutobook_build_info(void)
 {
-    return "Compiler: " COMPILER_NAME "\n"
-           "Built   : " __DATE__ " " __TIME__ "\n"
-           "System  : " SYSTEM_NAME "\n"
-           "Machine : " MACHINE_NAME "\n"
-           "Features:"
-#ifdef PLUTOBOOK_HAS_CURL
-           " Curl"
-#endif
-#ifdef PLUTOBOOK_HAS_TURBOJPEG
-           " TurboJPEG"
-#endif
-#ifdef PLUTOBOOK_HAS_WEBP
-           " WebP"
-#endif
-           "\n\n"
-           "PlutoBook version: " PLUTOBOOK_VERSION_STRING "\n"
-           "Cairo version: " CAIRO_VERSION_STRING "\n";
+    return "PlutoBook   " PLUTOBOOK_VERSION_STRING "\n"
+           "----------------------------------------\n"
+           "Built     : " PLUTOBOOK_BUILD_DATE     "\n"
+           "Compiler  : " PLUTOBOOK_COMPILER       "\n"
+           "System    : " PLUTOBOOK_SYSTEM         "\n"
+           "Machine   : " PLUTOBOOK_MACHINE        "\n"
+           "Features  : " PLUTOBOOK_FEATURES       "\n"
+           "Cairo     : " CAIRO_VERSION_STRING     "\n";
 }
 
 struct _plutobook_canvas {
@@ -98,6 +112,8 @@ static plutobook_canvas_t* plutobook_canvas_create(cairo_surface_t* surface)
     auto canvas = (plutobook_canvas_t*)(std::malloc(sizeof(plutobook_canvas_t)));
     if(canvas == nullptr) {
         plutobook_set_error_message("canvas allocation failed");
+        cairo_destroy(context);
+        cairo_surface_destroy(surface);
         return nullptr;
     }
 
@@ -356,6 +372,9 @@ struct _plutobook_resource_data {
 
 static plutobook_resource_data_t* plutobook_resource_data_create_uninitialized(unsigned int content_length, const char* mime_type, const char* text_encoding)
 {
+    if(mime_type == nullptr) mime_type = "";
+    if(text_encoding == nullptr) text_encoding = "";
+
     auto mime_type_length = std::strlen(mime_type) + 1ul;
     auto text_encoding_length = std::strlen(text_encoding) + 1ul;
     auto resource = (plutobook_resource_data_t*)(std::malloc(mime_type_length + text_encoding_length + content_length + sizeof(plutobook_resource_data_t)));
@@ -727,28 +746,59 @@ void* plutobook_get_custom_resource_fetcher_closure(const plutobook_t* book)
     return book->custom_resource_fetcher_closure;
 }
 
-constexpr int kErrorBufferSize = 512;
+struct plutobook_error_info {
+    std::unique_ptr<char[]> data;
+    size_t size = 0;
+};
 
-thread_local char plutobook_error_message[kErrorBufferSize];
+struct plutobook_error_buffer {
+    plutobook_error_info info[2];
+    size_t current = 0;
+};
+
+static plutobook_error_buffer* plutobook_get_error_buffer(void)
+{
+    thread_local plutobook_error_buffer error_buffer;
+    return &error_buffer;
+}
 
 void plutobook_set_error_message(const char* format, ...)
 {
+    auto error = plutobook_get_error_buffer();
+    auto next = error->current ? 0 : 1;
+    auto info = &error->info[next];
+    error->current = next;
+
     va_list args;
     va_start(args, format);
-    char error_message[kErrorBufferSize];
-    vsnprintf(error_message, kErrorBufferSize, format, args);
-    strcpy(plutobook_error_message, error_message);
+    auto length = std::vsnprintf(info->data.get(), info->size, format, args);
     va_end(args);
+
+    if(length >= 0 && info->size <= (size_t)(length)) {
+        const auto size = (size_t)(length) + 1;
+        info->data = std::make_unique<char[]>(size);
+        info->size = size;
+
+        va_start(args, format);
+        std::vsnprintf(info->data.get(), info->size, format, args);
+        va_end(args);
+    }
 }
 
 const char* plutobook_get_error_message(void)
 {
-    return plutobook_error_message;
+    auto error = plutobook_get_error_buffer();
+    if(error->info[error->current].data)
+        return error->info[error->current].data.get();
+    return "";
 }
 
 void plutobook_clear_error_message(void)
 {
-    std::memset(plutobook_error_message, 0, sizeof(plutobook_error_message));
+    auto error = plutobook_get_error_buffer();
+    if(error->info[error->current].data) {
+        error->info[error->current].data[0] = '\0';
+    }
 }
 
 void plutobook_set_fontconfig_path(const char* path)

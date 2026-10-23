@@ -15,12 +15,17 @@ namespace plutobook {
 SVGRootBox::SVGRootBox(SVGSVGElement* element, const RefPtr<BoxStyle>& style)
     : ReplacedBox(element, style)
 {
-    setIntrinsicSize(Size(300, 150));
+    Size intrinsicSize(300, 150);
+    if(auto intrinsicWidth = element->intrinsicWidth())
+        intrinsicSize.w = intrinsicWidth.value();
+    if(auto intrinsicHeight = element->intrinsicHeight())
+        intrinsicSize.h = intrinsicHeight.value();
+    setIntrinsicSize(intrinsicSize);
 }
 
 bool SVGRootBox::requiresLayer() const
 {
-    return isPositioned() || isRelativePositioned() || hasTransform() || style()->zIndex();
+    return isPositioned() || isRelativePositioned() || style()->isStackingContext();
 }
 
 Rect SVGRootBox::fillBoundingBox() const
@@ -72,26 +77,26 @@ Rect SVGRootBox::paintBoundingBox() const
 
 float SVGRootBox::computePreferredReplacedWidth() const
 {
-    if(document()->isSVGImageDocument())
+    if(document()->isSVGDocument())
         return document()->containerWidth();
     return ReplacedBox::computePreferredReplacedWidth();
 }
 
 float SVGRootBox::computeReplacedWidth() const
 {
-    if(document()->isSVGImageDocument())
+    if(document()->isSVGDocument())
         return document()->containerWidth();
     return ReplacedBox::computeReplacedWidth();
 }
 
 float SVGRootBox::computeReplacedHeight() const
 {
-    if(document()->isSVGImageDocument())
+    if(document()->isSVGDocument())
         return document()->containerHeight();
     return ReplacedBox::computeReplacedHeight();
 }
 
-void SVGRootBox::computeIntrinsicRatioInformation(float& intrinsicWidth, float& intrinsicHeight, double& intrinsicRatio) const
+void SVGRootBox::computeIntrinsicRatioInformation(float& intrinsicWidth, float& intrinsicHeight, float &intrinsicRatio) const
 {
     element()->computeIntrinsicDimensions(intrinsicWidth, intrinsicHeight, intrinsicRatio);
 }

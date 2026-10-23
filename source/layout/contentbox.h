@@ -42,30 +42,9 @@ struct is_a<LeaderBox> {
     static bool check(const Box& box) { return box.isLeaderBox(); }
 };
 
-class TargetCounterBox final : public ContentBox {
-public:
-    TargetCounterBox(const RefPtr<BoxStyle>& style, const HeapString& fragment, const GlobalString& identifier, const HeapString& seperator, const GlobalString& listStyle);
-
-    bool isTargetCounterBox() const final { return true; }
-
-    void build() final;
-
-    const char* name() const final { return "TargetCounterBox"; }
-
-private:
-    HeapString m_fragment;
-    GlobalString m_identifier;
-    HeapString m_seperator;
-    GlobalString m_listStyle;
-};
-
-template<>
-struct is_a<TargetCounterBox> {
-    static bool check(const Box& box) { return box.isTargetCounterBox(); }
-};
-
 class CSSCounterValue;
 class CSSFunctionValue;
+class CSSUnaryFunctionValue;
 class CSSAttrValue;
 
 class Counters;
@@ -78,16 +57,20 @@ public:
     void build(const CSSValue& content);
 
 private:
+    void addValue(const CSSValue& value);
     void addText(const HeapString& text);
     void addLeaderText(const HeapString& text);
     void addLeader(const CSSValue& value);
     void addElement(const CSSValue& value);
+    void addFunction(const CSSUnaryFunctionValue& function);
     void addCounter(const CSSCounterValue& counter);
-    void addTargetCounter(const CSSFunctionValue& function);
     void addQuote(CSSValueID value);
     void addQrCode(const CSSFunctionValue& function);
     void addImage(RefPtr<Image> image);
 
+    void addDefaultListMarker();
+
+    const GlobalString& markerText(CSSValueID listStyleType) const;
     const HeapString& resolveAttr(const CSSAttrValue& attr) const;
 
     Counters& m_counters;

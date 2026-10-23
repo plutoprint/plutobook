@@ -12,6 +12,7 @@
 #include "blockbox.h"
 
 #include <list>
+#include <set>
 
 namespace plutobook {
 
@@ -45,11 +46,22 @@ public:
     std::optional<float> lastLineBaseline() const final;
     std::optional<float> inlineBlockBaseline() const final;
 
+    std::optional<float> repeatedHeaderTop(const Rect& pageRect, const Point& offset) const;
+    std::optional<float> repeatedFooterTop(const Rect& pageRect, const Point& offset) const;
+
+    float unbreakableHeight(const FragmentBuilder* fragmentainer, float offset) const final;
+
     TableColumnList& columns() { return m_columns; }
     const TableColumnList& columns() const { return m_columns; }
 
     TableColumnBox* columnAt(size_t index) const;
+    TableColumnBox* columnGroupAt(size_t index) const;
     size_t columnCount() const;
+
+    const TableCaptionBoxList& captions() const { return m_captions; }
+
+    TableCaptionBox* topCaption() const;
+    TableCaptionBox* bottomCaption() const;
 
     const TableSectionBoxList& sections() const { return m_sections; }
 
@@ -165,6 +177,8 @@ public:
     std::optional<float> firstLineBaseline() const final;
     std::optional<float> lastLineBaseline() const final;
 
+    float unbreakableRowHeightAt(size_t rowIndex) const;
+
     const TableRowBoxList& rows() const { return m_rows; }
     TableRowBoxList& rows() { return m_rows; }
     TableRowBox* rowAt(size_t index) const { return m_rows.at(index); }
@@ -173,6 +187,9 @@ public:
     TableBox* table() const;
     TableRowBox* firstRow() const;
     TableRowBox* lastRow() const;
+
+    TableRowBox* rowAbove(const TableRowBox* rowBox) const;
+    TableRowBox* rowBelow(const TableRowBox* rowBox) const;
 
     void distributeExcessHeightToRows(float distributableHeight);
 
@@ -206,13 +223,13 @@ public:
         : m_box(box), m_inColSpan(inColSpan), m_inRowSpan(inRowSpan)
     {}
 
-    TableCellBox& operator*() const { return *m_box; }
     TableCellBox* operator->() const { return m_box; }
-    bool inColOrRowSpan() const { return m_inColSpan || m_inRowSpan; }
 
     TableCellBox* box() const { return m_box; }
     bool inColSpan() const { return m_inColSpan; }
     bool inRowSpan() const { return m_inRowSpan; }
+
+    bool inColOrRowSpan() const { return m_inColSpan || m_inRowSpan; }
 
 private:
     TableCellBox* m_box;
@@ -320,6 +337,7 @@ private:
 
 inline TableColumnBox* TableBox::columnAt(size_t index) const
 {
+    assert(index < m_columns.size());
     return m_columns[index].box();
 }
 
@@ -336,6 +354,8 @@ public:
 
     uint32_t span() const { return m_span; }
     void setSpan(uint32_t span) { m_span = span; }
+
+    bool isColumnGroup() const;
     TableColumnBox* columnGroup() const;
 
     const char* name() const final { return "TableColumnBox"; }
@@ -343,6 +363,11 @@ public:
 private:
     uint32_t m_span{1};
 };
+
+inline bool TableColumnBox::isColumnGroup() const
+{
+    return style()->display() == Display::TableColumnGroup;
+}
 
 template<>
 struct is_a<TableColumnBox> {
@@ -451,7 +476,6 @@ public:
     TableCellBox* nextCell() const;
 
     TableRowBox* row() const;
-    TableColumnBox* column() const;
     TableSectionBox* section() const { return row()->section(); }
     TableBox* table() const { return section()->table(); }
 
@@ -498,18 +522,12 @@ inline TableRowBox* TableCellBox::row() const
     return static_cast<TableRowBox*>(parentBox());
 }
 
-inline TableColumnBox* TableCellBox::column() const
-{
-    return table()->columnAt(m_columnIndex);
-}
-
 class TableCaptionBox final : public BlockFlowBox {
 public:
     TableCaptionBox(Node* node, const RefPtr<BoxStyle>& style);
 
     bool isTableCaptionBox() const final { return true; }
     bool avoidsFloats() const final { return true; }
-    float containingBlockWidthForContent(const BlockBox* container) const final;
     CaptionSide captionSide() const { return style()->captionSide(); }
 
     const char* name() const final { return "TableCaptionBox"; }

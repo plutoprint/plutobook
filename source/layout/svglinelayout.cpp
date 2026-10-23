@@ -272,11 +272,11 @@ void SVGTextFragmentsBuilder::handleInlineEnd(const LineItem& item)
 static float calculateBaselineShift(const BoxStyle* style)
 {
     auto baselineShift = style->baselineShift();
-    if(baselineShift.type() == BaselineShiftType::Baseline)
+    if(baselineShift.type() == BaselineShift::Type::Baseline)
         return 0.f;
-    if(baselineShift.type() == BaselineShiftType::Sub)
+    if(baselineShift.type() == BaselineShift::Type::Sub)
         return -style->fontHeight() / 2.f;
-    if(baselineShift.type() == BaselineShiftType::Super)
+    if(baselineShift.type() == BaselineShift::Type::Super)
         return style->fontHeight() / 2.f;
     return baselineShift.length().calc(style->fontSize());
 }
@@ -561,22 +561,22 @@ static void paintSVGTextDecoration(GraphicsContext& context, const Point& offset
 static void paintSVGTextDecorations(GraphicsContext& context, const Point& origin, float width, const BoxStyle* style)
 {
     auto decorations = style->textDecorationLine();
-    if(decorations == TextDecorationLine::None)
+    if(decorations.isEmpty())
         return;
     auto baseline = style->fontAscent();
     auto thickness = style->fontSize() / 16.f;
-    if(decorations & TextDecorationLine::Underline) {
+    if(decorations.contains(TextDecorationLine::Underline)) {
         auto gap = std::max(1.f, std::ceil(thickness / 2.f));
         Point offset(origin.x, origin.y + gap);
         paintSVGTextDecoration(context, offset, width, thickness);
     }
 
-    if(decorations & TextDecorationLine::Overline) {
+    if(decorations.contains(TextDecorationLine::Overline)) {
         Point offset(origin.x, origin.y - baseline);
         paintSVGTextDecoration(context, offset, width, thickness);
     }
 
-    if(decorations & TextDecorationLine::LineThrough) {
+    if(decorations.contains(TextDecorationLine::LineThrough)) {
         Point offset(origin.x, origin.y - baseline / 3.f);
         paintSVGTextDecoration(context, offset, width, thickness);
     }

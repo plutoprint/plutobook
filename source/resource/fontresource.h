@@ -202,12 +202,12 @@ struct FontDataDescription {
     GlobalString lang;
 };
 
-constexpr bool operator==(const FontDataDescription& a, const FontDataDescription& b)
+inline bool operator==(const FontDataDescription& a, const FontDataDescription& b)
 {
     return std::tie(a.size, a.request, a.variations, a.lang) == std::tie(b.size, b.request, b.variations, b.lang);
 }
 
-constexpr bool operator<(const FontDataDescription& a, const FontDataDescription& b)
+inline bool operator<(const FontDataDescription& a, const FontDataDescription& b)
 {
     return std::tie(a.size, a.request, a.variations, a.lang) < std::tie(b.size, b.request, b.variations, b.lang);
 }
@@ -219,12 +219,12 @@ struct FontDescription {
     FontDataDescription data;
 };
 
-constexpr bool operator==(const FontDescription& a, const FontDescription& b)
+inline bool operator==(const FontDescription& a, const FontDescription& b)
 {
     return std::tie(a.families, a.data) == std::tie(b.families, b.data);
 }
 
-constexpr bool operator<(const FontDescription& a, const FontDescription& b)
+inline bool operator<(const FontDescription& a, const FontDescription& b)
 {
     return std::tie(a.families, a.data) < std::tie(b.families, b.data);
 }
@@ -280,9 +280,10 @@ public:
 
 private:
     SegmentedFontFace(const FontSelectionDescription& description) : m_description(description) {}
+    RefPtr<FontData> createFontData(Document* document, const FontDataDescription& description) const;
     FontSelectionDescription m_description;
     std::vector<RefPtr<SimpleFontFace>> m_faces;
-    std::map<FontDataDescription, RefPtr<SegmentedFontData>> m_table;
+    std::map<FontDataDescription, RefPtr<FontData>> m_table;
 };
 
 inline RefPtr<SegmentedFontFace> SegmentedFontFace::create(const FontSelectionDescription& description)
@@ -425,8 +426,8 @@ public:
     Document* document() const { return m_document; }
     const FontDescription& description() const { return m_description; }
     const FontDataList& fonts() const { return m_fonts; }
-    const LocaleData* locale() const { return m_locale; }
     const SimpleFontData* primaryFont() const { return m_primaryFont; }
+    const LocaleData* locale() const;
 
     float size() const { return m_description.data.size; }
     float weight() const { return m_description.data.request.weight; }
@@ -444,8 +445,8 @@ private:
     Document* m_document;
     FontDescription m_description;
     mutable FontDataList m_fonts;
-    const LocaleData* m_locale;
     const SimpleFontData* m_primaryFont{nullptr};
+    mutable const LocaleData* m_locale{nullptr};
 };
 
 } // namespace plutobook

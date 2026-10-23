@@ -11,7 +11,7 @@
 
 namespace plutobook {
 
-constexpr char kUserAgentCounterStyle[] = R"CSS(
+inline constexpr char kUserAgentCounterStyle[] = R"CSS(
 @counter-style decimal {
     system: numeric;
     symbols: '0' '1' '2' '3' '4' '5' '6' '7' '8' '9';
@@ -314,17 +314,13 @@ constexpr char kUserAgentCounterStyle[] = R"CSS(
     symbols: '\30' '\31' '\32' '\33' '\34' '\35' '\36' '\37';
 })CSS";
 
-constexpr char kUserAgentStyle[] = R"CSS(
+inline constexpr char kUserAgentStyle[] = R"CSS(
 @namespace url('http://www.w3.org/1999/xhtml');
 @namespace svg url('http://www.w3.org/2000/svg');
 
-area, base, basefont, datalist, head, link, menu[type=context i], meta,
-noembed, noframes, param, rp, script, source, style, template, track, title {
+area, base, basefont, datalist, head, link, meta, noembed, noframes,
+param, rp, script, source, style, template, track, title {
     display: none;
-}
-
-embed[hidden] {
-    display: inline; height: 0; width: 0;
 }
 
 input[type=hidden i] {
@@ -337,21 +333,35 @@ html, body {
 
 body { margin: 8px; }
 
-address, blockquote, center, div, figure, figcaption, footer, form, header, hr,
-legend, listing, main, p, plaintext, pre, summary, xmp {
+address, blockquote, center, details, dialog, div, figure, figcaption, footer,
+form, header, hr, legend, listing, main, p, plaintext, pre, summary, xmp {
     display: block;
 }
 
 blockquote, figure, listing, p, plaintext, pre, xmp {
-    margin-top: 1em; margin-bottom: 1em;
+    margin-block: 1em;
 }
 
 blockquote, figure {
-    margin-left: 40px; margin-right: 40px;
+    margin-inline: 40px;
 }
 
 address { font-style: italic; }
-listing, plaintext, pre, xmp {  font-family: monospace; white-space: pre; }
+listing, plaintext, pre, xmp { font-family: monospace; white-space: pre; }
+
+dialog:not([open]) { display: none; }
+
+dialog {
+    position: absolute;
+    inset-inline: 0;
+    width: fit-content;
+    height: fit-content;
+    margin: auto;
+    border: solid;
+    padding: 1em;
+    background-color: white;
+    color: black;
+}
 
 cite, dfn, em, i, var { font-style: italic; }
 b, strong { font-weight: bolder; }
@@ -385,18 +395,11 @@ q::after { content: close-quote; }
 nobr { white-space: nowrap; }
 nobr wbr { white-space: normal; }
 
-[dir=ltr i] { direction: ltr; }
-[dir=rtl i] { direction: rtl; }
-
-address, blockquote, center, div, figure, figcaption, footer, form, header, hr,
-legend, listing, main, p, plaintext, pre, summary, xmp, article, aside, h1, h2,
-h3, h4, h5, h6, hgroup, nav, section, table, caption, colgroup, col, thead,
-tbody, tfoot, tr, td, th, dir, dd, dl, dt, menu, ol, ul, li, bdi, output,
-[dir=ltr i], [dir=rtl i], [dir=auto i] {
+bdi {
     unicode-bidi: isolate;
 }
 
-bdo, bdo[dir] {
+bdo {
     unicode-bidi: isolate-override;
 }
 
@@ -404,32 +407,32 @@ article, aside, h1, h2, h3, h4, h5, h6, hgroup, nav, section {
     display: block;
 }
 
-h1 { margin-top: 0.67em; margin-bottom: 0.67em; font-size: 2.00em; font-weight: bold; }
-h2 { margin-top: 0.83em; margin-bottom: 0.83em; font-size: 1.50em; font-weight: bold; }
-h3 { margin-top: 1.00em; margin-bottom: 1.00em; font-size: 1.17em; font-weight: bold; }
-h4 { margin-top: 1.33em; margin-bottom: 1.33em; font-size: 1.00em; font-weight: bold; }
-h5 { margin-top: 1.67em; margin-bottom: 1.67em; font-size: 0.83em; font-weight: bold; }
-h6 { margin-top: 2.33em; margin-bottom: 2.33em; font-size: 0.67em; font-weight: bold; }
+h1 { margin-block: 0.67em; font-size: 2.00em; font-weight: bold; }
+h2 { margin-block: 0.83em; font-size: 1.50em; font-weight: bold; }
+h3 { margin-block: 1.00em; font-size: 1.17em; font-weight: bold; }
+h4 { margin-block: 1.33em; font-size: 1.00em; font-weight: bold; }
+h5 { margin-block: 1.67em; font-size: 0.83em; font-weight: bold; }
+h6 { margin-block: 2.33em; font-size: 0.67em; font-weight: bold; }
 
-:is(article, aside, nav, section) h1 { margin-top: 0.83em; margin-bottom: 0.83em; font-size: 1.50em; }
-:is(article, aside, nav, section) :is(article, aside, nav, section) h1 { margin-top: 1.00em; margin-bottom: 1.00em; font-size: 1.17em; }
-:is(article, aside, nav, section) :is(article, aside, nav, section) :is(article, aside, nav, section) h1 { margin-top: 1.33em; margin-bottom: 1.33em; font-size: 1.00em; }
-:is(article, aside, nav, section) :is(article, aside, nav, section) :is(article, aside, nav, section) :is(article, aside, nav, section) h1 { margin-top: 1.67em; margin-bottom: 1.67em; font-size: 0.83em; }
-:is(article, aside, nav, section) :is(article, aside, nav, section) :is(article, aside, nav, section) :is(article, aside, nav, section) :is(article, aside, nav, section) h1 { margin-top: 2.33em; margin-bottom: 2.33em; font-size: 0.67em; }
+:is(article, aside, nav, section) h1 { margin-block: 0.83em; font-size: 1.50em; }
+:is(article, aside, nav, section) :is(article, aside, nav, section) h1 { margin-block: 1.00em; font-size: 1.17em; }
+:is(article, aside, nav, section) :is(article, aside, nav, section) :is(article, aside, nav, section) h1 { margin-block: 1.33em; font-size: 1.00em; }
+:is(article, aside, nav, section) :is(article, aside, nav, section) :is(article, aside, nav, section) :is(article, aside, nav, section) h1 { margin-block: 1.67em; font-size: 0.83em; }
+:is(article, aside, nav, section) :is(article, aside, nav, section) :is(article, aside, nav, section) :is(article, aside, nav, section) :is(article, aside, nav, section) h1 { margin-block: 2.33em; font-size: 0.67em; }
 
 dir, dd, dl, dt, menu, ol, ul { display: block; }
 li { display: list-item; }
 
 dir, dl, menu, ol, ul {
-    margin-top: 1em; margin-bottom: 1em;
+    margin-block: 1em;
 }
 
 :is(dir, dl, menu, ol, ul) :is(dir, dl, menu, ol, ul) {
-    margin-top: 0; margin-bottom: 0;
+    margin-block: 0;
 }
 
-dd { margin-left: 40px; }
-dir, menu, ol, ul { padding-left: 40px; }
+dd { margin-inline-start: 40px; }
+dir, menu, ol, ul { padding-inline-start: 40px; }
 
 ol { list-style-type: decimal; }
 dir, menu, ul { list-style-type: disc; }
@@ -450,6 +453,20 @@ dir, menu, ul { list-style-type: disc; }
     text-transform: none;
     text-indent: 0 !important;
     line-height: normal !important;
+}
+
+details > summary:first-of-type {
+    display: list-item;
+    counter-increment: list-item 0;
+    list-style: disclosure-closed inside;
+}
+
+details[open] > summary:first-of-type {
+    list-style-type: disclosure-open;
+}
+
+details:not([open]) > *:not(summary:first-of-type) {
+    display: none;
 }
 
 table { display: table; }
@@ -510,6 +527,7 @@ optgroup > option::before {
 
 select {
     background-color: lightgray;
+    overflow: hidden;
 }
 
 input, select, button, textarea {
@@ -535,6 +553,7 @@ input[type=button i], input[type=reset i], input[type=submit i], button {
     text-align: center;
     background-color: lightgray;
     border-radius: 2px;
+    min-width: 2ch;
 }
 
 input::before {
@@ -575,22 +594,24 @@ input[type=radio i] {
 }
 
 hr {
-    color: gray; border-style: inset; border-width: 1px; margin: 0.5em auto;
+    color: gray; border-style: inset; border-width: 1px;
+    margin-block: 0.5em;
+    margin-inline: auto;
 }
 
 fieldset {
     display: block;
-    margin-left: 2px; margin-right: 2px;
+    margin-inline: 2px;
     border: groove 2px;
-    padding: 0.35em 0.625em 0.75em;
-    min-width: min-content;
+    padding-block: 0.35em 0.625em;
+    padding-inline: 0.75em;
+    min-inline-size: min-content;
 }
 
-iframe:not([seamless]) { border: 2px inset; }
-iframe[seamless] { display: block; }
+iframe { border: 2px inset; }
 
 legend {
-    padding-left: 2px; padding-right: 2px;
+    padding-inline: 2px;
 }
 
 svg|svg:root {

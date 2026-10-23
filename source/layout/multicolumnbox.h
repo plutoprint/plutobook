@@ -49,6 +49,8 @@ public:
     void computeHeight(float& y, float& height, float& marginTop, float& marginBottom) const final;
     void layout(FragmentBuilder* fragmentainer) final;
 
+    float unbreakableHeight(const FragmentBuilder* fragmentainer, float offset) const final { return 0.f; }
+
     void paint(const PaintInfo& info, const Point& offset, PaintPhase phase) final;
     void paintColumnRules(GraphicsContext& context, const Point& offset);
 
@@ -80,7 +82,7 @@ public:
     void updateMinimumColumnHeight(float height);
     void addContentRun(float endOffset);
 
-    void resetColumnHeight(float availableHeight);
+    void resetColumnHeight(float availableColumnHeight, float maxColumnHeight);
     bool recalculateColumnHeight(bool balancing);
 
     const char* name() const final { return "MultiColumnRowBox"; }
@@ -187,13 +189,14 @@ public:
     void skipColumnSpanner(MultiColumnSpanBox* spanner, float offset);
 
     uint32_t columnCount() const { return m_columnCount; }
+    float columnWidth() const { return m_columnWidth; }
     float columnGap() const { return m_columnGap; }
 
-    bool layoutColumns(bool balancing);
+    bool layoutColumns(FragmentBuilder* fragmentainer, bool balancing);
 
     void computePreferredWidths(float& minPreferredWidth, float& maxPreferredWidth) const final;
     void computeWidth(float& x, float& width, float& marginLeft, float& marginRight) const final;
-    void layoutContents(FragmentBuilder* fragmentainer) final;
+    void layout(FragmentBuilder* fragmentainer) final;
     void build() final;
 
     const char* name() const final { return "MultiColumnFlowBox"; }
@@ -201,8 +204,9 @@ public:
 private:
     MultiColumnFlowBox(const RefPtr<BoxStyle>& style);
     MultiColumnRowBox* m_currentRow{nullptr};
-    mutable uint32_t m_columnCount{0};
-    mutable float m_columnGap{0};
+    uint32_t m_columnCount{0};
+    float m_columnWidth{0};
+    float m_columnGap{0};
 };
 
 inline BlockFlowBox* MultiColumnFlowBox::columnBlockFlow() const

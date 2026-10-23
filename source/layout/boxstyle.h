@@ -162,14 +162,24 @@ enum class TextOverflow : uint8_t {
     Ellipsis
 };
 
-enum class TextDecorationLine : uint8_t {
-    None = 0x0,
-    Underline = 0x1,
-    Overline = 0x2,
-    LineThrough = 0x4
-};
+class TextDecorationLine {
+public:
+    enum Type : uint8_t {
+        Underline = 0x1,
+        Overline = 0x2,
+        LineThrough = 0x4
+    };
 
-constexpr bool operator&(TextDecorationLine a, TextDecorationLine b) { return static_cast<int>(a) & static_cast<int>(b); }
+    constexpr TextDecorationLine() = default;
+
+    constexpr bool contains(Type value) const { return m_values & value; }
+    constexpr void add(Type value) { m_values |= value; }
+
+    constexpr bool isEmpty() const { return m_values == 0; }
+
+private:
+    uint8_t m_values{0};
+};
 
 enum class TextDecorationStyle : uint8_t {
     Solid,
@@ -510,8 +520,7 @@ public:
         Length
     };
 
-    BackgroundSize() = default;
-    explicit BackgroundSize(Type type) : m_type(type) {}
+    BackgroundSize(Type type) : m_type(type) {}
     BackgroundSize(const Length& width, const Length& height)
         : m_type(Type::Length), m_width(width), m_height(height)
     {}
@@ -521,9 +530,9 @@ public:
     const Length& height() const { return m_height; }
 
 private:
-    Type m_type = Type::Length;
-    Length m_width = Length::Auto;
-    Length m_height = Length::Auto;
+    Type m_type;
+    Length m_width;
+    Length m_height;
 };
 
 class BorderEdge {
@@ -575,24 +584,25 @@ enum class DominantBaseline : uint8_t {
     TextBeforeEdge
 };
 
-enum class BaselineShiftType : uint8_t {
-    Baseline,
-    Sub,
-    Super,
-    Length
-};
-
 class BaselineShift {
 public:
-    BaselineShift(BaselineShiftType type, const Length& length = Length::Auto)
-        : m_type(type), m_length(length)
+    enum class Type : uint8_t {
+        Baseline,
+        Sub,
+        Super,
+        Length
+    };
+
+    BaselineShift(Type type) : m_type(type) {}
+    explicit BaselineShift(const Length& length)
+        : m_type(Type::Length), m_length(length)
     {}
 
-    BaselineShiftType type() const { return m_type; }
+    Type type() const { return m_type; }
     const Length& length() const { return m_length; }
 
 private:
-    BaselineShiftType m_type;
+    Type m_type;
     Length m_length;
 };
 
@@ -610,8 +620,9 @@ enum class VerticalAlignType : uint8_t {
 
 class VerticalAlign {
 public:
-    VerticalAlign(VerticalAlignType type, const Length& length = Length::Auto)
-        : m_type(type), m_length(length)
+    VerticalAlign(VerticalAlignType type) : m_type(type) {}
+    explicit VerticalAlign(const Length& length)
+        : m_type(VerticalAlignType::Length), m_length(length)
     {}
 
     VerticalAlignType type() const { return m_type; }
@@ -657,11 +668,7 @@ enum class PseudoType : uint8_t {
     After,
     Marker,
     FirstLetter,
-    FirstLine,
-    FirstPage,
-    LeftPage,
-    RightPage,
-    BlankPage
+    FirstLine
 };
 
 struct FontDescription;
@@ -821,9 +828,18 @@ public:
     BlendMode blendMode() const { return m_blendMode; }
     MaskType maskType() const { return m_maskType; }
     Overflow overflow() const { return m_overflow; }
-    std::optional<int> zIndex() const;
     VerticalAlign verticalAlign() const;
     LengthBox clip() const;
+
+    bool hasZIndex() const;
+
+    bool hasEffectiveZIndex() const { return m_hasEffectiveZIndex; }
+    void setHasEffectiveZIndex(bool value) { m_hasEffectiveZIndex = value; }
+
+    bool isStackingContext() const { return m_isStackingContext; }
+    void setIsStackingContext(bool value) { m_isStackingContext = value; }
+
+    int zIndex() const;
 
     Length flexBasis() const;
     float flexGrow() const;
@@ -835,6 +851,9 @@ public:
     AlignContent alignContent() const { return m_alignContent; }
     AlignItem alignItems() const { return m_alignItems; }
     AlignItem alignSelf() const { return m_alignSelf; }
+
+    bool isRowFlexDirection() const;
+    bool isColumnFlexDirection() const;
 
     float outlineOffset() const;
     Color outlineColor() const;
@@ -1111,9 +1130,24 @@ private:
     ColumnSpan m_columnSpan : 1 {ColumnSpan::None};
     ColumnFill m_columnFill : 1 {ColumnFill::Balance};
 
+    bool m_hasEffectiveZIndex : 1 {false};
+    bool m_isStackingContext : 1 {false};
+
     Color m_color{Color::Black};
     Length m_lineHeight{Length::Auto};
 };
+
+inline bool BoxStyle::isRowFlexDirection() const
+{
+    return m_flexDirection == FlexDirection::Row
+        || m_flexDirection == FlexDirection::RowReverse;
+}
+
+inline bool BoxStyle::isColumnFlexDirection() const
+{
+    return m_flexDirection == FlexDirection::Column
+        || m_flexDirection == FlexDirection::ColumnReverse;
+}
 
 inline bool BoxStyle::isDisplayBlockType(Display display)
 {

@@ -19,11 +19,12 @@
 #include "textresource.h"
 #include "imageresource.h"
 #include "fontresource.h"
+#include "localedata.h"
 #include "stringutils.h"
 #include "plutobook.hpp"
 
 #include <cmath>
-#include <cstdio>
+#include <iostream>
 
 namespace plutobook {
 
@@ -95,27 +96,27 @@ void TextNode::appendData(std::string_view data)
     m_data = heap()->concatenateString(m_data, data);
 }
 
-bool TextNode::isHidden(const Box* parent) const
+bool TextNode::shouldCreateBox(const Box* parent) const
 {
     if(m_data.empty())
-        return true;
+        return false;
     for(auto cc : m_data) {
         if(!isSpace(cc)) {
-            return false;
+            return true;
         }
     }
 
     if(parent->isFlexibleBox() || parent->isTableBox()
         || parent->isTableSectionBox() || parent->isTableRowBox()
         || parent->isTableColumnBox()) {
-        return true;
+        return false;
     }
 
     if(parent->style()->preserveNewline())
-        return false;
+        return true;
     if(auto prevBox = previousSiblingBox())
-        return !prevBox->isInline() || prevBox->isLineBreakBox();
-    return !parent->isInlineBox();
+        return prevBox->isInline() && !prevBox->isLineBreakBox();
+    return parent->isInlineBox();
 }
 
 Node* TextNode::cloneNode(bool deep)
@@ -134,10 +135,10 @@ Box* TextNode::createBox(const RefPtr<BoxStyle>& style)
 
 void TextNode::buildBox(Counters& counters, SelectorFilter& selectorFilter, Box* parent)
 {
-    if(isHidden(parent))
-        return;
-    if(auto box = createBox(parent->style())) {
-        parent->addChild(box);
+    if(shouldCreateBox(parent)) {
+        if(auto box = createBox(parent->style())) {
+            parent->addChild(box);
+        }
     }
 }
 
@@ -335,10 +336,37 @@ const HeapString& Element::getAttribute(const GlobalString& name) const
 
 Url Element::getUrlAttribute(const GlobalString& name) const
 {
-    const auto& value = getAttribute(name);
-    if(!value.empty())
-        return document()->completeUrl(value);
+    if(auto attribute = findAttribute(name))
+        return document()->completeUrl(attribute->value());
     return Url();
+}
+
+void Element::parseAttribute(const GlobalString& name, const HeapString& value)
+{
+    if(name == idAttr) {
+        if(!m_id.empty())
+            document()->removeElementById(m_id, this);
+        if(!value.empty()) {
+            document()->addElementById(value, this);
+        }
+
+        m_id = value;
+    } else if(name == classAttr) {
+        m_classNames.clear();
+
+        size_t begin = 0;
+        while(true) {
+            while(begin < value.size() && isSpace(value[begin]))
+                ++begin;
+            if(begin >= value.size())
+                break;
+            size_t end = begin + 1;
+            while(end < value.size() && !isSpace(value[end]))
+                ++end;
+            m_classNames.push_front(value.substring(begin, end - begin));
+            begin = end + 1;
+        }
+    }
 }
 
 void Element::setAttributes(const AttributeList& attributes)
@@ -375,32 +403,28 @@ void Element::removeAttribute(const GlobalString& name)
     });
 }
 
-void Element::parseAttribute(const GlobalString& name, const HeapString& value)
+void Element::addAttributeStyle(std::string& output, std::string_view name, std::string_view value)
 {
-    if(name == idAttr) {
-        if(!m_id.empty())
-            document()->removeElementById(m_id, this);
-        if(!value.empty()) {
-            document()->addElementById(value, this);
-        }
-
-        m_id = value;
-    } else if(name == classAttr) {
-        m_classNames.clear();
-
-        size_t begin = 0;
-        while(true) {
-            while(begin < value.size() && isSpace(value[begin]))
-                ++begin;
-            if(begin >= value.size())
-                break;
-            size_t end = begin + 1;
-            while(end < value.size() && !isSpace(value[end]))
-                ++end;
-            m_classNames.push_front(value.substring(begin, end - begin));
-            begin = end + 1;
+    if(value.empty())
+        return;
+    for(auto cc : value) {
+        if(cc == ':' || cc == ';') {
+            return;
         }
     }
+
+    output += name;
+    output += ':';
+    output += value;
+    output += ';';
+}
+
+void Element::addAttributeStyle(std::string& output, const char* name, const char* value)
+{
+    output += name;
+    output += ':';
+    output += value;
+    output += ';';
 }
 
 CSSPropertyList Element::inlineStyle()
@@ -525,7 +549,7 @@ void Element::finishParsingDocument()
                 setIsLinkSource(true);
             }
         } else {
-            setIsLinkSource(!completeUrl.isEmpty());
+            setIsLinkSource(completeUrl.isValid());
         }
     }
 
@@ -539,23 +563,94 @@ void Element::finishParsingDocument()
     ContainerNode::finishParsingDocument();
 }
 
-Document::Document(Book* book, Heap* heap, ResourceFetcher* fetcher, Url baseUrl)
+Document::Document(Book* book, Url baseUrl)
     : ContainerNode(this)
     , m_book(book)
-    , m_heap(heap)
-    , m_customResourceFetcher(fetcher)
     , m_baseUrl(std::move(baseUrl))
-    , m_pages(heap)
-    , m_idCache(heap)
-    , m_resourceCache(heap)
-    , m_fontCache(heap)
-    , m_counterCache(heap)
-    , m_runningStyles(heap)
+    , m_pages(book->heap())
+    , m_idCache(book->heap())
+    , m_localeCache(book->heap())
+    , m_resourceCache(book->heap())
+    , m_fontCache(book->heap())
+    , m_runningStyles(book->heap())
     , m_styleSheet(this)
 {
 }
 
 Document::~Document() = default;
+
+bool Document::isRootDocument() const
+{
+    return this == m_book->document();
+}
+
+ResourceFetcher* Document::customResourceFetcher() const
+{
+    return m_book->customResourceFetcher();
+}
+
+Heap* Document::heap() const
+{
+    return m_book->heap();
+}
+
+bool Document::shouldSetTitle() const
+{
+    return m_book->title().isNull() && isRootDocument();
+}
+
+void Document::setTitle(std::string title)
+{
+    unsigned int index = 0;
+
+    bool pendingWhitespace = false;
+    for(auto cc : title) {
+        if(!isSpace(cc)) {
+            if(pendingWhitespace) {
+                title[index++] = ' ';
+                pendingWhitespace = false;
+            }
+
+            title[index++] = cc;
+        } else if(index > 0) {
+            pendingWhitespace = true;
+        }
+    }
+
+    title.resize(index);
+    m_book->setTitle(title);
+}
+
+void Document::setMetadata(std::string_view name, std::string_view content)
+{
+    if(equalsIgnoringCase(name, "author")) {
+        if(m_book->author().isNull())
+            m_book->setAuthor(content);
+    } else if(equalsIgnoringCase(name, "description")) {
+        if(m_book->subject().isNull())
+            m_book->setSubject(content);
+    } else if(equalsIgnoringCase(name, "keywords")) {
+        if(m_book->keywords().isNull())
+            m_book->setKeywords(content);
+    } else if(equalsIgnoringCase(name, "generator")) {
+        if(m_book->creator().isNull()) {
+            m_book->setCreator(content);
+        }
+    }
+}
+
+Url Document::completeUrl(std::string_view input) const
+{
+    stripLeadingAndTrailingSpaces(input);
+    if(input.empty()) {
+        return Url();
+    }
+
+    auto completeUrl = m_baseUrl.complete(input);
+    if(!completeUrl.isValid())
+        std::cerr << "WARNING: Unable to complete URL: '" << ellipsize(input) << '\'' << std::endl;
+    return completeUrl;
+}
 
 BoxView* Document::box() const
 {
@@ -574,16 +669,12 @@ float Document::height() const
 
 float Document::viewportWidth() const
 {
-    if(m_book)
-        return m_book->viewportWidth();
-    return 0.f;
+    return m_book->viewportWidth();
 }
 
 float Document::viewportHeight() const
 {
-    if(m_book)
-        return m_book->viewportHeight();
-    return 0.f;
+    return m_book->viewportHeight();
 }
 
 bool Document::setContainerSize(float containerWidth, float containerHeight)
@@ -599,108 +690,112 @@ bool Document::setContainerSize(float containerWidth, float containerHeight)
 
 TextNode* Document::createTextNode(std::string_view value)
 {
-    return new (m_heap) TextNode(this, m_heap->createString(value));
+    return new (m_book->heap()) TextNode(this, m_book->heap()->createString(value));
 }
 
 Element* Document::createElement(const GlobalString& namespaceURI, const GlobalString& tagName)
 {
     if(namespaceURI == xhtmlNs) {
         if(tagName == bodyTag)
-            return new (m_heap) HTMLBodyElement(this);
+            return new (m_book->heap()) HTMLBodyElement(this);
         if(tagName == fontTag)
-            return new (m_heap) HTMLFontElement(this);
+            return new (m_book->heap()) HTMLFontElement(this);
         if(tagName == imgTag)
-            return new (m_heap) HTMLImageElement(this);
+            return new (m_book->heap()) HTMLImageElement(this);
         if(tagName == hrTag)
-            return new (m_heap) HTMLHRElement(this);
+            return new (m_book->heap()) HTMLHRElement(this);
         if(tagName == brTag)
-            return new (m_heap) HTMLBRElement(this);
+            return new (m_book->heap()) HTMLBRElement(this);
         if(tagName == wbrTag)
-            return new (m_heap) HTMLWBRElement(this);
+            return new (m_book->heap()) HTMLWBRElement(this);
         if(tagName == liTag)
-            return new (m_heap) HTMLLIElement(this);
+            return new (m_book->heap()) HTMLLIElement(this);
         if(tagName == olTag)
-            return new (m_heap) HTMLOLElement(this);
+            return new (m_book->heap()) HTMLOLElement(this);
         if(tagName == tableTag)
-            return new (m_heap) HTMLTableElement(this);
+            return new (m_book->heap()) HTMLTableElement(this);
         if(tagName == theadTag || tagName == tbodyTag || tagName == tfootTag)
-            return new (m_heap) HTMLTableSectionElement(this, tagName);
+            return new (m_book->heap()) HTMLTableSectionElement(this, tagName);
         if(tagName == trTag)
-            return new (m_heap) HTMLTableRowElement(this);
+            return new (m_book->heap()) HTMLTableRowElement(this);
         if(tagName == colTag || tagName == colgroupTag)
-            return new (m_heap) HTMLTableColElement(this, tagName);
+            return new (m_book->heap()) HTMLTableColElement(this, tagName);
         if(tagName == tdTag || tagName == thTag)
-            return new (m_heap) HTMLTableCellElement(this, tagName);
+            return new (m_book->heap()) HTMLTableCellElement(this, tagName);
         if(tagName == inputTag)
-            return new (m_heap) HTMLInputElement(this);
+            return new (m_book->heap()) HTMLInputElement(this);
         if(tagName == textareaTag)
-            return new (m_heap) HTMLTextAreaElement(this);
+            return new (m_book->heap()) HTMLTextAreaElement(this);
         if(tagName == selectTag)
-            return new (m_heap) HTMLSelectElement(this);
+            return new (m_book->heap()) HTMLSelectElement(this);
         if(tagName == styleTag)
-            return new (m_heap) HTMLStyleElement(this);
+            return new (m_book->heap()) HTMLStyleElement(this);
         if(tagName == linkTag)
-            return new (m_heap) HTMLLinkElement(this);
+            return new (m_book->heap()) HTMLLinkElement(this);
         if(tagName == titleTag)
-            return new (m_heap) HTMLTitleElement(this);
+            return new (m_book->heap()) HTMLTitleElement(this);
+        if(tagName == metaTag)
+            return new (m_book->heap()) HTMLMetaElement(this);
         if(tagName == baseTag)
-            return new (m_heap) HTMLBaseElement(this);
-        return new (m_heap) HTMLElement(this, tagName);
+            return new (m_book->heap()) HTMLBaseElement(this);
+        return new (m_book->heap()) HTMLElement(this, tagName);
     }
 
     if(namespaceURI == svgNs) {
         if(tagName == svgTag)
-            return new (m_heap) SVGSVGElement(this);
+            return new (m_book->heap()) SVGSVGElement(this);
         if(tagName == useTag)
-            return new (m_heap) SVGUseElement(this);
+            return new (m_book->heap()) SVGUseElement(this);
         if(tagName == imageTag)
-            return new (m_heap) SVGImageElement(this);
+            return new (m_book->heap()) SVGImageElement(this);
         if(tagName == symbolTag)
-            return new (m_heap) SVGSymbolElement(this);
+            return new (m_book->heap()) SVGSymbolElement(this);
         if(tagName == aTag)
-            return new (m_heap) SVGAElement(this);
+            return new (m_book->heap()) SVGAElement(this);
         if(tagName == gTag)
-            return new (m_heap) SVGGElement(this);
+            return new (m_book->heap()) SVGGElement(this);
         if(tagName == defsTag)
-            return new (m_heap) SVGDefsElement(this);
+            return new (m_book->heap()) SVGDefsElement(this);
         if(tagName == lineTag)
-            return new (m_heap) SVGLineElement(this);
+            return new (m_book->heap()) SVGLineElement(this);
         if(tagName == rectTag)
-            return new (m_heap) SVGRectElement(this);
+            return new (m_book->heap()) SVGRectElement(this);
         if(tagName == circleTag)
-            return new (m_heap) SVGCircleElement(this);
+            return new (m_book->heap()) SVGCircleElement(this);
         if(tagName == ellipseTag)
-            return new (m_heap) SVGEllipseElement(this);
+            return new (m_book->heap()) SVGEllipseElement(this);
         if(tagName == polylineTag || tagName == polygonTag)
-            return new (m_heap) SVGPolyElement(this, tagName);
+            return new (m_book->heap()) SVGPolyElement(this, tagName);
         if(tagName == pathTag)
-            return new (m_heap) SVGPathElement(this);
+            return new (m_book->heap()) SVGPathElement(this);
         if(tagName == tspanTag)
-            return new (m_heap) SVGTSpanElement(this);
+            return new (m_book->heap()) SVGTSpanElement(this);
         if(tagName == textPathTag)
-            return new (m_heap) SVGTextPathElement(this);
+            return new (m_book->heap()) SVGTextPathElement(this);
         if(tagName == textTag)
-            return new (m_heap) SVGTextElement(this);
+            return new (m_book->heap()) SVGTextElement(this);
         if(tagName == markerTag)
-            return new (m_heap) SVGMarkerElement(this);
+            return new (m_book->heap()) SVGMarkerElement(this);
         if(tagName == clipPathTag)
-            return new (m_heap) SVGClipPathElement(this);
+            return new (m_book->heap()) SVGClipPathElement(this);
         if(tagName == maskTag)
-            return new (m_heap) SVGMaskElement(this);
+            return new (m_book->heap()) SVGMaskElement(this);
         if(tagName == patternTag)
-            return new (m_heap) SVGPatternElement(this);
+            return new (m_book->heap()) SVGPatternElement(this);
         if(tagName == stopTag)
-            return new (m_heap) SVGStopElement(this);
+            return new (m_book->heap()) SVGStopElement(this);
         if(tagName == linearGradientTag)
-            return new (m_heap) SVGLinearGradientElement(this);
+            return new (m_book->heap()) SVGLinearGradientElement(this);
         if(tagName == radialGradientTag)
-            return new (m_heap) SVGRadialGradientElement(this);
+            return new (m_book->heap()) SVGRadialGradientElement(this);
         if(tagName == styleTag)
-            return new (m_heap) SVGStyleElement(this);
-        return new (m_heap) SVGElement(this, tagName);
+            return new (m_book->heap()) SVGStyleElement(this);
+        if(tagName == titleTag)
+            return new (m_book->heap()) SVGTitleElement(this);
+        return new (m_book->heap()) SVGElement(this, tagName);
     }
 
-    return new (m_heap) Element(this, namespaceURI, tagName);
+    return new (m_book->heap()) Element(this, namespaceURI, tagName);
 }
 
 Element* Document::bodyElement() const
@@ -778,44 +873,6 @@ RefPtr<BoxStyle> Document::getRunningStyle(const GlobalString& name) const
     return it->second;
 }
 
-void Document::addTargetCounters(const HeapString& id, const CounterMap& counters)
-{
-    assert(!id.empty() && !counters.empty());
-    m_counterCache.emplace(id, counters);
-}
-
-HeapString Document::getTargetCounterText(const HeapString& fragment, const GlobalString& name, const GlobalString& listStyle, const HeapString& separator)
-{
-    if(fragment.empty() || fragment.front() != '#')
-        return emptyGlo;
-    auto it = m_counterCache.find(fragment.substring(1));
-    if(it == m_counterCache.end())
-        return emptyGlo;
-    return getCountersText(it->second, name, listStyle, separator);
-}
-
-HeapString Document::getCountersText(const CounterMap& counters, const GlobalString& name, const GlobalString& listStyle, const HeapString& separator)
-{
-    auto it = counters.find(name);
-    if(it == counters.end())
-        return m_heap->createString(getCounterText(0, listStyle));
-    if(separator.empty()) {
-        int value = 0;
-        if(!it->second.empty())
-            value = it->second.back();
-        return m_heap->createString(getCounterText(value, listStyle));
-    }
-
-    std::string text;
-    for(auto value : it->second) {
-        if(!text.empty())
-            text += separator.value();
-        text += getCounterText(value, listStyle);
-    }
-
-    return m_heap->createString(text);
-}
-
 void Document::addAuthorStyleSheet(std::string_view content, Url baseUrl)
 {
     m_styleSheet.parseStyle(content, CSSStyleOrigin::Author, std::move(baseUrl));
@@ -872,6 +929,8 @@ bool Document::supportsMediaFeatures(const CSSMediaFeatureList& features) const
 
 bool Document::supportsMediaQuery(const CSSMediaQuery& query) const
 {
+    if(query.type() == CSSMediaQuery::Type::Unknown)
+        return query.restrictor() == CSSMediaQuery::Restrictor::Not;
     if(query.type() == CSSMediaQuery::Type::Print && m_book->mediaType() != MediaType::Print)
         return query.restrictor() == CSSMediaQuery::Restrictor::Not;
     if(query.type() == CSSMediaQuery::Type::Screen && m_book->mediaType() != MediaType::Screen) {
@@ -885,7 +944,7 @@ bool Document::supportsMediaQuery(const CSSMediaQuery& query) const
 
 bool Document::supportsMediaQueries(const CSSMediaQueryList& queries) const
 {
-    if(m_book == nullptr || queries.empty())
+    if(queries.empty())
         return true;
     for(const auto& query : queries) {
         if(supportsMediaQuery(query)) {
@@ -896,13 +955,28 @@ bool Document::supportsMediaQueries(const CSSMediaQueryList& queries) const
     return false;
 }
 
+static CaseMode caseMode(const Document* document)
+{
+    if(document->isXMLDocument())
+        return CaseMode::Exact;
+    return CaseMode::Ignore;
+}
+
 bool Document::supportsMedia(std::string_view type, std::string_view media) const
 {
-    if(!type.empty() && !equals(type, "text/css", isXMLDocument()))
+    if(!type.empty() && !equals(type, "text/css", caseMode(this))) {
         return false;
-    if(m_book && !media.empty()) {
+    }
+
+    stripLeadingAndTrailingSpaces(media);
+
+    if(!media.empty() && !equalsIgnoringCase(media, "all")) {
+        if(equalsIgnoringCase(media, "print"))
+            return supportsMediaQuery(CSSMediaQuery::onlyPrint());
+        if(equalsIgnoringCase(media, "screen"))
+            return supportsMediaQuery(CSSMediaQuery::onlyScreen());
         CSSParserContext context(this, CSSStyleOrigin::Author, m_baseUrl);
-        CSSParser parser(context, m_heap);
+        CSSParser parser(context, m_book->heap());
         return supportsMediaQueries(parser.parseMediaQueries(media));
     }
 
@@ -919,14 +993,14 @@ RefPtr<BoxStyle> Document::pseudoStyleForElement(Element* element, PseudoType ps
     return m_styleSheet.pseudoStyleForElement(element, pseudoType, selectorFilter, parentStyle);
 }
 
-RefPtr<BoxStyle> Document::styleForPage(const GlobalString& pageName, uint32_t pageIndex, PseudoType pseudoType) const
+RefPtr<BoxStyle> Document::styleForPage(uint32_t pageIndex) const
 {
-    return m_styleSheet.styleForPage(pageName, pageIndex, pseudoType);
+    return m_styleSheet.styleForPage(pageIndex);
 }
 
-RefPtr<BoxStyle> Document::styleForPageMargin(const GlobalString& pageName, uint32_t pageIndex, PageMarginType marginType, const BoxStyle* pageStyle) const
+RefPtr<BoxStyle> Document::styleForPageMargin(uint32_t pageIndex, PageMarginType marginType, const BoxStyle* pageStyle) const
 {
-    return m_styleSheet.styleForPageMargin(pageName, pageIndex, marginType, pageStyle);
+    return m_styleSheet.styleForPageMargin(pageIndex, marginType, pageStyle);
 }
 
 std::string Document::getCounterText(int value, const GlobalString& listType)
@@ -937,6 +1011,14 @@ std::string Document::getCounterText(int value, const GlobalString& listType)
 std::string Document::getMarkerText(int value, const GlobalString& listType)
 {
     return m_styleSheet.getMarkerText(value, listType);
+}
+
+const LocaleData* Document::getLocaleData(const GlobalString& lang)
+{
+    auto& locale = m_localeCache[lang];
+    if(locale == nullptr)
+        locale = LocaleData::create(lang);
+    return locale.get();
 }
 
 RefPtr<FontData> Document::getFontData(const GlobalString& family, const FontDataDescription& description)
@@ -974,11 +1056,12 @@ Node* Document::cloneNode(bool deep)
 
 Box* Document::createBox(const RefPtr<BoxStyle>& style)
 {
-    return new (m_heap) BoxView(this, style);
+    return new (m_book->heap()) BoxView(this, style);
 }
 
 void Document::finishParsingDocument()
 {
+    m_styleSheet.addUserAgentRules();
     assert(m_rootElement == nullptr);
     auto child = firstChild();
     while(child) {
@@ -1001,6 +1084,7 @@ void Document::buildBox(Counters& counters, SelectorFilter& selectorFilter, Box*
     auto rootStyle = BoxStyle::create(this, nullptr, PseudoType::None, Display::Block);
     rootStyle->setPosition(Position::Absolute);
     rootStyle->setFontDescription(FontDescription());
+    rootStyle->setIsStackingContext(true);
 
     auto rootBox = createBox(rootStyle);
     counters.push();
@@ -1061,7 +1145,7 @@ Rect Document::pageContentRectAt(uint32_t pageIndex) const
 template<typename ResourceType>
 RefPtr<ResourceType> Document::fetchResource(const Url& url)
 {
-    if(url.isEmpty())
+    if(!url.isValid())
         return nullptr;
     auto it = m_resourceCache.find(url);
     if(it != m_resourceCache.end())
@@ -1070,7 +1154,7 @@ RefPtr<ResourceType> Document::fetchResource(const Url& url)
     if(!url.protocolIs("data"))
         m_resourceCache.emplace(url, resource);
     if(resource == nullptr)
-        fprintf(stderr, "WARNING: %s\n", plutobook_get_error_message());
+        std::cerr << "WARNING: " << plutobook_get_error_message() << std::endl;
     return resource;
 }
 

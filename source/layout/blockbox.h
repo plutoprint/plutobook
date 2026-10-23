@@ -11,11 +11,9 @@
 
 #include "box.h"
 
-#include <set>
-
 namespace plutobook {
 
-using PositionedBoxList = std::pmr::set<BoxFrame*>;
+using PositionedBoxList = std::pmr::vector<BoxFrame*>;
 
 class BlockBox : public BoxFrame {
 public:
@@ -27,10 +25,9 @@ public:
     void computePreferredWidths(float& minPreferredWidth, float& maxPreferredWidth) const override;
 
     const PositionedBoxList* positionedBoxes() const { return m_positionedBoxes.get(); }
-    bool containsPositonedBoxes() const { return m_positionedBoxes && !m_positionedBoxes->empty(); }
+    bool containsPositionedBoxes() const { return m_positionedBoxes && !m_positionedBoxes->empty(); }
 
-    void insertPositonedBox(BoxFrame* box);
-    void removePositonedBox(BoxFrame* box);
+    void insertPositionedBox(BoxFrame* box);
     void layoutPositionedBoxes();
 
     float leftOffsetForContent() const { return borderLeft() + paddingLeft(); }
@@ -43,13 +40,13 @@ public:
     float availableWidth() const { return contentBoxWidth(); }
     std::optional<float> availableHeight() const;
 
-    bool shrinkToAvoidFloats() const;
-    float shrinkWidthToAvoidFloats(float marginLeft, float marginRight, const BlockFlowBox* container) const;
+    bool sizesWidthToFitContent() const;
+    float computeMainWidth(const BlockBox* container, float containerWidth) const;
 
-    float computeWidthUsing(const Length& widthLength, const BlockBox* container, float containerWidth) const;
+    float computeWidthUsing(const Length& widthLength, float containerWidth) const;
     std::optional<float> computeHeightUsing(const Length& heightLength) const;
 
-    float constrainWidth(float width, const BlockBox* container, float containerWidth) const;
+    float constrainWidth(float width, float containerWidth) const;
     float constrainBorderBoxHeight(float height) const;
     float constrainContentBoxHeight(float height) const;
 
@@ -72,7 +69,8 @@ public:
     std::optional<float> lastLineBaseline() const override;
     std::optional<float> inlineBlockBaseline() const override;
 
-    virtual void paintContents(const PaintInfo& info, const Point& offset, PaintPhase phase);
+    virtual void paintContents(const PaintInfo& info, const Point& offset, PaintPhase phase) = 0;
+    void paintLayerDecorations(const PaintInfo& info, const Point& offset) override;
     void paint(const PaintInfo& info, const Point& offset, PaintPhase phase) override;
 
     const char* name() const override { return "BlockBox"; }
@@ -155,6 +153,8 @@ public:
     std::optional<float> lastLineBaseline() const override;
     std::optional<float> inlineBlockBaseline() const override;
 
+    float unbreakableHeight(const FragmentBuilder* fragmentainer, float offset) const override;
+
     void collectIntrudingFloats();
     void collectOverhangingFloats();
 
@@ -162,9 +162,12 @@ public:
     void addOverhangingFloats(BlockFlowBox* childBlock);
 
     void positionFloatingBox(FloatingBox& floatingBox, FragmentBuilder* fragmentainer, float top);
+    void positionNewFloat(FloatingBox& floatingBox, FragmentBuilder* fragmentainer, float top);
     void positionNewFloats(FragmentBuilder* fragmentainer);
 
     FloatingBox& insertFloatingBox(BoxFrame* box);
+    void removeFloatingBox(Box* box);
+    void clearFloatingBoxes();
 
     bool containsFloat(Box* box) const;
     bool containsFloats() const { return m_floatingBoxes && !m_floatingBoxes->empty(); }
@@ -187,12 +190,13 @@ public:
     float endOffsetForLine(float y, float height = 0, bool indent = false) const;
 
     float availableWidthForLine(float y, float height = 0, bool indent = false) const;
+    float shrinkWidthToAvoidFloats(float width, float marginLeft, float marginRight, float y) const;
 
     void adjustFloatingBox(FragmentBuilder* fragmentainer, const MarginInfo& marginInfo);
     void adjustPositionedBox(BoxFrame* child, const MarginInfo& marginInfo);
 
-    void handleBottomOfBlock(float top, float bottom, MarginInfo& marginInfo);
-    float collapseMargins(BoxFrame* child, FragmentBuilder* fragmentainer, MarginInfo& marginInfo);
+    float collapseMargins(MarginInfo& marginInfo, FragmentBuilder* fragmentainer, BoxFrame* child);
+    void handleBottomOfBlock(MarginInfo& marginInfo, FragmentBuilder* fragmentainer, float top, float bottom);
 
     void updateMaxMargins();
 
@@ -219,12 +223,10 @@ public:
     void layoutBlockChild(BoxFrame* child, FragmentBuilder* fragmentainer, MarginInfo& marginInfo);
     void layoutBlockChildren(FragmentBuilder* fragmentainer);
 
-    virtual void layoutContents(FragmentBuilder* fragmentainer);
+    void layoutContents(FragmentBuilder* fragmentainer, float verticalShift);
     void layout(FragmentBuilder* fragmentainer) override;
-
     void build() override;
 
-    void paintFloats(const PaintInfo& info, const Point& offset);
     void paintContents(const PaintInfo& info, const Point& offset, PaintPhase phase) override;
     void serializeChildren(std::ostream& o, int indent) const override;
 

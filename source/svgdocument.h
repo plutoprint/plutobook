@@ -13,6 +13,7 @@
 #include "svgproperty.h"
 
 #include <memory>
+#include <optional>
 
 namespace plutobook {
 
@@ -63,6 +64,7 @@ public:
 
     const Rect& viewBox() const { return m_viewBox.value(); }
     const SVGPreserveAspectRatio& preserveAspectRatio() const { return m_preserveAspectRatio; }
+    Transform viewBoxToViewTransform(const Rect& viewBoxRect, const Size& viewportSize) const;
     Transform viewBoxToViewTransform(const Size& viewportSize) const;
     Rect getClipRect(const Size& viewportSize) const;
 
@@ -110,9 +112,18 @@ public:
     const SVGLength& y() const { return m_y; }
     const SVGLength& width() const { return m_width; }
     const SVGLength& height() const { return m_height; }
-    void computeIntrinsicDimensions(float& intrinsicWidth, float& intrinsicHeight, double& intrinsicRatio);
     void collectAttributeStyle(std::string& output, const GlobalString& name, const HeapString& value) const final;
     Box* createBox(const RefPtr<BoxStyle>& style) final;
+
+    Rect currentViewBoxRect() const;
+    Transform viewBoxToViewTransform(const Size& viewportSize) const;
+
+    void computeIntrinsicSize(float& intrinsicWidth, float& intrinsicHeight) const;
+    void computeIntrinsicDimensions(float& intrinsicWidth, float& intrinsicHeight, float& intrinsicRatio) const;
+
+    std::optional<float> intrinsicWidth() const;
+    std::optional<float> intrinsicHeight() const;
+    std::optional<float> intrinsicRatio() const;
 
 private:
     SVGLength m_x;
@@ -691,14 +702,21 @@ public:
     void finishParsingDocument() final;
 };
 
+class SVGTitleElement final : public SVGElement {
+public:
+    SVGTitleElement(Document* document);
+
+    void finishParsingDocument() final;
+};
+
 class SVGDocument final : public XMLDocument {
 public:
-    static std::unique_ptr<SVGDocument> create(Book* book, Heap* heap, ResourceFetcher* fetcher, Url baseUrl);
+    static std::unique_ptr<SVGDocument> create(Book* book, Url baseUrl);
 
     bool isSVGDocument() const final { return true; }
 
 private:
-    SVGDocument(Book* book, Heap* heap, ResourceFetcher* fetcher, Url baseUrl);
+    SVGDocument(Book* book, Url baseUrl);
 };
 
 template<>

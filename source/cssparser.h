@@ -21,7 +21,7 @@ public:
     CSSPropertyList parseStyle(std::string_view content);
     CSSMediaQueryList parseMediaQueries(std::string_view content);
 
-    CSSPropertyList parsePropertyValue(CSSTokenStream input, CSSPropertyID id, bool important);
+    CSSPropertyList parseSubstitutedValue(CSSTokenStream input, CSSPropertyID id, bool important);
 
 private:
     bool consumeMediaFeature(CSSTokenStream& input, CSSMediaFeatureList& features);
@@ -62,8 +62,8 @@ private:
     bool consumeCounterStyleDescriptor(CSSTokenStream& input, CSSPropertyList& properties, CSSPropertyID id);
     bool consumeDescriptor(CSSTokenStream& input, CSSPropertyList& properties, CSSPropertyID id, bool important);
 
-    bool consumeDeclaraction(CSSTokenStream& input, CSSPropertyList& properties, CSSRuleType ruleType);
-    void consumeDeclaractionList(CSSTokenStream& input, CSSPropertyList& properties, CSSRuleType ruleType);
+    bool consumeDeclaration(CSSTokenStream& input, CSSPropertyList& properties, CSSRuleType ruleType);
+    void consumeDeclarationList(CSSTokenStream& input, CSSPropertyList& properties, CSSRuleType ruleType);
 
     void addProperty(CSSPropertyList& properties, CSSPropertyID id, bool important, RefPtr<CSSValue> value);
     void addExpandedProperty(CSSPropertyList& properties, CSSPropertyID id, bool important, RefPtr<CSSValue> value);
@@ -126,7 +126,6 @@ private:
     RefPtr<CSSValue> consumeContentLeader(CSSTokenStream& input);
     RefPtr<CSSValue> consumeContentElement(CSSTokenStream& input);
     RefPtr<CSSValue> consumeContentCounter(CSSTokenStream& input, bool counters);
-    RefPtr<CSSValue> consumeContentTargetCounter(CSSTokenStream& input, bool counters);
     RefPtr<CSSValue> consumeContentQrCode(CSSTokenStream& input);
     RefPtr<CSSValue> consumeCounter(CSSTokenStream& input, bool increment);
     RefPtr<CSSValue> consumeOrientation(CSSTokenStream& input);
@@ -171,8 +170,8 @@ private:
     bool consumeFont(CSSTokenStream& input, CSSPropertyList& properties, bool important);
     bool consumeFontVariant(CSSTokenStream& input, CSSPropertyList& properties, bool important);
     bool consumeMarker(CSSTokenStream& input, CSSPropertyList& properties, bool important);
-    bool consumeBorderRadius(CSSTokenStream& input, CSSPropertyList& properties, bool important);
     bool consumeBorder(CSSTokenStream& input, CSSPropertyList& properties, CSSPropertyID id, bool important);
+    bool consumeBorderRadius(CSSTokenStream& input, CSSPropertyList& properties, bool important);
     bool consume2Shorthand(CSSTokenStream& input, CSSPropertyList& properties, CSSPropertyID id, bool important);
     bool consume4Shorthand(CSSTokenStream& input, CSSPropertyList& properties, CSSPropertyID id, bool important);
     bool consumeShorthand(CSSTokenStream& input, CSSPropertyList& properties, CSSPropertyID id, bool important);

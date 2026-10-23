@@ -12,7 +12,7 @@
 #include "svggeometrybox.h"
 #include "svgtextbox.h"
 #include "imageresource.h"
-#include "stringutils.h"
+#include "plutobook.hpp"
 
 #include <set>
 
@@ -31,16 +31,6 @@ void SVGElement::parseAttribute(const GlobalString& name, const HeapString& valu
     } else {
         Element::parseAttribute(name, value);
     }
-}
-
-static void addSVGAttributeStyle(std::string& output, std::string_view name, std::string_view value)
-{
-    if(value.empty())
-        return;
-    output += name;
-    output += ':';
-    output += value;
-    output += ';';
 }
 
 void SVGElement::collectAttributeStyle(std::string& output, const GlobalString& name, const HeapString& value) const
@@ -95,7 +85,7 @@ void SVGElement::collectAttributeStyle(std::string& output, const GlobalString& 
     };
 
     if(presentationAttrs.contains(name)) {
-        addSVGAttributeStyle(output, name, value);
+        addAttributeStyle(output, name, value);
     } else {
         Element::collectAttributeStyle(output, name, value);
     }
@@ -120,27 +110,25 @@ SVGProperty* SVGElement::getProperty(const GlobalString& name) const
 Size SVGElement::currentViewportSize() const
 {
     auto parent = to<SVGElement>(parentNode());
-    if(parent == nullptr) {
-        return to<SVGRootBox>(box())->contentBoxSize();
+    while(parent && parent->tagName() != svgTag) {
+        parent = to<SVGElement>(parent->parentNode());
     }
 
-    if(parent->tagName() == svgTag) {
-        auto element = static_cast<const SVGSVGElement*>(parent);
-        const auto& viewBoxRect = element->viewBox();
-        if(viewBoxRect.isValid())
-            return viewBoxRect.size();
-        if(auto rootBox = to<SVGRootBox>(element->box()))
-            return rootBox->contentBoxSize();
-        SVGLengthContext lengthContext(element);
-        const Size viewportSize = {
-            lengthContext.valueForLength(element->width()),
-            lengthContext.valueForLength(element->height())
-        };
+    assert(parent && parent->isOfType(svgNs, svgTag));
+    auto element = static_cast<const SVGSVGElement*>(parent);
 
-        return viewportSize;
-    }
+    const auto& viewBoxRect = element->viewBox();
+    if(viewBoxRect.isValid())
+        return viewBoxRect.size();
+    if(auto rootBox = to<SVGRootBox>(element->box()))
+        return rootBox->contentBoxSize();
+    SVGLengthContext lengthContext(element);
+    const Size viewportSize = {
+        lengthContext.valueForLength(element->width()),
+        lengthContext.valueForLength(element->height())
+    };
 
-    return parent->currentViewportSize();
+    return viewportSize;
 }
 
 SVGResourceContainerBox* SVGElement::getResourceById(std::string_view id) const
@@ -211,12 +199,19 @@ SVGFitToViewBox::SVGFitToViewBox(SVGElement* element)
     element->addProperty(preserveAspectRatioAttr, m_preserveAspectRatio);
 }
 
+Transform SVGFitToViewBox::viewBoxToViewTransform(const Rect& viewBoxRect, const Size& viewportSize) const
+{
+    if(viewportSize.isEmpty())
+        return Transform::Identity;
+    return m_preserveAspectRatio.getTransform(viewBoxRect, viewportSize);
+}
+
 Transform SVGFitToViewBox::viewBoxToViewTransform(const Size& viewportSize) const
 {
     const auto& viewBoxRect = m_viewBox.value();
-    if(viewBoxRect.isEmpty() || viewportSize.isEmpty())
+    if(viewBoxRect.isEmpty())
         return Transform::Identity;
-    return m_preserveAspectRatio.getTransform(viewBoxRect, viewportSize);
+    return viewBoxToViewTransform(viewBoxRect, viewportSize);
 }
 
 Rect SVGFitToViewBox::getClipRect(const Size& viewportSize) const
@@ -254,45 +249,20 @@ SVGSVGElement::SVGSVGElement(Document* document)
     addProperty(heightAttr, m_height);
 }
 
-void SVGSVGElement::computeIntrinsicDimensions(float& intrinsicWidth, float& intrinsicHeight, double& intrinsicRatio)
-{
-    SVGLengthContext lengthContext(this);
-    if(m_width.type() != SVGLengthType::Percentage) {
-        intrinsicWidth = lengthContext.valueForLength(m_width);
-    } else {
-        intrinsicWidth = 0.f;
-    }
-
-    if(m_height.type() != SVGLengthType::Percentage) {
-        intrinsicHeight = lengthContext.valueForLength(m_height);
-    } else {
-        intrinsicHeight = 0.f;
-    }
-
-    const auto& viewBoxRect = viewBox();
-    if(intrinsicWidth > 0.f && intrinsicHeight > 0.f) {
-        intrinsicRatio = intrinsicWidth / intrinsicHeight;
-    } else if(!viewBoxRect.isEmpty()) {
-        intrinsicRatio = viewBoxRect.w / viewBoxRect.h;
-    } else {
-        intrinsicRatio = 0.0;
-    }
-}
-
 static void addSVGTransformAttributeStyle(std::string& output, const Transform& matrix)
 {
     output += "transform:matrix(";
-    output += toString(matrix.a);
+    output += std::to_string(matrix.a);
     output += ',';
-    output += toString(matrix.b);
+    output += std::to_string(matrix.b);
     output += ',';
-    output += toString(matrix.c);
+    output += std::to_string(matrix.c);
     output += ',';
-    output += toString(matrix.d);
+    output += std::to_string(matrix.d);
     output += ',';
-    output += toString(matrix.e);
+    output += std::to_string(matrix.e);
     output += ',';
-    output += toString(matrix.f);
+    output += std::to_string(matrix.f);
     output += ");";
 }
 
@@ -300,8 +270,8 @@ void SVGSVGElement::collectAttributeStyle(std::string& output, const GlobalStrin
 {
     if(name == transformAttr && isSVGRootNode()) {
         addSVGTransformAttributeStyle(output, transform());
-    } else if(isSVGRootNode() && (name == widthAttr || name == heightAttr)) {
-        addSVGAttributeStyle(output, name, value);
+    } else if((name == widthAttr || name == heightAttr) && isSVGRootNode()) {
+        addAttributeStyle(output, name, value);
     } else {
         SVGElement::collectAttributeStyle(output, name, value);
     }
@@ -312,6 +282,73 @@ Box* SVGSVGElement::createBox(const RefPtr<BoxStyle>& style)
     if(isSVGRootNode())
         return new (heap()) SVGRootBox(this, style);
     return new (heap()) SVGViewportContainerBox(this, style);
+}
+
+Rect SVGSVGElement::currentViewBoxRect() const
+{
+    const auto& viewBoxRect = viewBox();
+    if(viewBoxRect.isEmpty() && isSVGRootNode() && document()->isSVGDocument()) {
+        float intrinsicWidth, intrinsicHeight;
+        computeIntrinsicSize(intrinsicWidth, intrinsicHeight);
+        return Rect(intrinsicWidth, intrinsicHeight);
+    }
+
+    return viewBoxRect;
+}
+
+Transform SVGSVGElement::viewBoxToViewTransform(const Size& viewportSize) const
+{
+    const auto viewBoxRect = currentViewBoxRect();
+    if(viewBoxRect.isEmpty())
+        return Transform::Identity;
+    return SVGFitToViewBox::viewBoxToViewTransform(viewBoxRect, viewportSize);
+}
+
+void SVGSVGElement::computeIntrinsicSize(float& intrinsicWidth, float& intrinsicHeight) const
+{
+    intrinsicWidth = 0.f;
+    intrinsicHeight = 0.f;
+
+    SVGLengthContext lengthContext(this);
+    if(m_width.type() != SVGLengthType::Percentage)
+        intrinsicWidth = lengthContext.valueForLength(m_width);
+    if(m_height.type() != SVGLengthType::Percentage) {
+        intrinsicHeight = lengthContext.valueForLength(m_height);
+    }
+}
+
+void SVGSVGElement::computeIntrinsicDimensions(float& intrinsicWidth, float& intrinsicHeight, float& intrinsicRatio) const
+{
+    computeIntrinsicSize(intrinsicWidth, intrinsicHeight);
+
+    if(intrinsicWidth > 0.f && intrinsicHeight > 0.f) {
+        intrinsicRatio = intrinsicWidth / intrinsicHeight;
+    } else if(const auto& viewBoxRect = viewBox(); !viewBoxRect.isEmpty()) {
+        intrinsicRatio = viewBoxRect.w / viewBoxRect.h;
+    } else {
+        intrinsicRatio = 0.0;
+    }
+}
+
+std::optional<float> SVGSVGElement::intrinsicWidth() const
+{
+    if(m_width.type() == SVGLengthType::Percentage)
+        return std::nullopt;
+    return SVGLengthContext(this).valueForLength(m_width);
+}
+
+std::optional<float> SVGSVGElement::intrinsicHeight() const
+{
+    if(m_height.type() == SVGLengthType::Percentage)
+        return std::nullopt;
+    return SVGLengthContext(this).valueForLength(m_height);
+}
+
+std::optional<float> SVGSVGElement::intrinsicRatio() const
+{
+    if(const auto& viewBoxRect = viewBox(); !viewBoxRect.isEmpty())
+        return viewBoxRect.w / viewBoxRect.h;
+    return std::nullopt;
 }
 
 SVGUseElement::SVGUseElement(Document* document)
@@ -1011,13 +1048,25 @@ void SVGStyleElement::finishParsingDocument()
     SVGElement::finishParsingDocument();
 }
 
-std::unique_ptr<SVGDocument> SVGDocument::create(Book* book, Heap* heap, ResourceFetcher* fetcher, Url baseUrl)
+SVGTitleElement::SVGTitleElement(Document* document)
+    : SVGElement(document, titleTag)
 {
-    return std::unique_ptr<SVGDocument>(new (heap) SVGDocument(book, heap, fetcher, std::move(baseUrl)));
 }
 
-SVGDocument::SVGDocument(Book* book, Heap* heap, ResourceFetcher* fetcher, Url baseUrl)
-    : XMLDocument(book, heap, fetcher, std::move(baseUrl))
+void SVGTitleElement::finishParsingDocument()
+{
+    if(document()->shouldSetTitle())
+        document()->setTitle(textFromChildren());
+    SVGElement::finishParsingDocument();
+}
+
+std::unique_ptr<SVGDocument> SVGDocument::create(Book* book, Url baseUrl)
+{
+    return std::unique_ptr<SVGDocument>(new (book->heap()) SVGDocument(book, std::move(baseUrl)));
+}
+
+SVGDocument::SVGDocument(Book* book, Url baseUrl)
+    : XMLDocument(book, std::move(baseUrl))
 {
 }
 

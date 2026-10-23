@@ -10,9 +10,6 @@
 #define PLUTOBOOK_DOCUMENT_H
 
 #include "cssstylesheet.h"
-#include "globalstring.h"
-#include "heapstring.h"
-#include "url.h"
 
 #include <forward_list>
 
@@ -91,7 +88,7 @@ public:
     void setData(const HeapString& data) { m_data = data; }
     void appendData(std::string_view data);
 
-    bool isHidden(const Box* parent) const;
+    bool shouldCreateBox(const Box* parent) const;
 
     Node* cloneNode(bool deep) final;
     Box* createBox(const RefPtr<BoxStyle>& style) final;
@@ -205,14 +202,18 @@ public:
     const HeapString& getAttribute(const GlobalString& name) const;
     Url getUrlAttribute(const GlobalString& name) const;
 
+    virtual void parseAttribute(const GlobalString& name, const HeapString& value);
+
     void setAttributes(const AttributeList& attributes);
     void setAttribute(const Attribute& attribute);
     void setAttribute(const GlobalString& name, const HeapString& value);
     void removeAttribute(const GlobalString& name);
 
-    virtual void parseAttribute(const GlobalString& name, const HeapString& value);
     virtual void collectAttributeStyle(std::string& output, const GlobalString& name, const HeapString& value) const {}
     virtual void collectAdditionalAttributeStyle(std::string& output) const {}
+
+    static void addAttributeStyle(std::string& output, std::string_view name, std::string_view value);
+    static void addAttributeStyle(std::string& output, const char* name, const char* value);
 
     CSSPropertyList inlineStyle();
     CSSPropertyList presentationAttributeStyle();
@@ -300,17 +301,16 @@ class TextResource;
 class ImageResource;
 class FontResource;
 class ResourceFetcher;
+class LocaleData;
 class Font;
 
 struct FontDescription;
 struct FontDataDescription;
 
-using CounterMap = std::map<GlobalString, std::vector<int>>;
-
 using DocumentElementMap = std::pmr::multimap<HeapString, Element*, std::less<>>;
+using DocumentLocaleMap = std::pmr::map<GlobalString, std::unique_ptr<LocaleData>>;
 using DocumentResourceMap = std::pmr::map<Url, RefPtr<Resource>>;
 using DocumentFontMap = std::pmr::map<FontDescription, RefPtr<Font>>;
-using DocumentCounterMap = std::pmr::map<HeapString, CounterMap, std::less<>>;
 using DocumentRunningStyleMap = std::pmr::map<GlobalString, RefPtr<BoxStyle>>;
 
 class BoxView;
@@ -328,19 +328,24 @@ using PageBoxList = std::pmr::vector<std::unique_ptr<PageBox>>;
 
 class Document : public ContainerNode {
 public:
-    Document(Book* book, Heap* heap, ResourceFetcher* fetcher, Url baseUrl);
+    Document(Book* book, Url baseUrl);
     ~Document() override;
 
     bool isDocumentNode() const final { return true; }
-    bool isSVGImageDocument() const { return !m_book && isSVGDocument(); }
+    bool isRootDocument() const;
 
     Book* book() const { return m_book; }
-    Heap* heap() const { return m_heap; }
-    ResourceFetcher* customResourceFetcher() const { return m_customResourceFetcher; }
+    ResourceFetcher* customResourceFetcher() const;
+    Heap* heap() const;
+
+    bool shouldSetTitle() const;
+    void setTitle(std::string title);
+
+    void setMetadata(std::string_view name, std::string_view content);
 
     const Url& baseUrl() const { return m_baseUrl; }
     void setBaseUrl(Url baseUrl) { m_baseUrl = std::move(baseUrl); }
-    Url completeUrl(std::string_view value) const { return m_baseUrl.complete(value); }
+    Url completeUrl(std::string_view input) const;
 
     BoxView* box() const;
     float width() const;
@@ -370,11 +375,6 @@ public:
     void addRunningStyle(const GlobalString& name, RefPtr<BoxStyle> style);
     RefPtr<BoxStyle> getRunningStyle(const GlobalString& name) const;
 
-    void addTargetCounters(const HeapString& id, const CounterMap& counters);
-
-    HeapString getTargetCounterText(const HeapString& fragment, const GlobalString& name, const GlobalString& listStyle, const HeapString& separator);
-    HeapString getCountersText(const CounterMap& counters, const GlobalString& name, const GlobalString& listStyle, const HeapString& separator);
-
     void addAuthorStyleSheet(std::string_view content, Url baseUrl);
     void addUserStyleSheet(std::string_view content);
 
@@ -389,11 +389,13 @@ public:
     RefPtr<BoxStyle> styleForElement(Element* element, const SelectorFilter& selectorFilter, const BoxStyle* parentStyle) const;
     RefPtr<BoxStyle> pseudoStyleForElement(Element* element, PseudoType pseudoType, const SelectorFilter& selectorFilter, const BoxStyle* parentStyle) const;
 
-    RefPtr<BoxStyle> styleForPage(const GlobalString& pageName, uint32_t pageIndex, PseudoType pseudoType) const;
-    RefPtr<BoxStyle> styleForPageMargin(const GlobalString& pageName, uint32_t pageIndex, PageMarginType marginType, const BoxStyle* pageStyle) const;
+    RefPtr<BoxStyle> styleForPage(uint32_t pageIndex) const;
+    RefPtr<BoxStyle> styleForPageMargin(uint32_t pageIndex, PageMarginType marginType, const BoxStyle* pageStyle) const;
 
     std::string getCounterText(int value, const GlobalString& listType);
     std::string getMarkerText(int value, const GlobalString& listType);
+
+    const LocaleData* getLocaleData(const GlobalString& lang);
 
     RefPtr<FontData> getFontData(const GlobalString& family, const FontDataDescription& description);
     RefPtr<Font> createFont(const FontDescription& description);
@@ -433,14 +435,12 @@ private:
     float m_containerHeight{0};
     Element* m_rootElement{nullptr};
     Book* m_book;
-    Heap* m_heap;
-    ResourceFetcher* m_customResourceFetcher;
     Url m_baseUrl;
     PageBoxList m_pages;
     DocumentElementMap m_idCache;
+    DocumentLocaleMap m_localeCache;
     DocumentResourceMap m_resourceCache;
     DocumentFontMap m_fontCache;
-    DocumentCounterMap m_counterCache;
     DocumentRunningStyleMap m_runningStyles;
     CSSStyleSheet m_styleSheet;
 };

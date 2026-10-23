@@ -8,6 +8,7 @@
 
 #include "textshape.h"
 #include "fontresource.h"
+#include "localedata.h"
 #include "graphicscontext.h"
 #include "geometry.h"
 #include "textbreakiterator.h"
@@ -148,17 +149,26 @@ static const SimpleFontData* resolveFontData(const Font* font, const uint16_t* c
     return font->fontDataForCharacters(characters, length, resolveEmojiPolicy(variantEmoji, characters, length));
 }
 
-constexpr int kMaxGlyphs = 1 << 16;
-constexpr int kMaxCharacters = kMaxGlyphs;
+constexpr uint32_t kMaxGlyphs = 1 << 16;
+constexpr uint32_t kMaxCharacters = kMaxGlyphs;
 
 #define HB_TO_FLT(v) (static_cast<float>(v) / (1 << 16))
+
+static hb_feature_t toHbFeature(const FontFeature& feature)
+{
+    hb_feature_t hbFeature;
+    hbFeature.tag = feature.first.value();
+    hbFeature.value = feature.second;
+    hbFeature.start = 0;
+    hbFeature.end = static_cast<unsigned>(-1);
+    return hbFeature;
+}
 
 RefPtr<TextShape> TextShape::createForText(const UString& text, Direction direction, bool disableSpacing, const BoxStyle* style)
 {
     assert(!text.isEmpty());
     const auto* font = style->font();
-    const auto& lang = font->lang();
-    auto fontFeatures = style->fontFeatures();
+    const auto* locale = font->locale();
     auto fontVariantEmoji = style->fontVariantEmoji();
     auto letterSpacing = disableSpacing ? 0 : style->letterSpacing();
     auto wordSpacing = disableSpacing ? 0 : style->wordSpacing();
@@ -166,16 +176,21 @@ RefPtr<TextShape> TextShape::createForText(const UString& text, Direction direct
 
     thread_local hb::unique_ptr<hb_buffer_t> hbBuffer(hb_buffer_create());
     auto hbDirection = direction == Direction::Ltr ? HB_DIRECTION_LTR : HB_DIRECTION_RTL;
-    auto hbLanguage = hb_language_from_string(lang.data(), lang.size());
-    auto textBuffer = reinterpret_cast<const uint16_t*>(text.getBuffer());
+    auto hbLanguage = locale->language();
+
+    std::vector<hb_feature_t> hbFeatures;
+    for(const auto& feature : style->fontFeatures())
+        hbFeatures.push_back(toHbFeature(feature));
+    const auto initialHbFeaturesSize = hbFeatures.size();
 
     float totalWidth = 0.f;
-    int startIndex = 0;
-    int totalLength = text.length();
+    uint32_t startIndex = 0;
+    uint32_t totalLength = text.length();
     TextShapeRunList textRuns(heap);
 
-    CharacterBreakIterator iterator(text, font->locale());
+    CharacterBreakIterator iterator(text, locale);
     auto character = text.char32At(startIndex);
+    auto textBuffer = reinterpret_cast<const uint16_t*>(text.getBuffer());
     auto nextIndex = iterator.nextBreakOpportunity(startIndex, totalLength);
     auto nextFontData = resolveFontData(font, textBuffer + startIndex, nextIndex, fontVariantEmoji);
 
@@ -215,20 +230,10 @@ RefPtr<TextShape> TextShape::createForText(const UString& text, Direction direct
         auto scriptName = uscript_getShortName(scriptCode);
         auto hbScript = hb_script_from_string(scriptName, -1);
 
-        std::vector<hb_feature_t> hbFeatures;
-        auto addFeatures = [&hbFeatures](const FontFeatureList& features) {
-            for(const auto& feature : features) {
-                hb_feature_t hbFeature;
-                hbFeature.tag = feature.first.value();
-                hbFeature.value = feature.second;
-                hbFeature.start = 0;
-                hbFeature.end = static_cast<unsigned>(-1);
-                hbFeatures.push_back(hbFeature);
-            }
-        };
-
-        addFeatures(fontFeatures);
-        addFeatures(fontData->features());
+        hbFeatures.resize(initialHbFeaturesSize);
+        for(const auto& feature : fontData->features()) {
+            hbFeatures.push_back(toHbFeature(feature));
+        }
 
         while(numCharacters > 0) {
             const auto itemLength = std::min(numCharacters, kMaxCharacters);
@@ -289,8 +294,8 @@ RefPtr<TextShape> TextShape::createForTabs(const UString& text, Direction direct
     auto heap = style->heap();
 
     float totalWidth = 0.f;
-    int startIndex = 0;
-    int totalLength = text.length();
+    uint32_t startIndex = 0;
+    uint32_t totalLength = text.length();
 
     TextShapeRunList runs(heap);
     if(auto fontData = font->primaryFont()) {
@@ -322,7 +327,7 @@ RefPtr<TextShape> TextShape::createForTabs(const UString& text, Direction direct
 
 uint32_t TextShape::offsetForPosition(float position) const
 {
-    auto currentOffset = m_direction == Direction::Ltr ? 0 : m_text.length();
+    uint32_t currentOffset = m_direction == Direction::Ltr ? 0 : m_text.length();
     if(position <= 0.f)
         return currentOffset;
     float currentPosition = 0;

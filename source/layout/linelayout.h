@@ -125,6 +125,9 @@ protected:
     LineItem& appendOpaqueItem(LineItem::Type type, Box* box);
     LineItem& appendTextItem(LineItem::Type type, Box* box, const UString& text);
 
+    LineItem* lastItemToCollapseWith() const;
+    UChar32 lastCharacterToCapitalizeWith() const;
+
     void removeTrailingCollapsibleSpaceIfExists();
     void restoreTrailingCollapsibleSpaceIfRemoved();
 
@@ -154,13 +157,10 @@ protected:
 
 struct LineItemRun {
     LineItemRun(const LineItem& item, uint32_t index, uint32_t start, uint32_t end)
-        : item(&item), itemIndex(index), startOffset(start), endOffset(end)
+        : item(item), itemIndex(index), startOffset(start), endOffset(end)
     {}
 
-    const LineItem& operator*() const { return *item; }
-    const LineItem* operator->() const { return item; }
-
-    const LineItem* item;
+    const LineItem& item;
     uint32_t itemIndex;
     uint32_t startOffset;
     uint32_t endOffset;
@@ -368,6 +368,8 @@ public:
 
     void paint(const PaintInfo& info, const Point& offset, PaintPhase phase);
     void serialize(std::ostream& o, int indent) const;
+
+    void clearLines();
 
 private:
     LineLayout(BlockFlowBox* block);

@@ -83,8 +83,10 @@ public:
     static Box* createAnonymous(Display display, const BoxStyle* parentStyle);
     static BlockFlowBox* createAnonymousBlock(const BoxStyle* parentStyle);
 
-    bool canContainFixedPositionedBoxes() const;
-    bool canContainAbsolutePositionedBoxes() const;
+    bool canContainFixedPositionedBoxes() const { return m_canContainFixedPositionedBoxes; }
+    void setCanContainFixedPositionedBoxes(bool value) { m_canContainFixedPositionedBoxes = value; }
+
+    bool canContainPositionedBox(const Box* box) const;
 
     BlockBox* containingBlock() const;
     BoxModel* containingBox() const;
@@ -93,8 +95,6 @@ public:
 
     bool isBodyBox() const;
     bool isRootBox() const;
-    bool isListMarkerBox() const { return isInsideListMarkerBox() || isOutsideListMarkerBox(); }
-    bool isFlexItem() const;
 
     virtual bool isBoxModel() const { return false; }
     virtual bool isBoxFrame() const { return false; }
@@ -104,7 +104,6 @@ public:
     virtual bool isWordBreakBox() const { return false; }
     virtual bool isContentBox() const { return false; }
     virtual bool isLeaderBox() const { return false; }
-    virtual bool isTargetCounterBox() const { return false; }
     virtual bool isInlineBox() const { return false; }
     virtual bool isBlockBox() const { return false; }
     virtual bool isBlockFlowBox() const { return false; }
@@ -154,10 +153,12 @@ public:
     virtual bool isSVGResourceRadialGradientBox() const { return false; }
 
     bool isRelativePositioned() const { return m_style->position() == Position::Relative; }
+    bool isAbsolutePositioned() const { return m_style->position() == Position::Absolute; }
     bool isFixedPositioned() const { return m_style->position() == Position::Fixed; }
 
     bool isAnonymous() const { return m_isAnonymous; }
     bool isAnonymousBlock() const { return m_isAnonymousBlock; }
+    bool isContinuation() const { return m_isContinuation; }
     bool isChildrenInline() const { return m_isChildrenInline; }
     bool isInline() const { return m_isInline; }
     bool isFloating() const { return m_isFloating; }
@@ -168,12 +169,18 @@ public:
     bool isOverflowHidden() const { return m_isOverflowHidden; }
     bool isBackgroundStolen() const { return m_isBackgroundStolen; }
     bool isBorderCollapsed() const { return m_isBorderCollapsed; }
+    bool isPaginatedView() const { return m_isPaginatedView; }
+    bool isPaginatedTable() const { return m_isPaginatedTable; }
     bool isTableHeader() const { return m_isTableHeader; }
     bool isTableFooter() const { return m_isTableFooter; }
     bool isColumnSpanner() const { return m_isColumnSpanner; }
+    bool isListMarker() const { return m_isListMarker; }
+    bool isSelectItem() const { return m_isSelectItem; }
+    bool isFlexItem() const { return m_isFlexItem; }
 
     void setIsAnonymous(bool value) { m_isAnonymous = value; }
     void setIsAnonymousBlock(bool value) { m_isAnonymousBlock = value; }
+    void setIsContinuation(bool value) { m_isContinuation = value; }
     void setIsChildrenInline(bool value) { m_isChildrenInline = value; }
     void setIsInline(bool value) { m_isInline = value; }
     void setIsFloating(bool value) { m_isFloating = value; }
@@ -183,9 +190,14 @@ public:
     void setIsOverflowHidden(bool value) { m_isOverflowHidden = value; }
     void setIsBackgroundStolen(bool value) { m_isBackgroundStolen = value; }
     void setIsBorderCollapsed(bool value) { m_isBorderCollapsed = value; }
+    void setIsPaginatedView(bool value) { m_isPaginatedView = value; }
+    void setIsPaginatedTable(bool value) { m_isPaginatedTable = value; }
     void setIsTableHeader(bool value) { m_isTableHeader = value; }
     void setIsTableFooter(bool value) { m_isTableFooter = value; }
     void setIsColumnSpanner(bool value) { m_isColumnSpanner = value; }
+    void setIsListMarker(bool value) { m_isListMarker = value; }
+    void setIsSelectItem(bool value) { m_isSelectItem = value; }
+    void setIsFlexItem(bool value) { m_isFlexItem = value; }
 
     bool hasColumnFlowBox() const { return m_hasColumnFlowBox; }
     bool hasTransform() const { return m_hasTransform; }
@@ -194,6 +206,12 @@ public:
     void setHasColumnFlowBox(bool value) { m_hasColumnFlowBox = value; }
     void setHasTransform(bool value) { m_hasTransform = value; }
     void setHasLayer(bool value) { m_hasLayer = value; }
+
+    bool isFirstInFlowChild() const { return m_isFirstInFlowChild; }
+    bool isLastInFlowChild() const { return m_isLastInFlowChild; }
+
+    void setIsFirstInFlowChild(bool value) { m_isFirstInFlowChild = value; }
+    void setIsLastInFlowChild(bool value) { m_isLastInFlowChild = value; }
 
     Heap* heap() const { return m_style->heap(); }
     Document* document() const { return m_style->document(); }
@@ -225,6 +243,7 @@ private:
     Box* m_lastChild{nullptr};
     bool m_isAnonymous : 1 {false};
     bool m_isAnonymousBlock : 1 {false};
+    bool m_isContinuation : 1 {false};
     bool m_isChildrenInline : 1 {false};
     bool m_isInline : 1 {false};
     bool m_isFloating : 1 {false};
@@ -235,8 +254,16 @@ private:
     bool m_isBackgroundStolen : 1 {false};
     bool m_isColumnSpanner : 1 {false};
     bool m_isBorderCollapsed : 1 {false};
+    bool m_isPaginatedView : 1 {false};
+    bool m_isPaginatedTable : 1 {false};
     bool m_isTableHeader : 1 {false};
     bool m_isTableFooter : 1 {false};
+    bool m_isListMarker : 1 {false};
+    bool m_isSelectItem : 1 {false};
+    bool m_isFlexItem : 1 {false};
+    bool m_isFirstInFlowChild : 1 {false};
+    bool m_isLastInFlowChild : 1 {false};
+    bool m_canContainFixedPositionedBoxes : 1 {false};
     bool m_hasColumnFlowBox : 1 {false};
     bool m_hasTransform : 1 {false};
     bool m_hasLayer : 1 {false};
@@ -250,14 +277,14 @@ public:
     bool isBoxModel() const final { return true; }
     void addChild(Box* newChild) override;
 
+    void paintBackgroundImage(const PaintInfo& info, const Rect& borderRect, const BoxStyle* backgroundStyle, const RefPtr<Image>& backgroundImage) const;
     void paintBackgroundStyle(const PaintInfo& info, const Rect& borderRect, const BoxStyle* backgroundStyle, bool includeLeftEdge = true, bool includeRightEdge = true) const;
     void paintBackground(const PaintInfo& info, const Rect& borderRect, bool includeLeftEdge = true, bool includeRightEdge = true) const;
-
-    virtual void paintRootBackground(const PaintInfo& info) const {}
 
     void paintBorder(const PaintInfo& info, const Rect& borderRect, bool includeLeftEdge = true, bool includeRightEdge = true) const;
     void paintOutline(const PaintInfo& info, const Rect& borderRect) const;
 
+    virtual void paintLayerDecorations(const PaintInfo& info, const Point& offset) {}
     virtual void paint(const PaintInfo& info, const Point& offset, PaintPhase phase);
 
     virtual Rect visualOverflowRect() const = 0;
@@ -267,10 +294,8 @@ public:
     BoxLayer* layer() const { return m_layer.get(); }
 
     void paintLayer(GraphicsContext& context, const Rect& rect);
-    void updateLayerPosition();
+    void updateLayerGeometry();
 
-    float relativePositionOffsetX() const;
-    float relativePositionOffsetY() const;
     Point relativePositionOffset() const;
 
     float containingBlockWidthForPositioned(const BoxModel* container) const;
@@ -279,7 +304,7 @@ public:
     float containingBlockHeightForPositioned(const BoxModel* container) const;
     float containingBlockHeightForPositioned() const { return containingBlockHeightForPositioned(containingBox()); }
 
-    virtual float containingBlockWidthForContent(const BlockBox* container) const;
+    float containingBlockWidthForContent(const BlockBox* container) const;
     float containingBlockWidthForContent() const { return containingBlockWidthForContent(containingBlock()); }
 
     std::optional<float> containingBlockHeightForContent(const BlockBox* container) const;
@@ -298,26 +323,26 @@ public:
     void setMarginLeft(float value) { m_marginLeft = value; }
     void setMarginRight(float value) { m_marginRight = value; }
 
-    void updateVerticalMargins(const BlockBox* container);
-    void updateHorizontalMargins(const BlockBox* container);
-    void updateMarginWidths(const BlockBox* container);
+    void updateVerticalMargins(float containerWidth);
+    void updateHorizontalMargins(float containerWidth);
+    void updateMarginWidths(float containerWidth);
 
     float paddingTop() const { return m_paddingTop; }
     float paddingBottom() const { return m_paddingBottom; }
     float paddingLeft() const { return m_paddingLeft; }
     float paddingRight() const { return m_paddingRight; }
 
-    float paddingWidth() const { return paddingLeft() + paddingRight(); }
-    float paddingHeight() const { return paddingTop() + paddingBottom(); }
+    float paddingWidth() const { return m_paddingLeft + m_paddingRight; }
+    float paddingHeight() const { return m_paddingTop + m_paddingBottom; }
 
     void setPaddingTop(float value) { m_paddingTop = value; }
     void setPaddingBottom(float value) { m_paddingBottom = value; }
     void setPaddingLeft(float value) { m_paddingLeft = value; }
     void setPaddingRight(float value) { m_paddingRight = value; }
 
-    void updateVerticalPaddings(const BlockBox* container);
-    void updateHorizontalPaddings(const BlockBox* container);
-    void updatePaddingWidths(const BlockBox* container);
+    void updateVerticalPaddings(float containerWidth);
+    void updateHorizontalPaddings(float containerWidth);
+    void updatePaddingWidths(float containerWidth);
 
     virtual void computeBorderWidths(float& borderTop, float& borderBottom, float& borderLeft, float& borderRight) const;
 
@@ -340,20 +365,20 @@ public:
     float marginStart(Direction direction) const { return direction == Direction::Ltr ? m_marginLeft : m_marginRight; }
     float marginEnd(Direction direction) const { return direction == Direction::Ltr ? m_marginRight : m_marginLeft; }
 
+    float paddingStart(Direction direction) const { return direction == Direction::Ltr ? m_paddingLeft : m_paddingRight; }
+    float paddingEnd(Direction direction) const { return direction == Direction::Ltr ? m_paddingRight : m_paddingLeft; }
+
     float borderStart(Direction direction) const { return direction == Direction::Ltr ? borderLeft() : borderRight(); }
     float borderEnd(Direction direction) const { return direction == Direction::Ltr ? borderRight() : borderLeft(); }
-
-    float paddingStart(Direction direction) const { return direction == Direction::Ltr ? paddingLeft() : paddingRight(); }
-    float paddingEnd(Direction direction) const { return direction == Direction::Ltr ? paddingRight() : paddingLeft(); }
 
     float marginStart() const { return marginStart(style()->direction()); }
     float marginEnd() const { return marginEnd(style()->direction()); }
 
-    float borderStart() const { return borderStart(style()->direction()); }
-    float borderEnd() const { return borderEnd(style()->direction()); }
-
     float paddingStart() const { return paddingStart(style()->direction()); }
     float paddingEnd() const { return paddingEnd(style()->direction()); }
+
+    float borderStart() const { return borderStart(style()->direction()); }
+    float borderEnd() const { return borderEnd(style()->direction()); }
 
     void build() override;
 
@@ -395,6 +420,10 @@ public:
 
     bool isBoxFrame() const final { return true; }
     bool requiresLayer() const override;
+
+    bool isStretchedFlexItem(bool isRowDirection) const;
+    bool isStretchedRowFlexItem() const;
+    bool isStretchedColumnFlexItem() const;
 
     BoxFrame* parentBoxFrame() const;
     BoxFrame* nextBoxFrame() const;
@@ -441,7 +470,7 @@ public:
     Rect borderBoxRect() const { return Rect(0, 0, borderBoxWidth(), borderBoxHeight()); }
     Rect paddingBoxRect() const { return Rect(borderLeft(), borderTop(), paddingBoxWidth(), paddingBoxHeight()); }
     Rect contentBoxRect() const { return Rect(borderLeft() + paddingLeft(), borderTop() + paddingTop(), contentBoxWidth(), contentBoxHeight()); }
-    Rect marginBoxRect() const { return Rect(-marginLeft(), -marginRight(), marginBoxWidth(), marginBoxHeight()); }
+    Rect marginBoxRect() const { return Rect(-marginLeft(), -marginTop(), marginBoxWidth(), marginBoxHeight()); }
 
     Rect visualOverflowRect() const override;
     Rect borderBoundingBox() const override;
@@ -472,6 +501,8 @@ public:
     void computeHorizontalStaticDistance(Length& leftLength, Length& rightLength, const BoxModel* container, float containerWidth) const;
     void computeVerticalStaticDistance(Length& topLength, Length& bottomLength, const BoxModel* container) const;
 
+    float computeStaticTop(const BoxModel* container) const;
+
     void computeHorizontalMargins(float& marginLeft, float& marginRight, float childWidth, const BlockBox* container, float containerWidth) const;
     void computeVerticalMargins(float& marginTop, float& marginBottom) const;
 
@@ -494,6 +525,8 @@ public:
     virtual std::optional<float> firstLineBaseline() const { return std::nullopt; }
     virtual std::optional<float> lastLineBaseline() const { return std::nullopt; }
     virtual std::optional<float> inlineBlockBaseline() const { return std::nullopt; }
+
+    virtual float unbreakableHeight(const FragmentBuilder* fragmentainer, float offset) const { return height(); }
 
     float overflowTop() const { return m_overflowTop; }
     float overflowBottom() const { return m_overflowBottom; }

@@ -9,14 +9,15 @@
 #include "csstokenizer.h"
 #include "stringutils.h"
 
+#include <unicode/utf8.h>
 #include <cmath>
 
 namespace plutobook {
 
-constexpr bool isNameStart(char cc) { return isAlpha(cc) || cc == '_'; }
-constexpr bool isNameChar(char cc) { return isNameStart(cc) || isDigit(cc) || cc == '-'; }
-constexpr bool isNewLine(char cc) { return (cc == '\n' || cc == '\r' || cc == '\f'); }
-constexpr bool isNonPrintable(char cc) { return (cc >= 0 && cc <= 0x8) || cc == 0xb || (cc >= 0xf && cc <= 0x1f) || cc == 0x7f; }
+constexpr bool isNameStart(uint8_t cc) { return isAlpha(cc) || cc == '_' || cc >= 0x80; }
+constexpr bool isNameChar(uint8_t cc) { return isNameStart(cc) || isDigit(cc) || cc == '-'; }
+constexpr bool isNewLine(uint8_t cc) { return (cc == '\n' || cc == '\r' || cc == '\f'); }
+constexpr bool isNonPrintable(uint8_t cc) { return cc <= 0x8 || cc == 0xb || (cc >= 0xe && cc <= 0x1f) || cc == 0x7f; }
 
 const CSSToken CSSTokenStream::eofToken(CSSToken::Type::EndOfFile);
 
@@ -40,64 +41,49 @@ CSSTokenStream CSSTokenizer::tokenize()
     return CSSTokenStream(m_tokenList.data(), m_tokenList.size());
 }
 
-bool CSSTokenizer::isEscapeSequence(char first, char second)
-{
-    return first == '\\' && !isNewLine(second);
-}
-
-bool CSSTokenizer::isIdentSequence(char first, char second, char third)
-{
-    if(isNameStart(first) || isEscapeSequence(first, second))
-        return true;
-    if(first == '-')
-        return isNameStart(second) || second == '-' || isEscapeSequence(second, third);
-    return false;
-}
-
-bool CSSTokenizer::isNumberSequence(char first, char second, char third)
-{
-    if(isDigit(first))
-        return true;
-    if(first == '-' || first == '+')
-        return isDigit(second) || (second == '.' && isDigit(third));
-    if(first == '.')
-        return isDigit(second);
-    return false;
-}
-
 bool CSSTokenizer::isEscapeSequence() const
 {
-    if(m_input.empty())
-        return false;
-    return isEscapeSequence(*m_input, m_input.peek(1));
+    return m_input.peek() == '\\' && !isNewLine(m_input.peek(1));
 }
 
 bool CSSTokenizer::isIdentSequence() const
 {
-    if(m_input.empty())
-        return false;
-    auto second = m_input.peek(1);
-    if(second == 0)
-        return isIdentSequence(*m_input, 0, 0);
-    return isIdentSequence(*m_input, second, m_input.peek(2));
+    auto first = m_input.peek();
+    if(isNameStart(first))
+        return true;
+    if(first == '-') {
+        auto second = m_input.peek(1);
+        if(second == '-' || isNameStart(second))
+            return true;
+        return second == '\\' && !isNewLine(m_input.peek(2));
+    }
+
+    return first == '\\' && !isNewLine(m_input.peek(1));
 }
 
 bool CSSTokenizer::isNumberSequence() const
 {
-    if(m_input.empty())
-        return false;
-    auto second = m_input.peek(1);
-    if(second == 0)
-        return isNumberSequence(*m_input, 0, 0);
-    return isNumberSequence(*m_input, second, m_input.peek(2));
+    auto first = m_input.peek();
+    if(isDigit(first))
+        return true;
+    if(first == '-' || first == '+') {
+        auto second = m_input.peek(1);
+        if(isDigit(second))
+            return true;
+        return second == '.' && isDigit(m_input.peek(2));
+    }
+
+    return first == '.' && isDigit(m_input.peek(1));
 }
 
 bool CSSTokenizer::isExponentSequence() const
 {
-    if(m_input.peek() == 'E' || m_input.peek() == 'e') {
-        if(m_input.peek(1) == '+' || m_input.peek(1) == '-')
+    auto first = m_input.peek();
+    if(first == 'E' || first == 'e') {
+        auto second = m_input.peek(1);
+        if(second == '+' || second == '-')
             return isDigit(m_input.peek(2));
-        return isDigit(m_input.peek(1));
+        return isDigit(second);
     }
 
     return false;
@@ -105,8 +91,17 @@ bool CSSTokenizer::isExponentSequence() const
 
 bool CSSTokenizer::isUnicodeRangeSequence() const
 {
-    if(m_input.peek() == 'U' || m_input.peek() == 'u')
-        return m_input.peek(1) == '+' && (m_input.peek(2) == '?' || isHexDigit(m_input.peek(2)));
+    auto first = m_input.peek();
+    if(first == 'U' || first == 'u') {
+        auto second = m_input.peek(1);
+        if(second == '+') {
+            auto third = m_input.peek(2);
+            if(third == '?')
+                return true;
+            return isHexDigit(third);
+        }
+    }
+
     return false;
 }
 
@@ -118,13 +113,14 @@ std::string_view CSSTokenizer::addstring(std::string&& value)
 
 std::string_view CSSTokenizer::consumeName()
 {
+    const auto offset = m_input.offset();
+
     size_t count = 0;
     while(true) {
         auto cc = m_input.peek(count);
-        if(cc == 0 || cc == '\\')
+        if(cc == '\\')
             break;
         if(!isNameChar(cc)) {
-            auto offset = m_input.offset();
             m_input.advance(count);
             return m_input.substring(offset, count);
         }
@@ -133,6 +129,8 @@ std::string_view CSSTokenizer::consumeName()
     }
 
     std::string output;
+    output += m_input.substring(offset, count);
+    m_input.advance(count);
     while(true) {
         auto cc = m_input.peek();
         if(isNameChar(cc)) {
@@ -166,15 +164,23 @@ uint32_t CSSTokenizer::consumeEscape()
             m_input.advance();
         }
 
-        if(cp == 0 || cp >= 0x10FFFF || (cp >= 0xD800 && cp <= 0xDFFF))
+        if(cp == 0 || cp > 0x10FFFF || (cp >= 0xD800 && cp <= 0xDFFF))
             return 0xFFFD;
         return cp;
     }
 
-    if(cc == 0)
+    if(cc == 0) {
         return 0xFFFD;
-    m_input.advance();
-    return cc;
+    }
+
+    auto data = reinterpret_cast<const uint8_t*>(m_input.data());
+    auto offset = static_cast<int32_t>(m_input.offset());
+    auto length = static_cast<int32_t>(m_input.length());
+
+    UChar32 cp = 0;
+    U8_NEXT_OR_FFFD(data, offset, length, cp);
+    m_input.advance(offset - m_input.offset());
+    return cp;
 }
 
 CSSToken CSSTokenizer::consumeStringToken()
@@ -183,14 +189,17 @@ CSSToken CSSTokenizer::consumeStringToken()
     assert(endingCodePoint == '\"' || endingCodePoint == '\'');
     m_input.advance();
 
+    const auto offset = m_input.offset();
+
     size_t count = 0;
     while(true) {
         auto cc = m_input.peek(count);
-        if(cc == 0 || cc == '\\')
+        if(cc == '\\')
             break;
-        if(cc == endingCodePoint) {
-            auto offset = m_input.offset();
-            m_input.advance(count + 1);
+        if(cc == 0 || cc == endingCodePoint) {
+            m_input.advance(count);
+            if(cc == endingCodePoint)
+                m_input.advance();
             return CSSToken(CSSToken::Type::String, m_input.substring(offset, count));
         }
 
@@ -203,6 +212,8 @@ CSSToken CSSTokenizer::consumeStringToken()
     }
 
     std::string output;
+    output += m_input.substring(offset, count);
+    m_input.advance(count);
     while(true) {
         auto cc = m_input.peek();
         if(cc == 0)
@@ -243,58 +254,66 @@ CSSToken CSSTokenizer::consumeNumericToken()
     auto numberSign = CSSToken::NumberSign::None;
     double integer = 0;
     double fraction = 0;
-    int exponent = 0;
-    int expsign = 1;
 
-    if(m_input.peek() == '-') {
-        numberSign = CSSToken::NumberSign::Minus;
-        m_input.advance();
-    } else if(m_input.peek() == '+') {
+    auto cc = m_input.peek();
+    if(cc == '+') {
+        cc = m_input.consume();
         numberSign = CSSToken::NumberSign::Plus;
-        m_input.advance();
+    } else if(cc == '-') {
+        cc = m_input.consume();
+        numberSign = CSSToken::NumberSign::Minus;
     }
 
-    if(isDigit(m_input.peek())) {
-        auto cc = m_input.peek();
+    if(isDigit(cc)) {
         do {
             integer = 10.0 * integer + (cc - '0');
             cc = m_input.consume();
         } while(isDigit(cc));
+        if(integer > std::numeric_limits<double>::max()) {
+            integer = std::numeric_limits<double>::max();
+        }
     }
 
-    if(m_input.peek() == '.' && isDigit(m_input.peek(1))) {
+    if(cc == '.' && isDigit(m_input.peek(1))) {
         numberType = CSSToken::NumberType::Number;
-        auto cc = m_input.consume();
-        int count = 0;
+        cc = m_input.consume();
+        double scale = 1.0;
         do {
-            fraction = 10.0 * fraction + (cc - '0');
-            count += 1;
+            scale *= 0.1;
+            fraction += scale * (cc - '0');
             cc = m_input.consume();
         } while(isDigit(cc));
-        fraction *= std::pow(10.0, -count);
     }
 
+    double number = (integer + fraction);
     if(isExponentSequence()) {
         numberType = CSSToken::NumberType::Number;
-        m_input.advance();
-        if(m_input.peek() == '-') {
-            expsign = -1;
-            m_input.advance();
-        } else if(m_input.peek() == '+') {
-            m_input.advance();
+        cc = m_input.consume();
+
+        bool exponentIsNegative = false;
+        if(cc == '+') {
+            cc = m_input.consume();
+        } else if(cc == '-') {
+            cc = m_input.consume();
+            exponentIsNegative = true;
         }
 
-        auto cc = m_input.peek();
+        double exponent = 0;
+        assert(isDigit(cc));
         do {
-            exponent = 10 * exponent + (cc - '0');
+            exponent = 10.0 * exponent + (cc - '0');
             cc = m_input.consume();
         } while(isDigit(cc));
+        if(exponentIsNegative)
+            exponent = -exponent;
+        if(exponent > std::numeric_limits<double>::max_exponent10)
+            exponent = std::numeric_limits<double>::max_exponent10;
+        number *= std::pow(10.0, exponent);
     }
 
-    double number = (integer + fraction) * std::pow(10.0, exponent * expsign);
     if(numberSign == CSSToken::NumberSign::Minus)
         number = -number;
-    if(m_input.peek() == '%') {
+    if(cc == '%') {
         m_input.advance();
         return CSSToken(CSSToken::Type::Percentage, numberType, numberSign, number);
     }
@@ -325,7 +344,6 @@ CSSToken CSSTokenizer::consumeUnicodeRangeToken()
 
     uint32_t to = from;
     if(count < 6 && cc == '?') {
-        m_input.advance();
         do {
             from *= 16;
             to = to * 16 + 0xF;
@@ -343,15 +361,13 @@ CSSToken CSSTokenizer::consumeUnicodeRangeToken()
         } while(count < 6 && isHexDigit(cc));
     }
 
-    return CSSToken(CSSToken::Type::UnicodeRange, from, to);
+    return CSSToken(CSSToken::Type::UnicodeRange, CSSToken::Range{from, to});
 }
 
 CSSToken CSSTokenizer::consumeIdentLikeToken()
 {
-    if(isUnicodeRangeSequence())
-        return consumeUnicodeRangeToken();
     auto name = consumeName();
-    if(equals(name, "url", false) && m_input.peek() == '(') {
+    if(equalsIgnoringCase(name, "url") && m_input.peek() == '(') {
         auto cc = m_input.consume();
         while(isSpace(cc)) {
             cc = m_input.consume();
@@ -372,19 +388,21 @@ CSSToken CSSTokenizer::consumeIdentLikeToken()
 
 CSSToken CSSTokenizer::consumeUrlToken()
 {
-    auto cc = m_input.peek();
-    while(isSpace(cc)) {
-        cc = m_input.consume();
+    while(isSpace(m_input.peek())) {
+        m_input.advance();
     }
+
+    const auto offset = m_input.offset();
 
     size_t count = 0;
     while(true) {
         auto cc = m_input.peek(count);
-        if(cc == 0 || cc == '\\' || isSpace(cc))
+        if(cc == '\\' || isSpace(cc))
             break;
-        if(cc == ')') {
-            auto offset = m_input.offset();
-            m_input.advance(count + 1);
+        if(cc == 0 || cc == ')') {
+            m_input.advance(count);
+            if(cc == ')')
+                m_input.advance();
             return CSSToken(CSSToken::Type::Url, m_input.substring(offset, count));
         }
 
@@ -397,6 +415,8 @@ CSSToken CSSTokenizer::consumeUrlToken()
     }
 
     std::string output;
+    output += m_input.substring(offset, count);
+    m_input.advance(count);
     while(true) {
         auto cc = m_input.peek();
         if(cc == 0)
@@ -488,6 +508,7 @@ CSSToken CSSTokenizer::consumeCommentToken()
 
 CSSToken CSSTokenizer::consumeSolidusToken()
 {
+    assert(m_input.peek() == '/');
     auto cc = m_input.consume();
     if(cc == '*') {
         m_input.advance();
@@ -499,6 +520,7 @@ CSSToken CSSTokenizer::consumeSolidusToken()
 
 CSSToken CSSTokenizer::consumeHashToken()
 {
+    assert(m_input.peek() == '#');
     auto cc = m_input.consume();
     if(isNameChar(cc) || isEscapeSequence()) {
         if(isIdentSequence())
@@ -511,6 +533,7 @@ CSSToken CSSTokenizer::consumeHashToken()
 
 CSSToken CSSTokenizer::consumePlusSignToken()
 {
+    assert(m_input.peek() == '+');
     if(isNumberSequence())
         return consumeNumericToken();
     m_input.advance();
@@ -519,6 +542,7 @@ CSSToken CSSTokenizer::consumePlusSignToken()
 
 CSSToken CSSTokenizer::consumeHyphenMinusToken()
 {
+    assert(m_input.peek() == '-');
     if(isNumberSequence())
         return consumeNumericToken();
     if(m_input.peek(1) == '-' && m_input.peek(2) == '>') {
@@ -534,6 +558,7 @@ CSSToken CSSTokenizer::consumeHyphenMinusToken()
 
 CSSToken CSSTokenizer::consumeFullStopToken()
 {
+    assert(m_input.peek() == '.');
     if(isNumberSequence())
         return consumeNumericToken();
     m_input.advance();
@@ -542,6 +567,7 @@ CSSToken CSSTokenizer::consumeFullStopToken()
 
 CSSToken CSSTokenizer::consumeLessThanSignToken()
 {
+    assert(m_input.peek() == '<');
     auto cc = m_input.consume();
     if(cc == '!' && m_input.peek(1) == '-' && m_input.peek(2) == '-') {
         m_input.advance(3);
@@ -553,6 +579,7 @@ CSSToken CSSTokenizer::consumeLessThanSignToken()
 
 CSSToken CSSTokenizer::consumeCommercialAtToken()
 {
+    assert(m_input.peek() == '@');
     m_input.advance();
     if(isIdentSequence())
         return CSSToken(CSSToken::Type::AtKeyword, consumeName());
@@ -561,6 +588,7 @@ CSSToken CSSTokenizer::consumeCommercialAtToken()
 
 CSSToken CSSTokenizer::consumeReverseSolidusToken()
 {
+    assert(m_input.peek() == '\\');
     if(isEscapeSequence())
         return consumeIdentLikeToken();
     m_input.advance();
@@ -577,6 +605,8 @@ CSSToken CSSTokenizer::nextToken()
     if(isDigit(cc))
         return consumeNumericToken();
     if(isNameStart(cc)) {
+        if(isUnicodeRangeSequence())
+            return consumeUnicodeRangeToken();
         return consumeIdentLikeToken();
     }
 

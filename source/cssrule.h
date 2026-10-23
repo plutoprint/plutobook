@@ -14,6 +14,7 @@
 #include <map>
 #include <forward_list>
 #include <memory>
+#include <variant>
 
 namespace plutobook {
 
@@ -30,6 +31,8 @@ using CSSPageSelector = CSSCompoundSelector;
 using CSSPageSelectorList = CSSCompoundSelectorList;
 
 enum class PseudoType : uint8_t;
+enum class CaseMode : uint8_t;
+enum class Direction : uint8_t;
 
 class CSSSimpleSelector {
 public:
@@ -91,41 +94,35 @@ public:
         PseudoPageRight
     };
 
-    enum class AttributeCaseType {
-        Sensitive,
-        InSensitive
-    };
-
     using MatchPattern = std::pair<int, int>;
 
     explicit CSSSimpleSelector(MatchType matchType) : m_matchType(matchType) {}
     CSSSimpleSelector(MatchType matchType, const GlobalString& name) : m_matchType(matchType), m_name(name) {}
     CSSSimpleSelector(MatchType matchType, const HeapString& value) : m_matchType(matchType), m_value(value) {}
-    CSSSimpleSelector(MatchType matchType, const MatchPattern& matchPattern) : m_matchType(matchType), m_matchPattern(matchPattern) {}
-    CSSSimpleSelector(MatchType matchType, CSSSelectorList subSelectors) : m_matchType(matchType), m_subSelectors(std::move(subSelectors)) {}
-    CSSSimpleSelector(MatchType matchType, AttributeCaseType attributeCaseType, const GlobalString& name, const HeapString& value)
-        : m_matchType(matchType), m_attributeCaseType(attributeCaseType), m_name(name), m_value(value)
+    CSSSimpleSelector(MatchType matchType, const MatchPattern& matchPattern) : m_matchType(matchType), m_value(matchPattern) {}
+    CSSSimpleSelector(MatchType matchType, CSSSelectorList subSelectors) : m_matchType(matchType), m_value(std::move(subSelectors)) {}
+    CSSSimpleSelector(MatchType matchType, CaseMode caseMode, const GlobalString& name, const HeapString& value)
+        : m_matchType(matchType), m_caseMode(caseMode), m_name(name), m_value(value)
     {}
 
     MatchType matchType() const { return m_matchType; }
-    AttributeCaseType attributeCaseType() const { return m_attributeCaseType; }
-    const MatchPattern& matchPattern() const { return m_matchPattern; }
+    CaseMode caseMode() const { return m_caseMode; }
     const GlobalString& name() const { return m_name; }
-    const HeapString& value() const { return m_value; }
-    const CSSSelectorList& subSelectors() const { return m_subSelectors; }
-    bool isCaseSensitive() const { return m_attributeCaseType == AttributeCaseType::Sensitive; }
 
-    bool matchnth(int count) const;
+    const HeapString& value() const { return std::get<HeapString>(m_value); }
+    const MatchPattern& matchPattern() const { return std::get<MatchPattern>(m_value); }
+    const CSSSelectorList& subSelectors() const { return std::get<CSSSelectorList>(m_value); }
+
+    bool matchNth(int count) const;
     PseudoType pseudoType() const;
     uint32_t specificity() const;
 
 private:
+    using Value = std::variant<HeapString, MatchPattern, CSSSelectorList>;
     MatchType m_matchType;
-    AttributeCaseType m_attributeCaseType;
-    MatchPattern m_matchPattern;
-    GlobalString m_name;
-    HeapString m_value;
-    CSSSelectorList m_subSelectors;
+    CaseMode m_caseMode{};
+    GlobalString m_name{};
+    Value m_value{};
 };
 
 class CSSComplexSelector {
@@ -231,6 +228,7 @@ public:
     };
 
     enum class Type {
+        Unknown,
         None,
         All,
         Print,
@@ -244,6 +242,10 @@ public:
     Restrictor restrictor() const { return m_restrictor; }
     Type type() const { return m_type; }
     const CSSMediaFeatureList& features() const { return m_features; }
+
+    static CSSMediaQuery notAll() { return CSSMediaQuery(Restrictor::Not, Type::All); }
+    static CSSMediaQuery onlyPrint() { return CSSMediaQuery(Restrictor::Only, Type::Print); }
+    static CSSMediaQuery onlyScreen() { return CSSMediaQuery(Restrictor::Only, Type::Screen); }
 
 private:
     Restrictor m_restrictor;
@@ -531,7 +533,7 @@ inline void SelectorFilter::unset(unsigned key)
 
 class CSSRuleData {
 public:
-    CSSRuleData(const RefPtr<CSSStyleRule>& rule, const CSSSelector& selector, uint32_t specificity, uint32_t position);
+    CSSRuleData(CSSStyleRule& rule, const CSSSelector& selector, uint32_t specificity, uint32_t position);
 
     const RefPtr<CSSStyleRule>& rule() const { return m_rule; }
     const CSSSelector* selector() const { return m_selector; }
@@ -542,51 +544,6 @@ public:
     bool match(const Element* element, PseudoType pseudoType, const SelectorFilter& selectorFilter) const;
 
 private:
-    static bool matchSelector(const Element* element, PseudoType pseudoType, const CSSSelector& selector);
-    static bool matchCompoundSelector(const Element* element, PseudoType pseudoType, const CSSCompoundSelector& selector);
-    static bool matchSimpleSelector(const Element* element, const CSSSimpleSelector& selector);
-
-    static bool matchNamespaceSelector(const Element* element, const CSSSimpleSelector& selector);
-    static bool matchTagSelector(const Element* element, const CSSSimpleSelector& selector);
-    static bool matchIdSelector(const Element* element, const CSSSimpleSelector& selector);
-    static bool matchClassSelector(const Element* element, const CSSSimpleSelector& selector);
-
-    static bool matchAttributeHasSelector(const Element* element, const CSSSimpleSelector& selector);
-    static bool matchAttributeEqualsSelector(const Element* element, const CSSSimpleSelector& selector);
-    static bool matchAttributeIncludesSelector(const Element* element, const CSSSimpleSelector& selector);
-    static bool matchAttributeContainsSelector(const Element* element, const CSSSimpleSelector& selector);
-    static bool matchAttributeDashEqualsSelector(const Element* element, const CSSSimpleSelector& selector);
-    static bool matchAttributeStartsWithSelector(const Element* element, const CSSSimpleSelector& selector);
-    static bool matchAttributeEndsWithSelector(const Element* element, const CSSSimpleSelector& selector);
-
-    static bool matchPseudoClassIsSelector(const Element* element, const CSSSimpleSelector& selector);
-    static bool matchPseudoClassNotSelector(const Element* element, const CSSSimpleSelector& selector);
-    static bool matchPseudoClassHasSelector(const Element* element, const CSSSimpleSelector& selector);
-
-    static bool matchPseudoClassLinkSelector(const Element* element, const CSSSimpleSelector& selector);
-    static bool matchPseudoClassLocalLinkSelector(const Element* element, const CSSSimpleSelector& selector);
-    static bool matchPseudoClassEnabledSelector(const Element* element, const CSSSimpleSelector& selector);
-    static bool matchPseudoClassDisabledSelector(const Element* element, const CSSSimpleSelector& selector);
-    static bool matchPseudoClassCheckedSelector(const Element* element, const CSSSimpleSelector& selector);
-    static bool matchPseudoClassLangSelector(const Element* element, const CSSSimpleSelector& selector);
-
-    static bool matchPseudoClassRootSelector(const Element* element, const CSSSimpleSelector& selector);
-    static bool matchPseudoClassEmptySelector(const Element* element, const CSSSimpleSelector& selector);
-
-    static bool matchPseudoClassFirstChildSelector(const Element* element, const CSSSimpleSelector& selector);
-    static bool matchPseudoClassLastChildSelector(const Element* element, const CSSSimpleSelector& selector);
-    static bool matchPseudoClassOnlyChildSelector(const Element* element, const CSSSimpleSelector& selector);
-
-    static bool matchPseudoClassFirstOfTypeSelector(const Element* element, const CSSSimpleSelector& selector);
-    static bool matchPseudoClassLastOfTypeSelector(const Element* element, const CSSSimpleSelector& selector);
-    static bool matchPseudoClassOnlyOfTypeSelector(const Element* element, const CSSSimpleSelector& selector);
-
-    static bool matchPseudoClassNthChildSelector(const Element* element, const CSSSimpleSelector& selector);
-    static bool matchPseudoClassNthLastChildSelector(const Element* element, const CSSSimpleSelector& selector);
-
-    static bool matchPseudoClassNthOfTypeSelector(const Element* element, const CSSSimpleSelector& selector);
-    static bool matchPseudoClassNthLastOfTypeSelector(const Element* element, const CSSSimpleSelector& selector);
-
     static const unsigned maxHashCount = 4;
 
     RefPtr<CSSStyleRule> m_rule;
@@ -598,7 +555,7 @@ private:
 
 class CSSPageRuleData {
 public:
-    CSSPageRuleData(const RefPtr<CSSPageRule>& rule, const CSSPageSelector* selector, uint32_t specificity, uint32_t position)
+    CSSPageRuleData(CSSPageRule& rule, const CSSPageSelector* selector, uint32_t specificity, uint32_t position)
         : m_rule(rule), m_selector(selector), m_specificity(specificity), m_position(position)
     {}
 
@@ -609,10 +566,9 @@ public:
     const uint32_t specificity() const { return m_specificity; }
     const uint32_t position() const { return m_position; }
 
-    bool match(const GlobalString& pageName, uint32_t pageIndex, PseudoType pseudoType) const;
+    bool match(uint32_t pageIndex, Direction direction) const;
 
 private:
-    static bool matchSelector(const GlobalString& pageName, uint32_t pageIndex, PseudoType pseudoType, const CSSSimpleSelector& selector);
     RefPtr<CSSPageRule> m_rule;
     const CSSPageSelector* m_selector;
     uint32_t m_specificity;
@@ -622,6 +578,9 @@ private:
 class CSSCounterStyle : public HeapMember, public RefCounted<CSSCounterStyle> {
 public:
     static RefPtr<CSSCounterStyle> create(Heap* heap, RefPtr<CSSCounterStyleRule> rule);
+
+    template<bool isMarker>
+    static std::string generateDecimalRepresentation(int value);
 
     std::string generateInitialRepresentation(int value) const;
     std::string generateFallbackRepresentation(int value) const;
@@ -638,9 +597,10 @@ public:
     const HeapString& prefix() const;
     const HeapString& suffix() const;
 
-    void setFallbackStyle(CSSCounterStyle& fallbackStyle) { m_fallbackStyle = fallbackStyle; }
-    const RefPtr<CSSCounterStyle>& fallbackStyle() const { return m_fallbackStyle; }
     void extend(const CSSCounterStyle& extended);
+
+    void setFallbackStyle(CSSCounterStyle* fallbackStyle) { m_fallbackStyle = fallbackStyle; }
+    CSSCounterStyle* fallbackStyle() const { return m_fallbackStyle; }
 
     static CSSCounterStyle& defaultStyle();
 
@@ -658,7 +618,7 @@ private:
     RefPtr<CSSCustomIdentValue> m_fallback;
     RefPtr<CSSListValue> m_symbols;
     RefPtr<CSSListValue> m_additiveSymbols;
-    mutable RefPtr<CSSCounterStyle> m_fallbackStyle;
+    CSSCounterStyle* m_fallbackStyle = nullptr;
 };
 
 class CSSCounterStyleMap : public HeapMember {

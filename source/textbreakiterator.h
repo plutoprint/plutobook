@@ -11,37 +11,47 @@
 
 #include "ustring.h"
 
-#include <unicode/brkiter.h>
-
 namespace plutobook {
 
 class LocaleData;
 
-class CharacterBreakIterator {
+class TextBreakIterator {
 public:
-    explicit CharacterBreakIterator(const UString& text, const LocaleData* locale);
+    TextBreakIterator(const UString& text, const LocaleData* locale);
 
-    int nextBreakOpportunity(int pos, int end) const;
+    TextBreakIterator(const TextBreakIterator&) = delete;
+    TextBreakIterator& operator=(const TextBreakIterator&) = delete;
 
-private:
-    icu::BreakIterator* m_iterator;
+protected:
+    const UString m_text;
+    const LocaleData* m_locale;
+    const uint64_t m_id;
 };
 
-class LineBreakIterator {
+class CharacterBreakIterator final : public TextBreakIterator {
 public:
-    explicit LineBreakIterator(const UString& text, const LocaleData* locale);
+    CharacterBreakIterator(const UString& text, const LocaleData* locale);
+
+    uint32_t nextBreakOpportunity(uint32_t pos, uint32_t end) const;
+};
+
+class LineBreakIterator final : public TextBreakIterator {
+public:
+    LineBreakIterator(const UString& text, const LocaleData* locale);
+
+    static bool isBreakableSpace(UChar cc);
 
     uint32_t nextBreakOpportunity(uint32_t pos) const { return nextBreakOpportunity(pos, m_text.length()); }
     uint32_t nextBreakOpportunity(uint32_t pos, uint32_t end) const;
     uint32_t previousBreakOpportunity(uint32_t offset, uint32_t start = 0) const;
 
     bool isBreakable(uint32_t pos) const;
-
-private:
-    const UString m_text;
-    const LocaleData* m_locale;
-    mutable icu::BreakIterator* m_iterator = nullptr;
 };
+
+inline bool LineBreakIterator::isBreakableSpace(UChar cc)
+{
+    return cc == kSpaceCharacter || cc == kTabulationCharacter || cc == kNewlineCharacter;
+}
 
 } // namespace plutobook
 

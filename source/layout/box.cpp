@@ -189,33 +189,25 @@ BlockFlowBox* Box::createAnonymousBlock(const BoxStyle* parentStyle)
     return newBlock;
 }
 
-bool Box::canContainFixedPositionedBoxes() const
+bool Box::canContainPositionedBox(const Box* box) const
 {
-    return (hasTransform() && isBlockBox()) || !parentBox() || isPageMarginBox();
-}
-
-bool Box::canContainAbsolutePositionedBoxes() const
-{
-    return style()->position() != Position::Static || canContainFixedPositionedBoxes();
+    if(box->style()->position() == Position::Absolute)
+        return m_canContainFixedPositionedBoxes || style()->position() != Position::Static;
+    assert(box->style()->position() == Position::Fixed);
+    return m_canContainFixedPositionedBoxes;
 }
 
 BlockBox* Box::containingBlock() const
 {
     auto parent = parentBox();
-    if(style()->position() == Position::Static || style()->position() == Position::Relative || isTextBox()) {
+    if(!isPositioned()) {
         while(parent && !parent->isBlockBox())
             parent = parent->parentBox();
         return to<BlockBox>(parent);
     }
 
-    if(style()->position() == Position::Fixed) {
-        while(parent && !parent->canContainFixedPositionedBoxes()) {
-            parent = parent->parentBox();
-        }
-    } else {
-        while(parent && !parent->canContainAbsolutePositionedBoxes()) {
-            parent = parent->parentBox();
-        }
+    while(parent && !parent->canContainPositionedBox(this)) {
+        parent = parent->parentBox();
     }
 
     if(parent && !parent->isBlockBox())
@@ -228,15 +220,9 @@ BlockBox* Box::containingBlock() const
 BoxModel* Box::containingBox() const
 {
     auto parent = parentBox();
-    if(!isTextBox()) {
-        if(style()->position() == Position::Fixed) {
-            while(parent && !parent->canContainFixedPositionedBoxes()) {
-                parent = parent->parentBox();
-            }
-        } else if(style()->position() == Position::Absolute) {
-            while(parent && !parent->canContainAbsolutePositionedBoxes()) {
-                parent = parent->parentBox();
-            }
+    if(isPositioned()) {
+        while(parent && !parent->canContainPositionedBox(this)) {
+            parent = parent->parentBox();
         }
     }
 
@@ -267,11 +253,6 @@ bool Box::isBodyBox() const
 bool Box::isRootBox() const
 {
     return m_node && m_node->isRootNode();
-}
-
-bool Box::isFlexItem() const
-{
-    return m_parentBox && m_parentBox->isFlexibleBox();
 }
 
 void Box::paintAnnotation(GraphicsContext& context, const Rect& rect) const
@@ -436,7 +417,7 @@ static Size computeBackgroundImageIntrinsicSize(const RefPtr<Image>& backgroundI
 {
     float intrinsicWidth = 0;
     float intrinsicHeight = 0;
-    double intrinsicRatio = 0;
+    float intrinsicRatio = 0;
     backgroundImage->computeIntrinsicDimensions(intrinsicWidth, intrinsicHeight, intrinsicRatio);
     if(intrinsicWidth > 0 && intrinsicHeight > 0) {
         return Size(intrinsicWidth, intrinsicHeight);
@@ -474,6 +455,108 @@ static Size computeBackgroundImageIntrinsicSize(const RefPtr<Image>& backgroundI
     }
 
     return positioningAreaSize;
+}
+
+static Size computeBackgroundImageTileSize(const RefPtr<Image>& backgroundImage, const BackgroundSize& backgroundSize, const Size& positioningAreaSize)
+{
+    auto intrinsicSize = computeBackgroundImageIntrinsicSize(backgroundImage, positioningAreaSize);
+    if(backgroundSize.type() == BackgroundSize::Type::Contain || backgroundSize.type() == BackgroundSize::Type::Cover) {
+        if(intrinsicSize.isEmpty())
+            return Size(0, 0);
+        auto xScale = positioningAreaSize.w / intrinsicSize.w;
+        auto yScale = positioningAreaSize.h / intrinsicSize.h;
+        auto scale = backgroundSize.type() == BackgroundSize::Type::Contain ? std::min(xScale, yScale) : std::max(xScale, yScale);
+        return Size(intrinsicSize.w * scale, intrinsicSize.h * scale);
+    }
+
+    assert(backgroundSize.type() == BackgroundSize::Type::Length);
+    const auto& widthLength = backgroundSize.width();
+    const auto& heightLength = backgroundSize.height();
+
+    auto tileWidth = positioningAreaSize.w;
+    auto tileHeight = positioningAreaSize.h;
+    if(widthLength.isFixed()) {
+        tileWidth = widthLength.value();
+    } else if(widthLength.isPercent()) {
+        tileWidth = widthLength.calc(positioningAreaSize.w);
+    }
+
+    if(heightLength.isFixed()) {
+        tileHeight = heightLength.value();
+    } else if(heightLength.isPercent()) {
+        tileHeight = heightLength.calc(positioningAreaSize.h);
+    }
+
+    if(widthLength.isAuto() && !heightLength.isAuto()) {
+        if(intrinsicSize.h > 0)
+            return Size(intrinsicSize.w * tileHeight / intrinsicSize.h, tileHeight);
+        return Size(intrinsicSize.w, tileHeight);
+    }
+
+    if(!widthLength.isAuto() && heightLength.isAuto()) {
+        if(intrinsicSize.w > 0)
+            return Size(tileWidth, intrinsicSize.h * tileWidth / intrinsicSize.w);
+        return Size(tileWidth, intrinsicSize.h);
+    }
+
+    if(widthLength.isAuto() && heightLength.isAuto())
+        return Size(intrinsicSize.w, intrinsicSize.h);
+    return Size(tileWidth, tileHeight);
+}
+
+void BoxModel::paintBackgroundImage(const PaintInfo& info, const Rect& borderRect, const BoxStyle* backgroundStyle, const RefPtr<Image>& backgroundImage) const
+{
+    Rect positioningArea(0, 0, borderRect.w, borderRect.h);
+    auto backgroundOrigin = backgroundStyle->backgroundOrigin();
+    if(backgroundOrigin == BackgroundBox::PaddingBox || backgroundOrigin == BackgroundBox::ContentBox) {
+        auto topWidth = borderTop();
+        auto rightWidth = borderRight();
+        auto bottomWidth = borderBottom();
+        auto leftWidth = borderLeft();
+        if(backgroundOrigin == BackgroundBox::ContentBox) {
+            topWidth += paddingTop();
+            rightWidth += paddingRight();
+            bottomWidth += paddingBottom();
+            leftWidth += paddingLeft();
+        }
+
+        positioningArea.shrink(topWidth, rightWidth, bottomWidth, leftWidth);
+    }
+
+    auto tileSize = computeBackgroundImageTileSize(backgroundImage, backgroundStyle->backgroundSize(), positioningArea.size());
+    if(tileSize.isEmpty())
+        return;
+    auto backgroundPosition = backgroundStyle->backgroundPosition();
+    const Point positionOffset = {
+        backgroundPosition.x().calcMin(positioningArea.w - tileSize.w),
+        backgroundPosition.y().calcMin(positioningArea.h - tileSize.h)
+    };
+
+    Rect tileRect(tileSize);
+    Rect destRect(borderRect);
+
+    auto backgroundRepeat = backgroundStyle->backgroundRepeat();
+    if(backgroundRepeat == BackgroundRepeat::Repeat || backgroundRepeat == BackgroundRepeat::RepeatX) {
+        tileRect.x = tileRect.w - std::fmod(positionOffset.x + positioningArea.x, tileRect.w);
+    } else {
+        destRect.x += std::max(0.f, positionOffset.x + positioningArea.x);
+        tileRect.x = -std::min(0.f, positionOffset.x + positioningArea.x);
+        destRect.w = tileRect.w - tileRect.x;
+    }
+
+    if(backgroundRepeat == BackgroundRepeat::Repeat || backgroundRepeat == BackgroundRepeat::RepeatY) {
+        tileRect.y = tileRect.h - std::fmod(positionOffset.y + positioningArea.y, tileRect.h);
+    } else {
+        destRect.y += std::max(0.f, positionOffset.y + positioningArea.y);
+        tileRect.y = -std::min(0.f, positionOffset.y + positioningArea.y);
+        destRect.h = tileRect.h - tileRect.y;
+    }
+
+    destRect.intersect(borderRect);
+    if(destRect.intersects(info.rect())) {
+        backgroundImage->setContainerSize(tileRect.size());
+        backgroundImage->drawTiled(*info, destRect, tileRect);
+    }
 }
 
 void BoxModel::paintBackgroundStyle(const PaintInfo& info, const Rect& borderRect, const BoxStyle* backgroundStyle, bool includeLeftEdge, bool includeRightEdge) const
@@ -514,95 +597,7 @@ void BoxModel::paintBackgroundStyle(const PaintInfo& info, const Rect& borderRec
     info->setColor(backgroundColor);
     info->fillRect(borderRect);
     if(backgroundImage) {
-        Rect positioningArea(0, 0, borderRect.w, borderRect.h);
-        auto backgroundOrigin = backgroundStyle->backgroundOrigin();
-        if(backgroundOrigin == BackgroundBox::PaddingBox || backgroundOrigin == BackgroundBox::ContentBox) {
-            auto topWidth = borderTop();
-            auto rightWidth = borderRight();
-            auto bottomWidth = borderBottom();
-            auto leftWidth = borderLeft();
-            if(backgroundOrigin == BackgroundBox::ContentBox) {
-                topWidth += paddingTop();
-                rightWidth += paddingRight();
-                bottomWidth += paddingBottom();
-                leftWidth += paddingLeft();
-            }
-
-            positioningArea.shrink(topWidth, rightWidth, bottomWidth, leftWidth);
-        }
-
-        Rect tileRect;
-        auto intrinsicSize = computeBackgroundImageIntrinsicSize(backgroundImage, positioningArea.size());
-        auto backgroundSize = backgroundStyle->backgroundSize();
-        switch(backgroundSize.type()) {
-        case BackgroundSize::Type::Contain:
-        case BackgroundSize::Type::Cover: {
-            auto xScale = positioningArea.w / intrinsicSize.w;
-            auto yScale = positioningArea.h / intrinsicSize.h;
-            auto scale = backgroundSize.type() == BackgroundSize::Type::Contain ? std::min(xScale, yScale) : std::max(xScale, yScale);
-            tileRect.w = intrinsicSize.w * scale;
-            tileRect.h = intrinsicSize.h * scale;
-            break;
-        }
-
-        case BackgroundSize::Type::Length:
-            const auto& widthLength = backgroundSize.width();
-            const auto& heightLength = backgroundSize.height();
-            if(widthLength.isFixed())
-                tileRect.w = widthLength.value();
-            else if(widthLength.isPercent())
-                tileRect.w = widthLength.calc(positioningArea.w);
-            else {
-                tileRect.w = positioningArea.w;
-            }
-
-            if(heightLength.isFixed())
-                tileRect.h = heightLength.value();
-            else if(heightLength.isPercent())
-                tileRect.h = heightLength.calc(positioningArea.h);
-            else {
-                tileRect.h = positioningArea.h;
-            }
-
-            if(widthLength.isAuto() && !heightLength.isAuto()) {
-                tileRect.w = intrinsicSize.w * tileRect.h / intrinsicSize.h;
-            } else if(!widthLength.isAuto() && heightLength.isAuto()) {
-                tileRect.h = intrinsicSize.h * tileRect.w / intrinsicSize.w;
-            } else if(widthLength.isAuto() && heightLength.isAuto()) {
-                tileRect.w = intrinsicSize.w;
-                tileRect.h = intrinsicSize.h;
-            }
-        }
-
-        auto backgroundPosition = backgroundStyle->backgroundPosition();
-        const Point positionOffset = {
-            backgroundPosition.x().calcMin(positioningArea.w - tileRect.w),
-            backgroundPosition.y().calcMin(positioningArea.h - tileRect.h)
-        };
-
-        Rect destRect(borderRect);
-        auto backgroundRepeat = backgroundStyle->backgroundRepeat();
-        if(backgroundRepeat == BackgroundRepeat::Repeat || backgroundRepeat == BackgroundRepeat::RepeatX) {
-            tileRect.x = tileRect.w - std::fmod(positionOffset.x + positioningArea.x, tileRect.w);
-        } else {
-            destRect.x += std::max(0.f, positionOffset.x + positioningArea.x);
-            tileRect.x = -std::min(0.f, positionOffset.x + positioningArea.x);
-            destRect.w = tileRect.w - tileRect.x;
-        }
-
-        if(backgroundRepeat == BackgroundRepeat::Repeat || backgroundRepeat == BackgroundRepeat::RepeatY) {
-            tileRect.y = tileRect.h - std::fmod(positionOffset.y + positioningArea.y, tileRect.h);
-        } else {
-            destRect.y += std::max(0.f, positionOffset.y + positioningArea.y);
-            tileRect.y = -std::min(0.f, positionOffset.y + positioningArea.y);
-            destRect.h = tileRect.h - tileRect.y;
-        }
-
-        destRect.intersect(borderRect);
-        if(destRect.intersects(info.rect())) {
-            backgroundImage->setContainerSize(tileRect.size());
-            backgroundImage->drawTiled(*info, destRect, tileRect);
-        }
+        paintBackgroundImage(info, borderRect, backgroundStyle, backgroundImage);
     }
 
     if(clipping) {
@@ -638,51 +633,48 @@ void BoxModel::paintLayer(GraphicsContext& context, const Rect& rect)
     m_layer->paint(context, rect);
 }
 
-void BoxModel::updateLayerPosition()
+void BoxModel::updateLayerGeometry()
 {
-    m_layer->updateLayerPosition();
-}
-
-float BoxModel::relativePositionOffsetX() const
-{
-    auto container = containingBlock();
-
-    auto leftLength = style()->left();
-    auto rightLength = style()->right();
-
-    auto availableWidth = containingBlockWidthForContent(container);
-    if(!leftLength.isAuto()) {
-        if(!rightLength.isAuto() && container->style()->isRightToLeftDirection())
-            return -rightLength.calc(availableWidth);
-        return leftLength.calc(availableWidth);
-    }
-
-    if(!rightLength.isAuto())
-        return -rightLength.calc(availableWidth);
-    return 0;
-}
-
-float BoxModel::relativePositionOffsetY() const
-{
-    auto container = containingBlock();
-
-    auto topLength = style()->top();
-    auto bottomLength = style()->bottom();
-
-    auto availableHeight = containingBlockHeightForContent(container);
-    if(!topLength.isAuto() && (availableHeight || !topLength.isPercent()))
-        return topLength.calc(availableHeight.value_or(0.f));
-    if(!bottomLength.isAuto() && (availableHeight || !bottomLength.isPercent()))
-        return -bottomLength.calc(availableHeight.value_or(0.f));
-    return 0;
+    m_layer->updateGeometry();
 }
 
 Point BoxModel::relativePositionOffset() const
 {
-    auto xOffset = relativePositionOffsetX();
-    auto yOffset = relativePositionOffsetY();
+    auto container = containingBlock();
+    auto availableWidth = containingBlockWidthForContent(container);
+    auto availableHeight = containingBlockHeightForContent(container);
 
-    return Point(xOffset, yOffset);
+    auto leftLength = style()->left();
+    auto rightLength = style()->right();
+    auto topLength = style()->top();
+    auto bottomLength = style()->bottom();
+
+    Point offset;
+    if(!leftLength.isAuto() && (rightLength.isAuto() || container->style()->isLeftToRightDirection())) {
+        offset.x = leftLength.calc(availableWidth);
+    } else if(!rightLength.isAuto()) {
+        offset.x = -rightLength.calc(availableWidth);
+    }
+
+    if(!topLength.isAuto() && (availableHeight || !topLength.isPercent())) {
+        offset.y = topLength.calc(availableHeight.value_or(0.f));
+    } else if(!bottomLength.isAuto() && (availableHeight || !bottomLength.isPercent())) {
+        offset.y = -bottomLength.calc(availableHeight.value_or(0.f));
+    }
+
+    if(isContinuation() && isAnonymousBlock()) {
+        auto prevBlock = prevSibling();
+        assert(prevBlock && prevBlock->isAnonymousBlock());
+
+        auto inlineBox = to<InlineBox>(prevBlock->lastChild());
+        while(inlineBox && inlineBox->hasContinuation()) {
+            if(inlineBox->isRelativePositioned())
+                offset += inlineBox->relativePositionOffset();
+            inlineBox = to<InlineBox>(inlineBox->lastChild());
+        }
+    }
+
+    return offset;
 }
 
 float BoxModel::containingBlockWidthForPositioned(const BoxModel* container) const
@@ -705,9 +697,9 @@ float BoxModel::containingBlockHeightForPositioned(const BoxModel* container) co
 
 float BoxModel::containingBlockWidthForContent(const BlockBox* container) const
 {
-    if(container)
-        return container->availableWidth();
-    return 0.f;
+    if(isTableCaptionBox())
+        return container->width();
+    return container->availableWidth();
 }
 
 std::optional<float> BoxModel::containingBlockHeightForContent(const BlockBox* container) const
@@ -715,52 +707,48 @@ std::optional<float> BoxModel::containingBlockHeightForContent(const BlockBox* c
     return container->availableHeight();
 }
 
-void BoxModel::updateVerticalMargins(const BlockBox* container)
+void BoxModel::updateVerticalMargins(float containerWidth)
 {
-    auto containerWidth = containingBlockWidthForContent(container);
     m_marginTop = style()->marginTop().calcMin(containerWidth);
     m_marginBottom = style()->marginBottom().calcMin(containerWidth);
 }
 
-void BoxModel::updateHorizontalMargins(const BlockBox* container)
+void BoxModel::updateHorizontalMargins(float containerWidth)
 {
-    auto containerWidth = containingBlockWidthForContent(container);
     m_marginLeft = style()->marginLeft().calcMin(containerWidth);
     m_marginRight = style()->marginRight().calcMin(containerWidth);
 }
 
-void BoxModel::updateMarginWidths(const BlockBox* container)
+void BoxModel::updateMarginWidths(float containerWidth)
 {
-    updateVerticalMargins(container);
-    updateHorizontalMargins(container);
+    updateVerticalMargins(containerWidth);
+    updateHorizontalMargins(containerWidth);
 }
 
-void BoxModel::updateVerticalPaddings(const BlockBox* container)
+void BoxModel::updateVerticalPaddings(float containerWidth)
 {
     if(isBorderCollapsed()) {
         m_paddingTop = m_paddingBottom = 0;
     } else {
-        auto containerWidth = containingBlockWidthForContent(container);
         m_paddingTop = style()->paddingTop().calcMin(containerWidth);
         m_paddingBottom = style()->paddingBottom().calcMin(containerWidth);
     }
 }
 
-void BoxModel::updateHorizontalPaddings(const BlockBox* container)
+void BoxModel::updateHorizontalPaddings(float containerWidth)
 {
     if(isBorderCollapsed()) {
         m_paddingLeft = m_paddingRight = 0;
     } else {
-        auto containerWidth = containingBlockWidthForContent(container);
         m_paddingLeft = style()->paddingLeft().calcMin(containerWidth);
         m_paddingRight = style()->paddingRight().calcMin(containerWidth);
     }
 }
 
-void BoxModel::updatePaddingWidths(const BlockBox* container)
+void BoxModel::updatePaddingWidths(float containerWidth)
 {
-    updateVerticalPaddings(container);
-    updateHorizontalPaddings(container);
+    updateVerticalPaddings(containerWidth);
+    updateHorizontalPaddings(containerWidth);
 }
 
 void BoxModel::computeBorderWidths(float& borderTop, float& borderBottom, float& borderLeft, float& borderRight) const
@@ -814,7 +802,7 @@ void BoxModel::build()
 {
     if(requiresLayer()) {
         assert(!hasLayer());
-        m_layer = BoxLayer::create(this, enclosingLayer());
+        m_layer = BoxLayer::create(this);
         setHasLayer(true);
     }
 
@@ -848,8 +836,43 @@ BoxFrame::BoxFrame(Node* node, const RefPtr<BoxStyle>& style)
 
 bool BoxFrame::requiresLayer() const
 {
-    return isPositioned() || isRelativePositioned() || isOverflowHidden() || hasTransform() || hasColumnFlowBox()
-        || style()->hasOpacity() || style()->hasBlendMode() || style()->zIndex();
+    return isPositioned() || isRelativePositioned() || isOverflowHidden() || hasColumnFlowBox() || style()->isStackingContext();
+}
+
+bool BoxFrame::isStretchedFlexItem(bool isRowDirection) const
+{
+    if(!isFlexItem())
+        return false;
+    auto parent = parentBox();
+    assert(parent && parent->isFlexibleBox());
+    auto parentStyle = parent->style();
+
+    if(isRowDirection != parentStyle->isRowFlexDirection())
+        return false;
+    if(parentStyle->flexWrap() != FlexWrap::Nowrap) {
+        return false;
+    }
+
+    auto marginStartLength = isRowDirection ? style()->marginTop() : style()->marginLeft();
+    auto marginEndLength = isRowDirection ? style()->marginBottom(): style()->marginRight();
+    if(marginStartLength.isAuto() || marginEndLength.isAuto()) {
+        return false;
+    }
+
+    auto alignSelf = style()->alignSelf();
+    if(alignSelf == AlignItem::Auto)
+        alignSelf = parentStyle->alignItems();
+    return alignSelf == AlignItem::Stretch;
+}
+
+bool BoxFrame::isStretchedRowFlexItem() const
+{
+    return isStretchedFlexItem(true);
+}
+
+bool BoxFrame::isStretchedColumnFlexItem() const
+{
+    return isStretchedFlexItem(false);
 }
 
 BoxFrame::~BoxFrame() = default;
@@ -917,14 +940,14 @@ void BoxFrame::computeHorizontalStaticDistance(Length& leftLength, Length& right
             if(auto box = to<BoxFrame>(parent)) {
                 staticPosition += box->x();
                 if(box->isRelativePositioned()) {
-                    staticPosition += box->relativePositionOffsetX();
+                    staticPosition += box->relativePositionOffset().x;
                 }
             }
         }
 
         leftLength = Length(Length::Type::Fixed, staticPosition);
     } else {
-        auto staticPosition = layer()->staticLeft() + containerWidth + container->borderRight();
+        auto staticPosition = layer()->staticLeft() + containerWidth + container->borderLeft();
         while(parent && !parent->isBoxFrame())
             parent = parent->parentBox();
         if(auto box = to<BoxFrame>(parent))
@@ -933,7 +956,7 @@ void BoxFrame::computeHorizontalStaticDistance(Length& leftLength, Length& right
             if(auto box = to<BoxFrame>(parent)) {
                 staticPosition -= box->x();
                 if(box->isRelativePositioned()) {
-                    staticPosition -= box->relativePositionOffsetX();
+                    staticPosition -= box->relativePositionOffset().x;
                 }
             }
         }
@@ -944,19 +967,37 @@ void BoxFrame::computeHorizontalStaticDistance(Length& leftLength, Length& right
 
 void BoxFrame::computeVerticalStaticDistance(Length& topLength, Length& bottomLength, const BoxModel* container) const
 {
-    if(!topLength.isAuto() || !bottomLength.isAuto())
-        return;
+    if(topLength.isAuto() && bottomLength.isAuto()) {
+        topLength = Length(Length::Type::Fixed, computeStaticTop(container));
+    } else if(isAbsolutePositioned() && container->isPaginatedView()) {
+        auto pageHeight = document()->containerHeight();
+        if(pageHeight > 0.f) {
+            auto staticTop = computeStaticTop(container);
+            auto pageOffset = std::floor(staticTop / pageHeight) * pageHeight;
+            if(pageOffset > 0) {
+                if(!topLength.isAuto())
+                    topLength = Length(Length::Type::Fixed, topLength.calc(pageHeight) + pageOffset);
+                if(!bottomLength.isAuto()) {
+                    bottomLength = Length(Length::Type::Fixed, bottomLength.calc(pageHeight) - pageOffset);
+                }
+            }
+        }
+    }
+}
+
+float BoxFrame::computeStaticTop(const BoxModel* container) const
+{
     auto staticTop = layer()->staticTop() - container->borderTop();
     for(auto parent = parentBox(); parent && parent != container; parent = parent->containingBox()) {
         if(auto box = to<BoxFrame>(parent)) {
             staticTop += box->y();
             if(box->isRelativePositioned()) {
-                staticTop += box->relativePositionOffsetY();
+                staticTop += box->relativePositionOffset().y;
             }
         }
     }
 
-    topLength = Length(Length::Type::Fixed, staticTop);
+    return staticTop;
 }
 
 void BoxFrame::computeHorizontalMargins(float& marginLeft, float& marginRight, float childWidth, const BlockBox* container, float containerWidth) const
@@ -973,7 +1014,7 @@ void BoxFrame::computeHorizontalMargins(float& marginLeft, float& marginRight, f
 
     auto containerBlock = to<BlockFlowBox>(container);
     if(containerBlock && containerBlock->containsFloats() && avoidsFloats())
-        containerWidth = containerBlock->availableWidthForLine(y(), false);
+        containerWidth = containerBlock->availableWidthForLine(y());
     if(childWidth < containerWidth) {
         if(marginLeftLength.isAuto() && marginRightLength.isAuto()) {
             marginLeft = std::max(0.f, (containerWidth - childWidth) / 2.f);

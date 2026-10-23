@@ -10,7 +10,6 @@
 #define PLUTOBOOK_HTMLENTITYPARSER_H
 
 #include <string>
-#include <cstdint>
 
 namespace plutobook {
 
@@ -30,7 +29,8 @@ private:
     bool handleDecimal(char cc);
     bool handleMaybeHex(char cc);
     bool handleHex(char cc);
-    void append(uint32_t cp);
+
+    void appendCodePoint(unsigned cp);
 
     char currentInputCharacter() const;
     char nextInputCharacter();

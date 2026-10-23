@@ -14,22 +14,23 @@
 #include "document.h"
 #include "boxstyle.h"
 
-#include "plutobook.hpp"
-
 namespace plutobook {
 
 class CSSPropertyData {
 public:
-    CSSPropertyData(uint32_t specificity, uint32_t position, const CSSProperty& property)
+    CSSPropertyData(uint32_t specificity, uint32_t position, uint32_t sequence, const CSSProperty& property)
         : m_id(property.id()), m_origin(property.origin()), m_important(property.important())
-        , m_specificity(specificity), m_position(position), m_value(property.value())
+        , m_specificity(specificity), m_position(position), m_sequence(sequence), m_value(property.value())
     {}
 
     CSSPropertyID id() const { return m_id; }
+    void setId(CSSPropertyID id) { m_id = id; }
+
     CSSStyleOrigin origin() const { return m_origin; }
     bool important() const { return m_important; }
     uint32_t specificity() const { return m_specificity; }
     uint32_t position() const { return m_position; }
+    uint32_t sequence() const { return m_sequence; }
     const RefPtr<CSSValue>& value() const { return m_value; }
 
     bool isLessThan(const CSSPropertyData& data) const;
@@ -40,6 +41,7 @@ private:
     bool m_important;
     uint32_t m_specificity;
     uint32_t m_position;
+    uint32_t m_sequence;
     RefPtr<CSSValue> m_value;
 };
 
@@ -51,7 +53,9 @@ inline bool CSSPropertyData::isLessThan(const CSSPropertyData& data) const
         return m_origin < data.origin();
     if(m_specificity != data.specificity())
         return m_specificity < data.specificity();
-    return m_position < data.position();
+    if(m_position != data.position())
+        return m_position < data.position();
+    return m_sequence < data.sequence();
 }
 
 using CSSPropertyDataList = std::vector<CSSPropertyData>;
@@ -62,37 +66,52 @@ public:
         : m_parentStyle(parentStyle), m_pseudoType(pseudoType)
     {}
 
-    void merge(uint32_t specificity, uint32_t position, const CSSPropertyList& properties);
-    void buildStyle(BoxStyle* newStyle);
+    void cascade(uint32_t specificity, uint32_t position, const CSSPropertyList& properties);
+    void cascade(uint32_t specificity, uint32_t position, uint32_t sequence, const CSSPropertyList& properties);
+    void cascade(uint32_t specificity, uint32_t position, uint32_t sequence, const CSSProperty& property);
 
+    void buildStyle(BoxStyle* newStyle);
     FontDescription fontDescription() const;
 
 protected:
+    CSSPropertyDataList m_properties;
     const BoxStyle* m_parentStyle;
     PseudoType m_pseudoType;
-    CSSPropertyDataList m_properties;
+    uint32_t m_sequence = 0;
 };
 
-void StyleBuilder::merge(uint32_t specificity, uint32_t position, const CSSPropertyList& properties)
+void StyleBuilder::cascade(uint32_t specificity, uint32_t position, const CSSPropertyList& properties)
 {
     for(const auto& property : properties) {
-        CSSPropertyData data(specificity, position, property);
-        auto predicate_func = [&property](const CSSPropertyData& item) {
-            if(property.id() == CSSPropertyID::Custom && item.id() == CSSPropertyID::Custom) {
-                const auto& a = to<CSSCustomPropertyValue>(*property.value());
-                const auto& b = to<CSSCustomPropertyValue>(*item.value());
-                return a.name() == b.name();
-            }
+        cascade(specificity, position, m_sequence++, property);
+    }
+}
 
-            return property.id() == item.id();
-        };
+void StyleBuilder::cascade(uint32_t specificity, uint32_t position, uint32_t sequence, const CSSPropertyList& properties)
+{
+    for(const auto& property : properties) {
+        cascade(specificity, position, sequence, property);
+    }
+}
 
-        auto it = std::find_if(m_properties.begin(), m_properties.end(), predicate_func);
-        if(it == m_properties.end()) {
-            m_properties.push_back(std::move(data));
-        } else if(!data.isLessThan(*it)) {
-            *it = std::move(data);
+void StyleBuilder::cascade(uint32_t specificity, uint32_t position, uint32_t sequence, const CSSProperty& property)
+{
+    CSSPropertyData data(specificity, position, sequence, property);
+    auto predicate_func = [&property](const CSSPropertyData& item) {
+        if(property.id() == CSSPropertyID::Custom && item.id() == CSSPropertyID::Custom) {
+            const auto& a = to<CSSCustomPropertyValue>(*property.value());
+            const auto& b = to<CSSCustomPropertyValue>(*item.value());
+            return a.name() == b.name();
         }
+
+        return property.id() == item.id();
+    };
+
+    auto it = std::find_if(m_properties.begin(), m_properties.end(), predicate_func);
+    if(it == m_properties.end()) {
+        m_properties.push_back(std::move(data));
+    } else if(!data.isLessThan(*it)) {
+        *it = std::move(data);
     }
 }
 
@@ -179,25 +198,58 @@ static CSSPropertyID resolveDirectionAwareProperty(CSSPropertyID id, WritingDire
     }
 }
 
+static CSSPropertyID resolveCascadeTarget(CSSPropertyID id, WritingDirection direction)
+{
+    switch(id) {
+    case CSSPropertyID::Unknown:
+        return CSSPropertyID::Unknown;
+    case CSSPropertyID::ColumnBreakAfter:
+    case CSSPropertyID::PageBreakAfter:
+        return CSSPropertyID::BreakAfter;
+    case CSSPropertyID::ColumnBreakBefore:
+    case CSSPropertyID::PageBreakBefore:
+        return CSSPropertyID::BreakBefore;
+    case CSSPropertyID::ColumnBreakInside:
+    case CSSPropertyID::PageBreakInside:
+        return CSSPropertyID::BreakInside;
+    default:
+        return resolveDirectionAwareProperty(id, direction);
+    }
+}
+
 void StyleBuilder::buildStyle(BoxStyle* newStyle)
 {
     CSSPropertyDataList variables;
-    for(const auto& property : m_properties) {
+    std::vector<const CSSCustomPropertyValue*> customs;
+    for(auto& property : m_properties) {
         if(is<CSSVariableReferenceValue>(*property.value())) {
             variables.push_back(property);
+            property.setId(CSSPropertyID::Unknown);
         } else if(property.id() == CSSPropertyID::Custom) {
             const auto& custom = to<CSSCustomPropertyValue>(*property.value());
-            newStyle->setCustom(custom.name(), custom.value());
+            const auto& name = custom.name();
+            const auto& value = custom.value();
+            if(value->isInitial()) {
+                newStyle->setCustom(name, nullptr);
+            } else if(!value->isInherit() && !value->isUnset()) {
+                newStyle->setCustom(name, value);
+                if(value->containsVariables()) {
+                    customs.push_back(&custom);
+                }
+            }
         }
+    }
+
+    for(auto custom : customs) {
+        newStyle->setCustom(custom->name(), custom->resolve(newStyle));
     }
 
     for(const auto& variable : variables) {
         const auto& value = to<CSSVariableReferenceValue>(*variable.value());
-        merge(variable.specificity(), variable.position(), value.resolve(newStyle));
+        cascade(variable.specificity(), variable.position(), variable.sequence(), value.resolve(newStyle));
     }
 
     newStyle->setFontDescription(fontDescription());
-
     for(const auto& property : m_properties) {
         switch(property.id()) {
         case CSSPropertyID::Color:
@@ -212,10 +264,29 @@ void StyleBuilder::buildStyle(BoxStyle* newStyle)
     }
 
     const WritingDirection direction(newStyle->writingMode(), newStyle->direction());
+    for(auto& property : m_properties) {
+        auto target = resolveCascadeTarget(property.id(), direction);
+        if(target == property.id())
+            continue;
+        auto predicate_func = [target](const CSSPropertyData& item) {
+            return target == item.id();
+        };
+
+        auto it = std::find_if(m_properties.begin(), m_properties.end(), predicate_func);
+        if(it != m_properties.end()) {
+            if(property.isLessThan(*it)) {
+                target = CSSPropertyID::Unknown;
+            } else {
+                it->setId(CSSPropertyID::Unknown);
+            }
+        }
+
+        property.setId(target);
+    }
 
     for(const auto& property : m_properties) {
-        const auto id = property.id();
-        switch(id) {
+        switch(property.id()) {
+        case CSSPropertyID::Unknown:
         case CSSPropertyID::Custom:
         case CSSPropertyID::FontFamily:
         case CSSPropertyID::FontSize:
@@ -230,7 +301,7 @@ void StyleBuilder::buildStyle(BoxStyle* newStyle)
         case CSSPropertyID::WritingMode:
             break;
         default:
-            newStyle->set(resolveDirectionAwareProperty(id, direction), property.value());
+            newStyle->set(property.id(), property.value());
             break;
         }
     }
@@ -266,8 +337,7 @@ FontDescriptionBuilder::FontDescriptionBuilder(const BoxStyle* parentStyle, cons
 {
     for(const auto& property : properties) {
         if(is<CSSInheritValue>(*property.value())
-            || is<CSSUnsetValue>(*property.value())
-            || is<CSSVariableReferenceValue>(*property.value())) {
+            || is<CSSUnsetValue>(*property.value())) {
             continue;
         }
 
@@ -556,7 +626,7 @@ void ElementStyleBuilder::add(const CSSRuleDataList* rules)
     if(rules) {
         for(const auto& rule : *rules) {
             if(rule.match(m_element, m_pseudoType, m_selectorFilter)) {
-                merge(rule.specificity(), rule.position(), rule.properties());
+                cascade(rule.specificity(), rule.position(), rule.properties());
             }
         }
     }
@@ -565,8 +635,8 @@ void ElementStyleBuilder::add(const CSSRuleDataList* rules)
 RefPtr<BoxStyle> ElementStyleBuilder::build()
 {
     if(m_pseudoType == PseudoType::None) {
-        merge(0, 0, m_element->presentationAttributeStyle());
-        merge(0, 0, m_element->inlineStyle());
+        cascade(0, 0, m_element->presentationAttributeStyle());
+        cascade(0, 0, m_element->inlineStyle());
     }
 
     if(m_properties.empty()) {
@@ -585,8 +655,6 @@ RefPtr<BoxStyle> ElementStyleBuilder::build()
     buildStyle(newStyle.get());
     if(newStyle->display() == Display::None)
         return newStyle;
-    if(newStyle->position() == Position::Static && !m_parentStyle->isDisplayFlex())
-        newStyle->reset(CSSPropertyID::ZIndex);
     if(m_pseudoType == PseudoType::FirstLetter) {
         newStyle->setPosition(Position::Static);
         if(newStyle->isFloating()) {
@@ -594,6 +662,13 @@ RefPtr<BoxStyle> ElementStyleBuilder::build()
         } else {
             newStyle->setDisplay(Display::Inline);
         }
+    }
+
+    if(newStyle->hasZIndex() && (newStyle->position() != Position::Static || m_parentStyle->isDisplayFlex()))
+        newStyle->setHasEffectiveZIndex(true);
+    if(newStyle->hasEffectiveZIndex() || m_element->isRootNode() || newStyle->position() == Position::Fixed
+        || newStyle->hasBlendMode() || newStyle->hasTransform() || newStyle->hasOpacity()) {
+        newStyle->setIsStackingContext(true);
     }
 
     if(newStyle->isFloating() || newStyle->isPositioned() || m_element->isRootNode() || m_parentStyle->isDisplayFlex()) {
@@ -630,20 +705,18 @@ RefPtr<BoxStyle> ElementStyleBuilder::build()
 
 class PageStyleBuilder final : public StyleBuilder {
 public:
-    PageStyleBuilder(const GlobalString& pageName, uint32_t pageIndex, PageMarginType marginType, PseudoType pseudoType, const BoxStyle* parentStyle);
+    PageStyleBuilder(uint32_t pageIndex, PageMarginType marginType, const BoxStyle* parentStyle);
 
     void add(const CSSPageRuleDataList& rules);
     RefPtr<BoxStyle> build();
 
 private:
-    GlobalString m_pageName;
     uint32_t m_pageIndex;
     PageMarginType m_marginType;
 };
 
-PageStyleBuilder::PageStyleBuilder(const GlobalString& pageName, uint32_t pageIndex, PageMarginType marginType, PseudoType pseudoType, const BoxStyle* parentStyle)
-    : StyleBuilder(parentStyle, pseudoType)
-    , m_pageName(pageName)
+PageStyleBuilder::PageStyleBuilder(uint32_t pageIndex, PageMarginType marginType, const BoxStyle* parentStyle)
+    : StyleBuilder(parentStyle, PseudoType::None)
     , m_pageIndex(pageIndex)
     , m_marginType(marginType)
 {
@@ -652,13 +725,13 @@ PageStyleBuilder::PageStyleBuilder(const GlobalString& pageName, uint32_t pageIn
 void PageStyleBuilder::add(const CSSPageRuleDataList& rules)
 {
     for(const auto& rule : rules) {
-        if(rule.match(m_pageName, m_pageIndex, m_pseudoType)) {
+        if(rule.match(m_pageIndex, m_parentStyle->direction())) {
             if(m_marginType == PageMarginType::None) {
-                merge(rule.specificity(), rule.position(), rule.properties());
+                cascade(rule.specificity(), rule.position(), rule.properties());
             } else {
                 for(const auto& margin : rule.margins()) {
                     if(m_marginType == margin->marginType()) {
-                        merge(rule.specificity(), rule.position(), margin->properties());
+                        cascade(rule.specificity(), rule.position(), margin->properties());
                     }
                 }
             }
@@ -748,19 +821,10 @@ RefPtr<BoxStyle> PageStyleBuilder::build()
     newStyle->setPosition(Position::Static);
     newStyle->setDisplay(Display::Block);
     newStyle->setFloating(Float::None);
+    if(m_marginType != PageMarginType::None && newStyle->hasZIndex())
+        newStyle->setHasEffectiveZIndex(true);
+    newStyle->setIsStackingContext(true);
     return newStyle;
-}
-
-static const CSSRuleList& userAgentRules()
-{
-    static CSSRuleList rules = []() {
-        static Heap heap(1024 * 96);
-        CSSParserContext context(nullptr, CSSStyleOrigin::UserAgent, Url());
-        CSSParser parser(context, &heap);
-        return parser.parseSheet(kUserAgentStyle);
-    }();
-
-    return rules;
 }
 
 CSSStyleSheet::CSSStyleSheet(Document* document)
@@ -774,9 +838,6 @@ CSSStyleSheet::CSSStyleSheet(Document* document)
     , m_pageRules(document->heap())
     , m_fontFaces(document->heap())
 {
-    if(document->book()) {
-        addRuleList(userAgentRules());
-    }
 }
 
 CSSStyleSheet::~CSSStyleSheet() = default;
@@ -801,16 +862,16 @@ RefPtr<BoxStyle> CSSStyleSheet::pseudoStyleForElement(Element* element, PseudoTy
     return builder.build();
 }
 
-RefPtr<BoxStyle> CSSStyleSheet::styleForPage(const GlobalString& pageName, uint32_t pageIndex, PseudoType pseudoType) const
+RefPtr<BoxStyle> CSSStyleSheet::styleForPage(uint32_t pageIndex) const
 {
-    PageStyleBuilder builder(pageName, pageIndex, PageMarginType::None, pseudoType, m_document->rootStyle());
+    PageStyleBuilder builder(pageIndex, PageMarginType::None, m_document->rootStyle());
     builder.add(m_pageRules);
     return builder.build();
 }
 
-RefPtr<BoxStyle> CSSStyleSheet::styleForPageMargin(const GlobalString& pageName, uint32_t pageIndex, PageMarginType marginType, const BoxStyle* pageStyle) const
+RefPtr<BoxStyle> CSSStyleSheet::styleForPageMargin(uint32_t pageIndex, PageMarginType marginType, const BoxStyle* pageStyle) const
 {
-    PageStyleBuilder builder(pageName, pageIndex, marginType, pageStyle->pseudoType(), pageStyle);
+    PageStyleBuilder builder(pageIndex, marginType, pageStyle);
     builder.add(m_pageRules);
     return builder.build();
 }
@@ -851,11 +912,15 @@ const CSSCounterStyle& CSSStyleSheet::getCounterStyle(const GlobalString& name)
 
 std::string CSSStyleSheet::getCounterText(int value, const GlobalString& listType)
 {
+    if(listType == decimalGlo)
+        return CSSCounterStyle::generateDecimalRepresentation<false>(value);
     return getCounterStyle(listType).generateRepresentation(value);
 }
 
 std::string CSSStyleSheet::getMarkerText(int value, const GlobalString& listType)
 {
+    if(listType == decimalGlo)
+        return CSSCounterStyle::generateDecimalRepresentation<true>(value);
     const auto& counterStyle = getCounterStyle(listType);
     std::string representation(counterStyle.prefix());
     representation += counterStyle.generateRepresentation(value);
@@ -869,10 +934,10 @@ void CSSStyleSheet::parseStyle(std::string_view content, CSSStyleOrigin origin, 
         return;
     CSSParserContext context(m_document, origin, std::move(baseUrl));
     CSSParser parser(context, m_document->heap());
-    addRuleList(parser.parseSheet(content));
+    addRules(parser.parseSheet(content));
 }
 
-void CSSStyleSheet::addRuleList(const CSSRuleList& rules)
+void CSSStyleSheet::addRules(const CSSRuleList& rules)
 {
     for(const auto& rule : rules) {
         switch(rule->type()) {
@@ -1245,7 +1310,27 @@ void CSSStyleSheet::addCounterStyleRule(CSSCounterStyleRule& rule)
 void CSSStyleSheet::addMediaRule(CSSMediaRule& rule)
 {
     if(m_document->supportsMediaQueries(rule.queries())) {
-        addRuleList(rule.rules());
+        addRules(rule.rules());
+    }
+}
+
+static const CSSRuleList& userAgentRules()
+{
+    static CSSRuleList rules = []() {
+        static Heap heap(1024 * 96);
+        CSSParserContext context(nullptr, CSSStyleOrigin::UserAgent, Url());
+        CSSParser parser(context, &heap);
+        return parser.parseSheet(kUserAgentStyle);
+    }();
+
+    return rules;
+}
+
+void CSSStyleSheet::addUserAgentRules()
+{
+    assert(m_ruleCount == 0);
+    if(m_document->isRootDocument()) {
+        addRules(userAgentRules());
     }
 }
 

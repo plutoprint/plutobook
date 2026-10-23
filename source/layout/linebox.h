@@ -234,9 +234,11 @@ public:
     float lineBottom() const { return m_lineBottom; }
     void updateLineTopAndBottom(const LineBox* line);
 
+    float lineBoxTop() const { return m_lineBoxTop; }
+    float lineBoxBottom() const { return m_lineBoxBottom; }
+
     float alignInHorizontalDirection(float startOffset);
     float alignInVerticalDirection(FragmentBuilder* fragmentainer, float blockHeight);
-    float adjustLineBoxInFragmentFlow(FragmentBuilder* fragmentainer, float offset, float lineHeight) const;
 
     const char* name() const final { return "RootLineBox"; }
 
@@ -244,6 +246,8 @@ private:
     RootLineBox(BlockFlowBox* box);
     float m_lineTop{0};
     float m_lineBottom{0};
+    float m_lineBoxTop{0};
+    float m_lineBoxBottom{0};
 };
 
 template<>

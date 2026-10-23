@@ -93,9 +93,14 @@ public:
 
     void endAttribute() {
         assert(m_type == Type::StartTag || m_type == Type::EndTag);
-        auto name = GlobalString(m_attributeName);
-        auto value = m_heap->createString(m_attributeValue);
-        m_attributes.emplace_back(name, value);
+        const GlobalString name(m_attributeName);
+        for(const auto& attribute : m_attributes) {
+            if(name == attribute.name()) {
+                return;
+            }
+        }
+
+        m_attributes.emplace_back(name, m_heap->createString(m_attributeValue));
     }
 
     void beginComment() {
@@ -217,6 +222,7 @@ public:
             m_publicIdentifier = token.publicIdentifier();
             m_systemIdentifier = token.systemIdentifier();
             m_data = token.data();
+            break;
         case HTMLToken::Type::StartTag:
         case HTMLToken::Type::EndTag:
             m_selfClosing = token.selfClosing();
@@ -298,6 +304,8 @@ private:
     std::span<Attribute> m_attributes;
     std::string_view m_data;
 };
+
+enum class CaseMode : uint8_t;
 
 class HTMLTokenizer {
 public:
@@ -382,6 +390,10 @@ public:
 
     State state() const { return m_state; }
     void setState(State state) { m_state = state; }
+
+    bool shouldAllowCDATA() const { return m_shouldAllowCDATA; }
+    void setShouldAllowCDATA(bool value) { m_shouldAllowCDATA = value; }
+
     bool atEOF() const { return m_currentToken.type() == HTMLToken::Type::EndOfFile; }
 
 private:
@@ -475,7 +487,7 @@ private:
     char handleInputCharacter(char inputCharacter);
 
     bool consumeCharacterReference(std::string& output, bool inAttributeValue);
-    bool consumeString(std::string_view value, bool caseSensitive);
+    bool consumeString(std::string_view value, CaseMode mode);
 
     std::string_view m_input;
     std::string m_entityBuffer;
@@ -484,6 +496,7 @@ private:
     std::string m_endTagNameBuffer;
     std::string m_appropriateEndTagName;
     State m_state{State::Data};
+    bool m_shouldAllowCDATA{false};
     bool m_reconsumeCurrentCharacter{true};
     char m_additionalAllowedCharacter{0};
     HTMLToken m_currentToken;
@@ -503,6 +516,8 @@ inline bool HTMLTokenizer::switchTo(State state)
     return true;
 }
 
+constexpr char kEndOfFileMarker = '\0';
+
 inline char HTMLTokenizer::nextInputCharacter()
 {
     if(!m_input.empty()) {
@@ -513,7 +528,7 @@ inline char HTMLTokenizer::nextInputCharacter()
 
     if(!m_input.empty())
         return handleInputCharacter(m_input.front());
-    return 0;
+    return kEndOfFileMarker;
 }
 
 inline char HTMLTokenizer::handleInputCharacter(char inputCharacter)

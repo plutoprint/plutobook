@@ -12,22 +12,26 @@
 
 namespace plutobook {
 
-CharacterBreakIterator::CharacterBreakIterator(const UString& text, const LocaleData* locale)
-    : m_iterator(locale->characterIterator())
+TextBreakIterator::TextBreakIterator(const UString &text, const LocaleData *locale)
+    : m_text(text), m_locale(locale), m_id(locale->nextIteratorId())
 {
-    m_iterator->setText(text);
 }
 
-int CharacterBreakIterator::nextBreakOpportunity(int offset, int end) const
+CharacterBreakIterator::CharacterBreakIterator(const UString& text, const LocaleData* locale)
+    : TextBreakIterator(text, locale)
 {
-    auto position = m_iterator->following(offset);
-    if(position == UBRK_DONE)
+}
+
+uint32_t CharacterBreakIterator::nextBreakOpportunity(uint32_t offset, uint32_t end) const
+{
+    auto position = m_locale->nextCharacterBreak(m_id, m_text, offset);
+    if(position == UBRK_DONE || position > end)
         return end;
     return position;
 }
 
 LineBreakIterator::LineBreakIterator(const UString& text, const LocaleData* locale)
-    : m_text(text), m_locale(locale)
+    : TextBreakIterator(text, locale)
 {
 }
 
@@ -109,11 +113,6 @@ inline bool needsLineBreakIterator(UChar ch)
     return ch > kAsciiLineBreakTableLastChar && ch != kNoBreakSpaceCharacter;
 }
 
-inline bool isBreakableSpace(UChar cc)
-{
-    return cc == kSpaceCharacter || cc == kTabulationCharacter || cc == kNewlineCharacter;
-}
-
 uint32_t LineBreakIterator::nextBreakOpportunity(uint32_t pos, uint32_t end) const
 {
     UChar lastLastCh = pos > 1 ? m_text[pos - 2] : 0;
@@ -125,15 +124,8 @@ uint32_t LineBreakIterator::nextBreakOpportunity(uint32_t pos, uint32_t end) con
         if(isBreakableSpace(ch) || shouldBreakAfter(lastLastCh, lastCh, ch))
             return i;
         if(needsLineBreakIterator(ch) || needsLineBreakIterator(lastCh)) {
-            if(m_iterator == nullptr) {
-                m_iterator = m_locale->lineIterator();
-                m_iterator->setText(m_text);
-            }
-
-            if(i > 0 && nextBreak < i) {
-                nextBreak = m_iterator->following(i - 1);
-            }
-
+            if(i > 0 && nextBreak < i)
+                nextBreak = m_locale->nextLineBreak(m_id, m_text, i - 1);
             if(i == nextBreak && !isBreakableSpace(lastCh)) {
                 return i;
             }
@@ -149,8 +141,8 @@ uint32_t LineBreakIterator::nextBreakOpportunity(uint32_t pos, uint32_t end) con
 uint32_t LineBreakIterator::previousBreakOpportunity(uint32_t offset, uint32_t start) const
 {
     auto buffer = m_text.getBuffer();
-    auto pos = std::min<int>(offset, m_text.length());
-    auto end = std::min<int>(pos + 2, m_text.length());
+    auto pos = std::min<uint32_t>(offset, m_text.length());
+    auto end = std::min<uint32_t>(pos + 2, m_text.length());
     while(pos > start) {
         auto nextBreak = nextBreakOpportunity(pos, end);
         if(pos == nextBreak)
@@ -164,7 +156,7 @@ uint32_t LineBreakIterator::previousBreakOpportunity(uint32_t offset, uint32_t s
 
 bool LineBreakIterator::isBreakable(uint32_t pos) const
 {
-    auto end = std::min<int>(pos + 1, m_text.length());
+    auto end = std::min<uint32_t>(pos + 1, m_text.length());
     auto nextBreak = nextBreakOpportunity(pos, end);
     return pos == nextBreak;
 }
