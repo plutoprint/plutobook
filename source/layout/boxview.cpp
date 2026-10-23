@@ -43,6 +43,7 @@ void BoxView::computeHeight(float& y, float& height, float& marginTop, float& ma
 void BoxView::layout(FragmentBuilder* fragmentainer)
 {
     setWidth(document()->containerWidth());
+    setIsPaginatedView(isPageFragmentainer(fragmentainer));
     BlockFlowBox::layout(fragmentainer);
     updateLayerPosition();
 }

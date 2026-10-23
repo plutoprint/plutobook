@@ -969,7 +969,7 @@ void BoxFrame::computeVerticalStaticDistance(Length& topLength, Length& bottomLe
 {
     if(topLength.isAuto() && bottomLength.isAuto()) {
         topLength = Length(Length::Type::Fixed, computeStaticTop(container));
-    } else if(isAbsolutePositioned() && container->isBoxView()) {
+    } else if(isAbsolutePositioned() && container->isPaginatedView()) {
         auto pageHeight = document()->containerHeight();
         if(pageHeight > 0.f) {
             auto staticTop = computeStaticTop(container);

@@ -61,6 +61,11 @@ private:
     double m_fragmentOffset = 0;
 };
 
+inline bool isPageFragmentainer(const FragmentBuilder* fragmentainer)
+{
+    return fragmentainer && fragmentainer->fragmentType() == FragmentType::Page;
+}
+
 } // namespace plutobook
 
 #endif // PLUTOBOOK_FRAGMENTBUILDER_H

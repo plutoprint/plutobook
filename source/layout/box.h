@@ -169,6 +169,8 @@ public:
     bool isOverflowHidden() const { return m_isOverflowHidden; }
     bool isBackgroundStolen() const { return m_isBackgroundStolen; }
     bool isBorderCollapsed() const { return m_isBorderCollapsed; }
+    bool isPaginatedView() const { return m_isPaginatedView; }
+    bool isPaginatedTable() const { return m_isPaginatedTable; }
     bool isTableHeader() const { return m_isTableHeader; }
     bool isTableFooter() const { return m_isTableFooter; }
     bool isColumnSpanner() const { return m_isColumnSpanner; }
@@ -188,6 +190,8 @@ public:
     void setIsOverflowHidden(bool value) { m_isOverflowHidden = value; }
     void setIsBackgroundStolen(bool value) { m_isBackgroundStolen = value; }
     void setIsBorderCollapsed(bool value) { m_isBorderCollapsed = value; }
+    void setIsPaginatedView(bool value) { m_isPaginatedView = value; }
+    void setIsPaginatedTable(bool value) { m_isPaginatedTable = value; }
     void setIsTableHeader(bool value) { m_isTableHeader = value; }
     void setIsTableFooter(bool value) { m_isTableFooter = value; }
     void setIsColumnSpanner(bool value) { m_isColumnSpanner = value; }
@@ -250,6 +254,8 @@ private:
     bool m_isBackgroundStolen : 1 {false};
     bool m_isColumnSpanner : 1 {false};
     bool m_isBorderCollapsed : 1 {false};
+    bool m_isPaginatedView : 1 {false};
+    bool m_isPaginatedTable : 1 {false};
     bool m_isTableHeader : 1 {false};
     bool m_isTableFooter : 1 {false};
     bool m_isListMarker : 1 {false};

@@ -9,7 +9,6 @@
 #include "tablebox.h"
 #include "borderpainter.h"
 #include "fragmentbuilder.h"
-#include "boxview.h"
 
 #include <span>
 #include <ranges>
@@ -419,6 +418,7 @@ void TableBox::layout(FragmentBuilder* fragmentainer)
 {
     updateWidth();
     setHeight(0.f);
+    setIsPaginatedTable(isPageFragmentainer(fragmentainer));
     for(auto caption : m_captions) {
         if(caption->captionSide() == CaptionSide::Top) {
             layoutCaption(caption, fragmentainer);
@@ -658,7 +658,7 @@ void TableBox::paintContents(const PaintInfo& info, const Point& offset, PaintPh
     }
 
     auto shouldPaintCollapsedBorders = phase == PaintPhase::Decorations && m_collapsedBorderEdges && isBorderCollapsed();
-    if(view()->isPrinting()) {
+    if(isPaginatedTable()) {
         if(auto footer = footerSection()) {
             const auto& pageRect = info.rect();
             if(pageRect.bottom() < offset.y + footer->y()) {
@@ -683,7 +683,7 @@ void TableBox::paintContents(const PaintInfo& info, const Point& offset, PaintPh
         }
     }
 
-    if(view()->isPrinting()) {
+    if(isPaginatedTable()) {
         if(auto header = headerSection()) {
             const auto& pageRect = info.rect();
             if(pageRect.y > offset.y + header->y()) {
