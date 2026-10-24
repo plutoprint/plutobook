@@ -948,8 +948,8 @@ public:
     bool preserveNewline() const { return preserveNewline(m_whiteSpace); }
     bool collapseWhiteSpace() const { return collapseWhiteSpace(m_whiteSpace); }
 
-    bool breakAnywhere() const { return m_overflowWrap == OverflowWrap::Anywhere || m_wordBreak == WordBreak::BreakAll; }
-    bool breakWord() const { return m_wordBreak == WordBreak::BreakWord || m_overflowWrap == OverflowWrap::BreakWord; }
+    bool breakAll() const { return m_wordBreak == WordBreak::BreakAll; }
+    bool breakAnywhere(bool inMinContent = false) const;
 
     Point getTransformOrigin(float width, float height) const;
     Transform getTransform(float width, float height) const;
@@ -1163,6 +1163,13 @@ inline bool BoxStyle::isDisplayInlineType(Display display)
         || display == Display::InlineBlock
         || display == Display::InlineFlex
         || display == Display::InlineTable;
+}
+
+inline bool BoxStyle::breakAnywhere(bool inMinContent) const
+{
+    return m_wordBreak == WordBreak::BreakWord
+        || m_overflowWrap == OverflowWrap::Anywhere
+        || (m_overflowWrap == OverflowWrap::BreakWord && !inMinContent);
 }
 
 inline CSSValue* BoxStyle::get(CSSPropertyID id) const

@@ -309,6 +309,8 @@ private:
     LineBreakState m_state{LineBreakState::Continue};
     uint32_t m_itemIndex{0};
     uint32_t m_textOffset{0};
+    uint32_t m_lineStartItemIndex{0};
+    uint32_t m_lineStartTextOffset{0};
     uint32_t m_leadingFloatsEndIndex{0};
     float m_availableWidth{0};
     float m_currentWidth{0};
@@ -316,6 +318,7 @@ private:
     bool m_skipLeadingWhitespace{true};
     bool m_hasUnpositionedFloats{false};
     bool m_hasLeaderText{false};
+    bool m_breakAnywhereEnabled{false};
 };
 
 class LineBox;
