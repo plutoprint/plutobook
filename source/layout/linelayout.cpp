@@ -931,22 +931,19 @@ void LineBreaker::handleInlineEnd(const LineItem& item)
     auto& runs = m_line.runs();
     if(runs.size() >= 2) {
         auto& lastRun = runs[runs.size() - 2];
-        if(wasAutoWrap || lastRun.canBreakAfter) {
+        if(lastRun.canBreakAfter) {
             run.canBreakAfter = lastRun.canBreakAfter;
             lastRun.canBreakAfter = false;
-            return;
+        } else if(!wasAutoWrap && m_autoWrap) {
+            run.canBreakAfter = canBreakAfter(run);
         }
-    }
-
-    if(!wasAutoWrap && m_autoWrap) {
-        run.canBreakAfter = canBreakAfter(run);
     }
 }
 
 void LineBreaker::handleFloating(const LineItem& item)
 {
     auto& run = addItemRun(item);
-    run.canBreakAfter = m_autoWrap;
+    run.canBreakAfter = m_autoWrap && m_line.isEmptyLine();
     moveToNextOf(item);
     if(m_itemIndex <= m_leadingFloatsEndIndex) {
         return;
@@ -1013,7 +1010,21 @@ void LineBreaker::handleReplaced(const LineItem& item)
 
     box.layout(nullptr);
 
-    run.canBreakAfter = canBreakAfter(run);
+    auto& runs = m_line.runs();
+    if(m_autoWrap && runs.size() >= 2) {
+        auto& lastRun = runs[runs.size() - 2];
+        switch(lastRun.item.type()) {
+        case LineItem::Type::NormalText:
+        case LineItem::Type::Replaced:
+        case LineItem::Type::InlineEnd:
+            lastRun.canBreakAfter = true;
+            break;
+        default:
+            break;
+        }
+    }
+
+    run.canBreakAfter = m_autoWrap;
     run.width = box.marginBoxWidth();
     m_line.setIsEmptyLine(false);
     m_currentWidth += run.width;
@@ -1026,7 +1037,7 @@ void LineBreaker::handleSoftBreak(const LineItem& item)
     auto cc = m_data.text.charAt(item.startOffset());
     if(cc == kZeroWidthSpaceCharacter) {
         auto& run = addItemRun(item);
-        run.canBreakAfter = true;
+        run.canBreakAfter = m_autoWrap;
         moveToNextOf(item);
         m_line.setIsEmptyLine(false);
     } else {
@@ -1668,7 +1679,7 @@ void LineLayout::computeIntrinsicWidths(float& minWidth, float& maxWidth) const
             assert(item.length() == 1);
             auto cc = m_data.text.charAt(item.startOffset());
             assert(cc == kZeroWidthSpaceCharacter || cc == kCarriageReturnCharacter || cc == kFormFeedCharacter);
-            if(cc == kZeroWidthSpaceCharacter) {
+            if(cc == kZeroWidthSpaceCharacter && currentStyle->autoWrap()) {
                 minWidth = std::max(minWidth, inlineMinWidth);
                 inlineMinWidth = 0.f;
             }
