@@ -1013,14 +1013,8 @@ void LineBreaker::handleReplaced(const LineItem& item)
     auto& runs = m_line.runs();
     if(m_autoWrap && runs.size() >= 2) {
         auto& lastRun = runs[runs.size() - 2];
-        switch(lastRun.item.type()) {
-        case LineItem::Type::NormalText:
-        case LineItem::Type::Replaced:
-        case LineItem::Type::InlineEnd:
+        if(lastRun.endOffset > 0 && !isBreakableSpace(m_data.text[lastRun.endOffset - 1])) {
             lastRun.canBreakAfter = true;
-            break;
-        default:
-            break;
         }
     }
 
