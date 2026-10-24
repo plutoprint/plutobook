@@ -708,21 +708,27 @@ const LineInfo& LineBreaker::nextLine()
     auto startOffset = m_block->leftOffsetForLine(m_block->height(), m_lineHeight, m_line.isFirstLine());
     if(!m_line.endsWithBreak()) {
         const auto& runs = m_line.runs();
+        auto rewindIndex = runs.size();
+        auto hasContentBefore = false;
+
         auto index = runs.size();
         while(index > 0) {
-            const auto& run = runs[--index];
-            if(run.item.type() != LineItem::Type::InlineStart) {
-                auto nextIndex = index + 1;
-                if(nextIndex == runs.size())
-                    break;
-                const auto& nextRun = runs[nextIndex];
-                auto nextTextOffset = nextRun.startOffset;
-                auto nextItemIndex = nextRun.itemIndex;
-                rewindOverflow(nextIndex);
-                m_textOffset = nextTextOffset;
-                m_itemIndex = nextItemIndex;
+            auto type = runs[--index].item.type();
+            if(type == LineItem::Type::InlineStart) {
+                rewindIndex = index;
+            } else if(type != LineItem::Type::Floating && type != LineItem::Type::Positioned) {
+                hasContentBefore = true;
                 break;
             }
+        }
+
+        if(hasContentBefore && rewindIndex < runs.size()) {
+            const auto& rewindRun = runs[rewindIndex];
+            auto nextTextOffset = rewindRun.startOffset;
+            auto nextItemIndex = rewindRun.itemIndex;
+            rewindOverflow(rewindIndex);
+            m_textOffset = nextTextOffset;
+            m_itemIndex = nextItemIndex;
         }
     }
 
