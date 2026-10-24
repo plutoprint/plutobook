@@ -289,6 +289,7 @@ CSSPropertyID CSSProperty::id(std::string_view name)
         {"width", CSSPropertyID::Width},
         {"word-break", CSSPropertyID::WordBreak},
         {"word-spacing", CSSPropertyID::WordSpacing},
+        {"word-wrap", CSSPropertyID::OverflowWrap},
         {"writing-mode", CSSPropertyID::WritingMode},
         {"x", CSSPropertyID::X},
         {"y", CSSPropertyID::Y},
