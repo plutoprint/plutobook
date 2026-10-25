@@ -98,6 +98,11 @@ void TextNode::appendData(std::string_view data)
 
 bool TextNode::shouldCreateBox(const Box* parent) const
 {
+    if(parentNode()->isSVGElement() && !parent->isSVGTextBox()
+        && !parent->isSVGInlineBox()) {
+        return false;
+    }
+
     if(m_data.empty())
         return false;
     for(auto cc : m_data) {
