@@ -119,8 +119,15 @@ bool TextNode::shouldCreateBox(const Box* parent) const
 
     if(parent->style()->preserveNewline())
         return true;
-    if(auto prevBox = previousSiblingBox())
-        return prevBox->isInline() && !prevBox->isLineBreakBox();
+    auto prevBox = previousSiblingBox();
+    if(prevBox == nullptr)
+        prevBox = parent->lastChild();
+    for(; prevBox; prevBox = prevBox->prevSibling()) {
+        if(!prevBox->isFloatingOrPositioned() && !prevBox->isListMarker()) {
+            return prevBox->isInline() && !prevBox->isLineBreakBox();
+        }
+    }
+
     return parent->isInlineBox();
 }
 
