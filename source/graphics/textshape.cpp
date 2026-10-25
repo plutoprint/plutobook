@@ -322,6 +322,8 @@ RefPtr<TextShape> TextShape::createForTabs(const UString& text, Direction direct
         }
     }
 
+    if(direction == Direction::Rtl)
+        std::reverse(runs.begin(), runs.end());
     return adoptPtr(new (heap) TextShape(text, direction, totalWidth, std::move(runs)));
 }
 
