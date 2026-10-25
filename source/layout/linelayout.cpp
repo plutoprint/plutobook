@@ -708,7 +708,6 @@ const LineInfo& LineBreaker::nextLine()
         }
     }
 
-    auto startOffset = m_block->leftOffsetForLine(m_block->height(), m_lineHeight, m_line.isFirstLine());
     if(!m_line.endsWithBreak()) {
         const auto& runs = m_line.runs();
         auto rewindIndex = runs.size();
@@ -792,7 +791,9 @@ const LineInfo& LineBreaker::nextLine()
         }
     }
 
-    m_line.setLineOffset(startOffset + m_block->lineOffsetForAlignment(remainingWidth));
+    auto leftOffset = m_block->leftOffsetForLine(m_block->height(), m_lineHeight, m_line.isFirstLine());
+    m_line.setLineOffset(leftOffset + m_block->lineOffsetForAlignment(remainingWidth));
+
     if(m_data.isBidiEnabled && !m_line.isEmptyLine()) {
         UBiDiLevel paragraphLevel = blockStyle->direction() == Direction::Ltr ? 0 : 1;
         auto& logicalRuns = m_line.runs();
