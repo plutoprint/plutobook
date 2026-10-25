@@ -1364,13 +1364,9 @@ void LineBreaker::handleOverflow()
 
         float newLineWidth = availableWidth;
         float lastFloatBottom = m_block->height();
-        float floatBottom = 0.f;
-        while(true) {
-            floatBottom = m_block->nextFloatBottom(lastFloatBottom);
-            if(floatBottom == 0.f)
-                break;
-            newLineWidth = m_block->availableWidthForLine(floatBottom, m_lineHeight, m_line.isFirstLine());
-            lastFloatBottom = floatBottom;
+        while(auto floatBottom = m_block->nextFloatBottom(lastFloatBottom)) {
+            newLineWidth = m_block->availableWidthForLine(floatBottom.value(), m_lineHeight, m_line.isFirstLine());
+            lastFloatBottom = floatBottom.value();
             if(newLineWidth >= m_currentWidth) {
                 break;
             }

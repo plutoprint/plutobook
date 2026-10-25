@@ -1019,10 +1019,10 @@ float BlockFlowBox::floatBottom() const
     return bottom;
 }
 
-float BlockFlowBox::nextFloatBottom(float y) const
+std::optional<float> BlockFlowBox::nextFloatBottom(float y) const
 {
     if(m_floatingBoxes == nullptr)
-        return 0;
+        return std::nullopt;
     std::optional<float> bottom;
     for(const auto& floatingBox : *m_floatingBoxes) {
         assert(floatingBox.isPlaced());
@@ -1032,7 +1032,7 @@ float BlockFlowBox::nextFloatBottom(float y) const
         }
     }
 
-    return bottom.value_or(0.f);
+    return bottom;
 }
 
 constexpr bool rangesIntersect(float objectTop, float objectBottom, float floatTop, float floatBottom)
@@ -1422,7 +1422,10 @@ float BlockFlowBox::getClearDelta(BoxFrame* child, float y) const
             child->setY(childY);
             if(childWidth <= availableWidth)
                 return top - y;
-            top = nextFloatBottom(top);
+            auto floatBottom = nextFloatBottom(top);
+            if(!floatBottom.has_value())
+                return top - y;
+            top = floatBottom.value();
         }
     }
 

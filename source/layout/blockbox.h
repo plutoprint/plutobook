@@ -175,7 +175,8 @@ public:
     float leftFloatBottom() const;
     float rightFloatBottom() const;
     float floatBottom() const;
-    float nextFloatBottom(float y) const;
+
+    std::optional<float> nextFloatBottom(float y) const;
 
     float leftOffsetForFloat(float top, float bottom, float offset, float* heightRemaining = nullptr) const;
     float rightOffsetForFloat(float top, float bottom, float offset, float* heightRemaining = nullptr) const;
