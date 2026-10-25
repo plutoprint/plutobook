@@ -289,6 +289,8 @@ private:
     void rewindOverflow(uint32_t newSize);
     void handleOverflow();
 
+    float hangingSpaceWidth() const;
+
     float availableWidthToFit() const { return m_availableWidth + kLineLayoutEpsilon; }
     float remainingAvailableWidth() const { return availableWidthToFit() - m_currentWidth; }
 

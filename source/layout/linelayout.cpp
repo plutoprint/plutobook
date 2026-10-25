@@ -734,7 +734,7 @@ const LineInfo& LineBreaker::nextLine()
         }
     }
 
-    auto remainingWidth = remainingAvailableWidth();
+    auto remainingWidth = remainingAvailableWidth() + hangingSpaceWidth();
     if(m_hasLeaderText && remainingWidth > 0.f && !m_line.isEmptyLine()) {
         uint32_t leaderCount = 0;
         for(const auto& run : m_line.runs()) {
@@ -1390,6 +1390,40 @@ void LineBreaker::handleOverflow()
     if(breakBefore > 0) {
         rewindOverflow(breakBefore);
     }
+}
+
+float LineBreaker::hangingSpaceWidth() const
+{
+    const auto& runs = m_line.runs();
+
+    float width = 0.f;
+    auto index = runs.size();
+    while(index > 0 && runs[index - 1].hasOnlyTrailingSpaces) {
+        width += runs[--index].width;
+    }
+
+    while(index > 0) {
+        const auto& run = runs[--index];
+        if(run.item.type() == LineItem::Type::NormalText || run.item.type() == LineItem::Type::TabulationText) {
+            if(run.item.box()->style()->collapseWhiteSpace())
+                break;
+            auto endOffset = run.endOffset;
+            while(endOffset > run.startOffset && isBreakableSpace(m_data.text[endOffset - 1]))
+                --endOffset;
+            if(endOffset < run.endOffset) {
+                const auto& shape = run.item.shapeText(m_data);
+                width += TextShapeView(shape, endOffset - run.item.startOffset(), run.endOffset - run.item.startOffset()).width();
+            }
+
+            break;
+        }
+
+        if(run.item.type() != LineItem::Type::InlineEnd && run.item.type() != LineItem::Type::BidiControl) {
+            break;
+        }
+    }
+
+    return width;
 }
 
 LineBuilder::LineBuilder(BlockFlowBox* block, FragmentBuilder* fragmentainer, RootLineBoxList& lines)
