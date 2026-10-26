@@ -223,13 +223,13 @@ public:
         : m_box(box), m_inColSpan(inColSpan), m_inRowSpan(inRowSpan)
     {}
 
-    TableCellBox& operator*() const { return *m_box; }
     TableCellBox* operator->() const { return m_box; }
-    bool inColOrRowSpan() const { return m_inColSpan || m_inRowSpan; }
 
     TableCellBox* box() const { return m_box; }
     bool inColSpan() const { return m_inColSpan; }
     bool inRowSpan() const { return m_inRowSpan; }
+
+    bool inColOrRowSpan() const { return m_inColSpan || m_inRowSpan; }
 
 private:
     TableCellBox* m_box;

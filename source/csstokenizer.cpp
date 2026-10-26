@@ -173,11 +173,11 @@ uint32_t CSSTokenizer::consumeEscape()
         return 0xFFFD;
     }
 
-    auto data = m_input.data();
-    auto offset = m_input.offset();
-    auto length = m_input.length();
+    auto data = reinterpret_cast<const uint8_t*>(m_input.data());
+    auto offset = static_cast<int32_t>(m_input.offset());
+    auto length = static_cast<int32_t>(m_input.length());
 
-    uint32_t cp = 0;
+    UChar32 cp = 0;
     U8_NEXT_OR_FFFD(data, offset, length, cp);
     m_input.advance(offset - m_input.offset());
     return cp;

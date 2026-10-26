@@ -157,13 +157,10 @@ protected:
 
 struct LineItemRun {
     LineItemRun(const LineItem& item, uint32_t index, uint32_t start, uint32_t end)
-        : item(&item), itemIndex(index), startOffset(start), endOffset(end)
+        : item(item), itemIndex(index), startOffset(start), endOffset(end)
     {}
 
-    const LineItem& operator*() const { return *item; }
-    const LineItem* operator->() const { return item; }
-
-    const LineItem* item;
+    const LineItem& item;
     uint32_t itemIndex;
     uint32_t startOffset;
     uint32_t endOffset;
@@ -292,6 +289,8 @@ private:
     void rewindOverflow(uint32_t newSize);
     void handleOverflow();
 
+    float hangingSpaceWidth() const;
+
     float availableWidthToFit() const { return m_availableWidth + kLineLayoutEpsilon; }
     float remainingAvailableWidth() const { return availableWidthToFit() - m_currentWidth; }
 
@@ -312,6 +311,8 @@ private:
     LineBreakState m_state{LineBreakState::Continue};
     uint32_t m_itemIndex{0};
     uint32_t m_textOffset{0};
+    uint32_t m_lineStartItemIndex{0};
+    uint32_t m_lineStartTextOffset{0};
     uint32_t m_leadingFloatsEndIndex{0};
     float m_availableWidth{0};
     float m_currentWidth{0};
@@ -319,6 +320,7 @@ private:
     bool m_skipLeadingWhitespace{true};
     bool m_hasUnpositionedFloats{false};
     bool m_hasLeaderText{false};
+    bool m_breakAnywhereEnabled{false};
 };
 
 class LineBox;

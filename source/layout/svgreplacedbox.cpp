@@ -25,7 +25,7 @@ SVGRootBox::SVGRootBox(SVGSVGElement* element, const RefPtr<BoxStyle>& style)
 
 bool SVGRootBox::requiresLayer() const
 {
-    return isPositioned() || isRelativePositioned() || hasTransform() || style()->zIndex();
+    return isPositioned() || isRelativePositioned() || style()->isStackingContext();
 }
 
 Rect SVGRootBox::fillBoundingBox() const

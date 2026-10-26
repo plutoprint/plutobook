@@ -14,20 +14,27 @@
 
 namespace plutobook {
 
-std::unique_ptr<BoxLayer> BoxLayer::create(BoxModel* box, BoxLayer* parent)
+std::unique_ptr<BoxLayer> BoxLayer::create(BoxModel* box)
 {
+    auto parent = box->enclosingLayer();
+    if(box->isPositioned()) {
+        for(auto current = parent; current; current = current->parent()) {
+            if(current->box()->canContainPositionedBox(box))
+                break;
+            if(current->box()->isMultiColumnFlowBox()) {
+                parent = current->parent();
+            }
+        }
+    }
+
     return std::unique_ptr<BoxLayer>(new (box->heap()) BoxLayer(box, parent));
 }
 
 BoxLayer* BoxLayer::containingLayer() const
 {
     auto parentLayer = parent();
-    if(m_box->style()->position() == Position::Fixed) {
-        while(parentLayer && !parentLayer->box()->canContainFixedPositionedBoxes()) {
-            parentLayer = parentLayer->parent();
-        }
-    } else if(m_box->style()->position() == Position::Absolute) {
-        while(parentLayer && !parentLayer->box()->canContainAbsolutePositionedBoxes()) {
+    if(m_box->isPositioned()) {
+        while(parentLayer && !parentLayer->box()->canContainPositionedBox(m_box)) {
             parentLayer = parentLayer->parent();
         }
     }
@@ -35,7 +42,7 @@ BoxLayer* BoxLayer::containingLayer() const
     return parentLayer;
 }
 
-void BoxLayer::updateLayerPosition()
+void BoxLayer::updateGeometry()
 {
     m_borderRect = m_box->borderBoundingBox();
     if(m_box->isPositioned()) {
@@ -62,14 +69,15 @@ void BoxLayer::updateLayerPosition()
         m_transform = m_box->style()->getTransform(m_borderRect.w, m_borderRect.h);
     }
 
-    auto compare_func = [](const auto& a, const auto& b) { return a->zIndex() < b->zIndex(); };
-    std::stable_sort(m_children.begin(), m_children.end(), compare_func);
     m_overflowRect = m_box->visualOverflowRect();
     for(auto child : m_children) {
-        child->updateLayerPosition();
+        child->updateGeometry();
         if(!m_box->isOverflowHidden() && !child->box()->isFixedPositioned()
             && !child->box()->isMultiColumnFlowBox()) {
+            auto container = child->containingLayer();
             auto overflowRect = child->transform().mapRect(child->overflowRect());
+            for(auto layer = this; layer && layer != container; layer = layer->containingLayer())
+                overflowRect.translate(-layer->location());
             overflowRect.translate(child->location());
             m_overflowRect.unite(overflowRect);
         }
@@ -161,18 +169,18 @@ void BoxLayer::paintLayerContents(BoxLayer* rootLayer, GraphicsContext& context,
         context.pushGroup();
     }
 
-    PaintInfo paintInfo(context, rect);
-    m_box->paintRootBackground(paintInfo);
-    for(auto child : m_children) {
-        if(child->zIndex() < 0) {
-            child->paintLayer(rootLayer, context, rect);
-        }
-    }
-
     Point adjustedOffset(offset);
     if(m_box->isBoxFrame() && !m_box->isPageBox()) {
         const auto& box = to<BoxFrame>(*m_box);
         adjustedOffset.translate(-box.location());
+    }
+
+    PaintInfo paintInfo(context, rect);
+    m_box->paintLayerDecorations(paintInfo, adjustedOffset);
+    for(auto child : m_children) {
+        if(child->zIndex() < 0) {
+            child->paintLayer(rootLayer, context, rect);
+        }
     }
 
     m_box->paint(paintInfo, adjustedOffset, PaintPhase::Decorations);
@@ -225,11 +233,13 @@ BoxLayer::BoxLayer(BoxModel* box, BoxLayer* parent)
     : m_box(box)
     , m_parent(parent)
     , m_children(box->heap())
-    , m_zIndex(box->style()->zIndex().value_or(0))
+    , m_zIndex(box->style()->zIndex())
     , m_opacity(box->style()->opacity())
 {
     if(parent) {
-        parent->m_children.push_back(this);
+        auto compare_func = [](const BoxLayer* a, const BoxLayer* b) { return a->zIndex() < b->zIndex(); };
+        auto it = std::upper_bound(parent->m_children.begin(), parent->m_children.end(), this, compare_func);
+        parent->m_children.insert(it, this);
     }
 }
 

@@ -22,12 +22,13 @@ public:
     bool isTextInputBox() const final { return true; }
 
     HTMLElement* element() const;
-    std::optional<float> inlineBlockBaseline() const final;
     uint32_t rows() const { return m_rows; }
     uint32_t cols() const { return m_cols; }
 
     void setRows(uint32_t rows) { m_rows = rows; }
     void setCols(uint32_t cols) { m_cols = cols; }
+
+    std::optional<float> inlineBlockBaseline() const final;
 
     void computeIntrinsicWidths(float& minWidth, float& maxWidth) const final;
     void computeHeight(float& y, float& height, float& marginTop, float& marginBottom) const final;
@@ -59,9 +60,9 @@ public:
     void addChild(Box* newChild) final;
     void updateOverflowRect() final;
     void computeIntrinsicWidths(float& minWidth, float& maxWidth) const final;
-    void computeHeight(float& y, float& height, float& marginTop, float& marginBottom) const final;
     void paintContents(const PaintInfo& info, const Point& offset, PaintPhase phase) final;
     void layout(FragmentBuilder* fragmentainer) final;
+    void build() final;
 
     const char* name() const final { return "SelectBox"; }
 

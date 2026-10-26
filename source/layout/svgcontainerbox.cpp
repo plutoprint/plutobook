@@ -49,15 +49,9 @@ Rect SVGContainerBox::strokeBoundingBox() const
 
 void SVGContainerBox::layout()
 {
-    SVGBoxModel::layout();
-
     m_fillBoundingBox = Rect::Invalid;
     m_strokeBoundingBox = Rect::Invalid;
-    for(auto child = firstChild(); child; child = child->nextSibling()) {
-        if(auto box = to<SVGBoxModel>(child)) {
-            box->layout();
-        }
-    }
+    SVGBoxModel::layout();
 }
 
 void SVGContainerBox::renderChildren(const SVGRenderState& state) const

@@ -25,9 +25,9 @@ public:
     void computePreferredWidths(float& minPreferredWidth, float& maxPreferredWidth) const override;
 
     const PositionedBoxList* positionedBoxes() const { return m_positionedBoxes.get(); }
-    bool containsPositonedBoxes() const { return m_positionedBoxes && !m_positionedBoxes->empty(); }
+    bool containsPositionedBoxes() const { return m_positionedBoxes && !m_positionedBoxes->empty(); }
 
-    void insertPositonedBox(BoxFrame* box);
+    void insertPositionedBox(BoxFrame* box);
     void layoutPositionedBoxes();
 
     float leftOffsetForContent() const { return borderLeft() + paddingLeft(); }
@@ -43,10 +43,10 @@ public:
     bool sizesWidthToFitContent() const;
     float computeMainWidth(const BlockBox* container, float containerWidth) const;
 
-    float computeWidthUsing(const Length& widthLength, const BlockBox* container, float containerWidth) const;
+    float computeWidthUsing(const Length& widthLength, float containerWidth) const;
     std::optional<float> computeHeightUsing(const Length& heightLength) const;
 
-    float constrainWidth(float width, const BlockBox* container, float containerWidth) const;
+    float constrainWidth(float width, float containerWidth) const;
     float constrainBorderBoxHeight(float height) const;
     float constrainContentBoxHeight(float height) const;
 
@@ -69,7 +69,8 @@ public:
     std::optional<float> lastLineBaseline() const override;
     std::optional<float> inlineBlockBaseline() const override;
 
-    virtual void paintContents(const PaintInfo& info, const Point& offset, PaintPhase phase);
+    virtual void paintContents(const PaintInfo& info, const Point& offset, PaintPhase phase) = 0;
+    void paintLayerDecorations(const PaintInfo& info, const Point& offset) override;
     void paint(const PaintInfo& info, const Point& offset, PaintPhase phase) override;
 
     const char* name() const override { return "BlockBox"; }
@@ -174,7 +175,8 @@ public:
     float leftFloatBottom() const;
     float rightFloatBottom() const;
     float floatBottom() const;
-    float nextFloatBottom(float y) const;
+
+    std::optional<float> nextFloatBottom(float y) const;
 
     float leftOffsetForFloat(float top, float bottom, float offset, float* heightRemaining = nullptr) const;
     float rightOffsetForFloat(float top, float bottom, float offset, float* heightRemaining = nullptr) const;
@@ -224,10 +226,8 @@ public:
 
     void layoutContents(FragmentBuilder* fragmentainer, float verticalShift);
     void layout(FragmentBuilder* fragmentainer) override;
-
     void build() override;
 
-    void paintFloats(const PaintInfo& info, const Point& offset);
     void paintContents(const PaintInfo& info, const Point& offset, PaintPhase phase) override;
     void serializeChildren(std::ostream& o, int indent) const override;
 

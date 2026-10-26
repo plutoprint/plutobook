@@ -19,6 +19,7 @@ BlockBox::BlockBox(Node* node, const RefPtr<BoxStyle>& style)
     : BoxFrame(node, style)
 {
     setIsReplaced(style->isDisplayInlineType());
+    setCanContainFixedPositionedBoxes(hasTransform());
 }
 
 void BlockBox::computePreferredWidths(float& minPreferredWidth, float& maxPreferredWidth) const
@@ -49,7 +50,7 @@ void BlockBox::computePreferredWidths(float& minPreferredWidth, float& maxPrefer
     maxPreferredWidth += borderAndPaddingWidth();
 }
 
-void BlockBox::insertPositonedBox(BoxFrame* box)
+void BlockBox::insertPositionedBox(BoxFrame* box)
 {
     if(m_positionedBoxes == nullptr)
         m_positionedBoxes = std::make_unique<PositionedBoxList>(heap());
@@ -112,7 +113,7 @@ float BlockBox::computeMainWidth(const BlockBox* container, float containerWidth
 {
     auto widthLength = style()->width();
     if(!widthLength.isAuto())
-        return computeWidthUsing(widthLength, container, containerWidth);
+        return computeWidthUsing(widthLength, containerWidth);
     auto marginLeft = style()->marginLeft().calcMin(containerWidth);
     auto marginRight = style()->marginRight().calcMin(containerWidth);
     auto width = containerWidth - marginLeft - marginRight;
@@ -131,7 +132,7 @@ float BlockBox::computeMainWidth(const BlockBox* container, float containerWidth
     return width;
 }
 
-float BlockBox::computeWidthUsing(const Length& widthLength, const BlockBox* container, float containerWidth) const
+float BlockBox::computeWidthUsing(const Length& widthLength, float containerWidth) const
 {
     if(widthLength.isIntrinsic())
         return computeIntrinsicWidthUsing(widthLength, containerWidth);
@@ -151,15 +152,15 @@ std::optional<float> BlockBox::computeHeightUsing(const Length& heightLength) co
     return std::nullopt;
 }
 
-float BlockBox::constrainWidth(float width, const BlockBox* container, float containerWidth) const
+float BlockBox::constrainWidth(float width, float containerWidth) const
 {
     auto minWidthLength = style()->minWidth();
     auto maxWidthLength = style()->maxWidth();
 
     if(!maxWidthLength.isNone())
-        width = std::min(width, computeWidthUsing(maxWidthLength, container, containerWidth));
+        width = std::min(width, computeWidthUsing(maxWidthLength, containerWidth));
     if(!minWidthLength.isAuto())
-        return std::max(width, computeWidthUsing(minWidthLength, container, containerWidth));
+        return std::max(width, computeWidthUsing(minWidthLength, containerWidth));
     return std::max(width, adjustBorderBoxWidth(0));
 }
 
@@ -449,7 +450,7 @@ void BlockBox::computeWidth(float& x, float& width, float& marginLeft, float& ma
     auto container = containingBlock();
     auto containerWidth = std::max(0.f, containingBlockWidthForContent(container));
     width = computeMainWidth(container, containerWidth);
-    width = constrainWidth(width, container, containerWidth);
+    width = constrainWidth(width, containerWidth);
     if(isTableBox())
         width = std::max(width, minPreferredWidth());
     computeHorizontalMargins(marginLeft, marginRight, width, container, containerWidth);
@@ -482,6 +483,8 @@ void BlockBox::computeHeight(float& y, float& height, float& marginTop, float& m
 
 std::optional<float> BlockBox::firstLineBaseline() const
 {
+    assert(!isChildrenInline());
+
     for(auto child = firstBoxFrame(); child; child = child->nextBoxFrame()) {
         if(child->isFloatingOrPositioned())
             continue;
@@ -495,6 +498,8 @@ std::optional<float> BlockBox::firstLineBaseline() const
 
 std::optional<float> BlockBox::lastLineBaseline() const
 {
+    assert(!isChildrenInline());
+
     for(auto child = lastBoxFrame(); child; child = child->prevBoxFrame()) {
         if(child->isFloatingOrPositioned())
             continue;
@@ -508,6 +513,8 @@ std::optional<float> BlockBox::lastLineBaseline() const
 
 std::optional<float> BlockBox::inlineBlockBaseline() const
 {
+    assert(!isChildrenInline());
+
     for(auto child = lastBoxFrame(); child; child = child->prevBoxFrame()) {
         if(child->isFloatingOrPositioned() || child->isTableBox())
             continue;
@@ -519,12 +526,13 @@ std::optional<float> BlockBox::inlineBlockBaseline() const
     return std::nullopt;
 }
 
-void BlockBox::paintContents(const PaintInfo& info, const Point& offset, PaintPhase phase)
+void BlockBox::paintLayerDecorations(const PaintInfo& info, const Point& offset)
 {
-    for(auto child = firstBoxFrame(); child; child = child->nextBoxFrame()) {
-        if(!child->isFloating() && !child->hasLayer()) {
-            child->paint(info, offset, phase);
-        }
+    Point adjustedOffset(offset + location());
+    if(!info.shouldPaintBox(this, adjustedOffset))
+        return;
+    if(style()->visibility() == Visibility::Visible && style()->isStackingContext()) {
+        paintDecorations(info, adjustedOffset);
     }
 }
 
@@ -535,7 +543,7 @@ void BlockBox::paint(const PaintInfo& info, const Point& offset, PaintPhase phas
         return;
     }
 
-    if(phase == PaintPhase::Decorations && style()->visibility() == Visibility::Visible)
+    if(phase == PaintPhase::Decorations && style()->visibility() == Visibility::Visible && !style()->isStackingContext())
         paintDecorations(info, adjustedOffset);
     paintContents(info, adjustedOffset, phase);
     if(phase == PaintPhase::Outlines && style()->visibility() == Visibility::Visible) {
@@ -1011,10 +1019,10 @@ float BlockFlowBox::floatBottom() const
     return bottom;
 }
 
-float BlockFlowBox::nextFloatBottom(float y) const
+std::optional<float> BlockFlowBox::nextFloatBottom(float y) const
 {
     if(m_floatingBoxes == nullptr)
-        return 0;
+        return std::nullopt;
     std::optional<float> bottom;
     for(const auto& floatingBox : *m_floatingBoxes) {
         assert(floatingBox.isPlaced());
@@ -1024,7 +1032,7 @@ float BlockFlowBox::nextFloatBottom(float y) const
         }
     }
 
-    return bottom.value_or(0.f);
+    return bottom;
 }
 
 constexpr bool rangesIntersect(float objectTop, float objectBottom, float floatTop, float floatBottom)
@@ -1414,7 +1422,10 @@ float BlockFlowBox::getClearDelta(BoxFrame* child, float y) const
             child->setY(childY);
             if(childWidth <= availableWidth)
                 return top - y;
-            top = nextFloatBottom(top);
+            auto floatBottom = nextFloatBottom(top);
+            if(!floatBottom.has_value())
+                return top - y;
+            top = floatBottom.value();
         }
     }
 
@@ -1602,7 +1613,7 @@ void BlockFlowBox::layoutBlockChildren(FragmentBuilder* fragmentainer)
     MarginInfo marginInfo(this, top, bottom);
     for(auto child = firstBoxFrame(); child; child = child->nextBoxFrame()) {
         if(child->isPositioned()) {
-            child->containingBlock()->insertPositonedBox(child);
+            child->containingBlock()->insertPositionedBox(child);
             adjustPositionedBox(child, marginInfo);
         } else if(child->isFloating()) {
             insertFloatingBox(child);
@@ -1689,7 +1700,6 @@ void BlockFlowBox::build()
         m_columnFlowBox = columnFlowBox;
     }
 
-    BlockBox::build();
     if(isChildrenInline()) {
         m_lineLayout = LineLayout::create(this);
         m_lineLayout->build();
@@ -1708,36 +1718,37 @@ void BlockFlowBox::build()
             }
         }
     }
-}
 
-void BlockFlowBox::paintFloats(const PaintInfo& info, const Point& offset)
-{
-    if(m_floatingBoxes == nullptr)
-        return;
-    for(const auto& item : *m_floatingBoxes) {
-        auto child = item.box();
-        if(!item.isIntruding() && !child->hasLayer()) {
-            Point adjustedOffset = {
-                offset.x + item.x() - child->x() + child->marginLeft(),
-                offset.y + item.y() - child->y() + child->marginTop()
-            };
-
-            child->paint(info, adjustedOffset, PaintPhase::Decorations);
-            child->paint(info, adjustedOffset, PaintPhase::Floats);
-            child->paint(info, adjustedOffset, PaintPhase::Contents);
-            child->paint(info, adjustedOffset, PaintPhase::Outlines);
-        }
-    }
+    BlockBox::build();
 }
 
 void BlockFlowBox::paintContents(const PaintInfo& info, const Point& offset, PaintPhase phase)
 {
-    if(isChildrenInline())
+    if(isChildrenInline()) {
         m_lineLayout->paint(info, offset, phase);
-    else
-        BlockBox::paintContents(info, offset, phase);
-    if(phase == PaintPhase::Floats) {
-        paintFloats(info, offset);
+    } else {
+        for(auto child = firstBoxFrame(); child; child = child->nextBoxFrame()) {
+            if(!child->isFloating() && !child->hasLayer()) {
+                child->paint(info, offset, phase);
+            }
+        }
+    }
+
+    if(phase == PaintPhase::Floats && containsFloats()) {
+        for(const auto& item : *m_floatingBoxes) {
+            auto child = item.box();
+            if(!item.isIntruding() && !child->hasLayer()) {
+                Point adjustedOffset = {
+                    offset.x + item.x() - child->x() + child->marginLeft(),
+                    offset.y + item.y() - child->y() + child->marginTop()
+                };
+
+                child->paint(info, adjustedOffset, PaintPhase::Decorations);
+                child->paint(info, adjustedOffset, PaintPhase::Floats);
+                child->paint(info, adjustedOffset, PaintPhase::Contents);
+                child->paint(info, adjustedOffset, PaintPhase::Outlines);
+            }
+        }
     }
 }
 

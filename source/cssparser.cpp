@@ -149,7 +149,11 @@ static CSSMediaQuery::Type consumeMediaType(CSSTokenStream& input)
 
 bool CSSParser::consumeMediaFeature(CSSTokenStream& input, CSSMediaFeatureList& features)
 {
-    if(input->type() != CSSToken::Type::Ident)
+    if(input->type() != CSSToken::Type::LeftParenthesis)
+        return false;
+    auto block = input.consumeBlock();
+    block.consumeWhitespace();
+    if(block->type() != CSSToken::Type::Ident)
         return false;
     static constexpr CSSIdentEntry<CSSPropertyID> table[] = {
         {"width", CSSPropertyID::Width},
@@ -161,13 +165,13 @@ bool CSSParser::consumeMediaFeature(CSSTokenStream& input, CSSMediaFeatureList& 
         {"orientation", CSSPropertyID::Orientation}
     };
 
-    auto id = matchIdent(table, input->data());
+    auto id = matchIdent(table, block->data());
     if(id == std::nullopt)
         return false;
-    input.consumeIncludingWhitespace();
-    if(input->type() != CSSToken::Type::Colon)
+    block.consumeIncludingWhitespace();
+    if(block->type() != CSSToken::Type::Colon)
         return false;
-    input.consumeIncludingWhitespace();
+    block.consumeIncludingWhitespace();
 
     RefPtr<CSSValue> value;
     switch(id.value()) {
@@ -177,31 +181,27 @@ bool CSSParser::consumeMediaFeature(CSSTokenStream& input, CSSMediaFeatureList& 
     case CSSPropertyID::Height:
     case CSSPropertyID::MinHeight:
     case CSSPropertyID::MaxHeight:
-        value = consumeLength(input, false, false);
+        value = consumeLength(block, false, false);
         break;
     case CSSPropertyID::Orientation:
-        value = consumeOrientation(input);
+        value = consumeOrientation(block);
         break;
     default:
         assert(false);
     }
 
-    if(value == nullptr || !input.empty())
+    if(value == nullptr || !block.empty())
         return false;
     features.emplace_front(*id, std::move(value));
+    input.consumeWhitespace();
     return true;
 }
 
 bool CSSParser::consumeMediaFeatures(CSSTokenStream& input, CSSMediaFeatureList& features)
 {
     do {
-        if(input->type() != CSSToken::Type::LeftParenthesis)
+        if(!consumeMediaFeature(input, features))
             return false;
-        auto block = input.consumeBlock();
-        block.consumeWhitespace();
-        if(!consumeMediaFeature(block, features))
-            return false;
-        input.consumeWhitespace();
     } while(consumeIdentIncludingWhitespace(input, "and"));
     return true;
 }
@@ -211,12 +211,16 @@ bool CSSParser::consumeMediaQuery(CSSTokenStream& input, CSSMediaQueryList& quer
     auto restrictor = consumeMediaRestrictor(input);
     auto type = consumeMediaType(input);
     if(type == CSSMediaQuery::Type::None
-        && restrictor != CSSMediaQuery::Restrictor::None) {
+        && restrictor == CSSMediaQuery::Restrictor::Only) {
         return false;
     }
 
     CSSMediaFeatureList features(m_heap);
     if(type == CSSMediaQuery::Type::None
+        && restrictor == CSSMediaQuery::Restrictor::Not) {
+        if(!consumeMediaFeature(input, features))
+            return false;
+    } else if(type == CSSMediaQuery::Type::None
         || consumeIdentIncludingWhitespace(input, "and")) {
         if(!consumeMediaFeatures(input, features)) {
             return false;

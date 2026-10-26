@@ -42,7 +42,7 @@ extern "C" {
 #define PLUTOBOOK_STRINGIZE(x) PLUTOBOOK_XSTRINGIZE(x)
 
 #define PLUTOBOOK_VERSION_MAJOR 0
-#define PLUTOBOOK_VERSION_MINOR 19
+#define PLUTOBOOK_VERSION_MINOR 20
 #define PLUTOBOOK_VERSION_MICRO 0
 
 #define PLUTOBOOK_VERSION_ENCODE(major, minor, micro) (((major) * 10000) + ((minor) * 100) + ((micro) * 1))

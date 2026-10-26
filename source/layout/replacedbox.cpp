@@ -298,7 +298,7 @@ std::optional<float> ReplacedBox::computeMainReplacedWidth() const
     auto widthLength = style()->width();
     if(!widthLength.isAuto())
         return computeReplacedWidthUsing(widthLength);
-    if(isFlexItem() && isStretchedColumnFlexItem())
+    if(isStretchedColumnFlexItem())
         return availableReplacedWidth();
     return std::nullopt;
 }
@@ -308,7 +308,7 @@ std::optional<float> ReplacedBox::computeMainReplacedHeight() const
     auto heightLength = style()->height();
     if(!heightLength.isAuto())
         return computeReplacedHeightUsing(heightLength);
-    if(isFlexItem() && isStretchedRowFlexItem()) {
+    if(isStretchedRowFlexItem()) {
         if(auto containerHeight = containingBlockHeightForContent()) {
             return std::max(0.f, containerHeight.value() - marginHeight() - borderAndPaddingHeight());
         }

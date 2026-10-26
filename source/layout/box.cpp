@@ -189,33 +189,25 @@ BlockFlowBox* Box::createAnonymousBlock(const BoxStyle* parentStyle)
     return newBlock;
 }
 
-bool Box::canContainFixedPositionedBoxes() const
+bool Box::canContainPositionedBox(const Box* box) const
 {
-    return (hasTransform() && isBlockBox()) || !parentBox() || isPageMarginBox();
-}
-
-bool Box::canContainAbsolutePositionedBoxes() const
-{
-    return style()->position() != Position::Static || canContainFixedPositionedBoxes();
+    if(box->style()->position() == Position::Absolute)
+        return m_canContainFixedPositionedBoxes || style()->position() != Position::Static;
+    assert(box->style()->position() == Position::Fixed);
+    return m_canContainFixedPositionedBoxes;
 }
 
 BlockBox* Box::containingBlock() const
 {
     auto parent = parentBox();
-    if(style()->position() == Position::Static || style()->position() == Position::Relative || isTextBox()) {
+    if(!isPositioned()) {
         while(parent && !parent->isBlockBox())
             parent = parent->parentBox();
         return to<BlockBox>(parent);
     }
 
-    if(style()->position() == Position::Fixed) {
-        while(parent && !parent->canContainFixedPositionedBoxes()) {
-            parent = parent->parentBox();
-        }
-    } else {
-        while(parent && !parent->canContainAbsolutePositionedBoxes()) {
-            parent = parent->parentBox();
-        }
+    while(parent && !parent->canContainPositionedBox(this)) {
+        parent = parent->parentBox();
     }
 
     if(parent && !parent->isBlockBox())
@@ -228,15 +220,9 @@ BlockBox* Box::containingBlock() const
 BoxModel* Box::containingBox() const
 {
     auto parent = parentBox();
-    if(!isTextBox()) {
-        if(style()->position() == Position::Fixed) {
-            while(parent && !parent->canContainFixedPositionedBoxes()) {
-                parent = parent->parentBox();
-            }
-        } else if(style()->position() == Position::Absolute) {
-            while(parent && !parent->canContainAbsolutePositionedBoxes()) {
-                parent = parent->parentBox();
-            }
+    if(isPositioned()) {
+        while(parent && !parent->canContainPositionedBox(this)) {
+            parent = parent->parentBox();
         }
     }
 
@@ -647,51 +633,48 @@ void BoxModel::paintLayer(GraphicsContext& context, const Rect& rect)
     m_layer->paint(context, rect);
 }
 
-void BoxModel::updateLayerPosition()
+void BoxModel::updateLayerGeometry()
 {
-    m_layer->updateLayerPosition();
-}
-
-float BoxModel::relativePositionOffsetX() const
-{
-    auto container = containingBlock();
-
-    auto leftLength = style()->left();
-    auto rightLength = style()->right();
-
-    auto availableWidth = containingBlockWidthForContent(container);
-    if(!leftLength.isAuto()) {
-        if(!rightLength.isAuto() && container->style()->isRightToLeftDirection())
-            return -rightLength.calc(availableWidth);
-        return leftLength.calc(availableWidth);
-    }
-
-    if(!rightLength.isAuto())
-        return -rightLength.calc(availableWidth);
-    return 0;
-}
-
-float BoxModel::relativePositionOffsetY() const
-{
-    auto container = containingBlock();
-
-    auto topLength = style()->top();
-    auto bottomLength = style()->bottom();
-
-    auto availableHeight = containingBlockHeightForContent(container);
-    if(!topLength.isAuto() && (availableHeight || !topLength.isPercent()))
-        return topLength.calc(availableHeight.value_or(0.f));
-    if(!bottomLength.isAuto() && (availableHeight || !bottomLength.isPercent()))
-        return -bottomLength.calc(availableHeight.value_or(0.f));
-    return 0;
+    m_layer->updateGeometry();
 }
 
 Point BoxModel::relativePositionOffset() const
 {
-    auto xOffset = relativePositionOffsetX();
-    auto yOffset = relativePositionOffsetY();
+    auto container = containingBlock();
+    auto availableWidth = containingBlockWidthForContent(container);
+    auto availableHeight = containingBlockHeightForContent(container);
 
-    return Point(xOffset, yOffset);
+    auto leftLength = style()->left();
+    auto rightLength = style()->right();
+    auto topLength = style()->top();
+    auto bottomLength = style()->bottom();
+
+    Point offset;
+    if(!leftLength.isAuto() && (rightLength.isAuto() || container->style()->isLeftToRightDirection())) {
+        offset.x = leftLength.calc(availableWidth);
+    } else if(!rightLength.isAuto()) {
+        offset.x = -rightLength.calc(availableWidth);
+    }
+
+    if(!topLength.isAuto() && (availableHeight || !topLength.isPercent())) {
+        offset.y = topLength.calc(availableHeight.value_or(0.f));
+    } else if(!bottomLength.isAuto() && (availableHeight || !bottomLength.isPercent())) {
+        offset.y = -bottomLength.calc(availableHeight.value_or(0.f));
+    }
+
+    if(isContinuation() && isAnonymousBlock()) {
+        auto prevBlock = prevSibling();
+        assert(prevBlock && prevBlock->isAnonymousBlock());
+
+        auto inlineBox = to<InlineBox>(prevBlock->lastChild());
+        while(inlineBox && inlineBox->hasContinuation()) {
+            if(inlineBox->isRelativePositioned())
+                offset += inlineBox->relativePositionOffset();
+            inlineBox = to<InlineBox>(inlineBox->lastChild());
+        }
+    }
+
+    return offset;
 }
 
 float BoxModel::containingBlockWidthForPositioned(const BoxModel* container) const
@@ -819,7 +802,7 @@ void BoxModel::build()
 {
     if(requiresLayer()) {
         assert(!hasLayer());
-        m_layer = BoxLayer::create(this, enclosingLayer());
+        m_layer = BoxLayer::create(this);
         setHasLayer(true);
     }
 
@@ -853,54 +836,43 @@ BoxFrame::BoxFrame(Node* node, const RefPtr<BoxStyle>& style)
 
 bool BoxFrame::requiresLayer() const
 {
-    return isPositioned() || isRelativePositioned() || isOverflowHidden() || hasTransform() || hasColumnFlowBox()
-        || style()->hasOpacity() || style()->hasBlendMode() || style()->zIndex();
+    return isPositioned() || isRelativePositioned() || isOverflowHidden() || hasColumnFlowBox() || style()->isStackingContext();
+}
+
+bool BoxFrame::isStretchedFlexItem(bool isRowDirection) const
+{
+    if(!isFlexItem())
+        return false;
+    auto parent = parentBox();
+    assert(parent && parent->isFlexibleBox());
+    auto parentStyle = parent->style();
+
+    if(isRowDirection != parentStyle->isRowFlexDirection())
+        return false;
+    if(parentStyle->flexWrap() != FlexWrap::Nowrap) {
+        return false;
+    }
+
+    auto marginStartLength = isRowDirection ? style()->marginTop() : style()->marginLeft();
+    auto marginEndLength = isRowDirection ? style()->marginBottom(): style()->marginRight();
+    if(marginStartLength.isAuto() || marginEndLength.isAuto()) {
+        return false;
+    }
+
+    auto alignSelf = style()->alignSelf();
+    if(alignSelf == AlignItem::Auto)
+        alignSelf = parentStyle->alignItems();
+    return alignSelf == AlignItem::Stretch;
 }
 
 bool BoxFrame::isStretchedRowFlexItem() const
 {
-    auto parent = parentBox();
-    assert(parent && parent->isFlexibleBox());
-    auto parentStyle = parent->style();
-    switch(parentStyle->flexDirection()) {
-    case FlexDirection::Row:
-    case FlexDirection::RowReverse:
-        break;
-    default:
-        return false;
-    }
-
-    if(parentStyle->flexWrap() != FlexWrap::Nowrap)
-        return false;
-    if(style()->marginTop().isAuto() || style()->marginBottom().isAuto())
-        return false;
-    auto alignSelf = style()->alignSelf();
-    if(alignSelf == AlignItem::Auto)
-        alignSelf = parentStyle->alignItems();
-    return alignSelf == AlignItem::Stretch;
+    return isStretchedFlexItem(true);
 }
 
 bool BoxFrame::isStretchedColumnFlexItem() const
 {
-    auto parent = parentBox();
-    assert(parent && parent->isFlexibleBox());
-    auto parentStyle = parent->style();
-    switch(parentStyle->flexDirection()) {
-    case FlexDirection::Column:
-    case FlexDirection::ColumnReverse:
-        break;
-    default:
-        return false;
-    }
-
-    if(parentStyle->flexWrap() != FlexWrap::Nowrap)
-        return false;
-    if(style()->marginLeft().isAuto() || style()->marginRight().isAuto())
-        return false;
-    auto alignSelf = style()->alignSelf();
-    if(alignSelf == AlignItem::Auto)
-        alignSelf = parentStyle->alignItems();
-    return alignSelf == AlignItem::Stretch;
+    return isStretchedFlexItem(false);
 }
 
 BoxFrame::~BoxFrame() = default;
@@ -968,7 +940,7 @@ void BoxFrame::computeHorizontalStaticDistance(Length& leftLength, Length& right
             if(auto box = to<BoxFrame>(parent)) {
                 staticPosition += box->x();
                 if(box->isRelativePositioned()) {
-                    staticPosition += box->relativePositionOffsetX();
+                    staticPosition += box->relativePositionOffset().x;
                 }
             }
         }
@@ -984,7 +956,7 @@ void BoxFrame::computeHorizontalStaticDistance(Length& leftLength, Length& right
             if(auto box = to<BoxFrame>(parent)) {
                 staticPosition -= box->x();
                 if(box->isRelativePositioned()) {
-                    staticPosition -= box->relativePositionOffsetX();
+                    staticPosition -= box->relativePositionOffset().x;
                 }
             }
         }
@@ -995,19 +967,37 @@ void BoxFrame::computeHorizontalStaticDistance(Length& leftLength, Length& right
 
 void BoxFrame::computeVerticalStaticDistance(Length& topLength, Length& bottomLength, const BoxModel* container) const
 {
-    if(!topLength.isAuto() || !bottomLength.isAuto())
-        return;
+    if(topLength.isAuto() && bottomLength.isAuto()) {
+        topLength = Length(Length::Type::Fixed, computeStaticTop(container));
+    } else if(isAbsolutePositioned() && container->isPaginatedView()) {
+        auto pageHeight = document()->containerHeight();
+        if(pageHeight > 0.f) {
+            auto staticTop = computeStaticTop(container);
+            auto pageOffset = std::floor(staticTop / pageHeight) * pageHeight;
+            if(pageOffset > 0) {
+                if(!topLength.isAuto())
+                    topLength = Length(Length::Type::Fixed, topLength.calc(pageHeight) + pageOffset);
+                if(!bottomLength.isAuto()) {
+                    bottomLength = Length(Length::Type::Fixed, bottomLength.calc(pageHeight) - pageOffset);
+                }
+            }
+        }
+    }
+}
+
+float BoxFrame::computeStaticTop(const BoxModel* container) const
+{
     auto staticTop = layer()->staticTop() - container->borderTop();
     for(auto parent = parentBox(); parent && parent != container; parent = parent->containingBox()) {
         if(auto box = to<BoxFrame>(parent)) {
             staticTop += box->y();
             if(box->isRelativePositioned()) {
-                staticTop += box->relativePositionOffsetY();
+                staticTop += box->relativePositionOffset().y;
             }
         }
     }
 
-    topLength = Length(Length::Type::Fixed, staticTop);
+    return staticTop;
 }
 
 void BoxFrame::computeHorizontalMargins(float& marginLeft, float& marginRight, float childWidth, const BlockBox* container, float containerWidth) const

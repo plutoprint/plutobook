@@ -655,8 +655,6 @@ RefPtr<BoxStyle> ElementStyleBuilder::build()
     buildStyle(newStyle.get());
     if(newStyle->display() == Display::None)
         return newStyle;
-    if(newStyle->position() == Position::Static && !m_parentStyle->isDisplayFlex())
-        newStyle->reset(CSSPropertyID::ZIndex);
     if(m_pseudoType == PseudoType::FirstLetter) {
         newStyle->setPosition(Position::Static);
         if(newStyle->isFloating()) {
@@ -664,6 +662,13 @@ RefPtr<BoxStyle> ElementStyleBuilder::build()
         } else {
             newStyle->setDisplay(Display::Inline);
         }
+    }
+
+    if(newStyle->hasZIndex() && (newStyle->position() != Position::Static || m_parentStyle->isDisplayFlex()))
+        newStyle->setHasEffectiveZIndex(true);
+    if(newStyle->hasEffectiveZIndex() || m_element->isRootNode() || newStyle->position() == Position::Fixed
+        || newStyle->hasBlendMode() || newStyle->hasTransform() || newStyle->hasOpacity()) {
+        newStyle->setIsStackingContext(true);
     }
 
     if(newStyle->isFloating() || newStyle->isPositioned() || m_element->isRootNode() || m_parentStyle->isDisplayFlex()) {
@@ -700,20 +705,18 @@ RefPtr<BoxStyle> ElementStyleBuilder::build()
 
 class PageStyleBuilder final : public StyleBuilder {
 public:
-    PageStyleBuilder(const GlobalString& pageName, uint32_t pageIndex, PageMarginType marginType, PseudoType pseudoType, const BoxStyle* parentStyle);
+    PageStyleBuilder(uint32_t pageIndex, PageMarginType marginType, const BoxStyle* parentStyle);
 
     void add(const CSSPageRuleDataList& rules);
     RefPtr<BoxStyle> build();
 
 private:
-    GlobalString m_pageName;
     uint32_t m_pageIndex;
     PageMarginType m_marginType;
 };
 
-PageStyleBuilder::PageStyleBuilder(const GlobalString& pageName, uint32_t pageIndex, PageMarginType marginType, PseudoType pseudoType, const BoxStyle* parentStyle)
-    : StyleBuilder(parentStyle, pseudoType)
-    , m_pageName(pageName)
+PageStyleBuilder::PageStyleBuilder(uint32_t pageIndex, PageMarginType marginType, const BoxStyle* parentStyle)
+    : StyleBuilder(parentStyle, PseudoType::None)
     , m_pageIndex(pageIndex)
     , m_marginType(marginType)
 {
@@ -722,7 +725,7 @@ PageStyleBuilder::PageStyleBuilder(const GlobalString& pageName, uint32_t pageIn
 void PageStyleBuilder::add(const CSSPageRuleDataList& rules)
 {
     for(const auto& rule : rules) {
-        if(rule.match(m_pageName, m_pageIndex, m_pseudoType)) {
+        if(rule.match(m_pageIndex, m_parentStyle->direction())) {
             if(m_marginType == PageMarginType::None) {
                 cascade(rule.specificity(), rule.position(), rule.properties());
             } else {
@@ -818,6 +821,9 @@ RefPtr<BoxStyle> PageStyleBuilder::build()
     newStyle->setPosition(Position::Static);
     newStyle->setDisplay(Display::Block);
     newStyle->setFloating(Float::None);
+    if(m_marginType != PageMarginType::None && newStyle->hasZIndex())
+        newStyle->setHasEffectiveZIndex(true);
+    newStyle->setIsStackingContext(true);
     return newStyle;
 }
 
@@ -856,16 +862,16 @@ RefPtr<BoxStyle> CSSStyleSheet::pseudoStyleForElement(Element* element, PseudoTy
     return builder.build();
 }
 
-RefPtr<BoxStyle> CSSStyleSheet::styleForPage(const GlobalString& pageName, uint32_t pageIndex, PseudoType pseudoType) const
+RefPtr<BoxStyle> CSSStyleSheet::styleForPage(uint32_t pageIndex) const
 {
-    PageStyleBuilder builder(pageName, pageIndex, PageMarginType::None, pseudoType, m_document->rootStyle());
+    PageStyleBuilder builder(pageIndex, PageMarginType::None, m_document->rootStyle());
     builder.add(m_pageRules);
     return builder.build();
 }
 
-RefPtr<BoxStyle> CSSStyleSheet::styleForPageMargin(const GlobalString& pageName, uint32_t pageIndex, PageMarginType marginType, const BoxStyle* pageStyle) const
+RefPtr<BoxStyle> CSSStyleSheet::styleForPageMargin(uint32_t pageIndex, PageMarginType marginType, const BoxStyle* pageStyle) const
 {
-    PageStyleBuilder builder(pageName, pageIndex, marginType, pageStyle->pseudoType(), pageStyle);
+    PageStyleBuilder builder(pageIndex, marginType, pageStyle);
     builder.add(m_pageRules);
     return builder.build();
 }

@@ -66,86 +66,70 @@ private:
 
 constexpr BoxSide WritingDirection::inlineStart() const
 {
-    if(m_mode == WritingMode::HorizontalTb) {
+    if(m_mode == WritingMode::HorizontalTb)
         return m_direction == Direction::Ltr ? BoxSideLeft : BoxSideRight;
-    } else {
-        return m_direction == Direction::Ltr ? BoxSideTop : BoxSideBottom;
-    }
+    return m_direction == Direction::Ltr ? BoxSideTop : BoxSideBottom;
 }
 
 constexpr BoxSide WritingDirection::inlineEnd() const
 {
-    if(m_mode == WritingMode::HorizontalTb) {
+    if(m_mode == WritingMode::HorizontalTb)
         return m_direction == Direction::Ltr ? BoxSideRight : BoxSideLeft;
-    } else {
-        return m_direction == Direction::Ltr ? BoxSideBottom : BoxSideTop;
-    }
+    return m_direction == Direction::Ltr ? BoxSideBottom : BoxSideTop;
 }
 
 constexpr BoxSide WritingDirection::blockStart() const
 {
-    if(m_mode == WritingMode::HorizontalTb) {
+    if(m_mode == WritingMode::HorizontalTb)
         return BoxSideTop;
-    } else if(m_mode == WritingMode::VerticalRl) {
+    if(m_mode == WritingMode::VerticalRl)
         return BoxSideRight;
-    } else {
-        return BoxSideLeft;
-    }
+    return BoxSideLeft;
 }
 
 constexpr BoxSide WritingDirection::blockEnd() const
 {
-    if(m_mode == WritingMode::HorizontalTb) {
+    if(m_mode == WritingMode::HorizontalTb)
         return BoxSideBottom;
-    } else if(m_mode == WritingMode::VerticalRl) {
+    if(m_mode == WritingMode::VerticalRl)
         return BoxSideLeft;
-    } else {
-        return BoxSideRight;
-    }
+    return BoxSideRight;
 }
 
 constexpr BoxCorner WritingDirection::startStart() const
 {
-    if(m_mode == WritingMode::HorizontalTb) {
+    if(m_mode == WritingMode::HorizontalTb)
         return m_direction == Direction::Ltr ? BoxCornerTopLeft : BoxCornerTopRight;
-    } else if(m_mode == WritingMode::VerticalRl) {
+    if(m_mode == WritingMode::VerticalRl)
         return m_direction == Direction::Ltr ? BoxCornerTopRight : BoxCornerBottomRight;
-    } else {
-        return m_direction == Direction::Ltr ? BoxCornerTopLeft : BoxCornerBottomLeft;
-    }
+    return m_direction == Direction::Ltr ? BoxCornerTopLeft : BoxCornerBottomLeft;
 }
 
 constexpr BoxCorner WritingDirection::startEnd() const
 {
-    if(m_mode == WritingMode::HorizontalTb) {
+    if(m_mode == WritingMode::HorizontalTb)
         return m_direction == Direction::Ltr ? BoxCornerTopRight : BoxCornerTopLeft;
-    } else if(m_mode == WritingMode::VerticalRl) {
+    if(m_mode == WritingMode::VerticalRl)
         return m_direction == Direction::Ltr ? BoxCornerBottomRight : BoxCornerTopRight;
-    } else {
-        return m_direction == Direction::Ltr ? BoxCornerBottomLeft : BoxCornerTopLeft;
-    }
+    return m_direction == Direction::Ltr ? BoxCornerBottomLeft : BoxCornerTopLeft;
 }
 
 constexpr BoxCorner WritingDirection::endStart() const
 {
-    if(m_mode == WritingMode::HorizontalTb) {
+    if(m_mode == WritingMode::HorizontalTb)
         return m_direction == Direction::Ltr ? BoxCornerBottomLeft : BoxCornerBottomRight;
-    } else if(m_mode == WritingMode::VerticalRl) {
+    if(m_mode == WritingMode::VerticalRl)
         return m_direction == Direction::Ltr ? BoxCornerTopLeft : BoxCornerBottomLeft;
-    } else {
-        return m_direction == Direction::Ltr ? BoxCornerTopRight : BoxCornerBottomRight;
-    }
+    return m_direction == Direction::Ltr ? BoxCornerTopRight : BoxCornerBottomRight;
 }
 
 constexpr BoxCorner WritingDirection::endEnd() const
 {
-    if(m_mode == WritingMode::HorizontalTb) {
+    if(m_mode == WritingMode::HorizontalTb)
         return m_direction == Direction::Ltr ? BoxCornerBottomRight : BoxCornerBottomLeft;
-    } else if(m_mode == WritingMode::VerticalRl) {
+    if(m_mode == WritingMode::VerticalRl)
         return m_direction == Direction::Ltr ? BoxCornerBottomLeft : BoxCornerTopLeft;
-    } else {
-        return m_direction == Direction::Ltr ? BoxCornerBottomRight : BoxCornerTopRight;
-    }
+    return m_direction == Direction::Ltr ? BoxCornerBottomRight : BoxCornerTopRight;
 }
 
 } // namespace plutobook

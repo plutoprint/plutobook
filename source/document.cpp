@@ -96,27 +96,39 @@ void TextNode::appendData(std::string_view data)
     m_data = heap()->concatenateString(m_data, data);
 }
 
-bool TextNode::isHidden(const Box* parent) const
+bool TextNode::shouldCreateBox(const Box* parent) const
 {
+    if(parentNode()->isSVGElement() && !parent->isSVGTextBox()
+        && !parent->isSVGInlineBox()) {
+        return false;
+    }
+
     if(m_data.empty())
-        return true;
+        return false;
     for(auto cc : m_data) {
         if(!isSpace(cc)) {
-            return false;
+            return true;
         }
     }
 
     if(parent->isFlexibleBox() || parent->isTableBox()
         || parent->isTableSectionBox() || parent->isTableRowBox()
         || parent->isTableColumnBox()) {
-        return true;
+        return false;
     }
 
     if(parent->style()->preserveNewline())
-        return false;
-    if(auto prevBox = previousSiblingBox())
-        return !prevBox->isInline() || prevBox->isLineBreakBox();
-    return !parent->isInlineBox();
+        return true;
+    auto prevBox = previousSiblingBox();
+    if(prevBox == nullptr)
+        prevBox = parent->lastChild();
+    for(; prevBox; prevBox = prevBox->prevSibling()) {
+        if(!prevBox->isFloatingOrPositioned() && !prevBox->isListMarker()) {
+            return prevBox->isInline() && !prevBox->isLineBreakBox();
+        }
+    }
+
+    return parent->isInlineBox();
 }
 
 Node* TextNode::cloneNode(bool deep)
@@ -135,10 +147,10 @@ Box* TextNode::createBox(const RefPtr<BoxStyle>& style)
 
 void TextNode::buildBox(Counters& counters, SelectorFilter& selectorFilter, Box* parent)
 {
-    if(isHidden(parent))
-        return;
-    if(auto box = createBox(parent->style())) {
-        parent->addChild(box);
+    if(shouldCreateBox(parent)) {
+        if(auto box = createBox(parent->style())) {
+            parent->addChild(box);
+        }
     }
 }
 
@@ -993,14 +1005,14 @@ RefPtr<BoxStyle> Document::pseudoStyleForElement(Element* element, PseudoType ps
     return m_styleSheet.pseudoStyleForElement(element, pseudoType, selectorFilter, parentStyle);
 }
 
-RefPtr<BoxStyle> Document::styleForPage(const GlobalString& pageName, uint32_t pageIndex, PseudoType pseudoType) const
+RefPtr<BoxStyle> Document::styleForPage(uint32_t pageIndex) const
 {
-    return m_styleSheet.styleForPage(pageName, pageIndex, pseudoType);
+    return m_styleSheet.styleForPage(pageIndex);
 }
 
-RefPtr<BoxStyle> Document::styleForPageMargin(const GlobalString& pageName, uint32_t pageIndex, PageMarginType marginType, const BoxStyle* pageStyle) const
+RefPtr<BoxStyle> Document::styleForPageMargin(uint32_t pageIndex, PageMarginType marginType, const BoxStyle* pageStyle) const
 {
-    return m_styleSheet.styleForPageMargin(pageName, pageIndex, marginType, pageStyle);
+    return m_styleSheet.styleForPageMargin(pageIndex, marginType, pageStyle);
 }
 
 std::string Document::getCounterText(int value, const GlobalString& listType)
@@ -1084,6 +1096,7 @@ void Document::buildBox(Counters& counters, SelectorFilter& selectorFilter, Box*
     auto rootStyle = BoxStyle::create(this, nullptr, PseudoType::None, Display::Block);
     rootStyle->setPosition(Position::Absolute);
     rootStyle->setFontDescription(FontDescription());
+    rootStyle->setIsStackingContext(true);
 
     auto rootBox = createBox(rootStyle);
     counters.push();

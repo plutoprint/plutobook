@@ -548,33 +548,23 @@ float BoxStyle::borderVerticalSpacing() const
     return convertLengthValue(*value);
 }
 
-constexpr TextDecorationLine operator|(TextDecorationLine a, TextDecorationLine b)
-{
-    return static_cast<TextDecorationLine>(static_cast<int>(a) | static_cast<int>(b));
-}
-
-constexpr TextDecorationLine& operator|=(TextDecorationLine& a, TextDecorationLine b)
-{
-    return a = a | b;
-}
-
 TextDecorationLine BoxStyle::textDecorationLine() const
 {
     auto value = get(CSSPropertyID::TextDecorationLine);
     if(value == nullptr || value->id() == CSSValueID::None)
-        return TextDecorationLine::None;
-    TextDecorationLine decorations = TextDecorationLine::None;
+        return TextDecorationLine();
+    TextDecorationLine decorations;
     for(const auto& decoration : to<CSSListValue>(*value)) {
         const auto& ident = to<CSSIdentValue>(*decoration);
         switch(ident.value()) {
         case CSSValueID::Underline:
-            decorations |= TextDecorationLine::Underline;
+            decorations.add(TextDecorationLine::Underline);
             break;
         case CSSValueID::Overline:
-            decorations |= TextDecorationLine::Overline;
+            decorations.add(TextDecorationLine::Overline);
             break;
         case CSSValueID::LineThrough:
-            decorations |= TextDecorationLine::LineThrough;
+            decorations.add(TextDecorationLine::LineThrough);
             break;
         default:
             assert(false);
@@ -651,14 +641,6 @@ float BoxStyle::tabWidth(float spaceWidth) const
     return convertLengthValue(length);
 }
 
-std::optional<int> BoxStyle::zIndex() const
-{
-    auto value = get(CSSPropertyID::ZIndex);
-    if(value == nullptr)
-        return std::nullopt;
-    return convertIntegerOrAuto(*value);
-}
-
 VerticalAlign BoxStyle::verticalAlign() const
 {
     if(m_verticalAlignType == VerticalAlignType::Length) {
@@ -681,6 +663,23 @@ LengthBox BoxStyle::clip() const
     auto top = convertLengthOrPercentOrAuto(*rect.top());
     auto bottom = convertLengthOrPercentOrAuto(*rect.bottom());
     return LengthBox(left, right, top, bottom);
+}
+
+bool BoxStyle::hasZIndex() const
+{
+    auto value = get(CSSPropertyID::ZIndex);
+    return value && value->id() != CSSValueID::Auto;
+}
+
+int BoxStyle::zIndex() const
+{
+    if(m_hasEffectiveZIndex && m_isStackingContext) {
+        if(auto value = get(CSSPropertyID::ZIndex))
+            return convertInteger(*value);
+        assert(false);
+    }
+
+    return 0;
 }
 
 Length BoxStyle::flexBasis() const

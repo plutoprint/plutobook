@@ -25,12 +25,10 @@ public:
     BoxStyle* backgroundStyle() const { return m_backgroundStyle; }
     Rect backgroundRect() const;
 
-    void paintRootBackground(const PaintInfo& info) const final;
+    void paintLayerDecorations(const PaintInfo& info, const Point& offset) final;
 
     void setCurrentPage(PageBox* page) { m_currentPage = page; }
     PageBox* currentPage() const { return m_currentPage; }
-
-    bool isPrinting() const { return m_currentPage != nullptr; }
 
     void computeWidth(float& x, float& width, float& marginLeft, float& marginRight) const final;
     void computeHeight(float& y, float& height, float& marginTop, float& marginBottom) const final;

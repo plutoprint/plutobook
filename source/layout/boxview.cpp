@@ -15,6 +15,7 @@ namespace plutobook {
 BoxView::BoxView(Document* document, const RefPtr<BoxStyle>& style)
     : BlockFlowBox(document, style)
 {
+    setCanContainFixedPositionedBoxes(true);
 }
 
 Rect BoxView::backgroundRect() const
@@ -24,7 +25,7 @@ Rect BoxView::backgroundRect() const
     return Rect(0, 0, document()->width(), document()->height());
 }
 
-void BoxView::paintRootBackground(const PaintInfo& info) const
+void BoxView::paintLayerDecorations(const PaintInfo& info, const Point& offset)
 {
     if(m_backgroundStyle) {
         paintBackgroundStyle(info, backgroundRect(), m_backgroundStyle);
@@ -42,8 +43,9 @@ void BoxView::computeHeight(float& y, float& height, float& marginTop, float& ma
 void BoxView::layout(FragmentBuilder* fragmentainer)
 {
     setWidth(document()->containerWidth());
+    setIsPaginatedView(isPageFragmentainer(fragmentainer));
     BlockFlowBox::layout(fragmentainer);
-    updateLayerPosition();
+    updateLayerGeometry();
 }
 
 void BoxView::build()

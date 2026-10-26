@@ -9,7 +9,6 @@
 #include "tablebox.h"
 #include "borderpainter.h"
 #include "fragmentbuilder.h"
-#include "boxview.h"
 
 #include <span>
 #include <ranges>
@@ -262,6 +261,38 @@ float TableBox::unbreakableHeight(const FragmentBuilder* fragmentainer, float of
     return borderAndPaddingHeight();
 }
 
+TableColumnBox* TableBox::columnGroupAt(size_t index) const
+{
+    auto column = columnAt(index);
+    if(column == nullptr)
+        return nullptr;
+    if(column->isColumnGroup())
+        return column;
+    return column->columnGroup();
+}
+
+TableCaptionBox* TableBox::topCaption() const
+{
+    for(auto caption : m_captions) {
+        if(caption->captionSide() == CaptionSide::Top) {
+            return caption;
+        }
+    }
+
+    return nullptr;
+}
+
+TableCaptionBox* TableBox::bottomCaption() const
+{
+    for(auto caption : m_captions | std::views::reverse) {
+        if(caption->captionSide() == CaptionSide::Bottom) {
+            return caption;
+        }
+    }
+
+    return nullptr;
+}
+
 TableSectionBox* TableBox::headerSection() const
 {
     auto section = topSection();
@@ -320,30 +351,6 @@ TableSectionBox* TableBox::sectionBelow(const TableSectionBox* sectionBox) const
     }
 
     return footerSection();
-}
-
-TableColumnBox* TableBox::columnGroupAt(size_t index) const
-{
-    auto column = columnAt(index);
-    if(column == nullptr)
-        return nullptr;
-    if(column->isColumnGroup())
-        return column;
-    return column->columnGroup();
-}
-
-TableCaptionBox* TableBox::topCaption() const
-{
-    if(m_captions.empty())
-        return nullptr;
-    return m_captions.front();
-}
-
-TableCaptionBox* TableBox::bottomCaption() const
-{
-    if(m_captions.empty())
-        return nullptr;
-    return m_captions.back();
 }
 
 TableCellBox* TableBox::cellAbove(const TableCellBox* cellBox) const
@@ -411,6 +418,7 @@ void TableBox::layout(FragmentBuilder* fragmentainer)
 {
     updateWidth();
     setHeight(0.f);
+    setIsPaginatedTable(isPageFragmentainer(fragmentainer));
     for(auto caption : m_captions) {
         if(caption->captionSide() == CaptionSide::Top) {
             layoutCaption(caption, fragmentainer);
@@ -606,12 +614,16 @@ void TableBox::build()
         caption->setIsFirstInFlowChild(true);
     } else if(auto section = topSection()) {
         section->setIsFirstInFlowChild(true);
+    } else if(auto caption = bottomCaption()) {
+        caption->setIsFirstInFlowChild(true);
     }
 
     if(auto caption = bottomCaption()) {
         caption->setIsLastInFlowChild(true);
     } else if(auto section = bottomSection()) {
         section->setIsLastInFlowChild(true);
+    } else if(auto caption = topCaption()) {
+        caption->setIsLastInFlowChild(true);
     }
 }
 
@@ -646,7 +658,7 @@ void TableBox::paintContents(const PaintInfo& info, const Point& offset, PaintPh
     }
 
     auto shouldPaintCollapsedBorders = phase == PaintPhase::Decorations && m_collapsedBorderEdges && isBorderCollapsed();
-    if(view()->isPrinting()) {
+    if(isPaginatedTable()) {
         if(auto footer = footerSection()) {
             const auto& pageRect = info.rect();
             if(pageRect.bottom() < offset.y + footer->y()) {
@@ -671,7 +683,7 @@ void TableBox::paintContents(const PaintInfo& info, const Point& offset, PaintPh
         }
     }
 
-    if(view()->isPrinting()) {
+    if(isPaginatedTable()) {
         if(auto header = headerSection()) {
             const auto& pageRect = info.rect();
             if(pageRect.y > offset.y + header->y()) {
@@ -735,17 +747,16 @@ void FixedTableLayoutAlgorithm::build()
         auto row = section->firstRow();
         for(const auto& [col, cell] : row->cells()) {
             if(!cell.inColOrRowSpan()) {
-                auto cellBox = cell.box();
-                auto cellStyleWidth = cellBox->style()->width();
+                auto cellStyleWidth = cell->style()->width();
                 if(cellStyleWidth.isFixed()) {
-                    cellBox->updateHorizontalPaddings(0.f);
-                    cellStyleWidth = Length(Length::Type::Fixed, cellBox->adjustBorderBoxWidth(cellStyleWidth.value()) / cellBox->colSpan());
+                    cell->updateHorizontalPaddings(0.f);
+                    cellStyleWidth = Length(Length::Type::Fixed, cell->adjustBorderBoxWidth(cellStyleWidth.value()) / cell->colSpan());
                 } else if(cellStyleWidth.isPercent()) {
-                    cellStyleWidth = Length(Length::Type::Percent, cellStyleWidth.value() / cellBox->colSpan());
+                    cellStyleWidth = Length(Length::Type::Percent, cellStyleWidth.value() / cell->colSpan());
                 }
 
                 if(!cellStyleWidth.isZero()) {
-                    for(size_t index = 0; index < cellBox->colSpan(); ++index) {
+                    for(size_t index = 0; index < cell->colSpan(); ++index) {
                         if(m_widths[col + index].isAuto()) {
                             m_widths[col + index] = cellStyleWidth;
                         }
@@ -1084,17 +1095,16 @@ void AutoTableLayoutAlgorithm::computeIntrinsicWidths(float& minWidth, float& ma
     for(auto section : m_table->sections()) {
         for(auto row : section->rows()) {
             for(const auto& [col, cell] : row->cells()) {
-                auto cellBox = cell.box();
                 if(cell.inColOrRowSpan())
                     continue;
-                cellBox->updateHorizontalPaddings(0.f);
-                if(cellBox->colSpan() == 1) {
+                cell->updateHorizontalPaddings(0.f);
+                if(cell->colSpan() == 1) {
                     auto& columnWidth = m_columnWidths[col];
-                    columnWidth.minWidth = std::max(columnWidth.minWidth, cellBox->minPreferredWidth());
+                    columnWidth.minWidth = std::max(columnWidth.minWidth, cell->minPreferredWidth());
                     if(columnWidth.maxFixedWidth > 0.f) {
                         columnWidth.maxWidth = std::max(columnWidth.maxWidth, std::max(columnWidth.minWidth, columnWidth.maxFixedWidth));
                     } else {
-                        columnWidth.maxWidth = std::max(columnWidth.maxWidth, cellBox->maxPreferredWidth());
+                        columnWidth.maxWidth = std::max(columnWidth.maxWidth, cell->maxPreferredWidth());
                     }
                 }
             }
@@ -1167,17 +1177,16 @@ void AutoTableLayoutAlgorithm::build()
             for(const auto& [col, cell] : row->cells()) {
                 if(cell.inColOrRowSpan())
                     continue;
-                auto cellBox = cell.box();
-                if(cellBox->colSpan() > 1) {
-                    m_spanningCells.push_back(cellBox);
+                if(cell->colSpan() > 1) {
+                    m_spanningCells.push_back(cell.box());
                     continue;
                 }
 
-                auto cellStyleWidth = cellBox->style()->width();
+                auto cellStyleWidth = cell->style()->width();
                 auto& columnWidth = m_columnWidths[col];
                 if(cellStyleWidth.isFixed()) {
-                    cellBox->updateHorizontalPaddings(0.f);
-                    columnWidth.maxFixedWidth = std::max(columnWidth.maxFixedWidth, cellBox->adjustBorderBoxWidth(cellStyleWidth.value()));
+                    cell->updateHorizontalPaddings(0.f);
+                    columnWidth.maxFixedWidth = std::max(columnWidth.maxFixedWidth, cell->adjustBorderBoxWidth(cellStyleWidth.value()));
                 } else if(cellStyleWidth.isPercent()) {
                     columnWidth.maxPercentWidth = std::max(columnWidth.maxPercentWidth, cellStyleWidth.value());
                 }
@@ -1247,9 +1256,8 @@ std::optional<float> TableSectionBox::firstLineBaseline() const
         return baseline + firstRowBox->y();
     std::optional<float> baseline;
     for(const auto& [col, cell] : firstRowBox->cells()) {
-        auto cellBox = cell.box();
-        if(!cell.inColOrRowSpan() && cellBox->contentBoxHeight()) {
-            auto candidate = firstRowBox->y() + cellBox->borderAndPaddingTop() + cellBox->contentBoxHeight();
+        if(!cell.inColOrRowSpan() && cell->contentBoxHeight()) {
+            auto candidate = firstRowBox->y() + cell->borderAndPaddingTop() + cell->contentBoxHeight();
             baseline = std::max(candidate, baseline.value_or(candidate));
         }
     }
@@ -1266,9 +1274,8 @@ std::optional<float> TableSectionBox::lastLineBaseline() const
         return baseline + lastRowBox->y();
     std::optional<float> baseline;
     for(const auto& [col, cell] : lastRowBox->cells()) {
-        auto cellBox = cell.box();
-        if(!cell.inColOrRowSpan() && cellBox->contentBoxHeight()) {
-            auto candidate = lastRowBox->y() + cellBox->borderAndPaddingTop() + cellBox->contentBoxHeight();
+        if(!cell.inColOrRowSpan() && cell->contentBoxHeight()) {
+            auto candidate = lastRowBox->y() + cell->borderAndPaddingTop() + cell->contentBoxHeight();
             baseline = std::max(candidate, baseline.value_or(candidate));
         }
     }
@@ -1282,11 +1289,10 @@ float TableSectionBox::unbreakableRowHeightAt(size_t rowIndex) const
     auto verticalSpacing = table()->borderVerticalSpacing();
     auto unbreakableHeight = rowBox->height();
     for(const auto& [col, cell] : rowBox->cells()) {
-        auto cellBox = cell.box();
         if(cell.inColOrRowSpan())
             continue;
         auto rowHeight = -verticalSpacing;
-        for(size_t index = 0; index < cellBox->rowSpan(); ++index) {
+        for(size_t index = 0; index < cell->rowSpan(); ++index) {
             auto row = m_rows[rowIndex + index];
             rowHeight += verticalSpacing + row->height();
         }
@@ -1398,21 +1404,20 @@ void TableSectionBox::layoutRows(FragmentBuilder* fragmentainer, float headerHei
         rowBox->setY(rowTop);
         float rowHeightIncreaseForFragmentation = 0;
         for(const auto& [col, cell] : rowBox->cells()) {
-            auto cellBox = cell.box();
             if(cell.inColOrRowSpan())
                 continue;
             auto rowHeight = -verticalSpacing;
-            for(size_t index = 0; index < cellBox->rowSpan(); ++index) {
+            for(size_t index = 0; index < cell->rowSpan(); ++index) {
                 auto row = m_rows[rowIndex + index];
                 rowHeight += verticalSpacing + row->height();
             }
 
-            cellBox->setY(0.f);
-            cellBox->setOverrideHeight(rowHeight);
-            cellBox->layout(fragmentainer);
-            if(fragmentainer && cellBox->height() > rowHeight) {
-                rowHeightIncreaseForFragmentation = std::max(rowHeightIncreaseForFragmentation, cellBox->height() - rowHeight);
-                cellBox->setHeight(rowHeight);
+            cell->setY(0.f);
+            cell->setOverrideHeight(rowHeight);
+            cell->layout(fragmentainer);
+            if(fragmentainer && cell->height() > rowHeight) {
+                rowHeightIncreaseForFragmentation = std::max(rowHeightIncreaseForFragmentation, cell->height() - rowHeight);
+                cell->setHeight(rowHeight);
             }
         }
 
@@ -1421,10 +1426,9 @@ void TableSectionBox::layoutRows(FragmentBuilder* fragmentainer, float headerHei
             if(rowHeightIncreaseForFragmentation > 0) {
                 rowBox->setHeight(rowHeightIncreaseForFragmentation + rowBox->height());
                 for(const auto& [col, cell] : rowBox->cells()) {
-                    auto cellBox = cell.box();
                     if(!cell.inColSpan()) {
-                        cellBox->setHeight(rowHeightIncreaseForFragmentation + cellBox->height());
-                        cellBox->updateOverflowRect();
+                        cell->setHeight(rowHeightIncreaseForFragmentation + cell->height());
+                        cell->updateOverflowRect();
                     }
                 }
             }
@@ -1480,37 +1484,36 @@ void TableSectionBox::layout(FragmentBuilder* fragmentainer)
         float cellMaxDescent = 0.f;
         float cellMaxHeight = rowBox->maxFixedHeight();
         for(const auto& [col, cell] : rowBox->cells()) {
-            auto cellBox = cell.box();
             if(cell.inColOrRowSpan())
                 continue;
             auto width = -horizontalSpacing;
-            for(size_t index = 0; index < cellBox->colSpan(); ++index) {
+            for(size_t index = 0; index < cell->colSpan(); ++index) {
                 const auto& column = columns[col + index];
                 width += horizontalSpacing + column.width();
             }
 
             if(direction == Direction::Ltr) {
-                cellBox->setX(columns[col].x());
+                cell->setX(columns[col].x());
             } else {
-                cellBox->setX(columns[col + cellBox->colSpan() - 1].x());
+                cell->setX(columns[col + cell->colSpan() - 1].x());
             }
 
-            cellBox->clearOverrideSize();
-            cellBox->setOverrideWidth(width);
-            cellBox->updatePaddingWidths(table()->availableWidth());
-            cellBox->layout(fragmentainer);
+            cell->clearOverrideSize();
+            cell->setOverrideWidth(width);
+            cell->updatePaddingWidths(table()->availableWidth());
+            cell->layout(fragmentainer);
 
-            if(cellBox->rowSpan() == 1)
-                cellMaxHeight = std::max(cellMaxHeight, cellBox->heightForRowSizing());
-            if(cellBox->isBaselineAligned()) {
-                if(cellBox->rowSpan() == 1) {
-                    auto ascent = cellBox->cellBaselinePosition();
-                    auto descent = cellBox->height() - ascent;
+            if(cell->rowSpan() == 1)
+                cellMaxHeight = std::max(cellMaxHeight, cell->heightForRowSizing());
+            if(cell->isBaselineAligned()) {
+                if(cell->rowSpan() == 1) {
+                    auto ascent = cell->cellBaselinePosition();
+                    auto descent = cell->height() - ascent;
                     cellMaxAscent = std::max(cellMaxAscent, ascent);
                     cellMaxDescent = std::max(cellMaxDescent, descent);
                     cellMaxHeight = std::max(cellMaxHeight, cellMaxAscent + cellMaxDescent);
                 } else {
-                    cellMaxAscent = std::max(cellMaxAscent, cellBox->cellBaselinePosition());
+                    cellMaxAscent = std::max(cellMaxAscent, cell->cellBaselinePosition());
                     cellMaxHeight = std::max(cellMaxHeight, cellMaxAscent);
                 }
             }
@@ -1623,9 +1626,8 @@ void TableSectionBox::paintCollapsedBorders(const PaintInfo& info, const Point& 
         if(!info.shouldPaintBox(rowBox, rowOffset))
             continue;
         for(const auto& [col, cell] : rowBox->cells()) {
-            auto cellBox = cell.box();
             if(!cell.inColOrRowSpan()) {
-                cellBox->paintCollapsedBorders(info, rowOffset, currentEdge);
+                cell->paintCollapsedBorders(info, rowOffset, currentEdge);
             }
         }
     }
@@ -1645,24 +1647,23 @@ void TableSectionBox::paint(const PaintInfo& info, const Point& offset, PaintPha
         }
 
         for(const auto& [col, cell] : rowBox->cells()) {
-            auto cellBox = cell.box();
             if(cell.inColOrRowSpan())
                 continue;
             if(phase == PaintPhase::Decorations) {
                 if(auto columnBox = table()->columnAt(col)) {
                     if(auto columnGroupBox = columnBox->columnGroup())
-                        cellBox->paintBackgroundBehindCell(info, rowOffset, columnGroupBox->style());
-                    cellBox->paintBackgroundBehindCell(info, rowOffset, columnBox->style());
+                        cell->paintBackgroundBehindCell(info, rowOffset, columnGroupBox->style());
+                    cell->paintBackgroundBehindCell(info, rowOffset, columnBox->style());
                 }
 
-                cellBox->paintBackgroundBehindCell(info, rowOffset, style());
+                cell->paintBackgroundBehindCell(info, rowOffset, style());
                 if(!rowBox->hasLayer()) {
-                    cellBox->paintBackgroundBehindCell(info, rowOffset, rowBox->style());
+                    cell->paintBackgroundBehindCell(info, rowOffset, rowBox->style());
                 }
             }
 
-            if(!cellBox->hasLayer() && !rowBox->hasLayer()) {
-                cellBox->paint(info, rowOffset, phase);
+            if(!cell->hasLayer() && !rowBox->hasLayer()) {
+                cell->paint(info, rowOffset, phase);
             }
         }
     }
@@ -1700,17 +1701,16 @@ void TableRowBox::updateOverflowRect()
 {
     BoxFrame::updateOverflowRect();
     for(const auto& [col, cell] : m_cells) {
-        auto cellBox = cell.box();
         if(!cell.inColOrRowSpan()) {
-            addOverflowRect(cellBox, cellBox->x(), cellBox->y());
+            addOverflowRect(cell.box(), cell->x(), cell->y());
             if(table()->isBorderCollapsed()) {
-                const auto& edges = cellBox->collapsedBorderEdges();
+                const auto& edges = cell->collapsedBorderEdges();
                 auto topHalfWidth = edges.topEdge().width() / 2.f;
                 auto bottomHalfWidth = edges.bottomEdge().width() / 2.f;
                 auto leftHalfWidth = edges.leftEdge().width() / 2.f;
                 auto rightHalfWidth = edges.rightEdge().width() / 2.f;
 
-                Rect borderRect(cellBox->location(), cellBox->size());
+                Rect borderRect(cell->location(), cell->size());
                 borderRect.expand(topHalfWidth, rightHalfWidth, bottomHalfWidth, leftHalfWidth);
                 addOverflowRect(borderRect);
             }
@@ -1734,13 +1734,12 @@ void TableRowBox::paint(const PaintInfo& info, const Point& offset, PaintPhase p
     }
 
     for(const auto& [col, cell] : m_cells) {
-        auto cellBox = cell.box();
         if(cell.inColOrRowSpan())
             continue;
         if(phase == PaintPhase::Decorations)
-            cellBox->paintBackgroundBehindCell(info, adjustedOffset, style());
-        if(!cellBox->hasLayer()) {
-            cellBox->paint(info, adjustedOffset, phase);
+            cell->paintBackgroundBehindCell(info, adjustedOffset, style());
+        if(!cell->hasLayer()) {
+            cell->paint(info, adjustedOffset, phase);
         }
     }
 }

@@ -162,14 +162,24 @@ enum class TextOverflow : uint8_t {
     Ellipsis
 };
 
-enum class TextDecorationLine : uint8_t {
-    None = 0x0,
-    Underline = 0x1,
-    Overline = 0x2,
-    LineThrough = 0x4
-};
+class TextDecorationLine {
+public:
+    enum Type : uint8_t {
+        Underline = 0x1,
+        Overline = 0x2,
+        LineThrough = 0x4
+    };
 
-constexpr bool operator&(TextDecorationLine a, TextDecorationLine b) { return static_cast<int>(a) & static_cast<int>(b); }
+    constexpr TextDecorationLine() = default;
+
+    constexpr bool contains(Type value) const { return m_values & value; }
+    constexpr void add(Type value) { m_values |= value; }
+
+    constexpr bool isEmpty() const { return m_values == 0; }
+
+private:
+    uint8_t m_values{0};
+};
 
 enum class TextDecorationStyle : uint8_t {
     Solid,
@@ -658,11 +668,7 @@ enum class PseudoType : uint8_t {
     After,
     Marker,
     FirstLetter,
-    FirstLine,
-    FirstPage,
-    LeftPage,
-    RightPage,
-    BlankPage
+    FirstLine
 };
 
 struct FontDescription;
@@ -822,9 +828,18 @@ public:
     BlendMode blendMode() const { return m_blendMode; }
     MaskType maskType() const { return m_maskType; }
     Overflow overflow() const { return m_overflow; }
-    std::optional<int> zIndex() const;
     VerticalAlign verticalAlign() const;
     LengthBox clip() const;
+
+    bool hasZIndex() const;
+
+    bool hasEffectiveZIndex() const { return m_hasEffectiveZIndex; }
+    void setHasEffectiveZIndex(bool value) { m_hasEffectiveZIndex = value; }
+
+    bool isStackingContext() const { return m_isStackingContext; }
+    void setIsStackingContext(bool value) { m_isStackingContext = value; }
+
+    int zIndex() const;
 
     Length flexBasis() const;
     float flexGrow() const;
@@ -836,6 +851,9 @@ public:
     AlignContent alignContent() const { return m_alignContent; }
     AlignItem alignItems() const { return m_alignItems; }
     AlignItem alignSelf() const { return m_alignSelf; }
+
+    bool isRowFlexDirection() const;
+    bool isColumnFlexDirection() const;
 
     float outlineOffset() const;
     Color outlineColor() const;
@@ -930,8 +948,8 @@ public:
     bool preserveNewline() const { return preserveNewline(m_whiteSpace); }
     bool collapseWhiteSpace() const { return collapseWhiteSpace(m_whiteSpace); }
 
-    bool breakAnywhere() const { return m_overflowWrap == OverflowWrap::Anywhere || m_wordBreak == WordBreak::BreakAll; }
-    bool breakWord() const { return m_wordBreak == WordBreak::BreakWord || m_overflowWrap == OverflowWrap::BreakWord; }
+    bool breakAll() const { return m_wordBreak == WordBreak::BreakAll; }
+    bool breakAnywhere(bool inMinContent = false) const;
 
     Point getTransformOrigin(float width, float height) const;
     Transform getTransform(float width, float height) const;
@@ -1112,9 +1130,24 @@ private:
     ColumnSpan m_columnSpan : 1 {ColumnSpan::None};
     ColumnFill m_columnFill : 1 {ColumnFill::Balance};
 
+    bool m_hasEffectiveZIndex : 1 {false};
+    bool m_isStackingContext : 1 {false};
+
     Color m_color{Color::Black};
     Length m_lineHeight{Length::Auto};
 };
+
+inline bool BoxStyle::isRowFlexDirection() const
+{
+    return m_flexDirection == FlexDirection::Row
+        || m_flexDirection == FlexDirection::RowReverse;
+}
+
+inline bool BoxStyle::isColumnFlexDirection() const
+{
+    return m_flexDirection == FlexDirection::Column
+        || m_flexDirection == FlexDirection::ColumnReverse;
+}
 
 inline bool BoxStyle::isDisplayBlockType(Display display)
 {
@@ -1130,6 +1163,13 @@ inline bool BoxStyle::isDisplayInlineType(Display display)
         || display == Display::InlineBlock
         || display == Display::InlineFlex
         || display == Display::InlineTable;
+}
+
+inline bool BoxStyle::breakAnywhere(bool inMinContent) const
+{
+    return m_wordBreak == WordBreak::BreakWord
+        || m_overflowWrap == OverflowWrap::Anywhere
+        || (m_overflowWrap == OverflowWrap::BreakWord && !inMinContent);
 }
 
 inline CSSValue* BoxStyle::get(CSSPropertyID id) const
