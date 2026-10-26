@@ -293,7 +293,7 @@ private:
 
     void breakText(LineItemRun& run, const RefPtr<TextShape>& shape, float availableWidth);
     uint32_t autoHyphenationBreak(const LineItemRun& run, uint32_t lowerBound, uint32_t widthLimit);
-    void appendHyphen(LineItemRun& run, const BoxStyle* style, Direction direction);
+    void appendHyphen(LineItemRun& run, RefPtr<TextShape> hyphenShape);
 
     void rewindOverflow(uint32_t newSize);
     void handleOverflow();

@@ -1220,16 +1220,40 @@ void LineBreaker::breakText(LineItemRun& run, const RefPtr<TextShape>& shape, fl
     run.hyphenWidth = 0.f;
     auto breakOffset = run.item.startOffset() + shape->offsetForPosition(endPosition);
     const auto widthLimit = breakOffset;
+
+    // A hyphen is drawn after a soft-hyphen or automatic hyphenation break, so
+    // such a break only fits if the text before it leaves room for the hyphen.
+    auto createHyphenShape = [&] { return TextShape::createForText(m_currentStyle->hyphenString(), shape->direction(), false, m_currentStyle); };
+    RefPtr<TextShape> hyphenShape;
+
     auto breakAnyCharacter = m_currentStyle->breakAll() || (m_breakAnywhereEnabled && m_currentStyle->breakAnywhere());
     auto mayBreakInside = true;
     auto autoHyphenated = false;
     if(breakAnyCharacter) {
         breakOffset = std::max(breakOffset, run.startOffset + 1);
     } else if(breakOffset < run.item.endOffset()) {
+        auto hyphenLimit = widthLimit;
+        auto hasSoftHyphen = m_hyphens == Hyphens::Manual && breakOffset > run.startOffset
+            && m_data.text.indexOf(UChar(kSoftHyphenCharacter), run.startOffset, breakOffset - run.startOffset) >= 0;
+        if(m_hyphens == Hyphens::Auto || hasSoftHyphen) {
+            hyphenShape = createHyphenShape();
+            auto hyphenEndPosition = startPosition + flipRtl(std::max(0.f, availableWidth - hyphenShape->width()), shape->direction());
+            hyphenLimit = run.item.startOffset() + shape->offsetForPosition(hyphenEndPosition);
+        }
+
         auto breakOpportunity = m_breakIterator.previousBreakOpportunity(breakOffset, run.startOffset, skipSoftHyphen);
+        uint32_t overflowingSoftHyphen = 0;
+        while(hyphenShape && breakOpportunity > hyphenLimit && breakOpportunity > run.startOffset && m_data.text[breakOpportunity - 1] == kSoftHyphenCharacter) {
+            overflowingSoftHyphen = breakOpportunity;
+            breakOpportunity = m_breakIterator.previousBreakOpportunity(breakOpportunity - 1, run.startOffset, skipSoftHyphen);
+        }
+
         if(breakOpportunity <= run.startOffset) {
             breakOffset = std::max(breakOffset, run.startOffset + 1);
-            breakOpportunity = m_breakIterator.nextBreakOpportunity(breakOffset, run.item.endOffset(), skipSoftHyphen);
+            if(overflowingSoftHyphen > 0)
+                breakOpportunity = overflowingSoftHyphen;
+            else
+                breakOpportunity = m_breakIterator.nextBreakOpportunity(breakOffset, run.item.endOffset(), skipSoftHyphen);
             mayBreakInside = false;
         }
 
@@ -1239,7 +1263,7 @@ void LineBreaker::breakText(LineItemRun& run, const RefPtr<TextShape>& shape, fl
         // hyphenation point, either to avoid overflow (when no word boundary
         // fits) or to fill the line better than the word boundary does.
         if(m_hyphens == Hyphens::Auto) {
-            auto hyphenOffset = autoHyphenationBreak(run, run.startOffset, widthLimit);
+            auto hyphenOffset = autoHyphenationBreak(run, run.startOffset, hyphenLimit);
             if(hyphenOffset > run.startOffset && (breakOffset > widthLimit || hyphenOffset > breakOffset)) {
                 breakOffset = hyphenOffset;
                 mayBreakInside = true;
@@ -1256,8 +1280,9 @@ void LineBreaker::breakText(LineItemRun& run, const RefPtr<TextShape>& shape, fl
     if(breakOffset < run.item.endOffset()) {
         run.canBreakAfter = true;
         // Render a trailing hyphen at a soft-hyphen or automatic hyphenation break.
-        if(autoHyphenated || (m_hyphens != Hyphens::None && m_data.text[breakOffset - 1] == kSoftHyphenCharacter))
-            appendHyphen(run, m_currentStyle, shape->direction());
+        if(autoHyphenated || (m_hyphens != Hyphens::None && m_data.text[breakOffset - 1] == kSoftHyphenCharacter)) {
+            appendHyphen(run, hyphenShape ? std::move(hyphenShape) : createHyphenShape());
+        }
     } else {
         assert(breakOffset == run.item.endOffset());
         run.canBreakAfter = breakAnyCharacter || m_breakIterator.isBreakable(run.item.endOffset(), skipSoftHyphen);
@@ -1299,9 +1324,9 @@ uint32_t LineBreaker::autoHyphenationBreak(const LineItemRun& run, uint32_t lowe
     return best;
 }
 
-void LineBreaker::appendHyphen(LineItemRun& run, const BoxStyle* style, Direction direction)
+void LineBreaker::appendHyphen(LineItemRun& run, RefPtr<TextShape> hyphenShape)
 {
-    run.hyphenShape = TextShape::createForText(style->hyphenString(), direction, false, style);
+    run.hyphenShape = std::move(hyphenShape);
     run.hyphenWidth = run.hyphenShape->width();
     run.width += run.hyphenWidth;
 }
