@@ -114,6 +114,8 @@ private:
     RefPtr<CSSValue> consumeUrlOrNone(CSSTokenStream& input);
     RefPtr<CSSValue> consumeImage(CSSTokenStream& input);
     RefPtr<CSSValue> consumeImageOrNone(CSSTokenStream& input);
+    RefPtr<CSSValue> consumeGradient(CSSTokenStream& input, CSSGradientType gradientType, bool repeating);
+    RefPtr<CSSValue> consumeGradientStopPosition(CSSTokenStream& input, CSSGradientType gradientType);
     RefPtr<CSSValue> consumeColor(CSSTokenStream& input);
     RefPtr<CSSValue> consumeRgb(CSSTokenStream& input);
     RefPtr<CSSValue> consumeHsl(CSSTokenStream& input);
@@ -162,6 +164,24 @@ private:
     RefPtr<CSSValue> consumeTransform(CSSTokenStream& input);
     RefPtr<CSSValue> consumePaintOrder(CSSTokenStream& input);
     RefPtr<CSSValue> consumeLonghand(CSSTokenStream& input, CSSPropertyID id);
+
+    // The arguments a gradient function accepts before its color stop list.
+    // Which of them may appear depends on the gradient type.
+    struct GradientPrelude {
+        RefPtr<CSSValue> angle;
+        RefPtr<CSSValue> direction;
+        RefPtr<CSSValue> shape;
+        RefPtr<CSSValue> size;
+        RefPtr<CSSValue> position;
+        bool empty() const { return !angle && !direction && !shape && !size && !position; }
+    };
+
+    bool consumeGradientPrelude(CSSTokenStream& input, CSSGradientType gradientType, GradientPrelude& prelude);
+    bool consumeLinearGradientPrelude(CSSTokenStream& input, RefPtr<CSSValue>& angle, RefPtr<CSSValue>& direction);
+    bool consumeRadialGradientPrelude(CSSTokenStream& input, RefPtr<CSSValue>& shape, RefPtr<CSSValue>& size, RefPtr<CSSValue>& position);
+    bool consumeRadialGradientShapeAndSize(CSSTokenStream& input, RefPtr<CSSValue>& shape, RefPtr<CSSValue>& size);
+    bool consumeConicGradientPrelude(CSSTokenStream& input, RefPtr<CSSValue>& angle, RefPtr<CSSValue>& position);
+    bool consumeGradientStops(CSSTokenStream& input, CSSGradientType gradientType, CSSGradientStopList& stops);
 
     bool consumeFlex(CSSTokenStream& input, CSSPropertyList& properties, bool important);
     bool consumeBackground(CSSTokenStream& input, CSSPropertyList& properties, bool important);
