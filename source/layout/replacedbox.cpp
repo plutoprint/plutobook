@@ -11,6 +11,8 @@
 #include "graphicscontext.h"
 #include "document.h"
 
+#include <cmath>
+
 namespace plutobook {
 
 ReplacedBox::ReplacedBox(Node* node, const RefPtr<BoxStyle>& style)
@@ -26,8 +28,16 @@ void ReplacedBox::computeAspectRatioInformation(float& intrinsicWidth, float& in
     // A CSS 'aspect-ratio' overrides the natural ratio unless 'auto' was
     // specified and the element actually has a natural ratio of its own.
     auto aspectRatio = style()->aspectRatio();
-    if(aspectRatio.value > 0.0 && (!aspectRatio.isAuto || intrinsicRatio == 0.f)) {
-        intrinsicRatio = aspectRatio.value;
+    auto ratio = static_cast<float>(aspectRatio.value);
+    if(ratio > 0.f && std::isfinite(ratio) && (!aspectRatio.isAuto || intrinsicRatio == 0.f)) {
+        intrinsicRatio = ratio;
+        // Keep the natural size consistent with the new ratio, so the sizing
+        // code does not derive one axis from a dimension of the old ratio.
+        if(intrinsicWidth > 0.f) {
+            intrinsicHeight = intrinsicWidth / intrinsicRatio;
+        } else if(intrinsicHeight > 0.f) {
+            intrinsicWidth = intrinsicHeight * intrinsicRatio;
+        }
     }
 }
 
