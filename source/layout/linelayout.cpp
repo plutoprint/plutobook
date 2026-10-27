@@ -1298,14 +1298,23 @@ uint32_t LineBreaker::autoHyphenationBreak(const LineItemRun& run, uint32_t lowe
     if(hyphenator == nullptr)
         return 0;
 
-    // Isolate the word (maximal run of letters) that the width limit falls in.
+    // Isolate the whole word (maximal run of letters and soft hyphens) that the
+    // width limit falls in, including any part already laid out on a previous line.
+    auto isWordCharacter = [this](uint32_t offset) {
+        return u_isalpha(m_data.text[offset]) || m_data.text[offset] == kSoftHyphenCharacter;
+    };
+
     auto wordStart = widthLimit;
-    while(wordStart > run.startOffset && u_isalpha(m_data.text[wordStart - 1]))
+    while(wordStart > run.item.startOffset() && isWordCharacter(wordStart - 1))
         --wordStart;
     auto wordEnd = widthLimit;
-    while(wordEnd < run.item.endOffset() && u_isalpha(m_data.text[wordEnd]))
+    while(wordEnd < run.item.endOffset() && isWordCharacter(wordEnd))
         ++wordEnd;
     if(wordEnd - wordStart < 4)
+        return 0;
+
+    // A word containing a soft hyphen may only break at its soft hyphens (CSS Text 3 §5.4).
+    if(m_data.text.indexOf(UChar(kSoftHyphenCharacter), wordStart, wordEnd - wordStart) >= 0)
         return 0;
 
     std::vector<uint32_t> breaks;
