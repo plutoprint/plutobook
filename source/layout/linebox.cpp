@@ -196,12 +196,13 @@ static void paintTextDecorations(GraphicsContext& context, const Point& offset, 
 
 void TextLineBox::paint(const PaintInfo& info, const Point& offset, PaintPhase phase)
 {
-    if(m_shapeWidth == 0.f || phase != PaintPhase::Contents || style()->visibility() != Visibility::Visible)
+    // A run made only of a soft hyphen has no text width but still draws the hyphen.
+    if((m_shapeWidth == 0.f && m_hyphenWidth == 0.f) || phase != PaintPhase::Contents || style()->visibility() != Visibility::Visible)
         return;
     Point adjustedOffset(offset + location());
     Point origin(adjustedOffset.x, adjustedOffset.y + style()->fontAscent());
     const float textWidth = m_width - m_hyphenWidth;
-    int repeatCount = std::max(1.f, std::floor(textWidth / m_shapeWidth));
+    int repeatCount = m_shapeWidth > 0.f ? std::max(1.f, std::floor(textWidth / m_shapeWidth)) : 1;
     if(repeatCount > 1 && style()->direction() == Direction::Ltr) {
         origin.x += std::max(0.f, textWidth - (m_shapeWidth * repeatCount));
     }
