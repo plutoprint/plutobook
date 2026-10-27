@@ -50,7 +50,7 @@ PlutoBook implements the CSS Box Model as described in the [CSS Box Model Module
 
 ## Box Sizing
 
-PlutoBook supports box sizing properties as described in the [CSS Box Sizing Module Level 3](https://www.w3.org/TR/css-sizing-3). It provides control over element dimensions using `width`, `height`, `min-width`, `min-height`, `max-width`, and `max-height`. These properties make it easy to define fixed, minimum, or maximum sizes to ensure flexible and predictable layouts. The `box-sizing` property is also supported, allowing you to choose whether an element’s `width` and `height` include its padding and border (`border-box`) or apply only to its content (`content-box`). This gives precise control over how an element’s total size is calculated in relation to its content and surrounding box model properties.
+PlutoBook supports box sizing properties as described in the [CSS Box Sizing Module Level 3](https://www.w3.org/TR/css-sizing-3). It provides control over element dimensions using `width`, `height`, `min-width`, `min-height`, `max-width`, and `max-height`. These properties make it easy to define fixed, minimum, or maximum sizes to ensure flexible and predictable layouts. The `box-sizing` property is also supported, allowing you to choose whether an element’s `width` and `height` include its padding and border (`border-box`) or apply only to its content (`content-box`). This gives precise control over how an element’s total size is calculated in relation to its content and surrounding box model properties. The `aspect-ratio` property is also supported, letting an element’s automatic dimension be derived from a preferred width-to-height ratio and the other, definite dimension.
 
 ## Display
 

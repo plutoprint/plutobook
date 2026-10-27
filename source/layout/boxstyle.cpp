@@ -237,6 +237,40 @@ Length BoxStyle::height() const
     return convertWidthOrHeightLength(*value);
 }
 
+AspectRatio BoxStyle::aspectRatio() const
+{
+    auto value = get(CSSPropertyID::AspectRatio);
+    if(value == nullptr)
+        return AspectRatio{};
+
+    const CSSPairValue* pair = nullptr;
+    bool isAuto = false;
+    if(is<CSSPairValue>(*value)) {
+        pair = &to<CSSPairValue>(*value);
+    } else if(is<CSSListValue>(*value)) {
+        for(const auto& item : to<CSSListValue>(*value)) {
+            if(is<CSSPairValue>(*item))
+                pair = &to<CSSPairValue>(*item);
+            else if(item->id() == CSSValueID::Auto) {
+                isAuto = true;
+            }
+        }
+    } else {
+        isAuto = value->id() == CSSValueID::Auto;
+    }
+
+    double ratio = 0.0;
+    if(pair) {
+        auto width = to<CSSNumberValue>(*pair->first()).value();
+        auto height = to<CSSNumberValue>(*pair->second()).value();
+        if(width > 0.0 && height > 0.0) {
+            ratio = width / height;
+        }
+    }
+
+    return AspectRatio{isAuto, ratio};
+}
+
 Length BoxStyle::minWidth() const
 {
     auto value = get(CSSPropertyID::MinWidth);

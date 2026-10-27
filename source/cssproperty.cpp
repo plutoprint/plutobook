@@ -35,6 +35,7 @@ CSSPropertyID CSSProperty::id(std::string_view name)
         {"align-items", CSSPropertyID::AlignItems},
         {"align-self", CSSPropertyID::AlignSelf},
         {"alignment-baseline", CSSPropertyID::AlignmentBaseline},
+        {"aspect-ratio", CSSPropertyID::AspectRatio},
         {"background", CSSPropertyID::Background},
         {"background-attachment", CSSPropertyID::BackgroundAttachment},
         {"background-clip", CSSPropertyID::BackgroundClip},
