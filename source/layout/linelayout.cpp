@@ -1305,13 +1305,15 @@ uint32_t LineBreaker::autoHyphenationBreak(const LineItemRun& run, uint32_t lowe
         return u_isalpha(m_data.text[offset]) || m_data.text[offset] == kSoftHyphenCharacter;
     };
 
+    // Hyphenator::hyphenate rejects longer words; stop scanning past that length.
+    constexpr uint32_t kMaxWordLength = 100;
     auto wordStart = widthLimit;
-    while(wordStart > 0 && isWordCharacter(wordStart - 1))
+    while(wordStart > 0 && widthLimit - wordStart <= kMaxWordLength && isWordCharacter(wordStart - 1))
         --wordStart;
     auto wordEnd = widthLimit;
-    while(wordEnd < m_data.text.length() && isWordCharacter(wordEnd))
+    while(wordEnd < m_data.text.length() && wordEnd - wordStart <= kMaxWordLength && isWordCharacter(wordEnd))
         ++wordEnd;
-    if(wordEnd - wordStart < 4)
+    if(wordEnd - wordStart < 4 || wordEnd - wordStart > kMaxWordLength)
         return 0;
 
     // A word containing a soft hyphen may only break at its soft hyphens (CSS Text 3 §5.4).
