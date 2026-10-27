@@ -294,6 +294,8 @@ private:
     void breakText(LineItemRun& run, const RefPtr<TextShape>& shape, float availableWidth);
     uint32_t autoHyphenationBreak(const LineItemRun& run, uint32_t lowerBound, uint32_t widthLimit);
     void appendHyphen(LineItemRun& run, RefPtr<TextShape> hyphenShape);
+    LineItemRun* trailingSoftHyphenRun(uint32_t index);
+    RefPtr<TextShape> hyphenShapeFor(const LineItemRun& run) const;
 
     void rewindOverflow(uint32_t newSize);
     void handleOverflow();

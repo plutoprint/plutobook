@@ -1341,6 +1341,34 @@ void LineBreaker::appendHyphen(LineItemRun& run, RefPtr<TextShape> hyphenShape)
     run.width += run.hyphenWidth;
 }
 
+LineItemRun* LineBreaker::trailingSoftHyphenRun(uint32_t index)
+{
+    // Breaking after an inline end or a bidi isolate/embedding exit breaks
+    // after the text run they close.
+    auto& runs = m_line.runs();
+    while(runs[index].item.type() == LineItem::Type::InlineEnd || runs[index].item.type() == LineItem::Type::BidiControl) {
+        if(index == 0)
+            return nullptr;
+        --index;
+    }
+
+    auto& run = runs[index];
+    if(run.hyphenShape || run.item.type() != LineItem::Type::NormalText
+        || run.endOffset == run.startOffset || run.endOffset != run.item.endOffset()
+        || m_data.text[run.endOffset - 1] != kSoftHyphenCharacter
+        || run.item.box()->style()->hyphens() == Hyphens::None) {
+        return nullptr;
+    }
+
+    return &run;
+}
+
+RefPtr<TextShape> LineBreaker::hyphenShapeFor(const LineItemRun& run) const
+{
+    auto style = run.item.box()->style();
+    return TextShape::createForText(style->hyphenString(), run.shape.shape()->direction(), false, style);
+}
+
 void LineBreaker::rewindOverflow(uint32_t newSize)
 {
     auto& runs = m_line.runs();
@@ -1415,7 +1443,13 @@ void LineBreaker::handleOverflow()
     while(index > 0) {
         auto& run = runs[--index];
         if(run.canBreakAfter && index < runs.size() - 1) {
-            if(widthToRewind <= 0.f) {
+            // A soft hyphen ending a text item is rendered only if the line breaks
+            // after it, and the break fits only if there is room for the hyphen.
+            auto hyphenRun = trailingSoftHyphenRun(index);
+            auto hyphenShape = hyphenRun ? hyphenShapeFor(*hyphenRun) : nullptr;
+            if(widthToRewind + (hyphenShape ? hyphenShape->width() : 0.f) <= 0.f) {
+                if(hyphenShape)
+                    appendHyphen(*hyphenRun, std::move(hyphenShape));
                 m_state = LineBreakState::Trailing;
                 rewindOverflow(index + 1);
                 return;
@@ -1486,8 +1520,18 @@ void LineBreaker::handleOverflow()
         }
     }
 
-    if(breakBefore > 0 || m_line.canBreakAfterLastRun())
+    if(breakBefore > 0 || m_line.canBreakAfterLastRun()) {
         m_state = LineBreakState::Trailing;
+        // The line overflows anyway: render the hyphen of a soft hyphen break.
+        auto breakRunCount = breakBefore > 0 ? breakBefore : runs.size();
+        if(auto hyphenRun = trailingSoftHyphenRun(breakRunCount - 1)) {
+            appendHyphen(*hyphenRun, hyphenShapeFor(*hyphenRun));
+            if(breakBefore == 0) {
+                m_currentWidth += hyphenRun->hyphenWidth;
+            }
+        }
+    }
+
     if(breakBefore > 0) {
         rewindOverflow(breakBefore);
     }
