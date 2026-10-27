@@ -1739,6 +1739,8 @@ void LineLayout::computeIntrinsicWidths(float& minWidth, float& maxWidth) const
                 } else {
                     auto startOffset = item.startOffset();
                     auto breakAnyCharacter = currentStyle->breakAll() || currentStyle->breakAnywhere(true);
+                    auto skipSoftHyphen = currentStyle->hyphens() == Hyphens::None;
+                    float hyphenWidth = -1.f;
                     while(startOffset < item.endOffset()) {
                         if(breakIterator.isBreakableSpace(m_data.text[startOffset])) {
                             minWidth = std::max(minWidth, inlineMinWidth);
@@ -1751,12 +1753,19 @@ void LineLayout::computeIntrinsicWidths(float& minWidth, float& maxWidth) const
                         if(breakAnyCharacter) {
                             endOffset = characterIterator.nextBreakOpportunity(startOffset, endOffset);
                         } else {
-                            endOffset = breakIterator.nextBreakOpportunity(startOffset + 1, endOffset);
+                            endOffset = breakIterator.nextBreakOpportunity(startOffset + 1, endOffset, skipSoftHyphen);
                         }
 
                         assert(endOffset > startOffset);
                         auto subShape = TextShapeView(shape, startOffset - item.startOffset(), endOffset - item.startOffset());
                         inlineMinWidth += subShape.width();
+                        // A line broken at a soft hyphen ends with a visible hyphen.
+                        if(!skipSoftHyphen && !breakAnyCharacter && m_data.text[endOffset - 1] == kSoftHyphenCharacter) {
+                            if(hyphenWidth < 0.f)
+                                hyphenWidth = TextShape::createForText(currentStyle->hyphenString(), shape->direction(), false, currentStyle)->width();
+                            inlineMinWidth += hyphenWidth;
+                        }
+
                         startOffset = endOffset;
                         if(endOffset < item.endOffset()) {
                             minWidth = std::max(minWidth, inlineMinWidth);
@@ -1764,7 +1773,7 @@ void LineLayout::computeIntrinsicWidths(float& minWidth, float& maxWidth) const
                         }
                     }
 
-                    if(breakAnyCharacter || breakIterator.isBreakable(item.endOffset())) {
+                    if(breakAnyCharacter || breakIterator.isBreakable(item.endOffset(), skipSoftHyphen)) {
                         minWidth = std::max(minWidth, inlineMinWidth);
                         inlineMinWidth = 0.f;
                     }
