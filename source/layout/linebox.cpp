@@ -207,9 +207,10 @@ void TextLineBox::paint(const PaintInfo& info, const Point& offset, PaintPhase p
     }
 
     info->setColor(style()->color());
-    const bool rtl = style()->direction() == Direction::Rtl;
+    // The hyphen follows the text in its own bidi direction: on the left of
+    // right-to-left text, even inside a left-to-right paragraph, and vice versa.
+    const bool rtl = m_shape.shape()->direction() == Direction::Rtl;
     if(rtl && m_hyphenWidth > 0.f) {
-        // In RTL the line-end sits on the visual left, so the hyphen precedes the text.
         m_hyphenShape.draw(*info, origin, 0.f, false);
         origin.x += m_hyphenWidth;
     }
