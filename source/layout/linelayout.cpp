@@ -1299,16 +1299,17 @@ uint32_t LineBreaker::autoHyphenationBreak(const LineItemRun& run, uint32_t lowe
         return 0;
 
     // Isolate the whole word (maximal run of letters and soft hyphens) that the
-    // width limit falls in, including any part already laid out on a previous line.
+    // width limit falls in, including any part already laid out on a previous line
+    // or styled by a sibling inline box: inline boundaries do not end a word.
     auto isWordCharacter = [this](uint32_t offset) {
         return u_isalpha(m_data.text[offset]) || m_data.text[offset] == kSoftHyphenCharacter;
     };
 
     auto wordStart = widthLimit;
-    while(wordStart > run.item.startOffset() && isWordCharacter(wordStart - 1))
+    while(wordStart > 0 && isWordCharacter(wordStart - 1))
         --wordStart;
     auto wordEnd = widthLimit;
-    while(wordEnd < run.item.endOffset() && isWordCharacter(wordEnd))
+    while(wordEnd < m_data.text.length() && isWordCharacter(wordEnd))
         ++wordEnd;
     if(wordEnd - wordStart < 4)
         return 0;
