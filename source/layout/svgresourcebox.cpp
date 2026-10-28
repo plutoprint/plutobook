@@ -130,13 +130,16 @@ Rect SVGResourceClipperBox::clipBoundingBox(const Box* box) const
     return element()->transform().mapRect(clipBoundingBox);
 }
 
+static Transform makeObjectBoundingBoxTransform(const Rect& rect)
+{
+    return Transform(rect.w, 0, 0, rect.h, rect.x, rect.y);
+}
+
 void SVGResourceClipperBox::applyClipPath(const SVGRenderState& state) const
 {
     auto transform = element()->transform();
     if(element()->clipPathUnits() == SVGUnitsTypeObjectBoundingBox) {
-        const auto bbox = state.fillBoundingBox();
-        transform.translate(bbox.x, bbox.y);
-        transform.scale(bbox.w, bbox.h);
+        transform.multiply(makeObjectBoundingBoxTransform(state.fillBoundingBox()));
     }
 
     for(auto child = firstChild(); child; child = child->nextSibling()) {
@@ -172,9 +175,7 @@ void SVGResourceClipperBox::applyClipMask(const SVGRenderState& state) const
     context.addTransform(state.currentTransform());
     context.addTransform(element()->transform());
     if(element()->clipPathUnits() == SVGUnitsTypeObjectBoundingBox) {
-        const auto bbox = state.fillBoundingBox();
-        context.translate(bbox.x, bbox.y);
-        context.scale(bbox.w, bbox.h);
+        context.addTransform(makeObjectBoundingBoxTransform(state.fillBoundingBox()));
     }
     {
         SVGBlendInfo blendInfo(m_clipper, nullptr, 1.f, BlendMode::Normal);
@@ -245,9 +246,7 @@ void SVGResourceMaskerBox::applyMask(const SVGRenderState& state) const
     context.addTransform(state.currentTransform());
     context.clipRect(maskRect);
     if(element()->maskContentUnits() == SVGUnitsTypeObjectBoundingBox) {
-        const auto bbox = state.fillBoundingBox();
-        context.translate(bbox.x, bbox.y);
-        context.scale(bbox.w, bbox.h);
+        context.addTransform(makeObjectBoundingBoxTransform(state.fillBoundingBox()));
     }
     {
         SVGBlendInfo blendInfo(m_clipper, m_masker, 1.f, BlendMode::Normal);
