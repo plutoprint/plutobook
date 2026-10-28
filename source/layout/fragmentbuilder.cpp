@@ -94,17 +94,15 @@ static bool isBreakPropagatingContainer(const Box* box)
 
 static bool hasInFlowContentBefore(const Box* box)
 {
-    for(; box; box = box->parentBox()) {
-        auto parent = box->parentBox();
+    while(box) {
+        const auto* parent = box->parentBox();
         if(parent == nullptr)
             return false;
-        if(!box->isFirstInFlowChild())
+        if(!box->isFirstInFlowChild() || !isBreakPropagatingContainer(parent))
             return true;
-        if(!isBreakPropagatingContainer(parent))
-            return true;
-        if(parent->isFloatingOrPositioned() || parent->isMultiColumnFlowBox()) {
+        if(parent->isFloatingOrPositioned() || parent->isMultiColumnFlowBox())
             return false;
-        }
+        box = parent;
     }
 
     return false;
@@ -112,17 +110,15 @@ static bool hasInFlowContentBefore(const Box* box)
 
 static bool hasInFlowContentAfter(const Box* box)
 {
-    for(; box; box = box->parentBox()) {
-        auto parent = box->parentBox();
+    while(box) {
+        const auto* parent = box->parentBox();
         if(parent == nullptr)
             return false;
-        if(!box->isLastInFlowChild())
+        if(!box->isLastInFlowChild() || !isBreakPropagatingContainer(parent))
             return true;
-        if(!isBreakPropagatingContainer(parent))
-            return true;
-        if(parent->isFloatingOrPositioned() || parent->isMultiColumnFlowBox()) {
+        if(parent->isFloatingOrPositioned() || parent->isMultiColumnFlowBox())
             return false;
-        }
+        box = parent;
     }
 
     return false;
@@ -130,15 +126,16 @@ static bool hasInFlowContentAfter(const Box* box)
 
 static bool receivesPropagatedBreaks(const Box* box)
 {
-    auto parent = box->parentBox();
+    const auto* parent = box->parentBox();
     if(parent == nullptr)
         return true;
-    if(box->isBlockFlowBox() && !box->isChildrenInline() && !box->isFloatingOrPositioned()
-        && !box->isTableCellBox() && !box->isMultiColumnFlowBox()) {
-        return parent->isFlexibleBox() || (parent->isBlockFlowBox() && !parent->isChildrenInline());
+    if(!box->isBlockFlowBox() || box->isChildrenInline()
+        || box->isFloatingOrPositioned() || box->isTableCellBox()
+        || box->isMultiColumnFlowBox()) {
+        return false;
     }
 
-    return false;
+    return parent->isFlexibleBox() || (parent->isBlockFlowBox() && !parent->isChildrenInline());
 }
 
 static const Box* firstInFlowChild(const Box* box)
