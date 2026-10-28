@@ -66,6 +66,8 @@ public:
     bool hasCollapsibleNewline() const { return m_hasCollapsibleNewline; }
     void setHasCollapsibleNewline(bool hasNewline) { m_hasCollapsibleNewline = hasNewline; }
 
+    bool isEmptyText() const { return m_type == Type::NormalText && m_startOffset == m_endOffset; }
+
     bool isTextItem() const { return m_type == Type::NormalText || m_type == Type::TabulationText || m_type == Type::LeaderText; }
     bool isBreakOpportunity() const { return m_type == Type::SoftBreakOpportunity || m_type == Type::HardBreakOpportunity; }
 

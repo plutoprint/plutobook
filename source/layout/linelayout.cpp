@@ -628,7 +628,7 @@ const LineInfo& LineBreaker::nextLine()
 
     for(; m_leadingFloatsEndIndex < m_data.items.size(); ++m_leadingFloatsEndIndex) {
         const auto& item = m_data.items[m_leadingFloatsEndIndex];
-        if(item.type() == LineItem::Type::NormalText && !item.length())
+        if(item.isEmptyText())
             continue;
         if(item.type() != LineItem::Type::Floating)
             break;
@@ -853,10 +853,10 @@ void LineBreaker::setCurrentStyle(const BoxStyle* currentStyle)
 
 void LineBreaker::handleNormalText(const LineItem& item)
 {
-    if(item.length()) {
-        handleText(item, item.shapeText(m_data));
-    } else {
+    if(item.length() == 0) {
         handleEmptyText(item);
+    } else {
+        handleText(item, item.shapeText(m_data));
     }
 }
 
@@ -1058,7 +1058,7 @@ void LineBreaker::handleHardBreak(const LineItem& item)
     moveToNextOf(item);
     while(m_itemIndex < m_data.items.size()) {
         const auto& item = m_data.items[m_itemIndex];
-        if(item.type() == LineItem::Type::NormalText && !item.length()) {
+        if(item.isEmptyText()) {
             handleEmptyText(item);
         } else if(item.type() == LineItem::Type::InlineEnd) {
             handleInlineEnd(item);
@@ -1627,10 +1627,10 @@ void LineLayout::computeIntrinsicWidths(float& minWidth, float& maxWidth) const
     float inlineMinWidth = 0.f;
     float inlineMaxWidth = 0.f;
     for(const auto& item : m_data.items) {
-        if(item.type() == LineItem::Type::NormalText || item.type() == LineItem::Type::TabulationText || item.type() == LineItem::Type::LeaderText) {
-            if(item.type() == LineItem::Type::NormalText && !item.length())
+        if(item.isTextItem()) {
+            if(item.length() == 0)
                 continue;
-            if(indentWidth && item.length()) {
+            if(indentWidth) {
                 inlineMinWidth += indentWidth;
                 inlineMaxWidth += indentWidth;
                 indentWidth = 0.f;
