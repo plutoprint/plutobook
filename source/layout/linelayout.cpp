@@ -1412,7 +1412,8 @@ float LineBreaker::hangingSpaceWidth() const
                 --endOffset;
             if(endOffset < run.endOffset) {
                 const auto& shape = run.item.shapeText(m_data);
-                width += TextShapeView(shape, endOffset - run.item.startOffset(), run.endOffset - run.item.startOffset()).width();
+                auto subShape = TextShapeView(shape, endOffset - run.item.startOffset(), run.endOffset - run.item.startOffset());
+                width += subShape.width();
             }
 
             break;
