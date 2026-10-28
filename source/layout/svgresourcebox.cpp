@@ -53,8 +53,8 @@ Transform SVGResourceMarkerBox::markerTransform(const Point& origin, float angle
 
     auto reference = m_localTransform.mapPoint(refPoint());
     if(element()->markerUnits() == SVGMarkerUnitsTypeStrokeWidth)
-        transform.scale(strokeWidth, strokeWidth);
-    transform.translate(-reference.x, -reference.y);
+        transform.scale(strokeWidth);
+    transform.translate(-reference);
     return transform * m_localTransform;
 }
 
@@ -316,7 +316,7 @@ bool SVGResourcePatternBox::applyPaint(const SVGRenderState& state, float opacit
     }
 
     Transform patternTransform(m_attributes.patternTransform());
-    patternTransform.translate(patternRect.x, patternRect.y);
+    patternTransform.translate(patternRect.origin());
     state->setPattern(surface, patternTransform);
 
     cairo_destroy(canvas);

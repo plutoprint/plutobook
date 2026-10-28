@@ -80,8 +80,6 @@ public:
     PageMarginType marginType() const { return m_marginType; }
     PageBox* pageBox() const;
 
-    float pageScale() const { return pageBox()->pageScale(); }
-
     bool isHorizontalFlow() const;
     bool isVerticalFlow() const;
 

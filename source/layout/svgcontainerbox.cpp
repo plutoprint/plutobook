@@ -101,7 +101,7 @@ void SVGTransformableContainerBox::layout()
             lengthContext.valueForLength(useElement->y())
         };
 
-        m_localTransform.translate(translation.x, translation.y);
+        m_localTransform.translate(translation);
     }
 
     SVGContainerBox::layout();

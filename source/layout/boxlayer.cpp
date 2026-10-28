@@ -117,7 +117,7 @@ void BoxLayer::paintLayer(BoxLayer* rootLayer, GraphicsContext& context, const R
     Transform transform(m_transform);
     transform.postTranslate(location.x, location.y);
     if(auto marginBox = to<PageMarginBox>(m_box))
-        transform.postScale(marginBox->pageScale(), marginBox->pageScale());
+        transform.postScale(marginBox->pageBox()->pageScale());
     Rect rectangle = transform.inverted().mapRect(rect);
 
     context.save();

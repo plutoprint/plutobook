@@ -1096,7 +1096,7 @@ Transform BoxStyle::getTransform(float width, float height) const
         }
     }
 
-    transform.translate(-origin.x, -origin.y);
+    transform.translate(-origin);
     return transform;
 }
 

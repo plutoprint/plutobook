@@ -123,7 +123,7 @@ void SVGRootBox::paintReplaced(const PaintInfo& info, const Point& offset)
     }
 
     auto currentTransform = info->getTransform();
-    currentTransform.translate(contentRect.x, contentRect.y);
+    currentTransform.translate(contentRect.origin());
     currentTransform.multiply(element()->viewBoxToViewTransform(contentRect.size()));
 
     {

@@ -42,7 +42,6 @@ public:
     constexpr Point(float x, float y) : x(x), y(y) {}
 
     constexpr void translate(float dx, float dy) { x += dx; y += dy; }
-    constexpr void translate(float d) { translate(d, d); }
     constexpr void translate(const Point& p) { translate(p.x, p.y); }
 
     constexpr Point operator-() const { return Point(-x, -y); }
@@ -159,14 +158,12 @@ public:
 
     constexpr void inflate(float dx, float dy) { x -= dx; y -= dy; w += dx * 2.f; h += dy * 2.f; }
     constexpr void inflate(float d) { inflate(d, d); }
-    constexpr void inflate(const Point& p) { inflate(p.x, p.y); }
+    constexpr void inflate(const Size& s) { inflate(s.w, s.h); }
 
     constexpr void translate(float dx, float dy) { x += dx; y += dy; }
-    constexpr void translate(float d) { translate(d, d); }
     constexpr void translate(const Point& p) { translate(p.x, p.y); }
 
     constexpr Rect translated(float dx, float dy) const { return Rect(x + dx, y + dy, w, h); }
-    constexpr Rect translated(float d) const { return translated(d, d); }
     constexpr Rect translated(const Point& p) const { return translated(p.x, p.y); }
 
     constexpr Rect intersected(const Rect& rect) const;
@@ -423,22 +420,37 @@ public:
     Transform(float a, float b, float c, float d, float e, float f);
 
     Transform inverted() const;
+
     Transform operator*(const Transform& transform) const;
     Transform& operator*=(const Transform& transform);
 
     Transform& multiply(const Transform& transform);
+
     Transform& rotate(float angle);
     Transform& rotate(float angle, float cx, float cy);
+
     Transform& scale(float sx, float sy);
+    Transform& scale(float s) { return scale(s, s); }
+    Transform& scale(const Size& s) { return scale(s.w, s.h); }
+
     Transform& shear(float shx, float shy);
+
     Transform& translate(float tx, float ty);
+    Transform& translate(const Point& p) { return translate(p.x, p.y); }
 
     Transform& postMultiply(const Transform& transform);
+
     Transform& postRotate(float angle);
     Transform& postRotate(float angle, float cx, float cy);
-    Transform& postScale(float sx, float sy);
+
     Transform& postShear(float shx, float shy);
+
+    Transform& postScale(float sx, float sy);
+    Transform& postScale(float s) { return postScale(s, s); }
+    Transform& postScale(const Size& s) { return postScale(s.w, s.h); }
+
     Transform& postTranslate(float tx, float ty);
+    Transform& postTranslate(const Point& p) { return postTranslate(p.x, p.y); }
 
     Transform& invert();
 
@@ -451,8 +463,8 @@ public:
 
     static Transform makeRotate(float angle);
     static Transform makeRotate(float angle, float cx, float cy);
-    static Transform makeScale(float sx, float sy);
     static Transform makeShear(float shx, float shy);
+    static Transform makeScale(float sx, float sy);
     static Transform makeTranslate(float tx, float ty);
 
     static const Transform Identity;
