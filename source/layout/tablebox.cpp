@@ -486,6 +486,8 @@ void TableBox::layout(FragmentBuilder* fragmentainer)
         auto sectionTop = m_borderVerticalSpacing + height();
         for(auto section : m_sections) {
             if(fragmentainer) {
+                sectionTop = fragmentainer->applyFragmentBreakBefore(section, sectionTop);
+                sectionTop = fragmentainer->applyFragmentBreakInside(section, sectionTop);
                 fragmentainer->enterFragment(sectionTop);
             }
 
@@ -506,6 +508,9 @@ void TableBox::layout(FragmentBuilder* fragmentainer)
             }
 
             sectionTop += m_borderVerticalSpacing + section->height();
+            if(fragmentainer) {
+                sectionTop = fragmentainer->applyFragmentBreakAfter(section, sectionTop);
+            }
         }
 
         setHeight(sectionTop);
@@ -1364,6 +1369,32 @@ void TableSectionBox::distributeExcessHeightToRows(float distributableHeight)
     }
 }
 
+static const BoxFrame* rowAlwaysBreakBefore(const TableRowBox* rowBox, const FragmentBuilder* fragmentainer)
+{
+    if(fragmentainer->alwaysBreakBefore(rowBox))
+        return rowBox;
+    for(auto cellBox = rowBox->firstCell(); cellBox; cellBox = cellBox->nextCell()) {
+        if(fragmentainer->alwaysBreakBefore(cellBox)) {
+            return cellBox;
+        }
+    }
+
+    return nullptr;
+}
+
+static const BoxFrame* rowAlwaysBreakAfter(const TableRowBox* rowBox, const FragmentBuilder* fragmentainer)
+{
+    if(fragmentainer->alwaysBreakAfter(rowBox))
+        return rowBox;
+    for(auto cellBox = rowBox->firstCell(); cellBox; cellBox = cellBox->nextCell()) {
+        if(fragmentainer->alwaysBreakAfter(cellBox)) {
+            return cellBox;
+        }
+    }
+
+    return nullptr;
+}
+
 void TableSectionBox::layoutRows(FragmentBuilder* fragmentainer, float headerHeight, float footerHeight)
 {
     float rowTop = 0;
@@ -1371,17 +1402,13 @@ void TableSectionBox::layoutRows(FragmentBuilder* fragmentainer, float headerHei
     for(size_t rowIndex = 0; rowIndex < m_rows.size(); ++rowIndex) {
         auto rowBox = m_rows[rowIndex];
         if(fragmentainer) {
+            if(auto box = rowAlwaysBreakBefore(rowBox, fragmentainer))
+                rowTop = fragmentainer->applyFragmentBreakBefore(box, rowTop);
+            auto unbreakableHeight = unbreakableRowHeightAt(rowIndex) + footerHeight + verticalSpacing;
+            rowTop = fragmentainer->adjustOffsetInFragmentFlow(rowTop, unbreakableHeight, unbreakableHeight);
             auto fragmentHeight = fragmentainer->fragmentHeightForOffset(rowTop);
             if(fragmentHeight > 0.f) {
-                auto maxRowHeight = unbreakableRowHeightAt(rowIndex);
                 auto remainingHeight = fragmentainer->fragmentRemainingHeightForOffset(rowTop, AssociateWithLatterFragment);
-                auto availableHeight = remainingHeight - footerHeight - verticalSpacing;
-                if(maxRowHeight > availableHeight && maxRowHeight < fragmentHeight) {
-                    fragmentainer->setFragmentBreak(rowTop, maxRowHeight - availableHeight);
-                    rowTop += remainingHeight;
-                    remainingHeight = fragmentHeight;
-                }
-
                 if(isNearlyEqual(remainingHeight, fragmentHeight)) {
                     rowTop += headerHeight;
                     if(table()->isBorderCollapsed()) {
@@ -1436,6 +1463,11 @@ void TableSectionBox::layoutRows(FragmentBuilder* fragmentainer, float headerHei
 
         rowBox->updateOverflowRect();
         rowTop += verticalSpacing + rowBox->height();
+        if(fragmentainer) {
+            if(auto box = rowAlwaysBreakAfter(rowBox, fragmentainer)) {
+                rowTop = fragmentainer->applyFragmentBreakAfter(box, rowTop);
+            }
+        }
     }
 
     setHeight(rowTop - verticalSpacing);

@@ -86,19 +86,13 @@ float FragmentBuilder::fragmentOffset() const
     return m_fragmentOffset;
 }
 
-static bool isBreakPropagatingContainer(const Box* box)
-{
-    return box->isBlockFlowBox() || box->isFlexibleBox()
-        || box->isTableBox() || box->isTableSectionBox() || box->isTableRowBox();
-}
-
 static bool hasInFlowContentBefore(const Box* box)
 {
     while(box) {
         const auto* parent = box->parentBox();
         if(parent == nullptr)
             return false;
-        if(!box->isFirstInFlowChild() || !isBreakPropagatingContainer(parent))
+        if(!box->isFirstInFlowChild())
             return true;
         if(parent->isFloatingOrPositioned() || parent->isMultiColumnFlowBox())
             return false;
@@ -114,7 +108,7 @@ static bool hasInFlowContentAfter(const Box* box)
         const auto* parent = box->parentBox();
         if(parent == nullptr)
             return false;
-        if(!box->isLastInFlowChild() || !isBreakPropagatingContainer(parent))
+        if(!box->isLastInFlowChild())
             return true;
         if(parent->isFloatingOrPositioned() || parent->isMultiColumnFlowBox())
             return false;
@@ -130,12 +124,12 @@ static bool receivesPropagatedBreaks(const Box* box)
     if(parent == nullptr)
         return true;
     if(!box->isBlockFlowBox() || box->isChildrenInline()
-        || box->isFloatingOrPositioned() || box->isTableCellBox()
-        || box->isMultiColumnFlowBox()) {
+        || box->isFloatingOrPositioned() || box->isMultiColumnFlowBox()) {
         return false;
     }
 
-    return parent->isFlexibleBox() || (parent->isBlockFlowBox() && !parent->isChildrenInline());
+    return parent->isFlexibleBox() || parent->isTableRowBox()
+        || (parent->isBlockFlowBox() && !parent->isChildrenInline());
 }
 
 static const Box* firstInFlowChild(const Box* box)
