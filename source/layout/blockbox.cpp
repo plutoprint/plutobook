@@ -875,7 +875,9 @@ void BlockFlowBox::positionFloatingBox(FloatingBox& floatingBox, FragmentBuilder
     }
 
     if(fragmentainer) {
-        floatTop = fragmentainer->applyFragmentBreakInside(child, floatTop);
+        auto floatHeight = child->marginBoxHeight();
+        auto unbreakableHeight = child->marginTop() + child->unbreakableHeight(fragmentainer, floatTop + child->marginTop());
+        floatTop = fragmentainer->adjustOffsetInFragmentFlow(floatTop, floatHeight, unbreakableHeight);
         if(!isNearlyEqual(top, floatTop)) {
             auto newTop = floatTop + child->marginTop();
             fragmentainer->enterFragment(newTop);
