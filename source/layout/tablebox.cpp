@@ -236,15 +236,19 @@ float TableBox::unbreakableHeight(const FragmentBuilder* fragmentainer, float of
 {
     if(fragmentainer->avoidsBreakInside(this))
         return height();
+    float leadingHeight = 0;
     for(auto caption : m_captions) {
         if(caption->captionSide() == CaptionSide::Top) {
             auto marginTop = std::max(0.f, caption->marginTop());
-            return marginTop + caption->unbreakableHeight(fragmentainer, offset + marginTop);
+            auto unbreakableHeight = caption->unbreakableHeight(fragmentainer, offset + leadingHeight + marginTop);
+            if(unbreakableHeight + caption->borderAndPaddingBottom() + kLayoutEpsilon < caption->height())
+                return leadingHeight + marginTop + unbreakableHeight;
+            leadingHeight += caption->marginBoxHeight();
         }
     }
 
     if(auto section = topSection()) {
-        auto leadingHeight = m_borderVerticalSpacing + borderAndPaddingTop();
+        leadingHeight += m_borderVerticalSpacing + borderAndPaddingTop();
         if(section->isTableHeader()) {
             if(auto sectionBelow = TableBox::sectionBelow(section)) {
                 leadingHeight += m_borderVerticalSpacing + section->height();
@@ -265,7 +269,7 @@ float TableBox::unbreakableHeight(const FragmentBuilder* fragmentainer, float of
         return leadingHeight + unbreakableHeight;
     }
 
-    return borderAndPaddingHeight();
+    return leadingHeight + borderAndPaddingHeight();
 }
 
 TableColumnBox* TableBox::columnGroupAt(size_t index) const
