@@ -1404,9 +1404,10 @@ void TableSectionBox::layoutRows(FragmentBuilder* fragmentainer, float headerHei
         if(fragmentainer) {
             if(auto box = rowAlwaysBreakBefore(rowBox, fragmentainer))
                 rowTop = fragmentainer->applyFragmentBreakBefore(box, rowTop);
-            auto unbreakableHeight = unbreakableRowHeightAt(rowIndex) + footerHeight + verticalSpacing;
-            rowTop = fragmentainer->adjustOffsetInFragmentFlow(rowTop, unbreakableHeight, unbreakableHeight);
             auto fragmentHeight = fragmentainer->fragmentHeightForOffset(rowTop);
+            auto unbreakableHeight = unbreakableRowHeightAt(rowIndex) + footerHeight + verticalSpacing;
+            if(unbreakableHeight < fragmentHeight)
+                rowTop = fragmentainer->adjustOffsetInFragmentFlow(rowTop, unbreakableHeight, unbreakableHeight);
             if(fragmentHeight > 0.f) {
                 auto remainingHeight = fragmentainer->fragmentRemainingHeightForOffset(rowTop, AssociateWithLatterFragment);
                 if(isNearlyEqual(remainingHeight, fragmentHeight)) {
