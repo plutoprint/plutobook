@@ -401,6 +401,8 @@ void TableBox::layoutCaption(TableCaptionBox* caption, FragmentBuilder* fragment
 
     auto captionTop = height() + caption->marginTop();
     if(fragmentainer) {
+        captionTop = fragmentainer->applyFragmentBreakBefore(caption, captionTop);
+        captionTop = fragmentainer->applyFragmentBreakInside(caption, captionTop);
         fragmentainer->enterFragment(captionTop);
     }
 
@@ -409,9 +411,21 @@ void TableBox::layoutCaption(TableCaptionBox* caption, FragmentBuilder* fragment
     caption->setX(caption->marginLeft());
     if(fragmentainer) {
         fragmentainer->leaveFragment(captionTop);
+        auto captionHeight = caption->height();
+        auto unbreakableHeight = caption->unbreakableHeight(fragmentainer, captionTop);
+        auto newTop = fragmentainer->adjustOffsetInFragmentFlow(captionTop, captionHeight, unbreakableHeight);
+        if(!isNearlyEqual(newTop, captionTop)) {
+            fragmentainer->enterFragment(newTop);
+            caption->setY(newTop);
+            caption->layout(fragmentainer);
+            fragmentainer->leaveFragment(newTop);
+        }
     }
 
-    setHeight(captionTop + caption->height() + caption->marginBottom());
+    setHeight(caption->y() + caption->height() + caption->marginBottom());
+    if(fragmentainer) {
+        setHeight(fragmentainer->applyFragmentBreakAfter(caption, height()));
+    }
 }
 
 void TableBox::layout(FragmentBuilder* fragmentainer)
