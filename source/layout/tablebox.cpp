@@ -184,8 +184,10 @@ std::optional<float> TableBox::inlineBlockBaseline() const
     return firstLineBaseline();
 }
 
-std::optional<float> TableBox::repeatedHeaderTop(const Rect& pageRect, const Point& offset) const
+std::optional<float> TableBox::repeatedHeaderTop(const TableSectionBox* header, const Rect& pageRect, const Point& offset) const
 {
+    if(pageRect.y <= offset.y + header->y())
+        return std::nullopt;
     for(auto section : m_sections) {
         if(section->isTableHeader() || section->isTableFooter())
             continue;
@@ -207,8 +209,10 @@ std::optional<float> TableBox::repeatedHeaderTop(const Rect& pageRect, const Poi
     return std::nullopt;
 }
 
-std::optional<float> TableBox::repeatedFooterTop(const Rect& pageRect, const Point& offset) const
+std::optional<float> TableBox::repeatedFooterTop(const TableSectionBox* footer, const Rect& pageRect, const Point& offset) const
 {
+    if(pageRect.bottom() >= offset.y + footer->y())
+        return std::nullopt;
     for(auto section : m_sections | std::views::reverse) {
         if(section->isTableHeader() || section->isTableFooter())
             continue;
@@ -218,7 +222,7 @@ std::optional<float> TableBox::repeatedFooterTop(const Rect& pageRect, const Poi
         for(auto row : section->rows() | std::views::reverse) {
             auto rowBottom = sectionTop + row->y() + row->height();
             if(rowBottom < pageRect.bottom()) {
-                if(rowBottom > pageRect.y)
+                if(rowBottom > pageRect.y && rowBottom + footer->height() <= pageRect.bottom())
                     return rowBottom;
                 return std::nullopt;
             }
@@ -248,14 +252,17 @@ float TableBox::unbreakableHeight(const FragmentBuilder* fragmentainer, float of
             }
         }
 
-        auto rowHeight = section->unbreakableRowHeightAt(0);
+        auto unbreakableHeight = m_borderVerticalSpacing + section->unbreakableRowHeightAt(0);
+        if(!section->isTableFooter()) {
+            if(auto footer = footerSection()) {
+                unbreakableHeight += m_borderVerticalSpacing + footer->height();
+            }
+        }
+
         auto fragmentHeight = fragmentainer->fragmentHeightForOffset(offset);
-        if(fragmentHeight > 0.f && rowHeight >= fragmentHeight)
+        if(fragmentHeight > 0.f && unbreakableHeight >= fragmentHeight)
             return leadingHeight;
-        auto trailingHeight = m_borderVerticalSpacing;
-        if(auto footer = footerSection(); footer && !section->isTableFooter())
-            trailingHeight += m_borderVerticalSpacing + footer->height();
-        return leadingHeight + rowHeight + trailingHeight;
+        return leadingHeight + unbreakableHeight;
     }
 
     return borderAndPaddingHeight();
@@ -680,14 +687,12 @@ void TableBox::paintContents(const PaintInfo& info, const Point& offset, PaintPh
     if(isPaginatedTable()) {
         if(auto footer = footerSection()) {
             const auto& pageRect = info.rect();
-            if(pageRect.bottom() < offset.y + footer->y()) {
-                if(auto footerTop = repeatedFooterTop(pageRect, offset)) {
-                    Point footerOffset(offset.x, footerTop.value() - footer->y());
-                    footer->paint(info, footerOffset, phase);
-                    if(shouldPaintCollapsedBorders) {
-                        for(const auto& edge : *m_collapsedBorderEdges) {
-                            footer->paintCollapsedBorders(info, footerOffset, edge);
-                        }
+            if(auto footerTop = repeatedFooterTop(footer, pageRect, offset)) {
+                Point footerOffset(offset.x, footerTop.value() - footer->y());
+                footer->paint(info, footerOffset, phase);
+                if(shouldPaintCollapsedBorders) {
+                    for(const auto& edge : *m_collapsedBorderEdges) {
+                        footer->paintCollapsedBorders(info, footerOffset, edge);
                     }
                 }
             }
@@ -705,14 +710,12 @@ void TableBox::paintContents(const PaintInfo& info, const Point& offset, PaintPh
     if(isPaginatedTable()) {
         if(auto header = headerSection()) {
             const auto& pageRect = info.rect();
-            if(pageRect.y > offset.y + header->y()) {
-                if(auto headerTop = repeatedHeaderTop(pageRect, offset)) {
-                    Point headerOffset(offset.x, headerTop.value() - header->y());
-                    header->paint(info, headerOffset, phase);
-                    if(shouldPaintCollapsedBorders) {
-                        for(const auto& edge : *m_collapsedBorderEdges) {
-                            header->paintCollapsedBorders(info, headerOffset, edge);
-                        }
+            if(auto headerTop = repeatedHeaderTop(header, pageRect, offset)) {
+                Point headerOffset(offset.x, headerTop.value() - header->y());
+                header->paint(info, headerOffset, phase);
+                if(shouldPaintCollapsedBorders) {
+                    for(const auto& edge : *m_collapsedBorderEdges) {
+                        header->paintCollapsedBorders(info, headerOffset, edge);
                     }
                 }
             }

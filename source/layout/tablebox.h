@@ -46,8 +46,8 @@ public:
     std::optional<float> lastLineBaseline() const final;
     std::optional<float> inlineBlockBaseline() const final;
 
-    std::optional<float> repeatedHeaderTop(const Rect& pageRect, const Point& offset) const;
-    std::optional<float> repeatedFooterTop(const Rect& pageRect, const Point& offset) const;
+    std::optional<float> repeatedHeaderTop(const TableSectionBox* header, const Rect& pageRect, const Point& offset) const;
+    std::optional<float> repeatedFooterTop(const TableSectionBox* footer, const Rect& pageRect, const Point& offset) const;
 
     float unbreakableHeight(const FragmentBuilder* fragmentainer, float offset) const final;
 
