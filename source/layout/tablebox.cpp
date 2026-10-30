@@ -260,7 +260,7 @@ float TableBox::unbreakableHeight(const FragmentBuilder* fragmentainer, float of
         }
 
         auto fragmentHeight = fragmentainer->fragmentHeightForOffset(offset);
-        if(fragmentHeight > 0.f && unbreakableHeight >= fragmentHeight)
+        if(fragmentHeight > 0.f && leadingHeight + unbreakableHeight >= fragmentHeight)
             return leadingHeight;
         return leadingHeight + unbreakableHeight;
     }
@@ -1423,7 +1423,7 @@ void TableSectionBox::layoutRows(FragmentBuilder* fragmentainer, float headerHei
                 rowTop = fragmentainer->applyFragmentBreakBefore(box, rowTop);
             auto fragmentHeight = fragmentainer->fragmentHeightForOffset(rowTop);
             auto unbreakableHeight = unbreakableRowHeightAt(rowIndex) + footerHeight + verticalSpacing;
-            if(unbreakableHeight < fragmentHeight)
+            if(headerHeight + unbreakableHeight < fragmentHeight)
                 rowTop = fragmentainer->adjustOffsetInFragmentFlow(rowTop, unbreakableHeight, unbreakableHeight);
             if(fragmentHeight > 0.f) {
                 auto remainingHeight = fragmentainer->fragmentRemainingHeightForOffset(rowTop, AssociateWithLatterFragment);
