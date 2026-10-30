@@ -264,7 +264,7 @@ float TableBox::unbreakableHeight(const FragmentBuilder* fragmentainer, float of
         }
 
         auto fragmentHeight = fragmentainer->fragmentHeightForOffset(offset);
-        if(fragmentHeight > 0.f && leadingHeight + unbreakableHeight >= fragmentHeight)
+        if(fragmentHeight > 0.f && leadingHeight + unbreakableHeight > fragmentHeight + kLayoutEpsilon)
             return leadingHeight;
         return leadingHeight + unbreakableHeight;
     }
@@ -1425,24 +1425,26 @@ void TableSectionBox::layoutRows(FragmentBuilder* fragmentainer, float headerHei
         if(fragmentainer) {
             if(auto box = rowAlwaysBreakBefore(rowBox, fragmentainer))
                 rowTop = fragmentainer->applyFragmentBreakBefore(box, rowTop);
+            auto leadingHeight = headerHeight;
+            if(table()->isBorderCollapsed()) {
+                if(headerHeight) {
+                    leadingHeight += table()->borderTop();
+                } else {
+                    float borderTop = 0.f;
+                    for(const auto& [col, cell] : rowBox->cells())
+                        borderTop = std::max(borderTop, cell->borderTop());
+                    leadingHeight += borderTop;
+                }
+            }
+
             auto fragmentHeight = fragmentainer->fragmentHeightForOffset(rowTop);
             auto unbreakableHeight = unbreakableRowHeightAt(rowIndex) + footerHeight + verticalSpacing;
-            if(headerHeight + unbreakableHeight < fragmentHeight)
+            if(leadingHeight + unbreakableHeight <= fragmentHeight + kLayoutEpsilon)
                 rowTop = fragmentainer->adjustOffsetInFragmentFlow(rowTop, unbreakableHeight, unbreakableHeight);
             if(fragmentHeight > 0.f) {
                 auto remainingHeight = fragmentainer->fragmentRemainingHeightForOffset(rowTop, AssociateWithLatterFragment);
                 if(isNearlyEqual(remainingHeight, fragmentHeight)) {
-                    rowTop += headerHeight;
-                    if(table()->isBorderCollapsed()) {
-                        if(headerHeight) {
-                            rowTop += table()->borderTop();
-                        } else {
-                            float borderTop = 0.f;
-                            for(const auto& [col, cell] : rowBox->cells())
-                                borderTop = std::max(borderTop, cell->borderTop());
-                            rowTop += borderTop;
-                        }
-                    }
+                    rowTop += leadingHeight;
                 }
             }
 
