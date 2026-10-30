@@ -401,9 +401,10 @@ float FlexibleBox::unbreakableHeight(const FragmentBuilder* fragmentainer, float
     auto leadingHeight = borderAndPaddingTop();
     float unbreakableHeight = 0.f;
     for(auto& item : m_items) {
-        if(item.naturalTop() > leadingHeight + kLayoutEpsilon)
+        auto itemOffset = std::max(0.f, item.naturalTop() - leadingHeight);
+        if(itemOffset > kLayoutEpsilon && !item->isFirstInFlowChild())
             continue;
-        unbreakableHeight = std::max(unbreakableHeight, item->unbreakableHeight(fragmentainer, offset + leadingHeight));
+        unbreakableHeight = std::max(unbreakableHeight, itemOffset + item->unbreakableHeight(fragmentainer, offset + leadingHeight + itemOffset));
     }
 
     return leadingHeight + unbreakableHeight;
