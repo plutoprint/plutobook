@@ -173,6 +173,7 @@ public:
     void addChild(Box* newChild) final;
 
     void updateOverflowRect() final;
+    void computeBorderWidths(float& borderTop, float& borderBottom, float& borderLeft, float& borderRight) const final;
 
     std::optional<float> firstLineBaseline() const final;
     std::optional<float> lastLineBaseline() const final;
@@ -219,22 +220,25 @@ inline TableBox* TableSectionBox::table() const
 
 class TableCell {
 public:
-    TableCell(TableCellBox* box, bool inColSpan, bool inRowSpan)
-        : m_box(box), m_inColSpan(inColSpan), m_inRowSpan(inRowSpan)
+    TableCell(TableCellBox* box, uint32_t col, uint32_t row)
+        : m_box(box), m_colOffset(col), m_rowOffset(row)
     {}
 
     TableCellBox* operator->() const { return m_box; }
 
     TableCellBox* box() const { return m_box; }
-    bool inColSpan() const { return m_inColSpan; }
-    bool inRowSpan() const { return m_inRowSpan; }
+    uint32_t colOffset() const { return m_colOffset; }
+    uint32_t rowOffset() const { return m_rowOffset; }
 
-    bool inColOrRowSpan() const { return m_inColSpan || m_inRowSpan; }
+    bool inColSpan() const { return m_colOffset > 0; }
+    bool inRowSpan() const { return m_rowOffset > 0; }
+
+    bool inColOrRowSpan() const { return m_colOffset > 0 || m_rowOffset > 0; }
 
 private:
     TableCellBox* m_box;
-    bool m_inColSpan;
-    bool m_inRowSpan;
+    uint32_t m_colOffset;
+    uint32_t m_rowOffset;
 };
 
 using TableCellMap = std::pmr::map<uint32_t, TableCell>;
@@ -247,6 +251,7 @@ public:
     void addChild(Box* newChild) final;
 
     void updateOverflowRect() final;
+    void computeBorderWidths(float& borderTop, float& borderBottom, float& borderLeft, float& borderRight) const final;
 
     TableCellBox* firstCell() const;
     TableCellBox* lastCell() const;
