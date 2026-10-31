@@ -124,36 +124,16 @@ void TableBox::computeBorderWidths(float& borderTop, float& borderBottom, float&
     borderBottom = 0.f;
     borderLeft = 0.f;
     borderRight = 0.f;
-    if(auto section = topSection()) {
-        auto row = section->firstRow();
-        for(const auto& [col, cell] : row->cells()) {
-            borderTop = std::max(borderTop, cell->borderTop());
-        }
-    }
 
+    if(auto section = topSection())
+        borderTop = section->borderTop();
     if(auto section = bottomSection()) {
-        auto row = section->lastRow();
-        for(const auto& [col, cell] : row->cells()) {
-            borderBottom = std::max(borderBottom, cell->borderBottom());
-        }
-    }
-
-    if(m_columns.empty())
-        return;
-    size_t startColumnIndex = 0;
-    size_t endColumnIndex = m_columns.size() - 1;
-    if(style()->isRightToLeftDirection()) {
-        std::swap(startColumnIndex, endColumnIndex);
+        borderBottom = section->borderBottom();
     }
 
     for(auto section : m_sections) {
-        for(auto row : section->rows()) {
-            if(auto cell = row->cellAt(startColumnIndex))
-                borderLeft = std::max(borderLeft, cell->borderLeft());
-            if(auto cell = row->cellAt(endColumnIndex)) {
-                borderRight = std::max(borderRight, cell->borderRight());
-            }
-        }
+        borderLeft = std::max(borderLeft, section->borderLeft());
+        borderRight = std::max(borderRight, section->borderRight());
     }
 }
 
@@ -1273,6 +1253,30 @@ void TableSectionBox::updateOverflowRect()
     }
 }
 
+void TableSectionBox::computeBorderWidths(float& borderTop, float& borderBottom, float& borderLeft, float& borderRight) const
+{
+    if(!table()->isBorderCollapsed()) {
+        BoxFrame::computeBorderWidths(borderTop, borderBottom, borderLeft, borderRight);
+        return;
+    }
+
+    borderTop = 0.f;
+    borderBottom = 0.f;
+    borderLeft = 0.f;
+    borderRight = 0.f;
+
+    if(auto row = firstRow())
+        borderTop = row->borderTop();
+    if(auto row = lastRow()) {
+        borderBottom = row->borderBottom();
+    }
+
+    for(auto row : m_rows) {
+        borderLeft = std::max(borderLeft, row->borderLeft());
+        borderRight = std::max(borderRight, row->borderRight());
+    }
+}
+
 std::optional<float> TableSectionBox::firstLineBaseline() const
 {
     if(m_rows.empty())
@@ -1430,10 +1434,7 @@ void TableSectionBox::layoutRows(FragmentBuilder* fragmentainer, float headerHei
                 if(headerHeight) {
                     leadingHeight += table()->borderTop();
                 } else {
-                    float borderTop = 0.f;
-                    for(const auto& [col, cell] : rowBox->cells())
-                        borderTop = std::max(borderTop, cell->borderTop());
-                    leadingHeight += borderTop;
+                    leadingHeight += rowBox->borderTop();
                 }
             }
 
@@ -1647,7 +1648,7 @@ void TableSectionBox::build()
             for(uint32_t row = 0; row < cellBox->rowSpan(); ++row) {
                 auto& cells = m_rows[row + rowIndex]->cells();
                 for(uint32_t col = 0; col < cellBox->colSpan(); ++col) {
-                    cells.emplace(col + columnIndex, TableCell(cellBox, col > 0, row > 0));
+                    cells.emplace(col + columnIndex, TableCell(cellBox, col, row));
                 }
             }
 
@@ -1770,6 +1771,40 @@ void TableRowBox::updateOverflowRect()
                 borderRect.expand(topHalfWidth, rightHalfWidth, bottomHalfWidth, leftHalfWidth);
                 addOverflowRect(borderRect);
             }
+        }
+    }
+}
+
+void TableRowBox::computeBorderWidths(float& borderTop, float& borderBottom, float& borderLeft, float& borderRight) const
+{
+    const auto tableBox = table();
+    if(!tableBox->isBorderCollapsed()) {
+        BoxFrame::computeBorderWidths(borderTop, borderBottom, borderLeft, borderRight);
+        return;
+    }
+
+    const auto totalColumns = tableBox->columnCount();
+
+    borderTop = 0.f;
+    borderBottom = 0.f;
+    borderLeft = 0.f;
+    borderRight = 0.f;
+
+    const auto isRTL = tableBox->style()->isRightToLeftDirection();
+
+    for(const auto& [col, cell] : m_cells) {
+        if(cell.rowOffset() == 0)
+            borderTop = std::max(borderTop, cell->borderTop());
+        if(cell.rowOffset() == cell->rowSpan() - 1) {
+            borderBottom = std::max(borderBottom, cell->borderBottom());
+        }
+
+        const auto isLogicalStart = (col == 0);
+        const auto isLogicalEnd = (col + 1 == totalColumns);
+        if((!isRTL && isLogicalStart) || (isRTL && isLogicalEnd))
+            borderLeft = std::max(borderLeft, cell->borderLeft());
+        if((!isRTL && isLogicalEnd) || (isRTL && isLogicalStart)) {
+            borderRight = std::max(borderRight, cell->borderRight());
         }
     }
 }
