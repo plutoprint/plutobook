@@ -220,28 +220,28 @@ inline TableBox* TableSectionBox::table() const
 
 class TableCell {
 public:
-    TableCell(TableCellBox* box, uint32_t col, uint32_t row)
-        : m_box(box), m_colOffset(col), m_rowOffset(row)
+    TableCell() = default;
+    TableCell(TableCellBox* box, uint32_t colOffset, uint32_t rowOffset)
+        : m_box(box), m_colOffset(colOffset), m_rowOffset(rowOffset)
     {}
 
-    TableCellBox* operator->() const { return m_box; }
+    bool isNull() const { return m_box == nullptr; }
 
+    TableCellBox* operator->() const { return m_box; }
     TableCellBox* box() const { return m_box; }
+
     uint32_t colOffset() const { return m_colOffset; }
     uint32_t rowOffset() const { return m_rowOffset; }
 
-    bool inColSpan() const { return m_colOffset > 0; }
-    bool inRowSpan() const { return m_rowOffset > 0; }
-
-    bool inColOrRowSpan() const { return m_colOffset > 0 || m_rowOffset > 0; }
+    bool isPrimary() const { return m_box && m_colOffset == 0 && m_rowOffset == 0; }
 
 private:
-    TableCellBox* m_box;
-    uint32_t m_colOffset;
-    uint32_t m_rowOffset;
+    TableCellBox* m_box{nullptr};
+    uint32_t m_colOffset{0};
+    uint32_t m_rowOffset{0};
 };
 
-using TableCellMap = std::pmr::map<uint32_t, TableCell>;
+using TableCellList = std::pmr::vector<TableCell>;
 
 class TableRowBox final : public BoxFrame {
 public:
@@ -262,8 +262,9 @@ public:
     TableSectionBox* section() const;
     TableBox* table() const { return section()->table(); }
 
-    const TableCellMap& cells() const { return m_cells; }
-    TableCellMap& cells()  { return m_cells; }
+    const TableCellList& cells() const { return m_cells; }
+    TableCellList& cells()  { return m_cells; }
+
     TableCellBox* cellAt(uint32_t columnIndex) const;
 
     uint32_t rowIndex() const { return m_rowIndex; }
@@ -283,7 +284,7 @@ public:
     const char* name() const final { return "TableRowBox"; }
 
 private:
-    TableCellMap m_cells;
+    TableCellList m_cells;
     uint32_t m_rowIndex{0};
     float m_maxBaseline{0};
     float m_maxFixedHeight{0};
