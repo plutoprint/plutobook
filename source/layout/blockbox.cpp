@@ -723,7 +723,7 @@ std::optional<float> BlockFlowBox::inlineBlockBaseline() const
     return lastLineBaseline();
 }
 
-float BlockFlowBox::unbreakableHeight(const FragmentBuilder* fragmentainer, float offset) const
+float BlockFlowBox::unbreakableHeight(const FragmentBuilder* fragmentainer) const
 {
     if(fragmentainer->avoidsBreakInside(this))
         return height();
@@ -742,8 +742,7 @@ float BlockFlowBox::unbreakableHeight(const FragmentBuilder* fragmentainer, floa
         auto marginTop = std::max(0.f, child->marginTop());
         if(leadingHeight == 0.f && !avoidsFloats())
             marginTop = 0.f;
-        auto childOffset = leadingHeight + marginTop;
-        return childOffset + child->unbreakableHeight(fragmentainer, offset + childOffset);
+        return leadingHeight + marginTop + child->unbreakableHeight(fragmentainer);
     }
 
     return leadingHeight + borderAndPaddingBottom();
@@ -876,7 +875,7 @@ void BlockFlowBox::positionFloatingBox(FloatingBox& floatingBox, FragmentBuilder
 
     if(fragmentainer) {
         auto floatHeight = child->marginBoxHeight();
-        auto unbreakableHeight = child->marginTop() + child->unbreakableHeight(fragmentainer, floatTop + child->marginTop());
+        auto unbreakableHeight = child->marginTop() + child->unbreakableHeight(fragmentainer);
         floatTop = fragmentainer->adjustOffsetInFragmentFlow(floatTop, floatHeight, unbreakableHeight);
         if(!isNearlyEqual(top, floatTop)) {
             auto newTop = floatTop + child->marginTop();
@@ -1552,7 +1551,7 @@ void BlockFlowBox::determineHorizontalPosition(BoxFrame* child) const
 float BlockFlowBox::adjustBlockChildInFragmentFlow(BoxFrame* child, FragmentBuilder* fragmentainer, float top)
 {
     auto newTop = fragmentainer->applyFragmentBreakBefore(child, top);
-    auto unbreakableHeight = child->unbreakableHeight(fragmentainer, newTop);
+    auto unbreakableHeight = child->unbreakableHeight(fragmentainer);
     auto childHeight = child->height();
 
     newTop = fragmentainer->adjustOffsetInFragmentFlow(newTop, childHeight, unbreakableHeight);

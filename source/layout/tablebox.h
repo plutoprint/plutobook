@@ -49,7 +49,7 @@ public:
     std::optional<float> repeatedHeaderTop(const TableSectionBox* header, const Rect& pageRect, const Point& offset) const;
     std::optional<float> repeatedFooterTop(const TableSectionBox* footer, const Rect& pageRect, const Point& offset) const;
 
-    float unbreakableHeight(const FragmentBuilder* fragmentainer, float offset) const final;
+    float unbreakableHeight(const FragmentBuilder* fragmentainer) const final;
 
     TableColumnList& columns() { return m_columns; }
     const TableColumnList& columns() const { return m_columns; }
@@ -175,10 +175,10 @@ public:
     void updateOverflowRect() final;
     void computeBorderWidths(float& borderTop, float& borderBottom, float& borderLeft, float& borderRight) const final;
 
+    float unbreakableHeight(const FragmentBuilder* fragmentainer) const final;
+
     std::optional<float> firstLineBaseline() const final;
     std::optional<float> lastLineBaseline() const final;
-
-    float unbreakableRowHeightAt(size_t rowIndex) const;
 
     const TableRowBoxList& rows() const { return m_rows; }
     TableRowBoxList& rows() { return m_rows; }
@@ -253,6 +253,8 @@ public:
     void updateOverflowRect() final;
     void computeBorderWidths(float& borderTop, float& borderBottom, float& borderLeft, float& borderRight) const final;
 
+    float unbreakableHeight(const FragmentBuilder* fragmentainer) const final;
+
     TableCellBox* firstCell() const;
     TableCellBox* lastCell() const;
 
@@ -267,9 +269,6 @@ public:
 
     TableCellBox* cellAt(uint32_t columnIndex) const;
 
-    uint32_t rowIndex() const { return m_rowIndex; }
-    void setRowIndex(uint32_t rowIndex) { m_rowIndex = rowIndex; }
-
     float maxBaseline() const { return m_maxBaseline; }
     void setMaxBaseline(float baseline) { m_maxBaseline = baseline; }
 
@@ -279,16 +278,19 @@ public:
     float maxPercentHeight() const { return m_maxPercentHeight; }
     void setMaxPercentHeight(float height) { m_maxPercentHeight = height; }
 
+    float maxHeight() const { return m_maxHeight; }
+    void setMaxHeight(float height) { m_maxHeight = height; }
+
     void paint(const PaintInfo& info, const Point& offset, PaintPhase phase) final;
 
     const char* name() const final { return "TableRowBox"; }
 
 private:
     TableCellList m_cells;
-    uint32_t m_rowIndex{0};
     float m_maxBaseline{0};
     float m_maxFixedHeight{0};
     float m_maxPercentHeight{0};
+    float m_maxHeight{0};
 };
 
 template<>
@@ -472,11 +474,12 @@ public:
     uint32_t colSpan() const { return m_colSpan; }
     uint32_t rowSpan() const { return m_rowSpan; }
     uint32_t columnIndex() const { return m_columnIndex; }
-    uint32_t rowIndex() const { return row()->rowIndex(); }
+    uint32_t rowIndex() const { return m_rowIndex; }
 
     void setColSpan(uint32_t span) { m_colSpan = span; }
     void setRowSpan(uint32_t span) { m_rowSpan = span; }
     void setColumnIndex(uint32_t columnIndex) { m_columnIndex = columnIndex; }
+    void setRowIndex(uint32_t rowIndex) { m_rowIndex = rowIndex; }
 
     TableCellBox* prevCell() const;
     TableCellBox* nextCell() const;
@@ -496,6 +499,7 @@ private:
     uint32_t m_colSpan{1};
     uint32_t m_rowSpan{1};
     uint32_t m_columnIndex{0};
+    uint32_t m_rowIndex{0};
 };
 
 template<>

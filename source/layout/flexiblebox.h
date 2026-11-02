@@ -134,7 +134,7 @@ public:
     std::optional<float> lastLineBaseline() const final;
     std::optional<float> inlineBlockBaseline() const final;
 
-    float unbreakableHeight(const FragmentBuilder* fragmentainer, float offset) const final;
+    float unbreakableHeight(const FragmentBuilder* fragmentainer) const final;
 
     float computeMainContentSize(float hypotheticalMainSize) const;
     float availableCrossSize() const;

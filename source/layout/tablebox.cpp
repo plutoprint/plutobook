@@ -176,7 +176,7 @@ std::optional<float> TableBox::repeatedHeaderTop(const TableSectionBox* header, 
             break;
         for(auto row : section->rows()) {
             auto rowTop = sectionTop + row->y();
-            if(rowTop + row->height() <= pageRect.y)
+            if(rowTop + row->maxHeight() <= pageRect.y)
                 continue;
             if(rowTop < pageRect.y || rowTop >= pageRect.bottom())
                 return std::nullopt;
@@ -200,7 +200,7 @@ std::optional<float> TableBox::repeatedFooterTop(const TableSectionBox* footer, 
         if(sectionTop >= pageRect.bottom())
             continue;
         for(auto row : section->rows() | std::views::reverse) {
-            auto rowBottom = sectionTop + row->y() + row->height();
+            auto rowBottom = sectionTop + row->y() + row->maxHeight();
             if(rowBottom < pageRect.bottom()) {
                 if(rowBottom > pageRect.y && rowBottom + footer->height() <= pageRect.bottom())
                     return rowBottom;
@@ -212,23 +212,18 @@ std::optional<float> TableBox::repeatedFooterTop(const TableSectionBox* footer, 
     return std::nullopt;
 }
 
-float TableBox::unbreakableHeight(const FragmentBuilder* fragmentainer, float offset) const
+float TableBox::unbreakableHeight(const FragmentBuilder* fragmentainer) const
 {
     if(fragmentainer->avoidsBreakInside(this))
         return height();
-    float leadingHeight = 0;
+    auto leadingHeight = borderAndPaddingTop();
     for(auto caption : m_captions) {
         if(caption->captionSide() == CaptionSide::Top) {
-            auto marginTop = std::max(0.f, caption->marginTop());
-            auto unbreakableHeight = caption->unbreakableHeight(fragmentainer, offset + leadingHeight + marginTop);
-            if(unbreakableHeight + caption->borderAndPaddingBottom() + kLayoutEpsilon < caption->height())
-                return leadingHeight + marginTop + unbreakableHeight;
             leadingHeight += caption->marginBoxHeight();
         }
     }
 
     if(auto section = topSection()) {
-        leadingHeight += m_borderVerticalSpacing + borderAndPaddingTop();
         if(section->isTableHeader()) {
             if(auto sectionBelow = TableBox::sectionBelow(section)) {
                 leadingHeight += m_borderVerticalSpacing + section->height();
@@ -236,20 +231,17 @@ float TableBox::unbreakableHeight(const FragmentBuilder* fragmentainer, float of
             }
         }
 
-        auto unbreakableHeight = m_borderVerticalSpacing + section->unbreakableRowHeightAt(0);
+        float footerHeight = 0;
         if(!section->isTableFooter()) {
             if(auto footer = footerSection()) {
-                unbreakableHeight += m_borderVerticalSpacing + footer->height();
+                footerHeight += m_borderVerticalSpacing + footer->height();
             }
         }
 
-        auto fragmentHeight = fragmentainer->fragmentHeightForOffset(offset);
-        if(fragmentHeight > 0.f && leadingHeight + unbreakableHeight > fragmentHeight + kLayoutEpsilon)
-            return leadingHeight;
-        return leadingHeight + unbreakableHeight;
+        return leadingHeight + section->unbreakableHeight(fragmentainer) + footerHeight + m_borderVerticalSpacing;
     }
 
-    return leadingHeight + borderAndPaddingHeight();
+    return leadingHeight + borderAndPaddingBottom();
 }
 
 TableColumnBox* TableBox::columnGroupAt(size_t index) const
@@ -403,7 +395,7 @@ void TableBox::layoutCaption(TableCaptionBox* caption, FragmentBuilder* fragment
     if(fragmentainer) {
         fragmentainer->leaveFragment(captionTop);
         auto captionHeight = caption->height();
-        auto unbreakableHeight = caption->unbreakableHeight(fragmentainer, captionTop);
+        auto unbreakableHeight = caption->unbreakableHeight(fragmentainer);
         auto newTop = fragmentainer->adjustOffsetInFragmentFlow(captionTop, captionHeight, unbreakableHeight);
         if(!isNearlyEqual(newTop, captionTop)) {
             fragmentainer->enterFragment(newTop);
@@ -1277,6 +1269,13 @@ void TableSectionBox::computeBorderWidths(float& borderTop, float& borderBottom,
     }
 }
 
+float TableSectionBox::unbreakableHeight(const FragmentBuilder* fragmentainer) const
+{
+    if(fragmentainer->avoidsBreakInside(this))
+        return height();
+    return firstRow()->unbreakableHeight(fragmentainer);
+}
+
 std::optional<float> TableSectionBox::firstLineBaseline() const
 {
     if(m_rows.empty())
@@ -1311,26 +1310,6 @@ std::optional<float> TableSectionBox::lastLineBaseline() const
     }
 
     return baseline;
-}
-
-float TableSectionBox::unbreakableRowHeightAt(size_t rowIndex) const
-{
-    auto rowBox = m_rows[rowIndex];
-    auto verticalSpacing = table()->borderVerticalSpacing();
-    auto unbreakableHeight = rowBox->height();
-    for(const auto& cell : rowBox->cells()) {
-        if(!cell.isPrimary())
-            continue;
-        auto rowHeight = -verticalSpacing;
-        for(size_t index = 0; index < cell->rowSpan(); ++index) {
-            auto row = m_rows[rowIndex + index];
-            rowHeight += verticalSpacing + row->height();
-        }
-
-        unbreakableHeight = std::max(rowHeight, unbreakableHeight);
-    }
-
-    return unbreakableHeight;
 }
 
 TableRowBox* TableSectionBox::rowAbove(const TableRowBox* rowBox) const
@@ -1431,21 +1410,19 @@ void TableSectionBox::layoutRows(FragmentBuilder* fragmentainer, float headerHei
                 rowTop = fragmentainer->applyFragmentBreakBefore(box, rowTop);
             auto leadingHeight = headerHeight;
             if(table()->isBorderCollapsed()) {
-                if(headerHeight) {
-                    leadingHeight += table()->borderTop();
-                } else {
-                    leadingHeight += rowBox->borderTop();
-                }
+                leadingHeight += headerHeight ? table()->borderTop() : rowBox->borderTop();
             }
 
-            auto fragmentHeight = fragmentainer->fragmentHeightForOffset(rowTop);
-            auto unbreakableHeight = unbreakableRowHeightAt(rowIndex) + footerHeight + verticalSpacing;
-            if(leadingHeight + unbreakableHeight <= fragmentHeight + kLayoutEpsilon)
-                rowTop = fragmentainer->adjustOffsetInFragmentFlow(rowTop, unbreakableHeight, unbreakableHeight);
-            if(fragmentHeight > 0.f) {
-                auto remainingHeight = fragmentainer->fragmentRemainingHeightForOffset(rowTop, AssociateWithLatterFragment);
-                if(isNearlyEqual(remainingHeight, fragmentHeight)) {
-                    rowTop += leadingHeight;
+            auto unbreakableHeight = leadingHeight + rowBox->unbreakableHeight(fragmentainer) + footerHeight + verticalSpacing;
+            rowTop = fragmentainer->adjustOffsetInFragmentFlow(rowTop, unbreakableHeight, unbreakableHeight);
+
+            if(leadingHeight) {
+                auto fragmentHeight = fragmentainer->fragmentHeightForOffset(rowTop);
+                if(fragmentHeight > 0.f) {
+                    auto remainingHeight = fragmentainer->fragmentRemainingHeightForOffset(rowTop, AssociateWithLatterFragment);
+                    if(isNearlyEqual(remainingHeight, fragmentHeight)) {
+                        rowTop += leadingHeight;
+                    }
                 }
             }
 
@@ -1458,18 +1435,11 @@ void TableSectionBox::layoutRows(FragmentBuilder* fragmentainer, float headerHei
         for(const auto& cell : rowBox->cells()) {
             if(!cell.isPrimary())
                 continue;
-            auto rowHeight = -verticalSpacing;
-            for(size_t index = 0; index < cell->rowSpan(); ++index) {
-                auto row = m_rows[rowIndex + index];
-                rowHeight += verticalSpacing + row->height();
-            }
-
             cell->setY(0.f);
-            cell->setOverrideHeight(rowHeight);
             cell->layout(fragmentainer);
-            if(fragmentainer && cell->height() > rowHeight) {
-                rowHeightIncreaseForFragmentation = std::max(rowHeightIncreaseForFragmentation, cell->height() - rowHeight);
-                cell->setHeight(rowHeight);
+            if(fragmentainer && cell->height() > cell->overrideHeight()) {
+                rowHeightIncreaseForFragmentation = std::max(rowHeightIncreaseForFragmentation, cell->height() - cell->overrideHeight());
+                cell->setHeight(cell->overrideHeight());
             }
         }
 
@@ -1477,6 +1447,7 @@ void TableSectionBox::layoutRows(FragmentBuilder* fragmentainer, float headerHei
             fragmentainer->leaveFragment(rowTop);
             if(rowHeightIncreaseForFragmentation > 0) {
                 rowBox->setHeight(rowHeightIncreaseForFragmentation + rowBox->height());
+                rowBox->setMaxHeight(rowHeightIncreaseForFragmentation + rowBox->maxHeight());
                 for(const auto& cell : rowBox->cells()) {
                     if(cell.isPrimary()) {
                         cell->setHeight(rowHeightIncreaseForFragmentation + cell->height());
@@ -1543,11 +1514,10 @@ void TableSectionBox::layout(FragmentBuilder* fragmentainer)
         for(const auto& cell : rowBox->cells()) {
             if(!cell.isPrimary())
                 continue;
-            auto width = -horizontalSpacing;
             const auto col = cell->columnIndex();
-            for(size_t index = 0; index < cell->colSpan(); ++index) {
-                const auto& column = columns[col + index];
-                width += horizontalSpacing + column.width();
+            auto width = columns[col].width();
+            for(size_t index = 1; index < cell->colSpan(); ++index) {
+                width += horizontalSpacing + columns[col + index].width();
             }
 
             if(direction == Direction::Ltr) {
@@ -1588,7 +1558,20 @@ void TableSectionBox::layout(FragmentBuilder* fragmentainer)
     }
 
     auto sectionHeight = -verticalSpacing;
-    for(auto rowBox : m_rows) {
+    for(size_t rowIndex = 0; rowIndex < m_rows.size(); ++rowIndex) {
+        auto rowBox = m_rows[rowIndex];
+        auto maxHeight = rowBox->height();
+        for(const auto& cell : rowBox->cells()) {
+            if(!cell.isPrimary())
+                continue;
+            auto height = rowBox->height();
+            for(size_t index = 1; index < cell->rowSpan(); ++index)
+                height += verticalSpacing + m_rows[rowIndex + index]->height();
+            cell->setOverrideHeight(height);
+            maxHeight = std::max(maxHeight, height);
+        }
+
+        rowBox->setMaxHeight(maxHeight);
         sectionHeight += verticalSpacing + rowBox->height();
     }
 
@@ -1600,7 +1583,6 @@ void TableSectionBox::build()
     auto& columns = table()->columns();
 
     for(auto rowBox = firstRow(); rowBox; rowBox = rowBox->nextRow()) {
-        rowBox->setRowIndex(m_rows.size());
         auto rowStyleHeight = rowBox->style()->height();
         if(rowStyleHeight.isFixed()) {
             rowBox->setMaxFixedHeight(rowStyleHeight.value());
@@ -1638,6 +1620,7 @@ void TableSectionBox::build()
 
             cellBox->setRowSpan(rowSpan);
             cellBox->setColumnIndex(columnIndex);
+            cellBox->setRowIndex(rowIndex);
             if(cellBox->rowSpan() > 1) {
                 m_spanningCells.push_back(cellBox);
             } else {
@@ -1818,6 +1801,20 @@ void TableRowBox::computeBorderWidths(float& borderTop, float& borderBottom, flo
             borderRight = std::max(borderRight, cell->borderRight());
         }
     }
+}
+
+float TableRowBox::unbreakableHeight(const FragmentBuilder* fragmentainer) const
+{
+    if(fragmentainer->avoidsBreakInside(this))
+        return height();
+    float unbreakableHeight = 0.f;
+    for(const auto& cell : m_cells) {
+        if(cell.isPrimary()) {
+            unbreakableHeight = std::max(unbreakableHeight, cell->unbreakableHeight(fragmentainer));
+        }
+    }
+
+    return unbreakableHeight;
 }
 
 TableCellBox* TableRowBox::cellAt(uint32_t columnIndex) const
