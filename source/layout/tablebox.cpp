@@ -1808,7 +1808,7 @@ void TableRowBox::computeBorderWidths(float& borderTop, float& borderBottom, flo
 float TableRowBox::unbreakableHeight(const FragmentBuilder* fragmentainer) const
 {
     if(fragmentainer->avoidsBreakInside(this))
-        return height();
+        return m_maxHeight;
     float unbreakableHeight = 0.f;
     for(const auto& cell : m_cells) {
         if(cell.isPrimary()) {
