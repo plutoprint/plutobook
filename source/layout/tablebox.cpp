@@ -231,14 +231,7 @@ float TableBox::unbreakableHeight(const FragmentBuilder* fragmentainer) const
             }
         }
 
-        float footerHeight = 0;
-        if(!section->isTableFooter()) {
-            if(auto footer = footerSection()) {
-                footerHeight += m_borderVerticalSpacing + footer->height();
-            }
-        }
-
-        return leadingHeight + section->unbreakableHeight(fragmentainer) + footerHeight + m_borderVerticalSpacing;
+        return leadingHeight + m_borderVerticalSpacing + section->unbreakableHeight(fragmentainer);
     }
 
     return leadingHeight + borderAndPaddingBottom();
@@ -1415,7 +1408,7 @@ void TableSectionBox::layoutRows(FragmentBuilder* fragmentainer, float headerHei
                 leadingHeight += headerHeight ? table()->borderTop() : rowBox->borderTop();
             }
 
-            auto unbreakableHeight = leadingHeight + rowBox->unbreakableHeight(fragmentainer) + footerHeight + verticalSpacing;
+            auto unbreakableHeight = leadingHeight + verticalSpacing + rowBox->unbreakableHeight(fragmentainer);
             rowTop = fragmentainer->adjustOffsetInFragmentFlow(rowTop, unbreakableHeight, unbreakableHeight);
 
             if(leadingHeight) {
@@ -1462,6 +1455,20 @@ void TableSectionBox::layoutRows(FragmentBuilder* fragmentainer, float headerHei
         rowBox->updateOverflowRect();
         rowTop += verticalSpacing + rowBox->height();
         if(fragmentainer) {
+            if(footerHeight) {
+                auto rowBelow = TableSectionBox::rowBelow(rowBox);
+                if(rowBelow && !rowBelow->section()->isTableFooter()) {
+                    auto fragmentHeight = fragmentainer->fragmentHeightForOffset(rowTop);
+                    if(fragmentHeight > 0.f) {
+                        auto rowHeight = verticalSpacing + rowBelow->height();
+                        auto remainingHeight = fragmentainer->fragmentRemainingHeightForOffset(rowTop, AssociateWithLatterFragment);
+                        if(remainingHeight > footerHeight && rowHeight + footerHeight > remainingHeight) {
+                            rowTop += remainingHeight;
+                        }
+                    }
+                }
+            }
+
             if(auto box = rowAlwaysBreakAfter(rowBox, fragmentainer)) {
                 rowTop = fragmentainer->applyFragmentBreakAfter(box, rowTop);
             }
