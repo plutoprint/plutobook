@@ -225,7 +225,7 @@ float TableBox::unbreakableHeight(const FragmentBuilder* fragmentainer) const
 
     if(auto section = topSection()) {
         if(section->isTableHeader()) {
-            if(auto sectionBelow = TableBox::sectionBelow(section)) {
+            if(auto sectionBelow = section->sectionBelow()) {
                 leadingHeight += m_borderVerticalSpacing + section->height();
                 section = sectionBelow;
             }
@@ -297,70 +297,6 @@ TableSectionBox* TableBox::bottomSection() const
     if(m_sections.empty())
         return nullptr;
     return m_sections.back();
-}
-
-TableSectionBox* TableBox::sectionAbove(const TableSectionBox* sectionBox) const
-{
-    if(sectionBox->isTableHeader())
-        return nullptr;
-    auto prevSection = sectionBox->isTableFooter() ? lastChild() : sectionBox->prevSibling();
-    while(prevSection) {
-        auto section = to<TableSectionBox>(prevSection);
-        if(section && !section->isTableHeader() && !section->isTableFooter() && section->firstRow())
-            return section;
-        prevSection = prevSection->prevSibling();
-    }
-
-    return headerSection();
-}
-
-TableSectionBox* TableBox::sectionBelow(const TableSectionBox* sectionBox) const
-{
-    if(sectionBox->isTableFooter())
-        return nullptr;
-    auto nextSection = sectionBox->isTableHeader() ? firstChild() : sectionBox->nextSibling();
-    while(nextSection) {
-        auto section = to<TableSectionBox>(nextSection);
-        if(section && !section->isTableHeader() && !section->isTableFooter() && section->firstRow())
-            return section;
-        nextSection = nextSection->nextSibling();
-    }
-
-    return footerSection();
-}
-
-TableCellBox* TableBox::cellAbove(const TableCellBox* cellBox) const
-{
-    auto section = cellBox->section();
-    auto firstRow = section->rowAt(cellBox->rowIndex());
-    if(auto rowBox = section->rowAbove(firstRow))
-        return rowBox->cellAt(cellBox->columnIndex());
-    return nullptr;
-}
-
-TableCellBox* TableBox::cellBelow(const TableCellBox* cellBox) const
-{
-    auto section = cellBox->section();
-    auto lastRow = section->rowAt(cellBox->rowIndex() + cellBox->rowSpan() - 1);
-    if(auto rowBox = section->rowBelow(lastRow))
-        return rowBox->cellAt(cellBox->columnIndex());
-    return nullptr;
-}
-
-TableCellBox* TableBox::cellBefore(const TableCellBox* cellBox) const
-{
-    auto columnIndex = cellBox->columnIndex();
-    if(columnIndex == 0)
-        return nullptr;
-    return cellBox->row()->cellAt(columnIndex - 1);
-}
-
-TableCellBox* TableBox::cellAfter(const TableCellBox* cellBox) const
-{
-    auto columnIndex = cellBox->columnIndex() + cellBox->colSpan();
-    if(columnIndex == m_columns.size())
-        return nullptr;
-    return cellBox->row()->cellAt(columnIndex);
 }
 
 float TableBox::availableHorizontalSpace() const
@@ -1307,22 +1243,34 @@ std::optional<float> TableSectionBox::lastLineBaseline() const
     return baseline;
 }
 
-TableRowBox* TableSectionBox::rowAbove(const TableRowBox* rowBox) const
+TableSectionBox* TableSectionBox::sectionAbove() const
 {
-    if(auto prevRow = rowBox->prevRow())
-        return prevRow;
-    if(auto sectionAbove = table()->sectionAbove(this))
-        return sectionAbove->lastRow();
-    return nullptr;
+    if(isTableHeader())
+        return nullptr;
+    auto prevSection = isTableFooter() ? table()->lastChild() : prevSibling();
+    while(prevSection) {
+        auto section = to<TableSectionBox>(prevSection);
+        if(section && !section->isTableHeader() && !section->isTableFooter() && section->firstRow())
+            return section;
+        prevSection = prevSection->prevSibling();
+    }
+
+    return table()->headerSection();
 }
 
-TableRowBox* TableSectionBox::rowBelow(const TableRowBox* rowBox) const
+TableSectionBox* TableSectionBox::sectionBelow() const
 {
-    if(auto nextRow = rowBox->nextRow())
-        return nextRow;
-    if(auto sectionBelow = table()->sectionBelow(this))
-        return sectionBelow->firstRow();
-    return nullptr;
+    if(isTableFooter())
+        return nullptr;
+    auto nextSection = isTableHeader() ? table()->firstChild() : nextSibling();
+    while(nextSection) {
+        auto section = to<TableSectionBox>(nextSection);
+        if(section && !section->isTableHeader() && !section->isTableFooter() && section->firstRow())
+            return section;
+        nextSection = nextSection->nextSibling();
+    }
+
+    return table()->footerSection();
 }
 
 void TableSectionBox::distributeExcessHeightToRows(float distributableHeight)
@@ -1456,7 +1404,7 @@ void TableSectionBox::layoutRows(FragmentBuilder* fragmentainer, float headerHei
         rowTop += verticalSpacing + rowBox->height();
         if(fragmentainer) {
             if(footerHeight) {
-                auto rowBelow = TableSectionBox::rowBelow(rowBox);
+                auto rowBelow = rowBox->rowBelow();
                 if(rowBelow && !rowBelow->section()->isTableFooter()) {
                     auto fragmentHeight = fragmentainer->fragmentHeightForOffset(rowTop);
                     if(fragmentHeight > 0.f) {
@@ -1826,6 +1774,24 @@ float TableRowBox::unbreakableHeight(const FragmentBuilder* fragmentainer) const
     return unbreakableHeight;
 }
 
+TableRowBox* TableRowBox::rowAbove() const
+{
+    if(auto rowAbove = prevRow())
+        return rowAbove;
+    if(auto sectionAbove = section()->sectionAbove())
+        return sectionAbove->lastRow();
+    return nullptr;
+}
+
+TableRowBox* TableRowBox::rowBelow() const
+{
+    if(auto rowBelow = nextRow())
+        return rowBelow;
+    if(auto sectionBelow = section()->sectionBelow())
+        return sectionBelow->firstRow();
+    return nullptr;
+}
+
 TableCellBox* TableRowBox::cellAt(uint32_t columnIndex) const
 {
     if(columnIndex < m_cells.size())
@@ -1937,8 +1903,7 @@ TableCollapsedBorderEdge TableCollapsedBorderEdges::getRightEdge(TableCollapsedB
 
 TableCollapsedBorderEdge TableCollapsedBorderEdges::calcTopEdge(const TableCellBox* cellBox)
 {
-    auto table = cellBox->table();
-    auto cellAbove = table->cellAbove(cellBox);
+    auto cellAbove = cellBox->cellAbove();
     auto edge = getTopEdge(TableCollapsedBorderSource::Cell, cellBox->style());
     if(cellAbove) {
         edge = chooseEdge(getBottomEdge(TableCollapsedBorderSource::Cell, cellAbove->style()), edge);
@@ -1947,32 +1912,33 @@ TableCollapsedBorderEdge TableCollapsedBorderEdges::calcTopEdge(const TableCellB
         }
     }
 
-    auto section = cellBox->section();
-    auto firstRow = section->rowAt(cellBox->rowIndex());
+    auto firstRow = cellBox->firstRow();
     edge = chooseEdge(edge, getTopEdge(TableCollapsedBorderSource::Row, firstRow->style()));
     if(!edge.exists()) {
         return edge;
     }
 
-    if(auto rowAbove = section->rowAbove(firstRow)) {
+    if(auto rowAbove = firstRow->rowAbove()) {
         edge = chooseEdge(getBottomEdge(TableCollapsedBorderSource::Row, rowAbove->style()), edge);
         if(!edge.exists()) {
             return edge;
         }
     }
 
+    auto section = cellBox->section();
     if(firstRow == section->firstRow()) {
         edge = chooseEdge(edge, getTopEdge(TableCollapsedBorderSource::RowGroup, section->style()));
         if(!edge.exists()) {
             return edge;
         }
 
-        if(auto sectionAbove = table->sectionAbove(section)) {
+        if(auto sectionAbove = section->sectionAbove()) {
             edge = chooseEdge(getBottomEdge(TableCollapsedBorderSource::RowGroup, sectionAbove->style()), edge);
             if(!edge.exists()) {
                 return edge;
             }
         } else {
+            auto table = cellBox->table();
             if(auto column = table->columnAt(cellBox->columnIndex()); column && !column->isColumnGroup()) {
                 edge = chooseEdge(edge, getTopEdge(TableCollapsedBorderSource::Column, column->style()));
                 if(!edge.exists()) {
@@ -1999,8 +1965,7 @@ TableCollapsedBorderEdge TableCollapsedBorderEdges::calcTopEdge(const TableCellB
 
 TableCollapsedBorderEdge TableCollapsedBorderEdges::calcBottomEdge(const TableCellBox* cellBox)
 {
-    auto table = cellBox->table();
-    auto cellBelow = table->cellBelow(cellBox);
+    auto cellBelow = cellBox->cellBelow();
     auto edge = getBottomEdge(TableCollapsedBorderSource::Cell, cellBox->style());
     if(cellBelow) {
         edge = chooseEdge(edge, getTopEdge(TableCollapsedBorderSource::Cell, cellBelow->style()));
@@ -2009,32 +1974,33 @@ TableCollapsedBorderEdge TableCollapsedBorderEdges::calcBottomEdge(const TableCe
         }
     }
 
-    auto section = cellBox->section();
-    auto lastRow = section->rowAt(cellBox->rowIndex() + cellBox->rowSpan() - 1);
+    auto lastRow = cellBox->lastRow();
     edge = chooseEdge(edge, getBottomEdge(TableCollapsedBorderSource::Row, lastRow->style()));
     if(!edge.exists()) {
         return edge;
     }
 
-    if(auto rowBelow = section->rowBelow(lastRow)) {
+    if(auto rowBelow = lastRow->rowBelow()) {
         edge = chooseEdge(edge, getTopEdge(TableCollapsedBorderSource::Row, rowBelow->style()));
         if(!edge.exists()) {
             return edge;
         }
     }
 
+    auto section = cellBox->section();
     if(lastRow == section->lastRow()) {
         edge = chooseEdge(edge, getBottomEdge(TableCollapsedBorderSource::RowGroup, section->style()));
         if(!edge.exists()) {
             return edge;
         }
 
-        if(auto sectionBelow = table->sectionBelow(section)) {
+        if(auto sectionBelow = section->sectionBelow()) {
             edge = chooseEdge(edge, getTopEdge(TableCollapsedBorderSource::RowGroup, sectionBelow->style()));
             if(!edge.exists()) {
                 return edge;
             }
         } else {
+            auto table = cellBox->table();
             if(auto column = table->columnAt(cellBox->columnIndex()); column && !column->isColumnGroup()) {
                 edge = chooseEdge(edge, getBottomEdge(TableCollapsedBorderSource::Column, column->style()));
                 if(!edge.exists()) {
@@ -2063,7 +2029,7 @@ TableCollapsedBorderEdge TableCollapsedBorderEdges::calcLeftEdge(const TableCell
 {
     auto table = cellBox->table();
     auto direction = table->style()->direction();
-    auto cellBefore = direction == Direction::Ltr ? table->cellBefore(cellBox) : table->cellAfter(cellBox);
+    auto cellBefore = direction == Direction::Ltr ? cellBox->cellBefore() : cellBox->cellAfter();
     auto edge = getLeftEdge(TableCollapsedBorderSource::Cell, cellBox->style());
     if(cellBefore) {
         auto rightEdge = getRightEdge(TableCollapsedBorderSource::Cell, cellBefore->style());
@@ -2140,7 +2106,7 @@ TableCollapsedBorderEdge TableCollapsedBorderEdges::calcRightEdge(const TableCel
 {
     auto table = cellBox->table();
     auto direction = table->style()->direction();
-    auto cellAfter = direction == Direction::Ltr ? table->cellAfter(cellBox) : table->cellBefore(cellBox);
+    auto cellAfter = direction == Direction::Ltr ? cellBox->cellAfter() : cellBox->cellBefore();
     auto edge = getRightEdge(TableCollapsedBorderSource::Cell, cellBox->style());
     if(cellAfter) {
         auto leftEdge = getLeftEdge(TableCollapsedBorderSource::Cell, cellAfter->style());
@@ -2298,6 +2264,42 @@ const TableCollapsedBorderEdges& TableCellBox::collapsedBorderEdges() const
     if(m_collapsedBorderEdges == nullptr)
         m_collapsedBorderEdges = TableCollapsedBorderEdges::create(this);
     return *m_collapsedBorderEdges;
+}
+
+TableCellBox* TableCellBox::cellAbove() const
+{
+    if(auto rowBox = firstRow()->rowAbove())
+        return rowBox->cellAt(m_columnIndex);
+    return nullptr;
+}
+
+TableCellBox* TableCellBox::cellBelow() const
+{
+    if(auto rowBox = lastRow()->rowBelow())
+        return rowBox->cellAt(m_columnIndex);
+    return nullptr;
+}
+
+TableCellBox* TableCellBox::cellBefore() const
+{
+    if(m_columnIndex == 0)
+        return nullptr;
+    return row()->cellAt(m_columnIndex - 1);
+}
+
+TableCellBox* TableCellBox::cellAfter() const
+{
+    return row()->cellAt(m_columnIndex + m_colSpan);
+}
+
+TableRowBox* TableCellBox::firstRow() const
+{
+    return section()->rowAt(m_rowIndex);
+}
+
+TableRowBox* TableCellBox::lastRow() const
+{
+    return section()->rowAt(m_rowIndex + m_rowSpan - 1);
 }
 
 void TableCellBox::paintBackgroundBehindCell(const PaintInfo& info, const Point& offset, const BoxStyle* backgroundStyle) const

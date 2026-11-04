@@ -71,14 +71,6 @@ public:
     TableSectionBox* topSection() const;
     TableSectionBox* bottomSection() const;
 
-    TableSectionBox* sectionAbove(const TableSectionBox* sectionBox) const;
-    TableSectionBox* sectionBelow(const TableSectionBox* sectionBox) const;
-
-    TableCellBox* cellAbove(const TableCellBox* cellBox) const;
-    TableCellBox* cellBelow(const TableCellBox* cellBox) const;
-    TableCellBox* cellBefore(const TableCellBox* cellBox) const;
-    TableCellBox* cellAfter(const TableCellBox* cellBox) const;
-
     float borderHorizontalSpacing() const { return m_borderHorizontalSpacing; }
     float borderVerticalSpacing() const { return m_borderVerticalSpacing; }
 
@@ -189,8 +181,8 @@ public:
     TableRowBox* firstRow() const;
     TableRowBox* lastRow() const;
 
-    TableRowBox* rowAbove(const TableRowBox* rowBox) const;
-    TableRowBox* rowBelow(const TableRowBox* rowBox) const;
+    TableSectionBox* sectionAbove() const;
+    TableSectionBox* sectionBelow() const;
 
     void distributeExcessHeightToRows(float distributableHeight);
 
@@ -260,6 +252,9 @@ public:
 
     TableRowBox* prevRow() const;
     TableRowBox* nextRow() const;
+
+    TableRowBox* rowAbove() const;
+    TableRowBox* rowBelow() const;
 
     TableSectionBox* section() const;
     TableBox* table() const { return section()->table(); }
@@ -483,6 +478,14 @@ public:
 
     TableCellBox* prevCell() const;
     TableCellBox* nextCell() const;
+
+    TableCellBox* cellAbove() const;
+    TableCellBox* cellBelow() const;
+    TableCellBox* cellBefore() const;
+    TableCellBox* cellAfter() const;
+
+    TableRowBox* firstRow() const;
+    TableRowBox* lastRow() const;
 
     TableRowBox* row() const;
     TableSectionBox* section() const { return row()->section(); }
