@@ -175,12 +175,12 @@ std::optional<float> TableBox::repeatedHeaderTop(const TableSectionBox* header, 
         if(sectionTop >= pageRect.bottom())
             break;
         for(auto row : section->rows()) {
-            if(row->rowAbove()->section()->isTableHeader())
-                continue;
             auto rowTop = sectionTop + row->y();
             if(rowTop + row->maxHeight() <= pageRect.y)
                 continue;
             if(rowTop < pageRect.y || rowTop >= pageRect.bottom())
+                return std::nullopt;
+            if(row->rowAbove()->section()->isTableHeader())
                 return std::nullopt;
             if(isBorderCollapsed())
                 return pageRect.y + row->borderTop();
@@ -202,14 +202,14 @@ std::optional<float> TableBox::repeatedFooterTop(const TableSectionBox* footer, 
         if(sectionTop >= pageRect.bottom())
             continue;
         for(auto row : section->rows() | std::views::reverse) {
-            if(row->rowBelow()->section()->isTableFooter())
+            if(sectionTop + row->y() >= pageRect.bottom())
                 continue;
-            auto rowBottom = sectionTop + row->y() + row->maxHeight() + m_borderVerticalSpacing;
-            if(rowBottom < pageRect.bottom()) {
-                if(rowBottom > pageRect.y && rowBottom + footer->height() <= pageRect.bottom())
-                    return rowBottom;
+            auto rowBottom = sectionTop + m_borderVerticalSpacing + row->y() + row->maxHeight();
+            if(rowBottom <= pageRect.y || rowBottom + footer->height() > pageRect.bottom())
                 return std::nullopt;
-            }
+            if(row->rowBelow()->section()->isTableFooter())
+                return std::nullopt;
+            return rowBottom;
         }
     }
 
@@ -236,12 +236,10 @@ float TableBox::unbreakableHeight(const FragmentBuilder* fragmentainer) const
             }
         }
 
-        float unbreakableHeight = 0.f;
-        if(auto firstRow = section->firstRow())
-            unbreakableHeight += m_borderVerticalSpacing + firstRow->unbreakableHeight(fragmentainer);
-        if(!section->isTableFooter()) {
+        auto unbreakableHeight = m_borderVerticalSpacing + section->unbreakableHeight(fragmentainer);
+        if(isPaginatedTable() && !section->isTableFooter()) {
             if(auto footer = footerSection()) {
-                unbreakableHeight += m_borderVerticalSpacing + footer->height();
+                unbreakableHeight += footer->height();
             }
         }
 
@@ -435,9 +433,9 @@ void TableBox::layout(FragmentBuilder* fragmentainer)
             float footerHeight = 0;
             if(isPaginatedTable() && !section->isTableHeader() && !section->isTableFooter()) {
                 if(header && header != section)
-                    headerHeight += m_borderVerticalSpacing + header->height();
+                    headerHeight += header->height();
                 if(footer && footer != section) {
-                    footerHeight += m_borderVerticalSpacing + footer->height();
+                    footerHeight += footer->height();
                 }
             }
 
@@ -1214,6 +1212,15 @@ void TableSectionBox::computeBorderWidths(float& borderTop, float& borderBottom,
     }
 }
 
+float TableSectionBox::unbreakableHeight(const FragmentBuilder* fragmentainer) const
+{
+    if(fragmentainer->avoidsBreakInside(this))
+        return height();
+    if(auto row = firstRow())
+        return row->unbreakableHeight(fragmentainer);
+    return 0.f;
+}
+
 std::optional<float> TableSectionBox::firstLineBaseline() const
 {
     if(m_rows.empty())
@@ -1356,23 +1363,20 @@ void TableSectionBox::layoutRows(FragmentBuilder* fragmentainer, float headerHei
     for(size_t rowIndex = 0; rowIndex < m_rows.size(); ++rowIndex) {
         auto rowBox = m_rows[rowIndex];
         if(fragmentainer) {
-            auto canRepeatHeader = headerHeight && !rowBox->rowAbove()->section()->isTableHeader();
             if(auto box = rowAlwaysBreakBefore(rowBox, fragmentainer))
                 rowTop = fragmentainer->applyFragmentBreakBefore(box, rowTop);
+            auto rowHeight = verticalSpacing + rowBox->maxHeight();
             auto unbreakableHeight = verticalSpacing + rowBox->unbreakableHeight(fragmentainer);
-            if(canRepeatHeader) {
-                unbreakableHeight += headerHeight;
-            }
+            rowTop = fragmentainer->adjustOffsetInFragmentFlow(rowTop, rowHeight, unbreakableHeight);
 
-            rowTop = fragmentainer->adjustOffsetInFragmentFlow(rowTop, unbreakableHeight, unbreakableHeight);
             auto fragmentHeight = fragmentainer->fragmentHeightForOffset(rowTop);
             if(fragmentHeight > 0.f) {
                 auto remainingHeight = fragmentainer->fragmentRemainingHeightForOffset(rowTop, AssociateWithLatterFragment);
                 if(isNearlyEqual(remainingHeight, fragmentHeight)) {
                     if(table()->isBorderCollapsed())
                         rowTop += rowBox->borderTop();
-                    if(canRepeatHeader) {
-                        rowTop += headerHeight;
+                    if(headerHeight && !rowBox->rowAbove()->section()->isTableHeader()) {
+                        rowTop += headerHeight + verticalSpacing;
                     }
                 }
             }
@@ -1416,9 +1420,9 @@ void TableSectionBox::layoutRows(FragmentBuilder* fragmentainer, float headerHei
                 if(rowBelow && !rowBelow->section()->isTableFooter()) {
                     auto fragmentHeight = fragmentainer->fragmentHeightForOffset(rowTop);
                     if(fragmentHeight > 0.f) {
-                        auto nextRowHeight = verticalSpacing + rowBox->rowBelow()->height();
+                        auto nextRowHeight = verticalSpacing + rowBox->rowBelow()->maxHeight();
                         auto remainingHeight = fragmentainer->fragmentRemainingHeightForOffset(rowTop, AssociateWithLatterFragment);
-                        if(remainingHeight >= footerHeight && nextRowHeight + footerHeight >= remainingHeight) {
+                        if(remainingHeight >= footerHeight && nextRowHeight + footerHeight > remainingHeight + kLayoutEpsilon) {
                             rowTop += remainingHeight;
                         }
                     }

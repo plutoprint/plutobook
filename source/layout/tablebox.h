@@ -167,6 +167,8 @@ public:
     void updateOverflowRect() final;
     void computeBorderWidths(float& borderTop, float& borderBottom, float& borderLeft, float& borderRight) const final;
 
+    float unbreakableHeight(const FragmentBuilder* fragmentainer) const final;
+
     std::optional<float> firstLineBaseline() const final;
     std::optional<float> lastLineBaseline() const final;
 

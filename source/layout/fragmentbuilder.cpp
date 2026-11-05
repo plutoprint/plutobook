@@ -63,7 +63,7 @@ float FragmentBuilder::adjustOffsetInFragmentFlow(float offset, float height, fl
     }
 
     setFragmentBreak(offset, height - remainingHeight);
-    if(unbreakableHeight > remainingHeight && unbreakableHeight < fragmentHeight && !isAtFragmentStart)
+    if(unbreakableHeight > remainingHeight && unbreakableHeight <= fragmentHeight + kLayoutEpsilon && !isAtFragmentStart)
         return offset + remainingHeight;
     return offset;
 }
