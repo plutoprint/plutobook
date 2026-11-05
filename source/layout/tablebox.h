@@ -65,11 +65,11 @@ public:
 
     const TableSectionBoxList& sections() const { return m_sections; }
 
-    TableSectionBox* headerSection() const;
-    TableSectionBox* footerSection() const;
-
     TableSectionBox* topSection() const;
     TableSectionBox* bottomSection() const;
+
+    TableSectionBox* headerSection() const;
+    TableSectionBox* footerSection() const;
 
     float borderHorizontalSpacing() const { return m_borderHorizontalSpacing; }
     float borderVerticalSpacing() const { return m_borderVerticalSpacing; }
@@ -166,8 +166,6 @@ public:
 
     void updateOverflowRect() final;
     void computeBorderWidths(float& borderTop, float& borderBottom, float& borderLeft, float& borderRight) const final;
-
-    float unbreakableHeight(const FragmentBuilder* fragmentainer) const final;
 
     std::optional<float> firstLineBaseline() const final;
     std::optional<float> lastLineBaseline() const final;
