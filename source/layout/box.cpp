@@ -504,10 +504,10 @@ static Size computeBackgroundImageTileSize(const RefPtr<Image>& backgroundImage,
     return Size(tileWidth, tileHeight);
 }
 
-void BoxModel::paintBackgroundImage(const PaintInfo& info, const Rect& borderRect, const BoxStyle* backgroundStyle, const RefPtr<Image>& backgroundImage) const
+void BoxModel::paintBackgroundImage(const PaintInfo& info, const Rect& borderRect, const BoxStyle* backgroundStyle, size_t index, const RefPtr<Image>& backgroundImage) const
 {
     Rect positioningArea(0, 0, borderRect.w, borderRect.h);
-    auto backgroundOrigin = backgroundStyle->backgroundOrigin();
+    auto backgroundOrigin = backgroundStyle->backgroundOrigin(index);
     if(backgroundOrigin == BackgroundBox::PaddingBox || backgroundOrigin == BackgroundBox::ContentBox) {
         auto topWidth = borderTop();
         auto rightWidth = borderRight();
@@ -523,10 +523,10 @@ void BoxModel::paintBackgroundImage(const PaintInfo& info, const Rect& borderRec
         positioningArea.shrink(topWidth, rightWidth, bottomWidth, leftWidth);
     }
 
-    auto tileSize = computeBackgroundImageTileSize(backgroundImage, backgroundStyle->backgroundSize(), positioningArea.size());
+    auto tileSize = computeBackgroundImageTileSize(backgroundImage, backgroundStyle->backgroundSize(index), positioningArea.size());
     if(tileSize.isEmpty())
         return;
-    auto backgroundPosition = backgroundStyle->backgroundPosition();
+    auto backgroundPosition = backgroundStyle->backgroundPosition(index);
     const Point positionOffset = {
         backgroundPosition.x().calcMin(positioningArea.w - tileSize.w),
         backgroundPosition.y().calcMin(positioningArea.h - tileSize.h)
@@ -535,7 +535,7 @@ void BoxModel::paintBackgroundImage(const PaintInfo& info, const Rect& borderRec
     Rect tileRect(tileSize);
     Rect destRect(borderRect);
 
-    auto backgroundRepeat = backgroundStyle->backgroundRepeat();
+    auto backgroundRepeat = backgroundStyle->backgroundRepeat(index);
     if(backgroundRepeat == BackgroundRepeat::Repeat || backgroundRepeat == BackgroundRepeat::RepeatX) {
         tileRect.x = tileRect.w - std::fmod(positionOffset.x + positioningArea.x, tileRect.w);
     } else {
@@ -559,14 +559,13 @@ void BoxModel::paintBackgroundImage(const PaintInfo& info, const Rect& borderRec
     }
 }
 
-void BoxModel::paintBackgroundStyle(const PaintInfo& info, const Rect& borderRect, const BoxStyle* backgroundStyle, bool includeLeftEdge, bool includeRightEdge) const
+void BoxModel::paintBackgroundLayer(const PaintInfo& info, const Rect& borderRect, const BoxStyle* backgroundStyle, size_t index, const Color& backgroundColor, bool includeLeftEdge, bool includeRightEdge) const
 {
-    auto backgroundColor = backgroundStyle->backgroundColor();
-    auto backgroundImage = backgroundStyle->backgroundImage();
+    auto backgroundImage = backgroundStyle->backgroundImage(index);
     if(backgroundImage == nullptr && !backgroundColor.alpha())
         return;
     auto clipRect = style()->getBorderRoundedRect(borderRect, includeLeftEdge, includeRightEdge);
-    auto backgroundClip = backgroundStyle->backgroundClip();
+    auto backgroundClip = backgroundStyle->backgroundClip(index);
     if(backgroundClip == BackgroundBox::PaddingBox || backgroundClip == BackgroundBox::ContentBox) {
         auto topWidth = borderTop();
         auto rightWidth = borderRight();
@@ -594,14 +593,28 @@ void BoxModel::paintBackgroundStyle(const PaintInfo& info, const Rect& borderRec
         info->clipRoundedRect(clipRect);
     }
 
-    info->setColor(backgroundColor);
-    info->fillRect(borderRect);
+    if(backgroundColor.alpha()) {
+        info->setColor(backgroundColor);
+        info->fillRect(borderRect);
+    }
+
     if(backgroundImage) {
-        paintBackgroundImage(info, borderRect, backgroundStyle, backgroundImage);
+        paintBackgroundImage(info, borderRect, backgroundStyle, index, backgroundImage);
     }
 
     if(clipping) {
         info->restore();
+    }
+}
+
+void BoxModel::paintBackgroundStyle(const PaintInfo& info, const Rect& borderRect, const BoxStyle* backgroundStyle, bool includeLeftEdge, bool includeRightEdge) const
+{
+    auto backgroundColor = backgroundStyle->backgroundColor();
+    auto layerCount = backgroundStyle->backgroundLayerCount();
+    auto index = layerCount;
+    while(index > 0) {
+        --index;
+        paintBackgroundLayer(info, borderRect, backgroundStyle, index, index + 1 == layerCount ? backgroundColor : Color::Transparent, includeLeftEdge, includeRightEdge);
     }
 }
 
