@@ -33,7 +33,9 @@ class FlexItem {
 public:
     FlexItem(BoxFrame* box, int order, float flexGrow, float flexShrink, AlignItem alignSelf);
 
+    BoxFrame* operator->() const { return m_box; }
     BoxFrame* box() const { return m_box; }
+
     int order() const { return m_order; }
     float flexGrow() const { return m_flexGrow; }
     float flexShrink() const { return m_flexShrink; }
@@ -100,8 +102,6 @@ public:
     float marginEnd() const;
     float marginBefore() const;
     float marginAfter() const;
-
-    BoxFrame* operator->() const { return m_box; }
 
 private:
     BoxFrame* m_box;

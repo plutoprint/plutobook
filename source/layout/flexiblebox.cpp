@@ -1180,6 +1180,7 @@ float FlexibleBox::adjustItemInFragmentFlow(FlexItem& item, FragmentBuilder* fra
     }
 
     layoutItem(item, fragmentainer);
+
     auto newHeight = height + fragmentationGrowth(height, item.naturalHeight(), item->height());
     if(!isNearlyEqual(newHeight, item->height())) {
         item->setOverrideHeight(newHeight);
