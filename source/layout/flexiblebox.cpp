@@ -410,22 +410,26 @@ float FlexibleBox::unbreakableHeight(const FragmentBuilder* fragmentainer) const
     return leadingHeight + unbreakableHeight;
 }
 
-float FlexibleBox::computeMainContentSize(float hypotheticalMainSize) const
+float FlexibleBox::computeContentHeight(float height) const
 {
-    if(isHorizontalFlow())
-        return contentBoxWidth();
     float y = 0;
-    float height = hypotheticalMainSize + borderAndPaddingHeight();
     float marginTop = 0;
     float marginBottom = 0;
     computeHeight(y, height, marginTop, marginBottom);
     return height - borderAndPaddingHeight();
 }
 
-float FlexibleBox::availableCrossSize() const
+float FlexibleBox::computeMainContentSize(float hypotheticalMainSize) const
 {
     if(isHorizontalFlow())
-        return contentBoxHeight();
+        return contentBoxWidth();
+    return computeContentHeight(hypotheticalMainSize + borderAndPaddingHeight());
+}
+
+float FlexibleBox::computeCrossContentSize() const
+{
+    if(isHorizontalFlow())
+        return computeContentHeight(height());
     return contentBoxWidth();
 }
 
@@ -844,14 +848,15 @@ void FlexibleBox::layout(FragmentBuilder* fragmentainer)
     if(lineCount > 1)
         crossOffset += m_gapBetweenLines * (lineCount - 1);
     crossOffset += borderAndPaddingAfter();
-    if(isHorizontalFlow())
+    if(isHorizontalFlow()) {
         setHeight(std::max(crossOffset, height()));
-    updateHeight();
+    }
 
+    const auto crossContentSize = computeCrossContentSize();
     if(lineCount && !isMultiLine())
-        lines.front().setCrossSize(availableCrossSize());
+        lines.front().setCrossSize(crossContentSize);
     if(lineCount && isMultiLine()) {
-        auto availableSpace = availableCrossSize();
+        auto availableSpace = crossContentSize;
         for(const auto& line : lines)
             availableSpace -= line.crossSize();
         availableSpace -= m_gapBetweenLines * (lineCount - 1);
@@ -873,7 +878,7 @@ void FlexibleBox::layout(FragmentBuilder* fragmentainer)
 
     if(isWrapReverse()) {
         auto crossStart = borderAndPaddingBefore();
-        auto crossEnd = crossStart + availableCrossSize();
+        auto crossEnd = crossStart + crossContentSize;
         for(auto& line : lines) {
             line.setCrossOffset(crossStart + crossEnd - line.crossOffset() - line.crossSize());
         }
@@ -901,6 +906,7 @@ void FlexibleBox::layout(FragmentBuilder* fragmentainer)
         }
     }
 
+    updateHeight();
     layoutPositionedBoxes();
     updateOverflowRect();
 }
@@ -1208,10 +1214,7 @@ void FlexibleBox::adjustLinesInFragmentFlow(FlexLineList& lines, FragmentBuilder
         }
     }
 
-    if(offset > 0.f) {
-        setHeight(offset + height());
-        updateHeight();
-    }
+    setHeight(offset + height());
 }
 
 } // namespace plutobook
