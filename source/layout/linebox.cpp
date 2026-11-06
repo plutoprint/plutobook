@@ -196,19 +196,32 @@ static void paintTextDecorations(GraphicsContext& context, const Point& offset, 
 
 void TextLineBox::paint(const PaintInfo& info, const Point& offset, PaintPhase phase)
 {
-    if(m_shapeWidth == 0.f || phase != PaintPhase::Contents || style()->visibility() != Visibility::Visible)
+    // A run made only of a soft hyphen has no text width but still draws the hyphen.
+    if((m_shapeWidth == 0.f && m_hyphenWidth == 0.f) || phase != PaintPhase::Contents || style()->visibility() != Visibility::Visible)
         return;
     Point adjustedOffset(offset + location());
     Point origin(adjustedOffset.x, adjustedOffset.y + style()->fontAscent());
-    int repeatCount = std::max(1.f, std::floor(m_width / m_shapeWidth));
+    const float textWidth = m_width - m_hyphenWidth;
+    int repeatCount = m_shapeWidth > 0.f ? std::max(1.f, std::floor(textWidth / m_shapeWidth)) : 1;
     if(repeatCount > 1 && style()->direction() == Direction::Ltr) {
-        origin.x += std::max(0.f, m_width - (m_shapeWidth * repeatCount));
+        origin.x += std::max(0.f, textWidth - (m_shapeWidth * repeatCount));
     }
 
     info->setColor(style()->color());
+    // The hyphen follows the text in its own bidi direction: on the left of
+    // right-to-left text, even inside a left-to-right paragraph, and vice versa.
+    const bool rtl = m_shape.shape()->direction() == Direction::Rtl;
+    if(rtl && m_hyphenWidth > 0.f) {
+        m_hyphenShape.draw(*info, origin, 0.f, false);
+        origin.x += m_hyphenWidth;
+    }
+
     for(int i = 0; i < repeatCount; ++i) {
         origin.x += m_shape.draw(*info, origin, m_expansion, false);
     }
+
+    if(!rtl && m_hyphenWidth > 0.f)
+        m_hyphenShape.draw(*info, origin, 0.f, false);
 
     paintTextDecorations(*info, adjustedOffset, m_width, style());
 }
