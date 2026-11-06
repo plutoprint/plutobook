@@ -176,11 +176,11 @@ std::optional<float> TableBox::repeatedHeaderTop(const TableSectionBox* header, 
             break;
         for(auto row : section->rows()) {
             auto rowTop = sectionTop + row->y();
-            if(rowTop + row->maxHeight() <= pageRect.y)
+            if(rowTop + row->height() <= pageRect.y)
                 continue;
             if(rowTop < pageRect.y || rowTop >= pageRect.bottom())
                 return std::nullopt;
-            if(row->rowAbove()->section()->isTableHeader())
+            if(row->isContinuation() || row->rowAbove()->section()->isTableHeader())
                 return std::nullopt;
             if(isBorderCollapsed())
                 return pageRect.y + row->borderTop();
@@ -204,10 +204,11 @@ std::optional<float> TableBox::repeatedFooterTop(const TableSectionBox* footer, 
         for(auto row : section->rows() | std::views::reverse) {
             if(sectionTop + row->y() >= pageRect.bottom())
                 continue;
-            auto rowBottom = sectionTop + m_borderVerticalSpacing + row->y() + row->maxHeight();
+            auto rowBottom = sectionTop + m_borderVerticalSpacing + row->y() + row->height();
             if(rowBottom <= pageRect.y || rowBottom + footer->height() > pageRect.bottom())
                 return std::nullopt;
-            if(row->rowBelow()->section()->isTableFooter())
+            auto rowBelow = row->rowBelow();
+            if(rowBelow->isContinuation() || rowBelow->section()->isTableFooter())
                 return std::nullopt;
             return rowBottom;
         }
@@ -1375,7 +1376,7 @@ void TableSectionBox::layoutRows(FragmentBuilder* fragmentainer, float headerHei
                 if(isNearlyEqual(remainingHeight, fragmentHeight)) {
                     if(table()->isBorderCollapsed())
                         rowTop += rowBox->borderTop();
-                    if(headerHeight && !rowBox->rowAbove()->section()->isTableHeader()) {
+                    if(headerHeight && !rowBox->isContinuation() && !rowBox->rowAbove()->section()->isTableHeader()) {
                         rowTop += headerHeight + verticalSpacing;
                     }
                 }
@@ -1417,12 +1418,12 @@ void TableSectionBox::layoutRows(FragmentBuilder* fragmentainer, float headerHei
         if(fragmentainer) {
             if(footerHeight) {
                 auto rowBelow = rowBox->rowBelow();
-                if(rowBelow && !rowBelow->section()->isTableFooter()) {
+                if(!rowBelow->isContinuation() && !rowBelow->section()->isTableFooter()) {
                     auto fragmentHeight = fragmentainer->fragmentHeightForOffset(rowTop);
                     if(fragmentHeight > 0.f) {
-                        auto nextRowHeight = verticalSpacing + rowBox->rowBelow()->maxHeight();
+                        auto requiredHeight = footerHeight + verticalSpacing + rowBelow->maxHeight();
                         auto remainingHeight = fragmentainer->fragmentRemainingHeightForOffset(rowTop, AssociateWithLatterFragment);
-                        if(remainingHeight >= footerHeight && nextRowHeight + footerHeight > remainingHeight + kLayoutEpsilon) {
+                        if(requiredHeight > remainingHeight + kLayoutEpsilon && requiredHeight <= fragmentHeight + kLayoutEpsilon) {
                             rowTop += remainingHeight;
                         }
                     }
@@ -1602,7 +1603,10 @@ void TableSectionBox::build()
             }
 
             for(uint32_t rowOffset = 0; rowOffset < cellBox->rowSpan(); ++rowOffset) {
-                auto& targetCells = m_rows[rowIndex + rowOffset]->cells();
+                auto targetRow = m_rows[rowIndex + rowOffset];
+                if(rowOffset > 0)
+                    targetRow->setIsContinuation(true);
+                auto& targetCells = targetRow->cells();
 
                 const auto requiredSize = columnIndex + cellBox->colSpan();
                 if(requiredSize > targetCells.size()) {
