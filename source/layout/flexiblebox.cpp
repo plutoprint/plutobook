@@ -1066,7 +1066,7 @@ static float lineUnbreakableHeight(const FlexLine& line, const FragmentBuilder* 
     float unbreakableHeight = 0.f;
     for(auto& item : line.items()) {
         auto itemOffset = item.naturalTop() - line.crossOffset();
-        if(fragmentHeight > 0.f && remainingHeight <= itemOffset)
+        if(fragmentHeight > 0.f && remainingHeight <= itemOffset + kLayoutEpsilon)
             continue;
         unbreakableHeight = std::max(unbreakableHeight, itemOffset + item->unbreakableHeight(fragmentainer));
     }
