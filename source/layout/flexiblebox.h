@@ -137,7 +137,9 @@ public:
     float unbreakableHeight(const FragmentBuilder* fragmentainer) const final;
 
     float computeMainContentSize(float hypotheticalMainSize) const;
-    float availableCrossSize() const;
+    float computeCrossContentSize() const;
+
+    float computeContentHeight(float height) const;
 
     float borderAndPaddingStart() const;
     float borderAndPaddingEnd() const;
