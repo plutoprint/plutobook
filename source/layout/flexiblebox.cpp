@@ -1113,45 +1113,31 @@ float FlexibleBox::adjustLineInFragmentFlow(FlexLine& line, FragmentBuilder* fra
     auto unbreakableHeight = lineUnbreakableHeight(line, fragmentainer, newTop);
     newTop = fragmentainer->adjustOffsetInFragmentFlow(newTop, lineHeight, unbreakableHeight);
 
-    float crossAscent = 0;
-    float crossDescent = 0;
     auto delta = newTop - line.crossOffset();
     for(auto& item : line.items()) {
-        auto itemStyle = item->style();
+        if(item->style()->marginBottom().isAuto()) {
+            item->setMarginBottom(0.f);
+        }
+
         auto height = item->height();
 
         item->setY(delta + item->y());
         item->setOverrideHeight(-1);
 
-        if(itemStyle->marginTop().isAuto())
-            item->setMarginTop(0.f);
-        if(itemStyle->marginBottom().isAuto()) {
-            item->setMarginBottom(0.f);
-        }
-
         layoutItem(item, fragmentainer);
 
         assert(item.hasNaturalHeight());
         auto newHeight = height + fragmentationGrowth(height, item.naturalHeight(), item->height());
-        auto marginBoxHeight = newHeight + item->marginTop() + item->marginBottom();
-        if(item.alignSelf() == AlignItem::Baseline) {
-            auto ascent = item.marginBoxCrossBaseline();
-            auto descent = marginBoxHeight - ascent;
-            crossAscent = std::max(crossAscent, ascent);
-            crossDescent = std::max(crossDescent, descent);
-            lineHeight = std::max(lineHeight, crossAscent + crossDescent);
-        } else {
-            lineHeight = std::max(lineHeight, marginBoxHeight);
-        }
+        lineHeight = std::max(lineHeight, item->y() - newTop + newHeight + item->marginBottom());
     }
 
     auto growth = lineHeight - line.crossSize();
     line.setCrossOffset(newTop);
     line.setCrossSize(lineHeight);
-    line.setCrossAscent(crossAscent);
-    line.setCrossDescent(crossDescent);
     for(auto& item : line.items()) {
-        alignItem(item, line, fragmentainer);
+        if(item.alignSelf() == AlignItem::Stretch) {
+            stretchItem(item, line, fragmentainer);
+        }
     }
 
     auto lineBottom = newTop + lineHeight;
