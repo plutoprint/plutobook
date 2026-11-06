@@ -101,6 +101,7 @@ private:
     RefPtr<CSSValue> consumeWidthOrHeight(CSSTokenStream& input, bool unitless);
     RefPtr<CSSValue> consumeWidthOrHeightOrAuto(CSSTokenStream& input, bool unitless);
     RefPtr<CSSValue> consumeWidthOrHeightOrNone(CSSTokenStream& input, bool unitless);
+    RefPtr<CSSValue> consumeAspectRatio(CSSTokenStream& input);
 
     RefPtr<CSSValue> consumeString(CSSTokenStream& input);
     RefPtr<CSSValue> consumeCustomIdent(CSSTokenStream& input);

@@ -11,12 +11,34 @@
 #include "graphicscontext.h"
 #include "document.h"
 
+#include <cmath>
+
 namespace plutobook {
 
 ReplacedBox::ReplacedBox(Node* node, const RefPtr<BoxStyle>& style)
     : BoxFrame(node, style)
 {
     setIsReplaced(true);
+}
+
+void ReplacedBox::computeAspectRatioInformation(float& intrinsicWidth, float& intrinsicHeight, float& intrinsicRatio) const
+{
+    computeIntrinsicRatioInformation(intrinsicWidth, intrinsicHeight, intrinsicRatio);
+
+    // A CSS 'aspect-ratio' overrides the natural ratio unless 'auto' was
+    // specified and the element actually has a natural ratio of its own.
+    auto aspectRatio = style()->aspectRatio();
+    auto ratio = static_cast<float>(aspectRatio.value);
+    if(ratio > 0.f && std::isfinite(ratio) && (!aspectRatio.isAuto || intrinsicRatio == 0.f)) {
+        intrinsicRatio = ratio;
+        // Keep the natural size consistent with the new ratio, so the sizing
+        // code does not derive one axis from a dimension of the old ratio.
+        if(intrinsicWidth > 0.f) {
+            intrinsicHeight = intrinsicWidth / intrinsicRatio;
+        } else if(intrinsicHeight > 0.f) {
+            intrinsicWidth = intrinsicHeight * intrinsicRatio;
+        }
+    }
 }
 
 float ReplacedBox::computePreferredReplacedWidth() const
@@ -29,7 +51,7 @@ float ReplacedBox::computePreferredReplacedWidth() const
     float intrinsicWidth = 0.f;
     float intrinsicHeight = 0.f;
     float intrinsicRatio = 0.f;
-    computeIntrinsicRatioInformation(intrinsicWidth, intrinsicHeight, intrinsicRatio);
+    computeAspectRatioInformation(intrinsicWidth, intrinsicHeight, intrinsicRatio);
 
     if(intrinsicRatio > 0.f) {
         float height = 0.f;
@@ -326,7 +348,7 @@ float ReplacedBox::computeReplacedWidth() const
     float intrinsicWidth = 0.f;
     float intrinsicHeight = 0.f;
     float intrinsicRatio = 0.f;
-    computeIntrinsicRatioInformation(intrinsicWidth, intrinsicHeight, intrinsicRatio);
+    computeAspectRatioInformation(intrinsicWidth, intrinsicHeight, intrinsicRatio);
 
     if(intrinsicRatio > 0.f) {
         float height = 0.f;
@@ -357,7 +379,7 @@ float ReplacedBox::computeReplacedHeight() const
     float intrinsicWidth = 0.f;
     float intrinsicHeight = 0.f;
     float intrinsicRatio = 0.f;
-    computeIntrinsicRatioInformation(intrinsicWidth, intrinsicHeight, intrinsicRatio);
+    computeAspectRatioInformation(intrinsicWidth, intrinsicHeight, intrinsicRatio);
 
     if(intrinsicRatio > 0.f) {
         float width = 0.f;
