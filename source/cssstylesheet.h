@@ -17,6 +17,8 @@
 #include <vector>
 #include <memory>
 #include <map>
+#include <string>
+#include <string_view>
 
 namespace plutobook {
 
