@@ -242,8 +242,6 @@ private:
     UBiDi* m_ubidi;
 };
 
-constexpr auto kLineLayoutEpsilon = 0.001f;
-
 class FragmentBuilder;
 
 class LineBreaker {
@@ -293,7 +291,7 @@ private:
 
     float hangingSpaceWidth() const;
 
-    float availableWidthToFit() const { return m_availableWidth + kLineLayoutEpsilon; }
+    float availableWidthToFit() const;
     float remainingAvailableWidth() const { return availableWidthToFit() - m_currentWidth; }
 
     bool canFitOnLine() const { return m_currentWidth <= availableWidthToFit(); }

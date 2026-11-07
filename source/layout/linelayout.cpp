@@ -1427,6 +1427,11 @@ float LineBreaker::hangingSpaceWidth() const
     return width;
 }
 
+float LineBreaker::availableWidthToFit() const
+{
+    return m_availableWidth + kLayoutEpsilon;
+}
+
 LineBuilder::LineBuilder(BlockFlowBox* block, FragmentBuilder* fragmentainer, RootLineBoxList& lines)
     : m_block(block), m_fragmentainer(fragmentainer), m_lines(lines)
 {
