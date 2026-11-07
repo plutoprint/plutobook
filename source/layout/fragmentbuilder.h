@@ -42,10 +42,10 @@ public:
 
     float adjustOffsetInFragmentFlow(float offset, float height, float unbreakableHeight);
 
-    void enterFragment(float offset);
-    void leaveFragment(float offset);
+    void enterFragment(float offset) { m_fragmentOffset += offset; }
+    void leaveFragment(float offset) { m_fragmentOffset -= offset; }
 
-    float fragmentOffset() const;
+    float fragmentOffset() const { return m_fragmentOffset; }
 
     bool alwaysBreakBefore(const BoxFrame* child) const;
     bool alwaysBreakAfter(const BoxFrame* child) const;
@@ -57,9 +57,16 @@ public:
     bool alwaysBreakBetween(BreakBetween between) const;
     bool avoidsBreakInside(BreakInside inside) const;
 
+    bool isAtFragmentFlowStart(float offset) const;
+
 private:
     double m_fragmentOffset = 0;
 };
+
+inline bool FragmentBuilder::isAtFragmentFlowStart(float offset) const
+{
+    return offset + m_fragmentOffset <= kEpsilon;
+}
 
 inline bool isPageFragmentainer(const FragmentBuilder* fragmentainer)
 {

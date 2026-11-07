@@ -17,7 +17,7 @@ float FragmentBuilder::applyForcedFragmentBreak(float offset)
     addForcedFragmentBreak(offset);
     if(fragmentHeight > 0.f) {
         auto rule = AssociateWithFormerFragment;
-        if(isNearlyZero(offset + fragmentOffset()))
+        if(isAtFragmentFlowStart(offset))
             rule = AssociateWithLatterFragment;
         offset += fragmentRemainingHeightForOffset(offset, rule);
     }
@@ -56,7 +56,7 @@ float FragmentBuilder::adjustOffsetInFragmentFlow(float offset, float height, fl
     auto remainingHeight = fragmentRemainingHeightForOffset(offset, AssociateWithLatterFragment);
     auto isAtFragmentStart = isNearlyEqual(remainingHeight, fragmentHeight);
     if(height <= remainingHeight + kEpsilon) {
-        if(isAtFragmentStart && !isNearlyZero(offset + fragmentOffset()))
+        if(isAtFragmentStart && !isAtFragmentFlowStart(offset))
             setFragmentBreak(offset, height);
         return offset;
     }
@@ -65,21 +65,6 @@ float FragmentBuilder::adjustOffsetInFragmentFlow(float offset, float height, fl
     if(!isAtFragmentStart && unbreakableHeight > remainingHeight + kEpsilon && unbreakableHeight <= fragmentHeight + kEpsilon)
         return offset + remainingHeight;
     return offset;
-}
-
-void FragmentBuilder::enterFragment(float offset)
-{
-    m_fragmentOffset += offset;
-}
-
-void FragmentBuilder::leaveFragment(float offset)
-{
-    m_fragmentOffset -= offset;
-}
-
-float FragmentBuilder::fragmentOffset() const
-{
-    return m_fragmentOffset;
 }
 
 static bool hasInFlowContentBefore(const Box* box)
