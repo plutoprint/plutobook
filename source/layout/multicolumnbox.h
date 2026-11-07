@@ -76,7 +76,6 @@ public:
     float columnHeight() const { return m_columnHeight; }
 
     uint32_t numberOfColumns() const;
-    float columnTopForOffset(float offset) const;
 
     void recordSpaceShortage(float spaceShortage);
     void updateMinimumColumnHeight(float height);
@@ -96,9 +95,7 @@ private:
     float rowTopAt(uint32_t columnIndex) const { return m_rowTop + columnIndex * m_columnHeight; }
     float rowHeightAt(uint32_t columnIndex) const;
 
-    uint32_t columnIndexAtOffset(float offset, bool clampToExistingColumns) const;
     uint32_t findRunWithTallestColumns() const;
-
     void distributeImplicitBreaks();
 
     MultiColumnFlowBox* m_columnFlow;

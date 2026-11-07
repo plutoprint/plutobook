@@ -166,11 +166,6 @@ uint32_t MultiColumnRowBox::numberOfColumns() const
     return count;
 }
 
-float MultiColumnRowBox::columnTopForOffset(float offset) const
-{
-    return rowTopAt(columnIndexAtOffset(offset, false));
-}
-
 void MultiColumnRowBox::recordSpaceShortage(float spaceShortage)
 {
     if(spaceShortage <= 0.f)
@@ -264,21 +259,6 @@ float MultiColumnRowBox::rowHeightAt(uint32_t columnIndex) const
     }
 
     return bottom - top;
-}
-
-uint32_t MultiColumnRowBox::columnIndexAtOffset(float offset, bool clampToExistingColumns) const
-{
-    if(offset < m_rowTop)
-        return 0;
-    if(clampToExistingColumns) {
-        if(offset >= m_rowBottom) {
-            return numberOfColumns() - 1;
-        }
-    }
-
-    if(m_columnHeight > 0.f)
-        return std::floor((offset - m_rowTop) / m_columnHeight);
-    return 0;
 }
 
 uint32_t MultiColumnRowBox::findRunWithTallestColumns() const
@@ -406,13 +386,19 @@ float MultiColumnFlowBox::fragmentHeightForOffset(float offset) const
 
 float MultiColumnFlowBox::fragmentRemainingHeightForOffset(float offset, FragmentBoundaryRule rule) const
 {
-    offset += fragmentOffset();
-    if(auto row = columnRowAtOffset(offset)) {
-        assert(row->columnHeight() > 0.f);
-        auto columnBottom = row->columnTopForOffset(offset) + row->columnHeight();
-        auto remainingHeight = columnBottom - offset;
+    double adjustedOffset = offset + fragmentOffset();
+    if(auto row = columnRowAtOffset(adjustedOffset)) {
+        double columnHeight = row->columnHeight();
+        assert(columnHeight > 0.0);
+
+        double columnOffset = adjustedOffset - row->rowTop();
+        double remainingHeight = columnHeight - columnOffset;
+        if(columnOffset > 0.0)
+            remainingHeight = columnHeight - std::fmod(columnOffset, columnHeight);
+        if(remainingHeight <= kEpsilon)
+            remainingHeight = columnHeight;
         if(rule == AssociateWithFormerFragment)
-            return std::fmod(remainingHeight, row->columnHeight());
+            remainingHeight = std::fmod(remainingHeight, columnHeight);
         return remainingHeight;
     }
 
