@@ -45,7 +45,7 @@ public:
     void enterFragment(float offset) { m_fragmentOffset += offset; }
     void leaveFragment(float offset) { m_fragmentOffset -= offset; }
 
-    float fragmentOffset() const { return m_fragmentOffset; }
+    double fragmentOffset() const { return m_fragmentOffset; }
 
     bool alwaysBreakBefore(const BoxFrame* child) const;
     bool alwaysBreakAfter(const BoxFrame* child) const;
