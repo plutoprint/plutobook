@@ -402,7 +402,7 @@ float FlexibleBox::unbreakableHeight(const FragmentBuilder* fragmentainer) const
     float unbreakableHeight = 0.f;
     for(auto& item : m_items) {
         auto itemOffset = std::max(0.f, item.naturalTop() - leadingHeight);
-        if(itemOffset > kLayoutEpsilon && !item->isFirstInFlowChild())
+        if(itemOffset > kEpsilon && !item->isFirstInFlowChild())
             continue;
         unbreakableHeight = std::max(unbreakableHeight, itemOffset + item->unbreakableHeight(fragmentainer));
     }
@@ -612,7 +612,7 @@ void FlexibleBox::layout(FragmentBuilder* fragmentainer)
 
         auto begin = it;
         for(; it != end; ++it) {
-            if(isMultiLine() && it != begin && totalHypotheticalMainSize + it->targetMainMarginBoxSize() > lineBreakLength + kLayoutEpsilon)
+            if(isMultiLine() && it != begin && totalHypotheticalMainSize + it->targetMainMarginBoxSize() > lineBreakLength + kEpsilon)
                 break;
             totalFlexGrow += it->flexGrow();
             totalFlexShrink += it->flexShrink();
@@ -1072,7 +1072,7 @@ static float lineUnbreakableHeight(const FlexLine& line, const FragmentBuilder* 
     float unbreakableHeight = 0.f;
     for(auto& item : line.items()) {
         auto itemOffset = item.naturalTop() - line.crossOffset();
-        if(fragmentHeight > 0.f && remainingHeight <= itemOffset + kLayoutEpsilon)
+        if(fragmentHeight > 0.f && remainingHeight <= itemOffset + kEpsilon)
             continue;
         unbreakableHeight = std::max(unbreakableHeight, itemOffset + item->unbreakableHeight(fragmentainer));
     }

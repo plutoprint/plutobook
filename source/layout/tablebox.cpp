@@ -1423,7 +1423,7 @@ void TableSectionBox::layoutRows(FragmentBuilder* fragmentainer, float headerHei
                     if(fragmentHeight > 0.f) {
                         auto requiredHeight = footerHeight + verticalSpacing + rowBelow->maxHeight();
                         auto remainingHeight = fragmentainer->fragmentRemainingHeightForOffset(rowTop, AssociateWithLatterFragment);
-                        if(requiredHeight > remainingHeight + kLayoutEpsilon && requiredHeight <= fragmentHeight + kLayoutEpsilon) {
+                        if(requiredHeight > remainingHeight + kEpsilon && requiredHeight <= fragmentHeight + kEpsilon) {
                             rowTop += remainingHeight;
                         }
                     }
