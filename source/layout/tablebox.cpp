@@ -1161,6 +1161,7 @@ TableSectionBox::TableSectionBox(Node* node, const RefPtr<BoxStyle>& style)
     , m_rows(style->heap())
     , m_spanningCells(style->heap())
 {
+    setIsOverflowHidden(false);
 }
 
 void TableSectionBox::addChild(Box* newChild)
@@ -1705,6 +1706,7 @@ TableRowBox::TableRowBox(Node* node, const RefPtr<BoxStyle>& style)
     : BoxFrame(node, style)
     , m_cells(style->heap())
 {
+    setIsOverflowHidden(false);
 }
 
 void TableRowBox::addChild(Box* newChild)
@@ -1731,17 +1733,17 @@ void TableRowBox::updateOverflowRect()
     for(const auto& cell : m_cells) {
         if(cell.isPrimary()) {
             addOverflowRect(cell.box(), cell->x(), cell->y());
+            Rect borderRect(cell->location(), cell->size());
             if(table()->isBorderCollapsed()) {
                 const auto& edges = cell->collapsedBorderEdges();
                 auto topHalfWidth = edges.topEdge().width() / 2.f;
                 auto bottomHalfWidth = edges.bottomEdge().width() / 2.f;
                 auto leftHalfWidth = edges.leftEdge().width() / 2.f;
                 auto rightHalfWidth = edges.rightEdge().width() / 2.f;
-
-                Rect borderRect(cell->location(), cell->size());
                 borderRect.expand(topHalfWidth, rightHalfWidth, bottomHalfWidth, leftHalfWidth);
-                addOverflowRect(borderRect);
             }
+
+            addOverflowRect(borderRect);
         }
     }
 }
