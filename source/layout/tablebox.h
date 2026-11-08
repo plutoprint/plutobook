@@ -185,6 +185,7 @@ public:
     TableSectionBox* sectionBelow() const;
 
     void distributeExcessHeightToRows(float distributableHeight);
+    void updateRowMaxHeights();
 
     void layoutRows(FragmentBuilder* fragmentainer, float headerHeight, float footerHeight);
     void layout(FragmentBuilder* fragmentainer) final;

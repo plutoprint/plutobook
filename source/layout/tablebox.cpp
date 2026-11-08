@@ -403,20 +403,20 @@ void TableBox::layout(FragmentBuilder* fragmentainer)
             }
         }
 
+        auto hasBodySections = bodySectionCount > 0;
+        auto distributableSectionCount = hasBodySections ? bodySectionCount : sectionCount;
+        auto distributableSectionHeight = hasBodySections ? totalBodySectionHeight : totalSectionHeight;
         auto distributableTableHeight = tableHeight - totalSectionHeight - m_borderVerticalSpacing * (sectionCount + 1);
-        if(distributableTableHeight > 0.f) {
-            auto hasBodySections = bodySectionCount > 0;
-            auto distributableSectionCount = hasBodySections ? bodySectionCount : sectionCount;
-            auto distributableSectionHeight = hasBodySections ? totalBodySectionHeight : totalSectionHeight;
-            for(auto section : m_sections) {
-                if(hasBodySections && (section->isTableHeader() || section->isTableFooter()))
-                    continue;
+        for(auto section : m_sections) {
+            if(distributableTableHeight > 0.f && !(hasBodySections && (section->isTableHeader() || section->isTableFooter()))) {
                 if(distributableSectionHeight > 0.f) {
                     section->distributeExcessHeightToRows(distributableTableHeight * section->height() / distributableSectionHeight);
                 } else {
                     section->distributeExcessHeightToRows(distributableTableHeight / distributableSectionCount);
                 }
             }
+
+            section->updateRowMaxHeights();
         }
 
         const auto* header = headerSection();
@@ -1290,6 +1290,8 @@ TableSectionBox* TableSectionBox::sectionBelow() const
 
 void TableSectionBox::distributeExcessHeightToRows(float distributableHeight)
 {
+    setHeight(distributableHeight + height());
+
     float totalHeight = 0;
     float totalAutoHeight = 0;
     for(auto rowBox : m_rows) {
@@ -1299,11 +1301,10 @@ void TableSectionBox::distributeExcessHeightToRows(float distributableHeight)
         }
     }
 
-    auto availableHeight = distributableHeight + height();
     for(auto rowBox : m_rows) {
         if(rowBox->maxPercentHeight() && !rowBox->maxFixedHeight()) {
-            auto height = availableHeight * rowBox->maxPercentHeight() / 100.f;
-            auto delta = std::min(distributableHeight, std::max(0.f, height - rowBox->height()));
+            auto percentHeight = height() * rowBox->maxPercentHeight() / 100.f;
+            auto delta = std::min(distributableHeight, std::max(0.f, percentHeight - rowBox->height()));
             distributableHeight -= delta;
             totalHeight += delta;
             rowBox->setHeight(delta + rowBox->height());
@@ -1328,6 +1329,26 @@ void TableSectionBox::distributeExcessHeightToRows(float distributableHeight)
         for(auto rowBox : m_rows) {
             rowBox->setHeight(rowBox->height() + distributableHeight / m_rows.size());
         }
+    }
+}
+
+void TableSectionBox::updateRowMaxHeights()
+{
+    auto verticalSpacing = table()->borderVerticalSpacing();
+    for(size_t rowIndex = 0; rowIndex < m_rows.size(); ++rowIndex) {
+        auto rowBox = m_rows[rowIndex];
+        auto maxHeight = rowBox->height();
+        for(const auto& cell : rowBox->cells()) {
+            if(!cell.isPrimary())
+                continue;
+            auto height = rowBox->height();
+            for(size_t index = 1; index < cell->rowSpan(); ++index)
+                height += verticalSpacing + m_rows[rowIndex + index]->height();
+            cell->setOverrideHeight(height);
+            maxHeight = std::max(maxHeight, height);
+        }
+
+        rowBox->setMaxHeight(maxHeight);
     }
 }
 
@@ -1527,25 +1548,10 @@ void TableSectionBox::layout(FragmentBuilder* fragmentainer)
         distributeSpanCellToRows(cellBox, m_rows, verticalSpacing);
     }
 
-    auto sectionHeight = -verticalSpacing;
-    for(size_t rowIndex = 0; rowIndex < m_rows.size(); ++rowIndex) {
-        auto rowBox = m_rows[rowIndex];
-        auto maxHeight = rowBox->height();
-        for(const auto& cell : rowBox->cells()) {
-            if(!cell.isPrimary())
-                continue;
-            auto height = rowBox->height();
-            for(size_t index = 1; index < cell->rowSpan(); ++index)
-                height += verticalSpacing + m_rows[rowIndex + index]->height();
-            cell->setOverrideHeight(height);
-            maxHeight = std::max(maxHeight, height);
-        }
-
-        rowBox->setMaxHeight(maxHeight);
+    float sectionHeight = 0;
+    for(auto rowBox : m_rows)
         sectionHeight += verticalSpacing + rowBox->height();
-    }
-
-    setHeight(sectionHeight);
+    setHeight(sectionHeight - verticalSpacing);
 }
 
 void TableSectionBox::build()
