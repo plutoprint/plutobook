@@ -1458,6 +1458,20 @@ void TableSectionBox::layoutRows(FragmentBuilder* fragmentainer, float headerHei
         }
     }
 
+    if(fragmentainer) {
+        for(auto cellBox : m_spanningCells) {
+            auto firstRow = cellBox->firstRow();
+            auto lastRow = cellBox->lastRow();
+            auto height = lastRow->y() + lastRow->height() - firstRow->y();
+            if(height > cellBox->height()) {
+                cellBox->setHeight(height);
+                cellBox->updateOverflowRect();
+                firstRow->setMaxHeight(std::max(height, firstRow->maxHeight()));
+                firstRow->updateOverflowRect();
+            }
+        }
+    }
+
     setHeight(rowTop - verticalSpacing);
 }
 
