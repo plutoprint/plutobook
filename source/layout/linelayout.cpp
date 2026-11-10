@@ -1405,7 +1405,8 @@ float LineBreaker::hangingSpaceWidth() const
     while(index > 0) {
         const auto& run = runs[--index];
         if(run.item.type() == LineItem::Type::NormalText || run.item.type() == LineItem::Type::TabulationText) {
-            if(run.item.box()->style()->collapseWhiteSpace())
+            const auto style = run.item.box()->style();
+            if(style->collapseWhiteSpace() || !style->autoWrap())
                 break;
             auto endOffset = run.endOffset;
             while(endOffset > run.startOffset && isBreakableSpace(m_data.text[endOffset - 1]))
