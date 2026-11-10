@@ -1358,11 +1358,6 @@ void LineBreaker::handleOverflow()
     }
 
     if(m_block->containsFloats()) {
-        if(m_hasUnpositionedFloats) {
-            m_block->positionNewFloats(m_fragmentainer);
-            m_hasUnpositionedFloats = false;
-        }
-
         float newLineWidth = availableWidth;
         float lastFloatBottom = m_block->height();
         while(auto floatBottom = m_block->nextFloatBottom(lastFloatBottom)) {

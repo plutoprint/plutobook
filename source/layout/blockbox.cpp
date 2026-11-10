@@ -1026,10 +1026,11 @@ std::optional<float> BlockFlowBox::nextFloatBottom(float y) const
         return std::nullopt;
     std::optional<float> bottom;
     for(const auto& floatingBox : *m_floatingBoxes) {
-        assert(floatingBox.isPlaced());
-        auto floatBottom = floatingBox.bottom();
-        if(floatBottom > y) {
-            bottom = std::min(floatBottom, bottom.value_or(floatBottom));
+        if(floatingBox.isPlaced()) {
+            auto floatBottom = floatingBox.bottom();
+            if(floatBottom > y) {
+                bottom = std::min(floatBottom, bottom.value_or(floatBottom));
+            }
         }
     }
 
