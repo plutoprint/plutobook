@@ -1360,7 +1360,7 @@ void LineBreaker::handleOverflow()
     if(m_block->containsFloats()) {
         float newLineWidth = availableWidth;
         float lastFloatBottom = m_block->height();
-        while(auto floatBottom = m_block->nextFloatBottom(lastFloatBottom)) {
+        while(auto floatBottom = nextFloatBottom(lastFloatBottom)) {
             newLineWidth = m_block->availableWidthForLine(floatBottom.value(), m_lineHeight, m_line.isFirstLine());
             lastFloatBottom = floatBottom.value();
             if(newLineWidth >= m_currentWidth) {
@@ -1385,6 +1385,32 @@ void LineBreaker::handleOverflow()
     if(breakBefore > 0) {
         rewindOverflow(breakBefore);
     }
+}
+
+bool LineBreaker::isLineFloat(const Box* box) const
+{
+    for(const auto& run : m_line.runs()) {
+        if(box == run.item.box() && run.item.type() == LineItem::Type::Floating) {
+            return run.itemIndex >= m_leadingFloatsEndIndex;
+        }
+    }
+
+    return false;
+}
+
+std::optional<float> LineBreaker::nextFloatBottom(float y) const
+{
+    std::optional<float> bottom;
+    for(const auto& floatingBox : *m_block->floatingBoxes()) {
+        if(floatingBox.isPlaced()) {
+            auto floatBottom = floatingBox.bottom();
+            if(floatBottom > y && !(m_breakAnywhereEnabled && isLineFloat(floatingBox.box()))) {
+                bottom = std::min(floatBottom, bottom.value_or(floatBottom));
+            }
+        }
+    }
+
+    return bottom;
 }
 
 float LineBreaker::hangingSpaceWidth() const

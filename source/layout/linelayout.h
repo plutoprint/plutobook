@@ -13,6 +13,7 @@
 #include "textbreakiterator.h"
 
 #include <unicode/ubidi.h>
+#include <optional>
 
 namespace plutobook {
 
@@ -288,6 +289,9 @@ private:
 
     void rewindOverflow(uint32_t newSize);
     void handleOverflow();
+
+    bool isLineFloat(const Box* box) const;
+    std::optional<float> nextFloatBottom(float y) const;
 
     float hangingSpaceWidth() const;
 
