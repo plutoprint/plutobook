@@ -734,7 +734,7 @@ const LineInfo& LineBreaker::nextLine()
         }
     }
 
-    auto remainingWidth = m_availableWidth - m_currentWidth + hangingSpaceWidth();;
+    auto remainingWidth = m_availableWidth - m_currentWidth + hangingSpaceWidth();
     if(m_hasLeaderText && remainingWidth > 0.f && !m_line.isEmptyLine()) {
         uint32_t leaderCount = 0;
         for(const auto& run : m_line.runs()) {
