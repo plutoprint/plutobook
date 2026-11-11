@@ -978,6 +978,19 @@ bool BlockFlowBox::containsFloat(Box* box) const
     return false;
 }
 
+bool BlockFlowBox::containsUnpositionedFloats() const
+{
+    if(m_floatingBoxes == nullptr)
+        return false;
+    for(const auto& floatingBox : *m_floatingBoxes) {
+        if(!floatingBox.isPlaced()) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 float BlockFlowBox::leftFloatBottom() const
 {
     if(m_floatingBoxes == nullptr)

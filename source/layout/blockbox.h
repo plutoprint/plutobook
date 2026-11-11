@@ -172,6 +172,8 @@ public:
     bool containsFloat(Box* box) const;
     bool containsFloats() const { return m_floatingBoxes && !m_floatingBoxes->empty(); }
 
+    bool containsUnpositionedFloats() const;
+
     float leftFloatBottom() const;
     float rightFloatBottom() const;
     float floatBottom() const;

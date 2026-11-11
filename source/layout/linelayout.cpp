@@ -1292,6 +1292,7 @@ void LineBreaker::rewindOverflow(uint32_t newSize)
     }
 
     if(hasRemovedFloats) {
+        m_hasUnpositionedFloats = m_block->containsUnpositionedFloats();
         m_availableWidth = m_block->availableWidthForLine(m_block->height(), m_lineHeight, m_line.isFirstLine());
     }
 
