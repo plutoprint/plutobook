@@ -9,6 +9,7 @@
 #include "contentbox.h"
 #include "replacedbox.h"
 #include "imageresource.h"
+#include "gradientimage.h"
 #include "htmldocument.h"
 #include "cssrule.h"
 #include "counters.h"
@@ -60,6 +61,9 @@ void ContentBoxBuilder::addValue(const CSSValue& value)
         break;
     case CSSValueType::Image:
         addImage(to<CSSImageValue>(value).fetch(m_style->document()));
+        break;
+    case CSSValueType::Gradient:
+        addImage(GradientImage::create(*m_style, to<CSSGradientValue>(value)));
         break;
     case CSSValueType::Counter:
         addCounter(to<CSSCounterValue>(value));
