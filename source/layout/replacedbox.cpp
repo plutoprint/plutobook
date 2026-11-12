@@ -428,6 +428,11 @@ void ReplacedBox::computeHeight(float& y, float& height, float& marginTop, float
         return;
     }
 
+    if(isColumnFlexItem()) {
+        height = computeIntrinsicHeight() + borderAndPaddingHeight();
+        return;
+    }
+
     if(isPositioned()) {
         computePositionedReplacedHeight(y, height, marginTop, marginBottom);
         return;

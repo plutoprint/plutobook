@@ -366,9 +366,12 @@ void TableBox::layout(FragmentBuilder* fragmentainer)
     }
 
     float tableHeight = 0.f;
-    if(auto height = computeHeightUsing(style()->height()))
-        tableHeight = adjustContentBoxHeight(height.value());
-    tableHeight = constrainContentBoxHeight(tableHeight);
+    if(!isColumnFlexItem()) {
+        if(auto height = computeHeightUsing(style()->height()))
+            tableHeight = adjustContentBoxHeight(height.value());
+        tableHeight = constrainContentBoxHeight(tableHeight);
+    }
+
     if(hasOverrideHeight()) {
         tableHeight = std::max(tableHeight, overrideHeight() - borderAndPaddingHeight() - height());
     }

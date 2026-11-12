@@ -875,6 +875,11 @@ bool BoxFrame::isStretchedColumnFlexItem() const
     return isStretchedFlexItem(false);
 }
 
+bool BoxFrame::isColumnFlexItem() const
+{
+    return isFlexItem() && parentBox()->style()->isColumnFlexDirection();
+}
+
 BoxFrame::~BoxFrame() = default;
 
 void BoxFrame::setLine(std::unique_ptr<ReplacedLineBox> line)

@@ -426,6 +426,8 @@ public:
     bool isStretchedRowFlexItem() const;
     bool isStretchedColumnFlexItem() const;
 
+    bool isColumnFlexItem() const;
+
     BoxFrame* parentBoxFrame() const;
     BoxFrame* nextBoxFrame() const;
     BoxFrame* prevBoxFrame() const;

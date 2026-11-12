@@ -438,7 +438,7 @@ void BlockBox::computeHeight(float& y, float& height, float& marginTop, float& m
         return;
     }
 
-    if(isTableCellBox() || isPageMarginBox())
+    if(isTableCellBox() || isPageMarginBox() || isColumnFlexItem())
         return;
     if(isPositioned()) {
         computePositionedHeight(y, height, marginTop, marginBottom);
