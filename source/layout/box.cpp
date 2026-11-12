@@ -882,23 +882,34 @@ void BoxFrame::setLine(std::unique_ptr<ReplacedLineBox> line)
     m_line = std::move(line);
 }
 
-void BoxFrame::computePreferredWidths(float& minPreferredWidth, float& maxPreferredWidth) const
+std::pair<float, float> BoxFrame::computePreferredWidths() const
+{
+    return {0, 0};
+}
+
+void BoxFrame::computeIntrinsicWidths(float& minWidth, float& maxWidth) const
 {
     assert(false);
 }
 
-float BoxFrame::minPreferredWidth() const
+float BoxFrame::minIntrinsicWidth() const
 {
-    if(m_minPreferredWidth < 0)
-        computePreferredWidths(m_minPreferredWidth, m_maxPreferredWidth);
-    return m_minPreferredWidth;
+    if(m_minIntrinsicWidth < 0) {
+        m_minIntrinsicWidth = m_maxIntrinsicWidth = 0;
+        computeIntrinsicWidths(m_minIntrinsicWidth, m_maxIntrinsicWidth);
+    }
+
+    return m_minIntrinsicWidth;
 }
 
-float BoxFrame::maxPreferredWidth() const
+float BoxFrame::maxIntrinsicWidth() const
 {
-    if(m_maxPreferredWidth < 0)
-        computePreferredWidths(m_minPreferredWidth, m_maxPreferredWidth);
-    return m_maxPreferredWidth;
+    if(m_maxIntrinsicWidth < 0) {
+        m_minIntrinsicWidth = m_maxIntrinsicWidth = 0;
+        computeIntrinsicWidths(m_minIntrinsicWidth, m_maxIntrinsicWidth);
+    }
+
+    return m_maxIntrinsicWidth;
 }
 
 float BoxFrame::adjustBorderBoxWidth(float width) const
@@ -1050,17 +1061,19 @@ void BoxFrame::computeVerticalMargins(float& marginTop, float& marginBottom) con
 
 float BoxFrame::computeIntrinsicWidthUsing(const Length& widthLength, float containerWidth) const
 {
+    auto minContentWidth = minIntrinsicWidth() + borderAndPaddingWidth();
+    auto maxContentWidth = maxIntrinsicWidth() + borderAndPaddingWidth();
     if(widthLength.isMinContent())
-        return minPreferredWidth();
+        return minContentWidth;
     if(widthLength.isMaxContent()) {
-        return maxPreferredWidth();
+        return maxContentWidth;
     }
 
     assert(widthLength.isFitContent());
     auto marginLeft = style()->marginLeft().calcMin(containerWidth);
     auto marginRight = style()->marginRight().calcMin(containerWidth);
     auto width = containerWidth - marginLeft - marginRight;
-    return std::max(minPreferredWidth(), std::min(width, maxPreferredWidth()));
+    return std::max(minContentWidth, std::min(width, maxContentWidth));
 }
 
 void BoxFrame::computeWidth(float& x, float& width, float& marginLeft, float& marginRight) const

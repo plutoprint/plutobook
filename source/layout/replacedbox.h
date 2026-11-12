@@ -20,9 +20,9 @@ public:
     bool isReplacedBox() const final { return true; }
 
     virtual void computeIntrinsicRatioInformation(float& intrinsicWidth, float& intrinsicHeight, float& intrinsicRatio) const = 0;
+    void computeIntrinsicWidths(float& minWidth, float& maxWidth) const override;
 
-    virtual float computePreferredReplacedWidth() const;
-    void computePreferredWidths(float& minPreferredWidth, float& maxPreferredWidth) const override;
+    std::pair<float, float> computePreferredWidths() const override;
 
     void computePositionedReplacedWidth(float& x, float& width, float& marginLeft, float& marginRight) const;
     void computePositionedReplacedHeight(float& y, float& height, float& marginTop, float& marginBottom) const;

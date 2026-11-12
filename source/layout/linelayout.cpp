@@ -1754,8 +1754,9 @@ void LineLayout::computeIntrinsicWidths(float& minWidth, float& maxWidth) const
             child.updateHorizontalMargins(0.f);
             child.updateHorizontalPaddings(0.f);
 
-            auto childMinWidth = child.minPreferredWidth() + child.marginWidth();
-            auto childMaxWidth = child.maxPreferredWidth() + child.marginWidth();
+            auto [childMinWidth, childMaxWidth] = child.computePreferredWidths();
+            childMinWidth += child.marginWidth();
+            childMaxWidth += child.marginWidth();
 
             if(indentWidth && !child.isFloating()) {
                 childMinWidth += indentWidth;

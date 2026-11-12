@@ -98,8 +98,9 @@ void SelectBox::computeIntrinsicWidths(float& minWidth, float& maxWidth) const
         child->updateHorizontalMargins(0.f);
         child->updateHorizontalPaddings(0.f);
 
-        auto childMinWidth = child->minPreferredWidth() + child->marginWidth();
-        auto childMaxWidth = child->maxPreferredWidth() + child->marginWidth();
+        auto [childMinWidth, childMaxWidth] = child->computePreferredWidths();
+        childMinWidth += child->marginWidth();
+        childMaxWidth += child->marginWidth();
 
         minWidth = std::max(minWidth, childMinWidth);
         maxWidth = std::max(maxWidth, childMaxWidth);

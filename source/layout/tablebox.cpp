@@ -64,6 +64,30 @@ void TableBox::updateOverflowRect()
     }
 }
 
+void TableBox::computeBorderWidths(float& borderTop, float& borderBottom, float& borderLeft, float& borderRight) const
+{
+    if(!isBorderCollapsed()) {
+        BlockBox::computeBorderWidths(borderTop, borderBottom, borderLeft, borderRight);
+        return;
+    }
+
+    borderTop = 0.f;
+    borderBottom = 0.f;
+    borderLeft = 0.f;
+    borderRight = 0.f;
+
+    if(auto section = topSection())
+        borderTop = section->borderTop();
+    if(auto section = bottomSection()) {
+        borderBottom = section->borderBottom();
+    }
+
+    for(auto section : m_sections) {
+        borderLeft = std::max(borderLeft, section->borderLeft());
+        borderRight = std::max(borderRight, section->borderRight());
+    }
+}
+
 void TableBox::computeIntrinsicWidths(float& minWidth, float& maxWidth) const
 {
     if(!m_columns.empty()) {
@@ -75,16 +99,16 @@ void TableBox::computeIntrinsicWidths(float& minWidth, float& maxWidth) const
     for(auto caption : m_captions) {
         caption->updateHorizontalPaddings(0.f);
 
-        minWidth = std::max(minWidth, caption->minPreferredWidth());
-        maxWidth = std::max(maxWidth, caption->minPreferredWidth());
+        auto [captionMinWidth, captionMaxWidth] = caption->computePreferredWidths();
+        minWidth = std::max(minWidth, captionMinWidth);
+        maxWidth = std::max(maxWidth, captionMinWidth);
     }
 }
 
-void TableBox::computePreferredWidths(float& minPreferredWidth, float& maxPreferredWidth) const
+std::pair<float, float> TableBox::computePreferredWidths() const
 {
-    minPreferredWidth = 0;
-    maxPreferredWidth = 0;
-    computeIntrinsicWidths(minPreferredWidth, maxPreferredWidth);
+    auto minPreferredWidth = minIntrinsicWidth();
+    auto maxPreferredWidth = maxIntrinsicWidth();
 
     auto widthLength = style()->width();
     auto minWidthLength = style()->minWidth();
@@ -111,30 +135,7 @@ void TableBox::computePreferredWidths(float& minPreferredWidth, float& maxPrefer
 
     minPreferredWidth += borderAndPaddingWidth();
     maxPreferredWidth += borderAndPaddingWidth();
-}
-
-void TableBox::computeBorderWidths(float& borderTop, float& borderBottom, float& borderLeft, float& borderRight) const
-{
-    if(!isBorderCollapsed()) {
-        BlockBox::computeBorderWidths(borderTop, borderBottom, borderLeft, borderRight);
-        return;
-    }
-
-    borderTop = 0.f;
-    borderBottom = 0.f;
-    borderLeft = 0.f;
-    borderRight = 0.f;
-
-    if(auto section = topSection())
-        borderTop = section->borderTop();
-    if(auto section = bottomSection()) {
-        borderBottom = section->borderBottom();
-    }
-
-    for(auto section : m_sections) {
-        borderLeft = std::max(borderLeft, section->borderLeft());
-        borderRight = std::max(borderRight, section->borderRight());
-    }
+    return {minPreferredWidth, maxPreferredWidth};
 }
 
 std::optional<float> TableBox::firstLineBaseline() const
@@ -1005,8 +1006,9 @@ static void distributeSpanCellToColumns(const TableCellBox* cellBox, std::span<T
 
     const auto innerBorderSpacing = borderSpacing * (cellBox->colSpan() - 1);
 
-    auto cellMinWidth = std::max(0.f, cellBox->minPreferredWidth() - innerBorderSpacing);
-    auto cellMaxWidth = std::max(0.f, cellBox->maxPreferredWidth() - innerBorderSpacing);
+    auto [cellMinWidth, cellMaxWidth] = cellBox->computePreferredWidths();
+    cellMinWidth = std::max(0.f, cellMinWidth - innerBorderSpacing);
+    cellMaxWidth = std::max(0.f, cellMaxWidth - innerBorderSpacing);
     if(cellStyleWidth.isFixed()) {
         cellMaxWidth = std::max(cellMinWidth, cellBox->adjustBorderBoxWidth(cellStyleWidth.value()) - innerBorderSpacing);
     }
@@ -1041,12 +1043,13 @@ void AutoTableLayoutAlgorithm::computeIntrinsicWidths(float& minWidth, float& ma
                     continue;
                 cell->updateHorizontalPaddings(0.f);
                 if(cell->colSpan() == 1) {
+                    auto [cellMinWidth, cellMaxWidth] = cell->computePreferredWidths();
                     auto& columnWidth = m_columnWidths[cell->columnIndex()];
-                    columnWidth.minWidth = std::max(columnWidth.minWidth, cell->minPreferredWidth());
+                    columnWidth.minWidth = std::max(columnWidth.minWidth, cellMinWidth);
                     if(columnWidth.maxFixedWidth > 0.f) {
                         columnWidth.maxWidth = std::max(columnWidth.maxWidth, std::max(columnWidth.minWidth, columnWidth.maxFixedWidth));
                     } else {
-                        columnWidth.maxWidth = std::max(columnWidth.maxWidth, cell->maxPreferredWidth());
+                        columnWidth.maxWidth = std::max(columnWidth.maxWidth, cellMaxWidth);
                     }
                 }
             }

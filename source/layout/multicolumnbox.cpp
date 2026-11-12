@@ -26,22 +26,6 @@ MultiColumnRowBox* MultiColumnRowBox::create(MultiColumnFlowBox* columnFlow, con
     return newRow;
 }
 
-void MultiColumnRowBox::updateOverflowRect()
-{
-    BoxFrame::updateOverflowRect();
-
-    auto overflowRect = m_columnFlow->visualOverflowRect();
-
-    auto startColumnRect = columnRectAt(0);
-    auto endColumnRect = columnRectAt(numberOfColumns() - 1);
-
-    auto startColumnOverflowRect = overflowRect.translated(startColumnRect.origin());
-    auto endColumnOverflowRect = overflowRect.translated(endColumnRect.origin());
-
-    addOverflowRect(startColumnRect.y, startColumnRect.bottom(), startColumnOverflowRect.x, startColumnOverflowRect.right());
-    addOverflowRect(endColumnRect.y, endColumnRect.bottom(), endColumnOverflowRect.x, endColumnOverflowRect.right());
-}
-
 MultiColumnRowBox::MultiColumnRowBox(MultiColumnFlowBox* columnFlow, const RefPtr<BoxStyle>& style)
     : BoxFrame(nullptr, style)
     , m_columnFlow(columnFlow)
@@ -49,10 +33,9 @@ MultiColumnRowBox::MultiColumnRowBox(MultiColumnFlowBox* columnFlow, const RefPt
 {
 }
 
-void MultiColumnRowBox::computePreferredWidths(float& minPreferredWidth, float& maxPreferredWidth) const
+std::pair<float, float> MultiColumnRowBox::computePreferredWidths() const
 {
-    minPreferredWidth = m_columnFlow->minPreferredWidth();
-    maxPreferredWidth = m_columnFlow->maxPreferredWidth();
+    return m_columnFlow->computePreferredWidths();
 }
 
 void MultiColumnRowBox::computeWidth(float& x, float& width, float& marginLeft, float& marginRight) const
@@ -70,6 +53,22 @@ void MultiColumnRowBox::layout(FragmentBuilder* fragmentainer)
     updateWidth();
     updateHeight();
     updateOverflowRect();
+}
+
+void MultiColumnRowBox::updateOverflowRect()
+{
+    BoxFrame::updateOverflowRect();
+
+    auto overflowRect = m_columnFlow->visualOverflowRect();
+
+    auto startColumnRect = columnRectAt(0);
+    auto endColumnRect = columnRectAt(numberOfColumns() - 1);
+
+    auto startColumnOverflowRect = overflowRect.translated(startColumnRect.origin());
+    auto endColumnOverflowRect = overflowRect.translated(endColumnRect.origin());
+
+    addOverflowRect(startColumnRect.y, startColumnRect.bottom(), startColumnOverflowRect.x, startColumnOverflowRect.right());
+    addOverflowRect(endColumnRect.y, endColumnRect.bottom(), endColumnOverflowRect.x, endColumnOverflowRect.right());
 }
 
 void MultiColumnRowBox::paint(const PaintInfo& info, const Point& offset, PaintPhase phase)
@@ -301,12 +300,6 @@ MultiColumnSpanBox* MultiColumnSpanBox::create(BoxFrame* box, const BoxStyle* pa
     return newSpanner;
 }
 
-void MultiColumnSpanBox::computePreferredWidths(float& minPreferredWidth, float& maxPreferredWidth) const
-{
-    minPreferredWidth = 0;
-    maxPreferredWidth = 0;
-}
-
 void MultiColumnSpanBox::computeWidth(float& x, float& width, float& marginLeft, float& marginRight) const
 {
     assert(false);
@@ -444,6 +437,31 @@ void MultiColumnFlowBox::skipColumnSpanner(MultiColumnSpanBox* spanner, float of
     }
 }
 
+std::pair<float, float> MultiColumnFlowBox::computePreferredWidths() const
+{
+    auto [minPreferredWidth, maxPreferredWidth] = BlockFlowBox::computePreferredWidths();
+
+    auto containerStyle = columnBlockFlow()->style();
+    auto columnGap = containerStyle->columnGap().value_or(containerStyle->fontSize());
+    auto columnCount = containerStyle->columnCount().value_or(1);
+
+    auto totalColumnGap = columnGap * (columnCount - 1);
+    if(auto columnWidth = containerStyle->columnWidth()) {
+        minPreferredWidth = std::min(minPreferredWidth, columnWidth.value());
+        maxPreferredWidth = std::max(maxPreferredWidth, columnWidth.value());
+    } else {
+        minPreferredWidth = minPreferredWidth * columnCount + totalColumnGap;
+    }
+
+    maxPreferredWidth = maxPreferredWidth * columnCount + totalColumnGap;
+    return {minPreferredWidth, maxPreferredWidth};
+}
+
+void MultiColumnFlowBox::computeWidth(float& x, float& width, float& marginLeft, float& marginRight) const
+{
+    width = m_columnWidth;
+}
+
 bool MultiColumnFlowBox::layoutColumns(FragmentBuilder* fragmentainer, bool balancing)
 {
     m_currentRow = firstRow();
@@ -459,30 +477,6 @@ bool MultiColumnFlowBox::layoutColumns(FragmentBuilder* fragmentainer, bool bala
     for(auto row = firstRow(); row; row = row->nextRow())
         changed |= row->recalculateColumnHeight(balancing);
     return changed;
-}
-
-void MultiColumnFlowBox::computePreferredWidths(float& minPreferredWidth, float& maxPreferredWidth) const
-{
-    BlockFlowBox::computePreferredWidths(minPreferredWidth, maxPreferredWidth);
-
-    auto containerStyle = columnBlockFlow()->style();
-    auto columnGap = containerStyle->columnGap().value_or(containerStyle->fontSize());
-    auto columnCount = containerStyle->columnCount().value_or(1);
-
-    auto totalColumnGap = columnGap * (columnCount - 1);
-    if(auto columnWidth = containerStyle->columnWidth()) {
-        minPreferredWidth = std::min(minPreferredWidth, columnWidth.value());
-        maxPreferredWidth = std::max(maxPreferredWidth, columnWidth.value());
-    } else {
-        minPreferredWidth = minPreferredWidth * columnCount + totalColumnGap;
-    }
-
-    maxPreferredWidth = maxPreferredWidth * columnCount + totalColumnGap;
-}
-
-void MultiColumnFlowBox::computeWidth(float& x, float& width, float& marginLeft, float& marginRight) const
-{
-    width = m_columnWidth;
 }
 
 void MultiColumnFlowBox::layout(FragmentBuilder* fragmentainer)

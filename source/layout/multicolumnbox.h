@@ -42,12 +42,12 @@ public:
     bool isMultiColumnRowBox() const final { return true; }
     bool requiresLayer() const final { return false; }
 
-    void updateOverflowRect() final;
+    std::pair<float, float> computePreferredWidths() const final;
 
-    void computePreferredWidths(float& minPreferredWidth, float& maxPreferredWidth) const final;
     void computeWidth(float& x, float& width, float& marginLeft, float& marginRight) const final;
     void computeHeight(float& y, float& height, float& marginTop, float& marginBottom) const final;
     void layout(FragmentBuilder* fragmentainer) final;
+    void updateOverflowRect() final;
 
     float unbreakableHeight(const FragmentBuilder* fragmentainer) const final { return 0.f; }
 
@@ -126,7 +126,6 @@ public:
     MultiColumnRowBox* nextRow() const;
     MultiColumnRowBox* prevRow() const;
 
-    void computePreferredWidths(float& minPreferredWidth, float& maxPreferredWidth) const final;
     void computeWidth(float& x, float& width, float& marginLeft, float& marginRight) const final;
     void computeHeight(float& y, float& height, float& marginTop, float& marginBottom) const final;
     void layout(FragmentBuilder* fragmentainer) final;
@@ -189,10 +188,10 @@ public:
     float columnWidth() const { return m_columnWidth; }
     float columnGap() const { return m_columnGap; }
 
-    bool layoutColumns(FragmentBuilder* fragmentainer, bool balancing);
+    std::pair<float, float> computePreferredWidths() const final;
 
-    void computePreferredWidths(float& minPreferredWidth, float& maxPreferredWidth) const final;
     void computeWidth(float& x, float& width, float& marginLeft, float& marginRight) const final;
+    bool layoutColumns(FragmentBuilder* fragmentainer, bool balancing);
     void layout(FragmentBuilder* fragmentainer) final;
     void build() final;
 

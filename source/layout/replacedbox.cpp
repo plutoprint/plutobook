@@ -19,13 +19,8 @@ ReplacedBox::ReplacedBox(Node* node, const RefPtr<BoxStyle>& style)
     setIsReplaced(true);
 }
 
-float ReplacedBox::computePreferredReplacedWidth() const
+void ReplacedBox::computeIntrinsicWidths(float& minWidth, float& maxWidth) const
 {
-    auto widthLength = style()->width();
-    if(widthLength.isFixed()) {
-        return adjustContentBoxWidth(widthLength.value());
-    }
-
     float intrinsicWidth = 0.f;
     float intrinsicHeight = 0.f;
     float intrinsicRatio = 0.f;
@@ -39,23 +34,27 @@ float ReplacedBox::computePreferredReplacedWidth() const
             height = intrinsicHeight;
         else if(intrinsicWidth > 0.f)
             height = intrinsicWidth / intrinsicRatio;
-        else
-            return 0.f;
-        return constrainReplacedHeight(height) * intrinsicRatio;
+        minWidth = maxWidth = constrainReplacedHeight(height) * intrinsicRatio;
+    } else if(intrinsicWidth > 0.f) {
+        minWidth = maxWidth = intrinsicWidth;
+    } else {
+        minWidth = maxWidth = intrinsicReplacedWidth();
     }
-
-    if(intrinsicWidth > 0.f)
-        return intrinsicWidth;
-    return intrinsicReplacedWidth();
 }
 
-void ReplacedBox::computePreferredWidths(float& minPreferredWidth, float& maxPreferredWidth) const
+std::pair<float, float> ReplacedBox::computePreferredWidths() const
 {
+    float minPreferredWidth = 0;
+    float maxPreferredWidth = 0;
+
     auto widthLength = style()->width();
-    if(widthLength.isPercent()) {
-        maxPreferredWidth = minPreferredWidth = intrinsicReplacedWidth();
+    if(widthLength.isFixed()) {
+        minPreferredWidth = maxPreferredWidth = adjustContentBoxWidth(widthLength.value());
+    } else if(widthLength.isPercent()) {
+        minPreferredWidth = maxPreferredWidth = intrinsicReplacedWidth();
     } else {
-        maxPreferredWidth = minPreferredWidth = computePreferredReplacedWidth();
+        minPreferredWidth = minIntrinsicWidth();
+        maxPreferredWidth = maxIntrinsicWidth();
     }
 
     auto maxWidthLength = style()->maxWidth();
@@ -76,6 +75,7 @@ void ReplacedBox::computePreferredWidths(float& minPreferredWidth, float& maxPre
 
     minPreferredWidth += borderAndPaddingWidth();
     maxPreferredWidth += borderAndPaddingWidth();
+    return {minPreferredWidth, maxPreferredWidth};
 }
 
 void ReplacedBox::computePositionedReplacedWidth(float& x, float& width, float& marginLeft, float& marginRight) const

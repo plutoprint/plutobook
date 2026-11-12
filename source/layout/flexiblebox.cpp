@@ -61,7 +61,7 @@ float FlexItem::constrainWidth(float width) const
     if(auto minWidth = computeWidthUsing(m_box->style()->minWidth()))
         width = std::max(width, *minWidth);
     if(m_box->isTableBox())
-        width = std::max(width, m_box->minPreferredWidth() - m_box->borderAndPaddingWidth());
+        width = std::max(width, m_box->minIntrinsicWidth());
     return std::max(0.f, width);
 }
 
@@ -106,14 +106,14 @@ float FlexItem::computeContentHeight()
 float FlexItem::computeMinContentMainSize()
 {
     if(isHorizontalFlow())
-        return std::max(0.f, m_box->minPreferredWidth() - m_box->borderAndPaddingWidth());
+        return m_box->minIntrinsicWidth();
     return computeContentHeight();
 }
 
 float FlexItem::computeMaxContentMainSize()
 {
     if(isHorizontalFlow())
-        return std::max(0.f, m_box->maxPreferredWidth() - m_box->borderAndPaddingWidth());
+        return m_box->maxIntrinsicWidth();
     return computeContentHeight();
 }
 
@@ -154,7 +154,7 @@ void FlexItem::computeHypotheticalMainSize()
     }
 
     if(isHorizontalFlow() && m_box->isTableBox())
-        m_minMainSize = std::max(m_minMainSize, m_box->minPreferredWidth() - m_box->borderAndPaddingWidth());
+        m_minMainSize = std::max(m_minMainSize, m_box->minIntrinsicWidth());
     m_targetMainSize = constrainMainSize(m_flexBaseSize);
 }
 
@@ -316,8 +316,9 @@ void FlexibleBox::computeIntrinsicWidths(float& minWidth, float& maxWidth) const
         child->updateHorizontalMargins(0.f);
         child->updateHorizontalPaddings(0.f);
 
-        auto childMinWidth = child->minPreferredWidth() + child->marginWidth();
-        auto childMaxWidth = child->maxPreferredWidth() + child->marginWidth();
+        auto [childMinWidth, childMaxWidth] = child->computePreferredWidths();
+        childMinWidth += child->marginWidth();
+        childMaxWidth += child->marginWidth();
 
         if(isVerticalFlow()) {
             minWidth = std::max(minWidth, childMinWidth);

@@ -13,6 +13,7 @@
 #include "geometry.h"
 
 #include <memory>
+#include <utility>
 
 namespace plutobook {
 
@@ -488,10 +489,11 @@ public:
     void setOverrideSize(float width, float height) { m_overrideWidth = width; m_overrideHeight = height; }
     void clearOverrideSize() { setOverrideSize(-1, -1); }
 
-    virtual void computePreferredWidths(float& minPreferredWidth, float& maxPreferredWidth) const;
+    virtual std::pair<float, float> computePreferredWidths() const;
 
-    float minPreferredWidth() const;
-    float maxPreferredWidth() const;
+    virtual void computeIntrinsicWidths(float& minWidth, float& maxWidth) const;
+    float minIntrinsicWidth() const;
+    float maxIntrinsicWidth() const;
 
     float adjustBorderBoxWidth(float width) const;
     float adjustBorderBoxHeight(float height) const;
@@ -561,8 +563,8 @@ private:
     float m_overflowLeft{0};
     float m_overflowRight{0};
 
-    mutable float m_minPreferredWidth{-1};
-    mutable float m_maxPreferredWidth{-1};
+    mutable float m_minIntrinsicWidth{-1};
+    mutable float m_maxIntrinsicWidth{-1};
 };
 
 template<>

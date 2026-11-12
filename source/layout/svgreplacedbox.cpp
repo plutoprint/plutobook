@@ -75,11 +75,14 @@ Rect SVGRootBox::paintBoundingBox() const
     return m_paintBoundingBox;
 }
 
-float SVGRootBox::computePreferredReplacedWidth() const
+std::pair<float, float> SVGRootBox::computePreferredWidths() const
 {
-    if(document()->isSVGDocument())
-        return document()->containerWidth();
-    return ReplacedBox::computePreferredReplacedWidth();
+    if(document()->isSVGDocument()) {
+        auto width = document()->containerWidth() + borderAndPaddingWidth();
+        return {width, width};
+    }
+
+    return ReplacedBox::computePreferredWidths();
 }
 
 float SVGRootBox::computeReplacedWidth() const

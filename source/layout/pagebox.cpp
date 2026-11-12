@@ -196,7 +196,8 @@ static PreferredSizeInfo computeEdgePreferredSize(PageMarginBox* edgeBox, const 
     if(isHorizontalEdge(edgeSide)) {
         auto widthLength = edgeBox->style()->width();
         if(widthLength.isAuto()) {
-            return PreferredSizeInfo(PreferredSizeInfo::Auto, edgeBox->minPreferredWidth(), edgeBox->maxPreferredWidth(), edgeBox->marginWidth());
+            auto [minWidth, maxWidth] = edgeBox->computePreferredWidths();
+            return PreferredSizeInfo(PreferredSizeInfo::Auto, minWidth, maxWidth, edgeBox->marginWidth());
         }
 
         auto minWidthLength = edgeBox->style()->minWidth();

@@ -29,7 +29,8 @@ public:
     Rect strokeBoundingBox() const final;
     Rect paintBoundingBox() const final;
 
-    float computePreferredReplacedWidth() const final;
+    std::pair<float, float> computePreferredWidths() const final;
+
     float computeReplacedWidth() const final;
     float computeReplacedHeight() const final;
 

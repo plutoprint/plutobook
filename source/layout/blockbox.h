@@ -21,9 +21,6 @@ public:
 
     bool isBlockBox() const final { return true; }
 
-    virtual void computeIntrinsicWidths(float& minWidth, float& maxWidth) const = 0;
-    void computePreferredWidths(float& minPreferredWidth, float& maxPreferredWidth) const override;
-
     const PositionedBoxList* positionedBoxes() const { return m_positionedBoxes.get(); }
     bool containsPositionedBoxes() const { return m_positionedBoxes && !m_positionedBoxes->empty(); }
 
@@ -66,6 +63,8 @@ public:
 
     void computeWidth(float& x, float& width, float& marginLeft, float& marginRight) const override;
     void computeHeight(float& y, float& height, float& marginTop, float& marginBottom) const override;
+
+    std::pair<float, float> computePreferredWidths() const override;
 
     std::optional<float> firstLineBaseline() const override;
     std::optional<float> lastLineBaseline() const override;
