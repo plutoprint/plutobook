@@ -41,6 +41,9 @@ public:
     virtual float computeReplacedWidth() const;
     virtual float computeReplacedHeight() const;
 
+    float computeIntrinsicWidth() const;
+    float computeIntrinsicHeight() const;
+
     Rect computeObjectFitRect(const Rect& contentRect) const;
 
     void computeWidth(float& x, float& width, float& marginLeft, float& marginRight) const override;
