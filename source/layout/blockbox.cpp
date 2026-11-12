@@ -182,6 +182,13 @@ float BlockBox::constrainContentBoxHeight(float height) const
     return std::max(0.f, height);
 }
 
+float BlockBox::shrinkToFitWidth(float availableWidth) const
+{
+    auto preferredMaxWidth = maxPreferredWidth() - borderAndPaddingWidth();
+    auto preferredMinWidth = minPreferredWidth() - borderAndPaddingWidth();
+    return std::min(preferredMaxWidth, std::max(preferredMinWidth, availableWidth));
+}
+
 void BlockBox::computePositionedWidthUsing(const Length& widthLength, const BoxModel* container, Direction containerDirection, float containerWidth,
     const Length& leftLength, const Length& rightLength, const Length& marginLeftLength, const Length& marginRightLength,
     float& x, float& width, float& marginLeft, float& marginRight) const
@@ -236,19 +243,11 @@ void BlockBox::computePositionedWidthUsing(const Length& widthLength, const BoxM
         auto availableSpace = containerWidth - (marginLeft + marginRight + borderAndPaddingWidth());
         if(leftLenghtIsAuto && widthLenghtIsAuto && !rightLenghtIsAuto) {
             auto rightLengthValue = rightLength.calc(containerWidth);
-
-            auto preferredMaxWidth = maxPreferredWidth() - borderAndPaddingWidth();
-            auto preferredMinWidth = minPreferredWidth() - borderAndPaddingWidth();
-            auto availableWidth = availableSpace - rightLengthValue;
-            width = std::min(preferredMaxWidth, std::max(preferredMinWidth, availableWidth));
+            width = shrinkToFitWidth(availableSpace - rightLengthValue);
             leftLengthValue = availableSpace - (width + rightLengthValue);
         } else if(!leftLenghtIsAuto && widthLenghtIsAuto && rightLenghtIsAuto) {
             leftLengthValue = leftLength.calc(containerWidth);
-
-            auto preferredMaxWidth = maxPreferredWidth() - borderAndPaddingWidth();
-            auto preferredMinWidth = minPreferredWidth() - borderAndPaddingWidth();
-            auto availableWidth = availableSpace - leftLengthValue;
-            width = std::min(preferredMaxWidth, std::max(preferredMinWidth, availableWidth));
+            width = shrinkToFitWidth(availableSpace - leftLengthValue);
         } else if(leftLenghtIsAuto && !widthLenghtIsAuto && !rightLenghtIsAuto) {
             width = widthLengthValue;
             leftLengthValue = availableSpace - (width + rightLength.calc(containerWidth));

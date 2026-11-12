@@ -50,6 +50,8 @@ public:
     float constrainBorderBoxHeight(float height) const;
     float constrainContentBoxHeight(float height) const;
 
+    float shrinkToFitWidth(float availableWidth) const;
+
     void computePositionedWidthUsing(const Length& widthLength, const BoxModel* container, Direction containerDirection, float containerWidth,
         const Length& leftLength, const Length& rightLength, const Length& marginLeftLength, const Length& marginRightLength,
         float& x, float& width, float& marginLeft, float& marginRight) const;
