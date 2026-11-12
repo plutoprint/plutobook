@@ -205,6 +205,10 @@ void BlockBox::computePositionedWidthUsing(const Length& widthLength, const BoxM
         widthLengthValue = adjustContentBoxWidth(widthLength.calc(containerWidth));
     }
 
+    if(isTableBox()) {
+        widthLengthValue = std::max(widthLengthValue, minPreferredWidth() - borderAndPaddingWidth());
+    }
+
     if(!leftLenghtIsAuto && !widthLenghtIsAuto && !rightLenghtIsAuto) {
         width = widthLengthValue;
         leftLengthValue = leftLength.calc(containerWidth);
@@ -254,6 +258,9 @@ void BlockBox::computePositionedWidthUsing(const Length& widthLength, const BoxM
         } else if(!leftLenghtIsAuto && widthLenghtIsAuto && !rightLenghtIsAuto) {
             leftLengthValue = leftLength.calc(containerWidth);
             width = availableSpace - (leftLengthValue + rightLength.calc(containerWidth));
+            if(isTableBox()) {
+                width = shrinkToFitWidth(width);
+            }
         } else if(!leftLenghtIsAuto && !widthLenghtIsAuto && rightLenghtIsAuto) {
             width = widthLengthValue;
             leftLengthValue = leftLength.calc(containerWidth);
@@ -441,8 +448,6 @@ void BlockBox::computeWidth(float& x, float& width, float& marginLeft, float& ma
         return;
     if(isPositioned()) {
         computePositionedWidth(x, width, marginLeft, marginRight);
-        if(isTableBox())
-            width = std::max(width, minPreferredWidth());
         return;
     }
 
