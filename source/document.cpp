@@ -539,7 +539,7 @@ void Element::buildElementChildrenBox(Counters& counters, SelectorFilter& select
 void Element::buildBox(Counters& counters, SelectorFilter& selectorFilter, Box* parent)
 {
     auto style = document()->styleForElement(this, selectorFilter, parent->style());
-    if(style == nullptr || style->display() == Display::None)
+    if(style == nullptr)
         return;
     auto box = createBox(style);
     if(box == nullptr)

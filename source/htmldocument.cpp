@@ -78,7 +78,7 @@ void HTMLElement::buildFirstLetterPseudoBox(SelectorFilter& selectorFilter, Box*
     if(!parent->isBlockFlowBox())
         return;
     auto style = document()->pseudoStyleForElement(this, PseudoType::FirstLetter, selectorFilter, parent->style());
-    if(style == nullptr || style->display() == Display::None)
+    if(style == nullptr)
         return;
     auto child = parent->firstChild();
     while(child) {
@@ -128,7 +128,7 @@ void HTMLElement::buildPseudoBox(Counters& counters, SelectorFilter& selectorFil
     if(pseudoType == PseudoType::Marker && !parent->isListItemBox())
         return;
     auto style = document()->pseudoStyleForElement(this, pseudoType, selectorFilter, parent->style());
-    if(style == nullptr || style->display() == Display::None) {
+    if(style == nullptr) {
         return;
     }
 
@@ -164,7 +164,7 @@ void HTMLElement::buildElementBox(Counters& counters, SelectorFilter& selectorFi
 void HTMLElement::buildBox(Counters& counters, SelectorFilter& selectorFilter, Box* parent)
 {
     auto style = document()->styleForElement(this, selectorFilter, parent->style());
-    if(style == nullptr || style->display() == Display::None)
+    if(style == nullptr)
         return;
     if(style->position() == Position::Running) {
         const auto* value = style->get(CSSPropertyID::Position);

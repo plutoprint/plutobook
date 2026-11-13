@@ -653,9 +653,11 @@ RefPtr<BoxStyle> ElementStyleBuilder::build()
 
     auto newStyle = BoxStyle::create(m_element, m_parentStyle, m_pseudoType, Display::Inline);
     buildStyle(newStyle.get());
-    if(newStyle->display() == Display::None)
-        return newStyle;
-    if(m_pseudoType == PseudoType::FirstLetter) {
+    if(m_pseudoType == PseudoType::Marker) {
+        newStyle->setDisplay(Display::Inline);
+        newStyle->setPosition(Position::Static);
+        newStyle->setFloating(Float::None);
+    } else if(m_pseudoType == PseudoType::FirstLetter) {
         newStyle->setPosition(Position::Static);
         if(newStyle->isFloating()) {
             newStyle->setDisplay(Display::Block);
@@ -664,6 +666,8 @@ RefPtr<BoxStyle> ElementStyleBuilder::build()
         }
     }
 
+    if(newStyle->display() == Display::None)
+        return nullptr;
     if(newStyle->hasZIndex() && (newStyle->position() != Position::Static || m_parentStyle->isDisplayFlex()))
         newStyle->setHasEffectiveZIndex(true);
     if(newStyle->hasEffectiveZIndex() || m_element->isRootNode() || newStyle->position() == Position::Fixed
