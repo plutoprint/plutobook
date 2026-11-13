@@ -478,6 +478,11 @@ std::pair<float, float> BlockBox::computePreferredWidths() const
         maxPreferredWidth = std::max(maxPreferredWidth, adjustContentBoxWidth(minWidthLength.value()));
     }
 
+    if(isTableBox()) {
+        minPreferredWidth = std::max(minPreferredWidth, minIntrinsicWidth());
+        maxPreferredWidth = std::max(maxPreferredWidth, minPreferredWidth);
+    }
+
     minPreferredWidth += borderAndPaddingWidth();
     maxPreferredWidth += borderAndPaddingWidth();
     return {minPreferredWidth, maxPreferredWidth};

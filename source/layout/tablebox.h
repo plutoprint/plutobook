@@ -41,8 +41,6 @@ public:
     void computeBorderWidths(float& borderTop, float& borderBottom, float& borderLeft, float& borderRight) const final;
     void computeIntrinsicWidths(float& minWidth, float& maxWidth) const final;
 
-    std::pair<float, float> computePreferredWidths() const final;
-
     std::optional<float> firstLineBaseline() const final;
     std::optional<float> lastLineBaseline() const final;
     std::optional<float> inlineBlockBaseline() const final;
