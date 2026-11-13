@@ -171,15 +171,16 @@ std::optional<float> TableBox::repeatedFooterTop(const TableSectionBox* footer, 
         if(sectionTop >= pageRect.bottom())
             continue;
         for(auto row : section->rows() | std::views::reverse) {
-            if(sectionTop + row->y() >= pageRect.bottom())
+            auto rowTop = sectionTop + row->y();
+            if(rowTop >= pageRect.bottom())
                 continue;
-            auto rowBottom = sectionTop + m_borderVerticalSpacing + row->y() + row->height();
-            if(rowBottom <= pageRect.y || rowBottom + footer->height() > pageRect.bottom())
+            auto footerTop = rowTop + row->height() + m_borderVerticalSpacing;
+            if(footerTop <= pageRect.y || footerTop + footer->height() > pageRect.bottom())
                 return std::nullopt;
             auto rowBelow = row->rowBelow();
             if(rowBelow->isContinuation() || rowBelow->section()->isTableFooter())
                 return std::nullopt;
-            return rowBottom;
+            return footerTop;
         }
     }
 
