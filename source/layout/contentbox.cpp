@@ -147,7 +147,7 @@ void ContentBoxBuilder::addElement(const CSSValue& value)
         return;
     m_box->addChild(newBox);
 
-    SelectorFilter selectorFilter;
+    SelectorFilter selectorFilter(element->parentElement());
     element->buildElementBox(m_counters, selectorFilter, newBox);
     newBox->setIsRunning(true);
     m_lastTextBox = nullptr;

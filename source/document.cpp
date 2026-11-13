@@ -1108,7 +1108,7 @@ void Document::buildBox(Counters& counters, SelectorFilter& selectorFilter, Box*
 void Document::build()
 {
     Counters counters(this, 0);
-    SelectorFilter selectorFilter;
+    SelectorFilter selectorFilter(nullptr);
     buildBox(counters, selectorFilter, nullptr);
 }
 

@@ -11,6 +11,7 @@
 
 #include "cssproperty.h"
 
+#include <array>
 #include <map>
 #include <forward_list>
 #include <memory>
@@ -474,18 +475,18 @@ class Element;
 
 class SelectorFilter {
 public:
-    SelectorFilter() = default;
+    explicit SelectorFilter(const Element* element);
+
+    bool contains(unsigned hash) const { return isSet(hash) && isSet(hash >> 16); }
 
     void push(const Element* element);
     void pop();
 
 private:
-    bool contains(unsigned hash) const { return isSet(hash) && isSet(hash >> 16); }
-
     void add(unsigned hash);
     void remove(unsigned hash);
 
-    bool isSet(unsigned key) const { return m_table && m_table[key & keyMask]; }
+    bool isSet(unsigned key) const { return m_table[key & keyMask]; }
 
     void set(unsigned key);
     void unset(unsigned key);
@@ -496,10 +497,8 @@ private:
 
     using HashVector = std::vector<unsigned>;
 
-    std::unique_ptr<uint8_t[]> m_table;
+    std::array<uint8_t, 1 << keyBits> m_table = {};
     std::vector<HashVector> m_stack;
-
-    friend class CSSRuleData;
 };
 
 inline void SelectorFilter::add(unsigned hash)

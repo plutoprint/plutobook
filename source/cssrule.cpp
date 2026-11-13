@@ -120,24 +120,24 @@ static unsigned hashString(std::string_view value)
     return std::hash<std::string_view>()(value);
 }
 
+SelectorFilter::SelectorFilter(const Element* element)
+{
+    for(; element; element = element->parentElement()) {
+        push(element);
+    }
+}
+
 void SelectorFilter::push(const Element* element)
 {
-    HashVector hashes;
-    do {
-        if(element->hasID())
-            hashes.push_back(hashString(element->id()));
-        hashes.push_back(hashString(element->foldTagNameCase()));
-        for(const auto& className : element->classNames()) {
-            hashes.push_back(hashString(className));
-        }
-
-        element = element->parentElement();
-    } while(element && m_stack.empty());
-    if(m_stack.empty())
-        m_table = std::make_unique<uint8_t[]>(1 << keyBits);
-    for(auto hash : hashes)
+    auto& hashes = m_stack.emplace_back();
+    if(element->hasID())
+        hashes.push_back(hashString(element->id()));
+    hashes.push_back(hashString(element->foldTagNameCase()));
+    for(const auto& className : element->classNames())
+        hashes.push_back(hashString(className));
+    for(auto hash : hashes) {
         add(hash);
-    m_stack.push_back(std::move(hashes));
+    }
 }
 
 void SelectorFilter::pop()
