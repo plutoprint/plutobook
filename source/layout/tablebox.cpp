@@ -98,10 +98,11 @@ void TableBox::computeIntrinsicWidths(float& minWidth, float& maxWidth) const
 
     for(auto caption : m_captions) {
         caption->updateHorizontalPaddings(0.f);
+        caption->updateHorizontalMargins(0.f);
 
         auto [captionMinWidth, captionMaxWidth] = caption->computePreferredWidths();
-        minWidth = std::max(minWidth, captionMinWidth);
-        maxWidth = std::max(maxWidth, captionMinWidth);
+        minWidth = std::max(minWidth, captionMinWidth + caption->marginWidth());
+        maxWidth = std::max(maxWidth, captionMinWidth + caption->marginWidth());
     }
 }
 
