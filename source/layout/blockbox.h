@@ -159,8 +159,8 @@ public:
     void collectIntrudingFloats();
     void collectOverhangingFloats();
 
-    void addIntrudingFloats(BlockFlowBox* prevBlock, float offsetX, float offsetY);
-    void addOverhangingFloats(BlockFlowBox* childBlock);
+    void addIntrudingFloats(const BlockFlowBox* block, float offsetX, float offsetY, float top = 0.f);
+    void addOverhangingFloats(const BoxFrame* child);
 
     void positionFloatingBox(FloatingBox& floatingBox, FragmentBuilder* fragmentainer, float top);
     void positionNewFloat(FloatingBox& floatingBox, FragmentBuilder* fragmentainer, float top);

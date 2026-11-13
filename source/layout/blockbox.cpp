@@ -757,11 +757,8 @@ float BlockFlowBox::unbreakableHeight(const FragmentBuilder* fragmentainer) cons
 void BlockFlowBox::collectIntrudingFloats()
 {
     assert(!containsFloats());
-
-    if(isFloating() || isPositioned() || avoidsFloats()) {
+    if(avoidsFloats())
         return;
-    }
-
     auto parentBlock = to<BlockFlowBox>(parentBox());
     if(parentBlock == nullptr)
         return;
@@ -779,13 +776,11 @@ void BlockFlowBox::collectIntrudingFloats()
         }
     }
 
-    if(parentHasFloats || (prevBlock == nullptr && parentBlock->floatBottom() > y()))
-        addIntrudingFloats(parentBlock, parentBlock->leftOffsetForContent(), y());
+    parentBlock->determineHorizontalPosition(this);
+    if(parentHasFloats || prevBlock == nullptr)
+        addIntrudingFloats(parentBlock, -x(), -y());
     if(prevBlock) {
-        auto offsetY = y() - prevBlock->y();
-        if(prevBlock->floatBottom() > offsetY) {
-            addIntrudingFloats(prevBlock, 0, offsetY);
-        }
+        addIntrudingFloats(prevBlock, prevBlock->x() - x(), prevBlock->y() - y());
     }
 }
 
@@ -793,29 +788,20 @@ void BlockFlowBox::collectOverhangingFloats()
 {
     if(isChildrenInline())
         return;
-    for(auto child = firstChild(); child; child = child->nextSibling()) {
-        if(child->isFloatingOrPositioned())
-            continue;
-        if(auto block = to<BlockFlowBox>(child)) {
-            if(block->floatBottom() + block->y() > height()) {
-                addOverhangingFloats(block);
-            }
-        }
+    for(auto child = firstBoxFrame(); child; child = child->nextBoxFrame()) {
+        addOverhangingFloats(child);
     }
 }
 
-void BlockFlowBox::addIntrudingFloats(BlockFlowBox* prevBlock, float offsetX, float offsetY)
+void BlockFlowBox::addIntrudingFloats(const BlockFlowBox* block, float offsetX, float offsetY, float top)
 {
-    if(!prevBlock->containsFloats())
+    if(!block->containsFloats())
         return;
-    for(const auto& item : *prevBlock->floatingBoxes()) {
-        if(item.bottom() > offsetY && !containsFloat(item.box())) {
-            auto leftOffset = offsetX + marginLeft();
-            if(prevBlock != parentBox())
-                leftOffset -= prevBlock->marginLeft();
+    for(const auto& item : *block->floatingBoxes()) {
+        if(item.bottom() + offsetY > top && !containsFloat(item.box())) {
             FloatingBox floatingBox(item.box());
-            floatingBox.setX(item.x() - leftOffset);
-            floatingBox.setY(item.y() - offsetY);
+            floatingBox.setX(item.x() + offsetX);
+            floatingBox.setY(item.y() + offsetY);
             floatingBox.setWidth(item.width());
             floatingBox.setHeight(item.height());
             floatingBox.setIsIntruding(true);
@@ -827,24 +813,11 @@ void BlockFlowBox::addIntrudingFloats(BlockFlowBox* prevBlock, float offsetX, fl
     }
 }
 
-void BlockFlowBox::addOverhangingFloats(BlockFlowBox* childBlock)
+void BlockFlowBox::addOverhangingFloats(const BoxFrame* child)
 {
-    if(!childBlock->containsFloats() || childBlock->avoidsFloats())
-        return;
-    for(const auto& item : *childBlock->floatingBoxes()) {
-        auto floatBottom = item.bottom() + childBlock->y();
-        if(floatBottom > height() && !containsFloat(item.box())) {
-            FloatingBox floatingBox(item.box());
-            floatingBox.setX(item.x() + childBlock->x());
-            floatingBox.setY(item.y() + childBlock->y());
-            floatingBox.setWidth(item.width());
-            floatingBox.setHeight(item.height());
-            floatingBox.setIsIntruding(true);
-            floatingBox.setIsPlaced(true);
-            if(m_floatingBoxes == nullptr)
-                m_floatingBoxes = std::make_unique<FloatingBoxList>(heap());
-            m_floatingBoxes->push_back(floatingBox);
-        }
+    auto childBlock = to<BlockFlowBox>(child);
+    if(childBlock && !childBlock->avoidsFloats()) {
+        addIntrudingFloats(childBlock, childBlock->x(), childBlock->y(), height());
     }
 }
 
@@ -1621,9 +1594,7 @@ void BlockFlowBox::layoutBlockChild(BoxFrame* child, FragmentBuilder* fragmentai
         setHeight(newHeight);
     }
 
-    if(auto childBlock = to<BlockFlowBox>(child)) {
-        addOverhangingFloats(childBlock);
-    }
+    addOverhangingFloats(child);
 }
 
 void BlockFlowBox::layoutBlockChildren(FragmentBuilder* fragmentainer)
