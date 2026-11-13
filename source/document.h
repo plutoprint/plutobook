@@ -236,9 +236,6 @@ public:
     void setIsLinkSource(bool value) { m_isLinkSource = value; }
     bool isLinkSource() const { return m_isLinkSource; }
 
-    void setHasElementChildren(bool value) { m_hasElementChildren = value; }
-    bool hasElementChildren() const { return m_hasElementChildren; }
-
     Node* cloneNode(bool deep) override;
     Box* createBox(const RefPtr<BoxStyle>& style) override;
     void buildElementChildrenBox(Counters& counters, SelectorFilter& selectorFilter, Box* box);

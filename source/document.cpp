@@ -567,7 +567,7 @@ void Element::finishParsingDocument()
 
     for(auto child = firstChild(); child; child = child->nextSibling()) {
         if(child->isElementNode()) {
-            setHasElementChildren(true);
+            m_hasElementChildren = true;
             break;
         }
     }
