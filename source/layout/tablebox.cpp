@@ -650,10 +650,10 @@ void FixedTableLayoutAlgorithm::build()
         }
 
         auto columnStyleWidth = columnBox->style()->width();
-        if(columnStyleWidth.isZero()) {
-            m_widths.push_back(Length::Auto);
-        } else {
+        if(columnStyleWidth.isFixed() || columnStyleWidth.isPercent()) {
             m_widths.push_back(columnStyleWidth);
+        } else {
+            m_widths.push_back(Length::Auto);
         }
     }
 
@@ -668,7 +668,7 @@ void FixedTableLayoutAlgorithm::build()
                     cellStyleWidth = Length(Length::Type::Percent, cellStyleWidth.value() / cell->colSpan());
                 }
 
-                if(!cellStyleWidth.isZero()) {
+                if(cellStyleWidth.isFixed() || cellStyleWidth.isPercent()) {
                     const auto col = cell->columnIndex();
                     for(size_t index = 0; index < cell->colSpan(); ++index) {
                         if(m_widths[col + index].isAuto()) {
@@ -999,12 +999,12 @@ void AutoTableLayoutAlgorithm::computeIntrinsicWidths(float& minWidth, float& ma
 {
     for(auto& columnWidth : m_columnWidths) {
         columnWidth.width = Length::Auto;
-        if(columnWidth.maxFixedWidth > 0.f)
+        if(columnWidth.maxFixedWidth >= 0.f)
             columnWidth.width = Length(Length::Type::Fixed, columnWidth.maxFixedWidth);
-        if(columnWidth.maxPercentWidth > 0.f)
+        if(columnWidth.maxPercentWidth >= 0.f)
             columnWidth.width = Length(Length::Type::Percent, columnWidth.maxPercentWidth);
+        columnWidth.maxWidth = std::max(0.f, columnWidth.maxFixedWidth);
         columnWidth.minWidth = 0.f;
-        columnWidth.maxWidth = columnWidth.maxFixedWidth;
     }
 
     for(auto section : m_table->sections()) {
@@ -1017,7 +1017,7 @@ void AutoTableLayoutAlgorithm::computeIntrinsicWidths(float& minWidth, float& ma
                     auto [cellMinWidth, cellMaxWidth] = cell->computePreferredWidths();
                     auto& columnWidth = m_columnWidths[cell->columnIndex()];
                     columnWidth.minWidth = std::max(columnWidth.minWidth, cellMinWidth);
-                    if(columnWidth.maxFixedWidth > 0.f) {
+                    if(columnWidth.maxFixedWidth >= 0.f) {
                         columnWidth.maxWidth = std::max(columnWidth.maxWidth, std::max(columnWidth.minWidth, columnWidth.maxFixedWidth));
                     } else {
                         columnWidth.maxWidth = std::max(columnWidth.maxWidth, cellMaxWidth);
@@ -1048,7 +1048,7 @@ void AutoTableLayoutAlgorithm::computeIntrinsicWidths(float& minWidth, float& ma
                 columnWidth.width = Length(Length::Type::Percent, 100.f - totalPercent);
             if(columnWidth.width.value() > 0.f) {
                 maxPercentWidth = std::max(maxPercentWidth, columnWidth.maxWidth * 100.f / columnWidth.width.value());
-            } else if(columnWidth.maxWidth > 0.f) {
+            } else if(totalPercent >= 100.f && columnWidth.maxWidth > 0.f) {
                 maxPercentWidth = kMaxTableWidth;
             }
 
@@ -1076,8 +1076,8 @@ void AutoTableLayoutAlgorithm::build()
     m_columnWidths.resize(columns.size());
     for(size_t columnIndex = 0; columnIndex < columns.size(); ++columnIndex) {
         auto& columnWidth = m_columnWidths[columnIndex];
-        columnWidth.maxFixedWidth = 0.f;
-        columnWidth.maxPercentWidth = 0.f;
+        columnWidth.maxFixedWidth = -1.f;
+        columnWidth.maxPercentWidth = -1.f;
         if(auto columnBox = columns[columnIndex].box()) {
             auto columnStyleWidth = columnBox->style()->width();
             if(columnStyleWidth.isFixed()) {

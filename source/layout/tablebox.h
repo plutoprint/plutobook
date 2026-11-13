@@ -128,8 +128,8 @@ private:
 };
 
 struct TableColumnWidth {
-    float maxFixedWidth = 0.f;
-    float maxPercentWidth = 0.f;
+    float maxFixedWidth = -1.f;
+    float maxPercentWidth = -1.f;
     float minWidth = 0.f;
     float maxWidth = 0.f;
     Length width = Length::Auto;
