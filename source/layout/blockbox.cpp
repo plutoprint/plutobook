@@ -163,11 +163,9 @@ void BlockBox::computePositionedWidthUsing(const Length& widthLength, const BoxM
     const Length& leftLength, const Length& rightLength, const Length& marginLeftLength, const Length& marginRightLength,
     float& x, float& width, float& marginLeft, float& marginRight) const
 {
-    auto widthLengthIsAuto = widthLength.isAuto();
-    auto leftLengthIsAuto = leftLength.isAuto();
-    auto rightLengthIsAuto = rightLength.isAuto();
+    auto leftLengthValue = leftLength.calcMin(containerWidth);
+    auto rightLengthValue = rightLength.calcMin(containerWidth);
 
-    float leftLengthValue = 0;
     float widthLengthValue = 0;
     if(widthLength.isIntrinsic()) {
         widthLengthValue = computeIntrinsicWidthUsing(widthLength, containerWidth) - borderAndPaddingWidth();
@@ -179,11 +177,11 @@ void BlockBox::computePositionedWidthUsing(const Length& widthLength, const BoxM
         widthLengthValue = std::max(widthLengthValue, minIntrinsicWidth());
     }
 
+    auto widthLengthIsAuto = widthLength.isAuto();
+    auto leftLengthIsAuto = leftLength.isAuto();
+    auto rightLengthIsAuto = rightLength.isAuto();
     if(!leftLengthIsAuto && !widthLengthIsAuto && !rightLengthIsAuto) {
-        width = widthLengthValue;
-        leftLengthValue = leftLength.calc(containerWidth);
-
-        auto availableSpace = containerWidth - (leftLengthValue + width + rightLength.calc(containerWidth) + borderAndPaddingWidth());
+        auto availableSpace = containerWidth - (widthLengthValue + leftLengthValue + rightLengthValue + borderAndPaddingWidth());
         if(marginLeftLength.isAuto() && marginRightLength.isAuto()) {
             if(availableSpace >= 0) {
                 marginLeft = availableSpace / 2.f;
@@ -210,30 +208,28 @@ void BlockBox::computePositionedWidthUsing(const Length& widthLength, const BoxM
                 leftLengthValue = (availableSpace + leftLengthValue) - marginLeft - marginRight;
             }
         }
+
+        width = widthLengthValue;
     } else {
         marginLeft = marginLeftLength.calcMin(containerWidth);
         marginRight = marginRightLength.calcMin(containerWidth);
 
         auto availableSpace = containerWidth - (marginLeft + marginRight + borderAndPaddingWidth());
         if(leftLengthIsAuto && widthLengthIsAuto && !rightLengthIsAuto) {
-            auto rightLengthValue = rightLength.calc(containerWidth);
             width = shrinkToFitWidth(availableSpace - rightLengthValue);
             leftLengthValue = availableSpace - (width + rightLengthValue);
         } else if(!leftLengthIsAuto && widthLengthIsAuto && rightLengthIsAuto) {
-            leftLengthValue = leftLength.calc(containerWidth);
             width = shrinkToFitWidth(availableSpace - leftLengthValue);
         } else if(leftLengthIsAuto && !widthLengthIsAuto && !rightLengthIsAuto) {
             width = widthLengthValue;
-            leftLengthValue = availableSpace - (width + rightLength.calc(containerWidth));
+            leftLengthValue = availableSpace - (width + rightLengthValue);
         } else if(!leftLengthIsAuto && widthLengthIsAuto && !rightLengthIsAuto) {
-            leftLengthValue = leftLength.calc(containerWidth);
-            width = std::max(0.f, availableSpace - (leftLengthValue + rightLength.calc(containerWidth)));
+            width = std::max(0.f, availableSpace - (leftLengthValue + rightLengthValue));
             if(isTableBox()) {
                 width = shrinkToFitWidth(width);
             }
         } else if(!leftLengthIsAuto && !widthLengthIsAuto && rightLengthIsAuto) {
             width = widthLengthValue;
-            leftLengthValue = leftLength.calc(containerWidth);
         }
     }
 
@@ -295,12 +291,11 @@ void BlockBox::computePositionedHeightUsing(const Length& heightLength, const Bo
     const Length& topLength, const Length& bottomLength, const Length& marginTopLength, const Length& marginBottomLength,
     float& y, float& height, float& marginTop, float& marginBottom) const
 {
-    auto heightLengthIsAuto = heightLength.isAuto() || heightLength.isIntrinsic();
-    auto topLengthIsAuto = topLength.isAuto();
-    auto bottomLengthIsAuto = bottomLength.isAuto();
+    auto topLengthValue = topLength.calcMin(containerHeight);
+    auto bottomLengthValue = bottomLength.calcMin(containerHeight);
 
-    float topLengthValue = 0;
     float heightLengthValue = 0;
+    auto heightLengthIsAuto = heightLength.isAuto() || heightLength.isIntrinsic();
     if(isTableBox()) {
         heightLengthValue = contentHeight;
         heightLengthIsAuto = false;
@@ -309,12 +304,12 @@ void BlockBox::computePositionedHeightUsing(const Length& heightLength, const Bo
         heightLengthValue = adjustContentBoxHeight(heightLengthValue);
     }
 
+    auto topLengthIsAuto = topLength.isAuto();
+    auto bottomLengthIsAuto = bottomLength.isAuto();
+
     auto containerWidth = containingBlockWidthForPositioned(container);
     if(!topLengthIsAuto && !heightLengthIsAuto && !bottomLengthIsAuto) {
-        height = heightLengthValue;
-        topLengthValue = topLength.calc(containerHeight);
-
-        auto availableSpace = containerHeight - (height + topLengthValue + bottomLength.calc(containerHeight) + borderAndPaddingHeight());
+        auto availableSpace = containerHeight - (heightLengthValue + topLengthValue + bottomLengthValue + borderAndPaddingHeight());
         if(marginTopLength.isAuto() && marginBottomLength.isAuto()) {
             marginTop = availableSpace / 2.f;
             marginBottom = availableSpace - marginTop;
@@ -328,6 +323,8 @@ void BlockBox::computePositionedHeightUsing(const Length& heightLength, const Bo
             marginTop = marginTopLength.calc(containerWidth);
             marginBottom = marginBottomLength.calc(containerWidth);
         }
+
+        height = heightLengthValue;
     } else {
         marginTop = marginTopLength.calcMin(containerWidth);
         marginBottom = marginBottomLength.calcMin(containerWidth);
@@ -335,19 +332,16 @@ void BlockBox::computePositionedHeightUsing(const Length& heightLength, const Bo
         auto availableSpace = containerHeight - (marginTop + marginBottom + borderAndPaddingHeight());
         if(topLengthIsAuto && heightLengthIsAuto && !bottomLengthIsAuto) {
             height = contentHeight;
-            topLengthValue = availableSpace - (height + bottomLength.calc(containerHeight));
+            topLengthValue = availableSpace - (height + bottomLengthValue);
         } else if(!topLengthIsAuto && heightLengthIsAuto && bottomLengthIsAuto) {
-            topLengthValue = topLength.calc(containerHeight);
             height = contentHeight;
         } else if(topLengthIsAuto && !heightLengthIsAuto && !bottomLengthIsAuto) {
             height = heightLengthValue;
-            topLengthValue = availableSpace - (height + bottomLength.calc(containerHeight));
+            topLengthValue = availableSpace - (height + bottomLengthValue);
         } else if(!topLengthIsAuto && heightLengthIsAuto && !bottomLengthIsAuto) {
-            topLengthValue = topLength.calc(containerHeight);
-            height = std::max(0.f, availableSpace - (topLengthValue + bottomLength.calc(containerHeight)));
+            height = std::max(0.f, availableSpace - (topLengthValue + bottomLengthValue));
         } else if(!topLengthIsAuto && !heightLengthIsAuto && bottomLengthIsAuto) {
             height = heightLengthValue;
-            topLengthValue = topLength.calc(containerHeight);
         }
     }
 
