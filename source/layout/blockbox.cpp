@@ -227,7 +227,7 @@ void BlockBox::computePositionedWidthUsing(const Length& widthLength, const BoxM
             leftLengthValue = availableSpace - (width + rightLength.calc(containerWidth));
         } else if(!leftLengthIsAuto && widthLengthIsAuto && !rightLengthIsAuto) {
             leftLengthValue = leftLength.calc(containerWidth);
-            width = availableSpace - (leftLengthValue + rightLength.calc(containerWidth));
+            width = std::max(0.f, availableSpace - (leftLengthValue + rightLength.calc(containerWidth)));
             if(isTableBox()) {
                 width = shrinkToFitWidth(width);
             }
