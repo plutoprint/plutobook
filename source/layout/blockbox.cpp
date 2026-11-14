@@ -163,9 +163,9 @@ void BlockBox::computePositionedWidthUsing(const Length& widthLength, const BoxM
     const Length& leftLength, const Length& rightLength, const Length& marginLeftLength, const Length& marginRightLength,
     float& x, float& width, float& marginLeft, float& marginRight) const
 {
-    auto widthLenghtIsAuto = widthLength.isAuto();
-    auto leftLenghtIsAuto = leftLength.isAuto();
-    auto rightLenghtIsAuto = rightLength.isAuto();
+    auto widthLengthIsAuto = widthLength.isAuto();
+    auto leftLengthIsAuto = leftLength.isAuto();
+    auto rightLengthIsAuto = rightLength.isAuto();
 
     float leftLengthValue = 0;
     float widthLengthValue = 0;
@@ -179,7 +179,7 @@ void BlockBox::computePositionedWidthUsing(const Length& widthLength, const BoxM
         widthLengthValue = std::max(widthLengthValue, minIntrinsicWidth());
     }
 
-    if(!leftLenghtIsAuto && !widthLenghtIsAuto && !rightLenghtIsAuto) {
+    if(!leftLengthIsAuto && !widthLengthIsAuto && !rightLengthIsAuto) {
         width = widthLengthValue;
         leftLengthValue = leftLength.calc(containerWidth);
 
@@ -215,23 +215,23 @@ void BlockBox::computePositionedWidthUsing(const Length& widthLength, const BoxM
         marginRight = marginRightLength.calcMin(containerWidth);
 
         auto availableSpace = containerWidth - (marginLeft + marginRight + borderAndPaddingWidth());
-        if(leftLenghtIsAuto && widthLenghtIsAuto && !rightLenghtIsAuto) {
+        if(leftLengthIsAuto && widthLengthIsAuto && !rightLengthIsAuto) {
             auto rightLengthValue = rightLength.calc(containerWidth);
             width = shrinkToFitWidth(availableSpace - rightLengthValue);
             leftLengthValue = availableSpace - (width + rightLengthValue);
-        } else if(!leftLenghtIsAuto && widthLenghtIsAuto && rightLenghtIsAuto) {
+        } else if(!leftLengthIsAuto && widthLengthIsAuto && rightLengthIsAuto) {
             leftLengthValue = leftLength.calc(containerWidth);
             width = shrinkToFitWidth(availableSpace - leftLengthValue);
-        } else if(leftLenghtIsAuto && !widthLenghtIsAuto && !rightLenghtIsAuto) {
+        } else if(leftLengthIsAuto && !widthLengthIsAuto && !rightLengthIsAuto) {
             width = widthLengthValue;
             leftLengthValue = availableSpace - (width + rightLength.calc(containerWidth));
-        } else if(!leftLenghtIsAuto && widthLenghtIsAuto && !rightLenghtIsAuto) {
+        } else if(!leftLengthIsAuto && widthLengthIsAuto && !rightLengthIsAuto) {
             leftLengthValue = leftLength.calc(containerWidth);
             width = availableSpace - (leftLengthValue + rightLength.calc(containerWidth));
             if(isTableBox()) {
                 width = shrinkToFitWidth(width);
             }
-        } else if(!leftLenghtIsAuto && !widthLenghtIsAuto && rightLenghtIsAuto) {
+        } else if(!leftLengthIsAuto && !widthLengthIsAuto && rightLengthIsAuto) {
             width = widthLengthValue;
             leftLengthValue = leftLength.calc(containerWidth);
         }
@@ -295,22 +295,22 @@ void BlockBox::computePositionedHeightUsing(const Length& heightLength, const Bo
     const Length& topLength, const Length& bottomLength, const Length& marginTopLength, const Length& marginBottomLength,
     float& y, float& height, float& marginTop, float& marginBottom) const
 {
-    auto heightLenghtIsAuto = heightLength.isAuto() || heightLength.isIntrinsic();
-    auto topLenghtIsAuto = topLength.isAuto();
-    auto bottomLenghtIsAuto = bottomLength.isAuto();
+    auto heightLengthIsAuto = heightLength.isAuto() || heightLength.isIntrinsic();
+    auto topLengthIsAuto = topLength.isAuto();
+    auto bottomLengthIsAuto = bottomLength.isAuto();
 
     float topLengthValue = 0;
     float heightLengthValue = 0;
     if(isTableBox()) {
         heightLengthValue = contentHeight;
-        heightLenghtIsAuto = false;
+        heightLengthIsAuto = false;
     } else {
         heightLengthValue = heightLength.calc(containerHeight);
         heightLengthValue = adjustContentBoxHeight(heightLengthValue);
     }
 
     auto containerWidth = containingBlockWidthForPositioned(container);
-    if(!topLenghtIsAuto && !heightLenghtIsAuto && !bottomLenghtIsAuto) {
+    if(!topLengthIsAuto && !heightLengthIsAuto && !bottomLengthIsAuto) {
         height = heightLengthValue;
         topLengthValue = topLength.calc(containerHeight);
 
@@ -333,19 +333,19 @@ void BlockBox::computePositionedHeightUsing(const Length& heightLength, const Bo
         marginBottom = marginBottomLength.calcMin(containerWidth);
 
         auto availableSpace = containerHeight - (marginTop + marginBottom + borderAndPaddingHeight());
-        if(topLenghtIsAuto && heightLenghtIsAuto && !bottomLenghtIsAuto) {
+        if(topLengthIsAuto && heightLengthIsAuto && !bottomLengthIsAuto) {
             height = contentHeight;
             topLengthValue = availableSpace - (height + bottomLength.calc(containerHeight));
-        } else if(!topLenghtIsAuto && heightLenghtIsAuto && bottomLenghtIsAuto) {
+        } else if(!topLengthIsAuto && heightLengthIsAuto && bottomLengthIsAuto) {
             topLengthValue = topLength.calc(containerHeight);
             height = contentHeight;
-        } else if(topLenghtIsAuto && !heightLenghtIsAuto && !bottomLenghtIsAuto) {
+        } else if(topLengthIsAuto && !heightLengthIsAuto && !bottomLengthIsAuto) {
             height = heightLengthValue;
             topLengthValue = availableSpace - (height + bottomLength.calc(containerHeight));
-        } else if(!topLenghtIsAuto && heightLenghtIsAuto && !bottomLenghtIsAuto) {
+        } else if(!topLengthIsAuto && heightLengthIsAuto && !bottomLengthIsAuto) {
             topLengthValue = topLength.calc(containerHeight);
             height = std::max(0.f, availableSpace - (topLengthValue + bottomLength.calc(containerHeight)));
-        } else if(!topLenghtIsAuto && !heightLenghtIsAuto && bottomLenghtIsAuto) {
+        } else if(!topLengthIsAuto && !heightLengthIsAuto && bottomLengthIsAuto) {
             height = heightLengthValue;
             topLengthValue = topLength.calc(containerHeight);
         }
