@@ -165,6 +165,7 @@ void BlockBox::computePositionedWidthUsing(const Length& widthLength, const BoxM
 {
     auto leftLengthValue = leftLength.calcMin(containerWidth);
     auto rightLengthValue = rightLength.calcMin(containerWidth);
+    auto insetWidth = leftLengthValue + rightLengthValue;
 
     float widthLengthValue = 0;
     if(widthLength.isIntrinsic()) {
@@ -181,7 +182,7 @@ void BlockBox::computePositionedWidthUsing(const Length& widthLength, const BoxM
     auto leftLengthIsAuto = leftLength.isAuto();
     auto rightLengthIsAuto = rightLength.isAuto();
     if(!leftLengthIsAuto && !widthLengthIsAuto && !rightLengthIsAuto) {
-        auto availableSpace = containerWidth - (widthLengthValue + leftLengthValue + rightLengthValue + borderAndPaddingWidth());
+        auto availableSpace = containerWidth - (widthLengthValue + insetWidth + borderAndPaddingWidth());
         if(marginLeftLength.isAuto() && marginRightLength.isAuto()) {
             if(availableSpace >= 0) {
                 marginLeft = availableSpace / 2.f;
@@ -224,7 +225,7 @@ void BlockBox::computePositionedWidthUsing(const Length& widthLength, const BoxM
             width = widthLengthValue;
             leftLengthValue = availableSpace - (width + rightLengthValue);
         } else if(!leftLengthIsAuto && widthLengthIsAuto && !rightLengthIsAuto) {
-            width = std::max(0.f, availableSpace - (leftLengthValue + rightLengthValue));
+            width = std::max(0.f, availableSpace - insetWidth);
             if(isTableBox()) {
                 width = shrinkToFitWidth(width);
             }
@@ -293,6 +294,7 @@ void BlockBox::computePositionedHeightUsing(const Length& heightLength, const Bo
 {
     auto topLengthValue = topLength.calcMin(containerHeight);
     auto bottomLengthValue = bottomLength.calcMin(containerHeight);
+    auto insetHeight = topLengthValue + bottomLengthValue;
 
     float heightLengthValue = 0;
     auto heightLengthIsAuto = heightLength.isAuto() || heightLength.isIntrinsic();
@@ -309,7 +311,7 @@ void BlockBox::computePositionedHeightUsing(const Length& heightLength, const Bo
 
     auto containerWidth = containingBlockWidthForPositioned(container);
     if(!topLengthIsAuto && !heightLengthIsAuto && !bottomLengthIsAuto) {
-        auto availableSpace = containerHeight - (heightLengthValue + topLengthValue + bottomLengthValue + borderAndPaddingHeight());
+        auto availableSpace = containerHeight - (heightLengthValue + insetHeight + borderAndPaddingHeight());
         if(marginTopLength.isAuto() && marginBottomLength.isAuto()) {
             marginTop = availableSpace / 2.f;
             marginBottom = availableSpace - marginTop;
@@ -339,7 +341,7 @@ void BlockBox::computePositionedHeightUsing(const Length& heightLength, const Bo
             height = heightLengthValue;
             topLengthValue = availableSpace - (height + bottomLengthValue);
         } else if(!topLengthIsAuto && heightLengthIsAuto && !bottomLengthIsAuto) {
-            height = std::max(0.f, availableSpace - (topLengthValue + bottomLengthValue));
+            height = std::max(0.f, availableSpace - insetHeight);
         } else if(!topLengthIsAuto && !heightLengthIsAuto && bottomLengthIsAuto) {
             height = heightLengthValue;
         }
