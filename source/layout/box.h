@@ -510,7 +510,7 @@ public:
     void computeHorizontalMargins(float& marginLeft, float& marginRight, float childWidth, const BlockBox* container, float containerWidth) const;
     void computeVerticalMargins(float& marginTop, float& marginBottom) const;
 
-    float computeIntrinsicWidthUsing(const Length& widthLength, float containerWidth) const;
+    float computeIntrinsicWidthUsing(const Length& widthLength, float containerWidth, float insetWidth = 0) const;
 
     virtual void computeWidth(float& x, float& width, float& marginLeft, float& marginRight) const;
     virtual void computeHeight(float& y, float& height, float& marginTop, float& marginBottom) const;

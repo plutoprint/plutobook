@@ -1064,7 +1064,7 @@ void BoxFrame::computeVerticalMargins(float& marginTop, float& marginBottom) con
     marginBottom = style()->marginBottom().calcMin(containerWidth);
 }
 
-float BoxFrame::computeIntrinsicWidthUsing(const Length& widthLength, float containerWidth) const
+float BoxFrame::computeIntrinsicWidthUsing(const Length& widthLength, float containerWidth, float insetWidth) const
 {
     auto minContentWidth = minIntrinsicWidth() + borderAndPaddingWidth();
     auto maxContentWidth = maxIntrinsicWidth() + borderAndPaddingWidth();
@@ -1077,7 +1077,7 @@ float BoxFrame::computeIntrinsicWidthUsing(const Length& widthLength, float cont
     assert(widthLength.isFitContent());
     auto marginLeft = style()->marginLeft().calcMin(containerWidth);
     auto marginRight = style()->marginRight().calcMin(containerWidth);
-    auto width = containerWidth - marginLeft - marginRight;
+    auto width = containerWidth - insetWidth - marginLeft - marginRight;
     return std::max(minContentWidth, std::min(width, maxContentWidth));
 }
 

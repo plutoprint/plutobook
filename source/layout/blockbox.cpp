@@ -169,7 +169,7 @@ void BlockBox::computePositionedWidthUsing(const Length& widthLength, const BoxM
 
     float widthLengthValue = 0;
     if(widthLength.isIntrinsic()) {
-        widthLengthValue = computeIntrinsicWidthUsing(widthLength, containerWidth) - borderAndPaddingWidth();
+        widthLengthValue = computeIntrinsicWidthUsing(widthLength, containerWidth, insetWidth) - borderAndPaddingWidth();
     } else {
         widthLengthValue = adjustContentBoxWidth(widthLength.calc(containerWidth));
     }
