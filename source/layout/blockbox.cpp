@@ -273,7 +273,7 @@ void BlockBox::computePositionedWidth(float& x, float& width, float& marginLeft,
         }
     }
 
-    if(!minWidthLength.isZero() || minWidthLength.isIntrinsic()) {
+    if(!minWidthLength.isAuto()) {
         float minX = 0;
         float minWidth = 0;
         float minMarginLeft = 0;
@@ -387,7 +387,7 @@ void BlockBox::computePositionedHeight(float& y, float& height, float& marginTop
         }
     }
 
-    if(!minHeightLength.isZero()) {
+    if(!minHeightLength.isAuto()) {
         float minY = 0;
         float minHeight = 0;
         float minMarginTop = 0;
