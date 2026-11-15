@@ -695,6 +695,7 @@ void FixedTableLayoutAlgorithm::layout()
     float totalPercentWidth = 0;
     float totalPercent = 0;
     size_t autoColumnCount = 0;
+    size_t percentColumnCount = 0;
     auto& columns = m_table->columns();
     for(size_t columnIndex = 0; columnIndex < columns.size(); ++columnIndex) {
         auto& column = columns[columnIndex];
@@ -706,6 +707,7 @@ void FixedTableLayoutAlgorithm::layout()
             column.setWidth(width.calc(availableWidth));
             totalPercentWidth += column.width();
             totalPercent += width.value();
+            percentColumnCount++;
         } else if(width.isAuto()) {
             column.setWidth(0);
             autoColumnCount++;
@@ -713,51 +715,42 @@ void FixedTableLayoutAlgorithm::layout()
     }
 
     auto totalWidth = totalFixedWidth + totalPercentWidth;
-    if(autoColumnCount == 0 || totalWidth > availableWidth) {
+    if(autoColumnCount == 0 && totalWidth == 0) {
+        for(size_t columnIndex = 0; columnIndex < columns.size(); ++columnIndex) {
+            if(percentColumnCount == 0) {
+                columns[columnIndex].setWidth(availableWidth / columns.size());
+            } else if(m_widths[columnIndex].isPercent()) {
+                columns[columnIndex].setWidth(availableWidth / percentColumnCount);
+            }
+        }
+    } else if(autoColumnCount == 0 || totalWidth > availableWidth) {
         if(totalFixedWidth > 0 && totalWidth < availableWidth) {
             auto availableFixedWidth = availableWidth - totalPercentWidth;
             auto totalFixed = totalFixedWidth;
             totalFixedWidth = 0;
             for(size_t columnIndex = 0; columnIndex < columns.size(); ++columnIndex) {
-                auto& column = columns[columnIndex];
                 const auto& width = m_widths[columnIndex];
                 if(width.isFixed()) {
-                    column.setWidth(width.value() * availableFixedWidth / totalFixed);
-                    totalFixedWidth += column.width();
+                    columns[columnIndex].setWidth(width.value() * availableFixedWidth / totalFixed);
+                    totalFixedWidth += columns[columnIndex].width();
                 }
             }
         }
 
-        if(totalPercentWidth > 0 && totalFixedWidth >= availableWidth) {
-            totalPercentWidth = 0;
+        if(totalPercent > 0) {
+            auto availablePercentWidth = std::max(0.f, availableWidth - totalFixedWidth);
             for(size_t columnIndex = 0; columnIndex < columns.size(); ++columnIndex) {
-                auto& column = columns[columnIndex];
                 const auto& width = m_widths[columnIndex];
                 if(width.isPercent()) {
-                    column.setWidth(0);
-                }
-            }
-        }
-
-        if(totalPercentWidth > 0) {
-            auto availablePercentWidth = availableWidth - totalFixedWidth;
-            for(size_t columnIndex = 0; columnIndex < columns.size(); ++columnIndex) {
-                auto& column = columns[columnIndex];
-                const auto& width = m_widths[columnIndex];
-                if(width.isPercent()) {
-                    column.setWidth(width.value() * availablePercentWidth / totalPercent);
+                    columns[columnIndex].setWidth(width.value() * availablePercentWidth / totalPercent);
                 }
             }
         }
     } else {
-        auto remainingWidth = availableWidth - totalFixedWidth - totalPercentWidth;
+        auto autoWidth = (availableWidth - totalWidth) / autoColumnCount;
         for(size_t columnIndex = 0; columnIndex < columns.size(); ++columnIndex) {
-            auto& column = columns[columnIndex];
-            const auto& width = m_widths[columnIndex];
-            if(width.isAuto()) {
-                column.setWidth(remainingWidth / autoColumnCount);
-                remainingWidth -= column.width();
-                autoColumnCount--;
+            if(m_widths[columnIndex].isAuto()) {
+                columns[columnIndex].setWidth(autoWidth);
             }
         }
     }
