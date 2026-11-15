@@ -629,6 +629,8 @@ std::unique_ptr<FixedTableLayoutAlgorithm> FixedTableLayoutAlgorithm::create(Tab
     return std::unique_ptr<FixedTableLayoutAlgorithm>(new (table->heap()) FixedTableLayoutAlgorithm(table));
 }
 
+constexpr auto kMaxTableWidth = 1000000.f;
+
 void FixedTableLayoutAlgorithm::computeIntrinsicWidths(float& minWidth, float& maxWidth)
 {
     for(const auto& width : m_widths) {
@@ -636,6 +638,10 @@ void FixedTableLayoutAlgorithm::computeIntrinsicWidths(float& minWidth, float& m
             minWidth += width.value();
             maxWidth += width.value();
         }
+    }
+
+    if(m_table->style()->width().isPercent()) {
+        maxWidth = std::max(maxWidth, kMaxTableWidth);
     }
 }
 
@@ -1031,8 +1037,6 @@ void AutoTableLayoutAlgorithm::computeIntrinsicWidths(float& minWidth, float& ma
     for(auto cellBox : m_spanningCells) {
         distributeSpanCellToColumns(cellBox, m_columnWidths, m_table->borderHorizontalSpacing());
     }
-
-    constexpr auto kMaxTableWidth = 1000000.f;
 
     float totalMinWidth = 0.f;
     float totalMaxWidth = 0.f;
