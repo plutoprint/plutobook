@@ -13,15 +13,16 @@
 
 namespace plutobook {
 
+constexpr float kDefaultReplacedWidth = 300.f;
+constexpr float kDefaultReplacedHeight = 150.f;
+
 class ReplacedBox : public BoxFrame {
 public:
     ReplacedBox(Node* node, const RefPtr<BoxStyle>& style);
 
     bool isReplacedBox() const final { return true; }
 
-    virtual void computeIntrinsicRatioInformation(float& intrinsicWidth, float& intrinsicHeight, float& intrinsicRatio) const = 0;
     void computeIntrinsicWidths(float& minWidth, float& maxWidth) const override;
-
     std::pair<float, float> computePreferredWidths() const override;
 
     void computePositionedReplacedWidth(float& x, float& width, float& marginLeft, float& marginRight) const;
@@ -44,6 +45,7 @@ public:
     float computeIntrinsicWidth() const;
     float computeIntrinsicHeight() const;
 
+    Size computeObjectFitSize(ObjectFit objectFit, const Size& contentSize) const;
     Rect computeObjectFitRect(const Rect& contentRect) const;
 
     void computeWidth(float& x, float& width, float& marginLeft, float& marginRight) const override;
@@ -53,16 +55,12 @@ public:
     virtual void paintReplaced(const PaintInfo& info, const Point& offset) = 0;
     void paint(const PaintInfo& info, const Point& offset, PaintPhase phase) override;
 
-    float intrinsicReplacedWidth() const { return m_intrinsicSize.w; }
-    float intrinsicReplacedHeight() const { return m_intrinsicSize.h; }
-
-    void setIntrinsicSize(const Size& intrinsicSize) { m_intrinsicSize = intrinsicSize; }
-    Size intrinsicSize() const { return m_intrinsicSize; }
-
     const char* name() const override { return "ReplacedBox"; }
 
-private:
-    Size m_intrinsicSize;
+protected:
+    float m_intrinsicWidth = -1.f;
+    float m_intrinsicHeight = -1.f;
+    float m_intrinsicRatio = -1.f;
 };
 
 template<>
@@ -81,7 +79,6 @@ public:
     const RefPtr<Image>& image() const { return m_image; }
     void setImage(RefPtr<Image> image);
 
-    void computeIntrinsicRatioInformation(float& intrinsicWidth, float& intrinsicHeight, float& intrinsicRatio) const final;
     void paintReplaced(const PaintInfo& info, const Point& offset) final;
 
     const char* name() const final { return "ImageBox"; }

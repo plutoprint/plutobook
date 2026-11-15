@@ -121,10 +121,6 @@ public:
     void computeIntrinsicSize(float& intrinsicWidth, float& intrinsicHeight) const;
     void computeIntrinsicDimensions(float& intrinsicWidth, float& intrinsicHeight, float& intrinsicRatio) const;
 
-    std::optional<float> intrinsicWidth() const;
-    std::optional<float> intrinsicHeight() const;
-    std::optional<float> intrinsicRatio() const;
-
 private:
     SVGLength m_x;
     SVGLength m_y;

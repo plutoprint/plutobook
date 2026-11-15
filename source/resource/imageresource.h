@@ -56,10 +56,13 @@ public:
     virtual void drawPattern(GraphicsContext& context, const Rect& destRect, const Size& size, const Size& scale, const Point& phase) = 0;
     virtual void computeIntrinsicDimensions(float& intrinsicWidth, float& intrinsicHeight, float& intrinsicRatio) = 0;
 
+    Size computeConcreteSize(const Size& defaultObjectSize);
+
     virtual void setContainerSize(const Size& size) = 0;
-    virtual Size intrinsicSize() const = 0;
     virtual Size size() const = 0;
 };
+
+Size computeConcreteObjectSize(float intrinsicWidth, float intrinsicHeight, float intrinsicRatio, const Size& defaultObjectSize);
 
 class BitmapImage final : public Image {
 public:
@@ -72,7 +75,6 @@ public:
     void computeIntrinsicDimensions(float& intrinsicWidth, float& intrinsicHeight, float& intrinsicRatio) final;
 
     void setContainerSize(const Size& size) final {};
-    Size intrinsicSize() const final;
     Size size() const final;
 
     ~BitmapImage() final;
@@ -101,7 +103,6 @@ public:
     void computeIntrinsicDimensions(float& intrinsicWidth, float& intrinsicHeight, float& intrinsicRatio) final;
 
     void setContainerSize(const Size& size) final;
-    Size intrinsicSize() const final;
     Size size() const final;
 
     ~SVGImage() final;

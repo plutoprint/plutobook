@@ -313,6 +313,55 @@ void Image::drawTiled(GraphicsContext& context, const Rect& destRect, const Rect
     }
 }
 
+Size Image::computeConcreteSize(const Size& defaultObjectSize)
+{
+    float intrinsicWidth = 0;
+    float intrinsicHeight = 0;
+    float intrinsicRatio = 0;
+    computeIntrinsicDimensions(intrinsicWidth, intrinsicHeight, intrinsicRatio);
+    return computeConcreteObjectSize(intrinsicWidth, intrinsicHeight, intrinsicRatio, defaultObjectSize);
+}
+
+Size computeConcreteObjectSize(float intrinsicWidth, float intrinsicHeight, float intrinsicRatio, const Size& defaultObjectSize)
+{
+    if(intrinsicWidth > 0 && intrinsicHeight > 0) {
+        return Size(intrinsicWidth, intrinsicHeight);
+    }
+
+    if(intrinsicWidth > 0 || intrinsicHeight > 0) {
+        if(intrinsicRatio > 0) {
+            if(intrinsicWidth > 0)
+                return Size(intrinsicWidth, intrinsicWidth / intrinsicRatio);
+            return Size(intrinsicHeight * intrinsicRatio, intrinsicHeight);
+        }
+
+        if(intrinsicWidth > 0)
+            return Size(intrinsicWidth, defaultObjectSize.h);
+        return Size(defaultObjectSize.w, intrinsicHeight);
+    }
+
+    if(intrinsicRatio > 0) {
+        auto solutionWidth = defaultObjectSize.h * intrinsicRatio;
+        auto solutionHeight = defaultObjectSize.w / intrinsicRatio;
+        if(solutionWidth <= defaultObjectSize.w) {
+            if(solutionHeight < defaultObjectSize.h) {
+                auto areaOne = solutionWidth * defaultObjectSize.h;
+                auto areaTwo = solutionHeight * defaultObjectSize.w;
+                if(areaOne < areaTwo)
+                    return Size(defaultObjectSize.w, solutionHeight);
+                return Size(solutionWidth, defaultObjectSize.h);
+            }
+
+            return Size(solutionWidth, defaultObjectSize.h);
+        }
+
+        assert(solutionHeight <= defaultObjectSize.h);
+        return Size(defaultObjectSize.w, solutionHeight);
+    }
+
+    return defaultObjectSize;
+}
+
 void BitmapImage::draw(GraphicsContext& context, const Rect& dstRect, const Rect& srcRect)
 {
     if(dstRect.isEmpty() || srcRect.isEmpty()) {
@@ -371,17 +420,12 @@ void BitmapImage::computeIntrinsicDimensions(float& intrinsicWidth, float& intri
     }
 }
 
-Size BitmapImage::intrinsicSize() const
+Size BitmapImage::size() const
 {
     auto width = cairo_image_surface_get_width(m_surface);
     auto height = cairo_image_surface_get_height(m_surface);
 
     return Size(width, height);
-}
-
-Size BitmapImage::size() const
-{
-    return intrinsicSize();
 }
 
 BitmapImage::~BitmapImage()
@@ -469,41 +513,6 @@ void SVGImage::setContainerSize(const Size& size)
     if(m_document->setContainerSize(size.w, size.h)) {
         m_document->layout(nullptr);
     }
-}
-
-Size SVGImage::intrinsicSize() const
-{
-    constexpr float defaultWidth = 300;
-    constexpr float defaultHeight = 150;
-    constexpr float defaultRatio = defaultWidth / defaultHeight;
-
-    const auto* element = rootElement();
-
-    auto intrinsicWidth = element->intrinsicWidth();
-    auto intrinsicHeight = element->intrinsicHeight();
-    auto intrinsicRatio = element->intrinsicRatio();
-
-    float width = defaultWidth;
-    float height = defaultHeight;
-    if(intrinsicWidth.has_value()) {
-        width = intrinsicWidth.value();
-        if(intrinsicHeight.has_value())
-            height = intrinsicHeight.value();
-        else if(intrinsicRatio.has_value())
-            height = width / intrinsicRatio.value();
-    } else if(intrinsicHeight.has_value()) {
-        height = intrinsicHeight.value();
-        if(intrinsicRatio.has_value())
-            width = height * intrinsicRatio.value();
-    } else if(intrinsicRatio.has_value()) {
-        if(defaultRatio <= intrinsicRatio.value()) {
-            height = width / intrinsicRatio.value();
-        } else {
-            width = height * intrinsicRatio.value();
-        }
-    }
-
-    return Size(width, height);
 }
 
 Size SVGImage::size() const

@@ -32,8 +32,6 @@ std::pair<float, float> ReplacedBox::computePreferredWidths() const
     auto widthLength = style()->width();
     if(widthLength.isFixed()) {
         minPreferredWidth = maxPreferredWidth = adjustContentBoxWidth(widthLength.value());
-    } else if(widthLength.isPercent()) {
-        minPreferredWidth = maxPreferredWidth = intrinsicReplacedWidth();
     } else {
         minPreferredWidth = minIntrinsicWidth();
         maxPreferredWidth = maxIntrinsicWidth();
@@ -255,6 +253,8 @@ float ReplacedBox::constrainReplacedHeight(float height) const
 
 float ReplacedBox::availableReplacedWidth() const
 {
+    if(style()->width().isPercent())
+        return kDefaultReplacedWidth;
     if(isPositioned()) {
         auto container = containingBox();
         auto containerWidth = containingBlockWidthForPositioned(container);
@@ -315,86 +315,73 @@ float ReplacedBox::computeReplacedHeight() const
 
 float ReplacedBox::computeIntrinsicWidth() const
 {
-    float intrinsicWidth = 0.f;
-    float intrinsicHeight = 0.f;
-    float intrinsicRatio = 0.f;
-    computeIntrinsicRatioInformation(intrinsicWidth, intrinsicHeight, intrinsicRatio);
-
-    if(intrinsicRatio > 0.f) {
+    if(m_intrinsicRatio > 0.f) {
         float height = 0.f;
         if(hasOverrideHeight())
             height = std::max(0.f, overrideHeight() - borderAndPaddingHeight());
         else if(auto mainHeight = computeMainReplacedHeight())
             height = mainHeight.value();
-        else if(intrinsicHeight > 0.f)
-            height = intrinsicHeight;
-        else if(intrinsicWidth > 0.f)
-            height = intrinsicWidth / intrinsicRatio;
+        else if(m_intrinsicHeight > 0.f)
+            height = m_intrinsicHeight;
+        else if(m_intrinsicWidth > 0.f)
+            height = m_intrinsicWidth / m_intrinsicRatio;
         else
-            height = availableReplacedWidth() / intrinsicRatio;
-        return constrainReplacedHeight(height) * intrinsicRatio;
+            height = availableReplacedWidth() / m_intrinsicRatio;
+        return constrainReplacedHeight(height) * m_intrinsicRatio;
     }
 
-    if(intrinsicWidth > 0.f)
-        return intrinsicWidth;
-    return intrinsicReplacedWidth();
+    if(m_intrinsicWidth == 0.f)
+        return kDefaultReplacedWidth;
+    return std::max(0.f, m_intrinsicWidth);
 }
 
 float ReplacedBox::computeIntrinsicHeight() const
 {
-    float intrinsicWidth = 0.f;
-    float intrinsicHeight = 0.f;
-    float intrinsicRatio = 0.f;
-    computeIntrinsicRatioInformation(intrinsicWidth, intrinsicHeight, intrinsicRatio);
-
-    if(intrinsicRatio > 0.f) {
+    if(m_intrinsicRatio > 0.f) {
         float width = 0.f;
         if(hasOverrideWidth())
             width = std::max(0.f, overrideWidth() - borderAndPaddingWidth());
         else if(auto mainWidth = computeMainReplacedWidth())
             width = mainWidth.value();
-        else if(intrinsicWidth > 0.f)
-            width = intrinsicWidth;
-        else if(intrinsicHeight > 0.f)
-            width = intrinsicHeight * intrinsicRatio;
+        else if(m_intrinsicWidth > 0.f)
+            width = m_intrinsicWidth;
+        else if(m_intrinsicHeight > 0.f)
+            width = m_intrinsicHeight * m_intrinsicRatio;
         else
             width = availableReplacedWidth();
-        return constrainReplacedWidth(width) / intrinsicRatio;
+        return constrainReplacedWidth(width) / m_intrinsicRatio;
     }
 
-    if(intrinsicHeight > 0.f)
-        return intrinsicHeight;
-    return intrinsicReplacedHeight();
+    if(m_intrinsicHeight == 0.f)
+        return kDefaultReplacedHeight;
+    return std::max(0.f, m_intrinsicHeight);
 }
 
-static Size computeObjectFitSize(ObjectFit objectFit, const Size& intrinsicSize, const Size& contentSize)
+Size ReplacedBox::computeObjectFitSize(ObjectFit objectFit, const Size& contentSize) const
 {
     if(objectFit == ObjectFit::Fill)
         return contentSize;
+    auto concreteSize = computeConcreteObjectSize(m_intrinsicWidth, m_intrinsicHeight, m_intrinsicRatio, contentSize);
     if(objectFit == ObjectFit::None) {
-        return intrinsicSize;
+        return concreteSize;
     }
 
-    auto xScale = contentSize.w / intrinsicSize.w;
-    auto yScale = contentSize.h / intrinsicSize.h;
+    auto xScale = contentSize.w / concreteSize.w;
+    auto yScale = contentSize.h / concreteSize.h;
     auto scale = objectFit == ObjectFit::Cover ? std::max(xScale, yScale) : std::min(xScale, yScale);
 
-    Size objectSize(intrinsicSize.w * scale, intrinsicSize.h * scale);
-    if(objectFit == ObjectFit::ScaleDown && objectSize.w > intrinsicSize.w)
-        return intrinsicSize;
+    Size objectSize(concreteSize.w * scale, concreteSize.h * scale);
+    if(objectFit == ObjectFit::ScaleDown && objectSize.w > concreteSize.w)
+        return concreteSize;
     return objectSize;
 }
 
 Rect ReplacedBox::computeObjectFitRect(const Rect& contentRect) const
 {
-    if(m_intrinsicSize.isEmpty()) {
-        return contentRect;
-    }
-
     auto objectFit = style()->objectFit();
     auto objectPosition = style()->objectPosition();
 
-    Rect objectRect(contentRect.origin(), computeObjectFitSize(objectFit, m_intrinsicSize, contentRect.size()));
+    Rect objectRect(contentRect.origin(), computeObjectFitSize(objectFit, contentRect.size()));
     const Point positionOffset = {
         objectPosition.x().calcMin(contentRect.w - objectRect.w),
         objectPosition.y().calcMin(contentRect.h - objectRect.h)
@@ -475,15 +462,8 @@ ImageBox::ImageBox(Node* node, const RefPtr<BoxStyle>& style)
 
 void ImageBox::setImage(RefPtr<Image> image)
 {
-    setIntrinsicSize(image->intrinsicSize());
+    image->computeIntrinsicDimensions(m_intrinsicWidth, m_intrinsicHeight, m_intrinsicRatio);
     m_image = std::move(image);
-}
-
-void ImageBox::computeIntrinsicRatioInformation(float& intrinsicWidth, float& intrinsicHeight, float& intrinsicRatio) const
-{
-    if(m_image) {
-        m_image->computeIntrinsicDimensions(intrinsicWidth, intrinsicHeight, intrinsicRatio);
-    }
 }
 
 void ImageBox::paintReplaced(const PaintInfo& info, const Point& offset)

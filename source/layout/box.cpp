@@ -413,60 +413,16 @@ void BoxModel::addChild(Box* newChild)
     newTable->addChild(newChild);
 }
 
-static Size computeBackgroundImageIntrinsicSize(const RefPtr<Image>& backgroundImage, const Size& positioningAreaSize)
-{
-    float intrinsicWidth = 0;
-    float intrinsicHeight = 0;
-    float intrinsicRatio = 0;
-    backgroundImage->computeIntrinsicDimensions(intrinsicWidth, intrinsicHeight, intrinsicRatio);
-    if(intrinsicWidth > 0 && intrinsicHeight > 0) {
-        return Size(intrinsicWidth, intrinsicHeight);
-    }
-
-    if(intrinsicWidth > 0 || intrinsicHeight > 0) {
-        if(intrinsicRatio > 0) {
-            if(intrinsicWidth > 0)
-                return Size(intrinsicWidth, intrinsicWidth / intrinsicRatio);
-            return Size(intrinsicHeight * intrinsicRatio, intrinsicHeight);
-        }
-
-        if(intrinsicWidth > 0)
-            return Size(intrinsicWidth, positioningAreaSize.h);
-        return Size(positioningAreaSize.w, intrinsicHeight);
-    }
-
-    if(intrinsicRatio > 0) {
-        auto solutionWidth = positioningAreaSize.h * intrinsicRatio;
-        auto solutionHeight = positioningAreaSize.w / intrinsicRatio;
-        if(solutionWidth <= positioningAreaSize.w) {
-            if(solutionHeight < positioningAreaSize.h) {
-                auto areaOne = solutionWidth * positioningAreaSize.h;
-                auto areaTwo = solutionHeight * positioningAreaSize.w;
-                if(areaOne < areaTwo)
-                    return Size(positioningAreaSize.w, solutionHeight);
-                return Size(solutionWidth, positioningAreaSize.h);
-            }
-
-            return Size(solutionWidth, positioningAreaSize.h);
-        }
-
-        assert(solutionHeight <= positioningAreaSize.h);
-        return Size(positioningAreaSize.w, solutionHeight);
-    }
-
-    return positioningAreaSize;
-}
-
 static Size computeBackgroundImageTileSize(const RefPtr<Image>& backgroundImage, const BackgroundSize& backgroundSize, const Size& positioningAreaSize)
 {
-    auto intrinsicSize = computeBackgroundImageIntrinsicSize(backgroundImage, positioningAreaSize);
+    auto concreteSize = backgroundImage->computeConcreteSize(positioningAreaSize);
     if(backgroundSize.type() == BackgroundSize::Type::Contain || backgroundSize.type() == BackgroundSize::Type::Cover) {
-        if(intrinsicSize.isEmpty())
+        if(concreteSize.isEmpty())
             return Size(0, 0);
-        auto xScale = positioningAreaSize.w / intrinsicSize.w;
-        auto yScale = positioningAreaSize.h / intrinsicSize.h;
+        auto xScale = positioningAreaSize.w / concreteSize.w;
+        auto yScale = positioningAreaSize.h / concreteSize.h;
         auto scale = backgroundSize.type() == BackgroundSize::Type::Contain ? std::min(xScale, yScale) : std::max(xScale, yScale);
-        return Size(intrinsicSize.w * scale, intrinsicSize.h * scale);
+        return Size(concreteSize.w * scale, concreteSize.h * scale);
     }
 
     assert(backgroundSize.type() == BackgroundSize::Type::Length);
@@ -488,19 +444,19 @@ static Size computeBackgroundImageTileSize(const RefPtr<Image>& backgroundImage,
     }
 
     if(widthLength.isAuto() && !heightLength.isAuto()) {
-        if(intrinsicSize.h > 0)
-            return Size(intrinsicSize.w * tileHeight / intrinsicSize.h, tileHeight);
-        return Size(intrinsicSize.w, tileHeight);
+        if(concreteSize.h > 0)
+            return Size(concreteSize.w * tileHeight / concreteSize.h, tileHeight);
+        return Size(concreteSize.w, tileHeight);
     }
 
     if(!widthLength.isAuto() && heightLength.isAuto()) {
-        if(intrinsicSize.w > 0)
-            return Size(tileWidth, intrinsicSize.h * tileWidth / intrinsicSize.w);
-        return Size(tileWidth, intrinsicSize.h);
+        if(concreteSize.w > 0)
+            return Size(tileWidth, concreteSize.h * tileWidth / concreteSize.w);
+        return Size(tileWidth, concreteSize.h);
     }
 
     if(widthLength.isAuto() && heightLength.isAuto())
-        return Size(intrinsicSize.w, intrinsicSize.h);
+        return Size(concreteSize.w, concreteSize.h);
     return Size(tileWidth, tileHeight);
 }
 

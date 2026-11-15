@@ -492,8 +492,8 @@ public:
     void clearOverrideSize() { setOverrideSize(-1, -1); }
 
     virtual std::pair<float, float> computePreferredWidths() const;
-
     virtual void computeIntrinsicWidths(float& minWidth, float& maxWidth) const;
+
     float minIntrinsicWidth() const;
     float maxIntrinsicWidth() const;
 

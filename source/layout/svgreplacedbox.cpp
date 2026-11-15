@@ -15,12 +15,7 @@ namespace plutobook {
 SVGRootBox::SVGRootBox(SVGSVGElement* element, const RefPtr<BoxStyle>& style)
     : ReplacedBox(element, style)
 {
-    Size intrinsicSize(300, 150);
-    if(auto intrinsicWidth = element->intrinsicWidth())
-        intrinsicSize.w = intrinsicWidth.value();
-    if(auto intrinsicHeight = element->intrinsicHeight())
-        intrinsicSize.h = intrinsicHeight.value();
-    setIntrinsicSize(intrinsicSize);
+    element->computeIntrinsicDimensions(m_intrinsicWidth, m_intrinsicHeight, m_intrinsicRatio);
 }
 
 bool SVGRootBox::requiresLayer() const
@@ -97,11 +92,6 @@ float SVGRootBox::computeReplacedHeight() const
     if(document()->isSVGDocument())
         return document()->containerHeight();
     return ReplacedBox::computeReplacedHeight();
-}
-
-void SVGRootBox::computeIntrinsicRatioInformation(float& intrinsicWidth, float& intrinsicHeight, float &intrinsicRatio) const
-{
-    element()->computeIntrinsicDimensions(intrinsicWidth, intrinsicHeight, intrinsicRatio);
 }
 
 void SVGRootBox::paintReplaced(const PaintInfo& info, const Point& offset)
