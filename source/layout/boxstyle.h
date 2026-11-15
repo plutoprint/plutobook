@@ -416,6 +416,7 @@ public:
     bool isIntrinsic() const { return isMinContent() || isMaxContent() || isFitContent(); }
     bool isFixed() const { return m_type == Type::Fixed; }
     bool isPercent() const { return m_type == Type::Percent; }
+    bool isSpecified() const { return isFixed() || isPercent(); }
     bool isZero() const { return m_value == 0; }
 
     Type type() const { return m_type; }

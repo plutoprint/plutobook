@@ -358,6 +358,8 @@ public:
     uint32_t span() const { return m_span; }
     void setSpan(uint32_t span) { m_span = span; }
 
+    Length columnStyleWidth() const;
+
     bool isColumnGroup() const;
     TableColumnBox* columnGroup() const;
 
@@ -462,6 +464,7 @@ public:
     bool isBaselineAligned() const;
     float cellBaselinePosition() const;
     float heightForRowSizing() const;
+    Length cellStyleWidth() const;
 
     void computeBorderWidths(float& borderTop, float& borderBottom, float& borderLeft, float& borderRight) const;
 

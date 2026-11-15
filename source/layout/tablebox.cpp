@@ -653,21 +653,15 @@ void FixedTableLayoutAlgorithm::build()
         auto columnBox = columns[columnIndex].box();
         if(columnBox == nullptr) {
             m_widths.push_back(Length::Auto);
-            continue;
-        }
-
-        auto columnStyleWidth = columnBox->style()->width();
-        if(columnStyleWidth.isFixed() || columnStyleWidth.isPercent()) {
-            m_widths.push_back(columnStyleWidth);
         } else {
-            m_widths.push_back(Length::Auto);
+            m_widths.push_back(columnBox->columnStyleWidth());
         }
     }
 
     if(auto section = m_table->topSection()) {
         for(const auto& cell : section->firstRow()->cells()) {
             if(cell.isPrimary()) {
-                auto cellStyleWidth = cell->style()->width();
+                auto cellStyleWidth = cell->cellStyleWidth();
                 if(cellStyleWidth.isFixed()) {
                     cell->updateHorizontalPaddings(0.f);
                     cellStyleWidth = Length(Length::Type::Fixed, cell->adjustBorderBoxWidth(cellStyleWidth.value()) / cell->colSpan());
@@ -675,7 +669,7 @@ void FixedTableLayoutAlgorithm::build()
                     cellStyleWidth = Length(Length::Type::Percent, cellStyleWidth.value() / cell->colSpan());
                 }
 
-                if(cellStyleWidth.isFixed() || cellStyleWidth.isPercent()) {
+                if(!cellStyleWidth.isAuto()) {
                     const auto col = cell->columnIndex();
                     for(size_t index = 0; index < cell->colSpan(); ++index) {
                         if(m_widths[col + index].isAuto()) {
@@ -944,7 +938,7 @@ static std::vector<float> distributeWidthToColumns(float availableWidth, std::sp
 static void distributeSpanCellToColumns(const TableCellBox* cellBox, std::span<TableColumnWidth> allColumns, float borderSpacing)
 {
     auto columns = allColumns.subspan(cellBox->columnIndex(), cellBox->colSpan());
-    auto cellStyleWidth = cellBox->style()->width();
+    auto cellStyleWidth = cellBox->cellStyleWidth();
     if(cellStyleWidth.isPercent()) {
         float totalPercent = 0.f;
         float totalNonPercentMaxWidth = 0.f;
@@ -1077,7 +1071,7 @@ void AutoTableLayoutAlgorithm::build()
         columnWidth.maxFixedWidth = -1.f;
         columnWidth.maxPercentWidth = -1.f;
         if(auto columnBox = columns[columnIndex].box()) {
-            auto columnStyleWidth = columnBox->style()->width();
+            auto columnStyleWidth = columnBox->columnStyleWidth();
             if(columnStyleWidth.isFixed()) {
                 columnWidth.maxFixedWidth = columnStyleWidth.value();
             } else if(columnStyleWidth.isPercent()) {
@@ -1096,7 +1090,7 @@ void AutoTableLayoutAlgorithm::build()
                     continue;
                 }
 
-                auto cellStyleWidth = cell->style()->width();
+                auto cellStyleWidth = cell->cellStyleWidth();
                 auto& columnWidth = m_columnWidths[cell->columnIndex()];
                 if(cellStyleWidth.isFixed()) {
                     cell->updateHorizontalPaddings(0.f);
@@ -1832,6 +1826,17 @@ TableColumnBox::TableColumnBox(Node* node, const RefPtr<BoxStyle>& style)
 {
 }
 
+Length TableColumnBox::columnStyleWidth() const
+{
+    auto widthLength = style()->width();
+    if(!widthLength.isSpecified() || (widthLength.isPercent() && widthLength.isZero()))
+        return Length::Auto;
+    auto minWidthLength = style()->minWidth();
+    if(widthLength.isFixed() && minWidthLength.isFixed())
+        return Length(Length::Type::Fixed, std::max(widthLength.value(), minWidthLength.value()));
+    return widthLength;
+}
+
 TableColumnBox* TableColumnBox::columnGroup() const
 {
     auto column = to<TableColumnBox>(parentBox());
@@ -2230,6 +2235,17 @@ float TableCellBox::heightForRowSizing() const
     if(cellStyleHeight.isFixed())
         return std::max(height(), adjustBorderBoxHeight(cellStyleHeight.value()));
     return height();
+}
+
+Length TableCellBox::cellStyleWidth() const
+{
+    auto widthLength = style()->width();
+    if(!widthLength.isSpecified())
+        return Length::Auto;
+    auto maxWidthLength = style()->maxWidth();
+    if(widthLength.isFixed() && maxWidthLength.isFixed())
+        return Length(Length::Type::Fixed, std::min(widthLength.value(), maxWidthLength.value()));
+    return widthLength;
 }
 
 float TableCellBox::computeVerticalAlignShift() const
