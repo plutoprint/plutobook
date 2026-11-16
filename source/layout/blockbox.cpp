@@ -297,8 +297,8 @@ void BlockBox::computePositionedHeightUsing(const Length& heightLength, const Bo
     auto insetHeight = topLengthValue + bottomLengthValue;
 
     float heightLengthValue = 0;
-    auto heightLengthIsAuto = heightLength.isAuto() || heightLength.isIntrinsic();
-    if(isTableBox()) {
+    auto heightLengthIsAuto = heightLength.isAuto();
+    if(heightLength.isIntrinsic() || isTableBox()) {
         heightLengthValue = contentHeight;
         heightLengthIsAuto = false;
     } else {
