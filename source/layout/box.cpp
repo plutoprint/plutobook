@@ -843,6 +843,21 @@ void BoxFrame::setLine(std::unique_ptr<ReplacedLineBox> line)
     m_line = std::move(line);
 }
 
+bool BoxFrame::isOverrideHeightDefinite() const
+{
+    assert(hasOverrideHeight());
+    if(isTableCellBox())
+        return style()->height().isFixed() || !containingBlock()->style()->height().isAuto();
+    if(isColumnFlexItem()) {
+        auto flexBasis = style()->flexBasis();
+        if(flexBasis.isAuto())
+            flexBasis = style()->height();
+        return flexBasis.isFixed() || containingBlock()->availableHeight();
+    }
+
+    return true;
+}
+
 std::pair<float, float> BoxFrame::computePreferredWidths() const
 {
     return {0, 0};

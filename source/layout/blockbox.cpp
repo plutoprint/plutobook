@@ -52,13 +52,22 @@ std::optional<float> BlockBox::availableHeight() const
 {
     if(isBoxView())
         return document()->containerHeight();
-    if(hasOverrideHeight())
+    if(hasOverrideHeight()) {
+        if(!isOverrideHeightDefinite())
+            return std::nullopt;
         return overrideHeight() - borderAndPaddingHeight();
-    if(isTableCellBox() || isPageMarginBox())
+    }
+
+    if(isTableCellBox())
         return std::nullopt;
     if(isAnonymous())
         return containingBlockHeightForContent();
-    if(isPositioned() && style()->height().isAuto() && !(style()->top().isAuto() || style()->bottom().isAuto())) {
+    auto heightLength = style()->height();
+    if(heightLength.isIntrinsic())
+        return std::nullopt;
+    if(isPositioned()) {
+        if(heightLength.isAuto() && (style()->top().isAuto() || style()->bottom().isAuto()))
+            return std::nullopt;
         float y = 0;
         float height = borderAndPaddingHeight();
         float marginTop = 0;
@@ -67,7 +76,7 @@ std::optional<float> BlockBox::availableHeight() const
         return height - borderAndPaddingHeight();
     }
 
-    if(auto height = computeHeightUsing(style()->height()))
+    if(auto height = computeHeightUsing(heightLength))
         return constrainContentBoxHeight(adjustContentBoxHeight(height.value()));
     return std::nullopt;
 }

@@ -488,6 +488,8 @@ public:
     bool hasOverrideWidth() const { return m_overrideWidth >= 0; }
     bool hasOverrideHeight() const { return m_overrideHeight >= 0; }
 
+    bool isOverrideHeightDefinite() const;
+
     void setOverrideSize(float width, float height) { m_overrideWidth = width; m_overrideHeight = height; }
     void clearOverrideSize() { setOverrideSize(-1, -1); }
 
