@@ -663,7 +663,9 @@ void FixedTableLayoutAlgorithm::build()
                 auto cellStyleWidth = cell->cellStyleWidth();
                 if(cellStyleWidth.isFixed()) {
                     cell->updateHorizontalPaddings(0.f);
-                    cellStyleWidth = Length(Length::Type::Fixed, cell->adjustBorderBoxWidth(cellStyleWidth.value()) / cell->colSpan());
+                    auto innerBorderSpacing = m_table->borderHorizontalSpacing() * (cell->colSpan() - 1);
+                    auto cellWidth = std::max(0.f, cell->adjustBorderBoxWidth(cellStyleWidth.value()) - innerBorderSpacing);
+                    cellStyleWidth = Length(Length::Type::Fixed, cellWidth / cell->colSpan());
                 } else if(cellStyleWidth.isPercent()) {
                     cellStyleWidth = Length(Length::Type::Percent, cellStyleWidth.value() / cell->colSpan());
                 }
