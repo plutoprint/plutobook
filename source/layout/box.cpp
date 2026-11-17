@@ -1037,19 +1037,75 @@ void BoxFrame::computeVerticalMargins(float& marginTop, float& marginBottom) con
 
 float BoxFrame::computeIntrinsicWidthUsing(const Length& widthLength, float containerWidth, float insetWidth) const
 {
-    auto minContentWidth = minIntrinsicWidth() + borderAndPaddingWidth();
-    auto maxContentWidth = maxIntrinsicWidth() + borderAndPaddingWidth();
     if(widthLength.isMinContent())
-        return minContentWidth;
+        return minIntrinsicWidth();
     if(widthLength.isMaxContent()) {
-        return maxContentWidth;
+        return maxIntrinsicWidth();
     }
 
     assert(widthLength.isFitContent());
     auto marginLeft = style()->marginLeft().calcMin(containerWidth);
     auto marginRight = style()->marginRight().calcMin(containerWidth);
-    auto width = containerWidth - insetWidth - marginLeft - marginRight;
-    return std::max(minContentWidth, std::min(width, maxContentWidth));
+    auto width = containerWidth - insetWidth - marginLeft - marginRight - borderAndPaddingWidth();
+    return std::max(minIntrinsicWidth(), std::min(width, maxIntrinsicWidth()));
+}
+
+std::optional<float> BoxFrame::computeWidthUsing(const Length& widthLength, float containerWidth) const
+{
+    if(widthLength.isSpecified())
+        return adjustContentBoxWidth(widthLength.calc(containerWidth));
+    if(widthLength.isIntrinsic())
+        return computeIntrinsicWidthUsing(widthLength, containerWidth);
+    return std::nullopt;
+}
+
+std::optional<float> BoxFrame::computeWidthUsing(const Length& widthLength) const
+{
+    if(isPositioned())
+        return computeWidthUsing(widthLength, containingBlockWidthForPositioned());
+    return computeWidthUsing(widthLength, containingBlockWidthForContent());
+}
+
+std::optional<float> BoxFrame::computeHeightUsing(const Length& heightLength) const
+{
+    if(heightLength.isFixed())
+        return adjustContentBoxHeight(heightLength.value());
+    if(heightLength.isPercent()) {
+        if(isPositioned())
+            return adjustContentBoxHeight(heightLength.calc(containingBlockHeightForPositioned()));
+        if(auto availableHeight = containingBlockHeightForContent()) {
+            return adjustContentBoxHeight(heightLength.calc(availableHeight.value()));
+        }
+    }
+
+    return std::nullopt;
+}
+
+float BoxFrame::constrainWidth(float width, float containerWidth) const
+{
+    if(auto maxWidth = computeWidthUsing(style()->maxWidth(), containerWidth))
+        width = std::min(width, maxWidth.value());
+    if(auto minWidth = computeWidthUsing(style()->minWidth(), containerWidth))
+        width = std::max(width, minWidth.value());
+    if(isTableBox())
+        width = std::max(width, minIntrinsicWidth());
+    return std::max(0.f, width);
+}
+
+float BoxFrame::constrainWidth(float width) const
+{
+    if(isPositioned())
+        return constrainWidth(width, containingBlockWidthForPositioned());
+    return constrainWidth(width, containingBlockWidthForContent());
+}
+
+float BoxFrame::constrainHeight(float height) const
+{
+    if(auto maxHeight = computeHeightUsing(style()->maxHeight()))
+        height = std::min(height, maxHeight.value());
+    if(auto minHeight = computeHeightUsing(style()->minHeight()))
+        height = std::max(height, minHeight.value());
+    return std::max(0.f, height);
 }
 
 void BoxFrame::computeWidth(float& x, float& width, float& marginLeft, float& marginRight) const

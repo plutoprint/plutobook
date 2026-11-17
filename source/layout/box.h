@@ -514,6 +514,14 @@ public:
 
     float computeIntrinsicWidthUsing(const Length& widthLength, float containerWidth, float insetWidth = 0) const;
 
+    std::optional<float> computeWidthUsing(const Length& widthLength, float containerWidth) const;
+    std::optional<float> computeWidthUsing(const Length& widthLength) const;
+    std::optional<float> computeHeightUsing(const Length& heightLength) const;
+
+    float constrainWidth(float width, float containerWidth) const;
+    float constrainWidth(float width) const;
+    float constrainHeight(float height) const;
+
     virtual void computeWidth(float& x, float& width, float& marginLeft, float& marginRight) const;
     virtual void computeHeight(float& y, float& height, float& marginTop, float& marginBottom) const;
 

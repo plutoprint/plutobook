@@ -28,16 +28,10 @@ public:
     void computePositionedReplacedWidth(float& x, float& width, float& marginLeft, float& marginRight) const;
     void computePositionedReplacedHeight(float& y, float& height, float& marginTop, float& marginBottom) const;
 
-    std::optional<float> computeReplacedWidthUsing(const Length& widthLength) const;
-    std::optional<float> computeReplacedHeightUsing(const Length& heightLength) const;
-
-    float constrainReplacedWidth(float width) const;
-    float constrainReplacedHeight(float height) const;
-
     float availableReplacedWidth() const;
 
-    std::optional<float> computeMainReplacedWidth() const;
-    std::optional<float> computeMainReplacedHeight() const;
+    std::optional<float> computeTentativeReplacedWidth() const;
+    std::optional<float> computeTentativeReplacedHeight() const;
 
     virtual float computeReplacedWidth() const;
     virtual float computeReplacedHeight() const;

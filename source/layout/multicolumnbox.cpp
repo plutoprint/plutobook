@@ -509,11 +509,10 @@ void MultiColumnFlowBox::layout(FragmentBuilder* fragmentainer)
     float availableColumnHeight = 0.f;
     float maxColumnHeight = 0.f;
     if(auto height = container->computeHeightUsing(containerStyle->height())) {
-        auto columnHeight = container->constrainBorderBoxHeight(container->adjustBorderBoxHeight(height.value()));
-        availableColumnHeight = std::max(0.f, columnHeight - container->borderAndPaddingHeight());
+        availableColumnHeight = container->constrainHeight(height.value());
         maxColumnHeight = availableColumnHeight;
     } else if(auto maxHeight = container->computeHeightUsing(containerStyle->maxHeight())) {
-        maxColumnHeight = std::max(0.f, container->adjustBorderBoxHeight(maxHeight.value()) - container->borderAndPaddingHeight());
+        maxColumnHeight = maxHeight.value();
     }
 
     for(auto row = firstRow(); row; row = row->nextRow()) {

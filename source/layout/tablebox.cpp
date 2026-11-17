@@ -337,8 +337,8 @@ void TableBox::layout(FragmentBuilder* fragmentainer)
     float tableHeight = 0.f;
     if(!isColumnFlexItem()) {
         if(auto height = computeHeightUsing(style()->height()))
-            tableHeight = adjustContentBoxHeight(height.value());
-        tableHeight = constrainContentBoxHeight(tableHeight);
+            tableHeight = height.value();
+        tableHeight = constrainHeight(tableHeight);
     }
 
     if(hasOverrideHeight()) {

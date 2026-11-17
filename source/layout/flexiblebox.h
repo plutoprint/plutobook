@@ -61,12 +61,6 @@ public:
 
     bool hasNaturalHeight() const { return m_naturalHeight >= 0.f; }
 
-    std::optional<float> computeWidthUsing(const Length& widthLength) const;
-    std::optional<float> computeHeightUsing(const Length& heightLength) const;
-
-    float constrainWidth(float width) const;
-    float constrainHeight(float height) const;
-
     std::optional<float> computeMainSizeUsing(const Length& length) const;
 
     float constrainMainSize(float size) const;

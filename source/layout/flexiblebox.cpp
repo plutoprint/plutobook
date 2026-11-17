@@ -27,58 +27,11 @@ FlexItem::FlexItem(BoxFrame* box, int order, float flexGrow, float flexShrink, A
     box->setIsFlexItem(true);
 }
 
-std::optional<float> FlexItem::computeWidthUsing(const Length& widthLength) const
-{
-    if(widthLength.isFixed())
-        return m_box->adjustContentBoxWidth(widthLength.value());
-    if(widthLength.isPercent() || widthLength.isIntrinsic()) {
-        auto containerWidth = m_box->containingBlockWidthForContent(flexBox());
-        if(widthLength.isPercent())
-            return m_box->adjustContentBoxWidth(widthLength.calc(containerWidth));
-        return m_box->computeIntrinsicWidthUsing(widthLength, containerWidth) - m_box->borderAndPaddingWidth();
-    }
-
-    return std::nullopt;
-}
-
-std::optional<float> FlexItem::computeHeightUsing(const Length& heightLength) const
-{
-    if(heightLength.isFixed())
-        return m_box->adjustContentBoxHeight(heightLength.value());
-    if(heightLength.isPercent()) {
-        if(auto availableHeight = m_box->containingBlockHeightForContent(flexBox())) {
-            return m_box->adjustContentBoxHeight(heightLength.calc(availableHeight.value()));
-        }
-    }
-
-    return std::nullopt;
-}
-
-float FlexItem::constrainWidth(float width) const
-{
-    if(auto maxWidth = computeWidthUsing(m_box->style()->maxWidth()))
-        width = std::min(width, *maxWidth);
-    if(auto minWidth = computeWidthUsing(m_box->style()->minWidth()))
-        width = std::max(width, *minWidth);
-    if(m_box->isTableBox())
-        width = std::max(width, m_box->minIntrinsicWidth());
-    return std::max(0.f, width);
-}
-
-float FlexItem::constrainHeight(float height) const
-{
-    if(auto maxHeight = computeHeightUsing(m_box->style()->maxHeight()))
-        height = std::min(height, *maxHeight);
-    if(auto minHeight = computeHeightUsing(m_box->style()->minHeight()))
-        height = std::max(height, *minHeight);
-    return std::max(0.f, height);
-}
-
 std::optional<float> FlexItem::computeMainSizeUsing(const Length& length) const
 {
     if(isHorizontalFlow())
-        return computeWidthUsing(length);
-    return computeHeightUsing(length);
+        return m_box->computeWidthUsing(length);
+    return m_box->computeHeightUsing(length);
 }
 
 float FlexItem::constrainMainSize(float size) const
@@ -89,8 +42,8 @@ float FlexItem::constrainMainSize(float size) const
 float FlexItem::constrainCrossSize(float size) const
 {
     if(isHorizontalFlow())
-        return constrainHeight(size);
-    return constrainWidth(size);
+        return m_box->constrainHeight(size);
+    return m_box->constrainWidth(size);
 }
 
 float FlexItem::computeContentHeight()
@@ -973,7 +926,7 @@ void FlexibleBox::stretchItem(FlexItem& item, const FlexLine& line, FragmentBuil
         if(!itemStyle->height().isAuto() || itemStyle->marginTop().isAuto() || itemStyle->marginBottom().isAuto())
             return;
         auto itemHeight = line.crossSize() - item->marginHeight() - item->borderAndPaddingHeight();
-        itemHeight = item.constrainHeight(itemHeight) + item->borderAndPaddingHeight();
+        itemHeight = item->constrainHeight(itemHeight) + item->borderAndPaddingHeight();
         if(!isNearlyEqual(itemHeight, item->height())) {
             item->setOverrideHeight(itemHeight);
             layoutItem(item, fragmentainer);
@@ -982,7 +935,7 @@ void FlexibleBox::stretchItem(FlexItem& item, const FlexLine& line, FragmentBuil
         if(!itemStyle->width().isAuto() || itemStyle->marginLeft().isAuto() || itemStyle->marginRight().isAuto())
             return;
         auto itemWidth = line.crossSize() - item->marginWidth() - item->borderAndPaddingWidth();
-        itemWidth = item.constrainWidth(itemWidth) + item->borderAndPaddingWidth();
+        itemWidth = item->constrainWidth(itemWidth) + item->borderAndPaddingWidth();
         if(!isNearlyEqual(itemWidth, item->width())) {
             item->setOverrideWidth(itemWidth);
             layoutItem(item, fragmentainer);
