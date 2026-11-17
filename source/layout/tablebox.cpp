@@ -650,11 +650,10 @@ void FixedTableLayoutAlgorithm::build()
     const auto& columns = m_table->columns();
     m_widths.reserve(columns.size());
     for(size_t columnIndex = 0; columnIndex < columns.size(); ++columnIndex) {
-        auto columnBox = columns[columnIndex].box();
-        if(columnBox == nullptr) {
-            m_widths.push_back(Length::Auto);
-        } else {
+        if(auto columnBox = columns[columnIndex].box()) {
             m_widths.push_back(columnBox->columnStyleWidth());
+        } else {
+            m_widths.push_back(Length::Auto);
         }
     }
 
