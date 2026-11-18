@@ -1072,37 +1072,38 @@ float FlexibleBox::adjustLineInFragmentFlow(FlexLine& line, FragmentBuilder* fra
     newTop = fragmentainer->adjustOffsetInFragmentFlow(newTop, lineHeight, unbreakableHeight);
 
     auto delta = newTop - line.crossOffset();
+    auto newHeight = lineHeight;
     for(auto& item : line.items()) {
         if(item->style()->marginBottom().isAuto()) {
             item->setMarginBottom(0.f);
         }
 
+        auto top = delta + item->y();
         auto height = item->height();
 
-        item->setY(delta + item->y());
+        item->setY(top);
         item->setOverrideHeight(-1);
 
         layoutItem(item, fragmentainer);
 
         assert(item.hasNaturalHeight());
-        auto newHeight = height + fragmentationGrowth(height, item.naturalHeight(), item->height());
-        lineHeight = std::max(lineHeight, item->y() - newTop + newHeight + item->marginBottom());
+        auto itemBottom = std::min(lineHeight, top - newTop + height + item->marginBottom());
+        newHeight = std::max(newHeight, itemBottom + fragmentationGrowth(height, item.naturalHeight(), item->height()));
     }
 
-    auto growth = lineHeight - line.crossSize();
     line.setCrossOffset(newTop);
-    line.setCrossSize(lineHeight);
+    line.setCrossSize(newHeight);
     for(auto& item : line.items()) {
         if(item.alignSelf() == AlignItem::Stretch) {
             stretchItem(item, line, fragmentainer);
         }
     }
 
-    auto lineBottom = newTop + lineHeight;
+    auto lineBottom = newTop + newHeight;
     auto newBottom = lineBottom;
     if(auto box = itemAlwaysBreakAfter(line, fragmentainer))
         newBottom = fragmentainer->applyFragmentBreakAfter(box, newBottom);
-    return (newTop - lineTop) + growth + (newBottom - lineBottom);
+    return (newTop - lineTop) + (newHeight - lineHeight) + (newBottom - lineBottom);
 }
 
 float FlexibleBox::adjustItemInFragmentFlow(FlexItem& item, FragmentBuilder* fragmentainer, float offset) const
