@@ -769,7 +769,7 @@ float PageLayout::fragmentRemainingHeightForOffset(float offset, FragmentBoundar
     assert(pageHeight > 0.0);
 
     double adjustedOffset = offset + fragmentOffset();
-    auto remainingHeight = pageHeight - std::fmod(adjustedOffset, pageHeight);
+    double remainingHeight = pageHeight - std::fmod(adjustedOffset, pageHeight);
     if(remainingHeight <= kEpsilon)
         remainingHeight = pageHeight;
     if(rule == AssociateWithFormerFragment)
