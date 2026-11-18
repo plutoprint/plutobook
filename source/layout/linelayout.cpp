@@ -886,8 +886,7 @@ void LineBreaker::handleLeaderText(const LineItem& item)
 void LineBreaker::handleInlineStart(const LineItem& item)
 {
     auto& box = to<InlineBox>(*item.box());
-    box.updateMarginWidths(m_block->availableWidth());
-    box.updatePaddingWidths(m_block->availableWidth());
+    box.updateMarginAndPaddingWidths(m_block->availableWidth());
 
     auto& run = addItemRun(item);
     if(!box.isContinuation()) {
@@ -979,8 +978,7 @@ void LineBreaker::handleFloating(const LineItem& item)
         }
     }
 
-    box->updatePaddingWidths(m_block->availableWidth());
-    box->updateVerticalMargins(m_block->availableWidth());
+    box->updateMarginAndPaddingWidths(m_block->availableWidth());
 
     auto estimatedTop = top + box->marginTop();
     if(m_fragmentainer)
@@ -1012,8 +1010,7 @@ void LineBreaker::handleReplaced(const LineItem& item)
     auto& run = addItemRun(item);
     moveToNextOf(item);
 
-    box.updatePaddingWidths(m_block->availableWidth());
-    box.updateVerticalMargins(m_block->availableWidth());
+    box.updateMarginAndPaddingWidths(m_block->availableWidth());
     if(box.isOutsideListMarkerBox()) {
         return;
     }
@@ -1714,8 +1711,7 @@ void LineLayout::computeIntrinsicWidths(float& minWidth, float& maxWidth) const
         } else if(item.type() == LineItem::Type::InlineStart || item.type() == LineItem::Type::InlineEnd) {
             auto& child = to<InlineBox>(*item.box());
             if(item.type() == LineItem::Type::InlineStart) {
-                child.updateHorizontalMargins(0.f);
-                child.updateHorizontalPaddings(0.f);
+                child.updateMarginAndPaddingWidths(0.f);
                 if(!child.isContinuation()) {
                     inlineMinWidth += child.marginStart() + child.paddingStart() + child.borderStart();
                     inlineMaxWidth += child.marginStart() + child.paddingStart() + child.borderStart();
@@ -1751,8 +1747,7 @@ void LineLayout::computeIntrinsicWidths(float& minWidth, float& maxWidth) const
                 inlineMinWidth = 0.f;
             }
 
-            child.updateHorizontalMargins(0.f);
-            child.updateHorizontalPaddings(0.f);
+            child.updateMarginAndPaddingWidths(0.f);
 
             auto [childMinWidth, childMaxWidth] = child.computePreferredWidths();
             childMinWidth += child.marginWidth();

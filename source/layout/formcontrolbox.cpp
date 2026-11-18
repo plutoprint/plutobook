@@ -95,8 +95,7 @@ void SelectBox::computeIntrinsicWidths(float& minWidth, float& maxWidth) const
             continue;
         }
 
-        child->updateHorizontalMargins(0.f);
-        child->updateHorizontalPaddings(0.f);
+        child->updateMarginAndPaddingWidths(0.f);
 
         auto [childMinWidth, childMaxWidth] = child->computePreferredWidths();
         childMinWidth += child->marginWidth();
@@ -135,8 +134,7 @@ void SelectBox::layout(FragmentBuilder* fragmentainer)
             continue;
         }
 
-        child->updatePaddingWidths(availableWidth());
-        child->updateVerticalMargins(availableWidth());
+        child->updateMarginAndPaddingWidths(availableWidth());
 
         optionTop += child->marginTop();
         if(fragmentainer)

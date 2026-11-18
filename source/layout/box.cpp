@@ -663,48 +663,31 @@ std::optional<float> BoxModel::containingBlockHeightForContent(const BlockBox* c
     return container->availableHeight();
 }
 
-void BoxModel::updateVerticalMargins(float containerWidth)
+void BoxModel::updateMarginWidths(float containerWidth)
 {
     m_marginTop = style()->marginTop().calcMin(containerWidth);
     m_marginBottom = style()->marginBottom().calcMin(containerWidth);
-}
-
-void BoxModel::updateHorizontalMargins(float containerWidth)
-{
     m_marginLeft = style()->marginLeft().calcMin(containerWidth);
     m_marginRight = style()->marginRight().calcMin(containerWidth);
 }
 
-void BoxModel::updateMarginWidths(float containerWidth)
-{
-    updateVerticalMargins(containerWidth);
-    updateHorizontalMargins(containerWidth);
-}
-
-void BoxModel::updateVerticalPaddings(float containerWidth)
+void BoxModel::updatePaddingWidths(float containerWidth)
 {
     if(isBorderCollapsed()) {
         m_paddingTop = m_paddingBottom = 0;
+        m_paddingLeft = m_paddingRight = 0;
     } else {
         m_paddingTop = style()->paddingTop().calcMin(containerWidth);
         m_paddingBottom = style()->paddingBottom().calcMin(containerWidth);
-    }
-}
-
-void BoxModel::updateHorizontalPaddings(float containerWidth)
-{
-    if(isBorderCollapsed()) {
-        m_paddingLeft = m_paddingRight = 0;
-    } else {
         m_paddingLeft = style()->paddingLeft().calcMin(containerWidth);
         m_paddingRight = style()->paddingRight().calcMin(containerWidth);
     }
 }
 
-void BoxModel::updatePaddingWidths(float containerWidth)
+void BoxModel::updateMarginAndPaddingWidths(float containerWidth)
 {
-    updateVerticalPaddings(containerWidth);
-    updateHorizontalPaddings(containerWidth);
+    updateMarginWidths(containerWidth);
+    updatePaddingWidths(containerWidth);
 }
 
 void BoxModel::computeBorderWidths(float& borderTop, float& borderBottom, float& borderLeft, float& borderRight) const

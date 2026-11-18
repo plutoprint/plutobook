@@ -311,6 +311,8 @@ public:
     std::optional<float> containingBlockHeightForContent(const BlockBox* container) const;
     std::optional<float> containingBlockHeightForContent() const { return containingBlockHeightForContent(containingBlock()); }
 
+    void updateMarginWidths(float containerWidth);
+
     float marginTop() const { return m_marginTop; }
     float marginBottom() const { return m_marginBottom; }
     float marginLeft() const { return m_marginLeft; }
@@ -324,9 +326,7 @@ public:
     void setMarginLeft(float value) { m_marginLeft = value; }
     void setMarginRight(float value) { m_marginRight = value; }
 
-    void updateVerticalMargins(float containerWidth);
-    void updateHorizontalMargins(float containerWidth);
-    void updateMarginWidths(float containerWidth);
+    void updatePaddingWidths(float containerWidth);
 
     float paddingTop() const { return m_paddingTop; }
     float paddingBottom() const { return m_paddingBottom; }
@@ -341,11 +341,7 @@ public:
     void setPaddingLeft(float value) { m_paddingLeft = value; }
     void setPaddingRight(float value) { m_paddingRight = value; }
 
-    void updateVerticalPaddings(float containerWidth);
-    void updateHorizontalPaddings(float containerWidth);
-    void updatePaddingWidths(float containerWidth);
-
-    virtual void computeBorderWidths(float& borderTop, float& borderBottom, float& borderLeft, float& borderRight) const;
+    void updateMarginAndPaddingWidths(float containerWidth);
 
     float borderTop() const;
     float borderBottom() const;
@@ -354,6 +350,8 @@ public:
 
     float borderWidth() const { return borderLeft() + borderRight(); }
     float borderHeight() const { return borderTop() + borderBottom(); }
+
+    virtual void computeBorderWidths(float& borderTop, float& borderBottom, float& borderLeft, float& borderRight) const;
 
     float borderAndPaddingTop() const { return borderTop() + paddingTop(); }
     float borderAndPaddingBottom() const { return borderBottom() + paddingBottom(); }

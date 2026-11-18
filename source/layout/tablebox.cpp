@@ -97,8 +97,7 @@ void TableBox::computeIntrinsicWidths(float& minWidth, float& maxWidth) const
     }
 
     for(auto caption : m_captions) {
-        caption->updateHorizontalPaddings(0.f);
-        caption->updateHorizontalMargins(0.f);
+        caption->updateMarginAndPaddingWidths(0.f);
 
         auto [captionMinWidth, captionMaxWidth] = caption->computePreferredWidths();
         minWidth = std::max(minWidth, captionMinWidth + caption->marginWidth());
@@ -291,8 +290,7 @@ float TableBox::availableHorizontalSpace() const
 
 void TableBox::layoutCaption(TableCaptionBox* caption, FragmentBuilder* fragmentainer)
 {
-    caption->updatePaddingWidths(width());
-    caption->updateVerticalMargins(width());
+    caption->updateMarginAndPaddingWidths(width());
 
     auto captionTop = height() + caption->marginTop();
     if(fragmentainer) {
@@ -662,7 +660,7 @@ void FixedTableLayoutAlgorithm::build()
             if(cell.isPrimary()) {
                 auto cellStyleWidth = cell->cellStyleWidth();
                 if(cellStyleWidth.isFixed()) {
-                    cell->updateHorizontalPaddings(0.f);
+                    cell->updatePaddingWidths(0.f);
                     auto innerBorderSpacing = m_table->borderHorizontalSpacing() * (cell->colSpan() - 1);
                     auto cellWidth = std::max(0.f, cell->adjustBorderBoxWidth(cellStyleWidth.value()) - innerBorderSpacing);
                     cellStyleWidth = Length(Length::Type::Fixed, cellWidth / cell->colSpan());
@@ -1007,7 +1005,7 @@ void AutoTableLayoutAlgorithm::computeIntrinsicWidths(float& minWidth, float& ma
             for(const auto& cell : row->cells()) {
                 if(!cell.isPrimary())
                     continue;
-                cell->updateHorizontalPaddings(0.f);
+                cell->updatePaddingWidths(0.f);
                 if(cell->colSpan() == 1) {
                     auto [cellMinWidth, cellMaxWidth] = cell->computePreferredWidths();
                     auto& columnWidth = m_columnWidths[cell->columnIndex()];
@@ -1094,7 +1092,7 @@ void AutoTableLayoutAlgorithm::build()
                 auto cellStyleWidth = cell->cellStyleWidth();
                 auto& columnWidth = m_columnWidths[cell->columnIndex()];
                 if(cellStyleWidth.isFixed()) {
-                    cell->updateHorizontalPaddings(0.f);
+                    cell->updatePaddingWidths(0.f);
                     columnWidth.maxFixedWidth = std::max(columnWidth.maxFixedWidth, cell->adjustBorderBoxWidth(cellStyleWidth.value()));
                 } else if(cellStyleWidth.isPercent()) {
                     columnWidth.maxPercentWidth = std::max(columnWidth.maxPercentWidth, cellStyleWidth.value());

@@ -41,8 +41,7 @@ void BlockBox::layoutPositionedBoxes()
         for(size_t i = 0; i < m_positionedBoxes->size(); i++) {
             auto box = m_positionedBoxes->at(i);
             auto containerWidth = box->containingBlockWidthForPositioned();
-            box->updatePaddingWidths(containerWidth);
-            box->updateVerticalMargins(containerWidth);
+            box->updateMarginAndPaddingWidths(containerWidth);
             box->layout(nullptr);
         }
     }
@@ -606,11 +605,9 @@ void BlockFlowBox::computeIntrinsicWidths(float& minWidth, float& maxWidth) cons
             floatRightWidth = 0;
         }
 
-        child->updateHorizontalMargins(0.f);
-        child->updateHorizontalPaddings(0.f);
+        child->updateMarginAndPaddingWidths(0.f);
 
         auto [childMinWidth, childMaxWidth] = child->computePreferredWidths();
-
         auto marginLeft = child->marginLeft();
         auto marginRight = child->marginRight();
 
@@ -834,8 +831,7 @@ void BlockFlowBox::positionNewFloat(FloatingBox& floatingBox, FragmentBuilder* f
         top = std::max(top, rightFloatBottom());
     }
 
-    child->updatePaddingWidths(availableWidth());
-    child->updateVerticalMargins(availableWidth());
+    child->updateMarginAndPaddingWidths(availableWidth());
 
     auto estimatedTop = top + child->marginTop();
     if(fragmentainer)
@@ -1387,7 +1383,7 @@ void BlockFlowBox::estimateMarginTop(BoxFrame* child, float& positiveMarginTop, 
         return;
     }
 
-    childBlock->updateVerticalPaddings(availableWidth());
+    childBlock->updatePaddingWidths(availableWidth());
 
     MarginInfo childMarginInfo(childBlock, childBlock->borderAndPaddingTop(), childBlock->borderAndPaddingBottom());
     if(!childMarginInfo.canCollapseMarginTopWithChildren()) {
@@ -1402,7 +1398,7 @@ void BlockFlowBox::estimateMarginTop(BoxFrame* child, float& positiveMarginTop, 
     }
 
     if(grandChild && grandChild->style()->clear() == Clear::None) {
-        grandChild->updateVerticalMargins(childBlock->availableWidth());
+        grandChild->updateMarginWidths(childBlock->availableWidth());
         childBlock->estimateMarginTop(grandChild, positiveMarginTop, negativeMarginTop);
     }
 }
@@ -1505,8 +1501,7 @@ float BlockFlowBox::adjustBlockChildInFragmentFlow(BoxFrame* child, FragmentBuil
 
 void BlockFlowBox::layoutBlockChild(BoxFrame* child, FragmentBuilder* fragmentainer, MarginInfo& marginInfo)
 {
-    child->updatePaddingWidths(availableWidth());
-    child->updateVerticalMargins(availableWidth());
+    child->updateMarginAndPaddingWidths(availableWidth());
 
     auto estimatedTop = estimateVerticalPosition(child, fragmentainer, marginInfo);
     if(fragmentainer)
