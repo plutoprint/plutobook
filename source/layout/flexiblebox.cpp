@@ -354,10 +354,10 @@ float FlexibleBox::unbreakableHeight(const FragmentBuilder* fragmentainer) const
     auto leadingHeight = borderAndPaddingTop();
     float unbreakableHeight = 0.f;
     for(auto& item : m_items) {
-        auto itemOffset = std::max(0.f, item.naturalTop() - leadingHeight);
-        if(itemOffset > kEpsilon && !item->isFirstInFlowChild())
+        auto itemTop = std::max(0.f, item.naturalTop() - leadingHeight);
+        if(itemTop > kEpsilon && !item->isFirstInFlowChild())
             continue;
-        unbreakableHeight = std::max(unbreakableHeight, itemOffset + item->unbreakableHeight(fragmentainer));
+        unbreakableHeight = std::max(unbreakableHeight, itemTop + item->unbreakableHeight(fragmentainer));
     }
 
     return leadingHeight + unbreakableHeight;
@@ -908,12 +908,12 @@ void FlexibleBox::paintContents(const PaintInfo& info, const Point& offset, Pain
 
 void FlexibleBox::layoutItem(FlexItem& item, FragmentBuilder* fragmentainer) const
 {
-    auto itemOffset = item->y();
+    auto itemTop = item->y();
     if(fragmentainer)
-        fragmentainer->enterFragment(itemOffset);
+        fragmentainer->enterFragment(itemTop);
     item->layout(fragmentainer);
     if(fragmentainer) {
-        fragmentainer->leaveFragment(itemOffset);
+        fragmentainer->leaveFragment(itemTop);
     }
 }
 
@@ -1023,10 +1023,10 @@ static float lineUnbreakableHeight(const FlexLine& line, const FragmentBuilder* 
         remainingHeight = fragmentainer->fragmentRemainingHeightForOffset(offset, AssociateWithLatterFragment);
     float unbreakableHeight = 0.f;
     for(auto& item : line.items()) {
-        auto itemOffset = item.naturalTop() - line.crossOffset();
-        if(fragmentHeight > 0.f && remainingHeight <= itemOffset + kEpsilon)
+        auto itemTop = item.naturalTop() - line.crossOffset();
+        if(fragmentHeight > 0.f && remainingHeight <= itemTop + kEpsilon)
             continue;
-        unbreakableHeight = std::max(unbreakableHeight, itemOffset + item->unbreakableHeight(fragmentainer));
+        unbreakableHeight = std::max(unbreakableHeight, itemTop + item->unbreakableHeight(fragmentainer));
     }
 
     return unbreakableHeight;
