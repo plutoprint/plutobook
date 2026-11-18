@@ -188,13 +188,21 @@ Rect SVGImageBox::strokeBoundingBox() const
 
 void SVGImageBox::render(const SVGRenderState& state) const
 {
-    if(m_image == nullptr || state.mode() != SVGRenderMode::Painting || style()->visibility() != Visibility::Visible)
+    if(m_image == nullptr || state.mode() != SVGRenderMode::Painting || style()->visibility() != Visibility::Visible) {
         return;
+    }
+
+    const auto& preserveAspectRatio = element()->preserveAspectRatio();
+
     Rect dstRect(fillBoundingBox());
-    m_image->setContainerSize(dstRect.size());
+    if(preserveAspectRatio.alignType() == SVGPreserveAspectRatio::AlignType::None) {
+        m_image->setContainerSize(m_image->computeConcreteSize(dstRect.size()));
+    } else {
+        m_image->setContainerSize(dstRect.size());
+    }
 
     Rect srcRect(m_image->size());
-    element()->preserveAspectRatio().transformRect(dstRect, srcRect);
+    preserveAspectRatio.transformRect(dstRect, srcRect);
 
     SVGBlendInfo blendInfo(m_clipper, m_masker, style());
     SVGRenderState newState(blendInfo, this, state, element()->transform());
