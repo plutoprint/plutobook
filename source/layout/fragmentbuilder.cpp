@@ -7,7 +7,6 @@
  */
 
 #include "fragmentbuilder.h"
-#include "geometry.h"
 
 namespace plutobook {
 
