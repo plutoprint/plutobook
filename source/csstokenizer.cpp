@@ -128,8 +128,8 @@ std::string_view CSSTokenizer::consumeName()
         count += 1;
     }
 
-    std::string output;
-    output += m_input.substring(offset, count);
+    std::string output(m_input.substring(offset, count));
+
     m_input.advance(count);
     while(true) {
         auto cc = m_input.peek();
@@ -211,8 +211,8 @@ CSSToken CSSTokenizer::consumeStringToken()
         count += 1;
     }
 
-    std::string output;
-    output += m_input.substring(offset, count);
+    std::string output(m_input.substring(offset, count));
+
     m_input.advance(count);
     while(true) {
         auto cc = m_input.peek();
@@ -414,8 +414,8 @@ CSSToken CSSTokenizer::consumeUrlToken()
         count += 1;
     }
 
-    std::string output;
-    output += m_input.substring(offset, count);
+    std::string output(m_input.substring(offset, count));
+
     m_input.advance(count);
     while(true) {
         auto cc = m_input.peek();
