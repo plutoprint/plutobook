@@ -115,6 +115,8 @@ SVGViewportContainerBox::SVGViewportContainerBox(SVGSVGElement* element, const R
 
 void SVGViewportContainerBox::render(const SVGRenderState& state) const
 {
+    if(element()->hasEmptyViewBox())
+        return;
     SVGBlendInfo blendInfo(m_clipper, m_masker, style());
     SVGRenderState newState(blendInfo, this, state, m_localTransform);
     if(isOverflowHidden()) {

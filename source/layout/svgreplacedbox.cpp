@@ -96,6 +96,8 @@ float SVGRootBox::computeReplacedHeight() const
 
 void SVGRootBox::paintReplaced(const PaintInfo& info, const Point& offset)
 {
+    if(element()->hasEmptyViewBox())
+        return;
     const RectOutsets outsets = {
         borderTop() + paddingTop(),
         borderRight() + paddingRight(),
