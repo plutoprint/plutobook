@@ -117,7 +117,6 @@ public:
     void collectAttributeStyle(std::string& output, const GlobalString& name, const HeapString& value) const final;
     Box* createBox(const RefPtr<BoxStyle>& style) final;
 
-    Rect currentViewBoxRect() const;
     Transform viewBoxToViewTransform(const Size& viewportSize) const;
 
     void computeIntrinsicSize(float& intrinsicWidth, float& intrinsicHeight) const;
