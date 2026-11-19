@@ -292,25 +292,28 @@ void Image::drawTiled(GraphicsContext& context, const Rect& destRect, const Rect
         return;
     }
 
-    const Size scale(tileRect.w / imageSize.w, tileRect.h / imageSize.h);
-    const Point phase = {
-        destRect.x + std::fmod(std::fmod(-tileRect.x, tileRect.w) - tileRect.w, tileRect.w),
-        destRect.y + std::fmod(std::fmod(-tileRect.y, tileRect.h) - tileRect.h, tileRect.h)
+    assert(tileRect.x >= 0 && tileRect.y >= 0);
+    const Rect oneTileRect = {
+        destRect.x - std::fmod(tileRect.x, tileRect.w),
+        destRect.y - std::fmod(tileRect.y, tileRect.h),
+        tileRect.w,
+        tileRect.h
     };
 
-    const Rect oneTileRect(phase, tileRect.size());
+    const Size scale(tileRect.w / imageSize.w, tileRect.h / imageSize.h);
     if(!oneTileRect.contains(destRect)) {
-        drawPattern(context, destRect, imageSize, scale, phase);
-    } else {
-        const Rect srcRect = {
-            (destRect.x - oneTileRect.x) / scale.w,
-            (destRect.y - oneTileRect.y) / scale.h,
-            (destRect.w / scale.w),
-            (destRect.h / scale.h)
-        };
-
-        draw(context, destRect, srcRect);
+        drawPattern(context, destRect, imageSize, scale, oneTileRect.origin());
+        return;
     }
+
+    const Rect srcRect = {
+        (destRect.x - oneTileRect.x) / scale.w,
+        (destRect.y - oneTileRect.y) / scale.h,
+        destRect.w / scale.w,
+        destRect.h / scale.h
+    };
+
+    draw(context, destRect, srcRect);
 }
 
 Size Image::computeConcreteSize(const Size& defaultObjectSize)
