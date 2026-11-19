@@ -478,10 +478,14 @@ void SVGImage::drawPattern(GraphicsContext& context, const Rect& destRect, const
 {
     assert(!destRect.isEmpty() && !size.isEmpty() && !scale.isEmpty());
 
-    cairo_matrix_t pattern_matrix;
-    cairo_matrix_init(&pattern_matrix, 1, 0, 0, 1, -phase.x, -phase.y);
+    const Size tileSize(size.w * scale.w, size.h * scale.h);
+    const Size patternSize(std::ceil(tileSize.w), std::ceil(tileSize.h));
 
-    cairo_rectangle_t pattern_rectangle = {0, 0, size.w * scale.w, size.h * scale.h};
+    cairo_matrix_t pattern_matrix;
+    cairo_matrix_init_scale(&pattern_matrix, patternSize.w / tileSize.w, patternSize.h / tileSize.h);
+    cairo_matrix_translate(&pattern_matrix, -phase.x, -phase.y);
+
+    cairo_rectangle_t pattern_rectangle = {0, 0, patternSize.w, patternSize.h};
     auto pattern_surface = cairo_recording_surface_create(CAIRO_CONTENT_COLOR_ALPHA, &pattern_rectangle);
     auto pattern_canvas = cairo_create(pattern_surface);
 
@@ -490,6 +494,7 @@ void SVGImage::drawPattern(GraphicsContext& context, const Rect& destRect, const
     cairo_pattern_set_extend(pattern, CAIRO_EXTEND_REPEAT);
 
     GraphicsContext pattern_context(pattern_canvas);
+    pattern_context.scale(patternSize.w / size.w, patternSize.h / size.h);
     m_document->render(pattern_context, Rect::Infinite);
 
     auto canvas = context.canvas();
