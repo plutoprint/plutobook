@@ -172,10 +172,13 @@ public:
     {}
 
     float valueForLength(const SVGLength& length) const;
+    float valueForLength(const SVGLength& length, const Size& viewportSize) const;
     float valueForLength(const Length& length, SVGLengthDirection direction = SVGLengthDirection::Diagonal) const;
 
 private:
-    float viewportDimension(SVGLengthDirection direction) const;
+    float valueForLength(float value, SVGLengthType type) const;
+    float valueForPercentage(float value, SVGLengthDirection direction, const Size& viewportSize) const;
+    static float viewportDimension(const Size& viewportSize, SVGLengthDirection direction);
     const SVGElement* m_element;
     const SVGUnitsType m_unitType;
 };

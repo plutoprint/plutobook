@@ -121,7 +121,7 @@ Size SVGElement::currentViewportSize() const
     if(viewBoxRect.isValid())
         return viewBoxRect.size();
     if(auto rootBox = to<SVGRootBox>(element->box()))
-        return rootBox->contentBoxSize();
+        return element->intrinsicViewportSize(rootBox->contentBoxSize());
     SVGLengthContext lengthContext(element);
     const Size viewportSize = {
         lengthContext.valueForLength(element->width()),
@@ -284,18 +284,30 @@ Box* SVGSVGElement::createBox(const RefPtr<BoxStyle>& style)
     return new (heap()) SVGViewportContainerBox(this, style);
 }
 
+Size SVGSVGElement::intrinsicViewportSize(const Size& viewportSize) const
+{
+    if(!isSVGRootNode() || !document()->isSVGDocument())
+        return viewportSize;
+    SVGLengthContext lengthContext(this);
+    const Size intrinsicSize = {
+        lengthContext.valueForLength(m_width, viewportSize),
+        lengthContext.valueForLength(m_height, viewportSize)
+    };
+
+    if(intrinsicSize.isEmpty())
+        return viewportSize;
+    return intrinsicSize;
+}
+
 Transform SVGSVGElement::viewBoxToViewTransform(const Size& viewportSize) const
 {
     const auto& viewBoxRect = viewBox();
     if(!viewBoxRect.isEmpty())
         return SVGFitToViewBox::viewBoxToViewTransform(viewBoxRect, viewportSize);
-    if(!isSVGRootNode() || !document()->isSVGDocument())
+    const auto intrinsicSize = intrinsicViewportSize(viewportSize);
+    if(intrinsicSize.isEmpty())
         return Transform::Identity;
-    float intrinsicWidth, intrinsicHeight;
-    computeIntrinsicSize(intrinsicWidth, intrinsicHeight);
-    if(intrinsicWidth <= 0.f || intrinsicHeight <= 0.f)
-        return Transform::Identity;
-    return Transform::makeScale(viewportSize.w / intrinsicWidth, viewportSize.h / intrinsicHeight);
+    return Transform::makeScale(viewportSize.w / intrinsicSize.w, viewportSize.h / intrinsicSize.h);
 }
 
 void SVGSVGElement::computeIntrinsicSize(float& intrinsicWidth, float& intrinsicHeight) const

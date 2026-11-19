@@ -296,37 +296,55 @@ static const BoxStyle* styleForLengthResolving(const Element* element)
 
 float SVGLengthContext::valueForLength(const SVGLength& length) const
 {
-    if(length.type() == SVGLengthType::Percentage) {
-        if(m_unitType == SVGUnitsTypeUserSpaceOnUse)
-            return length.value() * viewportDimension(length.direction()) / 100.f;
-        return length.value() / 100.f;
+    if(length.type() == SVGLengthType::Percentage)
+        return valueForPercentage(length.value(), length.direction(), m_element->currentViewportSize());
+    return valueForLength(length.value(), length.type());
+}
+
+float SVGLengthContext::valueForLength(const SVGLength& length, const Size& viewportSize) const
+{
+    if(length.type() == SVGLengthType::Percentage)
+        return valueForPercentage(length.value(), length.direction(), viewportSize);
+    return valueForLength(length.value(), length.type());
+}
+
+float SVGLengthContext::valueForLength(const Length& length, SVGLengthDirection direction) const
+{
+    if(length.isPercent()) {
+        return valueForPercentage(length.value(), direction, m_element->currentViewportSize());
     }
 
+    assert(length.isFixed());
+    return length.value();
+}
+
+float SVGLengthContext::valueForLength(float value, SVGLengthType type) const
+{
     constexpr auto dpi = 96.f;
-    switch(length.type()) {
+    switch(type) {
     case SVGLengthType::Number:
     case SVGLengthType::Pixels:
-        return length.value();
+        return value;
     case SVGLengthType::Centimeters:
-        return length.value() * dpi / 2.54f;
+        return value * dpi / 2.54f;
     case SVGLengthType::Millimeters:
-        return length.value() * dpi / 25.4f;
+        return value * dpi / 25.4f;
     case SVGLengthType::Inches:
-        return length.value() * dpi;
+        return value * dpi;
     case SVGLengthType::Points:
-        return length.value() * dpi / 72.f;
+        return value * dpi / 72.f;
     case SVGLengthType::Picas:
-        return length.value() * dpi / 6.f;
+        return value * dpi / 6.f;
     default:
         break;
     }
 
     if(auto style = styleForLengthResolving(m_element)) {
-        switch(length.type()) {
+        switch(type) {
         case SVGLengthType::Ems:
-            return length.value() * style->fontSize();
+            return value * style->fontSize();
         case SVGLengthType::Exs:
-            return length.value() * style->exFontSize();
+            return value * style->exFontSize();
         default:
             assert(false);
         }
@@ -335,21 +353,15 @@ float SVGLengthContext::valueForLength(const SVGLength& length) const
     return 0.f;
 }
 
-float SVGLengthContext::valueForLength(const Length& length, SVGLengthDirection direction) const
+float SVGLengthContext::valueForPercentage(float value, SVGLengthDirection direction, const Size& viewportSize) const
 {
-    if(length.isPercent()) {
-        if(m_unitType == SVGUnitsTypeUserSpaceOnUse)
-            return length.value() * viewportDimension(direction) / 100.f;
-        return length.value() / 100.f;
-    }
-
-    assert(length.isFixed());
-    return length.value();
+    if(m_unitType == SVGUnitsTypeUserSpaceOnUse)
+        return value * viewportDimension(viewportSize, direction) / 100.f;
+    return value / 100.f;
 }
 
-float SVGLengthContext::viewportDimension(SVGLengthDirection direction) const
+float SVGLengthContext::viewportDimension(const Size& viewportSize, SVGLengthDirection direction)
 {
-    auto viewportSize = m_element->currentViewportSize();
     switch(direction) {
     case SVGLengthDirection::Horizontal:
         return viewportSize.w;
