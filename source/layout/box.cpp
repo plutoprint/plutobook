@@ -415,8 +415,15 @@ void BoxModel::addChild(Box* newChild)
 
 static Size computeBackgroundImageTileSize(const RefPtr<Image>& backgroundImage, const BackgroundSize& backgroundSize, const Size& positioningAreaSize)
 {
-    auto concreteSize = backgroundImage->computeConcreteSize(positioningAreaSize);
+    float intrinsicWidth = 0;
+    float intrinsicHeight = 0;
+    float intrinsicRatio = 0;
+    backgroundImage->computeIntrinsicDimensions(intrinsicWidth, intrinsicHeight, intrinsicRatio);
+
+    auto concreteSize = computeConcreteObjectSize(intrinsicWidth, intrinsicHeight, intrinsicRatio, positioningAreaSize);
     if(backgroundSize.type() == BackgroundSize::Type::Contain || backgroundSize.type() == BackgroundSize::Type::Cover) {
+        if(intrinsicRatio <= 0)
+            return positioningAreaSize;
         if(concreteSize.isEmpty())
             return Size(0, 0);
         auto xScale = positioningAreaSize.w / concreteSize.w;
@@ -444,19 +451,23 @@ static Size computeBackgroundImageTileSize(const RefPtr<Image>& backgroundImage,
     }
 
     if(widthLength.isAuto() && !heightLength.isAuto()) {
-        if(concreteSize.h > 0)
-            return Size(concreteSize.w * tileHeight / concreteSize.h, tileHeight);
-        return Size(concreteSize.w, tileHeight);
+        if(intrinsicRatio > 0)
+            return Size(tileHeight * intrinsicRatio, tileHeight);
+        if(intrinsicWidth > 0)
+            return Size(intrinsicWidth, tileHeight);
+        return Size(tileWidth, tileHeight);
     }
 
     if(!widthLength.isAuto() && heightLength.isAuto()) {
-        if(concreteSize.w > 0)
-            return Size(tileWidth, concreteSize.h * tileWidth / concreteSize.w);
-        return Size(tileWidth, concreteSize.h);
+        if(intrinsicRatio > 0)
+            return Size(tileWidth, tileWidth / intrinsicRatio);
+        if(intrinsicHeight > 0)
+            return Size(tileWidth, intrinsicHeight);
+        return Size(tileWidth, tileHeight);
     }
 
     if(widthLength.isAuto() && heightLength.isAuto())
-        return Size(concreteSize.w, concreteSize.h);
+        return concreteSize;
     return Size(tileWidth, tileHeight);
 }
 
