@@ -111,7 +111,6 @@ private:
     SVGImage(std::unique_ptr<SVGDocument> document);
     SVGSVGElement* rootElement() const;
     std::unique_ptr<SVGDocument> m_document;
-    Size m_containerSize;
 };
 
 template<>

@@ -689,10 +689,8 @@ float Document::viewportHeight() const
     return m_book->viewportHeight();
 }
 
-bool Document::setContainerSize(float containerWidth, float containerHeight)
+bool Document::setContainerSize(float width, float height)
 {
-    auto width = std::ceil(containerWidth);
-    auto height = std::ceil(containerHeight);
     if(width == m_containerWidth && height == m_containerHeight)
         return false;
     m_containerWidth = width;

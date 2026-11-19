@@ -354,7 +354,7 @@ public:
     float containerWidth() const { return m_containerWidth; }
     float containerHeight() const { return m_containerHeight; }
 
-    bool setContainerSize(float containerWidth, float containerHeight);
+    bool setContainerSize(float width, float height);
 
     TextNode* createTextNode(std::string_view value);
     Element* createElement(const GlobalString& namespaceURI, const GlobalString& tagName);

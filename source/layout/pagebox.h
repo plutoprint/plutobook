@@ -137,6 +137,8 @@ public:
     void layout();
 
 private:
+    void layoutPageContent(float contentWidth, float contentHeight);
+
     void buildPageMargin(const Counters& counters, PageBox* pageBox, PageMarginType marginType);
     void buildPageMargins(const Counters& counters, PageBox* pageBox);
 

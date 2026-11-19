@@ -627,6 +627,7 @@ void PageMarginBox::updateAutoMargins(const Size& availableSize)
 PageLayout::PageLayout(Document* document)
     : m_document(document)
 {
+    m_document->setContainerSize(0, 0);
 }
 
 constexpr auto kMinPageScaleFactor = 10.f / 100.f;
@@ -638,8 +639,7 @@ void PageLayout::layout()
         const auto& pageBox = pages.front();
         auto contentWidth = pageBox->width() - pageBox->paddingLeft() - pageBox->paddingRight();
         auto contentHeight = pageBox->height() - pageBox->paddingTop() - pageBox->paddingBottom();
-        m_document->setContainerSize(contentWidth / pageBox->pageScale(), contentHeight / pageBox->pageScale());
-        m_document->layout(this);
+        layoutPageContent(contentWidth / pageBox->pageScale(), contentHeight / pageBox->pageScale());
         return;
     }
 
@@ -673,14 +673,11 @@ void PageLayout::layout()
     auto contentHeight = std::max(0.f, height - paddingTop - paddingBottom);
 
     auto pageScaleFactor = std::max(kMinPageScaleFactor, pageScale.value_or(1.f));
-    m_document->setContainerSize(contentWidth / pageScaleFactor, contentHeight / pageScaleFactor);
-    m_document->layout(this);
+    layoutPageContent(contentWidth / pageScaleFactor, contentHeight / pageScaleFactor);
 
     if(!pageScale.has_value() && m_document->width() > m_document->containerWidth()) {
         pageScaleFactor = std::max(kMinPageScaleFactor, m_document->containerWidth() / m_document->width());
-        if(m_document->setContainerSize(contentWidth / pageScaleFactor, contentHeight / pageScaleFactor)) {
-            m_document->layout(this);
-        }
+        layoutPageContent(contentWidth / pageScaleFactor, contentHeight / pageScaleFactor);
     }
 
     if(m_document->containerHeight()) {
@@ -713,6 +710,15 @@ void PageLayout::layout()
 
             pages.push_back(std::move(pageBox));
         }
+    }
+}
+
+void PageLayout::layoutPageContent(float contentWidth, float contentHeight)
+{
+    auto width = std::ceil(contentWidth);
+    auto height = std::ceil(contentHeight);
+    if(m_document->setContainerSize(width, height)) {
+        m_document->layout(this);
     }
 }
 

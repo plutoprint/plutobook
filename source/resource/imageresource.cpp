@@ -509,7 +509,6 @@ void SVGImage::computeIntrinsicDimensions(float& intrinsicWidth, float& intrinsi
 
 void SVGImage::setContainerSize(const Size& size)
 {
-    m_containerSize = size;
     if(m_document->setContainerSize(size.w, size.h)) {
         m_document->layout(nullptr);
     }
@@ -517,7 +516,7 @@ void SVGImage::setContainerSize(const Size& size)
 
 Size SVGImage::size() const
 {
-    return m_containerSize;
+    return Size(m_document->containerWidth(), m_document->containerHeight());
 }
 
 SVGImage::~SVGImage() = default;

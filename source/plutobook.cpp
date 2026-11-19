@@ -670,7 +670,9 @@ Document* Book::layoutIfNeeded() const
 {
     auto document = buildIfNeeded();
     if(document && m_needsLayout) {
-        document->setContainerSize(viewportWidth(), viewportHeight());
+        auto width = std::ceil(viewportWidth());
+        auto height = std::ceil(viewportHeight());
+        document->setContainerSize(width, height);
         document->layout(nullptr);
         m_needsPagination = true;
         m_needsLayout = false;
