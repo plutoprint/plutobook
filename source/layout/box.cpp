@@ -508,6 +508,8 @@ void BoxModel::paintBackgroundImage(const PaintInfo& info, const Rect& borderRec
         destRect.h = tileRect.h - tileRect.y;
     }
 
+    if(destRect.isEmpty())
+        return;
     destRect.intersect(borderRect);
     if(destRect.intersects(info.rect())) {
         backgroundImage->setContainerSize(tileRect.size());
