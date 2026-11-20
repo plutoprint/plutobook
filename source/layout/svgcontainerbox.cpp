@@ -79,6 +79,8 @@ SVGTransformableContainerBox::SVGTransformableContainerBox(SVGGraphicsElement* e
 
 void SVGTransformableContainerBox::render(const SVGRenderState& state) const
 {
+    if(!m_localTransform.isInvertible())
+        return;
     SVGBlendInfo blendInfo(m_clipper, m_masker, style());
     SVGRenderState newState(blendInfo, this, state, m_localTransform);
     renderChildren(newState);
@@ -116,6 +118,8 @@ SVGViewportContainerBox::SVGViewportContainerBox(SVGSVGElement* element, const R
 void SVGViewportContainerBox::render(const SVGRenderState& state) const
 {
     if(element()->hasEmptyViewBox())
+        return;
+    if(!m_localTransform.isInvertible())
         return;
     SVGBlendInfo blendInfo(m_clipper, m_masker, style());
     SVGRenderState newState(blendInfo, this, state, m_localTransform);

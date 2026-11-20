@@ -157,8 +157,11 @@ void SVGGeometryBox::render(const SVGRenderState& state) const
 {
     if(style()->visibility() != Visibility::Visible)
         return;
+    const auto& transform = element()->transform();
+    if(!transform.isInvertible())
+        return;
     SVGBlendInfo blendInfo(m_clipper, m_masker, style());
-    SVGRenderState newState(blendInfo, this, state, element()->transform());
+    SVGRenderState newState(blendInfo, this, state, transform);
     if(newState.mode() == SVGRenderMode::Clipping) {
         newState->setColor(Color::White);
         newState->fillPath(path(), style()->clipRule());

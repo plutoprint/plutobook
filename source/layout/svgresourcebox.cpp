@@ -69,8 +69,11 @@ void SVGResourceMarkerBox::renderMarker(const SVGRenderState& state, const Point
         return;
     if(element()->hasEmptyViewBox())
         return;
+    const auto transform = markerTransform(origin, angle, strokeWidth);
+    if(!transform.isInvertible())
+        return;
     SVGBlendInfo blendInfo(m_clipper, m_masker, style());
-    SVGRenderState newState(blendInfo, this, state, markerTransform(origin, angle, strokeWidth));
+    SVGRenderState newState(blendInfo, this, state, transform);
     if(isOverflowHidden())
         newState->clipRect(element()->getClipRect(markerSize()));
     renderChildren(newState);
