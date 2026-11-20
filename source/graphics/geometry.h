@@ -461,6 +461,8 @@ public:
     float xScale() const;
     float yScale() const;
 
+    bool isInvertible() const { return (a * d - b * c) != 0.f; }
+
     static Transform makeRotate(float angle);
     static Transform makeRotate(float angle, float cx, float cy);
     static Transform makeShear(float shx, float shy);

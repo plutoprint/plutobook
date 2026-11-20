@@ -281,6 +281,8 @@ bool SVGResourcePatternBox::applyPaint(const SVGRenderState& state, float opacit
 {
     if(state.hasCycleReference(this))
         return false;
+    if(!m_attributes.patternTransform().isInvertible())
+        return false;
     if(m_attributes.viewBox().isValid() && m_attributes.viewBox().isEmpty())
         return false;
     auto patternContentBox = to<SVGResourcePatternBox>(m_attributes.patternContentElement()->box());
@@ -302,6 +304,8 @@ bool SVGResourcePatternBox::applyPaint(const SVGRenderState& state, float opacit
         patternRect.h = patternRect.h * bbox.h;
     }
 
+    if(patternRect.isEmpty())
+        return false;
     cairo_rectangle_t rectangle = {0, 0, patternRect.w, patternRect.h};
     auto surface = cairo_recording_surface_create(CAIRO_CONTENT_COLOR_ALPHA, &rectangle);
     auto canvas = cairo_create(surface);
@@ -385,6 +389,13 @@ void SVGResourceLinearGradientBox::build()
 
 bool SVGResourceLinearGradientBox::applyPaint(const SVGRenderState& state, float opacity) const
 {
+    auto gradientTransform = m_attributes.gradientTransform();
+    if(m_attributes.gradientUnits() == SVGUnitsTypeObjectBoundingBox)
+        gradientTransform.postMultiply(makeObjectBoundingBoxTransform(state.fillBoundingBox()));
+    if(!gradientTransform.isInvertible()) {
+        return false;
+    }
+
     auto gradientStops = buildGradientStops(m_attributes.gradientContentElement());
     if(gradientStops.empty()) {
         return false;
@@ -398,17 +409,11 @@ bool SVGResourceLinearGradientBox::applyPaint(const SVGRenderState& state, float
         lengthContext.valueForLength(m_attributes.y2())
     };
 
+    auto spreadMethod = toSpreadMethod(m_attributes.spreadMethod());
     if((gradientStops.size() == 1 || (values.x1 == values.x2 && values.y1 == values.y2))) {
         const auto& lastStop = gradientStops.back();
         state->setColor(lastStop.second.colorWithAlpha(opacity));
         return true;
-    }
-
-    auto spreadMethod = toSpreadMethod(m_attributes.spreadMethod());
-    auto gradientTransform = m_attributes.gradientTransform();
-    if(m_attributes.gradientUnits() == SVGUnitsTypeObjectBoundingBox) {
-        const auto bbox = state.fillBoundingBox();
-        gradientTransform.postMultiply(Transform(bbox.w, 0, 0, bbox.h, bbox.x, bbox.y));
     }
 
     state->setLinearGradient(values, gradientStops, gradientTransform, spreadMethod, opacity);
@@ -428,6 +433,13 @@ void SVGResourceRadialGradientBox::build()
 
 bool SVGResourceRadialGradientBox::applyPaint(const SVGRenderState& state, float opacity) const
 {
+    auto gradientTransform = m_attributes.gradientTransform();
+    if(m_attributes.gradientUnits() == SVGUnitsTypeObjectBoundingBox)
+        gradientTransform.postMultiply(makeObjectBoundingBoxTransform(state.fillBoundingBox()));
+    if(!gradientTransform.isInvertible()) {
+        return false;
+    }
+
     auto gradientStops = buildGradientStops(m_attributes.gradientContentElement());
     if(gradientStops.empty()) {
         return false;
@@ -442,17 +454,11 @@ bool SVGResourceRadialGradientBox::applyPaint(const SVGRenderState& state, float
         lengthContext.valueForLength(m_attributes.r())
     };
 
+    auto spreadMethod = toSpreadMethod(m_attributes.spreadMethod());
     if(values.r == 0.f || gradientStops.size() == 1) {
         const auto& lastStop = gradientStops.back();
         state->setColor(lastStop.second.colorWithAlpha(opacity));
         return true;
-    }
-
-    auto spreadMethod = toSpreadMethod(m_attributes.spreadMethod());
-    auto gradientTransform = m_attributes.gradientTransform();
-    if(m_attributes.gradientUnits() == SVGUnitsTypeObjectBoundingBox) {
-        const auto bbox = state.fillBoundingBox();
-        gradientTransform.postMultiply(Transform(bbox.w, 0, 0, bbox.h, bbox.x, bbox.y));
     }
 
     state->setRadialGradient(values, gradientStops, gradientTransform, spreadMethod, opacity);
