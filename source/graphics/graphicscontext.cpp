@@ -101,7 +101,12 @@ constexpr cairo_operator_t to_cairo_operator(BlendMode blendMode)
 static cairo_matrix_t to_cairo_matrix(const Transform& transform)
 {
     cairo_matrix_t matrix;
-    cairo_matrix_init(&matrix, transform.a, transform.b, transform.c, transform.d, transform.e, transform.f);
+    if(transform.isInvertible()) {
+        cairo_matrix_init(&matrix, transform.a, transform.b, transform.c, transform.d, transform.e, transform.f);
+    } else {
+        cairo_matrix_init_identity(&matrix);
+    }
+
     return matrix;
 }
 

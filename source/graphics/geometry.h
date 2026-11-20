@@ -458,10 +458,12 @@ public:
     Point mapPoint(const Point& point) const;
     Rect mapRect(const Rect& rect) const;
 
+    float determinant() const { return (a * d - b * c); }
+
     float xScale() const;
     float yScale() const;
 
-    bool isInvertible() const { return (a * d - b * c) != 0.f; }
+    bool isInvertible() const;
 
     static Transform makeRotate(float angle);
     static Transform makeRotate(float angle, float cx, float cy);

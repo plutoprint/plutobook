@@ -823,10 +823,10 @@ SVGPatternAttributes SVGPatternElement::collectPatternAttributes() const
             attributes.setPatternUnits(current);
         if(!attributes.hasPatternContentUnits() && current->hasAttribute(patternContentUnitsAttr))
             attributes.setPatternContentUnits(current);
+        if(!attributes.hasViewBox() && current->hasAttribute(viewBoxAttr) && current->viewBox().isValid())
+            attributes.setViewBox(current);
         if(!attributes.hasPreserveAspectRatio() && current->hasAttribute(preserveAspectRatioAttr))
             attributes.setPreserveAspectRatio(current);
-        if(!attributes.hasViewBox() && current->viewBox().isValid())
-            attributes.setViewBox(current);
         if(!attributes.hasPatternContentElement() && current->box()) {
             for(auto child = current->firstChild(); child; child = child->nextSibling()) {
                 if(child->isSVGElement()) {

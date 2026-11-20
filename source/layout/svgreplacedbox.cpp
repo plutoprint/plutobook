@@ -96,8 +96,6 @@ float SVGRootBox::computeReplacedHeight() const
 
 void SVGRootBox::paintReplaced(const PaintInfo& info, const Point& offset)
 {
-    if(element()->hasEmptyViewBox())
-        return;
     const RectOutsets outsets = {
         borderTop() + paddingTop(),
         borderRight() + paddingRight(),
@@ -188,10 +186,7 @@ Rect SVGImageBox::strokeBoundingBox() const
 
 void SVGImageBox::render(const SVGRenderState& state) const
 {
-    if(m_image == nullptr || state.mode() != SVGRenderMode::Painting || style()->visibility() != Visibility::Visible)
-        return;
-    const auto& transform = element()->transform();
-    if(!transform.isInvertible()) {
+    if(m_image == nullptr || state.mode() != SVGRenderMode::Painting || style()->visibility() != Visibility::Visible) {
         return;
     }
 
@@ -208,7 +203,7 @@ void SVGImageBox::render(const SVGRenderState& state) const
     preserveAspectRatio.transformRect(dstRect, srcRect);
 
     SVGBlendInfo blendInfo(m_clipper, m_masker, style());
-    SVGRenderState newState(blendInfo, this, state, transform);
+    SVGRenderState newState(blendInfo, this, state, element()->transform());
     m_image->draw(*newState, dstRect, srcRect);
 }
 

@@ -27,8 +27,8 @@ Transform::Transform(float a, float b, float c, float d, float e, float f)
 
 Transform Transform::inverted() const
 {
-    float det = (a * d - b * c);
-    if(det == 0.f) {
+    float det = determinant();
+    if(!std::isnormal(det)) {
         return Transform();
     }
 
@@ -172,6 +172,11 @@ float Transform::xScale() const
 float Transform::yScale() const
 {
     return std::sqrt(b * b + d * d);
+}
+
+bool Transform::isInvertible() const
+{
+    return std::isnormal(determinant());
 }
 
 Transform Transform::makeRotate(float angle)

@@ -67,13 +67,8 @@ void SVGResourceMarkerBox::renderMarker(const SVGRenderState& state, const Point
 {
     if(state.hasCycleReference(this))
         return;
-    if(element()->hasEmptyViewBox())
-        return;
-    const auto transform = markerTransform(origin, angle, strokeWidth);
-    if(!transform.isInvertible())
-        return;
     SVGBlendInfo blendInfo(m_clipper, m_masker, style());
-    SVGRenderState newState(blendInfo, this, state, transform);
+    SVGRenderState newState(blendInfo, this, state, markerTransform(origin, angle, strokeWidth));
     if(isOverflowHidden())
         newState->clipRect(element()->getClipRect(markerSize()));
     renderChildren(newState);
@@ -284,10 +279,6 @@ bool SVGResourcePatternBox::applyPaint(const SVGRenderState& state, float opacit
 {
     if(state.hasCycleReference(this))
         return false;
-    if(!m_attributes.patternTransform().isInvertible())
-        return false;
-    if(m_attributes.viewBox().isValid() && m_attributes.viewBox().isEmpty())
-        return false;
     auto patternContentBox = to<SVGResourcePatternBox>(m_attributes.patternContentElement()->box());
     if(patternContentBox == nullptr || !patternContentBox->firstChild())
         return false;
@@ -392,13 +383,6 @@ void SVGResourceLinearGradientBox::build()
 
 bool SVGResourceLinearGradientBox::applyPaint(const SVGRenderState& state, float opacity) const
 {
-    auto gradientTransform = m_attributes.gradientTransform();
-    if(m_attributes.gradientUnits() == SVGUnitsTypeObjectBoundingBox)
-        gradientTransform.postMultiply(makeObjectBoundingBoxTransform(state.fillBoundingBox()));
-    if(!gradientTransform.isInvertible()) {
-        return false;
-    }
-
     auto gradientStops = buildGradientStops(m_attributes.gradientContentElement());
     if(gradientStops.empty()) {
         return false;
@@ -419,6 +403,9 @@ bool SVGResourceLinearGradientBox::applyPaint(const SVGRenderState& state, float
         return true;
     }
 
+    auto gradientTransform = m_attributes.gradientTransform();
+    if(m_attributes.gradientUnits() == SVGUnitsTypeObjectBoundingBox)
+        gradientTransform.postMultiply(makeObjectBoundingBoxTransform(state.fillBoundingBox()));
     state->setLinearGradient(values, gradientStops, gradientTransform, spreadMethod, opacity);
     return true;
 }
@@ -436,13 +423,6 @@ void SVGResourceRadialGradientBox::build()
 
 bool SVGResourceRadialGradientBox::applyPaint(const SVGRenderState& state, float opacity) const
 {
-    auto gradientTransform = m_attributes.gradientTransform();
-    if(m_attributes.gradientUnits() == SVGUnitsTypeObjectBoundingBox)
-        gradientTransform.postMultiply(makeObjectBoundingBoxTransform(state.fillBoundingBox()));
-    if(!gradientTransform.isInvertible()) {
-        return false;
-    }
-
     auto gradientStops = buildGradientStops(m_attributes.gradientContentElement());
     if(gradientStops.empty()) {
         return false;
@@ -464,6 +444,9 @@ bool SVGResourceRadialGradientBox::applyPaint(const SVGRenderState& state, float
         return true;
     }
 
+    auto gradientTransform = m_attributes.gradientTransform();
+    if(m_attributes.gradientUnits() == SVGUnitsTypeObjectBoundingBox)
+        gradientTransform.postMultiply(makeObjectBoundingBoxTransform(state.fillBoundingBox()));
     state->setRadialGradient(values, gradientStops, gradientTransform, spreadMethod, opacity);
     return true;
 }

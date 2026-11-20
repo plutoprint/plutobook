@@ -74,11 +74,8 @@ void SVGTextBox::render(const SVGRenderState& state) const
 {
     if(style()->visibility() != Visibility::Visible)
         return;
-    const auto& transform = element()->transform();
-    if(!transform.isInvertible())
-        return;
     SVGBlendInfo blendInfo(m_clipper, m_masker, style());
-    SVGRenderState newState(blendInfo, this, state, transform);
+    SVGRenderState newState(blendInfo, this, state, element()->transform());
     m_lineLayout.render(newState);
 }
 
