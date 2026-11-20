@@ -13,7 +13,6 @@
 #include "svgproperty.h"
 
 #include <memory>
-#include <optional>
 
 namespace plutobook {
 
