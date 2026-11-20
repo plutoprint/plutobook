@@ -172,13 +172,11 @@ public:
     {}
 
     float valueForLength(const SVGLength& length) const;
-    float valueForLength(const SVGLength& length, const Size& viewportSize) const;
     float valueForLength(const Length& length, SVGLengthDirection direction = SVGLengthDirection::Diagonal) const;
 
 private:
-    float valueForLength(float value, SVGLengthType type) const;
-    float valueForPercentage(float value, SVGLengthDirection direction, const Size& viewportSize) const;
-    static float viewportDimension(const Size& viewportSize, SVGLengthDirection direction);
+    float valueForPercentage(float value, SVGLengthDirection direction) const;
+    float viewportDimension(SVGLengthDirection direction) const;
     const SVGElement* m_element;
     const SVGUnitsType m_unitType;
 };
@@ -304,7 +302,9 @@ public:
         Slice
     };
 
-    SVGPreserveAspectRatio() = default;
+    SVGPreserveAspectRatio(AlignType alignType = AlignType::xMidYMid, MeetOrSlice meetOrSlice = MeetOrSlice::Meet)
+        : m_alignType(alignType), m_meetOrSlice(meetOrSlice)
+    {}
 
     AlignType alignType() const { return m_alignType; }
     MeetOrSlice meetOrSlice() const { return m_meetOrSlice; }
@@ -315,8 +315,8 @@ public:
     void transformRect(Rect& dstRect, Rect& srcRect) const;
 
 private:
-    AlignType m_alignType = AlignType::xMidYMid;
-    MeetOrSlice m_meetOrSlice = MeetOrSlice::Meet;
+    AlignType m_alignType;
+    MeetOrSlice m_meetOrSlice;
 };
 
 } // namespace plutobook

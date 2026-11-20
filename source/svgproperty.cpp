@@ -296,55 +296,35 @@ static const BoxStyle* styleForLengthResolving(const Element* element)
 
 float SVGLengthContext::valueForLength(const SVGLength& length) const
 {
-    if(length.type() == SVGLengthType::Percentage)
-        return valueForPercentage(length.value(), length.direction(), m_element->currentViewportSize());
-    return valueForLength(length.value(), length.type());
-}
-
-float SVGLengthContext::valueForLength(const SVGLength& length, const Size& viewportSize) const
-{
-    if(length.type() == SVGLengthType::Percentage)
-        return valueForPercentage(length.value(), length.direction(), viewportSize);
-    return valueForLength(length.value(), length.type());
-}
-
-float SVGLengthContext::valueForLength(const Length& length, SVGLengthDirection direction) const
-{
-    if(length.isPercent()) {
-        return valueForPercentage(length.value(), direction, m_element->currentViewportSize());
+    if(length.type() == SVGLengthType::Percentage) {
+        return valueForPercentage(length.value(), length.direction());
     }
 
-    assert(length.isFixed());
-    return length.value();
-}
-
-float SVGLengthContext::valueForLength(float value, SVGLengthType type) const
-{
     constexpr auto dpi = 96.f;
-    switch(type) {
+    switch(length.type()) {
     case SVGLengthType::Number:
     case SVGLengthType::Pixels:
-        return value;
+        return length.value();
     case SVGLengthType::Centimeters:
-        return value * dpi / 2.54f;
+        return length.value() * dpi / 2.54f;
     case SVGLengthType::Millimeters:
-        return value * dpi / 25.4f;
+        return length.value() * dpi / 25.4f;
     case SVGLengthType::Inches:
-        return value * dpi;
+        return length.value() * dpi;
     case SVGLengthType::Points:
-        return value * dpi / 72.f;
+        return length.value() * dpi / 72.f;
     case SVGLengthType::Picas:
-        return value * dpi / 6.f;
+        return length.value() * dpi / 6.f;
     default:
         break;
     }
 
     if(auto style = styleForLengthResolving(m_element)) {
-        switch(type) {
+        switch(length.type()) {
         case SVGLengthType::Ems:
-            return value * style->fontSize();
+            return length.value() * style->fontSize();
         case SVGLengthType::Exs:
-            return value * style->exFontSize();
+            return length.value() * style->exFontSize();
         default:
             assert(false);
         }
@@ -353,15 +333,26 @@ float SVGLengthContext::valueForLength(float value, SVGLengthType type) const
     return 0.f;
 }
 
-float SVGLengthContext::valueForPercentage(float value, SVGLengthDirection direction, const Size& viewportSize) const
+float SVGLengthContext::valueForLength(const Length& length, SVGLengthDirection direction) const
+{
+    if(length.isPercent()) {
+        return valueForPercentage(length.value(), direction);
+    }
+
+    assert(length.isFixed());
+    return length.value();
+}
+
+float SVGLengthContext::valueForPercentage(float value, SVGLengthDirection direction) const
 {
     if(m_unitType == SVGUnitsTypeUserSpaceOnUse)
-        return value * viewportDimension(viewportSize, direction) / 100.f;
+        return value * viewportDimension(direction) / 100.f;
     return value / 100.f;
 }
 
-float SVGLengthContext::viewportDimension(const Size& viewportSize, SVGLengthDirection direction)
+float SVGLengthContext::viewportDimension(SVGLengthDirection direction) const
 {
+    auto viewportSize = m_element->currentViewportSize();
     switch(direction) {
     case SVGLengthDirection::Horizontal:
         return viewportSize.w;
@@ -924,7 +915,8 @@ bool SVGPreserveAspectRatio::parse(std::string_view input)
 
 Rect SVGPreserveAspectRatio::getClipRect(const Rect& viewBoxRect, const Size& viewportSize) const
 {
-    assert(!viewBoxRect.isEmpty() && !viewportSize.isEmpty());
+    if(viewBoxRect.isEmpty() || viewportSize.isEmpty())
+        return Rect(0, 0, viewportSize.w, viewportSize.h);
     if(m_alignType == AlignType::None)
         return viewBoxRect;
     auto xScale = viewportSize.w / viewBoxRect.w;
@@ -969,7 +961,8 @@ Rect SVGPreserveAspectRatio::getClipRect(const Rect& viewBoxRect, const Size& vi
 
 Transform SVGPreserveAspectRatio::getTransform(const Rect& viewBoxRect, const Size& viewportSize) const
 {
-    assert(!viewBoxRect.isEmpty() && !viewportSize.isEmpty());
+    if(viewBoxRect.isEmpty() || viewportSize.isEmpty())
+        return Transform::Identity;
     auto xScale = viewportSize.w / viewBoxRect.w;
     auto yScale = viewportSize.h / viewBoxRect.h;
     if(m_alignType == AlignType::None) {

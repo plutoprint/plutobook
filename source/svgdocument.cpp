@@ -109,6 +109,8 @@ SVGProperty* SVGElement::getProperty(const GlobalString& name) const
 
 Size SVGElement::currentViewportSize() const
 {
+    if(auto rootBox = to<SVGRootBox>(box()))
+        return rootBox->contentBoxSize();
     auto parent = to<SVGElement>(parentNode());
     while(parent && parent->tagName() != svgTag) {
         parent = to<SVGElement>(parent->parentNode());
@@ -117,11 +119,16 @@ Size SVGElement::currentViewportSize() const
     assert(parent && parent->isOfType(svgNs, svgTag));
     auto element = static_cast<const SVGSVGElement*>(parent);
 
+    if(auto rootBox = to<SVGRootBox>(element->box())) {
+        const auto viewBoxRect = element->currentViewBoxRect();
+        if(!viewBoxRect.isEmpty())
+            return viewBoxRect.size();
+        return rootBox->contentBoxSize();
+    }
+
     const auto& viewBoxRect = element->viewBox();
-    if(viewBoxRect.isValid())
+    if(!viewBoxRect.isEmpty())
         return viewBoxRect.size();
-    if(auto rootBox = to<SVGRootBox>(element->box()))
-        return element->intrinsicViewportSize(rootBox->contentBoxSize());
     SVGLengthContext lengthContext(element);
     const Size viewportSize = {
         lengthContext.valueForLength(element->width()),
@@ -199,27 +206,9 @@ SVGFitToViewBox::SVGFitToViewBox(SVGElement* element)
     element->addProperty(preserveAspectRatioAttr, m_preserveAspectRatio);
 }
 
-Transform SVGFitToViewBox::viewBoxToViewTransform(const Rect& viewBoxRect, const Size& viewportSize) const
-{
-    if(viewportSize.isEmpty())
-        return Transform::Identity;
-    return m_preserveAspectRatio.getTransform(viewBoxRect, viewportSize);
-}
-
-Transform SVGFitToViewBox::viewBoxToViewTransform(const Size& viewportSize) const
-{
-    const auto& viewBoxRect = m_viewBox.value();
-    if(viewBoxRect.isEmpty())
-        return Transform::Identity;
-    return viewBoxToViewTransform(viewBoxRect, viewportSize);
-}
-
 Rect SVGFitToViewBox::getClipRect(const Size& viewportSize) const
 {
-    const auto& viewBoxRect = m_viewBox.value();
-    if(viewBoxRect.isEmpty() || viewportSize.isEmpty())
-        return Rect(0, 0, viewportSize.w, viewportSize.h);
-    return m_preserveAspectRatio.getClipRect(viewBoxRect, viewportSize);
+    return m_preserveAspectRatio.getClipRect(viewBox(), viewportSize);
 }
 
 SVGURIReference::SVGURIReference(SVGElement* element)
@@ -284,33 +273,43 @@ Box* SVGSVGElement::createBox(const RefPtr<BoxStyle>& style)
     return new (heap()) SVGViewportContainerBox(this, style);
 }
 
-Size SVGSVGElement::intrinsicViewportSize(const Size& viewportSize) const
+bool SVGSVGElement::shouldSynthesizeViewBox() const
 {
-    if(!isSVGRootNode() || !document()->isSVGDocument())
-        return viewportSize;
-    SVGLengthContext lengthContext(this);
-    const Size intrinsicSize = {
-        lengthContext.valueForLength(m_width, viewportSize),
-        lengthContext.valueForLength(m_height, viewportSize)
-    };
+    return isSVGRootNode() && document()->isSVGDocument();
+}
 
-    if(intrinsicSize.isEmpty())
-        return viewportSize;
-    return intrinsicSize;
+Rect SVGSVGElement::currentViewBoxRect() const
+{
+    const auto& viewBoxRect = viewBox();
+    if(viewBoxRect.isEmpty() && shouldSynthesizeViewBox()) {
+        SVGLengthContext lengthContext(this);
+        const Size synthesizedViewBoxSize = {
+            lengthContext.valueForLength(m_width),
+            lengthContext.valueForLength(m_height)
+        };
+
+        return Rect(synthesizedViewBoxSize);
+    }
+
+    return viewBoxRect;
+}
+
+const SVGPreserveAspectRatio& SVGSVGElement::currentPreserveAspectRatio() const
+{
+    if(!viewBox().isValid() && shouldSynthesizeViewBox()) {
+        static SVGPreserveAspectRatio synthesizedPreserveAspectRatio(SVGPreserveAspectRatio::AlignType::None);
+        return synthesizedPreserveAspectRatio;
+    }
+
+    return preserveAspectRatio();
 }
 
 Transform SVGSVGElement::viewBoxToViewTransform(const Size& viewportSize) const
 {
-    const auto& viewBoxRect = viewBox();
-    if(!viewBoxRect.isEmpty())
-        return SVGFitToViewBox::viewBoxToViewTransform(viewBoxRect, viewportSize);
-    const auto intrinsicSize = intrinsicViewportSize(viewportSize);
-    if(intrinsicSize.isEmpty())
-        return Transform::Identity;
-    return Transform::makeScale(viewportSize.w / intrinsicSize.w, viewportSize.h / intrinsicSize.h);
+    return currentPreserveAspectRatio().getTransform(currentViewBoxRect(), viewportSize);
 }
 
-void SVGSVGElement::computeIntrinsicSize(float& intrinsicWidth, float& intrinsicHeight) const
+void SVGSVGElement::computeIntrinsicDimensions(float& intrinsicWidth, float& intrinsicHeight, float& intrinsicRatio) const
 {
     intrinsicWidth = 0.f;
     intrinsicHeight = 0.f;
@@ -321,11 +320,6 @@ void SVGSVGElement::computeIntrinsicSize(float& intrinsicWidth, float& intrinsic
     if(m_height.type() != SVGLengthType::Percentage) {
         intrinsicHeight = lengthContext.valueForLength(m_height);
     }
-}
-
-void SVGSVGElement::computeIntrinsicDimensions(float& intrinsicWidth, float& intrinsicHeight, float& intrinsicRatio) const
-{
-    computeIntrinsicSize(intrinsicWidth, intrinsicHeight);
 
     if(intrinsicWidth > 0.f && intrinsicHeight > 0.f) {
         intrinsicRatio = intrinsicWidth / intrinsicHeight;
@@ -748,6 +742,11 @@ SVGMarkerElement::SVGMarkerElement(Document* document)
 Box* SVGMarkerElement::createBox(const RefPtr<BoxStyle>& style)
 {
     return new (heap()) SVGResourceMarkerBox(this, style);
+}
+
+Transform SVGMarkerElement::viewBoxToViewTransform(const Size& viewportSize) const
+{
+    return preserveAspectRatio().getTransform(viewBox(), viewportSize);
 }
 
 SVGClipPathElement::SVGClipPathElement(Document* document)

@@ -63,8 +63,6 @@ public:
 
     const Rect& viewBox() const { return m_viewBox.value(); }
     const SVGPreserveAspectRatio& preserveAspectRatio() const { return m_preserveAspectRatio; }
-    Transform viewBoxToViewTransform(const Rect& viewBoxRect, const Size& viewportSize) const;
-    Transform viewBoxToViewTransform(const Size& viewportSize) const;
     Rect getClipRect(const Size& viewportSize) const;
 
     bool hasEmptyViewBox() const { return viewBox().isValid() && viewBox().isEmpty(); }
@@ -116,10 +114,12 @@ public:
     void collectAttributeStyle(std::string& output, const GlobalString& name, const HeapString& value) const final;
     Box* createBox(const RefPtr<BoxStyle>& style) final;
 
-    Size intrinsicViewportSize(const Size& viewportSize) const;
+    bool shouldSynthesizeViewBox() const;
+
+    Rect currentViewBoxRect() const;
+    const SVGPreserveAspectRatio& currentPreserveAspectRatio() const;
     Transform viewBoxToViewTransform(const Size& viewportSize) const;
 
-    void computeIntrinsicSize(float& intrinsicWidth, float& intrinsicHeight) const;
     void computeIntrinsicDimensions(float& intrinsicWidth, float& intrinsicHeight, float& intrinsicRatio) const;
 
 private:
@@ -381,6 +381,8 @@ public:
     const SVGAngle& orient() const { return m_orient; }
     const SVGMarkerUnitsType markerUnits() const { return m_markerUnits.value(); }
     Box* createBox(const RefPtr<BoxStyle>& style) final;
+
+    Transform viewBoxToViewTransform(const Size& viewportSize) const;
 
 private:
     SVGLength m_refX;
