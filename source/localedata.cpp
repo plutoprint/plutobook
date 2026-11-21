@@ -90,7 +90,7 @@ UString LocaleData::toTitle(UString text, UChar32 previousCharacter) const
 
 const GlobalString& LocaleData::getQuote(bool open, size_t depth) const
 {
-    if(!m_quotes)
+    if(m_quotes == nullptr)
         m_quotes = Quotes::create(lang());
     return m_quotes->getQuote(open, depth);
 }
