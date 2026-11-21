@@ -348,15 +348,16 @@ void TableBox::layout(FragmentBuilder* fragmentainer)
         setHeight(tableHeight + height());
     } else {
         m_tableLayout->layout();
-        auto columnLeft = m_borderHorizontalSpacing;
+        float columnLeft = 0.f;
         for(auto& column : m_columns) {
             column.setX(columnLeft);
             columnLeft += column.width() + m_borderHorizontalSpacing;
         }
 
         if(style()->isRightToLeftDirection()) {
+            auto columnRight = columnLeft - m_borderHorizontalSpacing;
             for(auto& column : m_columns) {
-                column.setX(columnLeft - column.width() - column.x());
+                column.setX(columnRight - column.width() - column.x());
             }
         }
 
@@ -409,7 +410,7 @@ void TableBox::layout(FragmentBuilder* fragmentainer)
             }
 
             section->setY(sectionTop);
-            section->setX(borderAndPaddingLeft());
+            section->setX(borderAndPaddingLeft() + m_borderHorizontalSpacing);
             section->layoutRows(fragmentainer, headerHeight, footerHeight);
             section->updateOverflowRect();
             if(fragmentainer) {
@@ -1471,10 +1472,11 @@ static void distributeSpanCellToRows(TableCellBox* cellBox, std::span<TableRowBo
 
 void TableSectionBox::layout(FragmentBuilder* fragmentainer)
 {
-    setWidth(table()->contentBoxWidth());
     const auto& columns = table()->columns();
-    auto horizontalSpacing = table()->borderHorizontalSpacing();
     auto direction = table()->style()->direction();
+    auto horizontalSpacing = table()->borderHorizontalSpacing();
+
+    setWidth(table()->contentBoxWidth() - horizontalSpacing - horizontalSpacing);
     for(auto rowBox : m_rows) {
         float cellMaxAscent = 0.f;
         float cellMaxDescent = 0.f;
