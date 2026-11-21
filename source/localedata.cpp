@@ -100,12 +100,13 @@ const char* LocaleData::lang() const
     return hb_language_to_string(m_language);
 }
 
-icu::Locale LocaleData::locale() const
+const icu::Locale& LocaleData::locale() const
 {
-    auto locale = icu::Locale(lang());
-    if(locale.isBogus())
+    if(m_locale == nullptr)
+        m_locale = std::make_unique<icu::Locale>(lang());
+    if(m_locale->isBogus())
         return icu::Locale::getRoot();
-    return locale;
+    return *m_locale;
 }
 
 std::unique_ptr<LocaleData::Quotes> LocaleData::Quotes::create(std::string_view lang)

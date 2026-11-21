@@ -45,12 +45,13 @@ private:
     mutable std::unique_ptr<icu::BreakIterator> m_characterIterator;
     mutable std::unique_ptr<icu::BreakIterator> m_wordIterator;
     mutable std::unique_ptr<icu::BreakIterator> m_lineIterator;
+    mutable std::unique_ptr<icu::Locale> m_locale;
 
     mutable uint64_t m_iteratorIdCounter = 0;
     mutable uint64_t m_characterIteratorId = 0;
     mutable uint64_t m_lineIteratorId = 0;
 
-    icu::Locale locale() const;
+    const icu::Locale& locale() const;
 
     class Quotes {
     public:
