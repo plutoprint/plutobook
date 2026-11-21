@@ -28,8 +28,6 @@ public:
     void computePositionedReplacedWidth(float& x, float& width, float& marginLeft, float& marginRight) const;
     void computePositionedReplacedHeight(float& y, float& height, float& marginTop, float& marginBottom) const;
 
-    float availableReplacedWidth() const;
-
     std::optional<float> computeTentativeReplacedWidth() const;
     std::optional<float> computeTentativeReplacedHeight() const;
 

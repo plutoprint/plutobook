@@ -983,10 +983,13 @@ float BoxFrame::computeStaticTop(const BoxModel* container) const
     return staticTop;
 }
 
-void BoxFrame::computeHorizontalMargins(float& marginLeft, float& marginRight, float childWidth, const BlockBox* container, float containerWidth) const
+void BoxFrame::computeHorizontalMargins(float& marginLeft, float& marginRight, float childWidth) const
 {
     if(isFlexItem() || isTableCellBox())
         return;
+    auto container = containingBlock();
+    auto containerWidth = containingBlockWidthForContent(container);
+
     auto marginLeftLength = style()->marginLeft();
     auto marginRightLength = style()->marginRight();
     if(isInline() || isFloating()) {
@@ -995,9 +998,12 @@ void BoxFrame::computeHorizontalMargins(float& marginLeft, float& marginRight, f
         return;
     }
 
-    auto containerBlock = to<BlockFlowBox>(container);
-    if(containerBlock && containerBlock->containsFloats() && avoidsFloats())
-        containerWidth = containerBlock->availableWidthForLine(y());
+    if(auto block = to<BlockFlowBox>(container)) {
+        if(block->containsFloats() && avoidsFloats()) {
+            containerWidth = block->availableWidthForLine(y());
+        }
+    }
+
     if(childWidth < containerWidth) {
         if(marginLeftLength.isAuto() && marginRightLength.isAuto()) {
             marginLeft = std::max(0.f, (containerWidth - childWidth) / 2.f);
@@ -1031,7 +1037,52 @@ void BoxFrame::computeVerticalMargins(float& marginTop, float& marginBottom) con
     marginBottom = style()->marginBottom().calcMin(containerWidth);
 }
 
-float BoxFrame::computeIntrinsicWidthUsing(const Length& widthLength, float containerWidth, float insetWidth) const
+bool BoxFrame::sizesWidthToFitContent() const
+{
+    if(isFloating() || isInline())
+        return true;
+    if(isFlexItem())
+        return !isStretchedColumnFlexItem();
+    return isTableBox();
+}
+
+float BoxFrame::shrinkToFitWidth(float availableWidth) const
+{
+    return std::min(maxIntrinsicWidth(), std::max(availableWidth, minIntrinsicWidth()));
+}
+
+float BoxFrame::computeStretchFitWidth() const
+{
+    if(isPositioned()) {
+        auto container = containingBox();
+        auto containerWidth = containingBlockWidthForPositioned(container);
+
+        auto leftLength = style()->left();
+        auto rightLength = style()->right();
+        computeHorizontalStaticDistance(leftLength, rightLength, container, containerWidth);
+
+        auto marginLeft = style()->marginLeft().calcMin(containerWidth);
+        auto marginRight = style()->marginRight().calcMin(containerWidth);
+        auto insetWidth = leftLength.calcMin(containerWidth) + rightLength.calcMin(containerWidth);
+        return std::max(0.f, containerWidth - insetWidth - marginLeft - marginRight - borderAndPaddingWidth());
+    }
+
+    auto container = containingBlock();
+    auto containerWidth = containingBlockWidthForContent(container);
+    auto marginLeft = style()->marginLeft().calcMin(containerWidth);
+    auto marginRight = style()->marginRight().calcMin(containerWidth);
+
+    auto width = containerWidth - marginLeft - marginRight;
+    if(auto block = to<BlockFlowBox>(container)) {
+        if(block->containsFloats() && !isInline() && !isFloating() && avoidsFloats()) {
+            width = block->shrinkWidthToAvoidFloats(width, marginLeft, marginRight, y());
+        }
+    }
+
+    return std::max(0.f, width - borderAndPaddingWidth());
+}
+
+float BoxFrame::computeIntrinsicWidthUsing(const Length& widthLength) const
 {
     if(widthLength.isMinContent())
         return minIntrinsicWidth();
@@ -1039,27 +1090,22 @@ float BoxFrame::computeIntrinsicWidthUsing(const Length& widthLength, float cont
         return maxIntrinsicWidth();
     }
 
-    assert(widthLength.isFitContent());
-    auto marginLeft = style()->marginLeft().calcMin(containerWidth);
-    auto marginRight = style()->marginRight().calcMin(containerWidth);
-    auto width = containerWidth - insetWidth - marginLeft - marginRight - borderAndPaddingWidth();
-    return std::max(minIntrinsicWidth(), std::min(width, maxIntrinsicWidth()));
-}
-
-std::optional<float> BoxFrame::computeWidthUsing(const Length& widthLength, float containerWidth) const
-{
-    if(widthLength.isSpecified())
-        return adjustContentBoxWidth(widthLength.calc(containerWidth));
-    if(widthLength.isIntrinsic())
-        return computeIntrinsicWidthUsing(widthLength, containerWidth);
-    return std::nullopt;
+    return shrinkToFitWidth(computeStretchFitWidth());
 }
 
 std::optional<float> BoxFrame::computeWidthUsing(const Length& widthLength) const
 {
-    if(isPositioned())
-        return computeWidthUsing(widthLength, containingBlockWidthForPositioned());
-    return computeWidthUsing(widthLength, containingBlockWidthForContent());
+    if(widthLength.isFixed())
+        return adjustContentBoxWidth(widthLength.value());
+    if(widthLength.isPercent()) {
+        if(isPositioned())
+            return adjustContentBoxWidth(widthLength.calc(containingBlockWidthForPositioned()));
+        return adjustContentBoxWidth(widthLength.calc(containingBlockWidthForContent()));
+    }
+
+    if(widthLength.isIntrinsic())
+        return computeIntrinsicWidthUsing(widthLength);
+    return std::nullopt;
 }
 
 std::optional<float> BoxFrame::computeHeightUsing(const Length& heightLength) const
@@ -1077,22 +1123,15 @@ std::optional<float> BoxFrame::computeHeightUsing(const Length& heightLength) co
     return std::nullopt;
 }
 
-float BoxFrame::constrainWidth(float width, float containerWidth) const
+float BoxFrame::constrainWidth(float width) const
 {
-    if(auto maxWidth = computeWidthUsing(style()->maxWidth(), containerWidth))
+    if(auto maxWidth = computeWidthUsing(style()->maxWidth()))
         width = std::min(width, maxWidth.value());
-    if(auto minWidth = computeWidthUsing(style()->minWidth(), containerWidth))
+    if(auto minWidth = computeWidthUsing(style()->minWidth()))
         width = std::max(width, minWidth.value());
     if(isTableBox())
         width = std::max(width, minIntrinsicWidth());
     return std::max(0.f, width);
-}
-
-float BoxFrame::constrainWidth(float width) const
-{
-    if(isPositioned())
-        return constrainWidth(width, containingBlockWidthForPositioned());
-    return constrainWidth(width, containingBlockWidthForContent());
 }
 
 float BoxFrame::constrainHeight(float height) const

@@ -199,37 +199,13 @@ void ReplacedBox::computePositionedReplacedHeight(float& y, float& height, float
     y = topLengthValue + marginTop + container->borderTop();
 }
 
-float ReplacedBox::availableReplacedWidth() const
-{
-    if(style()->width().isPercent())
-        return kDefaultReplacedWidth;
-    if(isPositioned()) {
-        auto container = containingBox();
-        auto containerWidth = containingBlockWidthForPositioned(container);
-
-        auto leftLength = style()->left();
-        auto rightLength = style()->right();
-        computeHorizontalStaticDistance(leftLength, rightLength, container, containerWidth);
-
-        auto marginLeft = style()->marginLeft().calcMin(containerWidth);
-        auto marginRight = style()->marginRight().calcMin(containerWidth);
-        auto insetWidth = leftLength.calcMin(containerWidth) + rightLength.calcMin(containerWidth);
-        return std::max(0.f, containerWidth - insetWidth - marginLeft - marginRight - borderAndPaddingWidth());
-    }
-
-    auto containerWidth = containingBlockWidthForContent();
-    auto marginLeft = style()->marginLeft().calcMin(containerWidth);
-    auto marginRight = style()->marginRight().calcMin(containerWidth);
-    return std::max(0.f, containerWidth - marginLeft - marginRight - borderAndPaddingWidth());
-}
-
 std::optional<float> ReplacedBox::computeTentativeReplacedWidth() const
 {
     auto widthLength = style()->width();
     if(!widthLength.isAuto())
         return computeWidthUsing(widthLength);
     if(isStretchedColumnFlexItem())
-        return availableReplacedWidth();
+        return computeStretchFitWidth();
     return std::nullopt;
 }
 
@@ -273,8 +249,10 @@ float ReplacedBox::computeIntrinsicWidth() const
             height = m_intrinsicHeight;
         else if(m_intrinsicWidth > 0.f)
             height = m_intrinsicWidth / m_intrinsicRatio;
+        else if(style()->width().isPercent())
+            height = kDefaultReplacedWidth / m_intrinsicRatio;
         else
-            height = availableReplacedWidth() / m_intrinsicRatio;
+            height = computeStretchFitWidth() / m_intrinsicRatio;
         return constrainHeight(height) * m_intrinsicRatio;
     }
 
@@ -296,7 +274,7 @@ float ReplacedBox::computeIntrinsicHeight() const
         else if(m_intrinsicHeight > 0.f)
             width = m_intrinsicHeight * m_intrinsicRatio;
         else
-            width = availableReplacedWidth();
+            width = computeStretchFitWidth();
         return constrainWidth(width) / m_intrinsicRatio;
     }
 
@@ -350,10 +328,8 @@ void ReplacedBox::computeWidth(float& x, float& width, float& marginLeft, float&
         return;
     }
 
-    auto container = containingBlock();
-    auto containerWidth = std::max(0.f, containingBlockWidthForContent(container));
     width = computeReplacedWidth() + borderAndPaddingWidth();
-    computeHorizontalMargins(marginLeft, marginRight, width, container, containerWidth);
+    computeHorizontalMargins(marginLeft, marginRight, width);
 }
 
 void ReplacedBox::computeHeight(float& y, float& height, float& marginTop, float& marginBottom) const

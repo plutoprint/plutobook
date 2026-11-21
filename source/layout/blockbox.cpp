@@ -80,38 +80,14 @@ std::optional<float> BlockBox::availableHeight() const
     return std::nullopt;
 }
 
-bool BlockBox::sizesWidthToFitContent() const
+float BlockBox::computeTentativeWidth() const
 {
-    if(isFloating() || isInline())
-        return true;
-    if(isFlexItem())
-        return !isStretchedColumnFlexItem();
-    return isTableBox();
-}
-
-float BlockBox::computeTentativeWidth(const BlockBox* container, float containerWidth) const
-{
-    if(auto width = computeWidthUsing(style()->width(), containerWidth))
+    if(auto width = computeWidthUsing(style()->width()))
         return width.value();
-    auto marginLeft = style()->marginLeft().calcMin(containerWidth);
-    auto marginRight = style()->marginRight().calcMin(containerWidth);
-
-    auto width = containerWidth - marginLeft - marginRight;
-    if(auto block = to<BlockFlowBox>(container)) {
-        if(!isInline() && !isFloating() && avoidsFloats()) {
-            width = block->shrinkWidthToAvoidFloats(width, marginLeft, marginRight, y());
-        }
-    }
-
-    auto contentWidth = width - borderAndPaddingWidth();
+    auto availableWidth = computeStretchFitWidth();
     if(sizesWidthToFitContent())
-        contentWidth = shrinkToFitWidth(contentWidth);
-    return contentWidth;
-}
-
-float BlockBox::shrinkToFitWidth(float availableWidth) const
-{
-    return std::min(maxIntrinsicWidth(), std::max(availableWidth, minIntrinsicWidth()));
+        availableWidth = shrinkToFitWidth(availableWidth);
+    return availableWidth;
 }
 
 void BlockBox::computePositionedWidthUsing(const Length& widthLength, const BoxModel* container, Direction containerDirection, float containerWidth,
@@ -124,7 +100,7 @@ void BlockBox::computePositionedWidthUsing(const Length& widthLength, const BoxM
 
     float widthLengthValue = 0;
     if(widthLength.isIntrinsic()) {
-        widthLengthValue = computeIntrinsicWidthUsing(widthLength, containerWidth, insetWidth);
+        widthLengthValue = computeIntrinsicWidthUsing(widthLength);
     } else {
         widthLengthValue = adjustContentBoxWidth(widthLength.calc(containerWidth));
     }
@@ -370,11 +346,9 @@ void BlockBox::computeWidth(float& x, float& width, float& marginLeft, float& ma
         return;
     }
 
-    auto container = containingBlock();
-    auto containerWidth = std::max(0.f, containingBlockWidthForContent(container));
-    width = computeTentativeWidth(container, containerWidth);
-    width = constrainWidth(width, containerWidth) + borderAndPaddingWidth();
-    computeHorizontalMargins(marginLeft, marginRight, width, container, containerWidth);
+    width = computeTentativeWidth();
+    width = constrainWidth(width) + borderAndPaddingWidth();
+    computeHorizontalMargins(marginLeft, marginRight, width);
 }
 
 void BlockBox::computeHeight(float& y, float& height, float& marginTop, float& marginBottom) const
@@ -1096,8 +1070,6 @@ float BlockFlowBox::startAlignedOffsetForLine(float y, float height, bool indent
 
 float BlockFlowBox::shrinkWidthToAvoidFloats(float width, float marginLeft, float marginRight, float y) const
 {
-    if(!containsFloats())
-        return width;
     auto availableWidth = availableWidthForLine(y) - marginLeft - marginRight;
     auto marginStart = style()->isLeftToRightDirection() ? marginLeft : marginRight;
     auto marginEnd = style()->isLeftToRightDirection() ? marginRight : marginLeft;

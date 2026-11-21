@@ -34,13 +34,10 @@ public:
 
     float availableWidthForContent() const { return std::max(0.f, rightOffsetForContent() - leftOffsetForContent()); }
 
-    float availableWidth() const { return contentBoxWidth(); }
+    float availableWidth() const { return std::max(0.f, contentBoxWidth()); }
     std::optional<float> availableHeight() const;
 
-    bool sizesWidthToFitContent() const;
-    float computeTentativeWidth(const BlockBox* container, float containerWidth) const;
-
-    float shrinkToFitWidth(float availableWidth) const;
+    float computeTentativeWidth() const;
 
     void computePositionedWidthUsing(const Length& widthLength, const BoxModel* container, Direction containerDirection, float containerWidth,
         const Length& leftLength, const Length& rightLength, const Length& marginLeftLength, const Length& marginRightLength,

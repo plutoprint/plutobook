@@ -507,16 +507,18 @@ public:
 
     float computeStaticTop(const BoxModel* container) const;
 
-    void computeHorizontalMargins(float& marginLeft, float& marginRight, float childWidth, const BlockBox* container, float containerWidth) const;
+    void computeHorizontalMargins(float& marginLeft, float& marginRight, float childWidth) const;
     void computeVerticalMargins(float& marginTop, float& marginBottom) const;
 
-    float computeIntrinsicWidthUsing(const Length& widthLength, float containerWidth, float insetWidth = 0) const;
+    bool sizesWidthToFitContent() const;
 
-    std::optional<float> computeWidthUsing(const Length& widthLength, float containerWidth) const;
+    float shrinkToFitWidth(float availableWidth) const;
+    float computeStretchFitWidth() const;
+    float computeIntrinsicWidthUsing(const Length& widthLength) const;
+
     std::optional<float> computeWidthUsing(const Length& widthLength) const;
     std::optional<float> computeHeightUsing(const Length& heightLength) const;
 
-    float constrainWidth(float width, float containerWidth) const;
     float constrainWidth(float width) const;
     float constrainHeight(float height) const;
 
