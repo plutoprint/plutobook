@@ -765,6 +765,7 @@ BoxFrame::BoxFrame(Node* node, const RefPtr<BoxStyle>& style)
     : BoxModel(node, style)
 {
     setHasTransform(style->hasTransform());
+    setCanContainFixedPositionedBoxes(hasTransform());
     switch(style->position()) {
     case Position::Static:
     case Position::Relative:

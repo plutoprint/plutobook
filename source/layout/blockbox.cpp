@@ -19,7 +19,6 @@ BlockBox::BlockBox(Node* node, const RefPtr<BoxStyle>& style)
     : BoxFrame(node, style)
 {
     setIsReplaced(style->isDisplayInlineType());
-    setCanContainFixedPositionedBoxes(hasTransform());
 }
 
 void BlockBox::insertPositionedBox(BoxFrame* box)
