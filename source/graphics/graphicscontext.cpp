@@ -19,9 +19,14 @@ namespace plutobook {
 static void set_cairo_stroke_data(cairo_t* canvas, const StrokeData& strokeData)
 {
     const auto& dashes = strokeData.dashArray();
+    if(std::all_of(dashes.begin(), dashes.end(), [](double dash) { return !dash; })) {
+        cairo_set_dash(canvas, 0, 0, 0);
+    } else {
+        cairo_set_dash(canvas, dashes.data(), dashes.size(), strokeData.dashOffset());
+    }
+
     cairo_set_line_width(canvas, strokeData.lineWidth());
     cairo_set_miter_limit(canvas, strokeData.miterLimit());
-    cairo_set_dash(canvas, dashes.data(), dashes.size(), strokeData.dashOffset());
     switch(strokeData.lineCap()) {
     case LineCap::Butt:
         cairo_set_line_cap(canvas, CAIRO_LINE_CAP_BUTT);
