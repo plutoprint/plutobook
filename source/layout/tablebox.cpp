@@ -404,11 +404,8 @@ void TableBox::layout(FragmentBuilder* fragmentainer)
             float headerHeight = 0;
             float footerHeight = 0;
             if(isPaginatedTable() && !section->isTableHeader() && !section->isTableFooter()) {
-                if(header && header != section)
-                    headerHeight += header->height();
-                if(footer && footer != section) {
-                    footerHeight += footer->height();
-                }
+                if(header) headerHeight = header->height();
+                if(footer) footerHeight = footer->height();
             }
 
             section->setY(sectionTop);
