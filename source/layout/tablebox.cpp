@@ -201,12 +201,12 @@ float TableBox::unbreakableHeight(const FragmentBuilder* fragmentainer) const
         leadingHeight += m_borderVerticalSpacing;
         if(section->isTableHeader()) {
             if(auto sectionBelow = section->sectionBelow()) {
-                leadingHeight += m_borderVerticalSpacing + section->height();
+                leadingHeight += section->height() + m_borderVerticalSpacing;
                 section = sectionBelow;
             }
         }
 
-        auto unbreakableHeight = m_borderVerticalSpacing + section->unbreakableHeight(fragmentainer);
+        auto unbreakableHeight = section->unbreakableHeight(fragmentainer) + m_borderVerticalSpacing;
         if(isPaginatedTable() && !section->isTableFooter()) {
             if(auto footer = footerSection()) {
                 unbreakableHeight += footer->height();
@@ -351,7 +351,7 @@ void TableBox::layout(FragmentBuilder* fragmentainer)
         auto columnLeft = m_borderHorizontalSpacing;
         for(auto& column : m_columns) {
             column.setX(columnLeft);
-            columnLeft += m_borderHorizontalSpacing + column.width();
+            columnLeft += column.width() + m_borderHorizontalSpacing;
         }
 
         if(style()->isRightToLeftDirection()) {
@@ -393,7 +393,7 @@ void TableBox::layout(FragmentBuilder* fragmentainer)
         const auto* header = headerSection();
         const auto* footer = footerSection();
 
-        auto sectionTop = m_borderVerticalSpacing + height();
+        auto sectionTop = height() + m_borderVerticalSpacing;
         for(auto section : m_sections) {
             if(fragmentainer) {
                 sectionTop = fragmentainer->applyFragmentBreakBefore(section, sectionTop);
@@ -419,7 +419,7 @@ void TableBox::layout(FragmentBuilder* fragmentainer)
                 fragmentainer->leaveFragment(sectionTop);
             }
 
-            sectionTop += m_borderVerticalSpacing + section->height();
+            sectionTop += section->height() + m_borderVerticalSpacing;
             if(fragmentainer) {
                 sectionTop = fragmentainer->applyFragmentBreakAfter(section, sectionTop);
             }
@@ -1309,7 +1309,7 @@ void TableSectionBox::updateRowMaxHeights()
                 continue;
             auto height = rowBox->height();
             for(size_t index = 1; index < cell->rowSpan(); ++index)
-                height += verticalSpacing + m_rows[rowIndex + index]->height();
+                height += m_rows[rowIndex + index]->height() + verticalSpacing;
             cell->setOverrideHeight(height);
             maxHeight = std::max(maxHeight, height);
         }
@@ -1353,8 +1353,8 @@ void TableSectionBox::layoutRows(FragmentBuilder* fragmentainer, float headerHei
         if(fragmentainer) {
             if(auto box = rowAlwaysBreakBefore(rowBox, fragmentainer))
                 rowTop = fragmentainer->applyFragmentBreakBefore(box, rowTop);
-            auto rowHeight = verticalSpacing + rowBox->maxHeight();
-            auto unbreakableHeight = verticalSpacing + rowBox->unbreakableHeight(fragmentainer);
+            auto rowHeight = rowBox->maxHeight() + verticalSpacing;
+            auto unbreakableHeight = rowBox->unbreakableHeight(fragmentainer) + verticalSpacing;
             rowTop = fragmentainer->adjustOffsetInFragmentFlow(rowTop, rowHeight, unbreakableHeight);
 
             auto fragmentHeight = fragmentainer->fragmentHeightForOffset(rowTop);
@@ -1401,7 +1401,7 @@ void TableSectionBox::layoutRows(FragmentBuilder* fragmentainer, float headerHei
         }
 
         rowBox->updateOverflowRect();
-        rowTop += verticalSpacing + rowBox->height();
+        rowTop += rowBox->height() + verticalSpacing;
         if(fragmentainer) {
             if(footerHeight) {
                 auto rowBelow = rowBox->rowBelow();
@@ -1488,7 +1488,7 @@ void TableSectionBox::layout(FragmentBuilder* fragmentainer)
             const auto col = cell->columnIndex();
             auto width = columns[col].width();
             for(size_t index = 1; index < cell->colSpan(); ++index) {
-                width += horizontalSpacing + columns[col + index].width();
+                width += columns[col + index].width() + horizontalSpacing;
             }
 
             if(direction == Direction::Ltr) {
@@ -1530,7 +1530,7 @@ void TableSectionBox::layout(FragmentBuilder* fragmentainer)
 
     float sectionHeight = 0;
     for(auto rowBox : m_rows)
-        sectionHeight += verticalSpacing + rowBox->height();
+        sectionHeight += rowBox->height() + verticalSpacing;
     setHeight(sectionHeight - verticalSpacing);
 }
 
@@ -2225,7 +2225,7 @@ float TableCellBox::cellBaselinePosition() const
 {
     if(auto baseline = firstLineBaseline())
         return baseline.value();
-    return paddingTop() + borderTop() + contentBoxHeight();
+    return borderTop() + paddingTop() + contentBoxHeight();
 }
 
 float TableCellBox::heightForRowSizing() const
