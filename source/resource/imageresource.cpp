@@ -117,7 +117,7 @@ static cairo_surface_t* decodePngImage(const char* data, size_t size)
     struct ReadStream {
         const char* data;
         size_t size;
-    };
+    } stream = { data, size };
 
     auto read_func = [](void* closure, uint8_t* data, uint32_t length) -> cairo_status_t {
         auto stream = static_cast<ReadStream*>(closure);
@@ -129,7 +129,6 @@ static cairo_surface_t* decodePngImage(const char* data, size_t size)
         return CAIRO_STATUS_SUCCESS;
     };
 
-    ReadStream stream = { data, size };
     return cairo_image_surface_create_from_png_stream(read_func, &stream);
 }
 #endif // CAIRO_HAS_PNG_FUNCTIONS
