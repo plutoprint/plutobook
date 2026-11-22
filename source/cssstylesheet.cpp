@@ -567,8 +567,8 @@ FontVariationList FontDescriptionBuilder::variationSettings() const
         variationSettings.emplace_front(variation.tag(), variation.value());
     }
 
-    variationSettings.sort();
-    variationSettings.unique();
+    variationSettings.sort([](const auto& a, const auto& b) { return a.first < b.first; });
+    variationSettings.unique([](const auto& a, const auto& b) { return a.first == b.first; });
     return variationSettings;
 }
 
