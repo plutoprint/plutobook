@@ -1,6 +1,6 @@
 diff -urN cairo-1.18.4-original/src/cairo-scaled-font-subsets.c cairo-1.18.4/src/cairo-scaled-font-subsets.c
---- cairo-1.18.4-original/src/cairo-scaled-font-subsets.c	2025-03-08 13:35:35.000000000 +0100
-+++ cairo-1.18.4/src/cairo-scaled-font-subsets.c	2025-11-23 07:04:02.965885207 +0100
+--- cairo-1.18.4-original/src/cairo-scaled-font-subsets.c
++++ cairo-1.18.4/src/cairo-scaled-font-subsets.c
 @@ -929,6 +929,7 @@
                                                        &identity,
                                                        &identity,
@@ -8,10 +8,10 @@ diff -urN cairo-1.18.4-original/src/cairo-scaled-font-subsets.c cairo-1.18.4/src
 +            _cairo_font_options_fini (&font_options);
  	    if (unlikely (unscaled_font->status))
  		return unscaled_font->status;
- 
+
 diff -urN cairo-1.18.4-original/src/cairo-surface-wrapper.c cairo-1.18.4/src/cairo-surface-wrapper.c
---- cairo-1.18.4-original/src/cairo-surface-wrapper.c	2025-03-08 13:35:35.000000000 +0100
-+++ cairo-1.18.4/src/cairo-surface-wrapper.c	2025-11-23 06:56:34.103822822 +0100
+--- cairo-1.18.4-original/src/cairo-surface-wrapper.c
++++ cairo-1.18.4/src/cairo-surface-wrapper.c
 @@ -507,6 +507,7 @@
  					      dev_scaled_font,
  					      dev_clip);
@@ -20,3 +20,46 @@ diff -urN cairo-1.18.4-original/src/cairo-surface-wrapper.c cairo-1.18.4/src/cai
      _cairo_clip_destroy (dev_clip);
      if (dev_glyphs != stack_glyphs)
  	free (dev_glyphs);
+diff -urN cairo-1.18.4-original/src/cairo-surface.c cairo-1.18.4/src/cairo-surface.c
+--- cairo-1.18.4-original/src/cairo-surface.c
++++ cairo-1.18.4/src/cairo-surface.c
+@@ -2753,6 +2753,7 @@
+ 						&font_matrix,
+ 						&ctm,
+ 						&font_options);
++	_cairo_font_options_fini (&font_options);
+     }
+
+     if (source->type == CAIRO_PATTERN_TYPE_SOLID)
+diff -urN cairo-1.18.4-original/src/cairo-type1-fallback.c cairo-1.18.4/src/cairo-type1-fallback.c
+--- cairo-1.18.4-original/src/cairo-type1-fallback.c
++++ cairo-1.18.4/src/cairo-type1-fallback.c
+@@ -115,6 +115,7 @@
+ 							&font_matrix,
+ 							&ctm,
+ 							&font_options);
++    _cairo_font_options_fini (&font_options);
+     status = font->type1_scaled_font->status;
+     if (unlikely (status))
+         goto fail;
+diff -urN cairo-1.18.4-original/src/cairo-paginated-surface.c cairo-1.18.4/src/cairo-paginated-surface.c
+--- cairo-1.18.4-original/src/cairo-paginated-surface.c
++++ cairo-1.18.4/src/cairo-paginated-surface.c
+@@ -240,6 +240,7 @@
+
+     cairo_surface_get_font_options (&surface->base, &options);
+     _cairo_surface_set_font_options (image, &options);
++    _cairo_font_options_fini (&options);
+
+     return image;
+ }
+diff -urN cairo-1.18.4-original/src/cairo-script-surface.c cairo-1.18.4/src/cairo-script-surface.c
+--- cairo-1.18.4-original/src/cairo-script-surface.c
++++ cairo-1.18.4/src/cairo-script-surface.c
+@@ -3073,6 +3073,7 @@
+ 	_cairo_font_options_init_default (&options);
+ 	cairo_scaled_font_get_font_options (scaled_font, &options);
+ 	status = _emit_font_options (surface, &options);
++	_cairo_font_options_fini (&options);
+ 	if (unlikely (status))
+ 	    return status;
