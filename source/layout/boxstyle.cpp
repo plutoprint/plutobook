@@ -3343,6 +3343,8 @@ BoxStyle::BoxStyle(Node* node, const BoxStyle* parentStyle, PseudoType pseudoTyp
         m_writingMode = parentStyle->writingMode();
         for(const auto& [id, value] : parentStyle->properties()) {
             switch(id) {
+            case CSSPropertyID::BorderHorizontalSpacing:
+            case CSSPropertyID::BorderVerticalSpacing:
             case CSSPropertyID::Fill:
             case CSSPropertyID::FillOpacity:
             case CSSPropertyID::FontFeatureSettings:
