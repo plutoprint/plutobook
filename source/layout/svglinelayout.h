@@ -55,7 +55,6 @@ public:
 
 private:
     SVGTextPositionList& m_textPositions;
-    uint32_t m_itemIndex = 0;
 };
 
 class SVGTextContentElement;

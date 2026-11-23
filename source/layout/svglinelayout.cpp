@@ -30,7 +30,6 @@ void SVGLineItemsBuilder::enterInline(Box* box)
     if(box->isSVGTSpanBox()) {
         auto element = to<SVGTSpanBox>(*box).element();
         m_textPositions.emplace_back(element, m_data.text.length(), m_data.text.length());
-        m_itemIndex = m_textPositions.size();
     }
 }
 
@@ -38,9 +37,14 @@ void SVGLineItemsBuilder::exitInline(Box* box)
 {
     if(box->isSVGTSpanBox()) {
         auto element = to<SVGTSpanBox>(*box).element();
-        auto& position = m_textPositions[--m_itemIndex];
-        assert(position.element == element);
-        position.endOffset = m_data.text.length();
+        auto itemIndex = m_textPositions.size();
+        do {
+            auto& position = m_textPositions[--itemIndex];
+            if(position.element == element) {
+                position.endOffset = m_data.text.length();
+                break;
+            }
+        } while(itemIndex);
     }
 
     LineItemsBuilder::exitInline(box);
