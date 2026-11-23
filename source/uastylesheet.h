@@ -525,6 +525,7 @@ optgroup > option::before {
 select {
     background-color: lightgray;
     overflow: hidden;
+    box-sizing: border-box;
 }
 
 input, select, button, textarea {
@@ -555,7 +556,12 @@ input[type=button i], input[type=reset i], input[type=submit i], button {
     text-align: center;
     background-color: lightgray;
     border-radius: 2px;
-    min-width: 2ch;
+    min-width: calc(2ch + 6px);
+    box-sizing: border-box;
+}
+
+input[type=search i] {
+    box-sizing: border-box;
 }
 
 input::before {
@@ -577,8 +583,9 @@ input[type=checkbox i]::before, input[type=radio i]::before {
 
 input[type=checkbox i], input[type=radio i] {
     margin: 3px 3px 0 5px;
-    height: 16px;
-    width: 16px;
+    height: 22px;
+    width: 22px;
+    box-sizing: border-box;
 }
 
 input[type=checkbox i][checked]::before, input[type=radio i][checked]::before {
