@@ -604,7 +604,7 @@ hr {
 fieldset {
     display: block;
     margin-inline: 2px;
-    border: groove 2px;
+    border: groove 2px #efefef;
     padding-block: 0.35em 0.625em;
     padding-inline: 0.75em;
     min-inline-size: min-content;
