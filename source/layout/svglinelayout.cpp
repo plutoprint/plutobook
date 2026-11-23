@@ -460,21 +460,26 @@ void SVGTextFragmentsBuilder::startTextFragment(SVGTextFragment& fragment, const
 {
     const auto* style = fragment.element->style();
     const auto isTextOnPath = !m_textPath.isEmpty();
+    const auto isVerticalText = style->isVerticalWritingMode();
+    const auto isUprightText = style->isUprightTextOrientation();
 
     fragment.xShift = 0;
     fragment.yShift = 0;
     fragment.angle = position.rotate.value_or(0);
     if(isTextOnPath) {
         placeTextFragmentOnPath(fragment, position, baselineOffset);
+        if(isVerticalText && isUprightText) {
+            fragment.angle -= 90.f;
+            fragment.yShift += style->fontHeight();
+        }
     } else {
         placeTextFragment(fragment, position, baselineOffset);
-    }
-
-    if(style->isVerticalWritingMode()) {
-        if(style->isUprightTextOrientation()) {
-            fragment.y += style->fontHeight();
-        } else {
-            fragment.angle += isTextOnPath ? -90.f : 90.f;
+        if(isVerticalText) {
+            if(isUprightText) {
+                fragment.y += style->fontHeight();
+            } else {
+                fragment.angle += 90.f;
+            }
         }
     }
 
@@ -484,8 +489,14 @@ void SVGTextFragmentsBuilder::startTextFragment(SVGTextFragment& fragment, const
 
 void SVGTextFragmentsBuilder::placeTextFragmentOnPath(SVGTextFragment& fragment, const SVGCharacterPosition& position, float baselineOffset)
 {
-    if(fragment.element->style()->isVerticalWritingMode()) {
-        fragment.xShift += m_dx + baselineOffset;
+    const auto* style = fragment.element->style();
+    if(style->isVerticalWritingMode()) {
+        if(style->isUprightTextOrientation()) {
+            fragment.xShift += m_dx + baselineOffset;
+        } else {
+            fragment.yShift -= m_dx + baselineOffset;
+        }
+
         if(position.y.has_value())
             m_textPathCurrentOffset = m_textPathStartOffset + position.y.value();
         m_textPathCurrentOffset += m_dy;
@@ -540,7 +551,7 @@ void SVGTextFragmentsBuilder::recordTextFragment(SVGTextFragment& fragment, cons
     }
 
     if(!m_textPath.isEmpty()) {
-        m_textPathCurrentOffset += (isVerticalText && !isUprightText) ? fragment.height : fragment.width;
+        m_textPathCurrentOffset += (isVerticalText && isUprightText) ? fragment.height : fragment.width;
         const auto midpoint = (m_textPathFragmentOffset + m_textPathCurrentOffset) / 2.f;
         if(m_textPathFragmentOffset > m_textPathLength || midpoint < 0.f || midpoint > m_textPathLength) {
             return;
