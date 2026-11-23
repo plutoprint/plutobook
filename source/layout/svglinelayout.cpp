@@ -242,7 +242,8 @@ void SVGTextFragmentsBuilder::handleInlineStart(const LineItem& item)
     if(startOffset.type() == SVGLengthType::Percentage) {
         m_textPathStartOffset = m_textPathLength * (startOffset.value() / 100.f);
     } else {
-        m_textPathStartOffset = startOffset.value();
+        SVGLengthContext lengthContext(box->element());
+        m_textPathStartOffset = lengthContext.valueForLength(startOffset);
     }
 
     const auto* style = box->style();
