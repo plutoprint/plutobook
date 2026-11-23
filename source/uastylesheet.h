@@ -334,7 +334,7 @@ html, body {
 body { margin: 8px; }
 
 address, blockquote, center, details, dialog, div, figure, figcaption, footer,
-form, header, hr, legend, listing, main, p, plaintext, pre, summary, xmp {
+form, header, hr, legend, listing, main, p, plaintext, pre, search, summary, xmp {
     display: block;
 }
 
