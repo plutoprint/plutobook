@@ -546,6 +546,11 @@ textarea {
     font-family: monospace;
 }
 
+textarea[wrap=off i] {
+    white-space: pre;
+    overflow-wrap: normal;
+}
+
 input[type=button i], input[type=reset i], input[type=submit i], button {
     text-align: center;
     background-color: lightgray;
