@@ -364,6 +364,8 @@ dialog {
     color: black;
 }
 
+[popover]:not(dialog[open]) { display: none; }
+
 cite, dfn, em, i, var { font-style: italic; }
 b, strong { font-weight: bolder; }
 code, kbd, samp, tt { font-family: monospace; }
