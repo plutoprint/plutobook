@@ -92,6 +92,14 @@ private:
     void handleInlineEnd(const LineItem& item);
     void handleTextItem(const LineItem& item);
 
+    SVGCharacterPosition characterPositionAt(uint32_t characterOffset) const;
+    void updateCharacterShift(float dx, float dy, bool isVerticalText);
+    void startTextFragment(SVGTextFragment& fragment, const SVGCharacterPosition& position, float baselineOffset);
+    void placeTextFragmentOnPath(SVGTextFragment& fragment, const SVGCharacterPosition& position, float baselineOffset);
+    void placeTextFragment(SVGTextFragment& fragment, const SVGCharacterPosition& position, float baselineOffset);
+    void recordTextFragment(SVGTextFragment& fragment, const LineItem& item, uint32_t startOffset, uint32_t endOffset);
+    void applyCharacterSpacing(float spacing, bool isVerticalText);
+
     SVGTextFragmentList& m_fragments;
     const LineItemsData& m_data;
     const SVGCharacterPositions& m_positions;
@@ -100,6 +108,7 @@ private:
     float m_textPathLength = 0;
     float m_textPathStartOffset = 0;
     float m_textPathCurrentOffset = 0;
+    float m_textPathFragmentOffset = 0;
 
     uint32_t m_characterOffset = 0;
     float m_dx = 0;
