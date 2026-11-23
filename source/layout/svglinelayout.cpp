@@ -392,7 +392,6 @@ void SVGTextFragmentsBuilder::handleTextItem(const LineItem& item)
     auto textOffset = item.startOffset();
     auto didStartTextFragment = false;
     auto applySpacingToNextCharacter = false;
-    auto lastCharacter = 0u;
     auto lastAngle = 0.f;
 
     SVGTextFragment fragment(element);
@@ -418,10 +417,8 @@ void SVGTextFragmentsBuilder::handleTextItem(const LineItem& item)
         }
 
         auto spacing = letterSpacing;
-        if(currentCharacter && lastCharacter && wordSpacing) {
-            if(treatAsSpace(currentCharacter) && !treatAsSpace(lastCharacter)) {
-                spacing += wordSpacing;
-            }
+        if(wordSpacing && treatAsSpace(currentCharacter)) {
+            spacing += wordSpacing;
         }
 
         if(spacing) {
@@ -430,8 +427,6 @@ void SVGTextFragmentsBuilder::handleTextItem(const LineItem& item)
         }
 
         lastAngle = angle;
-        lastCharacter = currentCharacter;
-
         ++textOffset;
         ++m_characterOffset;
     }
