@@ -348,6 +348,7 @@ blockquote, figure {
 
 address { font-style: italic; }
 listing, plaintext, pre, xmp { font-family: monospace; white-space: pre; }
+pre[wrap] { white-space: pre-wrap; }
 
 dialog:not([open]) { display: none; }
 
