@@ -453,8 +453,7 @@ void SVGTextFragmentsBuilder::handleTextItem(const LineItem& item)
             startOffset = textOffset;
         }
 
-        auto startsNewTextChunk = (position.x || position.y) && textOffset == item.startOffset();
-        if(startsNewTextChunk || shouldStartNewFragment || !didStartTextFragment) {
+        if(shouldStartNewFragment || !didStartTextFragment) {
             fragment.xShift = 0;
             fragment.yShift = 0;
             fragment.angle = angle;
@@ -497,7 +496,7 @@ void SVGTextFragmentsBuilder::handleTextItem(const LineItem& item)
             }
 
             fragment.inTextPath = isTextOnPath;
-            fragment.startsNewTextChunk = startsNewTextChunk;
+            fragment.startsNewTextChunk = (position.x || position.y);
             didStartTextFragment = true;
         }
 
