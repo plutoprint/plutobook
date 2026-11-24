@@ -261,6 +261,7 @@ void SVGTextFragmentsBuilder::handleInlineStart(const LineItem& item)
     }
 
     m_textPathCurrentOffset = m_textPathStartOffset;
+    m_isTextOnPath = true;
 }
 
 void SVGTextFragmentsBuilder::handleInlineEnd(const LineItem& item)
@@ -272,6 +273,7 @@ void SVGTextFragmentsBuilder::handleInlineEnd(const LineItem& item)
     m_textPathLength = 0.f;
     m_textPathStartOffset = 0.f;
     m_textPathCurrentOffset = 0.f;
+    m_isTextOnPath = false;
 }
 
 static float calculateBaselineShift(const BoxStyle* style)
@@ -381,8 +383,8 @@ void SVGTextFragmentsBuilder::handleTextItem(const LineItem& item)
     const auto* element = elementForTextItem(item);
     const auto* style = element->style();
 
-    const auto isTextOnPath = !m_textPath.isEmpty();
-    const auto isVerticalText = style->isVerticalWritingMode();
+    m_isVerticalText = style->isVerticalWritingMode();
+    m_isUprightText = style->isUprightTextOrientation();
 
     auto needsTextLengthSpacing = element->lengthAdjust() == SVGLengthAdjustSpacing && element->hasAttribute(textLengthAttr);
     auto letterSpacing = style->letterSpacing();
@@ -402,9 +404,9 @@ void SVGTextFragmentsBuilder::handleTextItem(const LineItem& item)
         auto angle = position.rotate.value_or(0);
         auto dx = position.dx.value_or(0);
         auto dy = position.dy.value_or(0);
-        updateCharacterShift(dx, dy, isVerticalText);
+        updateCharacterShift(dx, dy);
 
-        auto shouldStartNewFragment = needsTextLengthSpacing || isTextOnPath || isVerticalText || applySpacingToNextCharacter
+        auto shouldStartNewFragment = needsTextLengthSpacing || m_isTextOnPath || m_isVerticalText || applySpacingToNextCharacter
             || position.x || position.y || dx || dy || angle || angle != lastAngle;
         if(shouldStartNewFragment && didStartTextFragment) {
             recordTextFragment(fragment, item, startOffset, textOffset);
@@ -423,7 +425,7 @@ void SVGTextFragmentsBuilder::handleTextItem(const LineItem& item)
         }
 
         if(spacing) {
-            applyCharacterSpacing(spacing, isVerticalText);
+            applyCharacterSpacing(spacing);
             applySpacingToNextCharacter = true;
         }
 
@@ -443,12 +445,12 @@ SVGCharacterPosition SVGTextFragmentsBuilder::characterPositionAt(uint32_t chara
     return it->second;
 }
 
-void SVGTextFragmentsBuilder::updateCharacterShift(float dx, float dy, bool isVerticalText)
+void SVGTextFragmentsBuilder::updateCharacterShift(float dx, float dy)
 {
-    if(m_textPath.isEmpty()) {
+    if(!m_isTextOnPath) {
         m_dx = dx;
         m_dy = dy;
-    } else if(isVerticalText) {
+    } else if(m_isVerticalText) {
         m_dx += dx;
         m_dy = dy;
     } else {
@@ -459,40 +461,34 @@ void SVGTextFragmentsBuilder::updateCharacterShift(float dx, float dy, bool isVe
 
 void SVGTextFragmentsBuilder::startTextFragment(SVGTextFragment& fragment, const SVGCharacterPosition& position, float baselineOffset)
 {
-    const auto* style = fragment.element->style();
-    const auto isTextOnPath = !m_textPath.isEmpty();
-    const auto isVerticalText = style->isVerticalWritingMode();
-    const auto isUprightText = style->isUprightTextOrientation();
-
     fragment.xShift = 0;
     fragment.yShift = 0;
     fragment.angle = position.rotate.value_or(0);
-    if(isTextOnPath) {
+    if(m_isTextOnPath) {
         placeTextFragmentOnPath(fragment, position, baselineOffset);
-        if(isVerticalText && isUprightText) {
+        if(m_isVerticalText && m_isUprightText) {
+            fragment.yShift += fragment.element->style()->fontHeight();
             fragment.angle -= 90.f;
-            fragment.yShift += style->fontHeight();
         }
     } else {
         placeTextFragment(fragment, position, baselineOffset);
-        if(isVerticalText) {
-            if(isUprightText) {
-                fragment.y += style->fontHeight();
+        if(m_isVerticalText) {
+            if(m_isUprightText) {
+                fragment.y += fragment.element->style()->fontHeight();
             } else {
                 fragment.angle += 90.f;
             }
         }
     }
 
-    fragment.inTextPath = isTextOnPath;
+    fragment.inTextPath = m_isTextOnPath;
     fragment.startsNewTextChunk = position.x || position.y;
 }
 
 void SVGTextFragmentsBuilder::placeTextFragmentOnPath(SVGTextFragment& fragment, const SVGCharacterPosition& position, float baselineOffset)
 {
-    const auto* style = fragment.element->style();
-    if(style->isVerticalWritingMode()) {
-        if(style->isUprightTextOrientation()) {
+    if(m_isVerticalText) {
+        if(m_isUprightText) {
             fragment.xShift += m_dx + baselineOffset;
         } else {
             fragment.yShift -= m_dx + baselineOffset;
@@ -521,7 +517,7 @@ void SVGTextFragmentsBuilder::placeTextFragment(SVGTextFragment& fragment, const
 {
     fragment.x = m_x = m_dx + position.x.value_or(m_x);
     fragment.y = m_y = m_dy + position.y.value_or(m_y);
-    if(fragment.element->style()->isVerticalWritingMode()) {
+    if(m_isVerticalText) {
         fragment.x += baselineOffset;
     } else {
         fragment.y -= baselineOffset;
@@ -538,21 +534,17 @@ void SVGTextFragmentsBuilder::recordTextFragment(SVGTextFragment& fragment, cons
         fragment.shape = TextShapeView(shape, item.endOffset() - endOffset, item.endOffset() - startOffset);
     }
 
-    const auto* style = fragment.element->style();
-    const auto isVerticalText = style->isVerticalWritingMode();
-    const auto isUprightText = style->isUprightTextOrientation();
-
     fragment.width = fragment.shape.width();
-    fragment.height = style->fontLineHeight();
+    fragment.height = fragment.element->style()->fontLineHeight();
 
-    if(isVerticalText) {
-        m_y += isUprightText ? fragment.height : fragment.width;
+    if(m_isVerticalText) {
+        m_y += m_isUprightText ? fragment.height : fragment.width;
     } else {
         m_x += fragment.width;
     }
 
-    if(!m_textPath.isEmpty()) {
-        m_textPathCurrentOffset += (isVerticalText && isUprightText) ? fragment.height : fragment.width;
+    if(m_isTextOnPath) {
+        m_textPathCurrentOffset += (m_isVerticalText && m_isUprightText) ? fragment.height : fragment.width;
         const auto midpoint = (m_textPathFragmentOffset + m_textPathCurrentOffset) / 2.f;
         if(m_textPathFragmentOffset > m_textPathLength || midpoint < 0.f || midpoint > m_textPathLength) {
             return;
@@ -562,10 +554,10 @@ void SVGTextFragmentsBuilder::recordTextFragment(SVGTextFragment& fragment, cons
     m_fragments.push_back(fragment);
 }
 
-void SVGTextFragmentsBuilder::applyCharacterSpacing(float spacing, bool isVerticalText)
+void SVGTextFragmentsBuilder::applyCharacterSpacing(float spacing)
 {
     m_textPathCurrentOffset += spacing;
-    if(isVerticalText) {
+    if(m_isVerticalText) {
         m_y += spacing;
     } else {
         m_x += spacing;
