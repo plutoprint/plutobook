@@ -246,17 +246,34 @@ void SVGTextFragmentsBuilder::handleInlineStart(const LineItem& item)
         m_textPathStartOffset = lengthContext.valueForLength(startOffset);
     }
 
-    const auto* style = box->style();
-    if(needsTextAnchorAdjustment(style)) {
-        float chunkLength = 0;
-        const auto* it = &item;
-        for(++it; box != it->box(); ++it) {
-            if(it->type() == LineItem::Type::NormalText && it->length()) {
-                const auto& shape = it->shapeText(m_data);
-                chunkLength += shape->width();
+    float chunkLength = 0;
+    uint32_t numCharacters = 0;
+    const auto* it = &item;
+    for(++it; box != it->box(); ++it) {
+        if(it->type() == LineItem::Type::NormalText && it->length()) {
+            const auto& shape = it->shapeText(m_data);
+            chunkLength += shape->width();
+            numCharacters += it->length();
+        }
+    }
+
+    const auto* element = box->element();
+    if(element->hasAttribute(textLengthAttr)) {
+        SVGLengthContext lengthContext(element);
+        auto textLength = lengthContext.valueForLength(element->textLength());
+        if(textLength > 0.f && chunkLength > 0.f) {
+            if(element->lengthAdjust() == SVGLengthAdjustSpacingAndGlyphs) {
+                m_textPathScaling = textLength / chunkLength;
+                chunkLength = textLength;
+            } else if(numCharacters > 1) {
+                m_textPathSpacing = (textLength - chunkLength) / (numCharacters - 1);
+                chunkLength = textLength;
             }
         }
+    }
 
+    const auto* style = box->style();
+    if(needsTextAnchorAdjustment(style)) {
         m_textPathStartOffset += calculateTextAnchorOffset(style, chunkLength);
     }
 
@@ -273,6 +290,8 @@ void SVGTextFragmentsBuilder::handleInlineEnd(const LineItem& item)
     m_textPathLength = 0.f;
     m_textPathStartOffset = 0.f;
     m_textPathCurrentOffset = 0.f;
+    m_textPathScaling = 1.f;
+    m_textPathSpacing = 0.f;
     m_isTextOnPath = false;
 }
 
@@ -556,10 +575,24 @@ void SVGTextFragmentsBuilder::recordTextFragment(SVGTextFragment& fragment, cons
     }
 
     if(m_isTextOnPath) {
-        m_textPathCurrentOffset += (m_isVerticalText && m_isUprightText) ? fragment.height : fragment.width;
+        const auto advance = (m_isVerticalText && m_isUprightText) ? fragment.height : fragment.width;
+        m_textPathCurrentOffset += advance * m_textPathScaling;
         const auto midpoint = (m_textPathFragmentOffset + m_textPathCurrentOffset) / 2.f;
+        m_textPathCurrentOffset += m_textPathSpacing;
         if(m_textPathFragmentOffset > m_textPathLength || midpoint < 0.f || midpoint > m_textPathLength) {
             return;
+        }
+
+        if(m_textPathScaling != 1.f) {
+            auto lengthAdjustTransform = Transform::makeTranslate(fragment.x, fragment.y);
+            if(m_isVerticalText && m_isUprightText) {
+                lengthAdjustTransform.scale(1.f, m_textPathScaling);
+            } else {
+                lengthAdjustTransform.scale(m_textPathScaling, 1.f);
+            }
+
+            lengthAdjustTransform.translate(-fragment.x, -fragment.y);
+            fragment.lengthAdjustTransform = lengthAdjustTransform;
         }
     }
 

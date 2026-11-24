@@ -109,6 +109,8 @@ private:
     float m_textPathStartOffset = 0;
     float m_textPathCurrentOffset = 0;
     float m_textPathFragmentOffset = 0;
+    float m_textPathScaling = 1;
+    float m_textPathSpacing = 0;
 
     bool m_isTextOnPath = false;
     bool m_isVerticalText = false;
