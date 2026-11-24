@@ -112,6 +112,8 @@ static float calculateTextChunkLength(SVGTextFragmentIterator begin, SVGTextFrag
     const SVGTextFragment* lastFragment = nullptr;
     for(auto it = begin; it != end; ++it) {
         const SVGTextFragment& fragment = *it;
+        if(fragment.inTextPath)
+            continue;
         chunkLength += isVerticalText ? fragment.height : fragment.width;
         if(!lastFragment) {
             lastFragment = &fragment;
@@ -153,7 +155,9 @@ static void handleTextChunk(SVGTextFragmentIterator begin, SVGTextFragmentIterat
             size_t numCharacters = 0;
             for(auto it = begin; it != end; ++it) {
                 const SVGTextFragment& fragment = *it;
-                numCharacters += fragment.shape.length();
+                if(!fragment.inTextPath) {
+                    numCharacters += fragment.shape.length();
+                }
             }
 
             if(textFragment->element->lengthAdjust() == SVGLengthAdjustSpacingAndGlyphs) {
@@ -168,7 +172,9 @@ static void handleTextChunk(SVGTextFragmentIterator begin, SVGTextFragmentIterat
                 lengthAdjustTransform.translate(-textFragment->x, -textFragment->y);
                 for(auto it = begin; it != end; ++it) {
                     SVGTextFragment& fragment = *it;
-                    fragment.lengthAdjustTransform = lengthAdjustTransform;
+                    if(!fragment.inTextPath) {
+                        fragment.lengthAdjustTransform = lengthAdjustTransform;
+                    }
                 }
             } else if(numCharacters > 1) {
                 assert(textFragment->element->lengthAdjust() == SVGLengthAdjustSpacing);
@@ -176,6 +182,8 @@ static void handleTextChunk(SVGTextFragmentIterator begin, SVGTextFragmentIterat
                 auto textLengthShift = (textLength - chunkLength) / (numCharacters - 1);
                 for(auto it = begin; it != end; ++it) {
                     SVGTextFragment& fragment = *it;
+                    if(fragment.inTextPath)
+                        continue;
                     if(isVerticalText) {
                         fragment.y += textLengthShift * characterOffset;
                     } else {
@@ -193,6 +201,8 @@ static void handleTextChunk(SVGTextFragmentIterator begin, SVGTextFragmentIterat
         auto chunkOffset = calculateTextAnchorOffset(style, chunkLength);
         for(auto it = begin; it != end; ++it) {
             SVGTextFragment& fragment = *it;
+            if(fragment.inTextPath)
+                continue;
             if(isVerticalText) {
                 fragment.y += chunkOffset;
             } else {
