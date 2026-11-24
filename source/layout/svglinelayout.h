@@ -62,6 +62,8 @@ class SVGTextContentElement;
 struct SVGTextFragment {
     explicit SVGTextFragment(const SVGTextContentElement* element) : element(element) {}
 
+    Transform transform() const;
+
     const SVGTextContentElement* element;
     TextShapeView shape;
     Transform lengthAdjustTransform;
@@ -78,6 +80,13 @@ struct SVGTextFragment {
     float xShift = 0;
     float yShift = 0;
 };
+
+inline Transform SVGTextFragment::transform() const
+{
+    if(inTextPath)
+        return Transform::makeRotate(angle, x, y) * lengthAdjustTransform;
+    return lengthAdjustTransform * Transform::makeRotate(angle, x + xShift, y + yShift);
+}
 
 using SVGTextFragmentList = std::pmr::vector<SVGTextFragment>;
 

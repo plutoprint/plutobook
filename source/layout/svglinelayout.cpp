@@ -523,7 +523,7 @@ void SVGTextFragmentsBuilder::startTextFragment(SVGTextFragment& fragment, const
         placeTextFragment(fragment, position, baselineOffset);
         if(m_isVerticalText) {
             if(m_isUprightText) {
-                fragment.y += fragment.element->style()->fontHeight();
+                fragment.yShift += fragment.element->style()->fontHeight();
             } else {
                 fragment.angle += 90.f;
             }
@@ -641,14 +641,13 @@ Rect SVGLineLayout::boundingRect(bool includeStroke) const
         auto style = fragment.element->style();
         auto origin = Point(fragment.x + fragment.xShift, fragment.y + fragment.yShift);
         auto fragmentRect = Rect(origin.x, origin.y - style->fontAscent(), fragment.width, style->fontHeight());
-        auto fragmentTranform = Transform::makeRotate(fragment.angle, fragment.x, fragment.y) * fragment.lengthAdjustTransform;
         if(includeStroke && style->hasStroke()) {
             SVGLengthContext lengthContext(fragment.element);
             auto strokeWidth = lengthContext.valueForLength(style->strokeWidth());
             fragmentRect.inflate(strokeWidth / 2.f);
         }
 
-        boundingRect.unite(fragmentTranform.mapRect(fragmentRect));
+        boundingRect.unite(fragment.transform().mapRect(fragmentRect));
     }
 
     if(!boundingRect.isValid())
@@ -690,12 +689,10 @@ static void paintTextFragment(const SVGRenderState& state, const SVGTextFragment
     const auto* style = fragment.element->style();
     if(style->visibility() != Visibility::Visible)
         return;
-    auto origin = Point(fragment.x + fragment.xShift, fragment.y + fragment.yShift);
-    auto transform = Transform::makeRotate(fragment.angle, fragment.x, fragment.y) * fragment.lengthAdjustTransform;
-
     state->save();
-    state->addTransform(transform);
+    state->addTransform(fragment.transform());
 
+    Point origin(fragment.x + fragment.xShift, fragment.y + fragment.yShift);
     if(state.mode() == SVGRenderMode::Clipping) {
         state->setColor(Color::White);
         fragment.shape.draw(*state, origin, 0.f, false);
