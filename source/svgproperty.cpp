@@ -421,7 +421,7 @@ bool SVGNumberList::parse(std::string_view input)
         float value = 0.f;
         if(!parseNumber(input, value))
             return false;
-        skipOptionalSpaces(input);
+        skipOptionalSpacesOrComma(input);
         m_values.push_back(value);
     }
 
