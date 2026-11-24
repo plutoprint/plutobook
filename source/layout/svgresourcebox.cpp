@@ -242,13 +242,14 @@ void SVGResourceMaskerBox::applyMask(const SVGRenderState& state) const
     }
 
     auto maskImage = ImageBuffer::create(state.currentTransform().mapRect(state.paintBoundingBox()));
-    GraphicsContext context(maskImage->canvas());
-    context.addTransform(state.currentTransform());
-    context.clipRect(maskRect);
-    if(element()->maskContentUnits() == SVGUnitsTypeObjectBoundingBox) {
-        context.addTransform(makeObjectBoundingBoxTransform(state.fillBoundingBox()));
-    }
-    {
+    if(!maskRect.isEmpty()) {
+        GraphicsContext context(maskImage->canvas());
+        context.addTransform(state.currentTransform());
+        context.clipRect(maskRect);
+        if(element()->maskContentUnits() == SVGUnitsTypeObjectBoundingBox) {
+            context.addTransform(makeObjectBoundingBoxTransform(state.fillBoundingBox()));
+        }
+
         SVGBlendInfo blendInfo(m_clipper, m_masker, 1.f, BlendMode::Normal);
         SVGRenderState newState(blendInfo, this, state, state.mode(), context);
         renderChildren(newState);
@@ -298,20 +299,19 @@ bool SVGResourcePatternBox::applyPaint(const SVGRenderState& state, float opacit
         patternRect.h = patternRect.h * bbox.h;
     }
 
-    if(patternRect.isEmpty())
-        return false;
     cairo_rectangle_t rectangle = {0, 0, patternRect.w, patternRect.h};
     auto surface = cairo_recording_surface_create(CAIRO_CONTENT_COLOR_ALPHA, &rectangle);
     auto canvas = cairo_create(surface);
 
-    GraphicsContext context(canvas);
-    if(m_attributes.viewBox().isValid()) {
-        context.addTransform(m_attributes.preserveAspectRatio().getTransform(m_attributes.viewBox(), patternRect.size()));
-    } else if(m_attributes.patternContentUnits() == SVGUnitsTypeObjectBoundingBox) {
-        const auto bbox = state.fillBoundingBox();
-        context.scale(bbox.w, bbox.h);
-    }
-    {
+    if(!patternRect.isEmpty()) {
+        GraphicsContext context(canvas);
+        if(m_attributes.viewBox().isValid()) {
+            context.addTransform(m_attributes.preserveAspectRatio().getTransform(m_attributes.viewBox(), patternRect.size()));
+        } else if(m_attributes.patternContentUnits() == SVGUnitsTypeObjectBoundingBox) {
+            const auto bbox = state.fillBoundingBox();
+            context.scale(bbox.w, bbox.h);
+        }
+
         SVGBlendInfo blendInfo(m_clipper, m_masker, opacity, BlendMode::Normal);
         SVGRenderState newState(blendInfo, this, state, SVGRenderMode::Painting, context);
         patternContentBox->renderChildren(newState);
