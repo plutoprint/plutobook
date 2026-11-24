@@ -376,6 +376,18 @@ static const SVGTextContentElement* elementForTextItem(const LineItem& item)
     return static_cast<SVGTextContentElement*>(parent->node());
 }
 
+static bool isTextLengthSpacingInEffect(const Box* box)
+{
+    while(box->isSVGInlineBox() || box->isSVGTextBox()) {
+        const auto* element = static_cast<const SVGTextContentElement*>(box->node());
+        if(element->lengthAdjust() == SVGLengthAdjustSpacing && element->hasAttribute(textLengthAttr))
+            return true;
+        box = box->parentBox();
+    }
+
+    return false;
+}
+
 void SVGTextFragmentsBuilder::handleTextItem(const LineItem& item)
 {
     if(item.length() == 0)
@@ -386,7 +398,7 @@ void SVGTextFragmentsBuilder::handleTextItem(const LineItem& item)
     m_isVerticalText = style->isVerticalWritingMode();
     m_isUprightText = style->isUprightTextOrientation();
 
-    auto needsTextLengthSpacing = element->lengthAdjust() == SVGLengthAdjustSpacing && element->hasAttribute(textLengthAttr);
+    auto needsTextLengthSpacing = isTextLengthSpacingInEffect(element->box());
     auto letterSpacing = style->letterSpacing();
     auto wordSpacing = style->wordSpacing();
 
