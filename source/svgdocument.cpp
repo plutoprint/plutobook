@@ -275,13 +275,12 @@ Box* SVGSVGElement::createBox(const RefPtr<BoxStyle>& style)
 
 bool SVGSVGElement::shouldSynthesizeViewBox() const
 {
-    return isSVGRootNode() && document()->isSVGDocument();
+    return !viewBox().isValid() && isSVGRootNode() && document()->isSVGDocument();
 }
 
 Rect SVGSVGElement::currentViewBoxRect() const
 {
-    const auto& viewBoxRect = viewBox();
-    if(viewBoxRect.isEmpty() && shouldSynthesizeViewBox()) {
+    if(shouldSynthesizeViewBox()) {
         SVGLengthContext lengthContext(this);
         const Size synthesizedViewBoxSize = {
             lengthContext.valueForLength(m_width),
@@ -291,12 +290,12 @@ Rect SVGSVGElement::currentViewBoxRect() const
         return Rect(synthesizedViewBoxSize);
     }
 
-    return viewBoxRect;
+    return viewBox();
 }
 
 const SVGPreserveAspectRatio& SVGSVGElement::currentPreserveAspectRatio() const
 {
-    if(!viewBox().isValid() && shouldSynthesizeViewBox()) {
+    if(shouldSynthesizeViewBox()) {
         static SVGPreserveAspectRatio synthesizedPreserveAspectRatio(SVGPreserveAspectRatio::AlignType::None);
         return synthesizedPreserveAspectRatio;
     }
