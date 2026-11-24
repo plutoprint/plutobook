@@ -1009,7 +1009,7 @@ Transform SVGPreserveAspectRatio::getTransform(const Rect& viewBoxRect, const Si
 
 void SVGPreserveAspectRatio::transformRect(Rect& dstRect, Rect& srcRect) const
 {
-    if(m_alignType == AlignType::None)
+    if(m_alignType == AlignType::None || dstRect.isEmpty() || srcRect.isEmpty())
         return;
     auto viewSize = dstRect.size();
     auto imageSize = srcRect.size();
