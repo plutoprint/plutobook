@@ -63,8 +63,9 @@ public:
 
     const Rect& viewBox() const { return m_viewBox.value(); }
     const SVGPreserveAspectRatio& preserveAspectRatio() const { return m_preserveAspectRatio; }
-
     Rect getClipRect(const Size& viewportSize) const;
+
+    bool hasEmptyViewBox() const { return viewBox().isValid() && viewBox().isEmpty(); }
 
 private:
     SVGRect m_viewBox;

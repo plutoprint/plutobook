@@ -65,7 +65,7 @@ Rect SVGResourceMarkerBox::markerBoundingBox(const Point& origin, float angle, f
 
 void SVGResourceMarkerBox::renderMarker(const SVGRenderState& state, const Point& origin, float angle, float strokeWidth) const
 {
-    if(state.hasCycleReference(this))
+    if(state.hasCycleReference(this) || element()->hasEmptyViewBox())
         return;
     SVGBlendInfo blendInfo(m_clipper, m_masker, style());
     SVGRenderState newState(blendInfo, this, state, markerTransform(origin, angle, strokeWidth));
@@ -279,6 +279,8 @@ void SVGResourcePatternBox::build()
 bool SVGResourcePatternBox::applyPaint(const SVGRenderState& state, float opacity) const
 {
     if(state.hasCycleReference(this))
+        return false;
+    if(m_attributes.viewBox().isValid() && m_attributes.viewBox().isEmpty())
         return false;
     auto patternContentBox = to<SVGResourcePatternBox>(m_attributes.patternContentElement()->box());
     if(patternContentBox == nullptr || !patternContentBox->firstChild())

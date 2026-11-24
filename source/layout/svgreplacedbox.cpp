@@ -96,6 +96,8 @@ float SVGRootBox::computeReplacedHeight() const
 
 void SVGRootBox::paintReplaced(const PaintInfo& info, const Point& offset)
 {
+    if(element()->hasEmptyViewBox())
+        return;
     const RectOutsets outsets = {
         borderTop() + paddingTop(),
         borderRight() + paddingRight(),
@@ -147,7 +149,7 @@ void SVGRootBox::layout(FragmentBuilder* fragmentainer)
         }
     }
 
-    if(!isOverflowHidden()) {
+    if(!isOverflowHidden() && !element()->hasEmptyViewBox()) {
         auto contentRect = contentBoxRect();
         auto localTransform = Transform::makeTranslate(contentRect.x, contentRect.y);
         localTransform.multiply(element()->viewBoxToViewTransform(contentRect.size()));
