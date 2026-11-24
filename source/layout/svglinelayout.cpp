@@ -104,6 +104,13 @@ static float calculateTextAnchorOffset(const BoxStyle* style, float width)
     return 0.f;
 }
 
+static float calculateTextFragmentAdvance(const SVGTextFragment& fragment, bool isVerticalText)
+{
+    if(isVerticalText && fragment.element->style()->isUprightTextOrientation())
+        return fragment.height;
+    return fragment.width;
+}
+
 using SVGTextFragmentIterator = SVGTextFragmentList::iterator;
 
 static float calculateTextChunkLength(SVGTextFragmentIterator begin, SVGTextFragmentIterator end, bool isVerticalText)
@@ -114,16 +121,17 @@ static float calculateTextChunkLength(SVGTextFragmentIterator begin, SVGTextFrag
         const SVGTextFragment& fragment = *it;
         if(fragment.inTextPath)
             continue;
-        chunkLength += isVerticalText ? fragment.height : fragment.width;
+        chunkLength += calculateTextFragmentAdvance(fragment, isVerticalText);
         if(!lastFragment) {
             lastFragment = &fragment;
             continue;
         }
 
+        auto advance = calculateTextFragmentAdvance(*lastFragment, isVerticalText);
         if(isVerticalText) {
-            chunkLength += fragment.y - (lastFragment->y + lastFragment->height);
+            chunkLength += fragment.y - (lastFragment->y + advance);
         } else {
-            chunkLength += fragment.x - (lastFragment->x + lastFragment->width);
+            chunkLength += fragment.x - (lastFragment->x + advance);
         }
 
         lastFragment = &fragment;
