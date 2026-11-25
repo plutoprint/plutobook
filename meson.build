@@ -102,6 +102,10 @@ plutobook_deps = [
     cairo_dep
 ]
 
+if icuuc_dep.type_name() == 'internal'
+    plutobook_deps += dependency('icu-data').as_link_whole()
+endif
+
 cairo_required_features = [
     'cairo-pdf',
     'cairo-png',

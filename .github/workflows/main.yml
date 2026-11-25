@@ -139,6 +139,104 @@ jobs:
           name: plutobook-win-x64
           path: plutobook-win-x64.zip
 
+  build-macos:
+    runs-on: macos-latest
+    if: github.ref_type == 'tag' || contains(github.event.head_commit.message, '[build:macos]')
+    env:
+      MACOSX_DEPLOYMENT_TARGET: '14.0'
+      CCACHE_DIR: ${{ github.workspace }}/.ccache
+      CCACHE_MAXSIZE: 500M
+      CMAKE_IGNORE_PREFIX_PATH: /opt/homebrew
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Install build tools
+        run: brew install meson ninja ccache
+
+      - name: Cache ccache
+        uses: actions/cache@v6
+        with:
+          path: .ccache
+          key: ccache-${{ github.job }}-${{ github.sha }}
+          restore-keys: ccache-${{ github.job }}-
+
+      - name: Use system curl
+        run: |
+          sdk=$(xcrun --show-sdk-path)
+          version=$(awk -F'"' '/#define LIBCURL_VERSION /{ print $2 }' "$sdk/usr/include/curl/curlver.h")
+          mkdir -p "$RUNNER_TEMP/pkgconfig"
+          printf 'Name: libcurl\nDescription: macOS system libcurl\nVersion: %s\nCflags: -I%s/usr/include\nLibs: -lcurl\n' \
+            "$version" "$sdk" > "$RUNNER_TEMP/pkgconfig/libcurl.pc"
+          cat "$RUNNER_TEMP/pkgconfig/libcurl.pc"
+
+          echo "PKG_CONFIG_LIBDIR=$RUNNER_TEMP/pkgconfig" >> "$GITHUB_ENV"
+
+      - name: Setup and Build
+        run: |
+          meson wrap update-db
+          meson setup build \
+            --prefix=/usr/local \
+            --buildtype=release \
+            --prefer-static \
+            --force-fallback-for=expat,icu-uc,freetype2,fontconfig,harfbuzz,cairo,pixman-1,libpng,libturbojpeg,libwebp \
+            -Dicu:default_library=static \
+            -Dpixman:default_library=static \
+            -Dlibpng:default_library=static \
+            -Dlibjpeg-turbo:default_library=static \
+            -Dlibwebp:default_library=static
+          meson compile -C build
+          meson install -C build --strip --destdir="$PWD/stage"
+          ccache --show-stats
+
+      - name: Create artifact
+        run: |
+          stage="$PWD/stage/usr/local"
+          mkdir -p plutobook-macos-arm64/{lib,include,tools,licenses,etc}
+          cp -R "$stage"/include/plutobook* plutobook-macos-arm64/include/
+          cp -R "$stage"/etc/fonts plutobook-macos-arm64/etc/
+          cp -R licenses/* plutobook-macos-arm64/licenses/
+          cp -v CREDITS LICENSE plutobook-macos-arm64/
+
+          lib=$(basename "$(otool -D "$stage"/lib/libplutobook.dylib | tail -n 1)")
+          cp -v "$stage/lib/$lib" plutobook-macos-arm64/lib/
+          ln -s "$lib" plutobook-macos-arm64/lib/libplutobook.dylib
+          install_name_tool -id "@rpath/$lib" "plutobook-macos-arm64/lib/$lib"
+
+          for tool in html2pdf html2png; do
+            cp -v "$stage/bin/$tool" plutobook-macos-arm64/tools/
+            old=$(otool -L "plutobook-macos-arm64/tools/$tool" | awk '/libplutobook/ { print $1 }')
+            install_name_tool -change "$old" "@rpath/$lib" "plutobook-macos-arm64/tools/$tool"
+            install_name_tool -add_rpath @executable_path/../lib "plutobook-macos-arm64/tools/$tool"
+          done
+
+          for file in "plutobook-macos-arm64/lib/$lib" plutobook-macos-arm64/tools/*; do
+            codesign --force --sign - "$file"
+            echo "--- $file"
+            otool -L "$file"
+            vtool -show-build "$file" | grep -E "platform|minos"
+            if otool -L "$file" | tail -n +2 | grep -v -E "^\s+(/usr/lib/|/System/|@rpath/)"; then
+              echo "error: $file links a library outside the system"
+              exit 1
+            fi
+            if [ "$(vtool -show-build "$file" | awk '/minos/ { print $2 }')" != "14.0" ]; then
+              echo "error: $file does not target macOS 14.0"
+              exit 1
+            fi
+          done
+
+          echo '<p>Hello from plutobook</p>' > hello.html
+          FONTCONFIG_PATH="$PWD/plutobook-macos-arm64/etc/fonts" plutobook-macos-arm64/tools/html2pdf hello.html hello.pdf
+          test -s hello.pdf
+
+          tar -czvf plutobook-macos-arm64.tar.gz plutobook-macos-arm64/
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: plutobook-macos-arm64
+          path: plutobook-macos-arm64.tar.gz
+
   build-docker:
     runs-on: ubuntu-latest
     if: github.ref_type == 'tag' || contains(github.event.head_commit.message, '[build:docker]')
@@ -230,7 +328,7 @@ jobs:
           path: plutobook-linux-x64.tar.gz
 
   release:
-    needs: [build-windows, build-linux]
+    needs: [build-windows, build-linux, build-macos]
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/v')
     permissions:
@@ -251,6 +349,7 @@ jobs:
 
           mv -v plutobook-win-x64.zip "plutobook-${TAG_VERSION}-win-x64.zip"
           mv -v plutobook-linux-x64.tar.gz "plutobook-${TAG_VERSION}-linux-x64.tar.gz"
+          mv -v plutobook-macos-arm64.tar.gz "plutobook-${TAG_VERSION}-macos-arm64.tar.gz"
 
           sed -n "/^## PlutoBook $TAG_VERSION/,/^## PlutoBook /{
             /^## PlutoBook $TAG_VERSION/b
