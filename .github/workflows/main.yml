@@ -237,89 +237,106 @@ jobs:
           name: plutobook-macos-arm64
           path: plutobook-macos-arm64.tar.gz
 
-  build-docker:
-    runs-on: ubuntu-latest
-    if: github.ref_type == 'tag' || contains(github.event.head_commit.message, '[build:docker]')
-    permissions:
-      contents: read
-      packages: write
-      id-token: write
-    outputs:
-      digest: ${{ steps.push.outputs.digest }}
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v7
-
-      - name: Login to GHCR
-        uses: docker/login-action@v4
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Extract Docker meta
-        id: meta
-        uses: docker/metadata-action@v6
-        with:
-          images: ghcr.io/${{ github.repository_owner }}/plutobook-manylinux_2_28_x86_64
-
-      - name: Build and Push Docker image
-        uses: docker/build-push-action@v7
-        id: push
-        with:
-          context: .
-          file: docker/manylinux_2_28_x86_64.Dockerfile
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-
   build-linux:
-    needs: [build-docker]
     runs-on: ubuntu-latest
+    if: github.ref_type == 'tag' || contains(github.event.head_commit.message, '[build:linux]')
     container:
-      image: ghcr.io/${{ github.repository_owner }}/plutobook-manylinux_2_28_x86_64@${{ needs.build-docker.outputs.digest }}
-
+      image: almalinux:8
     steps:
+      - name: Install build tools
+        run: |
+          dnf -y install dnf-plugins-core epel-release
+          dnf config-manager --set-enabled powertools
+          dnf -y install gcc-toolset-14-gcc gcc-toolset-14-gcc-c++ gcc-toolset-14-binutils \
+            python3.12 python3.12-pip libcurl-devel zlib-devel gperf \
+            fontconfig dejavu-sans-fonts tar gzip patch ccache
+          python3.12 -m pip install meson ninja patchelf
+          echo /opt/rh/gcc-toolset-14/root/usr/bin >> "$GITHUB_PATH"
+
       - name: Checkout code
         uses: actions/checkout@v7
+
+      - name: Cache ccache
+        uses: actions/cache@v6
+        with:
+          path: .ccache
+          key: ccache-${{ github.job }}-${{ github.sha }}
+          restore-keys: ccache-${{ github.job }}-
+
+      - name: Use system curl
+        run: |
+          mkdir -p "$RUNNER_TEMP/pkgconfig"
+          printf 'Name: libcurl\nDescription: system libcurl\nVersion: %s\nCflags:\nLibs: -lcurl\n' \
+            "$(curl-config --version | awk '{ print $2 }')" > "$RUNNER_TEMP/pkgconfig/libcurl.pc"
+          cat "$RUNNER_TEMP/pkgconfig/libcurl.pc"
+
+          echo "PKG_CONFIG_LIBDIR=$RUNNER_TEMP/pkgconfig" >> "$GITHUB_ENV"
+          echo "CCACHE_DIR=$GITHUB_WORKSPACE/.ccache" >> "$GITHUB_ENV"
+          echo "CCACHE_MAXSIZE=500M" >> "$GITHUB_ENV"
+
+      - name: Setup and Build
+        run: |
+          meson wrap update-db
+          meson setup build \
+            --prefix=/usr \
+            --libdir=lib \
+            --buildtype=release \
+            --prefer-static \
+            --force-fallback-for=expat,icu-uc,freetype2,fontconfig,harfbuzz,cairo,pixman-1,libpng,libturbojpeg,libwebp \
+            -Dicu:default_library=static \
+            -Dpixman:default_library=static \
+            -Dlibpng:default_library=static \
+            -Dlibjpeg-turbo:default_library=static \
+            -Dlibwebp:default_library=static
+          meson compile -C build
+          meson install -C build --strip --destdir="$PWD/stage"
+          ccache --show-stats
+
       - name: Create artifact
         run: |
-          dnf -y install patchelf pax-utils binutils
-
+          stage="$PWD/stage/usr"
           mkdir -p plutobook-linux-x64/{lib,include,tools,licenses}
-          cp -r /usr/include/plutobook* plutobook-linux-x64/include/
-          cp /usr/bin/html2pdf /usr/bin/html2png plutobook-linux-x64/tools/
-          cp -r licenses/* plutobook-linux-x64/licenses/
+          cp -R "$stage"/include/plutobook* plutobook-linux-x64/include/
+          cp -R licenses/* plutobook-linux-x64/licenses/
           cp -v CREDITS LICENSE plutobook-linux-x64/
+          cp -av "$stage"/lib/libplutobook.so* plutobook-linux-x64/lib/
 
-          tools="html2pdf html2png"
-          libraries=$( for tool in $tools; do lddtree -l /usr/bin/$tool; done \
-            | grep -v '^/usr/bin/' \
-            | grep -v -e 'libgcc_s.so.1' \
-                      -e 'libresolv.so.2' \
-                      -e 'libpthread.so.0' \
-                      -e 'libm.so.6' \
-                      -e 'libdl.so.2' \
-                      -e 'libc.so.6' \
-                      -e 'librt.so.1' \
-                      -e 'libz.so.1' \
-                      -e 'ld-linux-x86-64.so.2' \
-                      -e 'libstdc++.so.6' \
-            | sort -u)
-
-          for lib in $libraries; do
-            cp -v $lib plutobook-linux-x64/lib/
-            patchelf --set-rpath '$ORIGIN' plutobook-linux-x64/lib/$(basename $lib)
-            strip --strip-unneeded plutobook-linux-x64/lib/$(basename $lib)
+          for tool in html2pdf html2png; do
+            cp -v "$stage/bin/$tool" plutobook-linux-x64/tools/
+            patchelf --set-rpath '$ORIGIN/../lib' "plutobook-linux-x64/tools/$tool"
           done
 
-          for tool in $tools; do
-            patchelf --set-rpath '$ORIGIN/../lib' plutobook-linux-x64/tools/$tool
-            strip --strip-unneeded plutobook-linux-x64/tools/$tool
+          allowed='^(libplutobook\.so\.0|libcurl\.so\.4|libz\.so\.1|libstdc\+\+\.so\.6|libgcc_s\.so\.1|libm\.so\.6|libc\.so\.6|libpthread\.so\.0|libdl\.so\.2|librt\.so\.1|ld-linux-x86-64\.so\.2)$'
+          for file in $(find plutobook-linux-x64/lib plutobook-linux-x64/tools -type f); do
+            echo "--- $file"
+            needed=$(readelf -d "$file" | awk -F'[][]' '/NEEDED/ { print $2 }')
+            echo "$needed"
+            if echo "$needed" | grep -v -E "$allowed"; then
+              echo "error: $file links a library outside the system"
+              exit 1
+            fi
+            glibc=$(objdump -T "$file" | grep -oE 'GLIBC_[0-9.]+' | sed 's/GLIBC_//' | sort -uV | tail -n 1)
+            echo "newest glibc symbol: $glibc"
+            if [ "$(printf '%s\n2.28\n' "$glibc" | sort -V | tail -n 1)" != "2.28" ]; then
+              echo "error: $file needs glibc newer than 2.28"
+              exit 1
+            fi
+            for abi in GLIBCXX:3.4.25 CXXABI:1.3.11; do
+              name=${abi%%:*}; max=${abi#*:}
+              newest=$(objdump -T "$file" | grep -oE "${name}_[0-9.]+" | sed "s/${name}_//" | sort -uV | tail -n 1)
+              echo "newest $name symbol: ${newest:-none}"
+              if [ -n "$newest" ] && [ "$(printf '%s\n%s\n' "$newest" "$max" | sort -V | tail -n 1)" != "$max" ]; then
+                echo "error: $file needs a libstdc++ newer than the one in RHEL 8 (gcc 8)"
+                exit 1
+              fi
+            done
           done
 
-          tar -czhvf plutobook-linux-x64.tar.gz plutobook-linux-x64/
+          echo '<p>Hello from plutobook</p>' > hello.html
+          plutobook-linux-x64/tools/html2pdf hello.html hello.pdf
+          test -s hello.pdf
+
+          tar -czvf plutobook-linux-x64.tar.gz plutobook-linux-x64/
 
       - name: Upload artifact
         uses: actions/upload-artifact@v7
