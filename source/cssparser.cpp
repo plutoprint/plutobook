@@ -1578,13 +1578,6 @@ RefPtr<CSSValue> CSSParser::consumeNumberOrPercent(CSSTokenStream& input, bool n
     return consumePercent(input, negative);
 }
 
-RefPtr<CSSValue> CSSParser::consumeNumberOrPercentOrAuto(CSSTokenStream& input, bool negative)
-{
-    if(auto value = consumeAuto(input))
-        return value;
-    return consumeNumberOrPercent(input, negative);
-}
-
 static std::optional<CSSLengthUnits> matchUnitType(std::string_view name)
 {
     static constexpr CSSIdentEntry<CSSLengthUnits> table[] = {
@@ -3356,7 +3349,7 @@ RefPtr<CSSValue> CSSParser::consumeLonghand(CSSTokenStream& input, CSSPropertyID
     case CSSPropertyID::StopOpacity:
         return consumeNumberOrPercent(input, false);
     case CSSPropertyID::PageScale:
-        return consumeNumberOrPercentOrAuto(input, false);
+        return consumeNumberOrPercent(input, false);
     case CSSPropertyID::Bottom:
     case CSSPropertyID::Left:
     case CSSPropertyID::Right:
@@ -4055,6 +4048,15 @@ RefPtr<CSSValue> CSSParser::consumeLonghand(CSSTokenStream& input, CSSPropertyID
         static constexpr CSSIdentValueEntry table[] = {
             {"auto", CSSValueID::Auto},
             {"balance", CSSValueID::Balance}
+        };
+
+        return consumeIdent(input, table);
+    }
+
+    case CSSPropertyID::ShrinkToFit: {
+        static constexpr CSSIdentValueEntry table[] = {
+            {"auto", CSSValueID::Auto},
+            {"none", CSSValueID::None}
         };
 
         return consumeIdent(input, table);

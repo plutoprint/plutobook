@@ -809,11 +809,17 @@ std::optional<int> BoxStyle::columnCount() const
     return convertIntegerOrAuto(*value);
 }
 
-std::optional<float> BoxStyle::pageScale() const
+bool BoxStyle::shrinkToFit() const
+{
+    auto value = get(CSSPropertyID::ShrinkToFit);
+    return value == nullptr || value->id() == CSSValueID::Auto;
+}
+
+float BoxStyle::pageScale() const
 {
     auto value = get(CSSPropertyID::PageScale);
-    if(value == nullptr || value->id() == CSSValueID::Auto)
-        return std::nullopt;
+    if(value == nullptr)
+        return 1.f;
     return convertNumberOrPercent(*value);
 }
 

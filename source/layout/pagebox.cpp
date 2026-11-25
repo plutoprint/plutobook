@@ -645,7 +645,6 @@ void PageLayout::layout()
 
     auto pageStyle = m_document->styleForPage(0);
     auto pageSize = pageStyle->getPageSize(m_document->book()->pageSize());
-    auto pageScale = pageStyle->pageScale();
 
     auto pageWidth = pageStyle->width().calc(pageSize.width() / units::px);
     auto pageHeight = pageStyle->height().calc(pageSize.height() / units::px);
@@ -672,11 +671,11 @@ void PageLayout::layout()
     auto contentWidth = std::max(0.f, width - paddingLeft - paddingRight);
     auto contentHeight = std::max(0.f, height - paddingTop - paddingBottom);
 
-    auto pageScaleFactor = std::max(kMinPageScaleFactor, pageScale.value_or(1.f));
+    auto pageScaleFactor = std::max(kMinPageScaleFactor, pageStyle->pageScale());
     layoutPageContent(contentWidth / pageScaleFactor, contentHeight / pageScaleFactor);
 
-    if(!pageScale.has_value() && m_document->width() > m_document->containerWidth()) {
-        pageScaleFactor = std::max(kMinPageScaleFactor, m_document->containerWidth() / m_document->width());
+    if(pageStyle->shrinkToFit() && m_document->width() > m_document->containerWidth()) {
+        pageScaleFactor = std::max(kMinPageScaleFactor, pageScaleFactor * m_document->containerWidth() / m_document->width());
         layoutPageContent(contentWidth / pageScaleFactor, contentHeight / pageScaleFactor);
     }
 

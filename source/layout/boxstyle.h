@@ -882,7 +882,9 @@ public:
     BreakBetween breakBefore() const { return m_breakBefore; }
     BreakInside breakInside() const { return m_breakInside; }
 
-    std::optional<float> pageScale() const;
+    bool shrinkToFit() const;
+
+    float pageScale() const;
     GlobalString page() const;
 
     PageSize getPageSize(const PageSize& deviceSize) const;

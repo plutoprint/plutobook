@@ -30,6 +30,7 @@ CSSPropertyID CSSProperty::id(std::string_view name)
     } table[] = {
         {"-pluto-lang", CSSPropertyID::Lang},
         {"-pluto-page-scale", CSSPropertyID::PageScale},
+        {"-pluto-shrink-to-fit", CSSPropertyID::ShrinkToFit},
         {"additive-symbols", CSSPropertyID::AdditiveSymbols},
         {"align-content", CSSPropertyID::AlignContent},
         {"align-items", CSSPropertyID::AlignItems},

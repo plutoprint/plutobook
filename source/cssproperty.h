@@ -246,6 +246,7 @@ enum class CSSPropertyID : uint16_t {
     RowGap,
     Rx,
     Ry,
+    ShrinkToFit,
     Size,
     Src,
     StopColor,
