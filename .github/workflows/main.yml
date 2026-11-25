@@ -5,19 +5,25 @@ on: [push, pull_request]
 jobs:
   test-linux:
     runs-on: ubuntu-latest
+    env:
+      CCACHE_DIR: ${{ github.workspace }}/.ccache
+      CCACHE_MAXSIZE: 500M
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
 
-      - name: Setup Ccache
-        uses: hendrikmuhs/ccache-action@v1.2.23
+      - name: Cache ccache
+        uses: actions/cache@v6
         with:
-          key: ${{ github.job }}-${{ runner.os }}-${{ runner.arch }}
+          path: .ccache
+          key: ccache-${{ github.job }}-${{ github.sha }}
+          restore-keys: ccache-${{ github.job }}-
 
       - name: Install dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y \
+            ccache \
             libcairo2-dev \
             libexpat1-dev \
             libicu-dev \
@@ -34,43 +40,62 @@ jobs:
         run: |
           meson setup build --wrap-mode=nodownload
           meson compile -C build
+          ccache --show-stats
 
   test-macos:
     runs-on: macos-latest
+    env:
+      CCACHE_DIR: ${{ github.workspace }}/.ccache
+      CCACHE_MAXSIZE: 500M
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
 
-      - name: Setup Ccache
-        uses: hendrikmuhs/ccache-action@v1.2.23
+      - name: Cache ccache
+        uses: actions/cache@v6
         with:
-          key: ${{ github.job }}-${{ runner.os }}-${{ runner.arch }}
+          path: .ccache
+          key: ccache-${{ github.job }}-${{ github.sha }}
+          restore-keys: ccache-${{ github.job }}-
 
       - name: Install dependencies
         run: |
           brew update
-          brew install cairo expat icu4c freetype fontconfig harfbuzz curl jpeg-turbo webp ninja meson pkg-config
+          brew install ccache cairo expat icu4c freetype fontconfig harfbuzz curl jpeg-turbo webp ninja meson pkg-config
       - name: Setup and Build
         run: |
           export PKG_CONFIG_PATH="/opt/homebrew/opt/icu4c/lib/pkgconfig:$PKG_CONFIG_PATH"
           meson setup build --wrap-mode=nodownload
           meson compile -C build
+          ccache --show-stats
 
   build-windows:
     runs-on: windows-latest
     if: github.ref_type == 'tag' || contains(github.event.head_commit.message, '[build:windows]')
+    env:
+      CCACHE_DIR: ${{ github.workspace }}/.ccache
+      CCACHE_MAXSIZE: 500M
     defaults:
       run:
         shell: msys2 {0}
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
+
+      - name: Cache ccache
+        uses: actions/cache@v6
+        with:
+          path: .ccache
+          key: ccache-${{ github.job }}-${{ github.sha }}
+          restore-keys: ccache-${{ github.job }}-
+
       - name: Setup MSYS2
         uses: msys2/setup-msys2@v2
         with:
           msystem: UCRT64
           update: true
           install: >-
+            mingw-w64-ucrt-x86_64-ccache
             mingw-w64-ucrt-x86_64-expat
             mingw-w64-ucrt-x86_64-icu
             mingw-w64-ucrt-x86_64-freetype
@@ -97,6 +122,7 @@ jobs:
             -Dcpp_args='-DCAIRO_WIN32_STATIC_BUILD -DCURL_STATICLIB -DU_STATIC_IMPLEMENTATION'
           meson compile -C build
           meson install -C build --strip
+          ccache --show-stats
 
       - name: Create artifact
         run: |
