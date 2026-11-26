@@ -16,13 +16,15 @@ icu_required_version = '>=57.0'
 icuuc_dep = dependency('icu-uc',
     required: true,
     version: icu_required_version,
+    default_options: ['default_library=static'],
     fallback: ['icu', 'icuuc_dep']
 )
 
 freetype_default_options = [
     'default_library=static',
     'harfbuzz=disabled',
-    'error_strings=true'
+    'error_strings=true',
+    'libpng:default_library=static'
 ]
 
 freetype_dep = dependency('freetype2',
@@ -82,6 +84,7 @@ cairo_default_options = [
     'xlib=disabled',
     'xcb=disabled',
     'tests=disabled',
+    'pixman:default_library=static',
     'pixman:tests=disabled',
     'pixman:demos=disabled',
 ]
@@ -145,7 +148,7 @@ endif
 
 jpeg_dep = dependency('libturbojpeg',
     required: get_option('turbojpeg'),
-    default_options: ['tests=disabled', 'turbojpeg=enabled'],
+    default_options: ['default_library=static', 'tests=disabled', 'turbojpeg=enabled'],
     fallback: ['libjpeg-turbo', 'turbojpeg_dep']
 )
 
@@ -156,6 +159,7 @@ endif
 
 webp_dep = dependency('libwebp',
     required: get_option('webp'),
+    default_options: ['default_library=static'],
     fallback: ['libwebp', 'webp_dep']
 )
 

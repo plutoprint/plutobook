@@ -179,12 +179,7 @@ jobs:
             --prefix=/usr/local \
             --buildtype=release \
             --prefer-static \
-            --force-fallback-for=expat,icu-uc,freetype2,fontconfig,harfbuzz,cairo,pixman-1,libpng,libturbojpeg,libwebp \
-            -Dicu:default_library=static \
-            -Dpixman:default_library=static \
-            -Dlibpng:default_library=static \
-            -Dlibjpeg-turbo:default_library=static \
-            -Dlibwebp:default_library=static
+            --force-fallback-for=expat,icu-uc,freetype2,fontconfig,harfbuzz,cairo,pixman-1,libpng,libturbojpeg,libwebp
           meson compile -C build
           meson install -C build --strip --destdir="$PWD/stage"
           ccache --show-stats
@@ -283,12 +278,7 @@ jobs:
             --buildtype=release \
             --prefer-static \
             --force-fallback-for=expat,icu-uc,freetype2,fontconfig,harfbuzz,cairo,pixman-1,libpng,libturbojpeg,libwebp \
-            -Dicu:default_library=static \
-            -Dpixman:default_library=static \
-            -Dlibpng:default_library=static \
-            -Dlibjpeg-turbo:default_library=static \
-            -Dlibwebp:default_library=static \
-            -Dlibwebp:c_args=-fPIC
+            -Dc_args=-fPIC
           meson compile -C build
           meson install -C build --strip --destdir="$PWD/stage"
           ccache --show-stats
