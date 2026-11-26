@@ -274,7 +274,6 @@ plutobook_lib = library('plutobook', plutobook_sources,
 
 plutobook_dep = declare_dependency(
     link_with: plutobook_lib,
-    dependencies: plutobook_deps,
     include_directories: include_directories('include'),
     compile_args: plutobook_compile_args
 )
