@@ -193,9 +193,8 @@ jobs:
           cp -R licenses/* plutobook-macos-arm64/licenses/
           cp -v CREDITS LICENSE plutobook-macos-arm64/
 
-          lib=$(basename "$(otool -D "$stage"/lib/libplutobook.dylib | tail -n 1)")
-          cp -v "$stage/lib/$lib" plutobook-macos-arm64/lib/
-          ln -s "$lib" plutobook-macos-arm64/lib/libplutobook.dylib
+          lib=libplutobook.dylib
+          cp -Lv "$stage/lib/$lib" plutobook-macos-arm64/lib/
           install_name_tool -id "@rpath/$lib" "plutobook-macos-arm64/lib/$lib"
 
           for tool in html2pdf html2png; do
@@ -286,14 +285,17 @@ jobs:
           cp -R "$stage"/include/plutobook* plutobook-linux-x64/include/
           cp -R licenses/* plutobook-linux-x64/licenses/
           cp -v CREDITS LICENSE plutobook-linux-x64/
-          cp -av "$stage"/lib/libplutobook.so* plutobook-linux-x64/lib/
+          soname=$(patchelf --print-soname "$stage"/lib/libplutobook.so)
+          cp -Lv "$stage"/lib/libplutobook.so plutobook-linux-x64/lib/
+          patchelf --set-soname libplutobook.so plutobook-linux-x64/lib/libplutobook.so
 
           for tool in html2pdf html2png; do
             cp -v "$stage/bin/$tool" plutobook-linux-x64/tools/
+            patchelf --replace-needed "$soname" libplutobook.so "plutobook-linux-x64/tools/$tool"
             patchelf --set-rpath '$ORIGIN/../lib' "plutobook-linux-x64/tools/$tool"
           done
 
-          allowed='^(libplutobook\.so\.0|libstdc\+\+\.so\.6|libgcc_s\.so\.1|libm\.so\.6|libc\.so\.6|libpthread\.so\.0|libdl\.so\.2|librt\.so\.1|ld-linux-x86-64\.so\.2)$'
+          allowed='^(libplutobook\.so|libstdc\+\+\.so\.6|libgcc_s\.so\.1|libm\.so\.6|libc\.so\.6|libpthread\.so\.0|libdl\.so\.2|librt\.so\.1|ld-linux-x86-64\.so\.2)$'
           for file in $(find plutobook-linux-x64/lib plutobook-linux-x64/tools -type f); do
             echo "--- $file"
             needed=$(readelf -d "$file" | awk -F'[][]' '/NEEDED/ { print $2 }')
