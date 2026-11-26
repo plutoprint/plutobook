@@ -178,11 +178,12 @@ jobs:
 
       - name: Setup and Build
         run: |
+          meson wrap update-db
           meson setup build \
             --prefix=/usr/local \
             --buildtype=release \
             --prefer-static \
-            --force-fallback-for=expat,icu-uc,freetype2,fontconfig,harfbuzz,cairo,pixman-1,libpng,libturbojpeg,libwebp
+            --force-fallback-for=expat,icu-uc,freetype2,fontconfig,harfbuzz,cairo,pixman-1,libpng,libturbojpeg,libwebp,libbrotlidec
           meson compile -C build
           meson install -C build --strip --destdir="$PWD/stage"
           ccache --show-stats
@@ -280,7 +281,7 @@ jobs:
             --libdir=lib \
             --buildtype=release \
             --prefer-static \
-            --force-fallback-for=expat,icu-uc,freetype2,fontconfig,harfbuzz,cairo,pixman-1,libpng,libturbojpeg,libwebp,libcurl,openssl \
+            --force-fallback-for=expat,icu-uc,freetype2,fontconfig,harfbuzz,cairo,pixman-1,libpng,libturbojpeg,libwebp,libbrotlidec,libcurl,openssl \
             -Dc_args=-fPIC
           meson compile -C build
           meson install -C build --strip --destdir="$PWD/stage"

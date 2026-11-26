@@ -23,8 +23,10 @@ icuuc_dep = dependency('icu-uc',
 freetype_default_options = [
     'default_library=static',
     'harfbuzz=disabled',
+    'brotli=enabled',
     'error_strings=true',
-    'libpng:default_library=static'
+    'libpng:default_library=static',
+    'google-brotli:default_library=static'
 ]
 
 freetype_dep = dependency('freetype2',
