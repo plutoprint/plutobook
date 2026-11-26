@@ -288,7 +288,7 @@ jobs:
             -Dlibpng:default_library=static \
             -Dlibjpeg-turbo:default_library=static \
             -Dlibwebp:default_library=static \
-            -Dlibwebp:b_staticpic=true
+            -Dlibwebp:c_args=-fPIC
           meson compile -C build
           meson install -C build --strip --destdir="$PWD/stage"
           ccache --show-stats
