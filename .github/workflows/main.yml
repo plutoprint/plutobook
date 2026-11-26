@@ -131,6 +131,10 @@ jobs:
           cp -r licenses/* plutobook-win-x64/licenses/
           cp -v CREDITS LICENSE plutobook-win-x64/
 
+          echo '<p>Hello from plutobook</p>' > hello.html
+          plutobook-win-x64/bin/html2pdf.exe hello.html hello.pdf
+          test -s hello.pdf
+
           zip -r plutobook-win-x64.zip plutobook-win-x64/
 
       - name: Upload artifact
