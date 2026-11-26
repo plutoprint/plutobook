@@ -124,9 +124,12 @@ foreach feature: cairo_required_features
 endforeach
 
 curl_default_options = [
+    'default_library=static',
+    'ssl=enabled',
     'tool=disabled',
     'tests=disabled',
-    'unittests=disabled'
+    'unittests=disabled',
+    'openssl:default_library=static'
 ]
 
 curl_dep = dependency('libcurl',

@@ -243,7 +243,7 @@ jobs:
           dnf -y install dnf-plugins-core epel-release
           dnf config-manager --set-enabled powertools
           dnf -y install gcc-toolset-14-gcc gcc-toolset-14-gcc-c++ gcc-toolset-14-binutils \
-            python3.12 python3.12-pip libcurl-devel zlib-devel gperf \
+            python3.12 python3.12-pip gperf \
             fontconfig dejavu-sans-fonts tar gzip patch ccache
           python3.12 -m pip install meson ninja patchelf
           echo /opt/rh/gcc-toolset-14/root/usr/bin >> "$GITHUB_PATH"
@@ -258,13 +258,9 @@ jobs:
           key: ccache-${{ github.job }}-${{ github.sha }}
           restore-keys: ccache-${{ github.job }}-
 
-      - name: Use system curl
+      - name: Set up environment
         run: |
           mkdir -p "$RUNNER_TEMP/pkgconfig"
-          printf 'Name: libcurl\nDescription: system libcurl\nVersion: %s\nCflags:\nLibs: -lcurl\n' \
-            "$(curl-config --version | awk '{ print $2 }')" > "$RUNNER_TEMP/pkgconfig/libcurl.pc"
-          cat "$RUNNER_TEMP/pkgconfig/libcurl.pc"
-
           echo "PKG_CONFIG_LIBDIR=$RUNNER_TEMP/pkgconfig" >> "$GITHUB_ENV"
           echo "CCACHE_DIR=$GITHUB_WORKSPACE/.ccache" >> "$GITHUB_ENV"
           echo "CCACHE_MAXSIZE=500M" >> "$GITHUB_ENV"
@@ -277,7 +273,7 @@ jobs:
             --libdir=lib \
             --buildtype=release \
             --prefer-static \
-            --force-fallback-for=expat,icu-uc,freetype2,fontconfig,harfbuzz,cairo,pixman-1,libpng,libturbojpeg,libwebp \
+            --force-fallback-for=expat,icu-uc,freetype2,fontconfig,harfbuzz,cairo,pixman-1,libpng,libturbojpeg,libwebp,libcurl,openssl \
             -Dc_args=-fPIC
           meson compile -C build
           meson install -C build --strip --destdir="$PWD/stage"
@@ -297,7 +293,7 @@ jobs:
             patchelf --set-rpath '$ORIGIN/../lib' "plutobook-linux-x64/tools/$tool"
           done
 
-          allowed='^(libplutobook\.so\.0|libcurl\.so\.4|libz\.so\.1|libstdc\+\+\.so\.6|libgcc_s\.so\.1|libm\.so\.6|libc\.so\.6|libpthread\.so\.0|libdl\.so\.2|librt\.so\.1|ld-linux-x86-64\.so\.2)$'
+          allowed='^(libplutobook\.so\.0|libstdc\+\+\.so\.6|libgcc_s\.so\.1|libm\.so\.6|libc\.so\.6|libpthread\.so\.0|libdl\.so\.2|librt\.so\.1|ld-linux-x86-64\.so\.2)$'
           for file in $(find plutobook-linux-x64/lib plutobook-linux-x64/tools -type f); do
             echo "--- $file"
             needed=$(readelf -d "$file" | awk -F'[][]' '/NEEDED/ { print $2 }')
