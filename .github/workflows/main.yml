@@ -178,7 +178,6 @@ jobs:
 
       - name: Setup and Build
         run: |
-          meson wrap update-db
           meson setup build \
             --prefix=/usr/local \
             --buildtype=release \
@@ -203,9 +202,13 @@ jobs:
           cp -v CREDITS LICENSE plutobook-macos-arm64/
 
           cp -av "$stage"/lib/libplutobook*.dylib plutobook-macos-arm64/lib/
+          lib=$(basename "$(otool -D "$stage"/lib/libplutobook.dylib | tail -n 1)")
+          install_name_tool -id "@rpath/$lib" "plutobook-macos-arm64/lib/$lib"
 
           for tool in html2pdf html2png; do
             cp -v "$stage/bin/$tool" plutobook-macos-arm64/tools/
+            old=$(otool -L "plutobook-macos-arm64/tools/$tool" | awk '/libplutobook/ { print $1 }')
+            install_name_tool -change "$old" "@rpath/$lib" "plutobook-macos-arm64/tools/$tool"
             install_name_tool -add_rpath @executable_path/../lib "plutobook-macos-arm64/tools/$tool"
           done
 
