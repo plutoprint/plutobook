@@ -194,22 +194,22 @@ jobs:
           mkdir -p plutobook-macos-arm64/{lib,include,tools,licenses,etc}
           cp -R "$stage"/include/plutobook* plutobook-macos-arm64/include/
           cp -R "$stage"/etc/fonts plutobook-macos-arm64/etc/
+          for conf in plutobook-macos-arm64/etc/fonts/conf.d/*; do
+            [ -L "$conf" ] || continue
+            rm "$conf"
+            cp "$stage/share/fontconfig/conf.avail/$(basename "$conf")" "$conf"
+          done
           cp -R licenses/* plutobook-macos-arm64/licenses/
           cp -v CREDITS LICENSE plutobook-macos-arm64/
 
-          lib=$(basename "$(otool -D "$stage"/lib/libplutobook.dylib | tail -n 1)")
-          cp -v "$stage/lib/$lib" plutobook-macos-arm64/lib/
-          ln -s "$lib" plutobook-macos-arm64/lib/libplutobook.dylib
-          install_name_tool -id "@rpath/$lib" "plutobook-macos-arm64/lib/$lib"
+          cp -av "$stage"/lib/libplutobook*.dylib plutobook-macos-arm64/lib/
 
           for tool in html2pdf html2png; do
             cp -v "$stage/bin/$tool" plutobook-macos-arm64/tools/
-            old=$(otool -L "plutobook-macos-arm64/tools/$tool" | awk '/libplutobook/ { print $1 }')
-            install_name_tool -change "$old" "@rpath/$lib" "plutobook-macos-arm64/tools/$tool"
             install_name_tool -add_rpath @executable_path/../lib "plutobook-macos-arm64/tools/$tool"
           done
 
-          for file in "plutobook-macos-arm64/lib/$lib" plutobook-macos-arm64/tools/*; do
+          for file in $(find plutobook-macos-arm64/lib -type f) plutobook-macos-arm64/tools/*; do
             codesign --force --sign - "$file"
             echo "--- $file"
             otool -L "$file"
@@ -248,7 +248,7 @@ jobs:
           dnf config-manager --set-enabled powertools
           dnf -y install gcc-toolset-14-gcc gcc-toolset-14-gcc-c++ gcc-toolset-14-binutils \
             python3.12 python3.12-pip gperf \
-            fontconfig dejavu-sans-fonts tar gzip patch ccache
+            dejavu-sans-fonts tar gzip patch ccache
           python3.12 -m pip install meson ninja patchelf
           echo /opt/rh/gcc-toolset-14/root/usr/bin >> "$GITHUB_PATH"
 
@@ -286,8 +286,14 @@ jobs:
       - name: Create artifact
         run: |
           stage="$PWD/stage/usr"
-          mkdir -p plutobook-linux-x64/{lib,include,tools,licenses}
+          mkdir -p plutobook-linux-x64/{lib,include,tools,licenses,etc}
           cp -R "$stage"/include/plutobook* plutobook-linux-x64/include/
+          cp -R "$PWD"/stage/etc/fonts plutobook-linux-x64/etc/
+          for conf in plutobook-linux-x64/etc/fonts/conf.d/*; do
+            [ -L "$conf" ] || continue
+            rm "$conf"
+            cp "$stage/share/fontconfig/conf.avail/$(basename "$conf")" "$conf"
+          done
           cp -R licenses/* plutobook-linux-x64/licenses/
           cp -v CREDITS LICENSE plutobook-linux-x64/
           cp -av "$stage"/lib/libplutobook.so* plutobook-linux-x64/lib/
@@ -324,7 +330,7 @@ jobs:
           done
 
           echo '<p>Hello from plutobook</p>' > hello.html
-          plutobook-linux-x64/tools/html2pdf hello.html hello.pdf
+          FONTCONFIG_PATH="$PWD/plutobook-linux-x64/etc/fonts" plutobook-linux-x64/tools/html2pdf hello.html hello.pdf
           test -s hello.pdf
 
           tar -czvf plutobook-linux-x64.tar.gz plutobook-linux-x64/
