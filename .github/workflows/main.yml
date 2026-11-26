@@ -101,14 +101,14 @@ jobs:
             mingw-w64-ucrt-x86_64-freetype
             mingw-w64-ucrt-x86_64-harfbuzz
             mingw-w64-ucrt-x86_64-fontconfig
-            mingw-w64-ucrt-x86_64-cairo
             mingw-w64-ucrt-x86_64-curl-winssl
-            mingw-w64-ucrt-x86_64-libjpeg-turbo
+            mingw-w64-ucrt-x86_64-nasm
             mingw-w64-ucrt-x86_64-libwebp
             mingw-w64-ucrt-x86_64-meson
             mingw-w64-ucrt-x86_64-ninja
             mingw-w64-ucrt-x86_64-pkgconf
             mingw-w64-ucrt-x86_64-gcc
+            patch
             zip
 
       - name: Setup and Build
@@ -116,8 +116,8 @@ jobs:
           meson setup build \
             --prefix='${{ github.workspace }}/plutobook-win-x64' \
             --buildtype=release \
-            --wrap-mode=nodownload \
             --prefer-static \
+            --force-fallback-for=cairo,libturbojpeg \
             -Dcpp_link_args='-static -static-libgcc -static-libstdc++ -lwinpthread' \
             -Dcpp_args='-DCAIRO_WIN32_STATIC_BUILD -DCURL_STATICLIB -DU_STATIC_IMPLEMENTATION'
           meson compile -C build
