@@ -267,6 +267,25 @@ static std::string buildVariationSettings(const FontDataDescription& description
     return output;
 }
 
+// Cairo applies variations only to fonts with variation axes, so they change nothing for other
+// fonts. Cairo 1.18 also leaks a copy of the string for every glyph run it writes to a PDF
+// (https://gitlab.freedesktop.org/cairo/cairo/-/issues/1000), so only variable fonts get them.
+static cairo_scaled_font_t* createScaledFont(cairo_font_face_t* face, const cairo_matrix_t* ftm, const cairo_matrix_t* ctm,
+    cairo_font_options_t* options, const std::string& variations)
+{
+    auto font = cairo_scaled_font_create(face, ftm, ctm, options);
+    auto ftFace = cairo_ft_scaled_font_lock_face(font);
+    if(ftFace == nullptr)
+        return font;
+    const bool hasAxes = FT_HAS_MULTIPLE_MASTERS(ftFace);
+    cairo_ft_scaled_font_unlock_face(font);
+    if(!hasAxes)
+        return font;
+    cairo_scaled_font_destroy(font);
+    cairo_font_options_set_variations(options, variations.data());
+    return cairo_scaled_font_create(face, ftm, ctm, options);
+}
+
 RefPtr<FontData> SimpleFontFace::getFontData(Document* document, const FontDataDescription& description, bool syntheticOblique)
 {
     while(m_resource == nullptr && !m_sources.empty()) {
@@ -294,13 +313,11 @@ RefPtr<FontData> SimpleFontFace::getFontData(Document* document, const FontDataD
     cairo_matrix_scale(&ftm, description.size, description.size);
 
     auto options = cairo_font_options_create();
-    auto variations = buildVariationSettings(description, m_variations);
-    cairo_font_options_set_variations(options, variations.data());
     cairo_font_options_set_hint_metrics(options, CAIRO_HINT_METRICS_OFF);
 
     auto charSet = FcCharSetCopy(m_resource->charSet());
     auto face = cairo_font_face_reference(m_resource->face());
-    auto font = cairo_scaled_font_create(face, &ftm, &ctm, options);
+    auto font = createScaledFont(face, &ftm, &ctm, options, buildVariationSettings(description, m_variations));
 
     cairo_font_face_destroy(face);
     cairo_font_options_destroy(options);
@@ -624,12 +641,10 @@ static RefPtr<SimpleFontData> createFontDataFromPattern(FcPattern* pattern, cons
     }
 
     auto options = cairo_font_options_create();
-    auto variations = buildVariationSettings(description, variationSettings);
-    cairo_font_options_set_variations(options, variations.data());
     cairo_font_options_set_hint_metrics(options, CAIRO_HINT_METRICS_OFF);
 
     auto face = cairo_ft_font_face_create_for_pattern(pattern);
-    auto font = cairo_scaled_font_create(face, &ftm, &ctm, options);
+    auto font = createScaledFont(face, &ftm, &ctm, options, buildVariationSettings(description, variationSettings));
 
     cairo_font_face_destroy(face);
     cairo_font_options_destroy(options);
