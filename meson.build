@@ -259,8 +259,17 @@ plutobook_cpp_args += cpp.get_supported_arguments(
     '-fno-exceptions'
 )
 
-plutobook_compile_args = []
+plutobook_link_args = []
+if host_machine.system() == 'darwin'
+    plutobook_link_args += [
+        '-Wl,-exported_symbol,_plutobook_*',
+        '-Wl,-exported_symbol,__Z*9plutobook*'
+    ]
+else
+    plutobook_link_args += cpp.get_supported_link_arguments('-Wl,--exclude-libs,ALL')
+endif
 
+plutobook_compile_args = []
 if get_option('default_library') == 'static'
     plutobook_compile_args += ['-DPLUTOBOOK_BUILD_STATIC']
     plutobook_cpp_args += ['-DPLUTOBOOK_BUILD_STATIC']
@@ -271,6 +280,8 @@ plutobook_lib = library('plutobook', plutobook_sources,
     version: meson.project_version(),
     dependencies: plutobook_deps,
     cpp_args: plutobook_cpp_args,
+    link_args: plutobook_link_args,
+    gnu_symbol_visibility: 'inlineshidden',
     install: true
 )
 
