@@ -1,5 +1,71 @@
 # Changelog
 
+## PlutoBook 0.21.0 (2026-11-27)
+
+- Add `-pluto-shrink-to-fit` to control shrinking wide content to fit the page
+- Apply shrink-to-fit on top of `-pluto-page-scale`
+- Change `-pluto-page-scale` to a number or percentage and drop `auto`
+- Add support for WOFF2 fonts
+- Add prebuilt macOS `arm64` release package
+- Ship self-contained release packages with statically linked dependencies
+- Add `word-wrap` as an alias for `overflow-wrap`
+- Fix `overflow-wrap` and `word-break` support
+- Fix line break opportunities around replaced elements, floats, and inline boxes
+- Fix forced page and column breaks
+- Fix absolute positioning in paged media
+- Fix `:left` and `:right` page selectors, including right-to-left documents
+- Improve table fragmentation and break propagation
+- Fix repeated table headers and footers during fragmentation
+- Fix table rows, captions, and spanning cells across page breaks
+- Fix flex container fragmentation when flex lines grow
+- Fix float border fragmentation
+- Improve the precision of page and column fragmentation
+- Fix pseudo-elements in running elements
+- Fix white space dropped after floats, positioned boxes, list markers, and generated content
+- Fix hanging white space in line alignment and justification
+- Fix tab runs in right-to-left text
+- Fix float placement around overflowing and rewound lines
+- Fix logical `float` and `clear` values
+- Fix collapsed table borders for spanned cells and right-to-left tables
+- Fix table row heights and overflow with spanning cells
+- Fix table intrinsic widths, column widths, and fixed table layout
+- Fix `border-spacing` placement and make it inherited
+- Fix absolutely positioned tables and transformed table rows
+- Fix intrinsic sizing of flex items and `min-content`, `max-content`, and `fit-content`
+- Fix sizing of absolutely positioned boxes
+- Fix percentage heights against indefinite containers
+- Fix sizing of replaced elements and images without a natural size
+- Fix image sizing beside floats
+- Fix `background-size` and `no-repeat` backgrounds
+- Ignore `display` on `::marker` and `::first-letter`
+- Fix SVG `textLength` and `lengthAdjust` with rotated, sideways, and vertical text
+- Add support for `textLength` on SVG `textPath`
+- Fix SVG text on a path with vertical text, `startOffset` units, and glyphs past the path ends
+- Fix SVG text chunks, `word-spacing`, and nested `tspan` handling
+- Fix SVG `viewBox` and `preserveAspectRatio` handling
+- Fix sizing of SVG images and SVG background tiles
+- Fix SVG elements with non-invertible transforms
+- Fix SVG number lists separated by commas
+- Fix an all-zero `stroke-dasharray`
+- Display `<search>` as a block and hide `popover` elements
+- Support the `wrap` attribute on `<pre>` and `<textarea>`
+- Update default styles for `<fieldset>`, buttons, and form controls
+- Stop shrinking `<h1>` inside sectioning elements
+- Deduplicate `font-variation-settings` by tag
+- Fix Cairo font options memory leaks
+- Improve layout performance for `z-index` layers, tables, and locales
+- Update Expat to 2.8.5 and FreeType to 2.15.0
+- Stop exposing plutobook's dependencies to its users
+- Fix the macOS library install name
+- Improve the Linux, macOS, and Windows release builds
+- Correct the project license metadata to MPL-2.0
+
+Backers and sponsors:
+
+- [Sveltware Solutions](https://github.com/sveltware)
+- [Dino Maric](https://github.com/dixpac)
+- [Ashish Kulkarni](https://github.com/ashkulz)
+
 ## PlutoBook 0.20.0 (2026-10-20)
 
 - Add support for fragmenting flex containers across pages and columns
