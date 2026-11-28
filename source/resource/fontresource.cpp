@@ -95,10 +95,8 @@ bool FontResource::supportsFormat(std::string_view format)
         || equalsIgnoringCase(format, "opentype-variations")
         || equalsIgnoringCase(format, "truetype")
         || equalsIgnoringCase(format, "truetype-variations")
-#ifdef FT_CONFIG_OPTION_USE_BROTLI
         || equalsIgnoringCase(format, "woff2")
         || equalsIgnoringCase(format, "woff2-variations")
-#endif
         || equalsIgnoringCase(format, "woff")
         || equalsIgnoringCase(format, "woff-variations");
 }
